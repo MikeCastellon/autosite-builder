@@ -3,12 +3,12 @@ export default function ProgressBar({ step, labels }) {
 
   return (
     <div className="w-full">
-      {/* Step dots */}
       <div className="flex items-center justify-between relative">
-        {/* connecting line */}
-        <div className="absolute top-3 left-0 right-0 h-px bg-gray-800 z-0" />
+        {/* Background track */}
+        <div className="absolute top-[11px] left-0 right-0 h-px bg-gray-200 z-0" />
+        {/* Filled track */}
         <div
-          className="absolute top-3 left-0 h-px bg-blue-500 z-0 transition-all duration-500"
+          className="absolute top-[11px] left-0 h-px bg-gray-900 z-0 transition-all duration-500"
           style={{ width: `${((step - 1) / (total - 1)) * 100}%` }}
         />
         {labels.map((label, i) => {
@@ -18,13 +18,19 @@ export default function ProgressBar({ step, labels }) {
           return (
             <div key={label} className="flex flex-col items-center z-10">
               <div
-                className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300
-                  ${done ? 'bg-blue-500 text-white' : active ? 'bg-blue-500 text-white ring-4 ring-blue-500/30' : 'bg-gray-800 text-gray-500'}`}
+                className={`w-[22px] h-[22px] rounded-full flex items-center justify-center text-[10px] font-semibold transition-all duration-300 border
+                  ${done
+                    ? 'bg-gray-900 border-gray-900 text-white'
+                    : active
+                      ? 'bg-white border-gray-900 text-gray-900 shadow-sm'
+                      : 'bg-white border-gray-300 text-gray-400'}`}
               >
-                {done ? '✓' : num}
+                {done
+                  ? <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  : num}
               </div>
-              <span className={`mt-1.5 text-[10px] hidden sm:block font-medium transition-colors
-                ${active ? 'text-blue-400' : done ? 'text-gray-400' : 'text-gray-600'}`}>
+              <span className={`mt-1.5 text-[10px] hidden sm:block font-medium transition-colors whitespace-nowrap
+                ${active ? 'text-gray-800' : done ? 'text-gray-400' : 'text-gray-300'}`}>
                 {label}
               </span>
             </div>
