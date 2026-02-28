@@ -1,8 +1,10 @@
 import { Suspense, lazy, useMemo, useState } from 'react';
 import { TEMPLATE_COMPONENT_MAP } from '../../data/templates.js';
+import { normalizeBusinessInfo } from '../../lib/normalizeBusinessInfo.js';
 import PreviewToolbar from './PreviewToolbar.jsx';
 
 export default function WebsitePreview({ businessInfo, generatedCopy, templateId, templateMeta, onBack, onExport, onStartOver }) {
+  const normalizedInfo = useMemo(() => normalizeBusinessInfo(businessInfo), [businessInfo]);
   const [viewMode, setViewMode] = useState('desktop');
 
   const TemplateComponent = useMemo(
@@ -35,7 +37,7 @@ export default function WebsitePreview({ businessInfo, generatedCopy, templateId
             }
           >
             <TemplateComponent
-              businessInfo={businessInfo}
+              businessInfo={normalizedInfo}
               generatedCopy={generatedCopy}
               templateMeta={templateMeta}
             />

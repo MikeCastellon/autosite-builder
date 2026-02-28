@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { createElement } from 'react';
+import { normalizeBusinessInfo } from './normalizeBusinessInfo.js';
 
 // Map templateId -> static import path for SSR rendering
 const TEMPLATE_MODULES = {
@@ -15,6 +16,10 @@ const TEMPLATE_MODULES = {
   tint_sleek:           () => import('../components/preview/templates/tint/TintSleek.jsx'),
   mechanic_industrial:  () => import('../components/preview/templates/mechanic/MechanicIndustrial.jsx'),
   mechanic_friendly:    () => import('../components/preview/templates/mechanic/MechanicFriendly.jsx'),
+  detailing_coastal:    () => import('../components/preview/templates/detailing/DetailingCoastal.jsx'),
+  mechanic_garage:      () => import('../components/preview/templates/mechanic/MechanicGarage.jsx'),
+  mobile_chrome:        () => import('../components/preview/templates/mobile/MobileChrome.jsx'),
+  tint_elite:           () => import('../components/preview/templates/tint/TintElite.jsx'),
 };
 
 function buildSeoHead(businessInfo, generatedCopy) {
@@ -89,8 +94,9 @@ export async function exportHtml(templateId, businessInfo, generatedCopy, templa
   const mod = await TEMPLATE_MODULES[templateId]();
   const TemplateComponent = mod.default;
 
+  const normalizedInfo = normalizeBusinessInfo(businessInfo);
   const bodyHtml = renderToStaticMarkup(
-    createElement(TemplateComponent, { businessInfo, generatedCopy, templateMeta })
+    createElement(TemplateComponent, { businessInfo: normalizedInfo, generatedCopy, templateMeta })
   );
 
   const seoHead = buildSeoHead(businessInfo, generatedCopy);
