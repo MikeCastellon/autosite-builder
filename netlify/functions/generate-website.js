@@ -107,7 +107,7 @@ Return ONLY this JSON structure (no markdown, no explanation):
     return {
       statusCode: 500,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ error: 'Failed to generate website copy. Please try again.' }),
+      body: JSON.stringify({ error: error.message || String(error) }),
     };
   }
 };
