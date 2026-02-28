@@ -1,9 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 
-const key = process.env.ANTHROPIC_API_KEY || '';
-const client = new Anthropic(
-  key.startsWith('sk-ant-oat') ? { authToken: key } : { apiKey: key }
-);
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const SYSTEM_PROMPT = `You are a professional copywriter specializing in automotive service businesses in the US.
 Your job is to generate compelling, authentic website copy for car industry businesses.
