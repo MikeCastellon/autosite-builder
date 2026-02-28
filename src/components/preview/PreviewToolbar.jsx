@@ -1,4 +1,4 @@
-export default function PreviewToolbar({ viewMode, onViewMode, onBack, onExport }) {
+export default function PreviewToolbar({ viewMode, onViewMode, onBack, onExport, onStartOver }) {
   return (
     <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 px-5 h-13 flex items-center justify-between gap-4" style={{ height: 52 }}>
       {/* Left: back */}
@@ -28,13 +28,21 @@ export default function PreviewToolbar({ viewMode, onViewMode, onBack, onExport 
         </button>
       </div>
 
-      {/* Right: export */}
-      <button
-        onClick={onExport}
-        className="bg-gray-900 hover:bg-gray-800 text-white text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors shrink-0"
-      >
-        Download Site
-      </button>
+      {/* Right: actions */}
+      <div className="flex items-center gap-2 shrink-0">
+        <button
+          onClick={onStartOver}
+          className="border border-gray-200 hover:border-gray-400 text-gray-600 hover:text-gray-900 text-[13px] font-medium px-4 py-2 rounded-lg transition-colors"
+        >
+          Create Another Site
+        </button>
+        <button
+          onClick={onExport}
+          className="bg-gray-900 hover:bg-gray-800 text-white text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors"
+        >
+          Download Site
+        </button>
+      </div>
     </div>
   );
 }

@@ -2,7 +2,7 @@ import { Suspense, lazy, useMemo, useState } from 'react';
 import { TEMPLATE_COMPONENT_MAP } from '../../data/templates.js';
 import PreviewToolbar from './PreviewToolbar.jsx';
 
-export default function WebsitePreview({ businessInfo, generatedCopy, templateId, templateMeta, onBack, onExport }) {
+export default function WebsitePreview({ businessInfo, generatedCopy, templateId, templateMeta, onBack, onExport, onStartOver }) {
   const [viewMode, setViewMode] = useState('desktop');
 
   const TemplateComponent = useMemo(
@@ -21,6 +21,7 @@ export default function WebsitePreview({ businessInfo, generatedCopy, templateId
         onViewMode={setViewMode}
         onBack={onBack}
         onExport={onExport}
+        onStartOver={onStartOver}
       />
 
       {/* Preview frame */}

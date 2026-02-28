@@ -71,6 +71,7 @@ export default function App() {
         templateMeta={templateMeta}
         onBack={() => goTo(3)}
         onExport={() => goTo(6)}
+        onStartOver={handleStartOver}
       />
     );
   }
