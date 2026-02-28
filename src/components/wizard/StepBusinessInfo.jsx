@@ -7,6 +7,7 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
 
   const [values, setValues] = useState(initialValues || {});
   const [errors, setErrors] = useState({});
+  const [customInputs, setCustomInputs] = useState({});
 
   const allFields = [...COMMON_FIELDS, ...specificFields];
 
@@ -92,31 +93,83 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
                 {field.required && <span className="text-red-500 ml-1">*</span>}
               </label>
 
-              {field.type === 'multicheck' && (
-                <div className="flex flex-wrap gap-2">
-                  {field.options.map((option) => {
-                    const checked = (values[field.key] || []).includes(option);
-                    return (
+              {field.type === 'multicheck' && (() => {
+                const selected = values[field.key] || [];
+                // Combine preset options with any custom ones the user added
+                const customOnes = selected.filter((s) => !field.options.includes(s));
+                const allOptions = [...field.options, ...customOnes];
+                const inputVal = customInputs[field.key] || '';
+
+                const addCustom = () => {
+                  const trimmed = inputVal.trim();
+                  if (!trimmed || selected.includes(trimmed)) return;
+                  handleChange(field.key, [...selected, trimmed]);
+                  setCustomInputs((prev) => ({ ...prev, [field.key]: '' }));
+                };
+
+                return (
+                  <div>
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {allOptions.map((option) => {
+                        const checked = selected.includes(option);
+                        const isCustom = !field.options.includes(option);
+                        return (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() => handleCheckbox(field.key, option)}
+                            className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium border transition-all
+                              ${checked
+                                ? 'bg-gray-900 border-gray-900 text-white'
+                                : 'bg-white border-gray-300 text-gray-600 hover:border-gray-500'}`}
+                          >
+                            {checked && (
+                              <svg className="-mt-px shrink-0" width="10" height="10" viewBox="0 0 10 10" fill="none">
+                                <path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            )}
+                            {option}
+                            {isCustom && checked && (
+                              <span
+                                role="button"
+                                tabIndex={0}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleChange(field.key, selected.filter((s) => s !== option));
+                                }}
+                                onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.click()}
+                                className="ml-0.5 opacity-60 hover:opacity-100 text-[11px] leading-none"
+                              >
+                                ×
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Add custom service */}
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={inputVal}
+                        onChange={(e) => setCustomInputs((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustom())}
+                        placeholder="Add a service..."
+                        className="flex-1 bg-white border border-gray-300 rounded-lg px-3 py-2 text-[13px] text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition"
+                      />
                       <button
-                        key={option}
                         type="button"
-                        onClick={() => handleCheckbox(field.key, option)}
-                        className={`px-3 py-1.5 rounded-full text-[13px] font-medium border transition-all
-                          ${checked
-                            ? 'bg-gray-900 border-gray-900 text-white'
-                            : 'bg-white border-gray-300 text-gray-600 hover:border-gray-500'}`}
+                        onClick={addCustom}
+                        disabled={!inputVal.trim()}
+                        className="px-3 py-2 bg-gray-100 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed text-gray-700 text-[13px] font-medium rounded-lg transition-colors"
                       >
-                        {checked && (
-                          <svg className="inline mr-1 -mt-0.5" width="10" height="10" viewBox="0 0 10 10" fill="none">
-                            <path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        )}
-                        {option}
+                        Add
                       </button>
-                    );
-                  })}
-                </div>
-              )}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {field.type === 'textarea' && (
                 <textarea
