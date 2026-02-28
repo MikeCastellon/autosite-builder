@@ -4,14 +4,14 @@ export const BUSINESS_TYPES = [
     label: 'Car Detailing Shop',
     icon: '✨',
     description: 'Fixed-location detailing studio',
-    templates: ['detailing_premium', 'detailing_sporty', 'detailing_minimal'],
+    templates: ['detailing_premium', 'detailing_sporty', 'detailing_minimal', 'detailing_coastal'],
   },
   {
     id: 'mobile_detailing',
     label: 'Mobile Detailing',
     icon: '🚐',
     description: 'On-the-go mobile detailing service',
-    templates: ['mobile_bold', 'mobile_modern', 'mobile_rugged'],
+    templates: ['mobile_bold', 'mobile_modern', 'mobile_rugged', 'mobile_chrome'],
   },
   {
     id: 'wheel_shop',
@@ -25,14 +25,14 @@ export const BUSINESS_TYPES = [
     label: 'Tint Shop',
     icon: '🌑',
     description: 'Window tint & paint protection film',
-    templates: ['tint_dark', 'tint_sleek'],
+    templates: ['tint_dark', 'tint_sleek', 'tint_elite'],
   },
   {
     id: 'mechanic_shop',
     label: 'Mechanic Shop',
     icon: '🔩',
     description: 'Auto repair & maintenance',
-    templates: ['mechanic_industrial', 'mechanic_friendly'],
+    templates: ['mechanic_industrial', 'mechanic_friendly', 'mechanic_garage'],
   },
 ];
 
@@ -44,6 +44,20 @@ export const COMMON_FIELDS = [
   { key: 'address',         label: 'Street Address',       type: 'text',     required: false, placeholder: '123 Main St (optional)' },
   { key: 'tagline',         label: 'Your Tagline or Vibe', type: 'text',     required: false, placeholder: 'e.g. Where Every Detail Matters' },
   { key: 'yearsInBusiness', label: 'Years in Business',    type: 'number',   required: false, placeholder: 'e.g. 8' },
+  { key: 'hours',           label: 'Business Hours',       type: 'text',     required: false, placeholder: 'e.g. Mon–Sat 8am–6pm' },
+  { key: 'instagram',       label: 'Instagram Handle',     type: 'text',     required: false, placeholder: '@yourbusiness' },
+  { key: 'facebook',        label: 'Facebook Page URL',    type: 'text',     required: false, placeholder: 'facebook.com/yourbusiness' },
+];
+
+export const COMMON_EXTRA_FIELDS = [
+  {
+    key: 'paymentMethods',
+    label: 'Payment Methods Accepted',
+    type: 'multicheck',
+    required: false,
+    options: ['Cash', 'Credit Card', 'Debit Card', 'Venmo', 'Zelle', 'CashApp', 'Financing Available'],
+  },
+  { key: 'awards', label: 'Awards / Recognition', type: 'text', required: false, placeholder: 'e.g. Best Detail Shop 2024 — Miami Herald' },
 ];
 
 export const TYPE_SPECIFIC_FIELDS = {
@@ -53,9 +67,10 @@ export const TYPE_SPECIFIC_FIELDS = {
       label: 'Services Offered',
       type: 'multicheck',
       required: true,
-      options: ['Full Detail', 'Wash & Wax', 'Interior Only', 'Paint Correction', 'Ceramic Coating', 'PPF', 'Engine Bay'],
+      options: ['Full Detail', 'Wash & Wax', 'Interior Only', 'Paint Correction', 'Ceramic Coating', 'PPF', 'Engine Bay', 'Headlight Restoration', 'Odor Elimination'],
     },
     { key: 'priceRange',  label: 'Starting Price',              type: 'text',     required: false, placeholder: 'e.g. Starting at $150' },
+    { key: 'packages',    label: 'Service Packages / Tiers',    type: 'textarea', required: false, placeholder: 'e.g. Basic $99 · Premium $199 · Ultimate $349' },
     { key: 'specialties', label: 'What makes you stand out?',   type: 'textarea', required: false, placeholder: 'e.g. We specialize in luxury & exotic vehicles' },
   ],
   mobile_detailing: [
@@ -64,9 +79,10 @@ export const TYPE_SPECIFIC_FIELDS = {
       label: 'Services Offered',
       type: 'multicheck',
       required: true,
-      options: ['Full Detail', 'Wash & Wax', 'Interior Only', 'Ceramic Coating', 'Waterless Wash', 'Fleet Service'],
+      options: ['Full Detail', 'Wash & Wax', 'Interior Only', 'Ceramic Coating', 'Waterless Wash', 'Fleet Service', 'Engine Bay', 'Odor Elimination'],
     },
     { key: 'serviceArea', label: 'Service Area / Radius',       type: 'text',     required: false, placeholder: 'e.g. 30-mile radius from Las Vegas' },
+    { key: 'packages',    label: 'Service Packages / Tiers',    type: 'textarea', required: false, placeholder: 'e.g. Basic $79 · Premium $149 · Elite $249' },
     { key: 'specialties', label: 'What makes you stand out?',   type: 'textarea', required: false, placeholder: 'e.g. We come to you — home, office, or lot' },
   ],
   wheel_shop: [
@@ -75,9 +91,10 @@ export const TYPE_SPECIFIC_FIELDS = {
       label: 'Services Offered',
       type: 'multicheck',
       required: true,
-      options: ['Custom Wheels', 'Tire Sales', 'Wheel Repair', 'Powder Coating', 'Spacers & Adapters', 'Alignment'],
+      options: ['Custom Wheels', 'Tire Sales', 'Wheel Repair', 'Powder Coating', 'Chrome Dipping', 'Spacers & Adapters', 'Alignment', 'Balancing', 'Lowering Kits'],
     },
-    { key: 'brands',      label: 'Wheel Brands Carried',        type: 'text',     required: false, placeholder: 'e.g. Forgiato, Vossen, ADV.1' },
+    { key: 'brands',      label: 'Wheel Brands Carried',        type: 'text',     required: false, placeholder: 'e.g. Forgiato, Vossen, ADV.1, HRE' },
+    { key: 'tireBrands',  label: 'Tire Brands Carried',         type: 'text',     required: false, placeholder: 'e.g. Michelin, Nitto, Toyo, Continental' },
     { key: 'specialties', label: 'What makes you stand out?',   type: 'textarea', required: false, placeholder: '' },
   ],
   tint_shop: [
@@ -86,10 +103,11 @@ export const TYPE_SPECIFIC_FIELDS = {
       label: 'Services Offered',
       type: 'multicheck',
       required: true,
-      options: ['Window Tint', 'Paint Protection Film', 'Ceramic Coating', 'Headlight Tint', 'Vinyl Wrap', 'Detailing'],
+      options: ['Window Tint', 'Paint Protection Film', 'Ceramic Coating', 'Headlight Tint', 'Vinyl Wrap', 'Carbon Fiber Wrap', 'Color Change Wrap', 'Detailing'],
     },
-    { key: 'filmBrands',  label: 'Film Brands Used',            type: 'text',     required: false, placeholder: 'e.g. XPEL, LLumar, 3M' },
+    { key: 'filmBrands',  label: 'Film Brands Used',            type: 'text',     required: false, placeholder: 'e.g. XPEL, LLumar, 3M, Ceramic Pro' },
     { key: 'warranty',    label: 'Warranty Offered',            type: 'text',     required: false, placeholder: 'e.g. Lifetime warranty on all ceramic tint' },
+    { key: 'packages',    label: 'Tint Packages / Pricing',     type: 'textarea', required: false, placeholder: 'e.g. Sedans from $199 · SUVs from $249 · Trucks from $229' },
     { key: 'specialties', label: 'What makes you stand out?',   type: 'textarea', required: false, placeholder: '' },
   ],
   mechanic_shop: [
@@ -98,10 +116,11 @@ export const TYPE_SPECIFIC_FIELDS = {
       label: 'Services Offered',
       type: 'multicheck',
       required: true,
-      options: ['Oil Change', 'Brakes', 'Transmission', 'Engine Repair', 'Diagnostics', 'A/C Service', 'Tires', 'Suspension'],
+      options: ['Oil Change', 'Brakes', 'Transmission', 'Engine Repair', 'Diagnostics', 'A/C Service', 'Tires', 'Suspension', 'Exhaust', 'Tune-Up', 'Electrical', 'State Inspection'],
     },
-    { key: 'specialties',     label: 'Vehicle Specialties',            type: 'text',     required: false, placeholder: 'e.g. Honda & Toyota specialists' },
-    { key: 'certifications',  label: 'Certifications / Affiliations',  type: 'text',     required: false, placeholder: 'e.g. ASE Certified, AAA Approved' },
+    { key: 'specialties',     label: 'Vehicle Specialties',            type: 'text',     required: false, placeholder: 'e.g. Honda & Toyota specialists, European cars' },
+    { key: 'certifications',  label: 'Certifications / Affiliations',  type: 'text',     required: false, placeholder: 'e.g. ASE Certified, AAA Approved, NAPA AutoCare' },
+    { key: 'warrantyOffered', label: 'Parts & Labor Warranty',         type: 'text',     required: false, placeholder: 'e.g. 12-month / 12,000-mile warranty on all repairs' },
   ],
 };
 

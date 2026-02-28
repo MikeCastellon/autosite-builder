@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { COMMON_FIELDS, TYPE_SPECIFIC_FIELDS, BUSINESS_TYPES } from '../../data/businessTypes.js';
+import { COMMON_FIELDS, COMMON_EXTRA_FIELDS, TYPE_SPECIFIC_FIELDS, BUSINESS_TYPES } from '../../data/businessTypes.js';
 
 export default function StepBusinessInfo({ businessType, initialValues, onSubmit }) {
   const typeInfo = BUSINESS_TYPES.find((t) => t.id === businessType);
@@ -194,6 +194,59 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
               {errors[field.key] && (
                 <p className="text-red-500 text-xs mt-1">{errors[field.key]}</p>
               )}
+            </div>
+          ))}
+        </div>
+
+        {/* Extra optional fields */}
+        <div className="space-y-5">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Additional Details (Optional)</p>
+          {/* Payment methods multicheck */}
+          {COMMON_EXTRA_FIELDS.filter(f => f.type === 'multicheck').map((field) => (
+            <div key={field.key}>
+              <label className="block text-[13px] font-medium text-gray-700 mb-2">{field.label}</label>
+              {(() => {
+                const selected = values[field.key] || [];
+                return (
+                  <div className="flex flex-wrap gap-2">
+                    {field.options.map((option) => {
+                      const checked = selected.includes(option);
+                      return (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() => {
+                            const next = checked ? selected.filter(o => o !== option) : [...selected, option];
+                            handleChange(field.key, next);
+                          }}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium border transition-all
+                            ${checked ? 'bg-gray-900 border-gray-900 text-white' : 'bg-white border-gray-300 text-gray-600 hover:border-gray-500'}`}
+                        >
+                          {checked && (
+                            <svg className="-mt-px shrink-0" width="10" height="10" viewBox="0 0 10 10" fill="none">
+                              <path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          )}
+                          {option}
+                        </button>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+            </div>
+          ))}
+          {/* Awards text field */}
+          {COMMON_EXTRA_FIELDS.filter(f => f.type !== 'multicheck').map((field) => (
+            <div key={field.key}>
+              <label className="block text-[13px] font-medium text-gray-700 mb-1.5">{field.label}</label>
+              <input
+                type="text"
+                value={values[field.key] || ''}
+                onChange={(e) => handleChange(field.key, e.target.value)}
+                placeholder={field.placeholder}
+                className={`${inputBase} border-gray-300`}
+              />
             </div>
           ))}
         </div>

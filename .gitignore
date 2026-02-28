@@ -3,3 +3,6 @@ dist
 .env
 .env.local
 netlify/functions/node_modules
+
+# Local Netlify folder
+.netlify

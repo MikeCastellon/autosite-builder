@@ -7,6 +7,7 @@ import StepGenerating from './components/wizard/StepGenerating.jsx';
 import WebsitePreview from './components/preview/WebsitePreview.jsx';
 import StepExport from './components/wizard/StepExport.jsx';
 import { TEMPLATES } from './data/templates.js';
+import { DEMO_BUSINESS_INFO, DEMO_GENERATED_COPY } from './data/demoData.js';
 
 export default function App() {
   const [step, setStep] = useState(1);
@@ -61,17 +62,32 @@ export default function App() {
     setError(null);
   };
 
+  // Demo preview — shows a template with placeholder data, no AI call needed
+  const [isDemoPreview, setIsDemoPreview] = useState(false);
+  const handlePreviewDemo = (templateId) => {
+    setSelectedTemplate(templateId);
+    setGeneratedCopy(DEMO_GENERATED_COPY);
+    setIsDemoPreview(true);
+    goTo(5);
+  };
+  const handleBackFromDemo = () => {
+    setGeneratedCopy(null);
+    setIsDemoPreview(false);
+    goTo(3);
+  };
+
   // Step 5 is full-screen preview, no wizard shell
   if (step === 5 && generatedCopy) {
     return (
       <WebsitePreview
-        businessInfo={businessInfo}
+        businessInfo={isDemoPreview ? DEMO_BUSINESS_INFO : businessInfo}
         generatedCopy={generatedCopy}
         templateId={selectedTemplate}
         templateMeta={templateMeta}
-        onBack={() => goTo(3)}
-        onExport={() => goTo(6)}
+        onBack={isDemoPreview ? handleBackFromDemo : () => goTo(3)}
+        onExport={isDemoPreview ? null : () => goTo(6)}
         onStartOver={handleStartOver}
+        isDemoPreview={isDemoPreview}
       />
     );
   }
@@ -108,6 +124,7 @@ export default function App() {
           selected={selectedTemplate}
           onSelect={handleTemplateSelect}
           onGenerate={handleGenerate}
+          onPreview={handlePreviewDemo}
           error={error}
         />
       )}

@@ -1,136 +1,311 @@
-// Template: Detailing Minimal — Clean white/gray professional theme
+import React, { useState, useEffect } from 'react';
 
 export default function DetailingMinimal({ businessInfo, generatedCopy, templateMeta }) {
   const c = templateMeta.colors;
-  const biz = businessInfo;
-  const copy = generatedCopy;
-  const services = copy.servicesSection?.items || [];
+  const font = templateMeta.font;
+  const bodyFont = templateMeta.bodyFont;
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 30);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const s = {
+    nav: {
+      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
+      background: '#fff',
+      boxShadow: scrolled ? '0 1px 20px rgba(0,0,0,0.08)' : 'none',
+      transition: 'box-shadow 0.3s ease',
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      padding: '0 clamp(1.25rem, 5vw, 3.5rem)', height: '66px',
+    },
+    navLogo: {
+      fontFamily: font, fontSize: 'clamp(1rem, 1.8vw, 1.2rem)',
+      color: c.bg, letterSpacing: '0.04em', fontWeight: 700,
+    },
+    navPhone: {
+      background: c.accent, color: '#fff', padding: '9px 22px',
+      fontFamily: bodyFont, fontSize: '0.85rem', fontWeight: 600,
+      cursor: 'pointer', border: 'none', borderRadius: '4px',
+    },
+    hero: {
+      minHeight: '92vh', background: c.secondary || '#f5f5f5',
+      display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center', textAlign: 'center',
+      padding: 'clamp(6rem, 12vw, 9rem) clamp(1.5rem, 7vw, 5rem) clamp(4rem, 7vw, 6rem)',
+    },
+    heroPill: {
+      display: 'inline-block',
+      background: c.accent + '15',
+      color: c.accent,
+      fontFamily: bodyFont, fontSize: '0.78rem', fontWeight: 600,
+      letterSpacing: '0.12em', textTransform: 'uppercase',
+      padding: '7px 18px', borderRadius: '100px', marginBottom: '2rem',
+      border: `1px solid ${c.accent}30`,
+    },
+    heroH1: {
+      fontFamily: font, fontSize: 'clamp(2.4rem, 5.5vw, 4.5rem)',
+      color: c.bg, lineHeight: 1.1, marginBottom: '1.5rem', fontWeight: 700,
+      maxWidth: '750px',
+    },
+    heroSub: {
+      fontFamily: bodyFont, fontSize: 'clamp(1rem, 1.8vw, 1.15rem)',
+      color: c.text, marginBottom: '2.5rem', maxWidth: '520px', lineHeight: 1.75,
+    },
+    awardsChip: {
+      display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+      background: c.bg, color: '#fff',
+      fontFamily: bodyFont, fontSize: '0.72rem', fontWeight: 600,
+      padding: '5px 14px', borderRadius: '4px', marginBottom: '1.5rem',
+    },
+    ctaRow: { display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' },
+    ctaPrimary: {
+      background: c.accent, color: '#fff', padding: '13px 30px',
+      fontFamily: bodyFont, fontSize: '0.9rem', fontWeight: 600,
+      cursor: 'pointer', border: 'none', borderRadius: '4px',
+    },
+    ctaSecondary: {
+      background: 'transparent', color: c.bg, padding: '13px 30px',
+      fontFamily: bodyFont, fontSize: '0.9rem', fontWeight: 600,
+      cursor: 'pointer', border: `1.5px solid ${c.bg}44`, borderRadius: '4px',
+    },
+    statsBar: {
+      background: '#fff', padding: 'clamp(2rem, 4vw, 2.5rem) clamp(1.5rem, 5vw, 4rem)',
+      display: 'flex', flexWrap: 'wrap', justifyContent: 'space-around', gap: '1.5rem',
+      boxShadow: '0 1px 0 #eee, 0 -1px 0 #eee',
+    },
+    statItem: { textAlign: 'center', minWidth: '100px' },
+    statNum: {
+      fontFamily: font, fontSize: 'clamp(1.6rem, 3vw, 2.4rem)',
+      color: c.accent, display: 'block', fontWeight: 700,
+    },
+    statLabel: { fontFamily: bodyFont, fontSize: '0.75rem', color: c.text, marginTop: '0.3rem' },
+    section: { padding: 'clamp(3rem, 7vw, 6rem) clamp(1.5rem, 7vw, 5rem)', background: '#fff' },
+    sectionGray: { padding: 'clamp(3rem, 7vw, 6rem) clamp(1.5rem, 7vw, 5rem)', background: '#f7f7f8' },
+    sectionEyebrow: {
+      fontFamily: bodyFont, fontSize: '0.72rem', fontWeight: 700,
+      textTransform: 'uppercase', letterSpacing: '0.2em', color: c.accent,
+      marginBottom: '0.6rem',
+    },
+    sectionTitle: {
+      fontFamily: font, fontSize: 'clamp(1.7rem, 3.2vw, 2.6rem)', fontWeight: 700,
+      color: c.bg, marginBottom: '0.75rem',
+    },
+    sectionSub: { fontFamily: bodyFont, color: c.text, fontSize: '1.05rem', lineHeight: 1.75, maxWidth: '560px', marginBottom: '3rem' },
+    servicesGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '1.25rem' },
+    serviceCard: {
+      background: '#fff', padding: '1.75rem', borderRadius: '8px',
+      boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #eee',
+    },
+    serviceIcon: {
+      width: '36px', height: '36px', background: c.accent + '15',
+      borderRadius: '8px', marginBottom: '1rem', display: 'flex',
+      alignItems: 'center', justifyContent: 'center',
+    },
+    serviceIconDot: { width: '14px', height: '14px', background: c.accent, borderRadius: '3px' },
+    serviceName: { fontFamily: font, fontSize: '1.05rem', color: c.bg, fontWeight: 700, marginBottom: '0.6rem' },
+    serviceDesc: { fontFamily: bodyFont, color: c.text, fontSize: '0.9rem', lineHeight: 1.7 },
+    priceNote: {
+      marginTop: '2rem', background: c.accent + '12',
+      borderLeft: `3px solid ${c.accent}`, padding: '1rem 1.25rem', borderRadius: '0 6px 6px 0',
+      display: 'inline-block',
+    },
+    priceText: { fontFamily: bodyFont, fontSize: '0.95rem', color: c.bg },
+    priceVal: { fontWeight: 700, color: c.accent },
+    aboutGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '3rem', alignItems: 'start' },
+    aboutStatBoxes: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' },
+    aboutStatBox: {
+      background: '#fff', padding: '1.5rem', borderRadius: '8px',
+      boxShadow: '0 2px 10px rgba(0,0,0,0.05)', border: '1px solid #eee', textAlign: 'center',
+    },
+    aboutStatNum: { fontFamily: font, fontSize: '1.8rem', color: c.accent, fontWeight: 700, display: 'block' },
+    aboutStatLabel: { fontFamily: bodyFont, fontSize: '0.78rem', color: c.text, marginTop: '0.3rem' },
+    aboutText: { fontFamily: bodyFont, color: c.text, fontSize: '1.05rem', lineHeight: 1.85 },
+    testimonialGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.25rem' },
+    testimonialCard: {
+      background: '#fff', padding: '2rem', borderRadius: '10px',
+      boxShadow: '0 2px 16px rgba(0,0,0,0.06)', border: '1px solid #eee',
+    },
+    starRow: { display: 'flex', gap: '3px', marginBottom: '1rem' },
+    star: { width: '14px', height: '14px', background: c.accent, borderRadius: '2px' },
+    testimonialText: { fontFamily: bodyFont, color: c.text, fontSize: '0.95rem', lineHeight: 1.7, marginBottom: '1.25rem' },
+    testimonialName: { fontFamily: font, fontSize: '0.9rem', color: c.bg, fontWeight: 700 },
+    ctaBand: {
+      background: c.accent, padding: 'clamp(3rem, 6vw, 5rem) clamp(1.5rem, 7vw, 5rem)',
+      textAlign: 'center',
+    },
+    ctaBandTitle: {
+      fontFamily: font, fontSize: 'clamp(1.8rem, 3.5vw, 3rem)', color: '#fff',
+      fontWeight: 700, marginBottom: '0.75rem',
+    },
+    ctaBandSub: { fontFamily: bodyFont, fontSize: '1.05rem', color: 'rgba(255,255,255,0.85)', marginBottom: '2rem' },
+    ctaBandPhone: { fontFamily: font, fontSize: 'clamp(1.6rem, 3vw, 2.4rem)', color: '#fff', marginBottom: '1.5rem', display: 'block' },
+    ctaBandBtn: {
+      background: '#fff', color: c.accent, padding: '13px 32px',
+      fontFamily: bodyFont, fontSize: '0.9rem', fontWeight: 700,
+      cursor: 'pointer', border: 'none', borderRadius: '4px',
+    },
+    paymentPills: { display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center', marginTop: '1.5rem' },
+    paymentPill: {
+      background: 'rgba(255,255,255,0.2)', color: '#fff',
+      padding: '4px 14px', borderRadius: '100px', fontSize: '0.78rem',
+      fontFamily: bodyFont,
+    },
+    footer: {
+      background: '#fff', padding: 'clamp(2rem, 4vw, 3rem) clamp(1.5rem, 7vw, 5rem)',
+      display: 'flex', flexWrap: 'wrap', gap: '2rem', justifyContent: 'space-between',
+      borderTop: '1px solid #eee',
+    },
+    footerLogo: { fontFamily: font, fontSize: '1.1rem', color: c.bg, fontWeight: 700, marginBottom: '0.5rem' },
+    footerText: { fontFamily: bodyFont, fontSize: '0.85rem', color: c.text, lineHeight: 1.65 },
+    footerLink: { color: c.accent, textDecoration: 'none', fontFamily: bodyFont, fontSize: '0.85rem', display: 'block', marginBottom: '0.3rem', fontWeight: 600 },
+    footerHoursLabel: { fontFamily: bodyFont, fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: c.bg, marginBottom: '0.4rem' },
+  };
+
+  const stats = [
+    { num: businessInfo.yearsInBusiness ? `${businessInfo.yearsInBusiness}+` : '10+', label: 'Years Experience' },
+    { num: '5,000+', label: 'Happy Clients' },
+    { num: '5.0 ★', label: 'Average Rating' },
+    { num: businessInfo.warranty || '100%', label: 'Satisfaction Guaranteed' },
+  ];
 
   return (
-    <div style={{ fontFamily: templateMeta.bodyFont, background: c.bg, color: c.text, margin: 0, padding: 0 }}>
-
+    <div style={{ background: '#f7f7f8', color: c.bg, fontFamily: bodyFont }}>
       {/* NAV */}
-      <nav style={{ background: c.bg, borderBottom: `1px solid #e2e8f0`, padding: '0 5%', position: 'sticky', top: 0, zIndex: 100 }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 68 }}>
-          <div>
-            <span style={{ fontSize: 18, fontWeight: 800, color: c.accent, letterSpacing: -0.5 }}>{biz.businessName}</span>
-            <span style={{ display: 'block', fontSize: 11, color: c.muted, letterSpacing: 2, textTransform: 'uppercase', marginTop: 1 }}>{biz.city}, {biz.state}</span>
-          </div>
-          <div style={{ display: 'flex', gap: 28, alignItems: 'center' }}>
-            {['Services', 'About', 'Contact'].map((item) => (
-              <a key={item} href={`#${item.toLowerCase()}`} style={{ color: c.muted, textDecoration: 'none', fontSize: 14, fontWeight: 500 }}>{item}</a>
-            ))}
-            <a href={`tel:${biz.phone}`} style={{ background: c.accent, color: '#fff', padding: '9px 20px', borderRadius: 8, fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
-              {biz.phone}
-            </a>
-          </div>
-        </div>
+      <nav style={s.nav}>
+        <span style={s.navLogo}>{businessInfo.businessName}</span>
+        <button style={s.navPhone}>{businessInfo.phone}</button>
       </nav>
 
       {/* HERO */}
-      <header style={{ padding: '96px 5% 80px', background: c.secondary }}>
-        <div style={{ maxWidth: 720, margin: '0 auto', textAlign: 'center' }}>
-          <span style={{ background: `${c.accent}12`, color: c.accent, fontSize: 13, fontWeight: 600, padding: '6px 16px', borderRadius: 20, display: 'inline-block', marginBottom: 28, letterSpacing: 0.3 }}>
-            Serving {biz.city}, {biz.state}
-          </span>
-          <h1 style={{ fontSize: 'clamp(2rem, 4.5vw, 3.2rem)', fontWeight: 800, lineHeight: 1.2, marginBottom: 20, color: c.text, letterSpacing: -1 }}>
-            {copy.headline}
-          </h1>
-          <p style={{ color: c.muted, fontSize: 18, lineHeight: 1.7, marginBottom: 40 }}>{copy.subheadline}</p>
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <a href="#contact" style={{ background: c.accent, color: '#fff', padding: '13px 32px', borderRadius: 10, fontWeight: 700, fontSize: 16, textDecoration: 'none' }}>
-              {copy.ctaPrimary}
-            </a>
-            <a href="#services" style={{ background: c.bg, color: c.accent, border: `1.5px solid ${c.accent}`, padding: '13px 32px', borderRadius: 10, fontWeight: 600, fontSize: 16, textDecoration: 'none' }}>
-              {copy.ctaSecondary}
-            </a>
-          </div>
-        </div>
-      </header>
-
-      {/* SERVICES */}
-      <section id="services" style={{ padding: '80px 5%', background: c.bg }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <p style={{ color: c.accent, fontSize: 13, fontWeight: 600, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 2 }}>Our Services</p>
-          <h2 style={{ fontSize: 'clamp(1.6rem, 3vw, 2.4rem)', fontWeight: 800, marginBottom: 16, color: c.text }}>What We Offer</h2>
-          <p style={{ color: c.muted, fontSize: 16, lineHeight: 1.7, maxWidth: 520, marginBottom: 48 }}>{copy.servicesSection?.intro}</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
-            {services.map((svc) => (
-              <div key={svc.name} style={{ background: c.secondary, borderRadius: 12, padding: '28px 24px', border: '1px solid #e2e8f0' }}>
-                <div style={{ width: 32, height: 32, background: `${c.accent}15`, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16, fontSize: 16 }}>✦</div>
-                <h3 style={{ fontSize: 16, fontWeight: 700, color: c.text, marginBottom: 10 }}>{svc.name}</h3>
-                <p style={{ color: c.muted, fontSize: 14, lineHeight: 1.7 }}>{svc.description}</p>
-              </div>
-            ))}
-          </div>
+      <section style={s.hero}>
+        {businessInfo.awards && <div style={s.awardsChip}>◆ {businessInfo.awards}</div>}
+        <div style={s.heroPill}>Serving {businessInfo.city}, {businessInfo.state}</div>
+        <h1 style={s.heroH1}>{generatedCopy.headline}</h1>
+        <p style={s.heroSub}>{generatedCopy.subheadline}</p>
+        <div style={s.ctaRow}>
+          <button style={s.ctaPrimary}>{generatedCopy.ctaPrimary}</button>
+          <button style={s.ctaSecondary}>{generatedCopy.ctaSecondary}</button>
         </div>
       </section>
 
-      {/* ABOUT */}
-      <section id="about" style={{ background: c.secondary, padding: '80px 5%', borderTop: '1px solid #e2e8f0' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 64, alignItems: 'start' }}>
-          <div>
-            <p style={{ color: c.accent, fontSize: 13, fontWeight: 600, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 2 }}>About Us</p>
-            <h2 style={{ fontSize: 'clamp(1.6rem, 3vw, 2.4rem)', fontWeight: 800, marginBottom: 24, color: c.text }}>About {biz.businessName}</h2>
-            {copy.aboutText?.split('\n').filter(Boolean).map((para, i) => (
-              <p key={i} style={{ color: c.muted, fontSize: 16, lineHeight: 1.8, marginBottom: 16 }}>{para}</p>
-            ))}
+      {/* STATS */}
+      <div style={s.statsBar}>
+        {stats.map((st, i) => (
+          <div key={i} style={s.statItem}>
+            <span style={s.statNum}>{st.num}</span>
+            <span style={s.statLabel}>{st.label}</span>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {[
-              { num: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '5+', label: 'Years in Business' },
-              { num: '100%', label: 'Satisfaction Guarantee' },
-              { num: '5★', label: 'Google Rating' },
-            ].map(({ num, label }) => (
-              <div key={label} style={{ background: c.bg, border: '1px solid #e2e8f0', borderRadius: 12, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 16 }}>
-                <div style={{ fontSize: 28, fontWeight: 800, color: c.accent, minWidth: 60 }}>{num}</div>
-                <div style={{ color: c.muted, fontSize: 14, fontWeight: 500 }}>{label}</div>
+        ))}
+      </div>
+
+      {/* SERVICES */}
+      <section style={s.section}>
+        <div style={s.sectionEyebrow}>Services</div>
+        <h2 style={s.sectionTitle}>What We Offer</h2>
+        <p style={s.sectionSub}>{generatedCopy.servicesSection?.intro}</p>
+        <div style={s.servicesGrid}>
+          {(generatedCopy.servicesSection?.items || []).map((svc, i) => (
+            <div key={i} style={s.serviceCard}>
+              <div style={s.serviceIcon}><div style={s.serviceIconDot} /></div>
+              <div style={s.serviceName}>{svc.name}</div>
+              <div style={s.serviceDesc}>{svc.description}</div>
+            </div>
+          ))}
+        </div>
+        {businessInfo.priceRange && (
+          <div style={s.priceNote}>
+            <span style={s.priceText}>Investment range: <span style={s.priceVal}>{businessInfo.priceRange}</span></span>
+          </div>
+        )}
+      </section>
+
+      {/* ABOUT */}
+      <section style={s.sectionGray}>
+        <div style={s.aboutGrid}>
+          <div>
+            <div style={s.sectionEyebrow}>About Us</div>
+            <h2 style={{ ...s.sectionTitle, marginBottom: '1.5rem' }}>Our Commitment to Excellence</h2>
+            <div style={s.aboutStatBoxes}>
+              {[
+                { num: `${businessInfo.yearsInBusiness || '10'}+`, label: 'Years in Business' },
+                { num: '5K+', label: 'Cars Serviced' },
+                { num: '5.0', label: 'Star Rating' },
+                { num: '100%', label: 'Guaranteed' },
+              ].map((item, i) => (
+                <div key={i} style={s.aboutStatBox}>
+                  <span style={s.aboutStatNum}>{item.num}</span>
+                  <span style={s.aboutStatLabel}>{item.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p style={{ ...s.aboutText, marginBottom: '1.5rem' }}>{generatedCopy.aboutText}</p>
+            {businessInfo.certifications && (
+              <div style={{ display: 'inline-block', background: c.accent + '12', border: `1px solid ${c.accent}30`, padding: '8px 16px', borderRadius: '6px' }}>
+                <span style={{ fontFamily: bodyFont, fontSize: '0.82rem', color: c.accent, fontWeight: 600 }}>✦ {businessInfo.certifications}</span>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </section>
 
       {/* TESTIMONIALS */}
-      <section style={{ padding: '80px 5%', background: c.bg }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <p style={{ color: c.accent, fontSize: 13, fontWeight: 600, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 2, textAlign: 'center' }}>Reviews</p>
-          <h2 style={{ fontSize: 'clamp(1.6rem, 3vw, 2.4rem)', fontWeight: 800, marginBottom: 48, textAlign: 'center', color: c.text }}>What Our Customers Say</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
-            {copy.testimonialPlaceholders?.map((t) => (
-              <div key={t.name} style={{ background: c.secondary, border: '1px solid #e2e8f0', borderRadius: 12, padding: 28 }}>
-                <div style={{ color: '#f59e0b', fontSize: 16, marginBottom: 12 }}>★★★★★</div>
-                <p style={{ color: c.text, fontSize: 15, lineHeight: 1.7, fontStyle: 'italic', marginBottom: 16 }}>"{t.text}"</p>
-                <p style={{ color: c.muted, fontWeight: 600, fontSize: 13 }}>— {t.name}</p>
+      <section style={s.section}>
+        <div style={s.sectionEyebrow}>Testimonials</div>
+        <h2 style={{ ...s.sectionTitle, marginBottom: '2rem' }}>What Clients Are Saying</h2>
+        <div style={s.testimonialGrid}>
+          {(generatedCopy.testimonialPlaceholders || []).map((t, i) => (
+            <div key={i} style={s.testimonialCard}>
+              <div style={s.starRow}>
+                {[1,2,3,4,5].map(n => <div key={n} style={s.star} />)}
               </div>
-            ))}
-          </div>
+              <p style={s.testimonialText}>"{t.text}"</p>
+              <div style={s.testimonialName}>{t.name}</div>
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* CONTACT */}
-      <section id="contact" style={{ background: c.accent, padding: '72px 5%' }}>
-        <div style={{ maxWidth: 600, margin: '0 auto', textAlign: 'center' }}>
-          <h2 style={{ fontSize: 'clamp(1.6rem, 3vw, 2.4rem)', fontWeight: 800, color: '#fff', marginBottom: 14 }}>Ready to Book?</h2>
-          <p style={{ color: '#ffffff99', fontSize: 17, lineHeight: 1.7, marginBottom: 36 }}>
-            Serving {biz.city}, {biz.state} and surrounding communities. Call us today.
-          </p>
-          <a href={`tel:${biz.phone}`} style={{ background: '#fff', color: c.accent, padding: '15px 40px', borderRadius: 10, fontWeight: 800, fontSize: 18, textDecoration: 'none', display: 'inline-block' }}>
-            📞 {biz.phone}
-          </a>
-          {biz.address && (
-            <p style={{ color: '#ffffff88', fontSize: 14, marginTop: 20 }}>
-              {biz.address}, {biz.city}, {biz.state}
-            </p>
-          )}
-        </div>
+      {/* CTA BAND */}
+      <section style={s.ctaBand}>
+        <div style={s.ctaBandTitle}>Ready for a Perfect Detail?</div>
+        <div style={s.ctaBandSub}>{businessInfo.tagline || generatedCopy.subheadline}</div>
+        <span style={s.ctaBandPhone}>{businessInfo.phone}</span>
+        {businessInfo.hours && (
+          <p style={{ fontFamily: bodyFont, color: 'rgba(255,255,255,0.75)', fontSize: '0.88rem', marginBottom: '1.5rem' }}>{businessInfo.hours}</p>
+        )}
+        <div><button style={s.ctaBandBtn}>{generatedCopy.ctaPrimary}</button></div>
+        {businessInfo.paymentMethods?.length > 0 && (
+          <div style={s.paymentPills}>
+            {businessInfo.paymentMethods.map((pm, i) => (
+              <span key={i} style={s.paymentPill}>{pm}</span>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* FOOTER */}
-      <footer style={{ background: c.secondary, borderTop: '1px solid #e2e8f0', padding: '28px 5%', textAlign: 'center' }}>
-        <p style={{ color: c.text, fontWeight: 700, fontSize: 15, marginBottom: 4 }}>{biz.businessName}</p>
-        <p style={{ color: c.muted, fontSize: 13 }}>{copy.footerTagline}</p>
-        <p style={{ color: '#cbd5e0', fontSize: 12, marginTop: 12 }}>© {new Date().getFullYear()} {biz.businessName} · {biz.city}, {biz.state} · {biz.phone}</p>
+      <footer style={s.footer}>
+        <div>
+          <div style={s.footerLogo}>{businessInfo.businessName}</div>
+          <div style={s.footerText}>{generatedCopy.footerTagline}</div>
+          {businessInfo.address && <div style={{ ...s.footerText, marginTop: '0.4rem' }}>{businessInfo.address}</div>}
+        </div>
+        {businessInfo.hours && (
+          <div>
+            <div style={s.footerHoursLabel}>Hours</div>
+            <div style={s.footerText}>{businessInfo.hours}</div>
+          </div>
+        )}
+        <div>
+          {businessInfo.instagram && <a href={`https://instagram.com/${businessInfo.instagram}`} style={s.footerLink}>Instagram</a>}
+          {businessInfo.facebook && <a href={`https://facebook.com/${businessInfo.facebook}`} style={s.footerLink}>Facebook</a>}
+          {businessInfo.serviceArea && <div style={{ ...s.footerText, marginTop: '0.5rem' }}>Serving {businessInfo.serviceArea}</div>}
+        </div>
       </footer>
     </div>
   );

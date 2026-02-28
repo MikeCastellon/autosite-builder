@@ -1,141 +1,299 @@
-// Template: Detailing Premium — Dark gold luxury theme
+import React, { useState, useEffect } from 'react';
 
 export default function DetailingPremium({ businessInfo, generatedCopy, templateMeta }) {
   const c = templateMeta.colors;
-  const biz = businessInfo;
-  const copy = generatedCopy;
+  const font = templateMeta.font;
+  const bodyFont = templateMeta.bodyFont;
+  const [scrolled, setScrolled] = useState(false);
 
-  const services = copy.servicesSection?.items || [];
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const s = {
+    nav: {
+      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
+      background: scrolled ? 'rgba(10,8,5,0.97)' : 'transparent',
+      borderBottom: `1px solid ${scrolled ? c.accent : 'transparent'}`,
+      transition: 'all 0.3s ease',
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      padding: '0 clamp(1rem, 5vw, 3rem)', height: '70px',
+    },
+    navLogo: {
+      fontFamily: font, fontSize: 'clamp(1rem, 2vw, 1.3rem)',
+      color: c.accent, letterSpacing: '0.12em', fontWeight: 700,
+    },
+    navPhone: {
+      background: 'transparent', border: `1px solid ${c.accent}`,
+      color: c.accent, padding: '8px 20px', fontFamily: bodyFont,
+      fontSize: '0.85rem', letterSpacing: '0.08em', cursor: 'pointer',
+    },
+    hero: {
+      minHeight: '100vh', background: c.bg,
+      display: 'flex', flexDirection: 'column', justifyContent: 'center',
+      padding: 'clamp(5rem, 10vw, 8rem) clamp(1.5rem, 7vw, 5rem) clamp(3rem, 6vw, 5rem)',
+      position: 'relative', overflow: 'hidden',
+    },
+    heroDiag: {
+      position: 'absolute', top: 0, right: '28%', height: '100%', width: '1px',
+      background: `linear-gradient(to bottom, transparent, ${c.accent}55, transparent)`,
+    },
+    heroDiag2: {
+      position: 'absolute', top: 0, right: '32%', height: '100%', width: '1px',
+      background: `linear-gradient(to bottom, transparent, ${c.accent}22, transparent)`,
+    },
+    cityBadge: {
+      display: 'inline-block', border: `1px solid ${c.accent}66`,
+      color: c.accent, fontSize: '0.7rem', letterSpacing: '0.2em',
+      padding: '5px 14px', marginBottom: '2rem', fontFamily: bodyFont,
+      textTransform: 'uppercase',
+    },
+    heroH1: {
+      fontFamily: font, fontSize: 'clamp(2.4rem, 6vw, 5rem)',
+      color: c.text, lineHeight: 1.1, marginBottom: '1.5rem',
+      fontWeight: 700, maxWidth: '700px',
+    },
+    heroSub: {
+      fontFamily: bodyFont, fontSize: 'clamp(1rem, 2vw, 1.2rem)',
+      color: c.muted, marginBottom: '2.5rem', maxWidth: '500px', lineHeight: 1.7,
+    },
+    awardsRibbon: {
+      display: 'inline-block', background: c.accent, color: c.bg,
+      fontFamily: bodyFont, fontSize: '0.72rem', letterSpacing: '0.15em',
+      textTransform: 'uppercase', padding: '6px 16px', marginBottom: '1.5rem',
+      fontWeight: 700,
+    },
+    ctaRow: { display: 'flex', gap: '1rem', flexWrap: 'wrap' },
+    ctaPrimary: {
+      background: c.accent, color: c.bg, padding: '14px 32px',
+      fontFamily: bodyFont, fontSize: '0.9rem', letterSpacing: '0.1em',
+      textTransform: 'uppercase', cursor: 'pointer', border: 'none', fontWeight: 700,
+    },
+    ctaSecondary: {
+      background: 'transparent', color: c.accent, padding: '14px 32px',
+      fontFamily: bodyFont, fontSize: '0.9rem', letterSpacing: '0.1em',
+      textTransform: 'uppercase', cursor: 'pointer', border: `1px solid ${c.accent}`,
+    },
+    statsBar: {
+      background: c.secondary, padding: 'clamp(2rem, 4vw, 3rem) clamp(1.5rem, 5vw, 4rem)',
+      display: 'flex', flexWrap: 'wrap', justifyContent: 'space-around', gap: '2rem',
+    },
+    statItem: { textAlign: 'center', minWidth: '120px' },
+    statNum: {
+      fontFamily: font, fontSize: 'clamp(2rem, 4vw, 3rem)',
+      color: c.accent, display: 'block', fontWeight: 700,
+    },
+    statLabel: {
+      fontFamily: bodyFont, fontSize: '0.75rem', color: c.muted,
+      letterSpacing: '0.15em', textTransform: 'uppercase', marginTop: '0.4rem',
+    },
+    section: { padding: 'clamp(3rem, 7vw, 6rem) clamp(1.5rem, 7vw, 5rem)', background: c.bg },
+    sectionAlt: { padding: 'clamp(3rem, 7vw, 6rem) clamp(1.5rem, 7vw, 5rem)', background: c.secondary },
+    sectionLabel: {
+      fontFamily: bodyFont, fontSize: '0.7rem', letterSpacing: '0.25em',
+      textTransform: 'uppercase', color: c.accent, marginBottom: '0.75rem',
+    },
+    sectionTitle: {
+      fontFamily: font, fontSize: 'clamp(1.8rem, 3.5vw, 2.8rem)',
+      color: c.text, marginBottom: '1rem', fontWeight: 700,
+    },
+    sectionSub: {
+      fontFamily: bodyFont, color: c.muted, fontSize: '1.05rem',
+      lineHeight: 1.7, maxWidth: '600px', marginBottom: '3rem',
+    },
+    servicesGrid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+      gap: '1.5rem',
+    },
+    serviceCard: {
+      background: c.secondary, padding: '2rem', borderTop: `3px solid ${c.accent}`,
+    },
+    serviceName: {
+      fontFamily: font, fontSize: '1.2rem', color: c.text,
+      marginBottom: '0.75rem', fontWeight: 700,
+    },
+    serviceDesc: { fontFamily: bodyFont, color: c.muted, fontSize: '0.95rem', lineHeight: 1.7 },
+    priceCallout: {
+      marginTop: '2.5rem', border: `1px solid ${c.accent}44`,
+      padding: '1.25rem 1.75rem', display: 'inline-block',
+    },
+    priceLabel: {
+      fontFamily: bodyFont, fontSize: '0.7rem', letterSpacing: '0.2em',
+      textTransform: 'uppercase', color: c.accent,
+    },
+    priceVal: { fontFamily: font, fontSize: '1.4rem', color: c.text, marginTop: '0.3rem' },
+    aboutGrid: {
+      display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+      gap: '3rem', alignItems: 'start',
+    },
+    quoteWrapper: { position: 'relative', paddingLeft: '2rem' },
+    quoteMark: {
+      fontFamily: font, fontSize: '8rem', color: c.accent, lineHeight: 0.6,
+      opacity: 0.25, position: 'absolute', top: '1rem', left: '-1rem',
+      userSelect: 'none',
+    },
+    aboutText: { fontFamily: bodyFont, color: c.muted, fontSize: '1.05rem', lineHeight: 1.85 },
+    testimonialGrid: {
+      display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+      gap: '1.5rem',
+    },
+    testimonialCard: { background: c.secondary, padding: '2rem' },
+    stars: { color: c.accent, fontSize: '1rem', marginBottom: '1rem', letterSpacing: '2px' },
+    testimonialText: { fontFamily: bodyFont, color: c.muted, fontSize: '0.95rem', lineHeight: 1.7, marginBottom: '1.2rem' },
+    testimonialName: { fontFamily: font, color: c.text, fontSize: '0.95rem' },
+    ctaSection: {
+      background: c.secondary, padding: 'clamp(3rem, 7vw, 6rem) clamp(1.5rem, 7vw, 5rem)',
+      textAlign: 'center',
+    },
+    ctaBig: {
+      fontFamily: font, fontSize: 'clamp(1.8rem, 4vw, 3rem)',
+      color: c.text, marginBottom: '0.75rem', fontWeight: 700,
+    },
+    ctaPhone: {
+      fontFamily: font, fontSize: 'clamp(1.5rem, 3vw, 2.2rem)',
+      color: c.accent, marginBottom: '1.75rem', letterSpacing: '0.05em',
+    },
+    footer: {
+      background: '#050403', padding: 'clamp(2rem, 5vw, 3.5rem) clamp(1.5rem, 7vw, 5rem)',
+      display: 'flex', flexWrap: 'wrap', gap: '2rem', justifyContent: 'space-between',
+    },
+    footerName: { fontFamily: font, fontSize: '1.1rem', color: c.accent, marginBottom: '0.5rem' },
+    footerText: { fontFamily: bodyFont, fontSize: '0.85rem', color: c.muted, lineHeight: 1.7 },
+    footerLink: { color: c.accent, textDecoration: 'none', fontFamily: bodyFont, fontSize: '0.85rem', display: 'block', marginBottom: '0.3rem' },
+  };
+
+  const stats = [
+    { num: businessInfo.yearsInBusiness ? `${businessInfo.yearsInBusiness}+` : '10+', label: 'Years of Excellence' },
+    { num: '5,000+', label: 'Vehicles Perfected' },
+    { num: '5.0', label: 'Star Rating' },
+    { num: businessInfo.warranty || 'Lifetime', label: 'Satisfaction Guarantee' },
+  ];
 
   return (
-    <div style={{ fontFamily: templateMeta.bodyFont, background: c.bg, color: c.text, margin: 0, padding: 0 }}>
-
+    <div style={{ background: c.bg, color: c.text, fontFamily: bodyFont }}>
       {/* NAV */}
-      <nav style={{ background: c.secondary, borderBottom: `1px solid ${c.accent}22`, padding: '0 5%' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 72 }}>
-          <span style={{ fontFamily: templateMeta.font, color: c.accent, fontSize: 22, fontWeight: 700, letterSpacing: 1 }}>
-            {biz.businessName}
-          </span>
-          <div style={{ display: 'flex', gap: 32 }}>
-            {['Services', 'About', 'Contact'].map((item) => (
-              <a key={item} href={`#${item.toLowerCase()}`} style={{ color: c.muted, textDecoration: 'none', fontSize: 14, letterSpacing: 1, textTransform: 'uppercase' }}>
-                {item}
-              </a>
-            ))}
-          </div>
-          <a href={`tel:${biz.phone}`} style={{ background: c.accent, color: '#000', padding: '10px 22px', borderRadius: 4, fontWeight: 700, fontSize: 14, textDecoration: 'none', letterSpacing: 0.5 }}>
-            {biz.phone}
-          </a>
-        </div>
+      <nav style={s.nav}>
+        <span style={s.navLogo}>{businessInfo.businessName}</span>
+        <button style={s.navPhone}>{businessInfo.phone}</button>
       </nav>
 
       {/* HERO */}
-      <header style={{ background: `linear-gradient(135deg, ${c.bg} 0%, ${c.secondary} 100%)`, padding: '100px 5% 80px', textAlign: 'center', borderBottom: `1px solid ${c.accent}33` }}>
-        <p style={{ color: c.accent, fontSize: 13, letterSpacing: 4, textTransform: 'uppercase', marginBottom: 20, fontWeight: 600 }}>
-          {biz.city}, {biz.state}
-        </p>
-        <h1 style={{ fontFamily: templateMeta.font, fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 700, lineHeight: 1.2, marginBottom: 24, maxWidth: 750, margin: '0 auto 24px' }}>
-          {copy.headline}
-        </h1>
-        <p style={{ color: c.muted, fontSize: 18, maxWidth: 560, margin: '0 auto 40px', lineHeight: 1.7 }}>
-          {copy.subheadline}
-        </p>
-        <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <a href="#contact" style={{ background: c.accent, color: '#000', padding: '14px 36px', borderRadius: 4, fontWeight: 700, fontSize: 16, textDecoration: 'none' }}>
-            {copy.ctaPrimary}
-          </a>
-          <a href="#services" style={{ border: `1px solid ${c.accent}`, color: c.accent, padding: '14px 36px', borderRadius: 4, fontWeight: 600, fontSize: 16, textDecoration: 'none' }}>
-            {copy.ctaSecondary}
-          </a>
-        </div>
-      </header>
-
-      {/* SERVICES */}
-      <section id="services" style={{ padding: '80px 5%' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <p style={{ color: c.accent, fontSize: 12, letterSpacing: 4, textTransform: 'uppercase', marginBottom: 12, fontWeight: 600 }}>What We Offer</p>
-          <h2 style={{ fontFamily: templateMeta.font, fontSize: 'clamp(1.6rem, 3vw, 2.5rem)', marginBottom: 16 }}>Our Services</h2>
-          <p style={{ color: c.muted, fontSize: 16, maxWidth: 580, lineHeight: 1.7, marginBottom: 56 }}>{copy.servicesSection?.intro}</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24 }}>
-            {services.map((svc) => (
-              <div key={svc.name} style={{ background: c.secondary, border: `1px solid ${c.accent}22`, borderRadius: 8, padding: 32 }}>
-                <div style={{ width: 36, height: 3, background: c.accent, marginBottom: 20, borderRadius: 2 }} />
-                <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12 }}>{svc.name}</h3>
-                <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.7 }}>{svc.description}</p>
-              </div>
-            ))}
-          </div>
+      <section style={s.hero}>
+        <div style={s.heroDiag} />
+        <div style={s.heroDiag2} />
+        {businessInfo.awards && <div style={s.awardsRibbon}>{businessInfo.awards}</div>}
+        <div style={s.cityBadge}>{businessInfo.city}, {businessInfo.state}</div>
+        <h1 style={s.heroH1}>{generatedCopy.headline}</h1>
+        <p style={s.heroSub}>{generatedCopy.subheadline}</p>
+        <div style={s.ctaRow}>
+          <button style={s.ctaPrimary}>{generatedCopy.ctaPrimary}</button>
+          <button style={s.ctaSecondary}>{generatedCopy.ctaSecondary}</button>
         </div>
       </section>
 
-      {/* ABOUT */}
-      <section id="about" style={{ background: c.secondary, padding: '80px 5%', borderTop: `1px solid ${c.accent}22`, borderBottom: `1px solid ${c.accent}22` }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'center' }}>
-          <div>
-            <p style={{ color: c.accent, fontSize: 12, letterSpacing: 4, textTransform: 'uppercase', marginBottom: 12, fontWeight: 600 }}>Our Story</p>
-            <h2 style={{ fontFamily: templateMeta.font, fontSize: 'clamp(1.6rem, 3vw, 2.5rem)', marginBottom: 28 }}>About {biz.businessName}</h2>
-            {copy.aboutText?.split('\n').filter(Boolean).map((para, i) => (
-              <p key={i} style={{ color: c.muted, fontSize: 16, lineHeight: 1.8, marginBottom: 16 }}>{para}</p>
-            ))}
+      {/* STATS BAR */}
+      <div style={s.statsBar}>
+        {stats.map((st, i) => (
+          <div key={i} style={s.statItem}>
+            <span style={s.statNum}>{st.num}</span>
+            <span style={s.statLabel}>{st.label}</span>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            {[
-              { num: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '5+', label: 'Years in Business' },
-              { num: '500+', label: 'Cars Detailed' },
-              { num: '5★', label: 'Average Rating' },
-              { num: '100%', label: 'Satisfaction Rate' },
-            ].map(({ num, label }) => (
-              <div key={label} style={{ background: c.bg, border: `1px solid ${c.accent}33`, borderRadius: 8, padding: 24, textAlign: 'center' }}>
-                <div style={{ fontFamily: templateMeta.font, color: c.accent, fontSize: 32, fontWeight: 700 }}>{num}</div>
-                <div style={{ color: c.muted, fontSize: 13, marginTop: 6 }}>{label}</div>
-              </div>
-            ))}
+        ))}
+      </div>
+
+      {/* SERVICES */}
+      <section style={s.section}>
+        <div style={s.sectionLabel}>Our Services</div>
+        <h2 style={s.sectionTitle}>Precision. Perfection. Prestige.</h2>
+        <p style={s.sectionSub}>{generatedCopy.servicesSection?.intro}</p>
+        <div style={s.servicesGrid}>
+          {(generatedCopy.servicesSection?.items || []).map((svc, i) => (
+            <div key={i} style={s.serviceCard}>
+              <div style={s.serviceName}>{svc.name}</div>
+              <div style={s.serviceDesc}>{svc.description}</div>
+            </div>
+          ))}
+        </div>
+        {businessInfo.priceRange && (
+          <div style={s.priceCallout}>
+            <div style={s.priceLabel}>Investment Range</div>
+            <div style={s.priceVal}>{businessInfo.priceRange}</div>
+          </div>
+        )}
+      </section>
+
+      {/* ABOUT */}
+      <section style={s.sectionAlt}>
+        <div style={s.aboutGrid}>
+          <div>
+            <div style={s.sectionLabel}>Our Story</div>
+            <h2 style={s.sectionTitle}>The Art of the Detail</h2>
+          </div>
+          <div style={s.quoteWrapper}>
+            <span style={s.quoteMark}>"</span>
+            <p style={s.aboutText}>{generatedCopy.aboutText}</p>
           </div>
         </div>
       </section>
 
       {/* TESTIMONIALS */}
-      <section style={{ padding: '80px 5%' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <p style={{ color: c.accent, fontSize: 12, letterSpacing: 4, textTransform: 'uppercase', marginBottom: 12, fontWeight: 600 }}>Happy Clients</p>
-          <h2 style={{ fontFamily: templateMeta.font, fontSize: 'clamp(1.6rem, 3vw, 2.5rem)', marginBottom: 48 }}>What Our Customers Say</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 24 }}>
-            {copy.testimonialPlaceholders?.map((t) => (
-              <div key={t.name} style={{ background: c.secondary, border: `1px solid ${c.accent}22`, borderRadius: 8, padding: 32 }}>
-                <div style={{ color: c.accent, fontSize: 20, marginBottom: 16 }}>★★★★★</div>
-                <p style={{ color: c.text, fontSize: 15, lineHeight: 1.7, fontStyle: 'italic', marginBottom: 20 }}>"{t.text}"</p>
-                <p style={{ color: c.accent, fontWeight: 700, fontSize: 14 }}>— {t.name}</p>
-              </div>
-            ))}
-          </div>
+      <section style={s.section}>
+        <div style={s.sectionLabel}>Client Words</div>
+        <h2 style={{ ...s.sectionTitle, marginBottom: '2rem' }}>What Our Clients Say</h2>
+        <div style={s.testimonialGrid}>
+          {(generatedCopy.testimonialPlaceholders || []).map((t, i) => (
+            <div key={i} style={s.testimonialCard}>
+              <div style={s.stars}>★ ★ ★ ★ ★</div>
+              <p style={s.testimonialText}>"{t.text}"</p>
+              <div style={s.testimonialName}>— {t.name}</div>
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* CONTACT / CTA */}
-      <section id="contact" style={{ background: c.secondary, padding: '80px 5%', borderTop: `1px solid ${c.accent}22`, textAlign: 'center' }}>
-        <div style={{ maxWidth: 600, margin: '0 auto' }}>
-          <h2 style={{ fontFamily: templateMeta.font, fontSize: 'clamp(1.6rem, 3vw, 2.5rem)', marginBottom: 16 }}>Ready to Get Started?</h2>
-          <p style={{ color: c.muted, fontSize: 17, lineHeight: 1.7, marginBottom: 40 }}>
-            Give us a call or stop by. We serve {biz.city}, {biz.state} and the surrounding area.
+      {/* CTA SECTION */}
+      <section style={s.ctaSection}>
+        <div style={s.sectionLabel}>Ready to Begin?</div>
+        <div style={s.ctaBig}>Reserve Your Detail Session</div>
+        <div style={s.ctaPhone}>{businessInfo.phone}</div>
+        {businessInfo.hours && (
+          <p style={{ fontFamily: bodyFont, color: c.muted, fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+            {businessInfo.hours}
           </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
-            <a href={`tel:${biz.phone}`} style={{ background: c.accent, color: '#000', padding: '16px 48px', borderRadius: 4, fontWeight: 700, fontSize: 18, textDecoration: 'none', display: 'inline-block' }}>
-              📞 {biz.phone}
-            </a>
-            {biz.address && (
-              <p style={{ color: c.muted, fontSize: 15, marginTop: 8 }}>
-                📍 {biz.address}, {biz.city}, {biz.state}
-              </p>
-            )}
+        )}
+        {businessInfo.paymentMethods?.length > 0 && (
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center', marginTop: '1rem' }}>
+            {businessInfo.paymentMethods.map((pm, i) => (
+              <span key={i} style={{ border: `1px solid ${c.accent}44`, color: c.muted, padding: '4px 14px', fontSize: '0.78rem', fontFamily: bodyFont, letterSpacing: '0.1em' }}>{pm}</span>
+            ))}
           </div>
+        )}
+        <div style={{ marginTop: '2rem' }}>
+          <button style={s.ctaPrimary}>{generatedCopy.ctaPrimary}</button>
         </div>
       </section>
 
       {/* FOOTER */}
-      <footer style={{ background: '#050505', borderTop: `1px solid ${c.accent}22`, padding: '32px 5%', textAlign: 'center' }}>
-        <p style={{ color: c.accent, fontFamily: templateMeta.font, fontSize: 18, marginBottom: 8 }}>{biz.businessName}</p>
-        <p style={{ color: c.muted, fontSize: 13 }}>{copy.footerTagline}</p>
-        <p style={{ color: '#444', fontSize: 12, marginTop: 16 }}>© {new Date().getFullYear()} {biz.businessName} · {biz.city}, {biz.state} · {biz.phone}</p>
+      <footer style={s.footer}>
+        <div>
+          <div style={s.footerName}>{businessInfo.businessName}</div>
+          <div style={s.footerText}>{generatedCopy.footerTagline}</div>
+          {businessInfo.address && <div style={{ ...s.footerText, marginTop: '0.5rem' }}>{businessInfo.address}</div>}
+        </div>
+        {businessInfo.hours && (
+          <div>
+            <div style={{ ...s.footerText, color: c.accent, marginBottom: '0.5rem', letterSpacing: '0.12em', fontSize: '0.7rem', textTransform: 'uppercase' }}>Hours</div>
+            <div style={s.footerText}>{businessInfo.hours}</div>
+          </div>
+        )}
+        <div>
+          {businessInfo.instagram && <a href={`https://instagram.com/${businessInfo.instagram}`} style={s.footerLink}>Instagram</a>}
+          {businessInfo.facebook && <a href={`https://facebook.com/${businessInfo.facebook}`} style={s.footerLink}>Facebook</a>}
+          {businessInfo.serviceArea && <div style={{ ...s.footerText, marginTop: '0.5rem' }}>Serving: {businessInfo.serviceArea}</div>}
+        </div>
       </footer>
     </div>
   );

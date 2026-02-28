@@ -1,0 +1,55 @@
+// Demo/placeholder data used when previewing templates before filling out the form
+
+export const DEMO_BUSINESS_INFO = {
+  businessName: 'AutoSite Demo Shop',
+  phone: '(555) 800-1234',
+  city: 'Miami',
+  state: 'FL',
+  address: '1420 NW 7th Ave',
+  tagline: 'Where Perfection Meets Passion',
+  yearsInBusiness: '8',
+  hours: 'Mon–Fri 8am–6pm · Sat 9am–4pm',
+  instagram: '@autositedemo',
+  facebook: 'facebook.com/autositedemo',
+  paymentMethods: ['Cash', 'Credit Card', 'Venmo', 'Zelle'],
+  awards: 'Best Detail Shop 2024 — Miami New Times',
+  services: ['Full Detail', 'Ceramic Coating', 'Paint Correction', 'PPF', 'Interior Only'],
+  priceRange: 'Starting at $149',
+  packages: 'Basic $149 · Premium $299 · Elite $499',
+  specialties: 'Luxury & exotic vehicle specialists. We treat every car like it\'s our own.',
+  serviceArea: '30-mile radius from Miami',
+  brands: 'Forgiato, Vossen, ADV.1, HRE',
+  filmBrands: 'XPEL, LLumar, 3M, Ceramic Pro',
+  warranty: 'Lifetime warranty on all ceramic tint',
+  certifications: 'ASE Certified · AAA Approved',
+  warrantyOffered: '12-month / 12,000-mile warranty on all repairs',
+  tireBrands: 'Michelin, Nitto, Toyo, Continental',
+};
+
+export const DEMO_GENERATED_COPY = {
+  headline: "Miami's Most Trusted Auto Detailing Studio",
+  subheadline: 'Professional results that protect your investment and keep your ride looking flawless.',
+  aboutText: `AutoSite Demo Shop has been serving Miami and the surrounding communities for over 8 years. What started as a one-man operation out of a garage has grown into South Florida's most respected detailing studio.\n\nWe built this business on a simple belief: every car deserves to be treated like a showpiece. Whether you're rolling a daily driver or a six-figure exotic, our team brings the same obsessive attention to detail to every single job.\n\nBased right here in Miami, FL, we know the unique demands of the South Florida climate — UV exposure, salt air, humidity. Our packages are designed to protect your paint and keep it looking new for years to come.`,
+  servicesSection: {
+    intro: "From show-quality paint corrections to lasting ceramic protection, we offer everything your Miami vehicle needs to stay pristine.",
+    items: [
+      { name: 'Full Detail', description: 'A comprehensive top-to-bottom treatment inside and out. We clean, decontaminate, polish, and protect every inch of your vehicle.' },
+      { name: 'Ceramic Coating', description: 'Industry-leading ceramic protection that bonds to your paint and repels water, dirt, and UV rays for years — not just weeks.' },
+      { name: 'Paint Correction', description: 'Multi-stage machine polishing to eliminate swirl marks, scratches, and oxidation. Restore your paint to better-than-showroom condition.' },
+      { name: 'Paint Protection Film', description: 'Virtually invisible PPF shields your most vulnerable surfaces from rock chips, road debris, and light scratches.' },
+      { name: 'Interior Detail', description: 'Deep cleaned seats, carpets, dash, and trim. We extract every trace of dirt and condition every surface to last.' },
+    ],
+  },
+  ctaPrimary: 'Book Your Detail',
+  ctaSecondary: 'View Our Services',
+  testimonialPlaceholders: [
+    { text: "AutoSite transformed my BMW — paint looks better than the day I bought it. The ceramic coating is incredible. Won't take my car anywhere else.", name: 'Carlos M.' },
+    { text: "Fast, professional, and worth every penny. They detailed my truck before I sold it and I got $2,000 more than I expected. Absolutely unreal results.", name: 'Jessica T.' },
+    { text: "Best detail shop in Miami, period. The team is knowledgeable, honest, and the quality of work is on another level. Highly recommend.", name: 'Andre W.' },
+  ],
+  metaDescription: 'AutoSite Demo Shop — Miami FL. Professional auto detailing, ceramic coating & paint correction. Serving Miami and surrounding areas. Call (555) 800-1234.',
+  metaTitle: 'AutoSite Demo Shop | Auto Detailing in Miami, FL',
+  footerTagline: 'Proudly serving Miami and South Florida since 2016.',
+  keywords: ['Miami auto detailing', 'Miami ceramic coating', 'car detail Miami FL'],
+  schemaType: 'AutoRepair',
+};

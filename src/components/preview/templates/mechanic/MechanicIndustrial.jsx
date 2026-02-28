@@ -1,98 +1,352 @@
-// Template: Mechanic Industrial — Dark steel & yellow, hardworking
+import { useState, useEffect } from 'react';
+
+// Template: Mechanic Industrial — Dark steel & yellow (#1c1c1c bg, #eab308 accent, #2c2c2c secondary)
+// Gear/wrench feel, shop hours section, certifications as yellow badges, warranty guarantee box,
+// payment methods, awards, warrantyOffered displayed
 
 export default function MechanicIndustrial({ businessInfo, generatedCopy, templateMeta }) {
-  const c = templateMeta.colors;
-  const biz = businessInfo;
-  const copy = generatedCopy;
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 60);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const c = templateMeta?.colors || { bg: '#1c1c1c', accent: '#eab308', text: '#e8e8e8', secondary: '#2c2c2c', muted: '#888888' };
+  const font = templateMeta?.bodyFont || 'Inter, system-ui, sans-serif';
+  const biz = businessInfo || {};
+  const copy = generatedCopy || {};
   const services = copy.servicesSection?.items || [];
+  const testimonials = copy.testimonialPlaceholders || [];
+  const payments = biz.paymentMethods || [];
+
+  const certList = biz.certifications
+    ? (typeof biz.certifications === 'string' ? biz.certifications.split(/,|·/).map(c => c.trim()) : biz.certifications)
+    : [];
 
   return (
-    <div style={{ fontFamily: templateMeta.bodyFont, background: c.bg, color: c.text, margin: 0, padding: 0 }}>
-      {/* NAV */}
-      <nav style={{ background: c.secondary, borderBottom: `3px solid ${c.accent}`, padding: '0 5%' }}>
+    <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0 }}>
+
+      {/* STICKY NAV */}
+      <nav style={{
+        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000,
+        background: scrolled ? 'rgba(28,28,28,0.97)' : 'transparent',
+        borderBottom: scrolled ? `3px solid ${c.accent}` : '3px solid transparent',
+        transition: 'all 0.3s ease',
+        padding: '0 5%',
+        backdropFilter: scrolled ? 'blur(12px)' : 'none',
+      }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 68 }}>
           <div>
-            <span style={{ fontSize: 18, fontWeight: 900, color: c.text, textTransform: 'uppercase', letterSpacing: 1 }}>{biz.businessName}</span>
-            <span style={{ display: 'block', fontSize: 11, color: c.accent, letterSpacing: 2, textTransform: 'uppercase' }}>Auto Repair · {biz.city}, {biz.state}</span>
+            <span style={{ fontSize: 17, fontWeight: 900, color: c.text, textTransform: 'uppercase', letterSpacing: 1 }}>{biz.businessName || 'AUTO REPAIR'}</span>
+            <span style={{ display: 'block', fontSize: 10, color: c.accent, letterSpacing: 2, textTransform: 'uppercase' }}>Auto Repair · {biz.city}, {biz.state}</span>
           </div>
-          <a href={`tel:${biz.phone}`} style={{ background: c.accent, color: '#000', padding: '10px 22px', borderRadius: 4, fontWeight: 900, fontSize: 14, textDecoration: 'none', textTransform: 'uppercase', letterSpacing: 1 }}>
-            Call Now
-          </a>
+          <div style={{ display: 'flex', gap: 28, alignItems: 'center' }}>
+            <a href="#services" style={{ color: c.text, textDecoration: 'none', fontWeight: 700, fontSize: 13, letterSpacing: 0.5, textTransform: 'uppercase', opacity: 0.75 }}>Services</a>
+            <a href="#hours" style={{ color: c.text, textDecoration: 'none', fontWeight: 700, fontSize: 13, letterSpacing: 0.5, textTransform: 'uppercase', opacity: 0.75 }}>Hours</a>
+            <a href="#about" style={{ color: c.text, textDecoration: 'none', fontWeight: 700, fontSize: 13, letterSpacing: 0.5, textTransform: 'uppercase', opacity: 0.75 }}>About</a>
+            <a href={`tel:${biz.phone}`} style={{
+              background: c.accent, color: '#000', padding: '10px 22px',
+              borderRadius: 3, fontWeight: 900, fontSize: 13, textDecoration: 'none',
+              textTransform: 'uppercase', letterSpacing: 1,
+            }}>
+              CALL NOW
+            </a>
+          </div>
         </div>
       </nav>
 
-      {/* HERO */}
-      <header style={{ background: `linear-gradient(180deg, ${c.secondary} 0%, ${c.bg} 100%)`, padding: '88px 5% 72px', borderBottom: `1px solid #333` }}>
-        <div style={{ maxWidth: 800, margin: '0 auto' }}>
-          <p style={{ color: c.accent, fontSize: 12, letterSpacing: 4, textTransform: 'uppercase', marginBottom: 16, fontWeight: 700 }}>
-            ⚙️ Trusted Auto Repair · {biz.city}, {biz.state}
+      {/* HERO — full height, industrial feel */}
+      <header style={{
+        minHeight: '100vh', position: 'relative', display: 'flex', alignItems: 'center',
+        background: `linear-gradient(160deg, ${c.secondary || '#2c2c2c'} 0%, ${c.bg} 70%)`,
+        overflow: 'hidden',
+        borderBottom: '1px solid #333',
+      }}>
+        {/* Industrial grid overlay */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          backgroundImage: `linear-gradient(rgba(234,179,8,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(234,179,8,0.04) 1px, transparent 1px)`,
+          backgroundSize: '50px 50px',
+        }} />
+        {/* Accent corner decoration */}
+        <div style={{
+          position: 'absolute', top: 0, left: 0,
+          width: 8, height: '100%',
+          background: `linear-gradient(180deg, ${c.accent}, transparent)`,
+          opacity: 0.6,
+        }} />
+        <div style={{
+          position: 'absolute', top: 0, right: '30%',
+          width: 1, height: '100%',
+          background: `linear-gradient(180deg, transparent, ${c.accent}22, transparent)`,
+        }} />
+
+        <div style={{ position: 'relative', zIndex: 1, padding: '7rem 5% 4rem', maxWidth: 900 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+            <span style={{ fontSize: 22 }}>⚙️</span>
+            <span style={{ color: c.accent, fontSize: 11, letterSpacing: 4, textTransform: 'uppercase', fontWeight: 700 }}>
+              Trusted Auto Repair · {biz.city}, {biz.state}
+            </span>
+          </div>
+          <h1 style={{
+            fontSize: 'clamp(2.5rem, 6vw, 5rem)', fontWeight: 900, lineHeight: 1.05,
+            textTransform: 'uppercase', letterSpacing: '-0.01em', margin: '0 0 20px',
+          }}>
+            {copy.headline || `WE FIX\nWHAT OTHERS\nCAN'T.`}
+          </h1>
+          <p style={{ color: c.muted, fontSize: 16, lineHeight: 1.75, maxWidth: 500, marginBottom: 40 }}>
+            {copy.subheadline || biz.tagline || 'Reliable auto repair with honest pricing and expert technicians.'}
           </p>
-          <h1 style={{ fontSize: 'clamp(2.2rem, 5vw, 3.6rem)', fontWeight: 900, lineHeight: 1.15, marginBottom: 20, textTransform: 'uppercase' }}>{copy.headline}</h1>
-          <p style={{ color: c.muted, fontSize: 17, lineHeight: 1.7, maxWidth: 540, marginBottom: 36 }}>{copy.subheadline}</p>
-          <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
-            <a href={`tel:${biz.phone}`} style={{ background: c.accent, color: '#000', padding: '14px 32px', borderRadius: 4, fontWeight: 900, fontSize: 16, textDecoration: 'none', textTransform: 'uppercase', letterSpacing: 1 }}>{copy.ctaPrimary}</a>
-            <a href="#services" style={{ color: c.muted, padding: '14px 20px', fontWeight: 600, fontSize: 15, textDecoration: 'none' }}>{copy.ctaSecondary} →</a>
+          <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
+            <a href={`tel:${biz.phone}`} style={{
+              background: c.accent, color: '#000', padding: '15px 36px',
+              borderRadius: 3, fontWeight: 900, fontSize: 15, letterSpacing: 1, textTransform: 'uppercase',
+              textDecoration: 'none', display: 'inline-block',
+            }}>
+              {copy.ctaPrimary || 'SCHEDULE SERVICE'}
+            </a>
+            <a href="#services" style={{
+              border: `2px solid ${c.accent}`, color: c.accent, padding: '13px 26px',
+              borderRadius: 3, fontWeight: 800, fontSize: 14, letterSpacing: 1, textTransform: 'uppercase',
+              textDecoration: 'none', display: 'inline-block',
+            }}>
+              {copy.ctaSecondary || 'OUR SERVICES'}
+            </a>
           </div>
         </div>
       </header>
 
-      {/* BADGE ROW */}
-      <div style={{ background: c.accent, padding: '14px 5%' }}>
-        <div style={{ maxWidth: 1000, margin: '0 auto', display: 'flex', gap: 32, flexWrap: 'wrap', justifyContent: 'center' }}>
-          {[
-            biz.certifications ? `✓ ${biz.certifications}` : '✓ Certified Technicians',
-            '✓ Free Diagnostics',
-            '✓ Honest Pricing',
-            '✓ All Makes & Models',
-          ].map((b) => (
-            <span key={b} style={{ color: '#000', fontSize: 13, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5 }}>{b}</span>
-          ))}
+      {/* CERTIFICATIONS BADGE ROW */}
+      <div style={{ background: c.accent, padding: '16px 5%' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', gap: 24, flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center' }}>
+          {certList.length > 0
+            ? certList.map((cert, i) => (
+              <span key={i} style={{ color: '#000', fontSize: 12, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 1, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: 14 }}>✓</span> {cert}
+              </span>
+            ))
+            : [
+              '✓ ASE Certified Technicians',
+              '✓ Free Diagnostics',
+              '✓ Honest Pricing',
+              '✓ All Makes & Models',
+            ].map((b, i) => (
+              <span key={i} style={{ color: '#000', fontSize: 12, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 1 }}>{b}</span>
+            ))
+          }
         </div>
       </div>
 
+      {/* STATS */}
+      <section style={{ background: c.secondary || '#2c2c2c', padding: '3.5rem 5%', borderBottom: '1px solid #333' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 24, textAlign: 'center' }}>
+          {[
+            { val: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'YEARS IN BUSINESS' },
+            { val: '5K+', label: 'VEHICLES REPAIRED' },
+            { val: '5★', label: 'AVERAGE RATING' },
+            { val: '100%', label: 'SATISFACTION GUARANTEED' },
+          ].map((s, i) => (
+            <div key={i}>
+              <div style={{ fontSize: '3rem', fontWeight: 900, color: c.accent, lineHeight: 1 }}>{s.val}</div>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 2, color: '#666', marginTop: 8, textTransform: 'uppercase' }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* SERVICES */}
-      <section id="services" style={{ padding: '72px 5%' }}>
+      <section id="services" style={{ padding: '80px 5%' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
             <div style={{ width: 36, height: 4, background: c.accent, borderRadius: 2 }} />
-            <p style={{ color: c.accent, fontSize: 12, letterSpacing: 4, textTransform: 'uppercase', fontWeight: 700 }}>Services</p>
+            <span style={{ color: c.accent, fontSize: 11, letterSpacing: 4, textTransform: 'uppercase', fontWeight: 700 }}>SERVICES</span>
           </div>
-          <h2 style={{ fontSize: 'clamp(1.6rem, 3vw, 2.6rem)', fontWeight: 900, textTransform: 'uppercase', marginBottom: 12 }}>What We Fix</h2>
-          <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.7, maxWidth: 520, marginBottom: 44 }}>{copy.servicesSection?.intro}</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 2 }}>
-            {services.map((svc, i) => (
-              <div key={svc.name} style={{ background: i % 2 === 0 ? c.secondary : '#232323', padding: '28px 22px', borderTop: `2px solid ${i === 0 ? c.accent : 'transparent'}` }}>
-                <h3 style={{ fontSize: 15, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10, color: i < 2 ? c.accent : c.text }}>{svc.name}</h3>
-                <p style={{ color: c.muted, fontSize: 14, lineHeight: 1.7 }}>{svc.description}</p>
+          <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 14px', letterSpacing: '-0.01em' }}>WHAT WE FIX</h2>
+          {copy.servicesSection?.intro && (
+            <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.7, maxWidth: 520, marginBottom: 48 }}>{copy.servicesSection.intro}</p>
+          )}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 2 }}>
+            {services.length > 0 ? services.map((svc, i) => (
+              <div key={i} style={{
+                background: i % 2 === 0 ? c.secondary : '#232323',
+                padding: '28px 24px',
+                borderTop: `2px solid ${i === 0 || i === 1 ? c.accent : 'transparent'}`,
+                borderBottom: '1px solid #2a2a2a',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                  <div style={{ width: 28, height: 28, background: `${c.accent}18`, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13 }}>🔧</div>
+                  <h3 style={{ fontSize: 14, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, color: i < 2 ? c.accent : c.text, margin: 0 }}>{svc.name}</h3>
+                </div>
+                <p style={{ color: c.muted, fontSize: 14, lineHeight: 1.7, margin: 0 }}>{svc.description}</p>
+              </div>
+            )) : (biz.services || []).map((svc, i) => (
+              <div key={i} style={{ background: i % 2 === 0 ? c.secondary : '#232323', padding: '24px 22px', borderTop: `2px solid ${i < 2 ? c.accent : 'transparent'}` }}>
+                <h3 style={{ fontSize: 14, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, color: c.text, margin: 0 }}>{svc}</h3>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ABOUT */}
-      <section id="about" style={{ background: c.secondary, padding: '72px 5%', borderTop: '1px solid #333' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 56, alignItems: 'center' }}>
+      {/* SHOP HOURS — prominently shown section */}
+      <section id="hours" style={{ padding: '80px 5%', background: c.secondary, borderTop: '1px solid #333', borderBottom: '1px solid #333' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'start' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
               <div style={{ width: 36, height: 4, background: c.accent, borderRadius: 2 }} />
-              <p style={{ color: c.accent, fontSize: 12, letterSpacing: 4, textTransform: 'uppercase', fontWeight: 700 }}>Our Shop</p>
+              <span style={{ color: c.accent, fontSize: 11, letterSpacing: 4, textTransform: 'uppercase', fontWeight: 700 }}>SCHEDULE</span>
             </div>
-            <h2 style={{ fontSize: 'clamp(1.6rem, 3vw, 2.4rem)', fontWeight: 900, textTransform: 'uppercase', marginBottom: 24 }}>About Us</h2>
-            {copy.aboutText?.split('\n').filter(Boolean).map((para, i) => (
-              <p key={i} style={{ color: c.muted, fontSize: 15, lineHeight: 1.8, marginBottom: 14 }}>{para}</p>
-            ))}
+            <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.8rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 8px', letterSpacing: '-0.01em' }}>SHOP HOURS</h2>
+            <p style={{ color: c.muted, fontSize: 14, marginBottom: 28 }}>We're open and ready to serve you.</p>
+            {biz.hours && Object.keys(biz.hours).length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                {Object.entries(biz.hours).map(([day, hrs], i) => (
+                  <div key={i} style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    padding: '14px 20px',
+                    background: i % 2 === 0 ? c.bg : 'transparent',
+                    borderRadius: 3,
+                  }}>
+                    <span style={{ fontWeight: 700, textTransform: 'uppercase', fontSize: 13, letterSpacing: 1, color: c.text }}>{day}</span>
+                    <span style={{
+                      color: hrs.toLowerCase().includes('closed') ? '#ef4444' : c.accent,
+                      fontWeight: 800, fontSize: 14,
+                    }}>{hrs}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p style={{ color: c.muted, fontSize: 14 }}>Call us for current hours.</p>
+            )}
+          </div>
+          <div>
+            {/* CERTIFICATIONS as yellow badge row */}
+            {(certList.length > 0 || biz.certifications) && (
+              <div style={{ marginBottom: 24 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
+                  <div style={{ width: 36, height: 4, background: c.accent, borderRadius: 2 }} />
+                  <span style={{ color: c.accent, fontSize: 11, letterSpacing: 4, textTransform: 'uppercase', fontWeight: 700 }}>CERTIFIED</span>
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                  {certList.length > 0
+                    ? certList.map((cert, i) => (
+                      <span key={i} style={{
+                        background: c.accent, color: '#000', padding: '8px 18px',
+                        fontSize: 12, fontWeight: 900, letterSpacing: 1, textTransform: 'uppercase',
+                        borderRadius: 3,
+                      }}>{cert}</span>
+                    ))
+                    : (
+                      <span style={{
+                        background: c.accent, color: '#000', padding: '8px 18px',
+                        fontSize: 12, fontWeight: 900, letterSpacing: 1, textTransform: 'uppercase',
+                        borderRadius: 3,
+                      }}>{biz.certifications}</span>
+                    )
+                  }
+                </div>
+              </div>
+            )}
+
+            {/* AWARDS */}
+            {biz.awards && (
+              <div style={{ background: 'rgba(255,215,0,0.08)', border: '1px solid rgba(255,215,0,0.25)', borderRadius: 6, padding: '18px 20px', marginBottom: 16 }}>
+                <div style={{ color: '#ffd700', fontSize: 11, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 6 }}>RECOGNITION</div>
+                <p style={{ color: c.text, fontSize: 14, margin: 0, fontWeight: 500 }}>{biz.awards}</p>
+              </div>
+            )}
+
+            {/* PAYMENT METHODS */}
+            {payments.length > 0 && (
+              <div style={{ background: c.bg, borderRadius: 6, padding: '18px 20px', border: '1px solid #333' }}>
+                <div style={{ color: c.accent, fontSize: 11, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 12 }}>PAYMENT METHODS</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {payments.map((p, i) => (
+                    <span key={i} style={{
+                      background: '#2a2a2a', color: '#ccc', border: '1px solid #444',
+                      padding: '5px 14px', borderRadius: 3, fontSize: 12, fontWeight: 700,
+                      textTransform: 'uppercase', letterSpacing: 0.5,
+                    }}>{p}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* WARRANTY / GUARANTEE CALLOUT BOX */}
+      {(biz.warranty || biz.warrantyOffered) && (
+        <section style={{ padding: '64px 5%', borderBottom: '1px solid #333' }}>
+          <div style={{ maxWidth: 900, margin: '0 auto' }}>
+            <div style={{
+              background: c.secondary, border: `2px solid ${c.accent}`,
+              borderRadius: 6, padding: '36px 40px',
+              display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 28, alignItems: 'center',
+              boxShadow: `0 0 30px ${c.accent}18`,
+            }}>
+              <div style={{
+                width: 72, height: 72,
+                background: `${c.accent}18`, border: `2px solid ${c.accent}`,
+                borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 32, flexShrink: 0,
+              }}>
+                🛡
+              </div>
+              <div>
+                <div style={{ color: c.accent, fontSize: 11, fontWeight: 700, letterSpacing: 4, textTransform: 'uppercase', marginBottom: 8 }}>OUR GUARANTEE</div>
+                <h3 style={{ fontSize: 22, fontWeight: 900, textTransform: 'uppercase', margin: '0 0 10px' }}>
+                  {biz.warrantyOffered ? 'Warranty Offered' : 'Parts & Labor Warranty'}
+                </h3>
+                <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.7, margin: 0 }}>
+                  {biz.warranty || biz.warrantyOffered}
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ABOUT */}
+      <section id="about" style={{ padding: '80px 5%', background: c.secondary, borderBottom: '1px solid #333' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'start' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
+              <div style={{ width: 36, height: 4, background: c.accent, borderRadius: 2 }} />
+              <span style={{ color: c.accent, fontSize: 11, letterSpacing: 4, textTransform: 'uppercase', fontWeight: 700 }}>OUR SHOP</span>
+            </div>
+            <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.8rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 20px', letterSpacing: '-0.01em' }}>ABOUT US</h2>
+            <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.85, marginBottom: 20 }}>
+              {copy.aboutText || `Serving ${biz.city || 'your area'} with expert auto repair since day one.`}
+            </p>
+            {biz.specialties && (
+              <div style={{ background: c.bg, borderRadius: 4, padding: '14px 18px', marginBottom: 12, borderLeft: `4px solid ${c.accent}` }}>
+                <div style={{ color: c.accent, fontSize: 10, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 4 }}>SPECIALTIES</div>
+                <p style={{ color: c.text, fontSize: 14, margin: 0 }}>{biz.specialties}</p>
+              </div>
+            )}
+            {biz.brands && (
+              <div style={{ background: c.bg, borderRadius: 4, padding: '14px 18px', borderLeft: `4px solid ${c.accent}` }}>
+                <div style={{ color: c.accent, fontSize: 10, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 4 }}>BRANDS WE SERVICE</div>
+                <p style={{ color: c.text, fontSize: 14, margin: 0 }}>{biz.brands}</p>
+              </div>
+            )}
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             {[
-              { num: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'Years' },
-              { num: '5,000+', label: 'Vehicles' },
-              { num: '5★', label: 'Rating' },
-              { num: '100%', label: 'Guaranteed' },
+              { num: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'YEARS' },
+              { num: '5K+', label: 'VEHICLES' },
+              { num: '5★', label: 'RATING' },
+              { num: '100%', label: 'GUARANTEED' },
             ].map(({ num, label }) => (
-              <div key={label} style={{ background: c.bg, border: '1px solid #333', borderRadius: 6, padding: '22px 16px', textAlign: 'center' }}>
-                <div style={{ fontSize: 30, fontWeight: 900, color: c.accent }}>{num}</div>
-                <div style={{ color: c.muted, fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.5, marginTop: 4 }}>{label}</div>
+              <div key={label} style={{
+                background: c.bg, border: '1px solid #333', borderRadius: 4, padding: '24px 16px', textAlign: 'center',
+                borderTop: `3px solid ${c.accent}`,
+              }}>
+                <div style={{ fontSize: 32, fontWeight: 900, color: c.accent, lineHeight: 1 }}>{num}</div>
+                <div style={{ color: c.muted, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 2, marginTop: 8 }}>{label}</div>
               </div>
             ))}
           </div>
@@ -100,38 +354,98 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
       </section>
 
       {/* TESTIMONIALS */}
-      <section style={{ padding: '72px 5%' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 40 }}>
-            <div style={{ width: 36, height: 4, background: c.accent, borderRadius: 2 }} />
-            <h2 style={{ fontSize: 'clamp(1.6rem, 3vw, 2.4rem)', fontWeight: 900, textTransform: 'uppercase' }}>Reviews</h2>
+      {testimonials.length > 0 && (
+        <section style={{ padding: '80px 5%', borderBottom: '1px solid #333' }}>
+          <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 48 }}>
+              <div style={{ width: 36, height: 4, background: c.accent, borderRadius: 2 }} />
+              <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.5rem)', fontWeight: 900, textTransform: 'uppercase', margin: 0 }}>REVIEWS</h2>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
+              {testimonials.map((t, i) => (
+                <div key={i} style={{
+                  background: c.secondary, borderLeft: `4px solid ${c.accent}`,
+                  padding: '24px 24px 24px 26px',
+                }}>
+                  <div style={{ color: c.accent, marginBottom: 12 }}>★★★★★</div>
+                  <p style={{ color: c.text, fontSize: 15, lineHeight: 1.7, fontStyle: 'italic', margin: '0 0 14px' }}>"{t.text}"</p>
+                  <p style={{ color: c.accent, fontWeight: 800, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1, margin: 0 }}>— {t.name}</p>
+                </div>
+              ))}
+            </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 20 }}>
-            {copy.testimonialPlaceholders?.map((t) => (
-              <div key={t.name} style={{ background: c.secondary, borderLeft: `4px solid ${c.accent}`, padding: '22px 22px 22px 24px' }}>
-                <div style={{ color: c.accent, marginBottom: 10 }}>★★★★★</div>
-                <p style={{ color: c.text, fontSize: 15, lineHeight: 1.7, fontStyle: 'italic', marginBottom: 12 }}>"{t.text}"</p>
-                <p style={{ color: c.accent, fontWeight: 800, fontSize: 13, textTransform: 'uppercase', letterSpacing: 0.5 }}>— {t.name}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      {/* CONTACT */}
-      <section id="contact" style={{ background: c.accent, padding: '64px 5%', textAlign: 'center' }}>
-        <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.6rem)', fontWeight: 900, color: '#000', textTransform: 'uppercase', marginBottom: 12 }}>Schedule Service</h2>
-        <p style={{ color: '#00000066', fontSize: 16, marginBottom: 32 }}>Serving {biz.city}, {biz.state} and surrounding areas</p>
-        <a href={`tel:${biz.phone}`} style={{ background: '#000', color: c.accent, padding: '16px 44px', borderRadius: 4, fontWeight: 900, fontSize: 20, textDecoration: 'none', display: 'inline-block', textTransform: 'uppercase', letterSpacing: 1 }}>
-          📞 {biz.phone}
+      {/* CTA */}
+      <section style={{ background: c.accent, padding: '80px 5%', textAlign: 'center' }}>
+        <h2 style={{ fontSize: 'clamp(2rem, 4.5vw, 3.5rem)', fontWeight: 900, color: '#000', textTransform: 'uppercase', margin: '0 0 14px', letterSpacing: '-0.01em' }}>
+          SCHEDULE SERVICE
+        </h2>
+        <p style={{ color: 'rgba(0,0,0,0.55)', fontSize: 16, marginBottom: 36 }}>
+          {copy.ctaSecondary || `Serving ${biz.city || 'your area'}, ${biz.state || ''} and surrounding areas`}
+        </p>
+        <a href={`tel:${biz.phone}`} style={{
+          background: '#000', color: c.accent, padding: '17px 48px',
+          borderRadius: 3, fontWeight: 900, fontSize: 18, textDecoration: 'none',
+          display: 'inline-block', textTransform: 'uppercase', letterSpacing: 1.5,
+        }}>
+          {biz.phone || 'CALL NOW'}
         </a>
-        {biz.address && <p style={{ color: '#00000066', fontSize: 13, marginTop: 16 }}>📍 {biz.address}, {biz.city}, {biz.state}</p>}
+        {biz.address && (
+          <p style={{ color: 'rgba(0,0,0,0.5)', fontSize: 13, marginTop: 20 }}>
+            📍 {biz.address}, {biz.city}, {biz.state}
+          </p>
+        )}
       </section>
 
       {/* FOOTER */}
-      <footer style={{ background: '#111', padding: '24px 5%', textAlign: 'center' }}>
-        <p style={{ color: '#444', fontSize: 13 }}>© {new Date().getFullYear()} {biz.businessName} · {biz.city}, {biz.state}</p>
-        <p style={{ color: c.accent, fontSize: 12, marginTop: 6, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>{copy.footerTagline}</p>
+      <footer style={{ background: '#111', padding: '48px 5% 24px', borderTop: `3px solid ${c.accent}` }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 36, marginBottom: 32 }}>
+          <div>
+            <div style={{ fontWeight: 900, fontSize: 14, color: c.accent, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>
+              ⚙️ {biz.businessName}
+            </div>
+            <p style={{ color: '#555', fontSize: 13, lineHeight: 1.7 }}>{copy.footerTagline || biz.tagline}</p>
+          </div>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 10, letterSpacing: 3, textTransform: 'uppercase', color: '#444', marginBottom: 12 }}>CONTACT</div>
+            <div style={{ color: '#666', fontSize: 14, lineHeight: 2 }}>
+              {biz.phone && <div>{biz.phone}</div>}
+              {biz.address && <div>{biz.address}</div>}
+              {biz.city && <div>{biz.city}, {biz.state}</div>}
+            </div>
+          </div>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 10, letterSpacing: 3, textTransform: 'uppercase', color: '#444', marginBottom: 12 }}>FOLLOW US</div>
+            {biz.instagram && (
+              <a href={`https://instagram.com/${biz.instagram.replace('@', '')}`} style={{ display: 'block', color: c.accent, textDecoration: 'none', fontWeight: 700, fontSize: 13, marginBottom: 8 }}>
+                Instagram: {biz.instagram}
+              </a>
+            )}
+            {biz.facebook && (
+              <a href={`https://facebook.com/${biz.facebook}`} style={{ display: 'block', color: c.accent, textDecoration: 'none', fontWeight: 700, fontSize: 13 }}>
+                Facebook: {biz.facebook}
+              </a>
+            )}
+          </div>
+          {payments.length > 0 && (
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 10, letterSpacing: 3, textTransform: 'uppercase', color: '#444', marginBottom: 12 }}>WE ACCEPT</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {payments.map((p, i) => (
+                  <span key={i} style={{
+                    background: '#222', color: '#888', border: '1px solid #333',
+                    padding: '3px 10px', borderRadius: 3, fontSize: 11, fontWeight: 600, textTransform: 'uppercase',
+                  }}>{p}</span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+        <div style={{ borderTop: '1px solid #222', paddingTop: 20, textAlign: 'center', color: '#444', fontSize: 12 }}>
+          &copy; {new Date().getFullYear()} {biz.businessName} · {biz.city}, {biz.state} · All rights reserved.
+        </div>
       </footer>
     </div>
   );

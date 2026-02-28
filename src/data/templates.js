@@ -117,6 +117,19 @@ export const TEMPLATES = {
     mood: 'modern, fresh, precise, professional',
   },
 
+  // ─── Detailing Shop (extra) ────────────────────────────────────
+  detailing_coastal: {
+    id: 'detailing_coastal',
+    businessType: 'detailing_shop',
+    label: 'Coastal Fresh',
+    description: 'Ocean blue & white — clean, coastal, refreshing. Great for sunny-state shops.',
+    previewColors: ['#f0f9ff', '#0891b2', '#e0f2fe'],
+    colors: { bg: '#f0f9ff', accent: '#0891b2', text: '#0c4a6e', secondary: '#e0f2fe', muted: '#64748b' },
+    font: "'Inter', sans-serif",
+    bodyFont: "'Inter', sans-serif",
+    mood: 'clean, coastal, fresh, bright, approachable',
+  },
+
   // ─── Mechanic Shop ─────────────────────────────────────────────
   mechanic_industrial: {
     id: 'mechanic_industrial',
@@ -140,19 +153,60 @@ export const TEMPLATES = {
     bodyFont: "'Inter', sans-serif",
     mood: 'friendly, trustworthy, local, welcoming, honest',
   },
+  mechanic_garage: {
+    id: 'mechanic_garage',
+    businessType: 'mechanic_shop',
+    label: 'Raw Garage',
+    description: 'Dark concrete & orange — raw, gritty, authentic shop culture.',
+    previewColors: ['#1a1a1a', '#f97316', '#262626'],
+    colors: { bg: '#1a1a1a', accent: '#f97316', text: '#ffffff', secondary: '#262626', muted: '#a3a3a3' },
+    font: "'Inter', sans-serif",
+    bodyFont: "'Inter', sans-serif",
+    mood: 'raw, authentic, gritty, no-nonsense, skilled',
+  },
+
+  // ─── Mobile Detailing (extra) ──────────────────────────────────
+  mobile_chrome: {
+    id: 'mobile_chrome',
+    businessType: 'mobile_detailing',
+    label: 'Chrome Elite',
+    description: 'Black & silver chrome — ultra-premium mobile service for luxury vehicles.',
+    previewColors: ['#0a0a0a', '#94a3b8', '#1a1a1a'],
+    colors: { bg: '#0a0a0a', accent: '#94a3b8', text: '#ffffff', secondary: '#141414', muted: '#888888' },
+    font: "'Inter', sans-serif",
+    bodyFont: "'Inter', sans-serif",
+    mood: 'ultra-premium, luxury, exclusive, elite',
+  },
+
+  // ─── Tint Shop (extra) ─────────────────────────────────────────
+  tint_elite: {
+    id: 'tint_elite',
+    businessType: 'tint_shop',
+    label: 'Elite Gold',
+    description: 'Black & gold — ultra-premium tint for luxury & exotic vehicles.',
+    previewColors: ['#030303', '#ca8a04', '#111111'],
+    colors: { bg: '#030303', accent: '#ca8a04', text: '#ffffff', secondary: '#0f0f0f', muted: '#777777' },
+    font: "'Playfair Display', Georgia, serif",
+    bodyFont: "'Inter', sans-serif",
+    mood: 'elite, luxury, gold, exclusive, premium',
+  },
 };
 
 export const TEMPLATE_COMPONENT_MAP = {
   detailing_premium:    () => import('../components/preview/templates/detailing/DetailingPremium.jsx'),
   detailing_sporty:     () => import('../components/preview/templates/detailing/DetailingSporty.jsx'),
   detailing_minimal:    () => import('../components/preview/templates/detailing/DetailingMinimal.jsx'),
+  detailing_coastal:    () => import('../components/preview/templates/detailing/DetailingCoastal.jsx'),
   mobile_bold:          () => import('../components/preview/templates/mobile/MobileBold.jsx'),
   mobile_modern:        () => import('../components/preview/templates/mobile/MobileModern.jsx'),
   mobile_rugged:        () => import('../components/preview/templates/mobile/MobileRugged.jsx'),
+  mobile_chrome:        () => import('../components/preview/templates/mobile/MobileChrome.jsx'),
   wheel_edge:           () => import('../components/preview/templates/wheel/WheelEdge.jsx'),
   wheel_clean:          () => import('../components/preview/templates/wheel/WheelClean.jsx'),
   tint_dark:            () => import('../components/preview/templates/tint/TintDark.jsx'),
   tint_sleek:           () => import('../components/preview/templates/tint/TintSleek.jsx'),
+  tint_elite:           () => import('../components/preview/templates/tint/TintElite.jsx'),
   mechanic_industrial:  () => import('../components/preview/templates/mechanic/MechanicIndustrial.jsx'),
   mechanic_friendly:    () => import('../components/preview/templates/mechanic/MechanicFriendly.jsx'),
+  mechanic_garage:      () => import('../components/preview/templates/mechanic/MechanicGarage.jsx'),
 };

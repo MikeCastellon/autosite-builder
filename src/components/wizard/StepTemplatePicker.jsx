@@ -2,7 +2,7 @@ import { TEMPLATES } from '../../data/templates.js';
 import { BUSINESS_TYPES } from '../../data/businessTypes.js';
 import TemplateCard from '../ui/TemplateCard.jsx';
 
-export default function StepTemplatePicker({ businessType, selected, onSelect, onGenerate, error }) {
+export default function StepTemplatePicker({ businessType, selected, onSelect, onGenerate, onPreview, error }) {
   const typeInfo = BUSINESS_TYPES.find((t) => t.id === businessType);
   const typeTemplateIds = typeInfo?.templates || [];
   const typeTemplates = typeTemplateIds.map((id) => TEMPLATES[id]).filter(Boolean);
@@ -19,12 +19,20 @@ export default function StepTemplatePicker({ businessType, selected, onSelect, o
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
         {typeTemplates.map((template) => (
-          <TemplateCard
-            key={template.id}
-            template={template}
-            selected={selected}
-            onClick={onSelect}
-          />
+          <div key={template.id} className="flex flex-col gap-1.5">
+            <TemplateCard
+              template={template}
+              selected={selected}
+              onClick={onSelect}
+            />
+            <button
+              type="button"
+              onClick={() => onPreview(template.id)}
+              className="w-full text-[12px] font-medium text-gray-500 hover:text-gray-900 py-1.5 border border-gray-200 hover:border-gray-400 rounded-lg transition-colors"
+            >
+              Preview Demo
+            </button>
+          </div>
         ))}
       </div>
 
