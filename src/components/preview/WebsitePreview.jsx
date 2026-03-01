@@ -26,9 +26,9 @@ export default function WebsitePreview({ businessInfo, generatedCopy, templateId
         onStartOver={onStartOver}
       />
 
-      {/* Preview frame */}
+      {/* Preview frame — transform creates a containing block so template fixed navs stay inside */}
       <div className="pt-14 min-h-screen">
-        <div style={containerStyle}>
+        <div style={{ ...containerStyle, transform: 'translateZ(0)', position: 'relative' }}>
           <Suspense
             fallback={
               <div className="flex items-center justify-center min-h-screen">

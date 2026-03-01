@@ -2,10 +2,39 @@ import { TEMPLATES } from '../../data/templates.js';
 import { BUSINESS_TYPES } from '../../data/businessTypes.js';
 import TemplateCard from '../ui/TemplateCard.jsx';
 
-export default function StepTemplatePicker({ businessType, selected, onSelect, onGenerate, onPreview, error }) {
+function ColorSwatch({ label, colorKey, baseColor, customColors, onCustomColors }) {
+  const value = customColors[colorKey] ?? baseColor;
+  return (
+    <div className="flex flex-col items-center gap-1.5">
+      <label className="text-[11px] text-gray-500 font-medium text-center leading-tight">{label}</label>
+      <div className="relative w-9 h-9 rounded-lg overflow-hidden border-2 border-gray-200 hover:border-gray-400 transition-colors cursor-pointer shadow-sm">
+        <div className="absolute inset-0" style={{ background: value }} />
+        <input
+          type="color"
+          value={value}
+          onChange={(e) => onCustomColors((prev) => ({ ...prev, [colorKey]: e.target.value }))}
+          className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+          title={label}
+        />
+      </div>
+      {customColors[colorKey] && (
+        <button
+          onClick={() => onCustomColors((prev) => { const n = { ...prev }; delete n[colorKey]; return n; })}
+          className="text-[10px] text-gray-400 hover:text-red-500 transition-colors"
+          title="Reset to default"
+        >
+          reset
+        </button>
+      )}
+    </div>
+  );
+}
+
+export default function StepTemplatePicker({ businessType, selected, onSelect, onGenerate, onPreview, error, customColors, onCustomColors }) {
   const typeInfo = BUSINESS_TYPES.find((t) => t.id === businessType);
   const typeTemplateIds = typeInfo?.templates || [];
   const typeTemplates = typeTemplateIds.map((id) => TEMPLATES[id]).filter(Boolean);
+  const selectedTpl = selected ? TEMPLATES[selected] : null;
 
   return (
     <div>
@@ -17,7 +46,7 @@ export default function StepTemplatePicker({ businessType, selected, onSelect, o
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
         {typeTemplates.map((template) => (
           <div key={template.id} className="flex flex-col gap-1.5">
             <TemplateCard
@@ -35,6 +64,33 @@ export default function StepTemplatePicker({ businessType, selected, onSelect, o
           </div>
         ))}
       </div>
+
+      {/* Color customizer — shown when a template is selected */}
+      {selectedTpl && (
+        <div className="mb-6 p-4 border border-gray-200 rounded-xl bg-gray-50">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="text-[13px] font-semibold text-gray-800">Customize Colors</p>
+              <p className="text-[12px] text-gray-500">Click any swatch to change it</p>
+            </div>
+            {Object.keys(customColors).length > 0 && (
+              <button
+                onClick={() => onCustomColors({})}
+                className="text-[12px] text-gray-400 hover:text-gray-700 border border-gray-200 hover:border-gray-400 rounded-lg px-3 py-1 transition-colors"
+              >
+                Reset all
+              </button>
+            )}
+          </div>
+          <div className="flex items-start gap-5 flex-wrap">
+            <ColorSwatch label="Background" colorKey="bg" baseColor={selectedTpl.colors.bg} customColors={customColors} onCustomColors={onCustomColors} />
+            <ColorSwatch label="Accent / Brand" colorKey="accent" baseColor={selectedTpl.colors.accent} customColors={customColors} onCustomColors={onCustomColors} />
+            <ColorSwatch label="Text" colorKey="text" baseColor={selectedTpl.colors.text} customColors={customColors} onCustomColors={onCustomColors} />
+            <ColorSwatch label="Surface" colorKey="secondary" baseColor={selectedTpl.colors.secondary} customColors={customColors} onCustomColors={onCustomColors} />
+            <ColorSwatch label="Muted Text" colorKey="muted" baseColor={selectedTpl.colors.muted} customColors={customColors} onCustomColors={onCustomColors} />
+          </div>
+        </div>
+      )}
 
       {error && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
