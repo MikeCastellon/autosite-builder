@@ -80,13 +80,6 @@ export default function App() {
     goTo(3);
   };
 
-  // Dev-only quick test: jump straight to preview with first template + demo data
-  const handleDevQuickTest = () => {
-    setSelectedTemplate('detailing_premium');
-    setGeneratedCopy(DEMO_GENERATED_COPY);
-    setIsDemoPreview(true);
-    goTo(5);
-  };
 
   // Step 5 is full-screen preview, no wizard shell
   if (step === 5 && generatedCopy) {
@@ -120,14 +113,6 @@ export default function App() {
 
   return (
     <WizardShell step={step} onBack={goBack}>
-      {import.meta.env.DEV && (
-        <button
-          onClick={handleDevQuickTest}
-          style={{ position: 'fixed', bottom: 16, right: 16, zIndex: 9999, background: '#7c3aed', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer', opacity: 0.85 }}
-        >
-          ⚡ Quick Test
-        </button>
-      )}
       {step === 1 && (
         <StepBusinessType onSelect={handleBusinessTypeSelect} />
       )}
