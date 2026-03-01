@@ -56,15 +56,13 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">{typeInfo?.label}</p>
         <div className="flex items-center justify-between gap-4">
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Tell us about your business</h1>
-          {import.meta.env.DEV && (
-            <button
-              type="button"
-              onClick={() => { setValues(DEMO_BUSINESS_INFO); setErrors({}); }}
-              className="shrink-0 text-[12px] font-semibold px-3 py-1.5 rounded-lg border border-violet-300 text-violet-600 hover:bg-violet-50 transition-colors"
-            >
-              ⚡ Fill Demo
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => { setValues(DEMO_BUSINESS_INFO); setErrors({}); }}
+            className="shrink-0 text-[12px] font-semibold px-3 py-1.5 rounded-lg border border-violet-300 text-violet-600 hover:bg-violet-50 transition-colors"
+          >
+            ⚡ Fill Demo
+          </button>
         </div>
         <p className="text-gray-500 text-[15px] mt-2">The more detail you provide, the better the AI-generated copy will be.</p>
       </div>
