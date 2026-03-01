@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { COMMON_FIELDS, COMMON_EXTRA_FIELDS, TYPE_SPECIFIC_FIELDS, BUSINESS_TYPES } from '../../data/businessTypes.js';
+import { DEMO_BUSINESS_INFO } from '../../data/demoData.js';
 
 export default function StepBusinessInfo({ businessType, initialValues, onSubmit }) {
   const typeInfo = BUSINESS_TYPES.find((t) => t.id === businessType);
@@ -53,8 +54,19 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
     <div>
       <div className="mb-8">
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">{typeInfo?.label}</p>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2 tracking-tight">Tell us about your business</h1>
-        <p className="text-gray-500 text-[15px]">The more detail you provide, the better the AI-generated copy will be.</p>
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Tell us about your business</h1>
+          {import.meta.env.DEV && (
+            <button
+              type="button"
+              onClick={() => { setValues(DEMO_BUSINESS_INFO); setErrors({}); }}
+              className="shrink-0 text-[12px] font-semibold px-3 py-1.5 rounded-lg border border-violet-300 text-violet-600 hover:bg-violet-50 transition-colors"
+            >
+              ⚡ Fill Demo
+            </button>
+          )}
+        </div>
+        <p className="text-gray-500 text-[15px] mt-2">The more detail you provide, the better the AI-generated copy will be.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-7">
