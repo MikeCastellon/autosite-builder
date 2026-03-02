@@ -190,6 +190,93 @@ export const TEMPLATES = {
     bodyFont: "'Inter', sans-serif",
     mood: 'elite, luxury, gold, exclusive, premium',
   },
+  tint_obsidian: {
+    id: 'tint_obsidian',
+    businessType: 'tint_shop',
+    label: 'Obsidian Studio',
+    description: 'Ultra-dark purple & cyan glow — high-tech, mysterious, premium.',
+    previewColors: ['#050507', '#7C3AED', '#06B6D4'],
+    colors: { bg: '#050507', accent: '#7C3AED', text: '#ffffff', secondary: '#0d0d12', muted: '#888888' },
+    font: "'Syne', sans-serif",
+    bodyFont: "'Outfit', sans-serif",
+    mood: 'high-tech, mysterious, premium, dark, sophisticated',
+  },
+
+  // ─── Mobile Detailing (extra) ──────────────────────────────────
+  mobile_sudsy: {
+    id: 'mobile_sudsy',
+    businessType: 'mobile_detailing',
+    label: 'Bright & Bubbly',
+    description: 'Warm yellows & playful energy — fun, approachable, neighborhood favorite.',
+    previewColors: ['#fffbeb', '#f59e0b', '#fef3c7'],
+    colors: { bg: '#fffbeb', accent: '#f59e0b', text: '#1c1917', secondary: '#fef3c7', muted: '#78716c' },
+    font: "'Boogaloo', cursive",
+    bodyFont: "'Nunito', sans-serif",
+    mood: 'fun, friendly, bubbly, approachable, energetic',
+  },
+
+  // ─── Wheel Shop (extra) ────────────────────────────────────────
+  wheel_apex: {
+    id: 'wheel_apex',
+    businessType: 'wheel_shop',
+    label: 'Apex Modern',
+    description: 'Crisp white & electric blue — sharp, modern, performance culture.',
+    previewColors: ['#ffffff', '#1A5CFF', '#f0f4ff'],
+    colors: { bg: '#ffffff', accent: '#1A5CFF', text: '#111827', secondary: '#f0f4ff', muted: '#6b7280' },
+    font: "'Barlow Condensed', sans-serif",
+    bodyFont: "'Barlow', sans-serif",
+    mood: 'modern, sharp, performance, clean, professional',
+  },
+
+  // ─── Detailing Shop (extra) ────────────────────────────────────
+  detailing_autosync_dark: {
+    id: 'detailing_autosync_dark',
+    businessType: 'detailing_shop',
+    label: 'AutoSync Dark',
+    description: 'Near-black with gold accents — sophisticated, premium, high-end studio.',
+    previewColors: ['#080A0D', '#C9A84C', '#0E1116'],
+    colors: { bg: '#080A0D', accent: '#C9A84C', text: '#ffffff', secondary: '#0E1116', muted: '#888888' },
+    font: "'Cormorant Garamond', serif",
+    bodyFont: "'Barlow', sans-serif",
+    mood: 'luxury, premium, sophisticated, dark, exclusive',
+  },
+  detailing_autosync_white: {
+    id: 'detailing_autosync_white',
+    businessType: 'detailing_shop',
+    label: 'AutoSync White',
+    description: 'Apple-inspired minimal white & blue — clean, modern, precision-focused.',
+    previewColors: ['#ffffff', '#0071E3', '#f5f5f7'],
+    colors: { bg: '#ffffff', accent: '#0071E3', text: '#1d1d1f', secondary: '#f5f5f7', muted: '#6e6e73' },
+    font: "'DM Serif Display', serif",
+    bodyFont: "'DM Sans', sans-serif",
+    mood: 'minimal, clean, modern, precision, professional',
+  },
+
+  // ─── Mechanic Shop (extra) ─────────────────────────────────────
+  mechanic_ironclad: {
+    id: 'mechanic_ironclad',
+    businessType: 'mechanic_shop',
+    label: 'Ironclad',
+    description: 'Dark steel & rust red — tough, no-nonsense, built for serious mechanics.',
+    previewColors: ['#111111', '#C0392B', '#1e1e1e'],
+    colors: { bg: '#111111', accent: '#C0392B', text: '#ffffff', secondary: '#1e1e1e', muted: '#aaaaaa' },
+    font: "'Bebas Neue', sans-serif",
+    bodyFont: "'Barlow', sans-serif",
+    mood: 'tough, industrial, reliable, no-nonsense, hardworking',
+  },
+
+  // ─── Car Wash ──────────────────────────────────────────────────
+  carwash_bubble: {
+    id: 'carwash_bubble',
+    businessType: 'car_wash',
+    label: 'Bubble Rush',
+    description: 'Sky blue & playful — bright, cheerful, family-friendly car wash brand.',
+    previewColors: ['#f0f9ff', '#06b6d4', '#e0f7fa'],
+    colors: { bg: '#f0f9ff', accent: '#06b6d4', text: '#0c4a6e', secondary: '#e0f7fa', muted: '#64748b' },
+    font: "'Righteous', cursive",
+    bodyFont: "'Nunito', sans-serif",
+    mood: 'fun, playful, cheerful, family-friendly, bright',
+  },
 };
 
 export const TEMPLATE_COMPONENT_MAP = {
@@ -209,4 +296,11 @@ export const TEMPLATE_COMPONENT_MAP = {
   mechanic_industrial:  () => import('../components/preview/templates/mechanic/MechanicIndustrial.jsx'),
   mechanic_friendly:    () => import('../components/preview/templates/mechanic/MechanicFriendly.jsx'),
   mechanic_garage:      () => import('../components/preview/templates/mechanic/MechanicGarage.jsx'),
+  mechanic_ironclad:    () => import('../components/preview/templates/mechanic/MechanicIronclad.jsx'),
+  tint_obsidian:        () => import('../components/preview/templates/tint/TintObsidian.jsx'),
+  mobile_sudsy:         () => import('../components/preview/templates/mobile/MobileSudsy.jsx'),
+  wheel_apex:           () => import('../components/preview/templates/wheel/WheelApex.jsx'),
+  detailing_autosync_dark:  () => import('../components/preview/templates/detailing/DetailingAutoSyncDark.jsx'),
+  detailing_autosync_white: () => import('../components/preview/templates/detailing/DetailingAutoSyncWhite.jsx'),
+  carwash_bubble:       () => import('../components/preview/templates/carwash/CarwashBubble.jsx'),
 };

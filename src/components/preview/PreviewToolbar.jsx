@@ -1,4 +1,4 @@
-export default function PreviewToolbar({ viewMode, onViewMode, onBack, onExport, onStartOver }) {
+export default function PreviewToolbar({ viewMode, onViewMode, onBack, onExport, onStartOver, onEdit, editorOpen, isDemoPreview }) {
   return (
     <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 px-5 h-13 flex items-center justify-between gap-4" style={{ height: 52 }}>
       {/* Left: back */}
@@ -31,17 +31,32 @@ export default function PreviewToolbar({ viewMode, onViewMode, onBack, onExport,
       {/* Right: actions */}
       <div className="flex items-center gap-2 shrink-0">
         <button
+          onClick={onEdit}
+          className={`flex items-center gap-1.5 text-[13px] font-medium px-4 py-2 rounded-lg border transition-all ${
+            editorOpen
+              ? 'bg-gray-900 text-white border-gray-900'
+              : 'border-gray-200 hover:border-gray-400 text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+            <path d="M9.5 1.5a1.414 1.414 0 012 2L4 11H1.5V8.5L9.5 1.5z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Edit
+        </button>
+        <button
           onClick={onStartOver}
           className="border border-gray-200 hover:border-gray-400 text-gray-600 hover:text-gray-900 text-[13px] font-medium px-4 py-2 rounded-lg transition-colors"
         >
-          Create Another Site
+          Create Another
         </button>
-        <button
-          onClick={onExport}
-          className="bg-gray-900 hover:bg-gray-800 text-white text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors"
-        >
-          Download Site
-        </button>
+        {!isDemoPreview && onExport && (
+          <button
+            onClick={onExport}
+            className="bg-gray-900 hover:bg-gray-800 text-white text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors"
+          >
+            Download Site
+          </button>
+        )}
       </div>
     </div>
   );

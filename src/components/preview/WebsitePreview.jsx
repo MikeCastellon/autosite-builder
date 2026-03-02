@@ -2,10 +2,14 @@ import { Suspense, lazy, useMemo, useState } from 'react';
 import { TEMPLATE_COMPONENT_MAP } from '../../data/templates.js';
 import { normalizeBusinessInfo } from '../../lib/normalizeBusinessInfo.js';
 import PreviewToolbar from './PreviewToolbar.jsx';
+import ContentEditor from './ContentEditor.jsx';
 
-export default function WebsitePreview({ businessInfo, generatedCopy, templateId, templateMeta, onBack, onExport, onStartOver }) {
+export default function WebsitePreview({ businessInfo, generatedCopy, templateId, templateMeta, onBack, onExport, onStartOver, isDemoPreview }) {
   const normalizedInfo = useMemo(() => normalizeBusinessInfo(businessInfo), [businessInfo]);
   const [viewMode, setViewMode] = useState('desktop');
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editedCopy, setEditedCopy] = useState(() => structuredClone(generatedCopy));
+  const [images, setImages] = useState({});
 
   const TemplateComponent = useMemo(
     () => lazy(TEMPLATE_COMPONENT_MAP[templateId]),
@@ -22,8 +26,20 @@ export default function WebsitePreview({ businessInfo, generatedCopy, templateId
         viewMode={viewMode}
         onViewMode={setViewMode}
         onBack={onBack}
-        onExport={onExport}
+        onExport={isDemoPreview ? null : onExport}
         onStartOver={onStartOver}
+        onEdit={() => setEditorOpen((o) => !o)}
+        editorOpen={editorOpen}
+        isDemoPreview={isDemoPreview}
+      />
+
+      <ContentEditor
+        isOpen={editorOpen}
+        onClose={() => setEditorOpen(false)}
+        copy={editedCopy}
+        images={images}
+        onCopyChange={setEditedCopy}
+        onImagesChange={setImages}
       />
 
       {/* Preview frame — transform creates a containing block so template fixed navs stay inside */}
@@ -38,8 +54,9 @@ export default function WebsitePreview({ businessInfo, generatedCopy, templateId
           >
             <TemplateComponent
               businessInfo={normalizedInfo}
-              generatedCopy={generatedCopy}
+              generatedCopy={editedCopy}
               templateMeta={templateMeta}
+              images={images}
             />
           </Suspense>
         </div>

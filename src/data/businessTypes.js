@@ -4,35 +4,42 @@ export const BUSINESS_TYPES = [
     label: 'Car Detailing Shop',
     icon: '✨',
     description: 'Fixed-location detailing studio',
-    templates: ['detailing_premium', 'detailing_sporty', 'detailing_minimal', 'detailing_coastal'],
+    templates: ['detailing_premium', 'detailing_sporty', 'detailing_minimal', 'detailing_coastal', 'detailing_autosync_dark', 'detailing_autosync_white'],
   },
   {
     id: 'mobile_detailing',
     label: 'Mobile Detailing',
     icon: '🚐',
     description: 'On-the-go mobile detailing service',
-    templates: ['mobile_bold', 'mobile_modern', 'mobile_rugged', 'mobile_chrome'],
+    templates: ['mobile_bold', 'mobile_modern', 'mobile_rugged', 'mobile_chrome', 'mobile_sudsy'],
   },
   {
     id: 'wheel_shop',
     label: 'Wheel Shop',
     icon: '🔧',
     description: 'Custom wheels, tires & fitment',
-    templates: ['wheel_edge', 'wheel_clean'],
+    templates: ['wheel_edge', 'wheel_clean', 'wheel_apex'],
   },
   {
     id: 'tint_shop',
     label: 'Tint Shop',
     icon: '🌑',
     description: 'Window tint & paint protection film',
-    templates: ['tint_dark', 'tint_sleek', 'tint_elite'],
+    templates: ['tint_dark', 'tint_sleek', 'tint_elite', 'tint_obsidian'],
   },
   {
     id: 'mechanic_shop',
     label: 'Mechanic Shop',
     icon: '🔩',
     description: 'Auto repair & maintenance',
-    templates: ['mechanic_industrial', 'mechanic_friendly', 'mechanic_garage'],
+    templates: ['mechanic_industrial', 'mechanic_friendly', 'mechanic_garage', 'mechanic_ironclad'],
+  },
+  {
+    id: 'car_wash',
+    label: 'Car Wash',
+    icon: '🫧',
+    description: 'Automated or hand car wash',
+    templates: ['carwash_bubble'],
   },
 ];
 
@@ -122,6 +129,18 @@ export const TYPE_SPECIFIC_FIELDS = {
     { key: 'certifications',  label: 'Certifications / Affiliations',  type: 'text',     required: false, placeholder: 'e.g. ASE Certified, AAA Approved, NAPA AutoCare' },
     { key: 'warrantyOffered', label: 'Parts & Labor Warranty',         type: 'text',     required: false, placeholder: 'e.g. 12-month / 12,000-mile warranty on all repairs' },
   ],
+  car_wash: [
+    {
+      key: 'services',
+      label: 'Wash Packages',
+      type: 'multicheck',
+      required: true,
+      options: ['Basic Wash', 'Deluxe Wash', 'Premium Wash', 'Full Detail', 'Interior Vacuum', 'Wax & Polish', 'Tire Shine', 'Hand Wash', 'Touchless Wash', 'Unlimited Monthly'],
+    },
+    { key: 'priceRange',  label: 'Starting Price',             type: 'text',     required: false, placeholder: 'e.g. Starting at $10' },
+    { key: 'packages',    label: 'Package Pricing',            type: 'textarea', required: false, placeholder: 'e.g. Basic $10 · Deluxe $18 · Premium $25' },
+    { key: 'specialties', label: 'What makes you stand out?',  type: 'textarea', required: false, placeholder: 'e.g. Eco-friendly soap, unlimited monthly membership' },
+  ],
 };
 
 export const BUSINESS_TYPE_LABELS = {
@@ -130,4 +149,5 @@ export const BUSINESS_TYPE_LABELS = {
   wheel_shop:        'Wheel & Tire Shop',
   tint_shop:         'Tint & PPF Shop',
   mechanic_shop:     'Auto Repair Shop',
+  car_wash:          'Car Wash',
 };
