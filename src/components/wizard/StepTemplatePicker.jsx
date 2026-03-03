@@ -34,16 +34,14 @@ function ColorSwatch({ label, colorKey, baseColor, customColors, onCustomColors 
 export default function StepTemplatePicker({ businessType, selected, onSelect, onGenerate, onPreview, error, customColors, onCustomColors }) {
   const typeInfo = BUSINESS_TYPES.find((t) => t.id === businessType);
   const regularIds = typeInfo?.templates || [];
-  const premiumIds = typeInfo?.premiumTemplates || [];
   const regularTemplates = regularIds.map((id) => TEMPLATES[id]).filter(Boolean);
-  const premiumTemplates = premiumIds.map((id) => TEMPLATES[id]).filter(Boolean);
+  const allPremiumTemplates = Object.values(TEMPLATES).filter((t) => t.tier === 'premium');
   const hasRegular = regularTemplates.length > 0;
-  const hasPremium = premiumTemplates.length > 0;
-  const hasBoth = hasRegular && hasPremium;
+  const hasPremium = allPremiumTemplates.length > 0;
 
   const [activeTab, setActiveTab] = useState(hasRegular ? 'themes' : 'premium');
 
-  const displayedTemplates = activeTab === 'themes' ? regularTemplates : premiumTemplates;
+  const displayedTemplates = activeTab === 'themes' ? regularTemplates : allPremiumTemplates;
   const selectedTpl = selected ? TEMPLATES[selected] : null;
 
   const tabClass = (tab) =>
@@ -63,7 +61,7 @@ export default function StepTemplatePicker({ businessType, selected, onSelect, o
         </p>
       </div>
 
-      {hasBoth && (
+      {hasRegular && hasPremium && (
         <div className="flex gap-2 mb-6">
           <button type="button" className={tabClass('themes')} onClick={() => setActiveTab('themes')}>
             Themes
