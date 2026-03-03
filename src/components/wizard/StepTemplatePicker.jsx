@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { TEMPLATES } from '../../data/templates.js';
 import { BUSINESS_TYPES } from '../../data/businessTypes.js';
 import TemplateCard from '../ui/TemplateCard.jsx';
@@ -32,9 +33,25 @@ function ColorSwatch({ label, colorKey, baseColor, customColors, onCustomColors 
 
 export default function StepTemplatePicker({ businessType, selected, onSelect, onGenerate, onPreview, error, customColors, onCustomColors }) {
   const typeInfo = BUSINESS_TYPES.find((t) => t.id === businessType);
-  const typeTemplateIds = typeInfo?.templates || [];
-  const typeTemplates = typeTemplateIds.map((id) => TEMPLATES[id]).filter(Boolean);
+  const regularIds = typeInfo?.templates || [];
+  const premiumIds = typeInfo?.premiumTemplates || [];
+  const regularTemplates = regularIds.map((id) => TEMPLATES[id]).filter(Boolean);
+  const premiumTemplates = premiumIds.map((id) => TEMPLATES[id]).filter(Boolean);
+  const hasRegular = regularTemplates.length > 0;
+  const hasPremium = premiumTemplates.length > 0;
+  const hasBoth = hasRegular && hasPremium;
+
+  const [activeTab, setActiveTab] = useState(hasRegular ? 'themes' : 'premium');
+
+  const displayedTemplates = activeTab === 'themes' ? regularTemplates : premiumTemplates;
   const selectedTpl = selected ? TEMPLATES[selected] : null;
+
+  const tabClass = (tab) =>
+    `px-4 py-2 rounded-lg text-[13px] font-semibold transition-all ${
+      activeTab === tab
+        ? 'bg-gray-900 text-white shadow-sm'
+        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+    }`;
 
   return (
     <div>
@@ -46,8 +63,19 @@ export default function StepTemplatePicker({ businessType, selected, onSelect, o
         </p>
       </div>
 
+      {hasBoth && (
+        <div className="flex gap-2 mb-6">
+          <button type="button" className={tabClass('themes')} onClick={() => setActiveTab('themes')}>
+            Themes
+          </button>
+          <button type="button" className={tabClass('premium')} onClick={() => setActiveTab('premium')}>
+            Premium ✨
+          </button>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
-        {typeTemplates.map((template) => (
+        {displayedTemplates.map((template) => (
           <div key={template.id} className="flex flex-col gap-1.5">
             <TemplateCard
               template={template}
