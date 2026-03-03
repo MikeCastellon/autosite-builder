@@ -200,6 +200,7 @@ export const TEMPLATES = {
     font: "'Syne', sans-serif",
     bodyFont: "'Outfit', sans-serif",
     mood: 'high-tech, mysterious, premium, dark, sophisticated',
+    tier: 'premium',
   },
 
   // ─── Mobile Detailing (extra) ──────────────────────────────────
@@ -213,6 +214,7 @@ export const TEMPLATES = {
     font: "'Boogaloo', cursive",
     bodyFont: "'Nunito', sans-serif",
     mood: 'fun, friendly, bubbly, approachable, energetic',
+    tier: 'premium',
   },
 
   // ─── Wheel Shop (extra) ────────────────────────────────────────
@@ -226,6 +228,7 @@ export const TEMPLATES = {
     font: "'Barlow Condensed', sans-serif",
     bodyFont: "'Barlow', sans-serif",
     mood: 'modern, sharp, performance, clean, professional',
+    tier: 'premium',
   },
 
   // ─── Detailing Shop (extra) ────────────────────────────────────
@@ -239,6 +242,7 @@ export const TEMPLATES = {
     font: "'Cormorant Garamond', serif",
     bodyFont: "'Barlow', sans-serif",
     mood: 'luxury, premium, sophisticated, dark, exclusive',
+    tier: 'premium',
   },
   detailing_autosync_white: {
     id: 'detailing_autosync_white',
@@ -250,6 +254,7 @@ export const TEMPLATES = {
     font: "'DM Serif Display', serif",
     bodyFont: "'DM Sans', sans-serif",
     mood: 'minimal, clean, modern, precision, professional',
+    tier: 'premium',
   },
 
   // ─── Mechanic Shop (extra) ─────────────────────────────────────
@@ -263,6 +268,7 @@ export const TEMPLATES = {
     font: "'Bebas Neue', sans-serif",
     bodyFont: "'Barlow', sans-serif",
     mood: 'tough, industrial, reliable, no-nonsense, hardworking',
+    tier: 'premium',
   },
 
   // ─── Car Wash ──────────────────────────────────────────────────
@@ -276,6 +282,7 @@ export const TEMPLATES = {
     font: "'Righteous', cursive",
     bodyFont: "'Nunito', sans-serif",
     mood: 'fun, playful, cheerful, family-friendly, bright',
+    tier: 'premium',
   },
 };
 
