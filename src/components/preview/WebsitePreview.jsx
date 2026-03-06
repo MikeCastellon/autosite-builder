@@ -4,12 +4,10 @@ import { normalizeBusinessInfo } from '../../lib/normalizeBusinessInfo.js';
 import PreviewToolbar from './PreviewToolbar.jsx';
 import ContentEditor from './ContentEditor.jsx';
 
-export default function WebsitePreview({ businessInfo, generatedCopy, templateId, templateMeta, onBack, onExport, onStartOver, isDemoPreview }) {
+export default function WebsitePreview({ businessInfo, generatedCopy, editedCopy, onEditedCopyChange, images, onImagesChange, templateId, templateMeta, onBack, onExport, onStartOver, isDemoPreview }) {
   const normalizedInfo = useMemo(() => normalizeBusinessInfo(businessInfo), [businessInfo]);
   const [viewMode, setViewMode] = useState('desktop');
   const [editorOpen, setEditorOpen] = useState(false);
-  const [editedCopy, setEditedCopy] = useState(() => structuredClone(generatedCopy));
-  const [images, setImages] = useState({});
 
   const TemplateComponent = useMemo(
     () => lazy(TEMPLATE_COMPONENT_MAP[templateId]),
@@ -38,8 +36,8 @@ export default function WebsitePreview({ businessInfo, generatedCopy, templateId
         onClose={() => setEditorOpen(false)}
         copy={editedCopy}
         images={images}
-        onCopyChange={setEditedCopy}
-        onImagesChange={setImages}
+        onCopyChange={onEditedCopyChange}
+        onImagesChange={onImagesChange}
       />
 
       {/* Preview frame — transform creates a containing block so template fixed navs stay inside */}

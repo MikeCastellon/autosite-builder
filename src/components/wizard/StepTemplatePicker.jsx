@@ -7,8 +7,8 @@ function ColorSwatch({ label, colorKey, baseColor, customColors, onCustomColors 
   const value = customColors[colorKey] ?? baseColor;
   return (
     <div className="flex flex-col items-center gap-1.5">
-      <label className="text-[11px] text-gray-500 font-medium text-center leading-tight">{label}</label>
-      <div className="relative w-9 h-9 rounded-lg overflow-hidden border-2 border-gray-200 hover:border-gray-400 transition-colors cursor-pointer shadow-sm">
+      <label className="text-[11px] text-[#555] font-medium text-center leading-tight">{label}</label>
+      <div className="relative w-9 h-9 rounded-lg overflow-hidden border-2 border-black/[0.07] hover:border-[#cc0000]/40 transition-colors cursor-pointer shadow-sm">
         <div className="absolute inset-0" style={{ background: value }} />
         <input
           type="color"
@@ -21,7 +21,7 @@ function ColorSwatch({ label, colorKey, baseColor, customColors, onCustomColors 
       {customColors[colorKey] && (
         <button
           onClick={() => onCustomColors((prev) => { const n = { ...prev }; delete n[colorKey]; return n; })}
-          className="text-[10px] text-gray-400 hover:text-red-500 transition-colors"
+          className="text-[10px] text-[#888] hover:text-[#cc0000] transition-colors"
           title="Reset to default"
         >
           reset
@@ -49,16 +49,16 @@ export default function StepTemplatePicker({ businessType, selected, onSelect, o
   const tabClass = (tab) =>
     `px-4 py-2 rounded-lg text-[13px] font-semibold transition-all ${
       activeTab === tab
-        ? 'bg-gray-900 text-white shadow-sm'
-        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+        ? 'bg-[#1a1a1a] text-white shadow-sm'
+        : 'bg-[#faf9f7] text-[#555] hover:bg-[#f2f0ec]'
     }`;
 
   return (
     <div>
       <div className="mb-8">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">{typeInfo?.label}</p>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2 tracking-tight">Choose a website style</h1>
-        <p className="text-gray-500 text-[15px]">
+        <p className="text-[12px] font-semibold text-[#cc0000] uppercase tracking-[1.5px] mb-3">{typeInfo?.label}</p>
+        <h1 className="text-[clamp(24px,4vw,32px)] font-[900] text-[#1a1a1a] mb-2 tracking-[-1px] leading-[1.1]">Choose a website style</h1>
+        <p className="text-[#555] text-[15px]">
           AI will write all the copy — just pick the look and feel that fits your brand.
         </p>
       </div>
@@ -69,7 +69,7 @@ export default function StepTemplatePicker({ businessType, selected, onSelect, o
             Themes
           </button>
           <button type="button" className={tabClass('premium')} onClick={() => setActiveTab('premium')}>
-            Premium ✨
+            Premium
           </button>
         </div>
       )}
@@ -85,7 +85,7 @@ export default function StepTemplatePicker({ businessType, selected, onSelect, o
             <button
               type="button"
               onClick={() => onPreview(template.id)}
-              className="w-full text-[12px] font-medium text-gray-500 hover:text-gray-900 py-1.5 border border-gray-200 hover:border-gray-400 rounded-lg transition-colors"
+              className="w-full text-[12px] font-medium text-[#555] hover:text-[#cc0000] py-1.5 border border-black/[0.07] hover:border-[#cc0000]/30 rounded-lg transition-colors"
             >
               Preview Demo
             </button>
@@ -95,16 +95,16 @@ export default function StepTemplatePicker({ businessType, selected, onSelect, o
 
       {/* Color customizer — shown when a template is selected */}
       {selectedTpl && (
-        <div className="mb-6 p-4 border border-gray-200 rounded-xl bg-gray-50">
+        <div className="mb-6 p-4 border border-black/[0.07] rounded-xl bg-[#faf9f7]">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <p className="text-[13px] font-semibold text-gray-800">Customize Colors</p>
-              <p className="text-[12px] text-gray-500">Click any swatch to change it</p>
+              <p className="text-[13px] font-bold text-[#1a1a1a]">Customize Colors</p>
+              <p className="text-[12px] text-[#888]">Click any swatch to change it</p>
             </div>
             {Object.keys(customColors).length > 0 && (
               <button
                 onClick={() => onCustomColors({})}
-                className="text-[12px] text-gray-400 hover:text-gray-700 border border-gray-200 hover:border-gray-400 rounded-lg px-3 py-1 transition-colors"
+                className="text-[12px] text-[#888] hover:text-[#cc0000] border border-black/[0.07] hover:border-[#cc0000]/30 rounded-lg px-3 py-1 transition-colors"
               >
                 Reset all
               </button>
@@ -121,7 +121,7 @@ export default function StepTemplatePicker({ businessType, selected, onSelect, o
       )}
 
       {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+        <div className="mb-4 p-4 bg-[#cc0000]/5 border border-[#cc0000]/20 rounded-xl text-[#cc0000] text-sm">
           {error} — please try again.
         </div>
       )}
@@ -129,10 +129,10 @@ export default function StepTemplatePicker({ businessType, selected, onSelect, o
       <button
         onClick={onGenerate}
         disabled={!selected}
-        className={`w-full font-semibold py-3.5 px-6 rounded-lg transition-all text-[15px]
+        className={`w-full font-semibold py-3.5 px-6 rounded-xl transition-all text-[15px]
           ${selected
-            ? 'bg-gray-900 hover:bg-gray-800 text-white cursor-pointer'
-            : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+            ? 'bg-[#1a1a1a] hover:bg-[#cc0000] text-white cursor-pointer'
+            : 'bg-[#f2f0ec] text-[#888] cursor-not-allowed'}`}
       >
         {selected ? 'Generate My Website' : 'Select a style to continue'}
       </button>

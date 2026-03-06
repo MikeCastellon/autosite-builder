@@ -49,22 +49,22 @@ export default function BusinessTypeCard({ type, onClick }) {
   return (
     <button
       onClick={() => onClick(type.id)}
-      className="group relative flex items-center gap-4 p-5 rounded-xl border border-gray-200 bg-white hover:border-gray-900 hover:shadow-sm transition-all duration-150 text-left cursor-pointer w-full"
+      className="group relative flex items-center gap-4 p-5 rounded-xl border border-black/[0.07] bg-white hover:border-[#cc0000] hover:shadow-sm transition-all duration-200 text-left cursor-pointer w-full"
     >
       {/* Icon box */}
-      <div className="w-11 h-11 rounded-lg bg-gray-100 group-hover:bg-gray-900 group-hover:text-white text-gray-500 flex items-center justify-center transition-all duration-150 shrink-0">
+      <div className="w-11 h-11 rounded-lg bg-[#faf9f7] group-hover:bg-[#cc0000] group-hover:text-white text-[#555] flex items-center justify-center transition-all duration-200 shrink-0">
         {ICONS[type.id]}
       </div>
 
       {/* Text */}
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-gray-900 text-[15px] leading-tight">{type.label}</p>
-        <p className="text-gray-400 text-[13px] mt-0.5 leading-snug">{type.description}</p>
+        <p className="font-bold text-[#1a1a1a] text-[15px] leading-tight">{type.label}</p>
+        <p className="text-[#888] text-[13px] mt-0.5 leading-snug">{type.description}</p>
       </div>
 
       {/* Arrow */}
       <svg
-        className="text-gray-300 group-hover:text-gray-900 transition-colors shrink-0"
+        className="text-[#ccc] group-hover:text-[#cc0000] transition-colors shrink-0"
         width="16" height="16" viewBox="0 0 16 16" fill="none"
       >
         <path d="M6 3l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>

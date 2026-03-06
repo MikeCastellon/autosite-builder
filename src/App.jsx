@@ -15,6 +15,8 @@ export default function App() {
   const [businessInfo, setBusinessInfo] = useState({});
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [generatedCopy, setGeneratedCopy] = useState(null);
+  const [editedCopy, setEditedCopy] = useState(null);
+  const [images, setImages] = useState({});
   const [error, setError] = useState(null);
   const [customColors, setCustomColors] = useState({});
 
@@ -29,6 +31,8 @@ export default function App() {
     setBusinessType(typeId);
     setSelectedTemplate(null);
     setGeneratedCopy(null);
+    setEditedCopy(null);
+    setImages({});
     goTo(2);
   };
 
@@ -49,6 +53,8 @@ export default function App() {
 
   const handleGenerateSuccess = (copy) => {
     setGeneratedCopy(copy);
+    setEditedCopy(structuredClone(copy));
+    setImages({});
     goTo(5);
   };
 
@@ -63,6 +69,8 @@ export default function App() {
     setBusinessInfo({});
     setSelectedTemplate(null);
     setGeneratedCopy(null);
+    setEditedCopy(null);
+    setImages({});
     setError(null);
   };
 
@@ -71,11 +79,15 @@ export default function App() {
   const handlePreviewDemo = (templateId) => {
     setSelectedTemplate(templateId);
     setGeneratedCopy(DEMO_GENERATED_COPY);
+    setEditedCopy(structuredClone(DEMO_GENERATED_COPY));
+    setImages({});
     setIsDemoPreview(true);
     goTo(5);
   };
   const handleBackFromDemo = () => {
     setGeneratedCopy(null);
+    setEditedCopy(null);
+    setImages({});
     setIsDemoPreview(false);
     goTo(3);
   };
@@ -87,6 +99,10 @@ export default function App() {
       <WebsitePreview
         businessInfo={isDemoPreview ? DEMO_BUSINESS_INFO : businessInfo}
         generatedCopy={generatedCopy}
+        editedCopy={editedCopy}
+        onEditedCopyChange={setEditedCopy}
+        images={images}
+        onImagesChange={setImages}
         templateId={selectedTemplate}
         templateMeta={templateMeta}
         onBack={isDemoPreview ? handleBackFromDemo : () => goTo(3)}
@@ -102,9 +118,10 @@ export default function App() {
     return (
       <StepExport
         businessInfo={businessInfo}
-        generatedCopy={generatedCopy}
+        generatedCopy={editedCopy || generatedCopy}
         templateId={selectedTemplate}
         templateMeta={templateMeta}
+        images={images}
         onBack={() => goTo(5)}
         onStartOver={handleStartOver}
       />

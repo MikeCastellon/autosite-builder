@@ -34,14 +34,14 @@ export default function StepGenerating({ businessInfo, templateMeta, onSuccess, 
     <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
       {/* Spinner */}
       <div className="relative mb-10">
-        <div className="w-16 h-16 rounded-full border-[3px] border-gray-200 border-t-gray-900 animate-spin" />
+        <div className="w-16 h-16 rounded-full border-[3px] border-[#f2f0ec] border-t-[#cc0000] animate-spin" />
       </div>
 
-      <h2 className="text-xl font-bold text-gray-900 mb-3 tracking-tight">Building your website...</h2>
-      <p className="text-gray-500 font-medium min-h-[1.5rem] text-[15px]">
+      <h2 className="text-xl font-[800] text-[#1a1a1a] mb-3 tracking-[-0.5px]">Building your website...</h2>
+      <p className="text-[#555] font-medium min-h-[1.5rem] text-[15px]">
         {STATUS_MESSAGES[statusIndex]}
       </p>
-      <p className="text-gray-400 text-sm mt-3">Writing custom copy for {businessInfo.businessName}</p>
+      <p className="text-[#888] text-sm mt-3">Writing custom copy for {businessInfo.businessName}</p>
     </div>
   );
 }

@@ -1,26 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { createElement } from 'react';
 import { normalizeBusinessInfo } from './normalizeBusinessInfo.js';
-
-// Map templateId -> static import path for SSR rendering
-const TEMPLATE_MODULES = {
-  detailing_premium:    () => import('../components/preview/templates/detailing/DetailingPremium.jsx'),
-  detailing_sporty:     () => import('../components/preview/templates/detailing/DetailingSporty.jsx'),
-  detailing_minimal:    () => import('../components/preview/templates/detailing/DetailingMinimal.jsx'),
-  mobile_bold:          () => import('../components/preview/templates/mobile/MobileBold.jsx'),
-  mobile_modern:        () => import('../components/preview/templates/mobile/MobileModern.jsx'),
-  mobile_rugged:        () => import('../components/preview/templates/mobile/MobileRugged.jsx'),
-  wheel_edge:           () => import('../components/preview/templates/wheel/WheelEdge.jsx'),
-  wheel_clean:          () => import('../components/preview/templates/wheel/WheelClean.jsx'),
-  tint_dark:            () => import('../components/preview/templates/tint/TintDark.jsx'),
-  tint_sleek:           () => import('../components/preview/templates/tint/TintSleek.jsx'),
-  mechanic_industrial:  () => import('../components/preview/templates/mechanic/MechanicIndustrial.jsx'),
-  mechanic_friendly:    () => import('../components/preview/templates/mechanic/MechanicFriendly.jsx'),
-  detailing_coastal:    () => import('../components/preview/templates/detailing/DetailingCoastal.jsx'),
-  mechanic_garage:      () => import('../components/preview/templates/mechanic/MechanicGarage.jsx'),
-  mobile_chrome:        () => import('../components/preview/templates/mobile/MobileChrome.jsx'),
-  tint_elite:           () => import('../components/preview/templates/tint/TintElite.jsx'),
-};
+import { TEMPLATE_COMPONENT_MAP } from '../data/templates.js';
 
 function buildSeoHead(businessInfo, generatedCopy) {
   const biz = businessInfo;
@@ -57,7 +38,6 @@ function buildSeoHead(businessInfo, generatedCopy) {
   <meta name="description" content="${copy.metaDescription || ''}" />
   <meta name="keywords" content="${keywords}" />
   <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="https://yourdomain.com" />
 
   <!-- Open Graph -->
   <meta property="og:title" content="${biz.businessName}" />
@@ -68,7 +48,7 @@ function buildSeoHead(businessInfo, generatedCopy) {
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@700;800&family=Outfit:wght@400;500;600;700;800;900&family=Syne:wght@400;500;600;700;800&family=Barlow+Condensed:wght@400;500;600;700&family=Barlow:wght@400;500;600;700&family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&family=Bebas+Neue&family=Righteous&family=Boogaloo&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
 
   <!-- Tailwind CSS CDN (for utility classes in templates) -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -90,16 +70,24 @@ function buildSeoHead(businessInfo, generatedCopy) {
   </script>`;
 }
 
-export async function exportHtml(templateId, businessInfo, generatedCopy, templateMeta) {
-  const mod = await TEMPLATE_MODULES[templateId]();
+export async function exportHtml(templateId, businessInfo, generatedCopy, templateMeta, images) {
+  const mod = await TEMPLATE_COMPONENT_MAP[templateId]();
   const TemplateComponent = mod.default;
 
   const normalizedInfo = normalizeBusinessInfo(businessInfo);
   const bodyHtml = renderToStaticMarkup(
-    createElement(TemplateComponent, { businessInfo: normalizedInfo, generatedCopy, templateMeta })
+    createElement(TemplateComponent, { businessInfo: normalizedInfo, generatedCopy, templateMeta, images: images || {} })
   );
 
   const seoHead = buildSeoHead(businessInfo, generatedCopy);
+
+  const poweredByBar = `
+<div style="background:#111;padding:14px 24px;display:flex;align-items:center;justify-content:center;gap:8px;">
+  <span style="font-family:'Outfit',system-ui,sans-serif;font-size:12px;color:#888;letter-spacing:0.02em;">Powered by</span>
+  <a href="https://www.autocaregenius.com" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;">
+    <img src="https://www.autocaregenius.com/cdn/shop/files/v11_1.svg?v=1760731533&width=160" alt="Auto Care Genius" style="height:18px;" />
+  </a>
+</div>`;
 
   const fullHtml = `<!DOCTYPE html>
 <html lang="en">
@@ -108,6 +96,7 @@ ${seoHead}
 </head>
 <body>
 ${bodyHtml}
+${poweredByBar}
 </body>
 </html>`;
 

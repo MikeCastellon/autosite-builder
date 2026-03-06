@@ -6,6 +6,7 @@ export default defineConfig({
   server: {
     port: 5173,
     host: '127.0.0.1',
+    hmr: { overlay: false },
     proxy: {
       '/.netlify/functions': {
         target: 'http://127.0.0.1:9999',

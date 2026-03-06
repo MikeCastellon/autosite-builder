@@ -48,45 +48,45 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
     onSubmit(values);
   };
 
-  const inputBase = 'w-full bg-white border rounded-lg px-3.5 py-2.5 text-gray-900 placeholder-gray-400 text-[14px] focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition';
+  const inputBase = 'w-full bg-white border rounded-xl px-3.5 py-2.5 text-[#1a1a1a] placeholder-[#aaa] text-[14px] focus:outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000] transition';
 
   return (
     <div>
       <div className="mb-8">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">{typeInfo?.label}</p>
+        <p className="text-[12px] font-semibold text-[#cc0000] uppercase tracking-[1.5px] mb-3">{typeInfo?.label}</p>
         <div className="flex items-center justify-between gap-4">
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Tell us about your business</h1>
+          <h1 className="text-[clamp(24px,4vw,32px)] font-[900] text-[#1a1a1a] tracking-[-1px] leading-[1.1]">Tell us about your business</h1>
           <button
             type="button"
             onClick={() => { setValues(DEMO_BUSINESS_INFO); setErrors({}); }}
-            className="shrink-0 text-[12px] font-semibold px-3 py-1.5 rounded-lg border border-violet-300 text-violet-600 hover:bg-violet-50 transition-colors"
+            className="shrink-0 text-[12px] font-semibold px-3 py-1.5 rounded-lg border border-[#cc0000]/30 text-[#cc0000] hover:bg-[#cc0000]/5 transition-colors"
           >
-            ⚡ Fill Demo
+            Fill Demo
           </button>
         </div>
-        <p className="text-gray-500 text-[15px] mt-2">The more detail you provide, the better the AI-generated copy will be.</p>
+        <p className="text-[#555] text-[15px] mt-2">The more detail you provide, the better the AI-generated copy will be.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-7">
         {/* Common fields */}
         <div className="space-y-4">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Basic Information</p>
+          <p className="text-[11px] font-semibold text-[#cc0000] uppercase tracking-[1.5px]">Basic Information</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {COMMON_FIELDS.map((field) => (
               <div key={field.key} className={field.key === 'tagline' ? 'sm:col-span-2' : ''}>
-                <label className="block text-[13px] font-medium text-gray-700 mb-1.5">
+                <label className="block text-[13px] font-medium text-[#1a1a1a] mb-1.5">
                   {field.label}
-                  {field.required && <span className="text-red-500 ml-1">*</span>}
+                  {field.required && <span className="text-[#cc0000] ml-1">*</span>}
                 </label>
                 <input
                   type={field.type}
                   value={values[field.key] || ''}
                   onChange={(e) => handleChange(field.key, e.target.value)}
                   placeholder={field.placeholder}
-                  className={`${inputBase} ${errors[field.key] ? 'border-red-400 ring-1 ring-red-300' : 'border-gray-300'}`}
+                  className={`${inputBase} ${errors[field.key] ? 'border-[#cc0000] ring-1 ring-[#cc0000]/30' : 'border-black/[0.12]'}`}
                 />
                 {errors[field.key] && (
-                  <p className="text-red-500 text-xs mt-1">{errors[field.key]}</p>
+                  <p className="text-[#cc0000] text-xs mt-1">{errors[field.key]}</p>
                 )}
               </div>
             ))}
@@ -95,17 +95,16 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
 
         {/* Type-specific fields */}
         <div className="space-y-5">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Services & Specialties</p>
+          <p className="text-[11px] font-semibold text-[#cc0000] uppercase tracking-[1.5px]">Services & Specialties</p>
           {specificFields.map((field) => (
             <div key={field.key}>
-              <label className="block text-[13px] font-medium text-gray-700 mb-2">
+              <label className="block text-[13px] font-medium text-[#1a1a1a] mb-2">
                 {field.label}
-                {field.required && <span className="text-red-500 ml-1">*</span>}
+                {field.required && <span className="text-[#cc0000] ml-1">*</span>}
               </label>
 
               {field.type === 'multicheck' && (() => {
                 const selected = values[field.key] || [];
-                // Combine preset options with any custom ones the user added
                 const customOnes = selected.filter((s) => !field.options.includes(s));
                 const allOptions = [...field.options, ...customOnes];
                 const inputVal = customInputs[field.key] || '';
@@ -130,8 +129,8 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
                             onClick={() => handleCheckbox(field.key, option)}
                             className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium border transition-all
                               ${checked
-                                ? 'bg-gray-900 border-gray-900 text-white'
-                                : 'bg-white border-gray-300 text-gray-600 hover:border-gray-500'}`}
+                                ? 'bg-[#1a1a1a] border-[#1a1a1a] text-white'
+                                : 'bg-white border-black/[0.12] text-[#555] hover:border-[#cc0000]/40'}`}
                           >
                             {checked && (
                               <svg className="-mt-px shrink-0" width="10" height="10" viewBox="0 0 10 10" fill="none">
@@ -166,13 +165,13 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
                         onChange={(e) => setCustomInputs((prev) => ({ ...prev, [field.key]: e.target.value }))}
                         onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustom())}
                         placeholder="Add a service..."
-                        className="flex-1 bg-white border border-gray-300 rounded-lg px-3 py-2 text-[13px] text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition"
+                        className="flex-1 bg-white border border-black/[0.12] rounded-xl px-3 py-2 text-[13px] text-[#1a1a1a] placeholder-[#aaa] focus:outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000] transition"
                       />
                       <button
                         type="button"
                         onClick={addCustom}
                         disabled={!inputVal.trim()}
-                        className="px-3 py-2 bg-gray-100 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed text-gray-700 text-[13px] font-medium rounded-lg transition-colors"
+                        className="px-3 py-2 bg-[#faf9f7] hover:bg-[#f2f0ec] disabled:opacity-40 disabled:cursor-not-allowed text-[#555] text-[13px] font-medium rounded-xl transition-colors"
                       >
                         Add
                       </button>
@@ -187,7 +186,7 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
                   onChange={(e) => handleChange(field.key, e.target.value)}
                   placeholder={field.placeholder}
                   rows={3}
-                  className={`${inputBase} resize-none ${errors[field.key] ? 'border-red-400' : 'border-gray-300'}`}
+                  className={`${inputBase} resize-none ${errors[field.key] ? 'border-[#cc0000]' : 'border-black/[0.12]'}`}
                 />
               )}
 
@@ -197,12 +196,12 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
                   value={values[field.key] || ''}
                   onChange={(e) => handleChange(field.key, e.target.value)}
                   placeholder={field.placeholder}
-                  className={`${inputBase} ${errors[field.key] ? 'border-red-400' : 'border-gray-300'}`}
+                  className={`${inputBase} ${errors[field.key] ? 'border-[#cc0000]' : 'border-black/[0.12]'}`}
                 />
               )}
 
               {errors[field.key] && (
-                <p className="text-red-500 text-xs mt-1">{errors[field.key]}</p>
+                <p className="text-[#cc0000] text-xs mt-1">{errors[field.key]}</p>
               )}
             </div>
           ))}
@@ -210,11 +209,11 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
 
         {/* Extra optional fields */}
         <div className="space-y-5">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Additional Details (Optional)</p>
+          <p className="text-[11px] font-semibold text-[#cc0000] uppercase tracking-[1.5px]">Additional Details (Optional)</p>
           {/* Payment methods multicheck */}
           {COMMON_EXTRA_FIELDS.filter(f => f.type === 'multicheck').map((field) => (
             <div key={field.key}>
-              <label className="block text-[13px] font-medium text-gray-700 mb-2">{field.label}</label>
+              <label className="block text-[13px] font-medium text-[#1a1a1a] mb-2">{field.label}</label>
               {(() => {
                 const selected = values[field.key] || [];
                 return (
@@ -230,7 +229,7 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
                             handleChange(field.key, next);
                           }}
                           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium border transition-all
-                            ${checked ? 'bg-gray-900 border-gray-900 text-white' : 'bg-white border-gray-300 text-gray-600 hover:border-gray-500'}`}
+                            ${checked ? 'bg-[#1a1a1a] border-[#1a1a1a] text-white' : 'bg-white border-black/[0.12] text-[#555] hover:border-[#cc0000]/40'}`}
                         >
                           {checked && (
                             <svg className="-mt-px shrink-0" width="10" height="10" viewBox="0 0 10 10" fill="none">
@@ -249,13 +248,13 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
           {/* Awards text field */}
           {COMMON_EXTRA_FIELDS.filter(f => f.type !== 'multicheck').map((field) => (
             <div key={field.key}>
-              <label className="block text-[13px] font-medium text-gray-700 mb-1.5">{field.label}</label>
+              <label className="block text-[13px] font-medium text-[#1a1a1a] mb-1.5">{field.label}</label>
               <input
                 type="text"
                 value={values[field.key] || ''}
                 onChange={(e) => handleChange(field.key, e.target.value)}
                 placeholder={field.placeholder}
-                className={`${inputBase} border-gray-300`}
+                className={`${inputBase} border-black/[0.12]`}
               />
             </div>
           ))}
@@ -263,7 +262,7 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
 
         <button
           type="submit"
-          className="w-full bg-gray-900 hover:bg-gray-800 text-white font-semibold py-3 px-6 rounded-lg transition-colors text-[15px]"
+          className="w-full bg-[#1a1a1a] hover:bg-[#cc0000] text-white font-semibold py-3.5 px-6 rounded-xl transition-all text-[15px]"
         >
           Choose a Template
         </button>

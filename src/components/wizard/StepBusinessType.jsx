@@ -5,9 +5,9 @@ export default function StepBusinessType({ onSelect }) {
   return (
     <div>
       <div className="mb-8">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Step 1 of 5</p>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2 tracking-tight">What type of business do you run?</h1>
-        <p className="text-gray-500 text-[15px]">
+        <p className="text-[12px] font-semibold text-[#cc0000] uppercase tracking-[1.5px] mb-3">Step 1 of 5</p>
+        <h1 className="text-[clamp(24px,4vw,32px)] font-[900] text-[#1a1a1a] mb-2 tracking-[-1px] leading-[1.1]">What type of business do you run?</h1>
+        <p className="text-[#555] text-[15px]">
           We'll select the right templates and write copy specific to your industry.
         </p>
       </div>
@@ -18,7 +18,7 @@ export default function StepBusinessType({ onSelect }) {
         ))}
       </div>
 
-      <p className="text-xs text-gray-400 text-center mt-8">
+      <p className="text-[12px] text-[#888] text-center mt-8 tracking-wide">
         Free · No account required · Download in minutes
       </p>
     </div>
