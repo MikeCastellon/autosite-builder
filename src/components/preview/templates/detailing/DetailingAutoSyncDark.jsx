@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, templateMeta }) {
+export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const c = templateMeta.colors;
   const font = templateMeta.font;
   const bodyFont = templateMeta.bodyFont;
@@ -170,15 +170,19 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
 
       {/* NAV */}
       <nav style={s.nav}>
-        <div style={s.navLogoWrap}>
-          <div style={s.logoIcon}>
-            <div style={s.logoIconInner} />
+        {images.logo ? (
+          <img src={images.logo} alt={businessInfo.businessName || 'Logo'} style={{ height: 38, objectFit: 'contain' }} />
+        ) : (
+          <div style={s.navLogoWrap}>
+            <div style={s.logoIcon}>
+              <div style={s.logoIconInner} />
+            </div>
+            <div>
+              <span style={s.logoText}>{businessInfo.businessName ? businessInfo.businessName.toUpperCase() : 'YOUR BUSINESS'}</span>
+              <span style={s.logoSub}>DETAILING SPECIALISTS</span>
+            </div>
           </div>
-          <div>
-            <span style={s.logoText}>{businessInfo.businessName ? businessInfo.businessName.toUpperCase() : 'YOUR BUSINESS'}</span>
-            <span style={s.logoSub}>DETAILING SPECIALISTS</span>
-          </div>
-        </div>
+        )}
         <button style={s.navCta}>{businessInfo.phone}</button>
       </nav>
 

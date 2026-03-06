@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 // Template: Tint Obsidian -- Ultra-dark void (#050507 bg, #7C3AED accent, #06B6D4 cyan)
 // Syne + Outfit fonts, VLT shade guide, film brands, process steps, testimonials
 
-export default function TintObsidian({ businessInfo, generatedCopy, templateMeta }) {
+export default function TintObsidian({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -105,10 +105,14 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
             }}>
               <div style={{ width: 14, height: 14, background: 'rgba(255,255,255,0.9)', clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)', borderRadius: 1 }} />
             </div>
-            <div>
-              <div style={{ fontFamily: font, fontSize: 16, fontWeight: 800, color: c.text, letterSpacing: -0.5, lineHeight: 1 }}>{biz.businessName || 'Obsidian Tint'}</div>
-              <div style={{ fontSize: 10, color: cCyan, letterSpacing: 3, textTransform: 'uppercase', marginTop: 2 }}>{biz.city || 'Studio'}</div>
-            </div>
+            {images.logo ? (
+              <img src={images.logo} alt={biz.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
+            ) : (
+              <div>
+                <div style={{ fontFamily: font, fontSize: 16, fontWeight: 800, color: c.text, letterSpacing: -0.5, lineHeight: 1 }}>{biz.businessName || 'Obsidian Tint'}</div>
+                <div style={{ fontSize: 10, color: cCyan, letterSpacing: 3, textTransform: 'uppercase', marginTop: 2 }}>{biz.city || 'Studio'}</div>
+              </div>
+            )}
           </div>
           <div style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
             {[['#services', 'Services'], ['#films', 'Film Tech'], ['#process', 'Process']].map(([href, label]) => (

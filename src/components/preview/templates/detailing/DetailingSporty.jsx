@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-export default function DetailingSporty({ businessInfo, generatedCopy, templateMeta }) {
+export default function DetailingSporty({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const c = templateMeta.colors;
   const font = templateMeta.font;
   const bodyFont = templateMeta.bodyFont;
@@ -179,11 +179,15 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
     <div style={{ background: c.bg, color: c.text, fontFamily: bodyFont }}>
       {/* NAV */}
       <nav style={s.nav}>
-        <span style={s.navLogo}>
-          {businessInfo.businessName.split(' ').map((w, i) =>
-            i === 0 ? <span key={i}>{w} </span> : <span key={i} style={s.navAccent}>{w} </span>
-          )}
-        </span>
+        {images.logo ? (
+          <img src={images.logo} alt={businessInfo.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
+        ) : (
+          <span style={s.navLogo}>
+            {businessInfo.businessName.split(' ').map((w, i) =>
+              i === 0 ? <span key={i}>{w} </span> : <span key={i} style={s.navAccent}>{w} </span>
+            )}
+          </span>
+        )}
         <button style={s.navPhone}>{businessInfo.phone}</button>
       </nav>
 

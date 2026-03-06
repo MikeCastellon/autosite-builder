@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 // brand strip, alloy hero panel, services grid, fitment band, process steps,
 // testimonials, CTA band, contact info row, dark footer.
 
-export default function WheelApex({ businessInfo, generatedCopy, templateMeta }) {
+export default function WheelApex({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -105,12 +105,18 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta })
               </span>
             </div>
             <div>
-              <span style={{ fontFamily: font, fontWeight: 700, fontSize: 18, letterSpacing: "3px", textTransform: "uppercase", color: D.dark, display: "block", lineHeight: 1 }}>
-                {biz.businessName || "Wheel Shop"}
-              </span>
-              <span style={{ fontSize: 10, fontWeight: 500, letterSpacing: "2px", textTransform: "uppercase", color: D.steel, display: "block", marginTop: 1 }}>
-                {[biz.city, biz.state].filter(Boolean).join(", ")}
-              </span>
+              {images.logo ? (
+                <img src={images.logo} alt={biz.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
+              ) : (
+                <>
+                  <span style={{ fontFamily: font, fontWeight: 700, fontSize: 18, letterSpacing: "3px", textTransform: "uppercase", color: D.dark, display: "block", lineHeight: 1 }}>
+                    {biz.businessName || "Wheel Shop"}
+                  </span>
+                  <span style={{ fontSize: 10, fontWeight: 500, letterSpacing: "2px", textTransform: "uppercase", color: D.steel, display: "block", marginTop: 1 }}>
+                    {[biz.city, biz.state].filter(Boolean).join(", ")}
+                  </span>
+                </>
+              )}
             </div>
           </div>
           <ul style={{ display: "flex", gap: 32, listStyle: "none", margin: 0, padding: 0 }}>

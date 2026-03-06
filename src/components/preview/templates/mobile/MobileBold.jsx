@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 // Template: Mobile Bold — Orange & dark (#1a1a1a bg, #f97316 accent)
 // Aggressive diagonal slashes, "WE COME TO YOU" badge, truck emoji nav, service area banner, packages pricing
 
-export default function MobileBold({ businessInfo, generatedCopy, templateMeta }) {
+export default function MobileBold({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -45,7 +45,11 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta }
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontSize: 22 }}>🚛</span>
             <div>
+              {images.logo ? (
+              <img src={images.logo} alt={biz.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
+            ) : (
               <span style={{ fontSize: 17, fontWeight: 900, color: c.text, textTransform: 'uppercase', letterSpacing: 1 }}>{biz.businessName || 'MOBILE DETAIL'}</span>
+            )}
               <span style={{ display: 'block', fontSize: 10, color: c.accent, letterSpacing: 2, textTransform: 'uppercase' }}>Mobile Detailing · {biz.city}</span>
             </div>
           </div>

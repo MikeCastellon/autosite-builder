@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-export default function DetailingMinimal({ businessInfo, generatedCopy, templateMeta }) {
+export default function DetailingMinimal({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const c = templateMeta.colors;
   const font = templateMeta.font;
   const bodyFont = templateMeta.bodyFont;
@@ -175,7 +175,11 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
     <div style={{ background: '#f7f7f8', color: c.bg, fontFamily: bodyFont }}>
       {/* NAV */}
       <nav style={s.nav}>
-        <span style={s.navLogo}>{businessInfo.businessName}</span>
+        {images.logo ? (
+          <img src={images.logo} alt={businessInfo.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
+        ) : (
+          <span style={s.navLogo}>{businessInfo.businessName}</span>
+        )}
         <button style={s.navPhone}>{businessInfo.phone}</button>
       </nav>
 

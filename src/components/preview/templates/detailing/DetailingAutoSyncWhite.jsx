@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, templateMeta }) {
+export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const c = templateMeta.colors;
   const font = templateMeta.font;
   const bodyFont = templateMeta.bodyFont;
@@ -152,10 +152,14 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
 
       {/* NAV */}
       <nav style={s.nav}>
-        <div style={s.navLogo}>
-          <div style={s.logoRing}><div style={s.logoRingInner} /></div>
-          {businessInfo.businessName}
-        </div>
+        {images.logo ? (
+          <img src={images.logo} alt={businessInfo.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
+        ) : (
+          <div style={s.navLogo}>
+            <div style={s.logoRing}><div style={s.logoRingInner} /></div>
+            {businessInfo.businessName}
+          </div>
+        )}
         <button style={s.navCta}>{generatedCopy.ctaPrimary || 'Book a Detail'}</button>
       </nav>
 

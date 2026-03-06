@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 // Template: Tint Sleek — Gray & teal (#1f2937 bg, #14b8a6 accent, #374151 secondary)
 // Modern precision, two-column hero, film brands as styled pills, warranty badge, teal left-border cards, social footer
 
-export default function TintSleek({ businessInfo, generatedCopy, templateMeta }) {
+export default function TintSleek({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -39,7 +39,11 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta })
       }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 68 }}>
           <div>
-            <span style={{ fontSize: 17, fontWeight: 800, color: c.text }}>{biz.businessName || 'Precision Tint'}</span>
+            {images.logo ? (
+              <img src={images.logo} alt={biz.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
+            ) : (
+              <span style={{ fontSize: 17, fontWeight: 800, color: c.text }}>{biz.businessName || 'Precision Tint'}</span>
+            )}
             <span style={{ display: 'block', fontSize: 10, color: c.accent, letterSpacing: 3, textTransform: 'uppercase' }}>Tint & PPF · {biz.city}, {biz.state}</span>
           </div>
           <div style={{ display: 'flex', gap: 28, alignItems: 'center' }}>

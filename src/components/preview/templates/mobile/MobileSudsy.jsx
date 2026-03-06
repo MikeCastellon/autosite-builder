@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 // Warm amber/cream bg, bubbly neo-brutalist mobile detailing aesthetic.
 // Boogaloo display font, static CSS bubble decorators, no cursor trail JS.
 
-export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta }) {
+export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
 
   const c = templateMeta?.colors || {
@@ -119,8 +119,14 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta 
         boxShadow: `0 4px 0 ${c.text}`,
       }}>
         <a href='#' style={{ fontFamily: font, fontSize: 24, color: c.text, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 22 }}>{String.fromCodePoint(0x1FAA7)}</span>
-          {biz.businessName || 'Mobile Detailing'}
+          {images.logo ? (
+            <img src={images.logo} alt={biz.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
+          ) : (
+            <>
+              <span style={{ fontSize: 22 }}>{String.fromCodePoint(0x1FAA7)}</span>
+              {biz.businessName || 'Mobile Detailing'}
+            </>
+          )}
         </a>
         <div style={{ display: 'flex', gap: 28, alignItems: 'center' }}>
           {[{ label: 'Services', href: '#services' }, { label: 'How It Works', href: '#how' }, { label: 'Reviews', href: '#reviews' }].map(({ label, href }) => (

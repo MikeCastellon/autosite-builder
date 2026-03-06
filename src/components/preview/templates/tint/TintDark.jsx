@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 // Template: Tint Dark — Black & purple (#080808 bg, #7c3aed accent, #111111 secondary)
 // Radial gradient glow hero, film brands section, shield warranty callout, packages, fade/gradient elements
 
-export default function TintDark({ businessInfo, generatedCopy, templateMeta }) {
+export default function TintDark({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -39,7 +39,11 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta }) 
       }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 68 }}>
           <div>
-            <span style={{ fontSize: 17, fontWeight: 800, color: c.text, letterSpacing: -0.5 }}>{biz.businessName || 'Premium Tint'}</span>
+            {images.logo ? (
+              <img src={images.logo} alt={biz.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
+            ) : (
+              <span style={{ fontSize: 17, fontWeight: 800, color: c.text, letterSpacing: -0.5 }}>{biz.businessName || 'Premium Tint'}</span>
+            )}
             <span style={{ display: 'block', fontSize: 10, color: c.accent, letterSpacing: 3, textTransform: 'uppercase' }}>Tint & Protection · {biz.city}</span>
           </div>
           <div style={{ display: 'flex', gap: 28, alignItems: 'center' }}>

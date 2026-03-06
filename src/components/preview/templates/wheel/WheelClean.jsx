@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 // Template: Wheel Clean — White & gunmetal (#f8f9fa bg, #374151 accent)
 // Professional clean, services list with left border accent, brands as styled text, tire brands, awards, split contact
 
-export default function WheelClean({ businessInfo, generatedCopy, templateMeta }) {
+export default function WheelClean({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -38,7 +38,11 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta }
       }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 68 }}>
           <div>
-            <span style={{ fontSize: 18, fontWeight: 800, color: c.accent }}>{biz.businessName || 'Wheel Shop'}</span>
+            {images.logo ? (
+              <img src={images.logo} alt={biz.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
+            ) : (
+              <span style={{ fontSize: 18, fontWeight: 800, color: c.accent }}>{biz.businessName || 'Wheel Shop'}</span>
+            )}
             <span style={{ display: 'block', fontSize: 11, color: c.muted, letterSpacing: 1.5, textTransform: 'uppercase' }}>Custom Wheels · {biz.city}, {biz.state}</span>
           </div>
           <div style={{ display: 'flex', gap: 28, alignItems: 'center' }}>

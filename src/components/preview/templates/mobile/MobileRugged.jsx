@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 // Template: Mobile Rugged — Dark green (#1a2318 bg, #8a9a4a accent, #f0ede0 text)
 // Repeating diagonal line texture in hero, "ANYWHERE · ANYTIME" subtext, service area, heavy uppercase
 
-export default function MobileRugged({ businessInfo, generatedCopy, templateMeta }) {
+export default function MobileRugged({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -44,7 +44,11 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
       }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 68 }}>
           <div>
-            <span style={{ fontSize: 17, fontWeight: 800, color: c.text, textTransform: 'uppercase', letterSpacing: 2 }}>{biz.businessName || 'MOBILE DETAIL'}</span>
+            {images.logo ? (
+              <img src={images.logo} alt={biz.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
+            ) : (
+              <span style={{ fontSize: 17, fontWeight: 800, color: c.text, textTransform: 'uppercase', letterSpacing: 2 }}>{biz.businessName || 'MOBILE DETAIL'}</span>
+            )}
             <span style={{ display: 'block', fontSize: 10, color: c.accent, letterSpacing: 3, textTransform: 'uppercase' }}>Mobile Detail · {biz.city}, {biz.state}</span>
           </div>
           <div style={{ display: 'flex', gap: 28, alignItems: 'center' }}>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-export default function DetailingPremium({ businessInfo, generatedCopy, templateMeta }) {
+export default function DetailingPremium({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const c = templateMeta.colors;
   const font = templateMeta.font;
   const bodyFont = templateMeta.bodyFont;
@@ -176,7 +176,11 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
     <div style={{ background: c.bg, color: c.text, fontFamily: bodyFont }}>
       {/* NAV */}
       <nav style={s.nav}>
-        <span style={s.navLogo}>{businessInfo.businessName}</span>
+        {images.logo ? (
+          <img src={images.logo} alt={businessInfo.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
+        ) : (
+          <span style={s.navLogo}>{businessInfo.businessName}</span>
+        )}
         <button style={s.navPhone}>{businessInfo.phone}</button>
       </nav>
 

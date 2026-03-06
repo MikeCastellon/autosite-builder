@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 // Bright, playful, cheerful car wash aesthetic. No canvas, no custom cursor JS.
 // Fonts: Righteous (headings) + Nunito (body)
 
-export default function CarwashBubble({ businessInfo, generatedCopy, templateMeta }) {
+export default function CarwashBubble({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const c = templateMeta?.colors || {
     bg: '#f0f9ff', accent: '#06b6d4', text: '#0c4a6e', secondary: '#e0f7fa', muted: '#64748b',
   };
@@ -115,20 +115,26 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
         transition: 'all 0.3s ease',
       }}>
         <a href='#' style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-          <div style={{
-            width: 38, height: 38, borderRadius: '50%',
-            background: `radial-gradient(circle at 35% 30%, #fff, ${c.accent})`,
-            border: `2px solid ${c.accent}`, flexShrink: 0,
-            boxShadow: `0 0 0 3px ${accentLight}55`,
-          }} />
-          <div>
-            <span style={{ fontFamily: font, fontSize: 17, color: c.text, display: 'block', lineHeight: 1.1 }}>
-              {biz.businessName || 'Bubble Rush'}
-            </span>
-            <span style={{ fontSize: 10, color: c.muted || '#64748b', letterSpacing: 1.5, textTransform: 'uppercase', display: 'block' }}>
-              Car Wash{biz.city ? ` · ${biz.city}` : ''}
-            </span>
-          </div>
+          {images.logo ? (
+            <img src={images.logo} alt={biz.businessName || 'Logo'} style={{ height: 38, objectFit: 'contain' }} />
+          ) : (
+            <>
+              <div style={{
+                width: 38, height: 38, borderRadius: '50%',
+                background: `radial-gradient(circle at 35% 30%, #fff, ${c.accent})`,
+                border: `2px solid ${c.accent}`, flexShrink: 0,
+                boxShadow: `0 0 0 3px ${accentLight}55`,
+              }} />
+              <div>
+                <span style={{ fontFamily: font, fontSize: 17, color: c.text, display: 'block', lineHeight: 1.1 }}>
+                  {biz.businessName || 'Bubble Rush'}
+                </span>
+                <span style={{ fontSize: 10, color: c.muted || '#64748b', letterSpacing: 1.5, textTransform: 'uppercase', display: 'block' }}>
+                  Car Wash{biz.city ? ` · ${biz.city}` : ''}
+                </span>
+              </div>
+            </>
+          )}
         </a>
         <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
           {[['#packages', 'Packages'], ['#how', 'How It Works'], ['#reviews', 'Reviews']].map(([href, label]) => (

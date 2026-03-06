@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-export default function DetailingCoastal({ businessInfo, generatedCopy, templateMeta }) {
+export default function DetailingCoastal({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -111,7 +111,11 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
       <nav style={navStyle}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '68px' }}>
           <div style={{ fontFamily: font, fontWeight: 800, fontSize: '1.4rem', color: c.accent }}>
-            {businessInfo.businessName}
+            {images.logo ? (
+              <img src={images.logo} alt={businessInfo.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
+            ) : (
+              businessInfo.businessName
+            )}
           </div>
           <div style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>
             {['Services', 'Packages', 'About', 'Contact'].map(link => (

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-export default function TintElite({ businessInfo, generatedCopy, templateMeta }) {
+export default function TintElite({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -168,9 +168,13 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta })
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '72px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             <div style={{ width: '2px', height: '32px', background: goldGradient }} />
-            <div style={{ fontFamily: font, fontWeight: 700, fontSize: '1.25rem', color: '#ffffff', letterSpacing: '1px' }}>
-              {businessInfo.businessName}
-            </div>
+            {images.logo ? (
+              <img src={images.logo} alt={businessInfo.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
+            ) : (
+              <div style={{ fontFamily: font, fontWeight: 700, fontSize: '1.25rem', color: '#ffffff', letterSpacing: '1px' }}>
+                {businessInfo.businessName}
+              </div>
+            )}
           </div>
           <div style={{ display: 'flex', gap: '36px', alignItems: 'center' }}>
             {['Services', 'Films', 'Packages', 'Contact'].map(link => (

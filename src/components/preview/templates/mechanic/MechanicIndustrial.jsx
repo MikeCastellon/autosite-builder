@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 // Gear/wrench feel, shop hours section, certifications as yellow badges, warranty guarantee box,
 // payment methods, awards, warrantyOffered displayed
 
-export default function MechanicIndustrial({ businessInfo, generatedCopy, templateMeta }) {
+export default function MechanicIndustrial({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -39,7 +39,11 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
       }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 68 }}>
           <div>
-            <span style={{ fontSize: 17, fontWeight: 900, color: c.text, textTransform: 'uppercase', letterSpacing: 1 }}>{biz.businessName || 'AUTO REPAIR'}</span>
+            {images.logo ? (
+              <img src={images.logo} alt={biz.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
+            ) : (
+              <span style={{ fontSize: 17, fontWeight: 900, color: c.text, textTransform: 'uppercase', letterSpacing: 1 }}>{biz.businessName || 'AUTO REPAIR'}</span>
+            )}
             <span style={{ display: 'block', fontSize: 10, color: c.accent, letterSpacing: 2, textTransform: 'uppercase' }}>Auto Repair · {biz.city}, {biz.state}</span>
           </div>
           <div style={{ display: 'flex', gap: 28, alignItems: 'center' }}>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-export default function MechanicFriendly({ businessInfo, generatedCopy, templateMeta }) {
+export default function MechanicFriendly({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const c = templateMeta.colors;
   const font = templateMeta.font;
   const bodyFont = templateMeta.bodyFont;
@@ -220,7 +220,11 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
     <div style={{ background: '#f8fafc', color: c.bg, fontFamily: bodyFont }}>
       {/* NAV */}
       <nav style={s.nav}>
-        <span style={s.navLogo}>{businessInfo.businessName}</span>
+        {images.logo ? (
+          <img src={images.logo} alt={businessInfo.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
+        ) : (
+          <span style={s.navLogo}>{businessInfo.businessName}</span>
+        )}
         <div style={s.navRight}>
           <span style={s.navPhoneText}>{businessInfo.phone}</span>
           <button style={s.navBtn}>Get a Quote</button>

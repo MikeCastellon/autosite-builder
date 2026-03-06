@@ -181,6 +181,8 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
           {activeSection === 'images' && (
             <>
               <p className="text-[11px] text-gray-400 mb-4">Upload photos to replace the placeholder backgrounds on your site.</p>
+              <ImageSlot label="Business Logo" value={images?.logo} onChange={(v) => setImage('logo', v)} />
+              <hr className="my-4 border-gray-100" />
               <ImageSlot label="Hero Background" value={images?.hero} onChange={(v) => setImage('hero', v)} />
               <ImageSlot label="About Section" value={images?.about} onChange={(v) => setImage('about', v)} />
               <ImageSlot label="Gallery Photo 1" value={images?.gallery0} onChange={(v) => setImage('gallery0', v)} />

@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 // numbered service cards, CSS garage scene in about section, WHY grid, hexagon-avatar
 // testimonials, contact/hours panel, parallelogram CTA band, columnar footer.
 
-export default function MechanicIronclad({ businessInfo, generatedCopy, templateMeta }) {
+export default function MechanicIronclad({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
 
   const c = templateMeta?.colors || {
@@ -151,26 +151,30 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
         }}
       >
         {/* Logo mark */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div
-            style={{
-              width: 42, height: 42, background: c.accent,
-              clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: bebas, fontSize: 14, color: '#fff', letterSpacing: 1, flexShrink: 0,
-            }}
-          >
-            {(biz.businessName || 'IC').replace(/[^A-Za-z]/g, '').slice(0, 2).toUpperCase() || 'IC'}
+        {images.logo ? (
+          <img src={images.logo} alt={biz.businessName || 'Logo'} style={{ height: 42, objectFit: 'contain' }} />
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div
+              style={{
+                width: 42, height: 42, background: c.accent,
+                clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontFamily: bebas, fontSize: 14, color: '#fff', letterSpacing: 1, flexShrink: 0,
+              }}
+            >
+              {(biz.businessName || 'IC').replace(/[^A-Za-z]/g, '').slice(0, 2).toUpperCase() || 'IC'}
+            </div>
+            <div>
+              <span style={{ fontFamily: bebas, fontSize: 22, letterSpacing: 3, color: c.text, lineHeight: 1, display: 'block' }}>
+                {biz.businessName || 'AUTO REPAIR'}
+              </span>
+              <span style={{ fontFamily: condensed, fontSize: 9, letterSpacing: 4, color: c.accent, fontWeight: 700, textTransform: 'uppercase', display: 'block', marginTop: 1 }}>
+                {[biz.city, biz.state].filter(Boolean).join(', ')}
+              </span>
+            </div>
           </div>
-          <div>
-            <span style={{ fontFamily: bebas, fontSize: 22, letterSpacing: 3, color: c.text, lineHeight: 1, display: 'block' }}>
-              {biz.businessName || 'AUTO REPAIR'}
-            </span>
-            <span style={{ fontFamily: condensed, fontSize: 9, letterSpacing: 4, color: c.accent, fontWeight: 700, textTransform: 'uppercase', display: 'block', marginTop: 1 }}>
-              {[biz.city, biz.state].filter(Boolean).join(', ')}
-            </span>
-          </div>
-        </div>
+        )}
 
         {/* Nav links */}
         <div style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
