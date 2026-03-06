@@ -376,16 +376,21 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta 
             )}
           </div>
           <div>
-            {biz.hours && Object.keys(biz.hours).length > 0 && (
+            {biz.hours && (typeof biz.hours === 'string' ? biz.hours.trim() : Object.keys(biz.hours).length > 0) && (() => {
+              const lines = typeof biz.hours === 'string'
+                ? biz.hours.split(/[·;|]+/).map(s => s.trim()).filter(Boolean)
+                : Object.entries(biz.hours).map(([d, h]) => `${d}: ${h}`);
+              return (
               <div style={{ background: c.secondary, ...neoBorder, borderRadius: 24, padding: "28px 24px", marginBottom: 16 }}>
                 <div style={{ fontFamily: font, fontSize: 22, color: c.text, marginBottom: 20, display: "flex", alignItems: "center", gap: 8 }}>Hours of Operation</div>
-                {Object.entries(biz.hours).map(([day, hrs], i) => (
-                  <div key={i} style={{ display: "flex", justifyContent: "space-between", borderBottom: "2px dashed rgba(28,25,23,0.12)", paddingBottom: 10, marginBottom: 10, fontSize: 14, fontWeight: 700 }}>
-                    <span>{day}</span><span style={{ color: "#2d9cdb" }}>{hrs}</span>
+                {lines.map((line, i) => (
+                  <div key={i} style={{ borderBottom: "2px dashed rgba(28,25,23,0.12)", paddingBottom: 10, marginBottom: 10, fontSize: 14, fontWeight: 700, color: c.text }}>
+                    {line}
                   </div>
                 ))}
               </div>
-            )}
+              );
+            })()}
             {biz.address && (
               <div style={{ background: "#fff5f8", border: "2.5px solid #ff6b9d", borderRadius: 14, padding: "16px 20px", boxShadow: "3px 3px 0 #ff6b9d" }}>
                 <div style={{ fontWeight: 800, fontSize: 11, textTransform: "uppercase", color: "#be185d", marginBottom: 6 }}>Location</div>
@@ -455,12 +460,12 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta 
                   </div>
                 </div>
               ))}
-              {biz.hours && Object.keys(biz.hours).length > 0 && (
+              {biz.hours && (
                 <div style={{ display: "flex", alignItems: "center", gap: 14, background: "#fff", ...neoBorder, borderRadius: 16, padding: "14px 20px" }}>
                   <span style={{ fontSize: 28 }}>🕐</span>
                   <div>
                     <div style={{ fontSize: 11, fontWeight: 800, color: "#aaa", textTransform: "uppercase", letterSpacing: 0.5 }}>Hours!</div>
-                    <div style={{ fontFamily: font, fontSize: 15, color: c.text }}>{Object.entries(biz.hours).map(([d, h]) => `${d}: ${h}`).join(" · ")}</div>
+                    <div style={{ fontFamily: font, fontSize: 15, color: c.text }}>{typeof biz.hours === 'string' ? biz.hours : Object.entries(biz.hours).map(([d, h]) => `${d}: ${h}`).join(" · ")}</div>
                   </div>
                 </div>
               )}

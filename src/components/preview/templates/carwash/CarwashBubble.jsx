@@ -69,7 +69,12 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
     }} />
   );
 
-  const hasHours = biz.hours && typeof biz.hours === 'object' && Object.keys(biz.hours).length > 0;
+  const hoursLines = typeof biz.hours === 'string' && biz.hours.trim()
+    ? biz.hours.split(/[·;|]+/).map(s => s.trim()).filter(Boolean)
+    : typeof biz.hours === 'object' && biz.hours
+      ? Object.entries(biz.hours).map(([d, h]) => `${d}: ${h}`)
+      : [];
+  const hasHours = hoursLines.length > 0;
 
   const steps = [
     { icon: '🚗', title: 'Pull In',          desc: 'Drive up, choose your package on the display, and follow our guide lights into the bay.' },
@@ -351,10 +356,9 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
               {hasHours && (
                 <div style={{ background: 'white', borderRadius: 24, border: `2px solid ${accentLight}`, padding: '24px 26px', boxShadow: '0 4px 20px rgba(6,182,212,0.07)' }}>
                   <div style={{ fontFamily: font, fontSize: 16, color: c.accent, marginBottom: 16 }}>Hours of Operation</div>
-                  {Object.entries(biz.hours).map(([day, hrs], i, arr) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: i < arr.length - 1 ? `1px solid ${accentLight}` : 'none', padding: '9px 0' }}>
-                      <span style={{ fontWeight: 700, fontSize: 13, color: c.text }}>{day}</span>
-                      <span style={{ fontWeight: 700, fontSize: 13, color: c.accent }}>{hrs}</span>
+                  {hoursLines.map((line, i) => (
+                    <div key={i} style={{ borderBottom: i < hoursLines.length - 1 ? `1px solid ${accentLight}` : 'none', padding: '9px 0' }}>
+                      <span style={{ fontWeight: 700, fontSize: 13, color: c.text }}>{line}</span>
                     </div>
                   ))}
                 </div>
