@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
+import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 
 // Template: Mechanic Ironclad
 // Industrial dark aesthetic with rust-red accent (#111111 bg, #C0392B accent, #ffffff text)
@@ -209,6 +210,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
       <header
         style={{ minHeight: '100vh', paddingTop: 68, position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center' }}
       >
+        <HeroImage src={images.hero} />
         {/* Dark diagonal base gradient */}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #0A0A0A 0%, #1a1a1a 40%, #0f0f0f 100%)' }} />
         {/* Rust-tinted grid */}
@@ -393,6 +395,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
           <p style={{ fontSize: 15, color: '#6B6560', lineHeight: 1.85, marginTop: 18, marginBottom: 24, maxWidth: 420 }}>
             {copy.aboutText || `Serving ${biz.city || 'your area'} with expert auto repair built on straight talk, fair prices, and work you can stake your safety on.`}
           </p>
+            {images.about && <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>}
 
           {/* Credential list */}
           <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 32 }}>
@@ -607,6 +610,9 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
       {/* ═══════════════════════════════════════════════════════════
           FOOTER
       ═══════════════════════════════════════════════════════════ */}
+
+      {/* GALLERY */}
+      <GallerySection images={images} colors={c} font={templateMeta.font} bodyFont={bodyFont} />
       <footer style={{ background: c.bg, borderTop: `2px solid ${c.accent}`, padding: 'clamp(48px, 8vw, 64px) 5% clamp(24px, 4vw, 32px)' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'clamp(28px, 5vw, 56px)', marginBottom: 48 }}>

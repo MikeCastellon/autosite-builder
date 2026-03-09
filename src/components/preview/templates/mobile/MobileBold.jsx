@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
+import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 
 // Template: Mobile Bold — Orange & dark (#1a1a1a bg, #f97316 accent)
 // Aggressive diagonal slashes, "WE COME TO YOU" badge, truck emoji nav, service area banner, packages pricing
@@ -77,6 +78,7 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
         background: `linear-gradient(135deg, #1a1a1a 0%, #2d1800 55%, #1a1a1a 100%)`,
         overflow: 'hidden',
       }}>
+        <HeroImage src={images.hero} />
         <div style={{ position: 'absolute', inset: 0, background: slashBg }} />
         <div style={{ position: 'absolute', top: 0, right: 0, width: '40%', height: '100%', background: `linear-gradient(to left, rgba(249,115,22,0.12), transparent)` }} />
 
@@ -247,6 +249,7 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
             <p style={{ color: '#bbb', lineHeight: 1.8, fontSize: 15, marginBottom: 20 }}>
               {copy.aboutText || `Based in ${biz.city || 'your area'}, we bring professional detailing directly to you.`}
             </p>
+            {images.about && <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>}
             {biz.certifications && (
               <div style={{ marginTop: 16, padding: '14px 18px', background: '#2a2a2a', borderLeft: `4px solid ${c.accent}` }}>
                 <div style={{ color: c.accent, fontWeight: 700, fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 4 }}>CERTIFIED</div>
@@ -333,6 +336,9 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
       </section>
 
       {/* FOOTER */}
+
+      {/* GALLERY */}
+      <GallerySection images={images} colors={c} font={font} bodyFont={templateMeta.bodyFont} />
       <footer style={{ background: '#111', padding: '48px 5% 28px', borderTop: `3px solid ${c.accent}` }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 36, marginBottom: 32 }}>
           <div>

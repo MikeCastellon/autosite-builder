@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
+import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 
 // Template: Mobile Modern — Blue & white (#ffffff bg, #2563eb accent, #eff6ff secondary)
 // Split hero layout, info cards, clean card-based services, professional badge row, stats grid
@@ -64,6 +65,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
         background: `linear-gradient(160deg, ${c.secondary || '#eff6ff'} 0%, #dbeafe 100%)`,
         padding: '96px 5% 72px',
       }}>
+        <HeroImage src={images.hero} />
         <div className="tp-2col" style={{ maxWidth: 1200, margin: '0 auto', width: '100%', display: 'grid', gridTemplateColumns: '1fr 420px', gap: 64, alignItems: 'center' }}>
           {/* Left: headline */}
           <div>
@@ -249,6 +251,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
             <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.8, marginBottom: 20 }}>
               {copy.aboutText || `Based in ${biz.city || 'your area'}, we bring professional detailing directly to you.`}
             </p>
+            {images.about && <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>}
             {biz.certifications && (
               <div style={{ background: c.secondary, borderRadius: 10, padding: '16px 20px', marginBottom: 12, borderLeft: `4px solid ${c.accent}` }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: c.accent, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 4 }}>CERTIFIED</div>
@@ -332,6 +335,9 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
       </section>
 
       {/* FOOTER */}
+
+      {/* GALLERY */}
+      <GallerySection images={images} colors={c} font={font} bodyFont={templateMeta.bodyFont} />
       <footer style={{ background: '#f1f5f9', borderTop: '1px solid #e5e7eb', padding: '48px 5% 28px' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 32, marginBottom: 32 }}>
           <div>

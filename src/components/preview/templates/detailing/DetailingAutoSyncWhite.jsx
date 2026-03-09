@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
+import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 
 export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const c = templateMeta.colors;
@@ -167,6 +168,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
 
       {/* HERO */}
       <section style={s.hero}>
+        <HeroImage src={images.hero} />
         <div style={s.heroGradient} />
         <div style={s.heroContent}>
           <div style={s.heroChip}>
@@ -264,6 +266,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
             <br />Trusted by industry.
           </h2>
           <p style={s.bodyText}>{generatedCopy.aboutText}</p>
+            {images.about && <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>}
           <div style={s.specPillsGrid}>
             {[
               { label: 'Experience', val: (businessInfo.yearsInBusiness || '8') + '+ Years' },
@@ -388,6 +391,9 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
       </section>
 
       {/* FOOTER */}
+
+      {/* GALLERY */}
+      <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
       <footer style={s.footer}>
         <div style={s.footerTop}>
           <div>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
+import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 
 export default function MechanicGarage({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
@@ -177,6 +178,7 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
 
       {/* HERO */}
       <section style={heroStyle}>
+        <HeroImage src={images.hero} />
         {[...Array(8)].map((_, i) => (
           <div key={i} style={heroAccentLine(`${10 + i * 12}%`, i % 3 === 0 ? 0.08 : 0.04)} />
         ))}
@@ -279,6 +281,7 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
               {businessInfo.yearsInBusiness ? `${businessInfo.yearsInBusiness} Years` : 'Built'} In The Trenches
             </h2>
             <p style={{ color: c.muted, lineHeight: 1.8, fontSize: '0.98rem', marginBottom: '28px' }}>{generatedCopy.aboutText}</p>
+            {images.about && <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>}
             {businessInfo.awards && businessInfo.awards.length > 0 && (
               <div style={{ marginBottom: '24px' }}>
                 {businessInfo.awards.map((award, i) => (
@@ -361,6 +364,9 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
       </section>
 
       {/* FOOTER */}
+
+      {/* GALLERY */}
+      <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
       <footer style={{ background: '#0a0a0a', backgroundImage: concreteTexture, padding: '48px 24px', fontFamily: bodyFont }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '32px', marginBottom: '36px' }}>

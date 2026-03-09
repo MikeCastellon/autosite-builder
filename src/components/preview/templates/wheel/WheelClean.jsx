@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
+import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 
 // Template: Wheel Clean — White & gunmetal (#f8f9fa bg, #374151 accent)
 // Professional clean, services list with left border accent, brands as styled text, tire brands, awards, split contact
@@ -68,6 +69,7 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
         borderBottom: '1px solid #e5e7eb',
         padding: '96px 5% 72px',
       }}>
+        <HeroImage src={images.hero} />
         <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'center' }}>
           <div>
             <span style={{
@@ -243,6 +245,7 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
               <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.85, marginBottom: 20 }}>
                 {copy.aboutText || `Serving ${biz.city || 'your area'} with expert wheel and tire services.`}
               </p>
+            {images.about && <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>}
               {biz.certifications && (
                 <div style={{ background: '#fff', borderRadius: 10, padding: '16px 20px', borderLeft: `4px solid ${c.accent}`, marginBottom: 12 }}>
                   <div style={{ fontSize: 11, fontWeight: 700, color: c.accent, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 4 }}>CERTIFICATIONS</div>
@@ -351,6 +354,9 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
       </section>
 
       {/* FOOTER */}
+
+      {/* GALLERY */}
+      <GallerySection images={images} colors={c} font={font} bodyFont={templateMeta.bodyFont} />
       <footer style={{ background: '#f9fafb', borderTop: '1px solid #e5e7eb', padding: '40px 5% 24px' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, marginBottom: 20 }}>
           <div>

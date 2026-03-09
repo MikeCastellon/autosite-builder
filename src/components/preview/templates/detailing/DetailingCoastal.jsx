@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
+import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 
 export default function DetailingCoastal({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
@@ -131,6 +132,7 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
 
       {/* HERO */}
       <section style={heroStyle}>
+        <HeroImage src={images.hero} />
         <div style={{ textAlign: 'center', maxWidth: '760px', padding: '120px 24px 100px', position: 'relative', zIndex: 1 }}>
           <div style={{ display: 'inline-block', background: 'rgba(8,145,178,0.1)', color: c.accent, borderRadius: '50px', padding: '8px 20px', fontSize: '0.85rem', fontWeight: 700, letterSpacing: '2px', marginBottom: '24px', textTransform: 'uppercase' }}>
             {businessInfo.city}, {businessInfo.state}
@@ -219,6 +221,7 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
               Serving {businessInfo.city} With Pride
             </h2>
             <p style={{ color: c.muted, lineHeight: 1.8, fontSize: '1rem', marginBottom: '24px' }}>{generatedCopy.aboutText}</p>
+            {images.about && <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>}
             {businessInfo.certifications && businessInfo.certifications.length > 0 && (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '20px' }}>
                 {businessInfo.certifications.map((cert, i) => (
@@ -295,6 +298,9 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
       </section>
 
       {/* FOOTER */}
+
+      {/* GALLERY */}
+      <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
       <footer style={{ background: '#0c4a6e', padding: '48px 24px', fontFamily: bodyFont }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '32px', marginBottom: '40px' }}>

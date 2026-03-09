@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
+import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 
 // Template: Tint Dark — Black & purple (#080808 bg, #7c3aed accent, #111111 secondary)
 // Radial gradient glow hero, film brands section, shield warranty callout, packages, fade/gradient elements
@@ -69,6 +70,7 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
         background: c.bg,
         overflow: 'hidden',
       }}>
+        <HeroImage src={images.hero} />
         {/* Radial glow — top right */}
         <div style={{
           position: 'absolute', top: '-20%', right: '-10%',
@@ -295,6 +297,7 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
             <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.85, marginBottom: 20 }}>
               {copy.aboutText || `Serving ${biz.city || 'your area'} with premium window tinting and film protection.`}
             </p>
+            {images.about && <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>}
             {biz.certifications && (
               <div style={{ background: c.secondary, borderRadius: 8, padding: '16px 20px', marginBottom: 12, borderLeft: `3px solid ${c.accent}` }}>
                 <div style={{ color: c.accent, fontSize: 10, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 4 }}>CERTIFICATIONS</div>
@@ -387,6 +390,9 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
       </section>
 
       {/* FOOTER */}
+
+      {/* GALLERY */}
+      <GallerySection images={images} colors={c} font={font} bodyFont={templateMeta.bodyFont} />
       <footer style={{ background: '#040408', padding: '48px 5% 24px', borderTop: `1px solid ${c.accent}22` }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 36, marginBottom: 32 }}>
           <div>

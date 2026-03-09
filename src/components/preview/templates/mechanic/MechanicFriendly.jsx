@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
+import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 
 export default function MechanicFriendly({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const c = templateMeta.colors;
@@ -236,6 +237,7 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
 
       {/* HERO */}
       <section style={s.hero}>
+        <HeroImage src={images.hero} />
         <div style={s.heroAccentBar} />
         {businessInfo.yearsInBusiness && (
           <div style={s.trustedBadge}>
@@ -305,6 +307,7 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
             <div style={s.sectionEyebrow}>About Us</div>
             <h2 style={{ ...s.sectionTitle, marginBottom: '1.25rem' }}>Part of Your Community</h2>
             <p style={s.aboutText}>{generatedCopy.aboutText}</p>
+            {images.about && <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>}
             {businessInfo.certifications && (
               <div style={s.certBadge}>
                 <div style={s.certIcon} />
@@ -386,6 +389,9 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
       </section>
 
       {/* FOOTER */}
+
+      {/* GALLERY */}
+      <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
       <footer style={s.footer}>
         <div>
           <div style={s.footerLogo}>{businessInfo.businessName}</div>

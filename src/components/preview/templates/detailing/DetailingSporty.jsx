@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
+import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 
 export default function DetailingSporty({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const c = templateMeta.colors;
@@ -196,6 +197,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
 
       {/* HERO */}
       <section style={s.hero}>
+        <HeroImage src={images.hero} />
         <div style={s.heroSlash} />
         <div style={s.heroSlash2} />
         {businessInfo.awards && <div style={s.awardsTag}>{businessInfo.awards}</div>}
@@ -262,6 +264,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
             <div style={s.sectionTag}>About Us</div>
             <h2 style={s.sectionTitle}>Built Different</h2>
             <p style={s.aboutText}>{generatedCopy.aboutText}</p>
+            {images.about && <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>}
           </div>
         </div>
       </section>
@@ -303,6 +306,9 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
       </div>
 
       {/* FOOTER */}
+
+      {/* GALLERY */}
+      <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
       <footer style={s.footer}>
         <div>
           <div style={s.footerName}>{businessInfo.businessName}</div>

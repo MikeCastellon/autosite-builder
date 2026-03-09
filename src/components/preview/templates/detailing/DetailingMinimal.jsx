@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
+import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 
 export default function DetailingMinimal({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const c = templateMeta.colors;
@@ -188,6 +189,7 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
 
       {/* HERO */}
       <section style={s.hero}>
+        <HeroImage src={images.hero} />
         {businessInfo.awards && <div style={s.awardsChip}>◆ {businessInfo.awards}</div>}
         <div style={s.heroPill}>Serving {businessInfo.city}, {businessInfo.state}</div>
         <h1 style={s.heroH1}>{generatedCopy.headline}</h1>
@@ -251,6 +253,7 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
           </div>
           <div>
             <p style={{ ...s.aboutText, marginBottom: '1.5rem' }}>{generatedCopy.aboutText}</p>
+            {images.about && <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>}
             {businessInfo.certifications && (
               <div style={{ display: 'inline-block', background: c.accent + '12', border: `1px solid ${c.accent}30`, padding: '8px 16px', borderRadius: '6px' }}>
                 <span style={{ fontFamily: bodyFont, fontSize: '0.82rem', color: c.accent, fontWeight: 600 }}>✦ {businessInfo.certifications}</span>
@@ -296,6 +299,9 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
       </section>
 
       {/* FOOTER */}
+
+      {/* GALLERY */}
+      <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
       <footer style={s.footer}>
         <div>
           <div style={s.footerLogo}>{businessInfo.businessName}</div>

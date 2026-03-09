@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
+import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 
 export default function MobileChrome({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
@@ -169,6 +170,7 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
 
       {/* HERO */}
       <section style={heroStyle}>
+        <HeroImage src={images.hero} />
         <div style={heroGlowStyle} />
         {/* Chrome horizontal lines */}
         {[15, 25, 75, 85].map((top, i) => (
@@ -294,6 +296,7 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
               Precision Detailing, Delivered to You
             </h2>
             <p style={{ color: c.muted, lineHeight: 1.85, fontSize: '0.95rem', marginBottom: '32px', fontWeight: 300 }}>{generatedCopy.aboutText}</p>
+            {images.about && <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>}
             {businessInfo.certifications && businessInfo.certifications.length > 0 && (
               <div style={{ marginBottom: '24px' }}>
                 <div style={{ fontSize: '0.68rem', letterSpacing: '2.5px', textTransform: 'uppercase', color: 'rgba(148,163,184,0.4)', marginBottom: '10px' }}>Certifications</div>
@@ -379,6 +382,9 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
       </section>
 
       {/* FOOTER */}
+
+      {/* GALLERY */}
+      <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
       <footer style={{ background: '#050505', borderTop: '1px solid rgba(148,163,184,0.08)', padding: '52px 24px', fontFamily: bodyFont }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '32px', marginBottom: '48px' }}>

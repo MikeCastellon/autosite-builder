@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
+import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 
 // Template: Carwash Bubble
 // Bright, playful, cheerful car wash aesthetic. No canvas, no custom cursor JS.
@@ -157,6 +158,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
         background: 'linear-gradient(160deg, #e0f7ff 0%, #f0f9ff 50%, #eff6ff 100%)',
         overflow: 'hidden', paddingTop: 66,
       }}>
+        <HeroImage src={images.hero} />
         <BubbleBlob size='480px' top='-120px' left='-120px' opacity={0.22} blur={8} />
         <BubbleBlob size='320px' bottom='-80px' right='-60px' opacity={0.18} blur={6} />
         <BubbleBlob size='220px' top='40%' right='6%' opacity={0.28} />
@@ -349,6 +351,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
                 <p style={{ color: c.muted || '#64748b', fontSize: 14, lineHeight: 1.75, margin: '0 0 16px', fontWeight: 600 }}>
                   {copy.aboutText || `Based in ${biz.city || 'your city'}${biz.state ? `, ${biz.state}` : ''}, we deliver a top-tier car wash every time.${biz.yearsInBusiness ? ` Over ${biz.yearsInBusiness} years in business — we know clean.` : ''}`}
                 </p>
+            {images.about && <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>}
                 {specialties.length > 0 && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
                     {specialties.map((s, idx) => <span key={idx} style={{ background: `${c.accent}15`, color: c.accent, borderRadius: 50, padding: '4px 14px', fontSize: 12, fontWeight: 700 }}>{s}</span>)}
@@ -446,6 +449,9 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
       </section>
 
       {/* ═══ FOOTER ═══ */}
+
+      {/* GALLERY */}
+      <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
       <footer style={{ background: deepBg, padding: '72px 5% 32px', position: 'relative', overflow: 'hidden', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 120, background: `conic-gradient(from 180deg at 50% 0%, ${c.accent}0e, #14b8a60a, transparent 40%)`, pointerEvents: 'none' }} />
         <div style={{ maxWidth: 1100, margin: '0 auto', position: 'relative', zIndex: 1 }}>

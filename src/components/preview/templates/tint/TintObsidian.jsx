@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
+import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 
 // Template: Tint Obsidian -- Ultra-dark void (#050507 bg, #7C3AED accent, #06B6D4 cyan)
 // Syne + Outfit fonts, VLT shade guide, film brands, process steps, testimonials
@@ -133,6 +134,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
 
       {/* ============================================================ HERO ============================================================ */}
       <header style={{ minHeight: '100vh', position: 'relative', display: 'flex', alignItems: 'center', background: c.bg, overflow: 'hidden' }}>
+        <HeroImage src={images.hero} />
         <div style={{
           position: 'absolute', top: '-15%', right: '-8%', width: 800, height: 800,
           background: `radial-gradient(circle, ${c.accent}28 0%, transparent 60%)`, pointerEvents: 'none',
@@ -481,6 +483,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
             <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.85, marginBottom: 24 }}>
               {copy.aboutText || `Serving ${biz.city || 'the area'} with premium window tinting and paint protection film.`}
             </p>
+            {images.about && <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>}
             {biz.yearsInBusiness && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
                 <div style={{ width: 3, height: 36, background: `linear-gradient(180deg, ${c.accent}, ${cCyan})`, borderRadius: 2, flexShrink: 0 }} />
@@ -639,6 +642,9 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
       </section>
 
       {/* ============================================================ FOOTER ============================================================ */}
+
+      {/* GALLERY */}
+      <GallerySection images={images} colors={c} font={templateMeta.font} bodyFont={bodyFont} />
       <footer style={{ background: '#030305', padding: '60px 5% 28px', borderTop: `1px solid ${c.accent}18` }}>
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 40, marginBottom: 48 }}>

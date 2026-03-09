@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
+import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 
 // Template: Mechanic Industrial — Dark steel & yellow (#1c1c1c bg, #eab308 accent, #2c2c2c secondary)
 // Gear/wrench feel, shop hours section, certifications as yellow badges, warranty guarantee box,
@@ -70,6 +71,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
         overflow: 'hidden',
         borderBottom: '1px solid #333',
       }}>
+        <HeroImage src={images.hero} />
         {/* Industrial grid overlay */}
         <div style={{
           position: 'absolute', inset: 0,
@@ -327,6 +329,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
             <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.85, marginBottom: 20 }}>
               {copy.aboutText || `Serving ${biz.city || 'your area'} with expert auto repair since day one.`}
             </p>
+            {images.about && <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>}
             {biz.specialties && (
               <div style={{ background: c.bg, borderRadius: 4, padding: '14px 18px', marginBottom: 12, borderLeft: `4px solid ${c.accent}` }}>
                 <div style={{ color: c.accent, fontSize: 10, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 4 }}>SPECIALTIES</div>
@@ -406,6 +409,9 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
       </section>
 
       {/* FOOTER */}
+
+      {/* GALLERY */}
+      <GallerySection images={images} colors={c} font={font} bodyFont={templateMeta.bodyFont} />
       <footer style={{ background: '#111', padding: '48px 5% 24px', borderTop: `3px solid ${c.accent}` }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 36, marginBottom: 32 }}>
           <div>

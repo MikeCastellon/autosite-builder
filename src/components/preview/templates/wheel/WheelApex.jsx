@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
+import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 
 // Template: Wheel Apex -- White & electric blue (#ffffff bg, #1A5CFF accent)
 // Industrial editorial layout: Barlow Condensed headings, grid-ruled sections,
@@ -144,6 +145,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
       {/* HERO */}
       <section className="tp-2col" style={{ paddingTop: 68, minHeight: "92vh", background: D.offwhite, display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", alignItems: "stretch", overflow: "hidden" }}>
 
+        <HeroImage src={images.hero} />
         {/* Hero Left */}
         <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "clamp(48px,6vw,80px) clamp(24px,5vw,64px) clamp(48px,6vw,80px) clamp(24px,6vw,80px)", position: "relative", zIndex: 2 }}>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 10, fontSize: 11, fontWeight: 600, letterSpacing: "3px", textTransform: "uppercase", color: D.blue, marginBottom: 24, fontFamily: bodyFont }}>
@@ -262,6 +264,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
                 ? copy.aboutText.substring(0, 200) + (copy.aboutText.length > 200 ? "..." : "")
                 : "We carry the brands that matter -- from forged JDM legends to European luxury to American custom. Every brand we stock is one we would put on our own car."}
             </p>
+            {images.about && <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>}
           </div>
 
           {brandsList.length > 0 ? (
@@ -539,6 +542,9 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
       </section>
 
       {/* FOOTER */}
+
+      {/* GALLERY */}
+      <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
       <footer style={{ background: D.dark, padding: "72px 0 32px", borderTop: `3px solid ${D.blue}` }}>
         <div style={wrap}>
           <div className="tp-4col" style={{ display: "grid", gridTemplateColumns: "minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)", gap: "clamp(24px,4vw,60px)", marginBottom: 56 }}>

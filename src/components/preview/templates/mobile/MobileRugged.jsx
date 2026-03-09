@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
+import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 
 // Template: Mobile Rugged — Dark green (#1a2318 bg, #8a9a4a accent, #f0ede0 text)
 // Repeating diagonal line texture in hero, "ANYWHERE · ANYTIME" subtext, service area, heavy uppercase
@@ -73,6 +74,7 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
         background: `linear-gradient(160deg, ${c.secondary || '#232e20'} 0%, ${c.bg} 70%)`,
         overflow: 'hidden',
       }}>
+        <HeroImage src={images.hero} />
         {/* Diagonal line texture overlay */}
         <div style={{ position: 'absolute', inset: 0, background: textureBg }} />
         {/* Vignette right side */}
@@ -193,6 +195,7 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
             <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.85, marginBottom: 20 }}>
               {copy.aboutText || `Serving ${biz.city || 'your area'} and surrounding regions. We bring the shop to you.`}
             </p>
+            {images.about && <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>}
             {biz.certifications && (
               <div style={{ background: `${c.accent}15`, border: `1px solid ${c.accent}44`, borderRadius: 4, padding: '14px 18px', marginBottom: 12 }}>
                 <div style={{ color: c.accent, fontWeight: 700, fontSize: 10, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 4 }}>CERTIFIED</div>
@@ -283,6 +286,9 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
       </section>
 
       {/* FOOTER */}
+
+      {/* GALLERY */}
+      <GallerySection images={images} colors={c} font={font} bodyFont={templateMeta.bodyFont} />
       <footer style={{ background: '#111a0f', padding: '48px 5% 24px', borderTop: `1px solid ${c.accent}33` }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 36, marginBottom: 32 }}>
           <div>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
+import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 
 export default function TintElite({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
@@ -190,6 +191,7 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
 
       {/* HERO */}
       <section style={heroStyle}>
+        <HeroImage src={images.hero} />
         {/* Diagonal accent lines */}
         <div style={diagonalLines} />
         {/* Corner gold accents */}
@@ -352,6 +354,7 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
               {businessInfo.yearsInBusiness ? `${businessInfo.yearsInBusiness} Years of Precision` : 'The Art of Window Tinting'}
             </h2>
             <p style={{ color: c.muted, lineHeight: 1.9, fontSize: '0.95rem', marginBottom: '32px', fontWeight: 300 }}>{generatedCopy.aboutText}</p>
+            {images.about && <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={templateMeta.colors.accent} /></div>}
             {businessInfo.specialties && businessInfo.specialties.length > 0 && (
               <div style={{ marginBottom: '24px' }}>
                 <div style={{ fontSize: '0.65rem', letterSpacing: '3px', textTransform: 'uppercase', color: c.muted, marginBottom: '10px', fontFamily: bodyFont }}>Specialties</div>
@@ -446,6 +449,9 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
       </section>
 
       {/* FOOTER */}
+
+      {/* GALLERY */}
+      <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
       <footer style={{ background: '#000000', padding: '56px 24px', fontFamily: bodyFont }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '36px', marginBottom: '48px' }}>
