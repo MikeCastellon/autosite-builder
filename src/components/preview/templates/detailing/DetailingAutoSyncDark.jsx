@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
+import { formatHours } from '../../../../lib/formatHours.js';
 
 export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const c = templateMeta.colors;
@@ -429,7 +430,7 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
               <div style={s.contactIcon}>⏷</div>
               <div>
                 <span style={s.contactLabel}>Hours</span>
-                <span style={s.contactVal}>{businessInfo.hours}</span>
+                <span style={s.contactVal}>{formatHours(businessInfo.hours)}</span>
               </div>
             </div>
           )}

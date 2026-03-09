@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
+import { formatHours } from '../../../../lib/formatHours.js';
 
 export default function DetailingPremium({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const c = templateMeta.colors;
@@ -267,7 +268,7 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
         <div style={s.ctaPhone}>{businessInfo.phone}</div>
         {businessInfo.hours && (
           <p style={{ fontFamily: bodyFont, color: c.muted, fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-            {businessInfo.hours}
+            {formatHours(businessInfo.hours)}
           </p>
         )}
         {businessInfo.paymentMethods?.length > 0 && (
@@ -292,7 +293,7 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
         {businessInfo.hours && (
           <div>
             <div style={{ ...s.footerText, color: c.accent, marginBottom: '0.5rem', letterSpacing: '0.12em', fontSize: '0.7rem', textTransform: 'uppercase' }}>Hours</div>
-            <div style={s.footerText}>{businessInfo.hours}</div>
+            <div style={s.footerText}>{formatHours(businessInfo.hours)}</div>
           </div>
         )}
         <div>

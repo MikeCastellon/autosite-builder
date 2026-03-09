@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
+import { formatHours } from '../../../../lib/formatHours.js';
 
 export default function MechanicFriendly({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const c = templateMeta.colors;
@@ -371,7 +372,7 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
             {businessInfo.hours && (
               <div style={s.contactInfoCard}>
                 <span style={s.contactInfoLabel}>Hours</span>
-                <span style={s.contactInfoText}>{businessInfo.hours}</span>
+                <span style={s.contactInfoText}>{formatHours(businessInfo.hours)}</span>
               </div>
             )}
             {businessInfo.serviceArea && (
@@ -394,7 +395,7 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
         {businessInfo.hours && (
           <div>
             <div style={s.footerSectionLabel}>Hours</div>
-            <div style={s.footerText}>{businessInfo.hours}</div>
+            <div style={s.footerText}>{formatHours(businessInfo.hours)}</div>
           </div>
         )}
         <div>

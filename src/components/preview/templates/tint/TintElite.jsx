@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
+import { formatHours } from '../../../../lib/formatHours.js';
 
 export default function TintElite({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
@@ -355,7 +356,7 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
               <div style={{ marginBottom: '24px' }}>
                 <div style={{ fontSize: '0.65rem', letterSpacing: '3px', textTransform: 'uppercase', color: c.muted, marginBottom: '10px', fontFamily: bodyFont }}>Specialties</div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                  {businessInfo.specialties.map((s, i) => goldPill(s, i))}
+                  {(Array.isArray(businessInfo.specialties) ? businessInfo.specialties : businessInfo.specialties.split(/[·,;|]+/).map(s => s.trim()).filter(Boolean)).map((s, i) => goldPill(s, i))}
                 </div>
               </div>
             )}
@@ -422,7 +423,7 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
           </h2>
           <p style={{ color: c.muted, fontSize: '1rem', marginBottom: '44px', lineHeight: 1.8, fontWeight: 300 }}>
             {businessInfo.serviceArea ? `Serving ${businessInfo.serviceArea}.` : `Serving ${businessInfo.city}, ${businessInfo.state} and surrounding areas.`}
-            {businessInfo.hours && ` ${businessInfo.hours}.`}
+            {businessInfo.hours && ` ${formatHours(businessInfo.hours)}.`}
           </p>
           <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '36px' }}>
             <a href={`tel:${businessInfo.phone}`} style={accentBtnStyle}>Call {businessInfo.phone}</a>

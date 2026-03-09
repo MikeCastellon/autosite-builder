@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
+import { formatHours } from '../../../../lib/formatHours.js';
 
 export default function DetailingSporty({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const c = templateMeta.colors;
@@ -285,7 +286,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
         <div style={s.ctaLeft}>
           <div style={s.ctaHeading}>Book Your Detail</div>
           <div style={s.ctaPhone}>{businessInfo.phone}</div>
-          {businessInfo.hours && <div style={{ fontFamily: bodyFont, color: 'rgba(255,255,255,0.75)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>{businessInfo.hours}</div>}
+          {businessInfo.hours && <div style={{ fontFamily: bodyFont, color: 'rgba(255,255,255,0.75)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>{formatHours(businessInfo.hours)}</div>}
           <button style={s.ctaBtn}>{generatedCopy.ctaPrimary}</button>
         </div>
         <div style={s.ctaRight}>
@@ -311,7 +312,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
         {businessInfo.hours && (
           <div>
             <div style={{ ...s.footerText, color: c.accent, marginBottom: '0.4rem', fontWeight: 700, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.15em' }}>Hours</div>
-            <div style={s.footerText}>{businessInfo.hours}</div>
+            <div style={s.footerText}>{formatHours(businessInfo.hours)}</div>
           </div>
         )}
         <div>

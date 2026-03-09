@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
+import { formatHours } from '../../../../lib/formatHours.js';
 
 export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const c = templateMeta.colors;
@@ -343,7 +344,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
               {[
                 { icon: '📞', label: 'Phone',    val: businessInfo.phone },
                 { icon: '📍', label: 'Location', val: businessInfo.address || [businessInfo.city, businessInfo.state].filter(Boolean).join(', ') },
-                { icon: '🕐', label: 'Hours',    val: businessInfo.hours },
+                { icon: '🕐', label: 'Hours',    val: formatHours(businessInfo.hours) },
               ].filter(item => item.val).map((item, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '16px 20px', background: off, border: '1px solid ' + border, borderRadius: radiusSm }}>
                   <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: white, border: '1px solid ' + border, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0, boxShadow: shadowSm }}>{item.icon}</div>

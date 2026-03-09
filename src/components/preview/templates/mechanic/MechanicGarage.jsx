@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
+import { formatHours } from '../../../../lib/formatHours.js';
 
 export default function MechanicGarage({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
@@ -311,7 +312,7 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
               ))}
             </div>
             {businessInfo.hours && (
-              <p style={{ color: c.muted, fontSize: '0.82rem', marginTop: '12px' }}>* {businessInfo.hours}</p>
+              <p style={{ color: c.muted, fontSize: '0.82rem', marginTop: '12px' }}>* {formatHours(businessInfo.hours)}</p>
             )}
           </div>
         </div>

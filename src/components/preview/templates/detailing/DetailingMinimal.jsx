@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
+import { formatHours } from '../../../../lib/formatHours.js';
 
 export default function DetailingMinimal({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const c = templateMeta.colors;
@@ -282,7 +283,7 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
         <div style={s.ctaBandSub}>{businessInfo.tagline || generatedCopy.subheadline}</div>
         <span style={s.ctaBandPhone}>{businessInfo.phone}</span>
         {businessInfo.hours && (
-          <p style={{ fontFamily: bodyFont, color: 'rgba(255,255,255,0.75)', fontSize: '0.88rem', marginBottom: '1.5rem' }}>{businessInfo.hours}</p>
+          <p style={{ fontFamily: bodyFont, color: 'rgba(255,255,255,0.75)', fontSize: '0.88rem', marginBottom: '1.5rem' }}>{formatHours(businessInfo.hours)}</p>
         )}
         <div><button style={s.ctaBandBtn}>{generatedCopy.ctaPrimary}</button></div>
         {businessInfo.paymentMethods?.length > 0 && (
@@ -304,7 +305,7 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
         {businessInfo.hours && (
           <div>
             <div style={s.footerHoursLabel}>Hours</div>
-            <div style={s.footerText}>{businessInfo.hours}</div>
+            <div style={s.footerText}>{formatHours(businessInfo.hours)}</div>
           </div>
         )}
         <div>

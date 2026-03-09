@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
+import { formatHours } from '../../../../lib/formatHours.js';
 
 export default function DetailingCoastal({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
@@ -277,7 +278,7 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
             <h3 style={{ fontFamily: font, fontSize: '1.4rem', fontWeight: 700, color: c.text, marginBottom: '20px' }}>Contact & Hours</h3>
             {businessInfo.phone && <p style={{ color: c.muted, marginBottom: '8px' }}>📞 {businessInfo.phone}</p>}
             {businessInfo.address && <p style={{ color: c.muted, marginBottom: '8px' }}>📍 {businessInfo.address}, {businessInfo.city}, {businessInfo.state}</p>}
-            {businessInfo.hours && <p style={{ color: c.muted, marginBottom: '8px' }}>🕐 {businessInfo.hours}</p>}
+            {businessInfo.hours && <p style={{ color: c.muted, marginBottom: '8px' }}>🕐 {formatHours(businessInfo.hours)}</p>}
           </div>
           <div style={{ flex: '1 1 260px' }}>
             <h3 style={{ fontFamily: font, fontSize: '1.4rem', fontWeight: 700, color: c.text, marginBottom: '20px' }}>Payment Methods</h3>

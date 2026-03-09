@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
+import { formatHours } from '../../../../lib/formatHours.js';
 
 export default function MobileChrome({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
@@ -355,7 +356,7 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
           </h2>
           <p style={{ color: c.muted, fontSize: '1rem', marginBottom: '48px', lineHeight: 1.8, fontWeight: 300 }}>
             {businessInfo.phone && `Call us at ${businessInfo.phone}.`} {businessInfo.address && `We come to you in ${businessInfo.city}, ${businessInfo.state}.`}
-            {businessInfo.hours && ` Available ${businessInfo.hours}.`}
+            {businessInfo.hours && ` Available ${formatHours(businessInfo.hours)}.`}
           </p>
           <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '32px' }}>
             <a href={`tel:${businessInfo.phone}`} style={accentBtnStyle}>Call Now</a>
