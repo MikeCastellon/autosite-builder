@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { SocialRow } from '../SocialIcons.jsx';
 
 export default function MechanicGarage({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
@@ -149,7 +150,8 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
   ];
 
   return (
-    <div style={{ background: c.bg, color: c.text, fontFamily: bodyFont }}>
+    <div style={{ background: c.bg, color: c.text, fontFamily: bodyFont, containerType: 'inline-size' }}>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
       {/* NAV */}
       <nav style={navStyle}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '68px' }}>
@@ -163,7 +165,7 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
               </div>
             )}
           </div>
-          <div style={{ display: 'flex', gap: '28px', alignItems: 'center' }}>
+          <div className="tp-nav-links" style={{ display: 'flex', gap: '28px', alignItems: 'center' }}>
             {['Services', 'Hours', 'About', 'Contact'].map(link => (
               <a key={link} href={`#${link.toLowerCase()}`} style={{ color: c.muted, textDecoration: 'none', fontWeight: 600, fontSize: '0.88rem', letterSpacing: '1px', textTransform: 'uppercase' }}>{link}</a>
             ))}
@@ -365,14 +367,7 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
               <div style={{ fontFamily: font, fontSize: '1.4rem', fontWeight: 900, color: '#ffffff', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '1px' }}>{businessInfo.businessName}</div>
               <p style={{ color: c.muted, fontSize: '0.88rem' }}>{generatedCopy.footerTagline}</p>
             </div>
-            <div style={{ display: 'flex', gap: '20px' }}>
-              {businessInfo.instagram && (
-                <a href={businessInfo.instagram} target="_blank" rel="noreferrer" style={{ color: c.muted, textDecoration: 'none', fontSize: '0.88rem', fontWeight: 600 }}>Instagram</a>
-              )}
-              {businessInfo.facebook && (
-                <a href={businessInfo.facebook} target="_blank" rel="noreferrer" style={{ color: c.muted, textDecoration: 'none', fontSize: '0.88rem', fontWeight: 600 }}>Facebook</a>
-              )}
-            </div>
+            <SocialRow biz={businessInfo} color={c.accent} size={20} images={images} />
           </div>
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '20px', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
             <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.8rem' }}>© {new Date().getFullYear()} {businessInfo.businessName}. All rights reserved.</p>

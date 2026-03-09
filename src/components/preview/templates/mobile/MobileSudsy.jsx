@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { SocialRow } from '../SocialIcons.jsx';
 
 // Template: Mobile Sudsy
 // Warm amber/cream bg, bubbly neo-brutalist mobile detailing aesthetic.
@@ -102,7 +103,8 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
   ];
 
   return (
-    <div style={{ fontFamily: bodyFont, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, position: 'relative' }}>
+    <div style={{ fontFamily: bodyFont, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, position: 'relative', containerType: 'inline-size' }}>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
 
       {/* STATIC BACKGROUND BUBBLES */}
       <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
@@ -128,7 +130,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
             </>
           )}
         </a>
-        <div style={{ display: 'flex', gap: 28, alignItems: 'center' }}>
+        <div className="tp-nav-links" style={{ display: 'flex', gap: 28, alignItems: 'center' }}>
           {[{ label: 'Services', href: '#services' }, { label: 'How It Works', href: '#how' }, { label: 'Reviews', href: '#reviews' }].map(({ label, href }) => (
             <a key={label} href={href} style={{ fontFamily: bodyFont, fontWeight: 800, fontSize: 14, color: c.text, textDecoration: 'none', opacity: 0.8 }}>{label}</a>
           ))}
@@ -148,13 +150,13 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
         {/* Top stripe */}
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 8, background: c.accent }} />
         {heroBubbles.map((b, i) => <StaticBubble key={i} {...b} />)}
-        <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 1200, margin: '0 auto', padding: '80px 5% 60px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, alignItems: 'center' }}>
+        <div className="tp-2col" style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 1200, margin: '0 auto', padding: '80px 5% 60px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, alignItems: 'center' }}>
           {/* Hero left: copy */}
           <div>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: c.text, color: c.accent, fontFamily: font, fontSize: 15, padding: '7px 18px', borderRadius: 980, marginBottom: 24 }}>
               {String.fromCodePoint(0x1F4CD)} We Come To YOU{biz.city ? ` — ${biz.city}` : ''}
             </div>
-            <h1 style={{ fontFamily: font, fontSize: 'clamp(3rem, 7vw, 5.5rem)', lineHeight: 1.05, color: c.text, margin: '0 0 20px' }}>
+            <h1 style={{ fontFamily: font, fontSize: 'clamp(1.8rem, 7vw, 5.5rem)', lineHeight: 1.05, color: c.text, margin: '0 0 20px' }}>
               {copy.headline || 'Your Car Deserves Better.'}
             </h1>
             <p style={{ fontSize: 17, fontWeight: 600, color: c.muted, lineHeight: 1.7, maxWidth: 480, marginBottom: 36 }}>
@@ -523,8 +525,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
           <div>
             <h4 style={{ fontFamily: font, fontSize: 20, color: c.accent, marginBottom: 16 }}>Follow Us</h4>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {biz.instagram && <a href={`https://instagram.com/${biz.instagram.replace('@', '')}`} style={{ fontSize: 13, fontWeight: 700, color: c.accent, textDecoration: 'none' }}>Instagram: {biz.instagram}</a>}
-              {biz.facebook  && <a href={`https://facebook.com/${biz.facebook}`}  style={{ fontSize: 13, fontWeight: 700, color: c.accent, textDecoration: 'none' }}>Facebook: {biz.facebook}</a>}
+              <SocialRow biz={biz} color={c.accent} size={20} images={images} />
               <a href="#services" style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.5)", textDecoration: "none" }}>View Services</a>
               <a href="#reviews"  style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.5)", textDecoration: "none" }}>Reviews</a>
             </div>

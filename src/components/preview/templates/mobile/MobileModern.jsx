@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { SocialRow } from '../SocialIcons.jsx';
 
 // Template: Mobile Modern — Blue & white (#ffffff bg, #2563eb accent, #eff6ff secondary)
 // Split hero layout, info cards, clean card-based services, professional badge row, stats grid
@@ -22,7 +23,8 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
   const packages = biz.packages || [];
 
   return (
-    <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0 }}>
+    <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, containerType: 'inline-size' }}>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
 
       {/* STICKY NAV */}
       <nav style={{
@@ -42,7 +44,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
             )}
             <span style={{ display: 'block', fontSize: 11, color: c.muted || '#64748b', letterSpacing: 1.5, textTransform: 'uppercase' }}>Mobile Detailing · {biz.city}</span>
           </div>
-          <div style={{ display: 'flex', gap: 28, alignItems: 'center' }}>
+          <div className="tp-nav-links" style={{ display: 'flex', gap: 28, alignItems: 'center' }}>
             <a href="#services" style={{ color: c.text, textDecoration: 'none', fontWeight: 600, fontSize: 14, opacity: 0.7 }}>Services</a>
             <a href="#about" style={{ color: c.text, textDecoration: 'none', fontWeight: 600, fontSize: 14, opacity: 0.7 }}>About</a>
             <a href="#contact" style={{ color: c.text, textDecoration: 'none', fontWeight: 600, fontSize: 14, opacity: 0.7 }}>Contact</a>
@@ -62,7 +64,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
         background: `linear-gradient(160deg, ${c.secondary || '#eff6ff'} 0%, #dbeafe 100%)`,
         padding: '96px 5% 72px',
       }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', width: '100%', display: 'grid', gridTemplateColumns: '1fr 420px', gap: 64, alignItems: 'center' }}>
+        <div className="tp-2col" style={{ maxWidth: 1200, margin: '0 auto', width: '100%', display: 'grid', gridTemplateColumns: '1fr 420px', gap: 64, alignItems: 'center' }}>
           {/* Left: headline */}
           <div>
             <span style={{
@@ -240,7 +242,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
 
       {/* ABOUT */}
       <section id="about" style={{ padding: '80px 5%', background: c.bg, borderTop: '1px solid #e5e7eb' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'start' }}>
+        <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'start' }}>
           <div>
             <span style={{ display: 'inline-block', background: `${c.accent}12`, color: c.accent, fontSize: 12, fontWeight: 700, padding: '5px 14px', borderRadius: 20, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 16 }}>About</span>
             <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, color: c.text, marginBottom: 20 }}>About {biz.businessName}</h2>
@@ -346,16 +348,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
           </div>
           <div>
             <div style={{ fontWeight: 700, fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', color: '#94a3b8', marginBottom: 12 }}>Follow Us</div>
-            {biz.instagram && (
-              <a href={`https://instagram.com/${biz.instagram.replace('@', '')}`} style={{ display: 'block', color: c.accent, textDecoration: 'none', fontWeight: 600, fontSize: 14, marginBottom: 6 }}>
-                Instagram: {biz.instagram}
-              </a>
-            )}
-            {biz.facebook && (
-              <a href={`https://facebook.com/${biz.facebook}`} style={{ display: 'block', color: c.accent, textDecoration: 'none', fontWeight: 600, fontSize: 14 }}>
-                Facebook: {biz.facebook}
-              </a>
-            )}
+            <SocialRow biz={biz} color={c.accent} size={20} images={images} />
           </div>
         </div>
         <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: 20, textAlign: 'center', color: '#94a3b8', fontSize: 12 }}>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { SocialRow } from '../SocialIcons.jsx';
 
 // Template: Carwash Bubble
 // Bright, playful, cheerful car wash aesthetic. No canvas, no custom cursor JS.
@@ -99,7 +100,8 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
   const packageIcons = ['💧', '🫧', '✨', '🌟'];
 
   return (
-    <div style={{ fontFamily: bodyFont, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0 }}>
+    <div style={{ fontFamily: bodyFont, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, containerType: 'inline-size' }}>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
 
       {/* Marquee keyframe */}
       <style>{'@keyframes soapScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }'}</style>
@@ -136,7 +138,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
             </>
           )}
         </a>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
+        <div className="tp-nav-links" style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
           {[['#packages', 'Packages'], ['#how', 'How It Works'], ['#reviews', 'Reviews']].map(([href, label]) => (
             <a key={href} href={href} style={{ color: c.text, textDecoration: 'none', fontWeight: 700, fontSize: 13, opacity: 0.8 }}>{label}</a>
           ))}
@@ -176,7 +178,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
             {biz.city || 'Your City'}{biz.state ? `, ${biz.state}` : ''} — Open Now
           </div>
 
-          <h1 style={{ fontFamily: font, fontSize: 'clamp(3rem, 9vw, 6.5rem)', lineHeight: 0.95, letterSpacing: '-0.01em', margin: '0 0 1.2rem', color: c.text }}>
+          <h1 style={{ fontFamily: font, fontSize: 'clamp(1.8rem, 9vw, 6.5rem)', lineHeight: 0.95, letterSpacing: '-0.01em', margin: '0 0 1.2rem', color: c.text }}>
             {copy.headline ? copy.headline : (
               <>
                 <span style={gradText}>{biz.businessName || 'Bubble Rush'}</span>
@@ -327,7 +329,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
               Not all car washes are{' '}<span style={gradText}>equal.</span>
             </h2>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, alignItems: 'start' }}>
+          <div className="tp-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, alignItems: 'start' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               {featuresList.map((feat, i) => (
                 <div key={i} style={{ display: 'flex', gap: 18, alignItems: 'flex-start', background: c.bg, border: `1.5px solid ${accentLight}`, borderRadius: 20, padding: '20px 22px', boxShadow: '0 4px 16px rgba(6,182,212,0.06)' }}>
@@ -475,9 +477,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
             <div>
               <h4 style={{ fontFamily: font, fontSize: 15, marginBottom: 18, background: `linear-gradient(135deg, ${c.accent}, #14b8a6)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Follow</h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {biz.instagram ? <a href={`https://instagram.com/${biz.instagram.replace('@', '')}`} style={{ color: c.accent, textDecoration: 'none', fontWeight: 700, fontSize: 14 }}>Instagram: {biz.instagram}</a> : null}
-                {biz.facebook ? <a href={`https://facebook.com/${biz.facebook}`} style={{ color: c.accent, textDecoration: 'none', fontWeight: 700, fontSize: 14 }}>Facebook: {biz.facebook}</a> : null}
-                {!biz.instagram && !biz.facebook && <span style={{ color: 'rgba(255,255,255,0.28)', fontSize: 13, fontWeight: 600 }}>Find us online!</span>}
+                <SocialRow biz={biz} color={c.accent} size={20} images={images} />
               </div>
             </div>
           </div>

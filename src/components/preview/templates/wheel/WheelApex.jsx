@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { SocialRow } from '../SocialIcons.jsx';
 
 // Template: Wheel Apex -- White & electric blue (#ffffff bg, #1A5CFF accent)
 // Industrial editorial layout: Barlow Condensed headings, grid-ruled sections,
@@ -93,7 +94,8 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
   );
 
   return (
-    <div style={{ fontFamily: bodyFont, background: D.white, color: D.dark, minHeight: "100vh", overflowX: "hidden", WebkitFontSmoothing: "antialiased" }}>
+    <div style={{ fontFamily: bodyFont, background: D.white, color: D.dark, minHeight: "100vh", overflowX: "hidden", WebkitFontSmoothing: "antialiased", containerType: 'inline-size' }}>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}.tp-4col{grid-template-columns:1fr 1fr!important}}`}</style>
 
       {/* NAV */}
       <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 500, height: 68, background: "rgba(255,255,255,0.96)", borderBottom: `1px solid ${D.border}`, backdropFilter: "blur(20px)", display: "flex", alignItems: "center", boxShadow: scrolled ? "0 2px 20px rgba(0,0,0,0.08)" : "none", transition: "box-shadow 0.3s ease" }}>
@@ -119,7 +121,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
               )}
             </div>
           </div>
-          <ul style={{ display: "flex", gap: 32, listStyle: "none", margin: 0, padding: 0 }}>
+          <ul className="tp-nav-links" style={{ display: "flex", gap: 32, listStyle: "none", margin: 0, padding: 0 }}>
             {["Brands", "Services", "Process", "Contact"].map(link => (
               <li key={link}>
                 <a href={`#${link.toLowerCase()}`} style={{ fontSize: 13, fontWeight: 600, letterSpacing: "1.5px", textTransform: "uppercase", color: D.slate, textDecoration: "none" }}>
@@ -140,7 +142,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
       </nav>
 
       {/* HERO */}
-      <section style={{ paddingTop: 68, minHeight: "92vh", background: D.offwhite, display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", alignItems: "stretch", overflow: "hidden" }}>
+      <section className="tp-2col" style={{ paddingTop: 68, minHeight: "92vh", background: D.offwhite, display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", alignItems: "stretch", overflow: "hidden" }}>
 
         {/* Hero Left */}
         <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "clamp(48px,6vw,80px) clamp(24px,5vw,64px) clamp(48px,6vw,80px) clamp(24px,6vw,80px)", position: "relative", zIndex: 2 }}>
@@ -149,7 +151,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
             {biz.city ? `${biz.city}'s Premier Wheel Studio` : "Custom Wheel Specialists"}
           </span>
 
-          <h1 style={{ fontFamily: font, fontSize: "clamp(52px, 5.5vw, 84px)", fontWeight: 900, lineHeight: 0.95, letterSpacing: "-0.5px", color: D.dark, marginBottom: 24 }}>
+          <h1 style={{ fontFamily: font, fontSize: "clamp(28px, 5.5vw, 84px)", fontWeight: 900, lineHeight: 0.95, letterSpacing: "-0.5px", color: D.dark, marginBottom: 24 }}>
             {copy.headline
               ? (() => {
                   const words = copy.headline.trim().split(" ");
@@ -250,7 +252,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
       {/* BRANDS SECTION */}
       <section id="brands" style={{ padding: "100px 0", background: D.white, borderTop: `1px solid ${D.border2}` }}>
         <div style={wrap}>
-          <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: "clamp(24px,6vw,80px)", alignItems: "end", marginBottom: 56 }}>
+          <div className="tp-2col" style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: "clamp(24px,6vw,80px)", alignItems: "end", marginBottom: 56 }}>
             <div>
               <Eyebrow label="Featured Brands" />
               <SecTitle>Wheels built<br />to <span style={{ color: D.blue }}>perform.</span></SecTitle>
@@ -335,7 +337,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
       <div id="fitment" style={{ background: D.dark, padding: "80px 0", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: 4, background: D.blue }} />
         <div style={wrap}>
-          <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: "clamp(32px,6vw,100px)", alignItems: "center" }}>
+          <div className="tp-2col" style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: "clamp(32px,6vw,100px)", alignItems: "center" }}>
             <div>
               <h2 style={{ fontFamily: font, fontWeight: 900, fontSize: "clamp(38px,4vw,60px)", lineHeight: 0.95, letterSpacing: "-0.5px", color: "#fff", marginBottom: 20 }}>
                 {specialtiesList.length > 0
@@ -464,7 +466,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
             <Eyebrow label="Get In Touch" />
             <SecTitle>Let's talk<br /><span style={{ color: D.blue }}>your build.</span></SecTitle>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: "clamp(32px,6vw,80px)", alignItems: "start" }}>
+          <div className="tp-2col" style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: "clamp(32px,6vw,80px)", alignItems: "start" }}>
             <div>
               <p style={{ fontSize: 16, color: D.steel, lineHeight: 1.75, marginBottom: 32, fontFamily: bodyFont }}>
                 {copy.footerTagline || "Reach out and we will get back to you with a full recommendation -- no obligation, no pressure. Just the right wheels for your car."}
@@ -539,7 +541,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
       {/* FOOTER */}
       <footer style={{ background: D.dark, padding: "72px 0 32px", borderTop: `3px solid ${D.blue}` }}>
         <div style={wrap}>
-          <div style={{ display: "grid", gridTemplateColumns: "minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)", gap: "clamp(24px,4vw,60px)", marginBottom: 56 }}>
+          <div className="tp-4col" style={{ display: "grid", gridTemplateColumns: "minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)", gap: "clamp(24px,4vw,60px)", marginBottom: 56 }}>
 
             {/* Brand col */}
             <div>
@@ -595,7 +597,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
                 {biz.phone && <li><a href={`tel:${biz.phone}`} style={{ fontSize: 14, color: D.alloy2, textDecoration: "none", fontFamily: bodyFont }}>{biz.phone}</a></li>}
                 {biz.address && <li><span style={{ fontSize: 14, color: D.alloy2, fontFamily: bodyFont }}>{biz.address}</span></li>}
                 <li><a href="#contact" style={{ fontSize: 14, color: D.alloy2, textDecoration: "none", fontFamily: bodyFont }}>Get a Quote</a></li>
-                {biz.instagram && <li><a href={`https://instagram.com/${biz.instagram.replace("@", "")}`} style={{ fontSize: 14, color: D.alloy2, textDecoration: "none", fontFamily: bodyFont }}>Instagram</a></li>}
+                <li><SocialRow biz={biz} color={D.alloy2} size={20} images={images} /></li>
               </ul>
             </div>
           </div>

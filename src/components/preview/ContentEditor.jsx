@@ -192,7 +192,31 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
           )}
 
           {activeSection === 'footer' && (
-            <Field label="Footer Tagline" value={copy.footerTagline} onChange={(v) => setCopy('footerTagline', v)} />
+            <>
+              <Field label="Footer Tagline" value={copy.footerTagline} onChange={(v) => setCopy('footerTagline', v)} />
+              <div className="mt-4 mb-2">
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-3">Social Icons</p>
+                <p className="text-[11px] text-gray-400 mb-3">Toggle which social icons appear on your site.</p>
+                {[
+                  { key: 'hideInstagram', label: 'Instagram' },
+                  { key: 'hideFacebook', label: 'Facebook' },
+                  { key: 'hideTiktok', label: 'TikTok' },
+                ].map(({ key, label }) => (
+                  <label key={key} className="flex items-center justify-between py-2 border-b border-gray-100 cursor-pointer">
+                    <span className="text-[13px] text-gray-700">{label}</span>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={!images?.[key]}
+                      onClick={() => setImage(key, !images?.[key])}
+                      className={`relative w-9 h-5 rounded-full transition-colors ${!images?.[key] ? 'bg-gray-900' : 'bg-gray-300'}`}
+                    >
+                      <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${!images?.[key] ? 'translate-x-4' : 'translate-x-0'}`} />
+                    </button>
+                  </label>
+                ))}
+              </div>
+            </>
           )}
 
         </div>

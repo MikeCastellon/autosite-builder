@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { SocialRow } from '../SocialIcons.jsx';
 
 // Template: Mechanic Ironclad
 // Industrial dark aesthetic with rust-red accent (#111111 bg, #C0392B accent, #ffffff text)
@@ -126,8 +127,10 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
         padding: 0,
         backgroundImage: noiseBg,
         backgroundRepeat: 'repeat',
+        containerType: 'inline-size',
       }}
     >
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
       {/* Marquee keyframe injection */}
       <style>{`
         @keyframes ironcladMarquee {
@@ -177,7 +180,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
         )}
 
         {/* Nav links */}
-        <div style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
+        <div className="tp-nav-links" style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
           {[['#services', 'Services'], ['#about', 'Our Shop'], ['#testimonials', 'Reviews'], ['#contact', 'Contact']].map(([href, label]) => (
             <a
               key={href} href={href}
@@ -231,7 +234,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
           </div>
 
           {/* H1 */}
-          <h1 style={{ fontFamily: bebas, fontSize: 'clamp(72px, 10vw, 130px)', lineHeight: 0.92, letterSpacing: 2, color: c.text, margin: '0 0 28px' }}>
+          <h1 style={{ fontFamily: bebas, fontSize: 'clamp(32px, 10vw, 130px)', lineHeight: 0.92, letterSpacing: 2, color: c.text, margin: '0 0 28px' }}>
             {copy.headline ? (
               copy.headline
             ) : (

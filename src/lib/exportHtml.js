@@ -61,6 +61,10 @@ function buildSeoHead(businessInfo, generatedCopy) {
       div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
       div[style*="1fr 1fr"] { grid-template-columns: 1fr !important; }
       div[style*="2fr 1fr"] { grid-template-columns: 1fr !important; }
+      .tp-nav-links a[href^="#"] { display: none !important; }
+      .tp-nav-links { gap: 12px !important; }
+      .tp-2col { grid-template-columns: 1fr !important; }
+      .tp-4col { grid-template-columns: 1fr 1fr !important; }
     }
   </style>
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { SocialRow } from '../SocialIcons.jsx';
 
 // Template: Wheel Edge — Dark chrome & electric blue (#0d0d0d bg, #00b4d8 accent, #1a1a2e secondary)
 // Circular ring decorative element in hero, product-catalog service grid, brands section, no emoji in nav
@@ -24,7 +25,8 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
   const tireBrands = biz.tireBrands ? (typeof biz.tireBrands === 'string' ? biz.tireBrands.split(/,|·/).map(b => b.trim()) : biz.tireBrands) : [];
 
   return (
-    <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0 }}>
+    <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, containerType: 'inline-size' }}>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}.tp-4col{grid-template-columns:1fr 1fr!important}}`}</style>
 
       {/* STICKY NAV — no emoji */}
       <nav style={{
@@ -44,7 +46,7 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
             )}
             <span style={{ display: 'block', fontSize: 10, color: c.accent, letterSpacing: 4, textTransform: 'uppercase' }}>Wheels · Tires · {biz.city}</span>
           </div>
-          <div style={{ display: 'flex', gap: 28, alignItems: 'center' }}>
+          <div className="tp-nav-links" style={{ display: 'flex', gap: 28, alignItems: 'center' }}>
             <a href="#services" style={{ color: c.text, textDecoration: 'none', fontWeight: 600, fontSize: 13, letterSpacing: 1.5, textTransform: 'uppercase', opacity: 0.7 }}>Services</a>
             <a href="#brands" style={{ color: c.text, textDecoration: 'none', fontWeight: 600, fontSize: 13, letterSpacing: 1.5, textTransform: 'uppercase', opacity: 0.7 }}>Brands</a>
             <a href="#about" style={{ color: c.text, textDecoration: 'none', fontWeight: 600, fontSize: 13, letterSpacing: 1.5, textTransform: 'uppercase', opacity: 0.7 }}>About</a>
@@ -241,7 +243,7 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
 
       {/* ABOUT */}
       <section id="about" style={{ padding: '80px 5%', borderTop: `1px solid ${c.accent}33` }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'start' }}>
+        <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'start' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
               <div style={{ width: 40, height: 2, background: c.accent }} />
@@ -358,16 +360,7 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
           </div>
           <div>
             <div style={{ fontWeight: 700, fontSize: 10, letterSpacing: 3, textTransform: 'uppercase', color: '#333', marginBottom: 12 }}>FOLLOW</div>
-            {biz.instagram && (
-              <a href={`https://instagram.com/${biz.instagram.replace('@', '')}`} style={{ display: 'block', color: c.accent, textDecoration: 'none', fontWeight: 600, fontSize: 13, marginBottom: 6 }}>
-                Instagram: {biz.instagram}
-              </a>
-            )}
-            {biz.facebook && (
-              <a href={`https://facebook.com/${biz.facebook}`} style={{ display: 'block', color: c.accent, textDecoration: 'none', fontWeight: 600, fontSize: 13 }}>
-                Facebook: {biz.facebook}
-              </a>
-            )}
+            <SocialRow biz={biz} color={c.accent} size={20} images={images} />
           </div>
         </div>
         <div style={{ borderTop: `1px solid #111`, paddingTop: 20, textAlign: 'center', color: '#333', fontSize: 12 }}>

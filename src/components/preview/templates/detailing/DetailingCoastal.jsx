@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { SocialRow } from '../SocialIcons.jsx';
 
 export default function DetailingCoastal({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
@@ -106,7 +107,8 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
   };
 
   return (
-    <div style={{ background: c.bg, color: c.text, fontFamily: bodyFont }}>
+    <div style={{ background: c.bg, color: c.text, fontFamily: bodyFont, containerType: 'inline-size' }}>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
       {/* NAV */}
       <nav style={navStyle}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '68px' }}>
@@ -117,7 +119,7 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
               businessInfo.businessName
             )}
           </div>
-          <div style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>
+          <div className="tp-nav-links" style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>
             {['Services', 'Packages', 'About', 'Contact'].map(link => (
               <a key={link} href={`#${link.toLowerCase()}`} style={{ color: c.text, textDecoration: 'none', fontWeight: 600, fontSize: '0.95rem' }}>{link}</a>
             ))}
@@ -299,14 +301,7 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
               <div style={{ fontFamily: font, fontSize: '1.5rem', fontWeight: 800, color: '#ffffff', marginBottom: '8px' }}>{businessInfo.businessName}</div>
               <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem', maxWidth: '300px' }}>{generatedCopy.footerTagline}</p>
             </div>
-            <div style={{ display: 'flex', gap: '20px' }}>
-              {businessInfo.instagram && (
-                <a href={businessInfo.instagram} target="_blank" rel="noreferrer" style={{ color: 'rgba(255,255,255,0.7)', textDecoration: 'none', fontSize: '0.9rem' }}>Instagram</a>
-              )}
-              {businessInfo.facebook && (
-                <a href={businessInfo.facebook} target="_blank" rel="noreferrer" style={{ color: 'rgba(255,255,255,0.7)', textDecoration: 'none', fontSize: '0.9rem' }}>Facebook</a>
-              )}
-            </div>
+            <SocialRow biz={businessInfo} color="rgba(255,255,255,0.7)" size={20} images={images} />
           </div>
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.15)', paddingTop: '24px', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
             <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.82rem' }}>© {new Date().getFullYear()} {businessInfo.businessName}. All rights reserved.</p>

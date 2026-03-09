@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { SocialRow } from '../SocialIcons.jsx';
 
 // Template: Tint Obsidian -- Ultra-dark void (#050507 bg, #7C3AED accent, #06B6D4 cyan)
 // Syne + Outfit fonts, VLT shade guide, film brands, process steps, testimonials
@@ -85,7 +86,8 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
 
   return (
 
-    <div style={{ fontFamily: bodyFont, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, WebkitFontSmoothing: 'antialiased' }}>
+    <div style={{ fontFamily: bodyFont, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, WebkitFontSmoothing: 'antialiased', containerType: 'inline-size' }}>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
 
       {/* ============================================================ NAV ============================================================ */}
       <nav style={{
@@ -114,7 +116,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
               </div>
             )}
           </div>
-          <div style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
+          <div className="tp-nav-links" style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
             {[['#services', 'Services'], ['#films', 'Film Tech'], ['#process', 'Process']].map(([href, label]) => (
               <a key={href} href={href} style={{ color: c.text, textDecoration: 'none', fontWeight: 500, fontSize: 13, opacity: 0.55 }}>{label}</a>
             ))}
@@ -159,7 +161,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
             {biz.city && biz.state ? `${biz.city}, ${biz.state}` : 'Premium Tint Studio'} · Certified Installers
           </div>
           <h1 style={{
-            fontFamily: font, fontSize: 'clamp(3rem, 7vw, 6rem)', fontWeight: 800,
+            fontFamily: font, fontSize: 'clamp(1.8rem, 7vw, 6rem)', fontWeight: 800,
             lineHeight: 1.0, letterSpacing: -2, margin: '0 0 24px', color: c.text,
           }}>
             {copy.headline || 'Precision Film. Zero Compromise.'}
@@ -216,7 +218,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
           background: `radial-gradient(circle, ${c.accent}07, transparent 70%)`, pointerEvents: 'none',
         }} />
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0 60px', alignItems: 'end', marginBottom: 72 }}>
+          <div className="tp-2col" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0 60px', alignItems: 'end', marginBottom: 72 }}>
             <div>
               <div style={labelTagStyle}>
                 <span style={{ width: 24, height: 1, background: c.accent, flexShrink: 0 }} />
@@ -535,21 +537,10 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
                 </div>
               )}
             </div>
-            {(biz.instagram || biz.facebook) && (
-              <div style={{ background: panelBg, padding: '20px 24px', borderRadius: 10, border: `1px solid ${c.accent}18` }}>
+            <div style={{ background: panelBg, padding: '20px 24px', borderRadius: 10, border: `1px solid ${c.accent}18` }}>
                 <div style={{ color: c.accent, fontWeight: 700, fontSize: 10, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 12, fontFamily: font }}>// FOLLOW</div>
-                {biz.instagram && (
-                  <a href={`https://instagram.com/${biz.instagram.replace('@', '')}`} style={{ display: 'block', color: cCyan, textDecoration: 'none', fontWeight: 600, fontSize: 13, marginBottom: 6 }}>
-                    Instagram: {biz.instagram}
-                  </a>
-                )}
-                {biz.facebook && (
-                  <a href={`https://facebook.com/${biz.facebook}`} style={{ display: 'block', color: cCyan, textDecoration: 'none', fontWeight: 600, fontSize: 13 }}>
-                    Facebook: {biz.facebook}
-                  </a>
-                )}
+                <SocialRow biz={biz} color={cCyan} size={20} images={images} />
               </div>
-            )}
           </div>
         </div>
       </section>
@@ -696,12 +687,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
                 )}
                 {biz.address && <div style={{ color: '#3a3a4e', fontSize: 13 }}>{biz.address}</div>}
                 {biz.city && biz.state && <div style={{ color: '#3a3a4e', fontSize: 13 }}>{biz.city}, {biz.state}</div>}
-                {biz.instagram && (
-                  <a href={`https://instagram.com/${biz.instagram.replace('@', '')}`} style={{ color: cCyan, fontSize: 13, textDecoration: 'none' }}>Instagram: {biz.instagram}</a>
-                )}
-                {biz.facebook && (
-                  <a href={`https://facebook.com/${biz.facebook}`} style={{ color: cCyan, fontSize: 13, textDecoration: 'none' }}>Facebook: {biz.facebook}</a>
-                )}
+                <SocialRow biz={biz} color={cCyan} size={20} images={images} />
               </div>
             </div>
           </div>

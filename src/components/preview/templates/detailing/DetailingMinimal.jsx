@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { SocialRow } from '../SocialIcons.jsx';
 
 export default function DetailingMinimal({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const c = templateMeta.colors;
@@ -172,7 +173,8 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
   ];
 
   return (
-    <div style={{ background: '#f7f7f8', color: c.bg, fontFamily: bodyFont }}>
+    <div style={{ background: '#f7f7f8', color: c.bg, fontFamily: bodyFont, containerType: 'inline-size' }}>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
       {/* NAV */}
       <nav style={s.nav}>
         {images.logo ? (
@@ -232,7 +234,7 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
           <div>
             <div style={s.sectionEyebrow}>About Us</div>
             <h2 style={{ ...s.sectionTitle, marginBottom: '1.5rem' }}>Our Commitment to Excellence</h2>
-            <div style={s.aboutStatBoxes}>
+            <div className="tp-2col" style={s.aboutStatBoxes}>
               {[
                 { num: `${businessInfo.yearsInBusiness || '10'}+`, label: 'Years in Business' },
                 { num: '5K+', label: 'Cars Serviced' },
@@ -306,8 +308,7 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
           </div>
         )}
         <div>
-          {businessInfo.instagram && <a href={`https://instagram.com/${businessInfo.instagram}`} style={s.footerLink}>Instagram</a>}
-          {businessInfo.facebook && <a href={`https://facebook.com/${businessInfo.facebook}`} style={s.footerLink}>Facebook</a>}
+          <SocialRow biz={businessInfo} color={c.accent} size={20} images={images} />
           {businessInfo.serviceArea && <div style={{ ...s.footerText, marginTop: '0.5rem' }}>Serving {businessInfo.serviceArea}</div>}
         </div>
       </footer>

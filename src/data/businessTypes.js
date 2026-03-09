@@ -60,6 +60,7 @@ export const COMMON_FIELDS = [
   { key: 'hours',           label: 'Business Hours',       type: 'text',     required: false, placeholder: 'e.g. Mon–Sat 8am–6pm' },
   { key: 'instagram',       label: 'Instagram Handle',     type: 'text',     required: false, placeholder: '@yourbusiness' },
   { key: 'facebook',        label: 'Facebook Page URL',    type: 'text',     required: false, placeholder: 'facebook.com/yourbusiness' },
+  { key: 'tiktok',          label: 'TikTok Handle',        type: 'text',     required: false, placeholder: '@yourbusiness' },
 ];
 
 export const COMMON_EXTRA_FIELDS = [

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { SocialRow } from '../SocialIcons.jsx';
 
 export default function TintElite({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
@@ -162,7 +163,8 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
   });
 
   return (
-    <div style={{ background: c.bg, color: c.text, fontFamily: bodyFont }}>
+    <div style={{ background: c.bg, color: c.text, fontFamily: bodyFont, containerType: 'inline-size' }}>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
       {/* NAV */}
       <nav style={navStyle}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '72px' }}>
@@ -176,7 +178,7 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
               </div>
             )}
           </div>
-          <div style={{ display: 'flex', gap: '36px', alignItems: 'center' }}>
+          <div className="tp-nav-links" style={{ display: 'flex', gap: '36px', alignItems: 'center' }}>
             {['Services', 'Films', 'Packages', 'Contact'].map(link => (
               <a key={link} href={`#${link.toLowerCase()}`} style={{ color: c.muted, textDecoration: 'none', fontWeight: 400, fontSize: '0.82rem', letterSpacing: '2px', textTransform: 'uppercase' }}>{link}</a>
             ))}
@@ -208,7 +210,7 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
           )}
 
           {/* Heading uses templateMeta.font (Playfair Display) */}
-          <h1 style={{ fontFamily: font, fontSize: 'clamp(2.6rem, 5.5vw, 4.5rem)', fontWeight: 700, color: c.text, lineHeight: 1.1, marginBottom: '8px', letterSpacing: '-0.5px', fontStyle: 'italic' }}>
+          <h1 style={{ fontFamily: font, fontSize: 'clamp(2rem, 5.5vw, 4.5rem)', fontWeight: 700, color: c.text, lineHeight: 1.1, marginBottom: '8px', letterSpacing: '-0.5px', fontStyle: 'italic' }}>
             {generatedCopy.headline}
           </h1>
           <div style={{ width: '100px', height: '1px', background: goldGradient, margin: '24px auto' }} />
@@ -454,14 +456,7 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
               <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.85rem', maxWidth: '300px', lineHeight: 1.65, fontWeight: 300 }}>{generatedCopy.footerTagline}</p>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'flex-end' }}>
-              <div style={{ display: 'flex', gap: '24px' }}>
-                {businessInfo.instagram && (
-                  <a href={businessInfo.instagram} target="_blank" rel="noreferrer" style={{ color: 'rgba(202,138,4,0.5)', textDecoration: 'none', fontSize: '0.78rem', letterSpacing: '2px', textTransform: 'uppercase' }}>Instagram</a>
-                )}
-                {businessInfo.facebook && (
-                  <a href={businessInfo.facebook} target="_blank" rel="noreferrer" style={{ color: 'rgba(202,138,4,0.5)', textDecoration: 'none', fontSize: '0.78rem', letterSpacing: '2px', textTransform: 'uppercase' }}>Facebook</a>
-                )}
-              </div>
+              <SocialRow biz={businessInfo} color="rgba(202,138,4,0.5)" size={20} images={images} />
               {businessInfo.serviceArea && (
                 <p style={{ color: 'rgba(255,255,255,0.2)', fontSize: '0.75rem', letterSpacing: '1px', textAlign: 'right' }}>Serving {businessInfo.serviceArea}</p>
               )}

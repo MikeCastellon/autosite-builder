@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { SocialRow } from '../SocialIcons.jsx';
 
 export default function MobileChrome({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
@@ -141,7 +142,8 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
   });
 
   return (
-    <div style={{ background: c.bg, color: c.text, fontFamily: bodyFont }}>
+    <div style={{ background: c.bg, color: c.text, fontFamily: bodyFont, containerType: 'inline-size' }}>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
       {/* NAV */}
       <nav style={navStyle}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '72px' }}>
@@ -155,7 +157,7 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
               </div>
             )}
           </div>
-          <div style={{ display: 'flex', gap: '36px', alignItems: 'center' }}>
+          <div className="tp-nav-links" style={{ display: 'flex', gap: '36px', alignItems: 'center' }}>
             {['Services', 'Packages', 'About', 'Contact'].map(link => (
               <a key={link} href={`#${link.toLowerCase()}`} style={{ color: c.muted, textDecoration: 'none', fontWeight: 400, fontSize: '0.82rem', letterSpacing: '2px', textTransform: 'uppercase', transition: 'color 0.2s' }}>{link}</a>
             ))}
@@ -386,14 +388,7 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
               </div>
               <p style={{ color: 'rgba(148,163,184,0.35)', fontSize: '0.85rem', maxWidth: '300px', lineHeight: 1.6, fontWeight: 300 }}>{generatedCopy.footerTagline}</p>
             </div>
-            <div style={{ display: 'flex', gap: '28px', alignItems: 'center' }}>
-              {businessInfo.instagram && (
-                <a href={businessInfo.instagram} target="_blank" rel="noreferrer" style={{ color: 'rgba(148,163,184,0.4)', textDecoration: 'none', fontSize: '0.78rem', letterSpacing: '2px', textTransform: 'uppercase' }}>Instagram</a>
-              )}
-              {businessInfo.facebook && (
-                <a href={businessInfo.facebook} target="_blank" rel="noreferrer" style={{ color: 'rgba(148,163,184,0.4)', textDecoration: 'none', fontSize: '0.78rem', letterSpacing: '2px', textTransform: 'uppercase' }}>Facebook</a>
-              )}
-            </div>
+            <SocialRow biz={businessInfo} color={c.accent} size={20} images={images} />
           </div>
           <div style={{ borderTop: '1px solid rgba(148,163,184,0.06)', paddingTop: '24px', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
             <p style={{ color: 'rgba(148,163,184,0.2)', fontSize: '0.75rem', letterSpacing: '0.5px' }}>© {new Date().getFullYear()} {businessInfo.businessName}. All rights reserved.</p>

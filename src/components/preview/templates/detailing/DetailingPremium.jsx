@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { SocialRow } from '../SocialIcons.jsx';
 
 export default function DetailingPremium({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const c = templateMeta.colors;
@@ -173,7 +174,8 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
   ];
 
   return (
-    <div style={{ background: c.bg, color: c.text, fontFamily: bodyFont }}>
+    <div style={{ background: c.bg, color: c.text, fontFamily: bodyFont, containerType: 'inline-size' }}>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
       {/* NAV */}
       <nav style={s.nav}>
         {images.logo ? (
@@ -294,8 +296,7 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
           </div>
         )}
         <div>
-          {businessInfo.instagram && <a href={`https://instagram.com/${businessInfo.instagram}`} style={s.footerLink}>Instagram</a>}
-          {businessInfo.facebook && <a href={`https://facebook.com/${businessInfo.facebook}`} style={s.footerLink}>Facebook</a>}
+          <SocialRow biz={businessInfo} color={c.accent} size={20} images={images} />
           {businessInfo.serviceArea && <div style={{ ...s.footerText, marginTop: '0.5rem' }}>Serving: {businessInfo.serviceArea}</div>}
         </div>
       </footer>

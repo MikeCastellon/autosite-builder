@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { SocialRow } from '../SocialIcons.jsx';
 
 // Template: Mobile Rugged — Dark green (#1a2318 bg, #8a9a4a accent, #f0ede0 text)
 // Repeating diagonal line texture in hero, "ANYWHERE · ANYTIME" subtext, service area, heavy uppercase
@@ -31,7 +32,8 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
   )`;
 
   return (
-    <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0 }}>
+    <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, containerType: 'inline-size' }}>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
 
       {/* STICKY NAV */}
       <nav style={{
@@ -51,7 +53,7 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
             )}
             <span style={{ display: 'block', fontSize: 10, color: c.accent, letterSpacing: 3, textTransform: 'uppercase' }}>Mobile Detail · {biz.city}, {biz.state}</span>
           </div>
-          <div style={{ display: 'flex', gap: 28, alignItems: 'center' }}>
+          <div className="tp-nav-links" style={{ display: 'flex', gap: 28, alignItems: 'center' }}>
             <a href="#services" style={{ color: c.text, textDecoration: 'none', fontWeight: 700, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', opacity: 0.75 }}>Services</a>
             <a href="#about" style={{ color: c.text, textDecoration: 'none', fontWeight: 700, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', opacity: 0.75 }}>About</a>
             <a href={`tel:${biz.phone}`} style={{
@@ -88,7 +90,7 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
             </span>
           </div>
           <h1 style={{
-            fontSize: 'clamp(3rem, 7vw, 5.5rem)', fontWeight: 900, lineHeight: 1,
+            fontSize: 'clamp(1.8rem, 7vw, 5.5rem)', fontWeight: 900, lineHeight: 1,
             textTransform: 'uppercase', letterSpacing: '-0.01em', margin: '0 0 16px',
           }}>
             {copy.headline || `BUILT TOUGH.\nWE ROLL TO YOU.`}
@@ -181,7 +183,7 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
 
       {/* ABOUT + HOURS */}
       <section id="about" style={{ background: c.secondary || '#232e20', padding: '80px 5%', borderTop: `1px solid ${c.accent}33` }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'start' }}>
+        <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'start' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
               <div style={{ width: 42, height: 3, background: c.accent, borderRadius: 2 }} />
@@ -297,16 +299,7 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
           </div>
           <div>
             <div style={{ fontWeight: 700, fontSize: 10, letterSpacing: 3, textTransform: 'uppercase', color: '#4a5a48', marginBottom: 12 }}>FOLLOW</div>
-            {biz.instagram && (
-              <a href={`https://instagram.com/${biz.instagram.replace('@', '')}`} style={{ display: 'block', color: c.accent, textDecoration: 'none', fontWeight: 700, fontSize: 14, marginBottom: 6 }}>
-                Instagram: {biz.instagram}
-              </a>
-            )}
-            {biz.facebook && (
-              <a href={`https://facebook.com/${biz.facebook}`} style={{ display: 'block', color: c.accent, textDecoration: 'none', fontWeight: 700, fontSize: 14 }}>
-                Facebook: {biz.facebook}
-              </a>
-            )}
+            <SocialRow biz={biz} color={c.accent} size={20} images={images} />
           </div>
         </div>
         <div style={{ borderTop: `1px solid ${c.accent}22`, paddingTop: 18, textAlign: 'center', color: c.muted, fontSize: 12 }}>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { SocialRow } from '../SocialIcons.jsx';
 
 // Template: Mobile Bold — Orange & dark (#1a1a1a bg, #f97316 accent)
 // Aggressive diagonal slashes, "WE COME TO YOU" badge, truck emoji nav, service area banner, packages pricing
@@ -30,7 +31,8 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
   )`;
 
   return (
-    <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0 }}>
+    <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, containerType: 'inline-size' }}>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
 
       {/* STICKY NAV */}
       <nav style={{
@@ -53,7 +55,7 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
               <span style={{ display: 'block', fontSize: 10, color: c.accent, letterSpacing: 2, textTransform: 'uppercase' }}>Mobile Detailing · {biz.city}</span>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
+          <div className="tp-nav-links" style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
             <a href="#services" style={{ color: c.text, textDecoration: 'none', fontWeight: 700, fontSize: 13, letterSpacing: 1, textTransform: 'uppercase', opacity: 0.85 }}>Services</a>
             <a href="#pricing" style={{ color: c.text, textDecoration: 'none', fontWeight: 700, fontSize: 13, letterSpacing: 1, textTransform: 'uppercase', opacity: 0.85 }}>Pricing</a>
             <a href="#about" style={{ color: c.text, textDecoration: 'none', fontWeight: 700, fontSize: 13, letterSpacing: 1, textTransform: 'uppercase', opacity: 0.85 }}>About</a>
@@ -99,7 +101,7 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
             MOBILE DETAILING — {biz.city || 'YOUR CITY'}, {biz.state || ''}
           </div>
           <h1 style={{
-            fontSize: 'clamp(3rem, 8vw, 6rem)', fontWeight: 900, lineHeight: 0.95,
+            fontSize: 'clamp(1.8rem, 8vw, 6rem)', fontWeight: 900, lineHeight: 0.95,
             textTransform: 'uppercase', letterSpacing: '-0.02em', margin: '0 0 1.2rem',
           }}>
             {copy.headline || `DETAIL\nCOMES\nTO YOU`}
@@ -236,7 +238,7 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
 
       {/* ABOUT + HOURS */}
       <section id="about" style={{ padding: '80px 5%' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'start' }}>
+        <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'start' }}>
           <div>
             <div style={{ color: c.accent, fontWeight: 900, letterSpacing: 3, fontSize: 11, textTransform: 'uppercase', marginBottom: 8 }}>ABOUT US</div>
             <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 24px', lineHeight: 1 }}>
@@ -349,18 +351,7 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
           </div>
           <div>
             <div style={{ fontWeight: 700, letterSpacing: 2, fontSize: 11, textTransform: 'uppercase', color: '#555', marginBottom: 12 }}>FOLLOW</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {biz.instagram && (
-                <a href={`https://instagram.com/${biz.instagram.replace('@', '')}`} style={{ color: c.accent, textDecoration: 'none', fontWeight: 700, fontSize: 14 }}>
-                  Instagram: {biz.instagram}
-                </a>
-              )}
-              {biz.facebook && (
-                <a href={`https://facebook.com/${biz.facebook}`} style={{ color: c.accent, textDecoration: 'none', fontWeight: 700, fontSize: 14 }}>
-                  Facebook: {biz.facebook}
-                </a>
-              )}
-            </div>
+            <SocialRow biz={biz} color={c.accent} size={20} images={images} />
           </div>
         </div>
         <div style={{ borderTop: '1px solid #222', paddingTop: 20, textAlign: 'center', color: '#444', fontSize: 12 }}>

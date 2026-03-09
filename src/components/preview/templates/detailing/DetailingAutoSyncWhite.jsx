@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { SocialRow } from '../SocialIcons.jsx';
 
 export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const c = templateMeta.colors;
@@ -408,12 +409,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
             {businessInfo.phone && (
               <a href={'tel:' + businessInfo.phone.replace(/D/g, '')} style={s.footerColLink}>{businessInfo.phone}</a>
             )}
-            {businessInfo.instagram && (
-              <a href={'https://instagram.com/' + businessInfo.instagram} style={s.footerColLink}>Instagram</a>
-            )}
-            {businessInfo.facebook && (
-              <a href={'https://facebook.com/' + businessInfo.facebook} style={s.footerColLink}>Facebook</a>
-            )}
+            <SocialRow biz={businessInfo} color={blue} size={20} images={images} />
             {businessInfo.city && (
               <span style={{ ...s.footerColLink, cursor: 'default' }}>
                 {businessInfo.city}{businessInfo.state ? ', ' + businessInfo.state : ''}

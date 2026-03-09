@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { SocialRow } from '../SocialIcons.jsx';
 
 // Template: Mechanic Industrial — Dark steel & yellow (#1c1c1c bg, #eab308 accent, #2c2c2c secondary)
 // Gear/wrench feel, shop hours section, certifications as yellow badges, warranty guarantee box,
@@ -26,7 +27,8 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
     : [];
 
   return (
-    <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0 }}>
+    <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, containerType: 'inline-size' }}>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
 
       {/* STICKY NAV */}
       <nav style={{
@@ -46,7 +48,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
             )}
             <span style={{ display: 'block', fontSize: 10, color: c.accent, letterSpacing: 2, textTransform: 'uppercase' }}>Auto Repair · {biz.city}, {biz.state}</span>
           </div>
-          <div style={{ display: 'flex', gap: 28, alignItems: 'center' }}>
+          <div className="tp-nav-links" style={{ display: 'flex', gap: 28, alignItems: 'center' }}>
             <a href="#services" style={{ color: c.text, textDecoration: 'none', fontWeight: 700, fontSize: 13, letterSpacing: 0.5, textTransform: 'uppercase', opacity: 0.75 }}>Services</a>
             <a href="#hours" style={{ color: c.text, textDecoration: 'none', fontWeight: 700, fontSize: 13, letterSpacing: 0.5, textTransform: 'uppercase', opacity: 0.75 }}>Hours</a>
             <a href="#about" style={{ color: c.text, textDecoration: 'none', fontWeight: 700, fontSize: 13, letterSpacing: 0.5, textTransform: 'uppercase', opacity: 0.75 }}>About</a>
@@ -196,7 +198,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
 
       {/* SHOP HOURS — prominently shown section */}
       <section id="hours" style={{ padding: '80px 5%', background: c.secondary, borderTop: '1px solid #333', borderBottom: '1px solid #333' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'start' }}>
+        <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'start' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
               <div style={{ width: 36, height: 4, background: c.accent, borderRadius: 2 }} />
@@ -315,7 +317,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
 
       {/* ABOUT */}
       <section id="about" style={{ padding: '80px 5%', background: c.secondary, borderBottom: '1px solid #333' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'start' }}>
+        <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'start' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
               <div style={{ width: 36, height: 4, background: c.accent, borderRadius: 2 }} />
@@ -338,7 +340,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
               </div>
             )}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div className="tp-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             {[
               { num: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'YEARS' },
               { num: '5K+', label: 'VEHICLES' },
@@ -422,16 +424,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
           </div>
           <div>
             <div style={{ fontWeight: 700, fontSize: 10, letterSpacing: 3, textTransform: 'uppercase', color: '#444', marginBottom: 12 }}>FOLLOW US</div>
-            {biz.instagram && (
-              <a href={`https://instagram.com/${biz.instagram.replace('@', '')}`} style={{ display: 'block', color: c.accent, textDecoration: 'none', fontWeight: 700, fontSize: 13, marginBottom: 8 }}>
-                Instagram: {biz.instagram}
-              </a>
-            )}
-            {biz.facebook && (
-              <a href={`https://facebook.com/${biz.facebook}`} style={{ display: 'block', color: c.accent, textDecoration: 'none', fontWeight: 700, fontSize: 13 }}>
-                Facebook: {biz.facebook}
-              </a>
-            )}
+            <SocialRow biz={biz} color={c.accent} size={20} images={images} />
           </div>
           {payments.length > 0 && (
             <div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { SocialRow } from '../SocialIcons.jsx';
 
 export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const c = templateMeta.colors;
@@ -58,7 +59,7 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
   const serviceIcons = ['✦', '◈', '⬡', '◉', '✧', '◆', '◇', '✣'];
 
   const s = {
-    wrapper: { background: c.bg, color: textColor, fontFamily: bodyFont, overflowX: 'hidden' },
+    wrapper: { background: c.bg, color: textColor, fontFamily: bodyFont, overflowX: 'hidden', containerType: 'inline-size' },
     nav: {
       position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
       padding: scrolled ? '14px clamp(1.5rem,5vw,3.75rem)' : '20px clamp(1.5rem,5vw,3.75rem)',
@@ -88,7 +89,7 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
     heroEyebrow: { display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '28px' },
     heroEyebrowLine: { width: '48px', height: '1px', background: c.accent, flexShrink: 0 },
     heroEyebrowText: { fontSize: '11px', letterSpacing: '4px', color: c.accent, textTransform: 'uppercase', fontWeight: 500, fontFamily: bodyFont },
-    heroH1: { fontFamily: font, fontSize: 'clamp(2.8rem,7vw,5.75rem)', fontWeight: 300, lineHeight: 1.0, color: c.text, marginBottom: '28px' },
+    heroH1: { fontFamily: font, fontSize: 'clamp(1.8rem,7vw,5.75rem)', fontWeight: 300, lineHeight: 1.0, color: c.text, marginBottom: '28px' },
     heroH1Em: { fontStyle: 'italic', color: c.accent },
     heroDesc: { fontSize: 'clamp(0.9rem,1.5vw,1rem)', lineHeight: 1.8, color: textDim, maxWidth: '480px', marginBottom: '48px', fontWeight: 300, fontFamily: bodyFont },
     heroActions: { display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' },
@@ -167,6 +168,7 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
 
   return (
     <div style={s.wrapper}>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
 
       {/* NAV */}
       <nav style={s.nav}>
@@ -472,12 +474,7 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
             {businessInfo.city && (
               <span style={s.footerLink}>{businessInfo.city}, {businessInfo.state}</span>
             )}
-            {businessInfo.instagram && (
-              <a href={'https://instagram.com/' + businessInfo.instagram} style={s.footerLink} target="_blank" rel="noopener noreferrer">Instagram</a>
-            )}
-            {businessInfo.facebook && (
-              <a href={'https://facebook.com/' + businessInfo.facebook} style={s.footerLink} target="_blank" rel="noopener noreferrer">Facebook</a>
-            )}
+            <SocialRow biz={businessInfo} color={c.accent} size={20} images={images} />
           </div>
         </div>
         <div style={s.footerBottom}>

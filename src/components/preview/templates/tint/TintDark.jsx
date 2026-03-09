@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { SocialRow } from '../SocialIcons.jsx';
 
 // Template: Tint Dark — Black & purple (#080808 bg, #7c3aed accent, #111111 secondary)
 // Radial gradient glow hero, film brands section, shield warranty callout, packages, fade/gradient elements
@@ -26,7 +27,8 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
     : [];
 
   return (
-    <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0 }}>
+    <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, containerType: 'inline-size' }}>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
 
       {/* STICKY NAV */}
       <nav style={{
@@ -46,7 +48,7 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
             )}
             <span style={{ display: 'block', fontSize: 10, color: c.accent, letterSpacing: 3, textTransform: 'uppercase' }}>Tint & Protection · {biz.city}</span>
           </div>
-          <div style={{ display: 'flex', gap: 28, alignItems: 'center' }}>
+          <div className="tp-nav-links" style={{ display: 'flex', gap: 28, alignItems: 'center' }}>
             <a href="#services" style={{ color: c.text, textDecoration: 'none', fontWeight: 500, fontSize: 14, opacity: 0.65 }}>Services</a>
             <a href="#films" style={{ color: c.text, textDecoration: 'none', fontWeight: 500, fontSize: 14, opacity: 0.65 }}>Film Brands</a>
             <a href="#warranty" style={{ color: c.text, textDecoration: 'none', fontWeight: 500, fontSize: 14, opacity: 0.65 }}>Warranty</a>
@@ -286,7 +288,7 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
 
       {/* ABOUT */}
       <section id="about" style={{ padding: '80px 5%', borderTop: `1px solid ${c.accent}22` }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'start' }}>
+        <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'start' }}>
           <div>
             <div style={{ color: c.accent, fontWeight: 700, letterSpacing: 3, fontSize: 11, textTransform: 'uppercase', marginBottom: 10 }}>ABOUT US</div>
             <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.8rem)', fontWeight: 800, margin: '0 0 20px' }}>About {biz.businessName}</h2>
@@ -401,16 +403,7 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
           </div>
           <div>
             <div style={{ fontWeight: 700, fontSize: 10, letterSpacing: 3, textTransform: 'uppercase', color: '#333', marginBottom: 12 }}>FOLLOW</div>
-            {biz.instagram && (
-              <a href={`https://instagram.com/${biz.instagram.replace('@', '')}`} style={{ display: 'block', color: c.accent, textDecoration: 'none', fontWeight: 600, fontSize: 13, marginBottom: 6 }}>
-                Instagram: {biz.instagram}
-              </a>
-            )}
-            {biz.facebook && (
-              <a href={`https://facebook.com/${biz.facebook}`} style={{ display: 'block', color: c.accent, textDecoration: 'none', fontWeight: 600, fontSize: 13 }}>
-                Facebook: {biz.facebook}
-              </a>
-            )}
+            <SocialRow biz={biz} color={c.accent} size={20} images={images} />
           </div>
         </div>
         <div style={{ borderTop: '1px solid #111', paddingTop: 20, textAlign: 'center', color: '#333', fontSize: 12 }}>

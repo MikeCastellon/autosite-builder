@@ -11,6 +11,7 @@ export const DEMO_BUSINESS_INFO = {
   hours: 'Mon–Fri 8am–6pm · Sat 9am–4pm',
   instagram: '@autositedemo',
   facebook: 'facebook.com/autositedemo',
+  tiktok: '@autositedemo',
   paymentMethods: ['Cash', 'Credit Card', 'Venmo', 'Zelle'],
   awards: 'Best Detail Shop 2024 — Miami New Times',
   services: ['Full Detail', 'Ceramic Coating', 'Paint Correction', 'PPF', 'Interior Only'],
