@@ -47,7 +47,7 @@ export default function StepSocialFeeds({ selectedWidgetIds, onWidgetIdsChange, 
     const state = session.user.id;
     const redirectUrl = encodeURIComponent(`${SOCIALFEEDS_URL}/.netlify/functions/instagram-auth-callback`);
     const authUrl = `https://api.instagram.com/oauth/authorize?client_id=${fbAppId}&redirect_uri=${redirectUrl}&scope=user_profile,user_media&response_type=code&state=${state}`;
-    window.location.href = authUrl;
+    window.open(authUrl, '_blank', 'noopener,noreferrer');
   };
 
   const handleSearchGoogle = async (e) => {
@@ -68,10 +68,22 @@ export default function StepSocialFeeds({ selectedWidgetIds, onWidgetIdsChange, 
 
   const handleSelectGoogleBusiness = async (result) => {
     if (!session?.user?.id) return;
+
+    // Check for existing widget with same place_id
+    const existing = widgets.find((w) => w.type === 'google-reviews' && w.place_id === result.place_id);
+    if (existing) {
+      if (!selectedWidgetIds.includes(existing.id)) {
+        onWidgetIdsChange([...selectedWidgetIds, existing.id]);
+      }
+      setSearchResults([]);
+      setSearchQuery('');
+      return;
+    }
+
     setSavingGoogle(true);
     setError(null);
     try {
-      const widgetKey = Math.random().toString(36).slice(2, 10);
+      const widgetKey = crypto.randomUUID().replace(/-/g, '').slice(0, 8);
       const { data, error } = await supabase
         .from('widget_configs')
         .insert({

@@ -6,6 +6,7 @@ export default function DashboardPage({ onNewSite }) {
   const { session } = useAuth();
   const [sites, setSites] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
 
   useEffect(() => {
     async function fetchSites() {
@@ -13,7 +14,11 @@ export default function DashboardPage({ onNewSite }) {
         .from('sites')
         .select('*')
         .order('created_at', { ascending: false });
-      if (!error) setSites(data || []);
+      if (error) {
+        setFetchError('Failed to load sites. Please refresh.');
+      } else {
+        setSites(data || []);
+      }
       setLoading(false);
     }
     fetchSites();
@@ -78,6 +83,10 @@ export default function DashboardPage({ onNewSite }) {
 
         {loading ? (
           <p className="text-[#888] text-sm">Loading...</p>
+        ) : fetchError ? (
+          <div className="border border-[#cc0000]/20 rounded-xl p-4 text-sm text-[#cc0000] bg-[#cc0000]/5">
+            {fetchError}
+          </div>
         ) : sites.length === 0 ? (
           <div className="text-center py-20 border border-black/[0.07] rounded-2xl bg-white">
             <p className="text-[#888] mb-4">No sites yet.</p>

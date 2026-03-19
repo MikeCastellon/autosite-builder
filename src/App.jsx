@@ -82,6 +82,7 @@ export default function App() {
     setError(null);
     setCustomColors({});
     setSelectedWidgetIds([]);
+    setIsDemoPreview(false);
   };
 
   // Demo preview — shows a template with placeholder data, no AI call needed

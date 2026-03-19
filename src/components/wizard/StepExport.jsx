@@ -15,8 +15,8 @@ export default function StepExport({ businessInfo, generatedCopy, templateId, te
     try {
       await exportHtml(templateId, businessInfo, generatedCopy, templateMeta, images, selectedWidgetIds || []);
 
-      // Save site to Supabase
-      if (session?.user?.id) {
+      // Save site to Supabase (only on first download, not re-downloads)
+      if (!downloaded && session?.user?.id) {
         const { error: saveError } = await supabase.from('sites').insert({
           user_id: session.user.id,
           business_info: businessInfo,
