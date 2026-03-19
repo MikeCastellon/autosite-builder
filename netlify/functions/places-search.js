@@ -1,6 +1,7 @@
-exports.handler = async (event) => {
+export const handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
     'Content-Type': 'application/json',
   };
 
@@ -23,6 +24,10 @@ exports.handler = async (event) => {
     const res = await fetch(url);
     const data = await res.json();
 
+    if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
+      return { statusCode: 502, headers, body: JSON.stringify({ error: `Places API error: ${data.status}` }) };
+    }
+
     const results = (data.candidates || []).map((p) => ({
       name: p.name,
       address: p.formatted_address,
@@ -33,6 +38,7 @@ exports.handler = async (event) => {
 
     return { statusCode: 200, headers, body: JSON.stringify({ results }) };
   } catch (err) {
+    console.error('places-search error:', err);
     return { statusCode: 502, headers, body: JSON.stringify({ error: 'Search request failed' }) };
   }
 };
