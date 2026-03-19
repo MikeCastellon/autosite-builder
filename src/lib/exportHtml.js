@@ -89,10 +89,11 @@ export async function exportHtml(templateId, businessInfo, generatedCopy, templa
   // Inject widget divs if any selected
   let widgetsHtml = '';
   if (widgetConfigIds.length > 0) {
-    const { data: widgetConfigs } = await supabase
+    const { data: widgetConfigs, error: widgetError } = await supabase
       .from('widget_configs')
       .select('id, type, widget_key')
       .in('id', widgetConfigIds);
+    if (widgetError) console.error('Widget fetch failed:', widgetError.message);
 
     if (widgetConfigs?.length > 0) {
       const divs = widgetConfigs.map((w) =>
@@ -103,7 +104,7 @@ export async function exportHtml(templateId, businessInfo, generatedCopy, templa
   <h2 style="font-family:'Inter',system-ui,sans-serif;font-size:24px;font-weight:700;color:#1a1a1a;margin-bottom:32px;">Reviews &amp; Social</h2>
   ${divs}
 </section>
-<script src="https://socialfeeds.netlify.app/widgets.js"></script>`;
+<script src="https://socialfeeds.netlify.app/widgets.js" defer></script>`;
     }
   }
 

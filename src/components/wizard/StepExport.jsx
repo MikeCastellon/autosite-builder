@@ -17,13 +17,14 @@ export default function StepExport({ businessInfo, generatedCopy, templateId, te
 
       // Save site to Supabase
       if (session?.user?.id) {
-        await supabase.from('sites').insert({
+        const { error: saveError } = await supabase.from('sites').insert({
           user_id: session.user.id,
           business_info: businessInfo,
           template_id: templateId,
           generated_content: generatedCopy,
           widget_config_ids: selectedWidgetIds || [],
         });
+        if (saveError) console.error('Failed to save site:', saveError.message);
       }
 
       setDownloaded(true);
@@ -111,7 +112,7 @@ export default function StepExport({ businessInfo, generatedCopy, templateId, te
           onClick={onBack}
           className="flex-1 py-2.5 px-4 rounded-xl border border-black/[0.07] text-[#555] hover:border-[#cc0000]/30 hover:text-[#cc0000] font-medium transition-colors text-[13px]"
         >
-          Back to Preview
+          Back to Social Feeds
         </button>
         <button
           onClick={onStartOver}
