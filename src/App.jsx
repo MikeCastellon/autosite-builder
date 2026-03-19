@@ -10,6 +10,7 @@ import { TEMPLATES } from './data/templates.js';
 import { DEMO_BUSINESS_INFO, DEMO_GENERATED_COPY } from './data/demoData.js';
 import { useAuth } from './lib/AuthContext.jsx';
 import LoginPage from './components/auth/LoginPage.jsx';
+import DashboardPage from './components/dashboard/DashboardPage.jsx';
 
 export default function App() {
   const { session, loading } = useAuth();
@@ -23,6 +24,7 @@ export default function App() {
   const [images, setImages] = useState({});
   const [error, setError] = useState(null);
   const [customColors, setCustomColors] = useState({});
+  const [view, setView] = useState('dashboard'); // 'dashboard' | 'wizard'
 
   const templateMeta = selectedTemplate
     ? { ...TEMPLATES[selectedTemplate], colors: { ...TEMPLATES[selectedTemplate].colors, ...customColors } }
@@ -76,6 +78,7 @@ export default function App() {
     setEditedCopy(null);
     setImages({});
     setError(null);
+    setView('dashboard');
   };
 
   // Demo preview — shows a template with placeholder data, no AI call needed
@@ -84,6 +87,10 @@ export default function App() {
   // Auth gate — placed after all hooks
   if (loading) return null;
   if (!session) return <LoginPage />;
+
+  if (view === 'dashboard') {
+    return <DashboardPage onNewSite={() => { handleStartOver(); setView('wizard'); }} />;
+  }
 
   const handlePreviewDemo = (templateId) => {
     setSelectedTemplate(templateId);

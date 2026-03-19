@@ -1,0 +1,129 @@
+import { useEffect, useState } from 'react';
+import { supabase } from '../../lib/supabase.js';
+import { useAuth } from '../../lib/AuthContext.jsx';
+
+export default function DashboardPage({ onNewSite }) {
+  const { session } = useAuth();
+  const [sites, setSites] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchSites() {
+      const { data, error } = await supabase
+        .from('sites')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (!error) setSites(data || []);
+      setLoading(false);
+    }
+    fetchSites();
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm('Delete this site?')) return;
+    await supabase.from('sites').delete().eq('id', id);
+    setSites((prev) => prev.filter((s) => s.id !== id));
+  };
+
+  const handleReExport = async (site) => {
+    // Download a saved site's HTML again
+    const { exportHtml } = await import('../../lib/exportHtml.js');
+    const { TEMPLATES } = await import('../../data/templates.js');
+    const templateMeta = TEMPLATES[site.template_id];
+    await exportHtml(
+      site.template_id,
+      site.business_info,
+      site.generated_content,
+      { ...templateMeta, colors: templateMeta?.colors || {} },
+      {},
+      site.widget_config_ids || []
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-[#faf9f7]">
+      <header className="border-b border-black/[0.07] bg-white px-6 py-4 flex items-center justify-between">
+        <h1 className="text-lg font-black text-[#1a1a1a] tracking-tight">Website Creator</h1>
+        <button
+          onClick={handleSignOut}
+          className="text-sm text-[#888] hover:text-[#cc0000] transition-colors"
+        >
+          Sign out
+        </button>
+      </header>
+
+      <main className="max-w-4xl mx-auto px-6 py-10">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h2 className="text-2xl font-black text-[#1a1a1a] tracking-tight">Your Sites</h2>
+            <p className="text-[#888] text-sm mt-1">
+              {session?.user?.phone || session?.user?.email}
+            </p>
+          </div>
+          <button
+            onClick={onNewSite}
+            className="px-5 py-2.5 bg-[#1a1a1a] hover:bg-[#cc0000] text-white rounded-xl font-semibold text-sm transition-colors"
+          >
+            + New Site
+          </button>
+        </div>
+
+        {loading ? (
+          <p className="text-[#888] text-sm">Loading...</p>
+        ) : sites.length === 0 ? (
+          <div className="text-center py-20 border border-black/[0.07] rounded-2xl bg-white">
+            <p className="text-[#888] mb-4">No sites yet.</p>
+            <button
+              onClick={onNewSite}
+              className="px-6 py-3 bg-[#1a1a1a] hover:bg-[#cc0000] text-white rounded-xl font-semibold text-sm transition-colors"
+            >
+              Create your first site
+            </button>
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {sites.map((site) => (
+              <div
+                key={site.id}
+                className="bg-white border border-black/[0.07] rounded-xl p-5 flex items-center justify-between"
+              >
+                <div>
+                  <p className="font-semibold text-[#1a1a1a]">
+                    {site.business_info?.businessName || 'Untitled'}
+                  </p>
+                  <p className="text-xs text-[#888] mt-0.5">
+                    {site.business_info?.city}, {site.business_info?.state} &middot;{' '}
+                    {new Date(site.created_at).toLocaleDateString()}
+                    {site.widget_config_ids?.length > 0 && (
+                      <span className="ml-2 text-[#cc0000]">
+                        {site.widget_config_ids.length} widget{site.widget_config_ids.length > 1 ? 's' : ''}
+                      </span>
+                    )}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleReExport(site)}
+                    className="px-3 py-1.5 text-xs font-medium border border-black/10 rounded-lg hover:border-[#cc0000]/30 hover:text-[#cc0000] transition-colors"
+                  >
+                    Re-export
+                  </button>
+                  <button
+                    onClick={() => handleDelete(site.id)}
+                    className="px-3 py-1.5 text-xs font-medium text-[#888] hover:text-[#cc0000] transition-colors"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
