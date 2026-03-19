@@ -8,8 +8,12 @@ import WebsitePreview from './components/preview/WebsitePreview.jsx';
 import StepExport from './components/wizard/StepExport.jsx';
 import { TEMPLATES } from './data/templates.js';
 import { DEMO_BUSINESS_INFO, DEMO_GENERATED_COPY } from './data/demoData.js';
+import { useAuth } from './lib/AuthContext.jsx';
+import LoginPage from './components/auth/LoginPage.jsx';
 
 export default function App() {
+  const { session, loading } = useAuth();
+
   const [step, setStep] = useState(1);
   const [businessType, setBusinessType] = useState(null);
   const [businessInfo, setBusinessInfo] = useState({});
@@ -76,6 +80,11 @@ export default function App() {
 
   // Demo preview — shows a template with placeholder data, no AI call needed
   const [isDemoPreview, setIsDemoPreview] = useState(false);
+
+  // Auth gate — placed after all hooks
+  if (loading) return null;
+  if (!session) return <LoginPage />;
+
   const handlePreviewDemo = (templateId) => {
     setSelectedTemplate(templateId);
     setGeneratedCopy(DEMO_GENERATED_COPY);
