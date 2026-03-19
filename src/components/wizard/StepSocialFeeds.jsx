@@ -24,6 +24,7 @@ export default function StepSocialFeeds({ selectedWidgetIds, onWidgetIdsChange, 
     const { data } = await supabase
       .from('widget_configs')
       .select('*')
+      .eq('user_id', session.user.id)
       .order('created_at', { ascending: false });
     setWidgets(data || []);
     setLoading(false);
@@ -38,9 +39,13 @@ export default function StepSocialFeeds({ selectedWidgetIds, onWidgetIdsChange, 
 
   const handleConnectInstagram = () => {
     if (!session?.user?.id) return;
+    const fbAppId = import.meta.env.VITE_FB_APP_ID;
+    if (!fbAppId) {
+      setError('Instagram connection is not configured. Please contact support.');
+      return;
+    }
     const state = session.user.id;
     const redirectUrl = encodeURIComponent(`${SOCIALFEEDS_URL}/.netlify/functions/instagram-auth-callback`);
-    const fbAppId = import.meta.env.VITE_FB_APP_ID;
     const authUrl = `https://api.instagram.com/oauth/authorize?client_id=${fbAppId}&redirect_uri=${redirectUrl}&scope=user_profile,user_media&response_type=code&state=${state}`;
     window.location.href = authUrl;
   };
@@ -62,23 +67,25 @@ export default function StepSocialFeeds({ selectedWidgetIds, onWidgetIdsChange, 
   };
 
   const handleSelectGoogleBusiness = async (result) => {
+    if (!session?.user?.id) return;
     setSavingGoogle(true);
     setError(null);
     try {
-      const res = await fetch('/.netlify/functions/widget-save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const widgetKey = Math.random().toString(36).slice(2, 10);
+      const { data, error } = await supabase
+        .from('widget_configs')
+        .insert({
           user_id: session.user.id,
           type: 'google-reviews',
+          widget_key: widgetKey,
           place_id: result.place_id,
           label: result.name,
-        }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Save failed');
+        })
+        .select('id')
+        .single();
+      if (error) throw new Error(error.message);
       await loadWidgets();
-      onWidgetIdsChange([...selectedWidgetIds, json.id]);
+      onWidgetIdsChange([...selectedWidgetIds, data.id]);
       setSearchResults([]);
       setSearchQuery('');
     } catch (err) {

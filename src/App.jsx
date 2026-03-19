@@ -26,6 +26,7 @@ export default function App() {
   const [error, setError] = useState(null);
   const [customColors, setCustomColors] = useState({});
   const [view, setView] = useState('dashboard'); // 'dashboard' | 'wizard'
+  const [selectedWidgetIds, setSelectedWidgetIds] = useState([]);
 
   const templateMeta = selectedTemplate
     ? { ...TEMPLATES[selectedTemplate], colors: { ...TEMPLATES[selectedTemplate].colors, ...customColors } }
@@ -82,8 +83,6 @@ export default function App() {
     setCustomColors({});
     setSelectedWidgetIds([]);
   };
-
-  const [selectedWidgetIds, setSelectedWidgetIds] = useState([]);
 
   // Demo preview — shows a template with placeholder data, no AI call needed
   const [isDemoPreview, setIsDemoPreview] = useState(false);
