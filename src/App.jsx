@@ -6,6 +6,7 @@ import StepTemplatePicker from './components/wizard/StepTemplatePicker.jsx';
 import StepGenerating from './components/wizard/StepGenerating.jsx';
 import WebsitePreview from './components/preview/WebsitePreview.jsx';
 import StepExport from './components/wizard/StepExport.jsx';
+import StepSocialFeeds from './components/wizard/StepSocialFeeds.jsx';
 import { TEMPLATES } from './data/templates.js';
 import { DEMO_BUSINESS_INFO, DEMO_GENERATED_COPY } from './data/demoData.js';
 import { useAuth } from './lib/AuthContext.jsx';
@@ -79,7 +80,10 @@ export default function App() {
     setImages({});
     setError(null);
     setCustomColors({});
+    setSelectedWidgetIds([]);
   };
+
+  const [selectedWidgetIds, setSelectedWidgetIds] = useState([]);
 
   // Demo preview — shows a template with placeholder data, no AI call needed
   const [isDemoPreview, setIsDemoPreview] = useState(false);
@@ -122,9 +126,21 @@ export default function App() {
         templateId={selectedTemplate}
         templateMeta={templateMeta}
         onBack={isDemoPreview ? handleBackFromDemo : () => goTo(3)}
-        onExport={isDemoPreview ? null : () => goTo(6)}
+        onExport={isDemoPreview ? null : () => goTo(5.5)}
         onStartOver={() => { handleStartOver(); setView('dashboard'); }}
         isDemoPreview={isDemoPreview}
+      />
+    );
+  }
+
+  // Step 5.5 — Social Feeds (between preview and export)
+  if (step === 5.5) {
+    return (
+      <StepSocialFeeds
+        selectedWidgetIds={selectedWidgetIds}
+        onWidgetIdsChange={setSelectedWidgetIds}
+        onNext={() => goTo(6)}
+        onBack={() => goTo(5)}
       />
     );
   }
