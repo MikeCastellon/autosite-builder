@@ -78,7 +78,7 @@ export default function App() {
     setEditedCopy(null);
     setImages({});
     setError(null);
-    setView('dashboard');
+    setCustomColors({});
   };
 
   // Demo preview — shows a template with placeholder data, no AI call needed
@@ -123,7 +123,7 @@ export default function App() {
         templateMeta={templateMeta}
         onBack={isDemoPreview ? handleBackFromDemo : () => goTo(3)}
         onExport={isDemoPreview ? null : () => goTo(6)}
-        onStartOver={handleStartOver}
+        onStartOver={() => { handleStartOver(); setView('dashboard'); }}
         isDemoPreview={isDemoPreview}
       />
     );
@@ -139,7 +139,7 @@ export default function App() {
         templateMeta={templateMeta}
         images={images}
         onBack={() => goTo(5)}
-        onStartOver={handleStartOver}
+        onStartOver={() => { handleStartOver(); setView('dashboard'); }}
       />
     );
   }

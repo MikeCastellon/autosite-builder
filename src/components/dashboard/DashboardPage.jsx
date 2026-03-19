@@ -25,7 +25,11 @@ export default function DashboardPage({ onNewSite }) {
 
   const handleDelete = async (id) => {
     if (!confirm('Delete this site?')) return;
-    await supabase.from('sites').delete().eq('id', id);
+    const { error } = await supabase.from('sites').delete().eq('id', id);
+    if (error) {
+      alert('Failed to delete site. Please try again.');
+      return;
+    }
     setSites((prev) => prev.filter((s) => s.id !== id));
   };
 
