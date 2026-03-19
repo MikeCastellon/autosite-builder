@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { createElement } from 'react';
 import { normalizeBusinessInfo } from './normalizeBusinessInfo.js';
 import { TEMPLATE_COMPONENT_MAP } from '../data/templates.js';
+import { supabase } from './supabase.js';
 
 function buildSeoHead(businessInfo, generatedCopy) {
   const biz = businessInfo;
@@ -74,7 +75,7 @@ function buildSeoHead(businessInfo, generatedCopy) {
   </script>`;
 }
 
-export async function exportHtml(templateId, businessInfo, generatedCopy, templateMeta, images) {
+export async function exportHtml(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds = []) {
   const mod = await TEMPLATE_COMPONENT_MAP[templateId]();
   const TemplateComponent = mod.default;
 
@@ -84,6 +85,27 @@ export async function exportHtml(templateId, businessInfo, generatedCopy, templa
   );
 
   const seoHead = buildSeoHead(businessInfo, generatedCopy);
+
+  // Inject widget divs if any selected
+  let widgetsHtml = '';
+  if (widgetConfigIds.length > 0) {
+    const { data: widgetConfigs } = await supabase
+      .from('widget_configs')
+      .select('id, type, widget_key')
+      .in('id', widgetConfigIds);
+
+    if (widgetConfigs?.length > 0) {
+      const divs = widgetConfigs.map((w) =>
+        `<div data-widget="${w.type}" data-widget-key="${w.widget_key}"></div>`
+      ).join('\n  ');
+      widgetsHtml = `
+<section style="padding:60px 24px;max-width:1200px;margin:0 auto;">
+  <h2 style="font-family:'Inter',system-ui,sans-serif;font-size:24px;font-weight:700;color:#1a1a1a;margin-bottom:32px;">Reviews &amp; Social</h2>
+  ${divs}
+</section>
+<script src="https://socialfeeds.netlify.app/widgets.js"></script>`;
+    }
+  }
 
   const poweredByBar = `
 <div style="background:#111;padding:14px 24px;display:flex;align-items:center;justify-content:center;gap:8px;">
@@ -100,6 +122,7 @@ ${seoHead}
 </head>
 <body>
 ${bodyHtml}
+${widgetsHtml}
 ${poweredByBar}
 </body>
 </html>`;

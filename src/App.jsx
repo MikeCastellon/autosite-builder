@@ -153,7 +153,8 @@ export default function App() {
         templateId={selectedTemplate}
         templateMeta={templateMeta}
         images={images}
-        onBack={() => goTo(5)}
+        selectedWidgetIds={selectedWidgetIds}
+        onBack={() => goTo(5.5)}
         onStartOver={() => { handleStartOver(); setView('dashboard'); }}
       />
     );

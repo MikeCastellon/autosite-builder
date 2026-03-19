@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { exportHtml } from '../../lib/exportHtml.js';
+import { supabase } from '../../lib/supabase.js';
+import { useAuth } from '../../lib/AuthContext.jsx';
 
-export default function StepExport({ businessInfo, generatedCopy, templateId, templateMeta, images, onBack, onStartOver }) {
+export default function StepExport({ businessInfo, generatedCopy, templateId, templateMeta, images, selectedWidgetIds, onBack, onStartOver }) {
+  const { session } = useAuth();
   const [downloading, setDownloading] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
   const [error, setError] = useState(null);
@@ -10,7 +13,19 @@ export default function StepExport({ businessInfo, generatedCopy, templateId, te
     setDownloading(true);
     setError(null);
     try {
-      await exportHtml(templateId, businessInfo, generatedCopy, templateMeta, images);
+      await exportHtml(templateId, businessInfo, generatedCopy, templateMeta, images, selectedWidgetIds || []);
+
+      // Save site to Supabase
+      if (session?.user?.id) {
+        await supabase.from('sites').insert({
+          user_id: session.user.id,
+          business_info: businessInfo,
+          template_id: templateId,
+          generated_content: generatedCopy,
+          widget_config_ids: selectedWidgetIds || [],
+        });
+      }
+
       setDownloaded(true);
     } catch (err) {
       setError(err.message || 'Download failed. Please try again.');
