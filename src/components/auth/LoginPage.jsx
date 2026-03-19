@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { supabase } from '../../lib/supabase.js';
 
+function formatPhone(raw) {
+  return raw.startsWith('+') ? raw : '+1' + raw.replace(/\D/g, '');
+}
+
 export default function LoginPage() {
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
@@ -12,7 +16,7 @@ export default function LoginPage() {
     setError(null);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin + '/dashboard' },
+      options: { redirectTo: window.location.origin },
     });
     if (error) setError(error.message);
   };
@@ -21,7 +25,7 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    const formatted = phone.startsWith('+') ? phone : '+1' + phone.replace(/\D/g, '');
+    const formatted = formatPhone(phone);
     const { error } = await supabase.auth.signInWithOtp({ phone: formatted });
     if (error) setError(error.message);
     else setOtpSent(true);
@@ -32,7 +36,7 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    const formatted = phone.startsWith('+') ? phone : '+1' + phone.replace(/\D/g, '');
+    const formatted = formatPhone(phone);
     const { error } = await supabase.auth.verifyOtp({ phone: formatted, token: otp, type: 'sms' });
     if (error) setError(error.message);
     setLoading(false);
@@ -68,6 +72,7 @@ export default function LoginPage() {
               className="w-full border border-black/10 rounded-xl px-4 py-3 text-sm mb-3 outline-none focus:ring-2 focus:ring-[#cc0000]/30"
               required
             />
+            <p className="text-xs text-[#aaa] mb-3">Include country code for non-US numbers (e.g. +44...)</p>
             <button
               type="submit"
               disabled={loading}

@@ -7,9 +7,6 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(undefined); // undefined = loading
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-    });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
     });
@@ -24,5 +21,7 @@ export function AuthProvider({ children }) {
 }
 
 export function useAuth() {
-  return useContext(AuthContext);
+  const ctx = useContext(AuthContext);
+  if (ctx === null) throw new Error('useAuth must be used within AuthProvider');
+  return ctx;
 }
