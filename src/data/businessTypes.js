@@ -12,7 +12,7 @@ export const BUSINESS_TYPES = [
     label: 'Mobile Detailing',
     icon: '🚐',
     description: 'On-the-go mobile detailing service',
-    templates: ['mobile_bold', 'mobile_modern', 'mobile_rugged', 'mobile_chrome', 'mobile_sudsy'],
+    templates: ['mobile_bold', 'mobile_modern', 'mobile_chrome', 'mobile_sudsy'],
     premiumTemplates: [],
   },
   {
