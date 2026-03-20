@@ -192,7 +192,7 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
               )}
 
               {field.type === 'packages' && (() => {
-                const pkgs = values[field.key] || [];
+                const pkgs = Array.isArray(values[field.key]) ? values[field.key] : [];
                 const draft = packageDrafts[field.key] || { name: '', price: '', description: '' };
 
                 const updateDraft = (k, v) =>

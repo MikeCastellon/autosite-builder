@@ -16,7 +16,11 @@ export const DEMO_BUSINESS_INFO = {
   awards: 'Best Detail Shop 2024 — Miami New Times',
   services: ['Full Detail', 'Ceramic Coating', 'Paint Correction', 'PPF', 'Interior Only'],
   priceRange: 'Starting at $149',
-  packages: 'Basic $149 · Premium $299 · Elite $499',
+  packages: [
+    { name: 'Basic', price: '$149', description: 'Full exterior wash, interior vacuum, and window clean.' },
+    { name: 'Premium', price: '$299', description: 'Everything in Basic plus clay bar, polish, and sealant.' },
+    { name: 'Elite', price: '$499', description: 'Full paint correction, ceramic coating, and interior deep clean.' },
+  ],
   specialties: 'Luxury & exotic vehicle specialists. We treat every car like it\'s our own.',
   serviceArea: '30-mile radius from Miami',
   brands: 'Forgiato, Vossen, ADV.1, HRE',
