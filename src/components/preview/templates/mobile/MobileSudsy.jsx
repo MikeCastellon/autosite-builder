@@ -360,7 +360,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
             <p style={{ fontSize: 15, fontWeight: 600, color: c.muted, lineHeight: 1.8, marginBottom: 20 }}>
               {copy.aboutText || 'We started with a bucket, a dream, and a serious love for clean cars. Today we bring that same passion to every vehicle we touch.'}
             </p>
-            {images.about && <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>}
+            <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>
             {biz.yearsInBusiness && (
               <div style={{ display: "inline-flex", alignItems: "center", gap: 10, background: c.secondary, ...neoBorder, borderRadius: 16, padding: "12px 18px", marginBottom: 16, fontWeight: 800, fontSize: 14, color: c.text }}>
                 {biz.yearsInBusiness}+ Years in Business

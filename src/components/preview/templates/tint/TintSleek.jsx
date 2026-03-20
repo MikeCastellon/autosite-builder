@@ -291,7 +291,7 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
             <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.85, marginBottom: 20 }}>
               {copy.aboutText || `Serving ${biz.city || 'your area'} with precision tint and film installation.`}
             </p>
-            {images.about && <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>}
+            <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>
             {biz.certifications && (
               <div style={{ background: c.secondary, borderRadius: 8, padding: '14px 18px', marginBottom: 12, borderLeft: `3px solid ${c.accent}` }}>
                 <div style={{ color: c.accent, fontSize: 10, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 4 }}>CERTIFIED</div>

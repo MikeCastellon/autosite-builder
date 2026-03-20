@@ -250,7 +250,7 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
             <p style={{ color: '#bbb', lineHeight: 1.8, fontSize: 15, marginBottom: 20 }}>
               {copy.aboutText || `Based in ${biz.city || 'your area'}, we bring professional detailing directly to you.`}
             </p>
-            {images.about && <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>}
+            <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>
             {biz.certifications && (
               <div style={{ marginTop: 16, padding: '14px 18px', background: '#2a2a2a', borderLeft: `4px solid ${c.accent}` }}>
                 <div style={{ color: c.accent, fontWeight: 700, fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 4 }}>CERTIFIED</div>

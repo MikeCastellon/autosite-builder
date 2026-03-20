@@ -224,7 +224,7 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
               Serving {businessInfo.city} With Pride
             </h2>
             <p style={{ color: c.muted, lineHeight: 1.8, fontSize: '1rem', marginBottom: '24px' }}>{generatedCopy.aboutText}</p>
-            {images.about && <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>}
+            <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>
             {businessInfo.certifications && businessInfo.certifications.length > 0 && (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '20px' }}>
                 {businessInfo.certifications.map((cert, i) => (

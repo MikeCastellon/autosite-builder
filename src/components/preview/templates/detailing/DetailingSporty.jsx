@@ -267,7 +267,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
             <div style={s.sectionTag}>About Us</div>
             <h2 style={s.sectionTitle}>Built Different</h2>
             <p style={s.aboutText}>{generatedCopy.aboutText}</p>
-            {images.about && <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>}
+            <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>
           </div>
         </div>
       </section>

@@ -396,7 +396,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
           <p style={{ fontSize: 15, color: '#6B6560', lineHeight: 1.85, marginTop: 18, marginBottom: 24, maxWidth: 420 }}>
             {copy.aboutText || `Serving ${biz.city || 'your area'} with expert auto repair built on straight talk, fair prices, and work you can stake your safety on.`}
           </p>
-            {images.about && <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>}
+            <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>
 
           {/* Credential list */}
           <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 32 }}>

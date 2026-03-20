@@ -49,7 +49,7 @@ export default function WizardShell({ step, onBack, children }) {
       )}
 
       {/* Main content */}
-      <main className="flex-1 px-8 py-10 max-w-2xl mx-auto w-full">
+      <main className="flex-1 px-8 pt-10 max-w-2xl mx-auto w-full">
         {children}
       </main>
 

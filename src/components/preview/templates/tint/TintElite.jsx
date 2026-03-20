@@ -357,7 +357,7 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
               {businessInfo.yearsInBusiness ? `${businessInfo.yearsInBusiness} Years of Precision` : 'The Art of Window Tinting'}
             </h2>
             <p style={{ color: c.muted, lineHeight: 1.9, fontSize: '0.95rem', marginBottom: '32px', fontWeight: 300 }}>{generatedCopy.aboutText}</p>
-            {images.about && <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={templateMeta.colors.accent} /></div>}
+            <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={templateMeta.colors.accent} /></div>
             {businessInfo.specialties && businessInfo.specialties.length > 0 && (
               <div style={{ marginBottom: '24px' }}>
                 <div style={{ fontSize: '0.65rem', letterSpacing: '3px', textTransform: 'uppercase', color: c.muted, marginBottom: '10px', fontFamily: bodyFont }}>Specialties</div>

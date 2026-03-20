@@ -299,7 +299,7 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
               Precision Detailing, Delivered to You
             </h2>
             <p style={{ color: c.muted, lineHeight: 1.85, fontSize: '0.95rem', marginBottom: '32px', fontWeight: 300 }}>{generatedCopy.aboutText}</p>
-            {images.about && <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>}
+            <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>
             {businessInfo.certifications && businessInfo.certifications.length > 0 && (
               <div style={{ marginBottom: '24px' }}>
                 <div style={{ fontSize: '0.68rem', letterSpacing: '2.5px', textTransform: 'uppercase', color: 'rgba(148,163,184,0.4)', marginBottom: '10px' }}>Certifications</div>

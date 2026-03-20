@@ -246,7 +246,7 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
           <div style={s.quoteWrapper}>
             <span style={s.quoteMark}>"</span>
             <p style={s.aboutText}>{generatedCopy.aboutText}</p>
-            {images.about && <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>}
+            <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>
           </div>
         </div>
       </section>

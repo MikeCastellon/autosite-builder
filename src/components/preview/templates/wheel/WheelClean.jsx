@@ -247,7 +247,7 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
               <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.85, marginBottom: 20 }}>
                 {copy.aboutText || `Serving ${biz.city || 'your area'} with expert wheel and tire services.`}
               </p>
-            {images.about && <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>}
+            <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>
               {biz.certifications && (
                 <div style={{ background: '#fff', borderRadius: 10, padding: '16px 20px', borderLeft: `4px solid ${c.accent}`, marginBottom: 12 }}>
                   <div style={{ fontSize: 11, fontWeight: 700, color: c.accent, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 4 }}>CERTIFICATIONS</div>

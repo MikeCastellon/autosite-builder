@@ -352,7 +352,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
                 <p style={{ color: c.muted || '#64748b', fontSize: 14, lineHeight: 1.75, margin: '0 0 16px', fontWeight: 600 }}>
                   {copy.aboutText || `Based in ${biz.city || 'your city'}${biz.state ? `, ${biz.state}` : ''}, we deliver a top-tier car wash every time.${biz.yearsInBusiness ? ` Over ${biz.yearsInBusiness} years in business — we know clean.` : ''}`}
                 </p>
-            {images.about && <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>}
+            <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>
                 {specialties.length > 0 && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
                     {specialties.map((s, idx) => <span key={idx} style={{ background: `${c.accent}15`, color: c.accent, borderRadius: 50, padding: '4px 14px', fontSize: 12, fontWeight: 700 }}>{s}</span>)}

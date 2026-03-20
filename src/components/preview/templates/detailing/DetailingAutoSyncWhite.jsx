@@ -267,7 +267,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
             <br />Trusted by industry.
           </h2>
           <p style={s.bodyText}>{generatedCopy.aboutText}</p>
-            {images.about && <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>}
+            <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>
           <div style={s.specPillsGrid}>
             {[
               { label: 'Experience', val: (businessInfo.yearsInBusiness || '8') + '+ Years' },

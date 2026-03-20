@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase.js';
-import { useAuth } from '../../lib/AuthContext.jsx';
 import { publishSite } from '../../lib/publishSite.js';
 
 export default function DashboardPage({ onNewSite }) {
-  const { session } = useAuth();
   const [sites, setSites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
@@ -24,10 +22,6 @@ export default function DashboardPage({ onNewSite }) {
     }
     fetchSites();
   }, []);
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-  };
 
   const handleDelete = async (id) => {
     if (!confirm('Delete this site?')) return;
@@ -53,7 +47,6 @@ export default function DashboardPage({ onNewSite }) {
         images: {},
         selectedWidgetIds: site.widget_config_ids || [],
         customDomain: site.custom_domain || null,
-        session,
       });
       alert(`${site.business_info?.businessName || 'Site'} republished successfully!`);
     } catch (err) {
@@ -80,21 +73,12 @@ export default function DashboardPage({ onNewSite }) {
     <div className="min-h-screen bg-[#faf9f7]">
       <header className="border-b border-black/[0.07] bg-white px-6 py-4 flex items-center justify-between">
         <h1 className="text-lg font-black text-[#1a1a1a] tracking-tight">Website Creator</h1>
-        <button
-          onClick={handleSignOut}
-          className="text-sm text-[#888] hover:text-[#cc0000] transition-colors"
-        >
-          Sign out
-        </button>
       </header>
 
       <main className="max-w-4xl mx-auto px-6 py-10">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h2 className="text-2xl font-black text-[#1a1a1a] tracking-tight">Your Sites</h2>
-            <p className="text-[#888] text-sm mt-1">
-              {session?.user?.phone || session?.user?.email}
-            </p>
           </div>
           <button
             onClick={onNewSite}

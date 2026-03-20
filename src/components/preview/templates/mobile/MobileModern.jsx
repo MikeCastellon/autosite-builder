@@ -253,7 +253,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
             <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.8, marginBottom: 20 }}>
               {copy.aboutText || `Based in ${biz.city || 'your area'}, we bring professional detailing directly to you.`}
             </p>
-            {images.about && <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>}
+            <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>
             {biz.certifications && (
               <div style={{ background: c.secondary, borderRadius: 10, padding: '16px 20px', marginBottom: 12, borderLeft: `4px solid ${c.accent}` }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: c.accent, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 4 }}>CERTIFIED</div>

@@ -19,19 +19,10 @@ export const handler = async (event) => {
     return { statusCode: 405, headers: CORS, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
-  // --- Auth ---
-  const authHeader = event.headers['authorization'] || '';
-  const token = authHeader.replace('Bearer ', '');
-  if (!token) return { statusCode: 401, headers: CORS, body: JSON.stringify({ error: 'Unauthorized' }) };
-
   const supabase = createClient(
     process.env.VITE_SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
   );
-  const { data: { user }, error: authErr } = await supabase.auth.admin.getUser(token);
-  if (authErr || !user) {
-    return { statusCode: 401, headers: CORS, body: JSON.stringify({ error: 'Invalid session' }) };
-  }
 
   // --- Parse body ---
   let body;
@@ -43,16 +34,13 @@ export const handler = async (event) => {
     return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Missing required fields' }) };
   }
 
-  // Verify site belongs to this user
-  const { data: siteRow, error: siteErr } = await supabase
-    .from('sites').select('id, netlify_site_id').eq('id', siteId).eq('user_id', user.id).single();
-  if (siteErr || !siteRow) {
-    return { statusCode: 403, headers: CORS, body: JSON.stringify({ error: 'Site not found' }) };
-  }
+  // Look up existing site for netlify_site_id (for republishing)
+  const { data: siteRow } = await supabase
+    .from('sites').select('id, netlify_site_id').eq('id', siteId).maybeSingle();
 
   try {
     // --- Step 1: Create or reuse Netlify site ---
-    let netlifySiteId = siteRow.netlify_site_id;
+    let netlifySiteId = siteRow?.netlify_site_id;
     let netlifySiteName;
 
     if (!netlifySiteId) {
@@ -149,14 +137,16 @@ export const handler = async (event) => {
       }
     }
 
-    // --- Step 5: Update Supabase ---
-    await supabase.from('sites').update({
-      slug,
-      published_url: publishedUrl,
-      netlify_site_id: netlifySiteId,
-      netlify_site_name: netlifySiteName,
-      custom_domain: customDomain || null,
-    }).eq('id', siteId);
+    // --- Step 5: Update Supabase (best-effort, site row may not exist without auth) ---
+    if (siteRow) {
+      await supabase.from('sites').update({
+        slug,
+        published_url: publishedUrl,
+        netlify_site_id: netlifySiteId,
+        netlify_site_name: netlifySiteName,
+        custom_domain: customDomain || null,
+      }).eq('id', siteId);
+    }
 
     return {
       statusCode: 200,

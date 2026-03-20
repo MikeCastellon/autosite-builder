@@ -196,7 +196,7 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
             <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.85, marginBottom: 20 }}>
               {copy.aboutText || `Serving ${biz.city || 'your area'} and surrounding regions. We bring the shop to you.`}
             </p>
-            {images.about && <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>}
+            <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>
             {biz.certifications && (
               <div style={{ background: `${c.accent}15`, border: `1px solid ${c.accent}44`, borderRadius: 4, padding: '14px 18px', marginBottom: 12 }}>
                 <div style={{ color: c.accent, fontWeight: 700, fontSize: 10, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 4 }}>CERTIFIED</div>

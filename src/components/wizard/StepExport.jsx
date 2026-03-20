@@ -1,18 +1,15 @@
 import { useState } from 'react';
 import { exportHtml } from '../../lib/exportHtml.js';
-import { supabase } from '../../lib/supabase.js';
-import { useAuth } from '../../lib/AuthContext.jsx';
 import { publishSite } from '../../lib/publishSite.js';
 import { generateSlug } from '../../lib/publishUtils.js';
 
 const PUBLISH_DOMAIN = import.meta.env.VITE_PUBLISH_DOMAIN || 'yourdomain.com';
 
 export default function StepExport({ businessInfo, generatedCopy, templateId, templateMeta, images, selectedWidgetIds, onBack, onStartOver }) {
-  const { session } = useAuth();
   const [downloading, setDownloading] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
   const [error, setError] = useState(null);
-  const [publishTab, setPublishTab] = useState('download'); // 'download' | 'publish'
+  const [publishTab, setPublishTab] = useState('publish'); // 'download' | 'publish'
   const [publishing, setPublishing] = useState(false);
   const [published, setPublished] = useState(null); // { publishedUrl, netlifyUrl, cnameInstructions }
   const [publishError, setPublishError] = useState(null);
@@ -25,19 +22,6 @@ export default function StepExport({ businessInfo, generatedCopy, templateId, te
     try {
       await exportHtml(templateId, businessInfo, generatedCopy, templateMeta, images, selectedWidgetIds || []);
 
-      // Save site to Supabase (only on first download, not re-downloads)
-      if (!downloaded && session?.user?.id) {
-        const { data: savedSite, error: saveError } = await supabase.from('sites').insert({
-          user_id: session.user.id,
-          business_info: businessInfo,
-          template_id: templateId,
-          generated_content: generatedCopy,
-          widget_config_ids: selectedWidgetIds || [],
-        }).select('id').single();
-        if (saveError) console.error('Failed to save site:', saveError.message);
-        if (savedSite) setSiteId(savedSite.id);
-      }
-
       setDownloaded(true);
     } catch (err) {
       setError(err.message || 'Download failed. Please try again.');
@@ -46,28 +30,12 @@ export default function StepExport({ businessInfo, generatedCopy, templateId, te
     }
   };
 
-  const saveSiteIfNeeded = async () => {
-    if (siteId) return siteId;
-    if (!session?.user?.id) throw new Error('You must be signed in to publish.');
-    const { data: savedSite, error: saveError } = await supabase.from('sites').insert({
-      user_id: session.user.id,
-      business_info: businessInfo,
-      template_id: templateId,
-      generated_content: generatedCopy,
-      widget_config_ids: selectedWidgetIds || [],
-    }).select('id').single();
-    if (saveError) throw new Error('Failed to save site before publishing');
-    setSiteId(savedSite.id);
-    return savedSite.id;
-  };
-
   const handlePublish = async () => {
     setPublishing(true);
     setPublishError(null);
     try {
-      const id = await saveSiteIfNeeded();
       const result = await publishSite({
-        siteId: id,
+        siteId: siteId || crypto.randomUUID(),
         businessInfo,
         generatedCopy,
         templateId,
@@ -75,7 +43,6 @@ export default function StepExport({ businessInfo, generatedCopy, templateId, te
         images,
         selectedWidgetIds,
         customDomain: customDomain || null,
-        session,
       });
       setPublished(result);
     } catch (err) {

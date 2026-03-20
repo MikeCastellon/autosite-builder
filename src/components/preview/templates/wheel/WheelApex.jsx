@@ -265,7 +265,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
                 ? copy.aboutText.substring(0, 200) + (copy.aboutText.length > 200 ? "..." : "")
                 : "We carry the brands that matter -- from forged JDM legends to European luxury to American custom. Every brand we stock is one we would put on our own car."}
             </p>
-            {images.about && <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>}
+            <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>
           </div>
 
           {brandsList.length > 0 ? (

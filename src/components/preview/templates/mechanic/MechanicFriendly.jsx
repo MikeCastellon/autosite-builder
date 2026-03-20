@@ -309,7 +309,7 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
             <div style={s.sectionEyebrow}>About Us</div>
             <h2 style={{ ...s.sectionTitle, marginBottom: '1.25rem' }}>Part of Your Community</h2>
             <p style={s.aboutText}>{generatedCopy.aboutText}</p>
-            {images.about && <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>}
+            <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>
             {businessInfo.certifications && (
               <div style={s.certBadge}>
                 <div style={s.certIcon} />

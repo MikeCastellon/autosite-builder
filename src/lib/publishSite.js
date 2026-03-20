@@ -5,7 +5,7 @@ import { exportHtmlString } from './exportHtml.js';
  * Publish a site to the web via the publish-site Netlify function.
  * Returns { publishedUrl, netlifyUrl, cnameInstructions }
  */
-export async function publishSite({ siteId, businessInfo, generatedCopy, templateId, templateMeta, images, selectedWidgetIds, customDomain, session }) {
+export async function publishSite({ siteId, businessInfo, generatedCopy, templateId, templateMeta, images, selectedWidgetIds, customDomain }) {
   const slug = generateSlug(businessInfo.businessName);
   const siteName = netlifyName(slug, siteId);
 
@@ -13,10 +13,7 @@ export async function publishSite({ siteId, businessInfo, generatedCopy, templat
 
   const res = await fetch('/.netlify/functions/publish-site', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${session.access_token}`,
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ siteId, htmlContent, slug, netlifyName: siteName, customDomain: customDomain || null }),
   });
 

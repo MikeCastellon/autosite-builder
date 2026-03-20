@@ -284,7 +284,7 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
               {businessInfo.yearsInBusiness ? `${businessInfo.yearsInBusiness} Years` : 'Built'} In The Trenches
             </h2>
             <p style={{ color: c.muted, lineHeight: 1.8, fontSize: '0.98rem', marginBottom: '28px' }}>{generatedCopy.aboutText}</p>
-            {images.about && <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>}
+            <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>
             {businessInfo.awards && businessInfo.awards.length > 0 && (
               <div style={{ marginBottom: '24px' }}>
                 {businessInfo.awards.map((award, i) => (

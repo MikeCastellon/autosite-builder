@@ -356,7 +356,7 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
               <p style={{ fontFamily: bodyFont, color: textDim, fontSize: '1rem', lineHeight: 1.85, position: 'relative', zIndex: 1 }}>
                 {generatedCopy.aboutText}
               </p>
-            {images.about && <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>}
+            <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>
               {businessInfo.awards && (
                 <div style={{ marginTop: '1.5rem', display: 'inline-block', background: c.accent, color: c.bg, fontFamily: bodyFont, fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', padding: '6px 16px', fontWeight: 700 }}>
                   {businessInfo.awards}

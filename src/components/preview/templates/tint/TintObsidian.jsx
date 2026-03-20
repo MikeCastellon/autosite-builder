@@ -484,7 +484,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
             <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.85, marginBottom: 24 }}>
               {copy.aboutText || `Serving ${biz.city || 'the area'} with premium window tinting and paint protection film.`}
             </p>
-            {images.about && <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>}
+            <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>
             {biz.yearsInBusiness && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
                 <div style={{ width: 3, height: 36, background: `linear-gradient(180deg, ${c.accent}, ${cCyan})`, borderRadius: 2, flexShrink: 0 }} />
