@@ -30,6 +30,7 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
   const goldDim = 'rgba(201,168,76,0.15)';
 
   const services = generatedCopy?.servicesSection?.items || [];
+  const svcCols = services.length >= 6 ? Math.ceil(services.length / 2) : services.length || 1;
   const testimonials = generatedCopy?.testimonialPlaceholders || [];
   const yearsNum = businessInfo.yearsInBusiness || '8';
   const cityName = businessInfo.city || 'Local';
@@ -112,7 +113,7 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
     servicesHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 'clamp(3rem,6vw,4.5rem)', flexWrap: 'wrap', gap: '1.5rem' },
     servicesHeaderLeft: { maxWidth: '520px' },
     servicesHeaderP: { color: textDim, lineHeight: 1.8, marginTop: '20px', fontSize: '15px', fontFamily: bodyFont },
-    servicesGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px,1fr))', gap: '2px' },
+    servicesGrid: { display: 'grid', gap: '2px' },
     serviceCard: { background: mid, padding: 'clamp(2rem,3vw,3rem) clamp(1.5rem,2.5vw,2.5rem)', position: 'relative', overflow: 'hidden', borderBottom: '3px solid ' + c.accent },
     serviceNum: { fontFamily: font, fontSize: '64px', fontWeight: 300, color: 'rgba(201,168,76,0.12)', lineHeight: 1, marginBottom: '24px' },
     serviceIcon: { fontSize: '28px', marginBottom: '20px', color: c.accent },
@@ -245,7 +246,7 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
             </p>
           </div>
         </div>
-        <div style={s.servicesGrid}>
+        <div style={{ ...s.servicesGrid, gridTemplateColumns: `repeat(${svcCols}, 1fr)` }}>
           {services.map((svc, i) => (
             <div key={i} style={s.serviceCard}>
               <div style={s.serviceNum}>{String(i + 1).padStart(2, '0')}</div>

@@ -19,6 +19,7 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
   const biz = businessInfo || {};
   const copy = generatedCopy || {};
   const services = copy.servicesSection?.items || [];
+  const svcCols = services.length >= 6 ? Math.ceil(services.length / 2) : services.length || 1;
   const testimonials = copy.testimonialPlaceholders || [];
   const payments = biz.paymentMethods || [];
   const packages = biz.packages || [];
@@ -69,9 +70,10 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
         background: `linear-gradient(135deg, ${c.bg} 0%, #111827 100%)`,
         padding: '96px 5% 72px',
         borderBottom: `2px solid ${c.accent}44`,
+        position: 'relative', overflow: 'hidden',
       }}>
         <HeroImage src={images.hero} />
-        <div className="tp-2col" style={{ maxWidth: 1200, margin: '0 auto', width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'center' }}>
+        <div className="tp-2col" style={{ position: 'relative', zIndex: 1, maxWidth: 1200, margin: '0 auto', width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'center' }}>
           {/* Left column */}
           <div>
             <div style={{
@@ -168,7 +170,7 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
               <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.7, maxWidth: 520 }}>{copy.servicesSection.intro}</p>
             )}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 18 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 18 }}>
             {services.length > 0 ? services.map((svc, i) => (
               <div key={i} style={{
                 background: c.secondary, border: `1px solid ${c.accent}33`,

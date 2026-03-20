@@ -38,6 +38,7 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center', textAlign: 'center',
       padding: 'clamp(6rem, 12vw, 9rem) clamp(1.5rem, 7vw, 5rem) clamp(4rem, 7vw, 6rem)',
+      position: 'relative', overflow: 'hidden',
     },
     heroPill: {
       display: 'inline-block',
@@ -97,7 +98,7 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
       color: c.bg, marginBottom: '0.75rem',
     },
     sectionSub: { fontFamily: bodyFont, color: c.text, fontSize: '1.05rem', lineHeight: 1.75, maxWidth: '560px', marginBottom: '3rem' },
-    servicesGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '1.25rem' },
+    servicesGrid: { display: 'grid', gap: '1.25rem' },
     serviceCard: {
       background: '#fff', padding: '1.75rem', borderRadius: '8px',
       boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #eee',
@@ -174,6 +175,9 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
     { num: businessInfo.warranty || '100%', label: 'Satisfaction Guaranteed' },
   ];
 
+  const _svcItems = generatedCopy.servicesSection?.items || [];
+  const svcCols = _svcItems.length >= 6 ? Math.ceil(_svcItems.length / 2) : _svcItems.length || 1;
+
   return (
     <div style={{ background: '#f7f7f8', color: c.bg, fontFamily: bodyFont, containerType: 'inline-size' }}>
       <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
@@ -190,13 +194,15 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
       {/* HERO */}
       <section style={s.hero}>
         <HeroImage src={images.hero} />
-        {businessInfo.awards && <div style={s.awardsChip}>◆ {businessInfo.awards}</div>}
-        <div style={s.heroPill}>Serving {businessInfo.city}, {businessInfo.state}</div>
-        <h1 style={s.heroH1}>{generatedCopy.headline}</h1>
-        <p style={s.heroSub}>{generatedCopy.subheadline}</p>
-        <div style={s.ctaRow}>
-          <button style={s.ctaPrimary}>{generatedCopy.ctaPrimary}</button>
-          <button style={s.ctaSecondary}>{generatedCopy.ctaSecondary}</button>
+        <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+          {businessInfo.awards && <div style={s.awardsChip}>◆ {businessInfo.awards}</div>}
+          <div style={s.heroPill}>Serving {businessInfo.city}, {businessInfo.state}</div>
+          <h1 style={s.heroH1}>{generatedCopy.headline}</h1>
+          <p style={s.heroSub}>{generatedCopy.subheadline}</p>
+          <div style={s.ctaRow}>
+            <button style={s.ctaPrimary}>{generatedCopy.ctaPrimary}</button>
+            <button style={s.ctaSecondary}>{generatedCopy.ctaSecondary}</button>
+          </div>
         </div>
       </section>
 
@@ -215,7 +221,7 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
         <div style={s.sectionEyebrow}>Services</div>
         <h2 style={s.sectionTitle}>What We Offer</h2>
         <p style={s.sectionSub}>{generatedCopy.servicesSection?.intro}</p>
-        <div style={s.servicesGrid}>
+        <div style={{ ...s.servicesGrid, gridTemplateColumns: `repeat(${svcCols}, 1fr)` }}>
           {(generatedCopy.servicesSection?.items || []).map((svc, i) => (
             <div key={i} style={s.serviceCard}>
               <div style={s.serviceIcon}><div style={s.serviceIconDot} /></div>

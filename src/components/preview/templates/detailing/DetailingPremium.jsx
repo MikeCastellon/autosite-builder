@@ -108,7 +108,6 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
     },
     servicesGrid: {
       display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
       gap: '1.5rem',
     },
     serviceCard: {
@@ -175,6 +174,9 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
     { num: businessInfo.warranty || 'Lifetime', label: 'Satisfaction Guarantee' },
   ];
 
+  const _svcItems = generatedCopy.servicesSection?.items || [];
+  const svcCols = _svcItems.length >= 6 ? Math.ceil(_svcItems.length / 2) : _svcItems.length || 1;
+
   return (
     <div style={{ background: c.bg, color: c.text, fontFamily: bodyFont, containerType: 'inline-size' }}>
       <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
@@ -218,7 +220,7 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
         <div style={s.sectionLabel}>Our Services</div>
         <h2 style={s.sectionTitle}>Precision. Perfection. Prestige.</h2>
         <p style={s.sectionSub}>{generatedCopy.servicesSection?.intro}</p>
-        <div style={s.servicesGrid}>
+        <div style={{ ...s.servicesGrid, gridTemplateColumns: `repeat(${svcCols}, 1fr)` }}>
           {(generatedCopy.servicesSection?.items || []).map((svc, i) => (
             <div key={i} style={s.serviceCard}>
               <div style={s.serviceName}>{svc.name}</div>

@@ -19,6 +19,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
   const biz          = businessInfo || {};
   const copy         = generatedCopy || {};
   const services     = copy.servicesSection?.items || [];
+  const svcCols = services.length >= 6 ? Math.ceil(services.length / 2) : services.length || 1;
   const testimonials = copy.testimonialPlaceholders || [];
   const payments     = biz.paymentMethods || [];
   const packages     = biz.packages || [];
@@ -261,7 +262,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
               <p style={{ fontSize: 15, color: c.muted, fontWeight: 600, marginTop: 12, maxWidth: 520, margin: '12px auto 0' }}>{copy.servicesSection.intro}</p>
             )}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 24 }}>
             {services.length > 0
               ? services.map((s, i) => (
                   <div key={i} style={{ background: cardBgs[i % cardBgs.length], ...neoBorder, borderRadius: 24, padding: '36px 32px' }}>

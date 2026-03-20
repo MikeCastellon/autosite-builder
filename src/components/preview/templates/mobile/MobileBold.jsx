@@ -19,6 +19,7 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
   const biz = businessInfo || {};
   const copy = generatedCopy || {};
   const services = copy.servicesSection?.items || [];
+  const svcCols = services.length >= 6 ? Math.ceil(services.length / 2) : services.length || 1;
   const testimonials = copy.testimonialPlaceholders || [];
   const payments = biz.paymentMethods || [];
   const packages = biz.packages || [];
@@ -168,7 +169,7 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
               <p style={{ color: '#888', fontSize: 15, lineHeight: 1.7, maxWidth: 520, marginTop: 16 }}>{copy.servicesSection.intro}</p>
             )}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 16 }}>
             {services.length > 0 ? services.map((s, i) => (
               <div key={i} style={{
                 background: c.secondary || '#2a2a2a',

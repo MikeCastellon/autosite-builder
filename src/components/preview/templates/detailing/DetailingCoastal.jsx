@@ -23,6 +23,8 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
     { value: '5★', label: 'Avg Rating' },
   ];
 
+  const svcCols = generatedCopy.servicesSection.items.length >= 6 ? Math.ceil(generatedCopy.servicesSection.items.length / 2) : generatedCopy.servicesSection.items.length || 1;
+
   const navStyle = {
     position: 'fixed',
     top: 0,
@@ -44,6 +46,7 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
       radial-gradient(ellipse at 80% 20%, rgba(8,145,178,0.06) 0%, transparent 50%),
       repeating-radial-gradient(circle at 50% 120%, transparent 0, transparent 40px, rgba(8,145,178,0.03) 40px, rgba(8,145,178,0.03) 41px)
     `,
+    position: 'relative', overflow: 'hidden',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -173,7 +176,7 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
             <h2 style={{ fontFamily: font, fontSize: '2.4rem', fontWeight: 800, color: c.text, marginBottom: '12px' }}>Our Services</h2>
             <p style={{ color: c.muted, maxWidth: '560px', margin: '0 auto', fontSize: '1.05rem', lineHeight: 1.7 }}>{generatedCopy.servicesSection.intro}</p>
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', justifyContent: 'center' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: '24px' }}>
             {generatedCopy.servicesSection.items.map((svc, i) => (
               <div key={i} style={cardStyle}>
                 <div style={{ width: '44px', height: '44px', background: `rgba(8,145,178,0.1)`, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px', fontSize: '1.4rem' }}>

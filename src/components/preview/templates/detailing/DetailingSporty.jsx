@@ -113,7 +113,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
       textTransform: 'uppercase', color: c.text, marginBottom: '1rem',
     },
     sectionSub: { fontFamily: bodyFont, color: c.muted, fontSize: '1rem', lineHeight: 1.75, maxWidth: '560px', marginBottom: '3rem' },
-    servicesGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem' },
+    servicesGrid: { display: 'grid', gap: '1rem' },
     serviceCard: {
       background: c.secondary, padding: '1.75rem',
       borderLeft: `4px solid ${c.accent}`,
@@ -178,6 +178,9 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
     { num: '100%', label: 'Satisfaction Rate', alt: true },
   ];
 
+  const _svcItems = generatedCopy.servicesSection?.items || [];
+  const svcCols = _svcItems.length >= 6 ? Math.ceil(_svcItems.length / 2) : _svcItems.length || 1;
+
   return (
     <div style={{ background: c.bg, color: c.text, fontFamily: bodyFont, containerType: 'inline-size' }}>
       <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
@@ -228,7 +231,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
         <div style={s.sectionTag}>What We Do</div>
         <h2 style={s.sectionTitle}>Our Services</h2>
         <p style={s.sectionSub}>{generatedCopy.servicesSection?.intro}</p>
-        <div style={s.servicesGrid}>
+        <div style={{ ...s.servicesGrid, gridTemplateColumns: `repeat(${svcCols}, 1fr)` }}>
           {(generatedCopy.servicesSection?.items || []).map((svc, i) => (
             <div key={i} style={s.serviceCard}>
               <div style={s.serviceName}>{svc.name}</div>

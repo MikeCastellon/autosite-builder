@@ -48,6 +48,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
   const dmSerif  = "'DM Serif Display', " + (font || 'serif');
 
   const services     = (generatedCopy && generatedCopy.servicesSection && generatedCopy.servicesSection.items) ? generatedCopy.servicesSection.items : [];
+  const svcCols = services.length >= 6 ? Math.ceil(services.length / 2) : services.length || 1;
   const testimonials = (generatedCopy && generatedCopy.testimonialPlaceholders) ? generatedCopy.testimonialPlaceholders : [];
 
   const stats = [
@@ -102,7 +103,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
     titleItalicBlue: { fontStyle: 'italic', color: blue },
     bodyText: { fontSize: '17px', color: text3, lineHeight: 1.7, fontWeight: 300, maxWidth: '560px' },
     servicesIntro: { maxWidth: '600px', margin: '0 auto 72px', textAlign: 'center' },
-    servicesBento: { display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '16px' },
+    servicesBento: { display: 'grid', gridTemplateColumns: isMobile ? '1fr' : `repeat(${svcCols}, 1fr)`, gap: '16px' },
     tileBase: { background: off, borderRadius: radius, padding: isMobile ? '28px 24px' : '40px 36px', position: 'relative', overflow: 'hidden', border: '1px solid ' + border },
     tileFeatured: { background: text, borderRadius: radius, padding: isMobile ? '28px 24px' : '40px 36px', position: 'relative', overflow: 'hidden', border: 'none', gridColumn: isMobile ? 'span 1' : 'span 2' },
     tileGlow: { position: 'absolute', top: '-40px', right: '-40px', width: '180px', height: '180px', borderRadius: '50%', background: 'radial-gradient(circle, ' + blue + '1f, transparent 70%)', pointerEvents: 'none' },
@@ -294,7 +295,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
               </p>
               {Array.isArray(businessInfo.packages) && businessInfo.packages[i] && (
                 <div style={s.fleetTags}>
-                  <span style={s.tag}>{businessInfo.packages[i]}</span>
+                  <span style={s.tag}>{typeof businessInfo.packages[i] === 'object' ? businessInfo.packages[i].name : businessInfo.packages[i]}</span>
                 </div>
               )}
             </div>
@@ -370,7 +371,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
                 '100% satisfaction guarantee on every job',
                 'Professional-grade products — no shortcuts',
                 Array.isArray(businessInfo.packages) && businessInfo.packages.length
-                  ? 'Packages available: ' + businessInfo.packages.slice(0, 3).join(', ')
+                  ? 'Packages available: ' + businessInfo.packages.slice(0, 3).map(p => typeof p === 'object' ? p.name : p).join(', ')
                   : null,
               ].filter(Boolean).map((item, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>

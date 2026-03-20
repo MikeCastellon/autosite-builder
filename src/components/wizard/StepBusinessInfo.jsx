@@ -9,6 +9,7 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
   const [values, setValues] = useState(initialValues || {});
   const [errors, setErrors] = useState({});
   const [customInputs, setCustomInputs] = useState({});
+  const [packageDrafts, setPackageDrafts] = useState({});
 
   const allFields = [...COMMON_FIELDS, ...specificFields];
 
@@ -189,6 +190,82 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
                   className={`${inputBase} resize-none ${errors[field.key] ? 'border-[#cc0000]' : 'border-black/[0.12]'}`}
                 />
               )}
+
+              {field.type === 'packages' && (() => {
+                const pkgs = values[field.key] || [];
+                const draft = packageDrafts[field.key] || { name: '', price: '', description: '' };
+
+                const updateDraft = (k, v) =>
+                  setPackageDrafts((prev) => ({ ...prev, [field.key]: { ...draft, [k]: v } }));
+
+                const addPackage = () => {
+                  if (!draft.name.trim()) return;
+                  handleChange(field.key, [...pkgs, { name: draft.name.trim(), price: draft.price.trim(), description: draft.description.trim() }]);
+                  setPackageDrafts((prev) => ({ ...prev, [field.key]: { name: '', price: '', description: '' } }));
+                };
+
+                const removePackage = (i) =>
+                  handleChange(field.key, pkgs.filter((_, idx) => idx !== i));
+
+                return (
+                  <div className="space-y-2">
+                    {pkgs.map((pkg, i) => (
+                      <div key={i} className="flex items-start justify-between gap-3 px-3.5 py-2.5 bg-[#faf9f7] border border-black/[0.07] rounded-xl">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[13px] font-semibold text-[#1a1a1a]">{pkg.name}</span>
+                            {pkg.price && <span className="text-[13px] font-bold text-[#cc0000]">{pkg.price}</span>}
+                          </div>
+                          {pkg.description && <p className="text-[12px] text-[#888] mt-0.5 leading-snug">{pkg.description}</p>}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removePackage(i)}
+                          className="shrink-0 text-[#bbb] hover:text-[#cc0000] text-[18px] leading-none transition-colors mt-0.5"
+                          title="Remove"
+                        >×</button>
+                      </div>
+                    ))}
+
+                    <div className="border border-black/[0.10] rounded-xl p-3.5 space-y-2.5 bg-white">
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          type="text"
+                          value={draft.name}
+                          onChange={(e) => updateDraft('name', e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addPackage())}
+                          placeholder="Package name (e.g. Premium)"
+                          className="col-span-1 bg-white border border-black/[0.12] rounded-lg px-3 py-2 text-[13px] text-[#1a1a1a] placeholder-[#aaa] focus:outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000] transition"
+                        />
+                        <input
+                          type="text"
+                          value={draft.price}
+                          onChange={(e) => updateDraft('price', e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addPackage())}
+                          placeholder="Price (e.g. $299)"
+                          className="col-span-1 bg-white border border-black/[0.12] rounded-lg px-3 py-2 text-[13px] text-[#1a1a1a] placeholder-[#aaa] focus:outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000] transition"
+                        />
+                      </div>
+                      <input
+                        type="text"
+                        value={draft.description}
+                        onChange={(e) => updateDraft('description', e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addPackage())}
+                        placeholder="Description (optional)"
+                        className="w-full bg-white border border-black/[0.12] rounded-lg px-3 py-2 text-[13px] text-[#1a1a1a] placeholder-[#aaa] focus:outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000] transition"
+                      />
+                      <button
+                        type="button"
+                        onClick={addPackage}
+                        disabled={!draft.name.trim()}
+                        className="w-full py-2 text-[13px] font-semibold rounded-lg border border-dashed border-black/[0.15] text-[#555] hover:border-[#cc0000]/40 hover:text-[#cc0000] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                      >
+                        + Add Package
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {(field.type === 'text' || field.type === 'tel' || field.type === 'number') && (
                 <input

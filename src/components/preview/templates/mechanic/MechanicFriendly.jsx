@@ -44,6 +44,8 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
     { icon: <IconStar />, title: 'Local & Trusted', desc: `Proudly serving ${businessInfo.city} and surrounding areas since ${new Date().getFullYear() - (parseInt(businessInfo.yearsInBusiness) || 10)}.` },
   ];
 
+  const svcCols = (() => { const n = generatedCopy?.servicesSection?.items?.length || 0; return n >= 6 ? Math.ceil(n / 2) : n || 1; })();
+
   const s = {
     nav: {
       position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
@@ -136,7 +138,7 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
       color: c.bg, marginBottom: '0.75rem',
     },
     sectionSub: { fontFamily: bodyFont, color: c.text, fontSize: '1rem', lineHeight: 1.75, maxWidth: '560px', marginBottom: '2.75rem' },
-    servicesGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem' },
+    servicesGrid: { display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: '1.25rem' },
     serviceCard: {
       background: '#fff', padding: '1.75rem', borderRadius: '8px',
       boxShadow: '0 1px 8px rgba(0,0,0,0.06)', border: '1px solid #e8edf2',

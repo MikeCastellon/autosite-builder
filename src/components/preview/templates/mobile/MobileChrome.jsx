@@ -26,6 +26,9 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
     { value: '100%', label: 'Satisfaction Rate' },
   ];
 
+  const _svcItems = generatedCopy.servicesSection.items;
+  const svcCols = _svcItems.length >= 6 ? Math.ceil(_svcItems.length / 2) : _svcItems.length || 1;
+
   const navStyle = {
     position: 'fixed',
     top: 0,
@@ -228,7 +231,7 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
             <h2 style={{ fontFamily: font, fontSize: '2.2rem', fontWeight: 300, color: c.text, marginBottom: '16px', letterSpacing: '-0.5px' }}>Our Services</h2>
             <p style={{ color: c.muted, maxWidth: '520px', margin: '0 auto', fontSize: '0.95rem', lineHeight: 1.8, fontWeight: 300 }}>{generatedCopy.servicesSection.intro}</p>
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', justifyContent: 'center' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: '20px' }}>
             {generatedCopy.servicesSection.items.map((svc, i) => (
               <div key={i} style={cardStyle}>
                 <div style={cardAccentTop} />

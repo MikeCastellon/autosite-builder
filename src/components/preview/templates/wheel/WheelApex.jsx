@@ -29,6 +29,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
   const biz = businessInfo || {};
   const copy = generatedCopy || {};
   const services = copy.servicesSection?.items || [];
+  const svcCols = services.length >= 6 ? Math.ceil(services.length / 2) : services.length || 1;
   const testimonials = copy.testimonialPlaceholders || [];
 
   const normalize = (val) => {
@@ -143,7 +144,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
       </nav>
 
       {/* HERO */}
-      <section className="tp-2col" style={{ paddingTop: 68, minHeight: "92vh", background: D.offwhite, display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", alignItems: "stretch", overflow: "hidden" }}>
+      <section className="tp-2col" style={{ paddingTop: 68, minHeight: "92vh", background: D.offwhite, display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", alignItems: "stretch", overflow: "hidden", position: "relative" }}>
 
         <HeroImage src={images.hero} />
         {/* Hero Left */}
@@ -316,7 +317,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
             <Eyebrow label="Our Services" />
             <SecTitle>Everything your<br />wheels <span style={{ color: D.blue }}>need.</span></SecTitle>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 1, background: D.border }}>
+          <div style={{ display: "grid", gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 1, background: D.border }}>
             {(services.length > 0
               ? services.map((svc, i) => ({ name: svc.name, desc: svc.description, num: String(i + 1).padStart(2, "0") }))
               : serviceNames.length > 0

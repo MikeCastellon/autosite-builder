@@ -19,6 +19,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
   const biz = businessInfo || {};
   const copy = generatedCopy || {};
   const services = copy.servicesSection?.items || [];
+  const svcCols = services.length >= 6 ? Math.ceil(services.length / 2) : services.length || 1;
   const testimonials = copy.testimonialPlaceholders || [];
   const payments = biz.paymentMethods || [];
   const packages = biz.packages || [];
@@ -64,9 +65,10 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
         minHeight: '100vh', display: 'flex', alignItems: 'center',
         background: `linear-gradient(160deg, ${c.secondary || '#eff6ff'} 0%, #dbeafe 100%)`,
         padding: '96px 5% 72px',
+        position: 'relative', overflow: 'hidden',
       }}>
         <HeroImage src={images.hero} />
-        <div className="tp-2col" style={{ maxWidth: 1200, margin: '0 auto', width: '100%', display: 'grid', gridTemplateColumns: '1fr 420px', gap: 64, alignItems: 'center' }}>
+        <div className="tp-2col" style={{ position: 'relative', zIndex: 1, maxWidth: 1200, margin: '0 auto', width: '100%', display: 'grid', gridTemplateColumns: '1fr 420px', gap: 64, alignItems: 'center' }}>
           {/* Left: headline */}
           <div>
             <span style={{
@@ -177,7 +179,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
               <p style={{ color: c.muted, fontSize: 16, lineHeight: 1.7, maxWidth: 540 }}>{copy.servicesSection.intro}</p>
             )}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 20 }}>
             {services.length > 0 ? services.map((svc, i) => (
               <div key={i} style={{
                 background: c.secondary || '#eff6ff', border: '1px solid #dbeafe',

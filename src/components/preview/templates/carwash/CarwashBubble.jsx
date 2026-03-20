@@ -16,6 +16,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
   const biz = businessInfo || {};
   const copy = generatedCopy || {};
   const services = copy.servicesSection?.items || [];
+  const svcCols = services.length >= 6 ? Math.ceil(services.length / 2) : services.length || 1;
   const testimonials = copy.testimonialPlaceholders || [];
   const payments = Array.isArray(biz.paymentMethods) ? biz.paymentMethods : [];
   const awards = Array.isArray(biz.awards) ? biz.awards : biz.awards ? [biz.awards] : [];
@@ -256,7 +257,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 20 }}>
             {(services.length > 0 ? services : [
               { name: 'Express', description: 'Quick, fresh, done right. High-pressure pre-rinse, foam wash, spot-free exit.' },
               { name: 'Bubble Rush', description: 'The full foam experience — triple foam cannon, tire scrub, Rain-X protectant.' },

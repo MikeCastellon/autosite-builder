@@ -20,6 +20,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
   const biz = businessInfo || {};
   const copy = generatedCopy || {};
   const services = copy.servicesSection?.items || [];
+  const svcCols = services.length >= 6 ? Math.ceil(services.length / 2) : services.length || 1;
   const testimonials = copy.testimonialPlaceholders || [];
   const payments = biz.paymentMethods || [];
 
@@ -175,7 +176,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
           {copy.servicesSection?.intro && (
             <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.7, maxWidth: 520, marginBottom: 48 }}>{copy.servicesSection.intro}</p>
           )}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 2 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 2 }}>
             {services.length > 0 ? services.map((svc, i) => (
               <div key={i} style={{
                 background: i % 2 === 0 ? c.secondary : '#232323',

@@ -19,6 +19,7 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
   const biz = businessInfo || {};
   const copy = generatedCopy || {};
   const services = copy.servicesSection?.items || [];
+  const svcCols = services.length >= 6 ? Math.ceil(services.length / 2) : services.length || 1;
   const testimonials = copy.testimonialPlaceholders || [];
   const payments = biz.paymentMethods || [];
   const packages = biz.packages || [];
@@ -68,9 +69,10 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
         background: c.secondary || '#e9ecef',
         borderBottom: '1px solid #e5e7eb',
         padding: '96px 5% 72px',
+        position: 'relative', overflow: 'hidden',
       }}>
         <HeroImage src={images.hero} />
-        <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'center' }}>
+        <div className="tp-2col" style={{ position: 'relative', zIndex: 1, maxWidth: 1100, margin: '0 auto', width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'center' }}>
           <div>
             <span style={{
               display: 'inline-block', background: `${c.accent}12`, color: c.accent,
@@ -177,7 +179,7 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
               )}
             </div>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 0 }}>
             {services.length > 0 ? services.map((svc, i) => (
               <div key={i} style={{
                 borderLeft: `4px solid ${i % 3 === 0 ? c.accent : i % 3 === 1 ? '#9ca3af' : '#d1d5db'}`,

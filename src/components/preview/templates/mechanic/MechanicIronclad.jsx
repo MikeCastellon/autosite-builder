@@ -23,6 +23,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
   const biz          = businessInfo || {};
   const copy         = generatedCopy || {};
   const services     = copy.servicesSection?.items || [];
+  const svcCols = services.length >= 6 ? Math.ceil(services.length / 2) : services.length || 1;
   const testimonials = copy.testimonialPlaceholders || [];
 
   // Normalise any field to a clean string array
@@ -329,7 +330,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
             )}
           </div>
           {/* Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 3, background: 'rgba(255,255,255,0.04)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 3, background: 'rgba(255,255,255,0.04)' }}>
             {(services.length > 0 ? services : []).map((svc, i) => (
               <div
                 key={i}
