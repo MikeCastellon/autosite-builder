@@ -241,23 +241,25 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
       <section style={s.hero}>
         <HeroImage src={images.hero} />
         <div style={s.heroAccentBar} />
-        {businessInfo.yearsInBusiness && (
-          <div style={s.trustedBadge}>
-            <div style={s.badgeDot} />
-            Trusted Since {new Date().getFullYear() - parseInt(businessInfo.yearsInBusiness)}
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          {businessInfo.yearsInBusiness && (
+            <div style={s.trustedBadge}>
+              <div style={s.badgeDot} />
+              Trusted Since {new Date().getFullYear() - parseInt(businessInfo.yearsInBusiness)}
+            </div>
+          )}
+          {!businessInfo.yearsInBusiness && businessInfo.awards && (
+            <div style={s.trustedBadge}><div style={s.badgeDot} />{businessInfo.awards}</div>
+          )}
+          <h1 style={s.heroH1}>{generatedCopy.headline}</h1>
+          <p style={s.heroSub}>{generatedCopy.subheadline}</p>
+          {businessInfo.certifications && (
+            <div style={s.heroCertBadge}>◆ {businessInfo.certifications}</div>
+          )}
+          <div style={s.ctaRow}>
+            <button style={s.ctaMain}>{generatedCopy.ctaPrimary}</button>
+            <button style={s.ctaOutline}>{generatedCopy.ctaSecondary}</button>
           </div>
-        )}
-        {!businessInfo.yearsInBusiness && businessInfo.awards && (
-          <div style={s.trustedBadge}><div style={s.badgeDot} />{businessInfo.awards}</div>
-        )}
-        <h1 style={s.heroH1}>{generatedCopy.headline}</h1>
-        <p style={s.heroSub}>{generatedCopy.subheadline}</p>
-        {businessInfo.certifications && (
-          <div style={s.heroCertBadge}>◆ {businessInfo.certifications}</div>
-        )}
-        <div style={s.ctaRow}>
-          <button style={s.ctaMain}>{generatedCopy.ctaPrimary}</button>
-          <button style={s.ctaOutline}>{generatedCopy.ctaSecondary}</button>
         </div>
       </section>
 

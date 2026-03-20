@@ -203,16 +203,18 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
         <HeroImage src={images.hero} />
         <div style={s.heroSlash} />
         <div style={s.heroSlash2} />
-        {businessInfo.awards && <div style={s.awardsTag}>{businessInfo.awards}</div>}
-        <h1 style={s.heroH1}>
-          {generatedCopy.headline.split(' ').map((word, i) =>
-            i % 3 === 2 ? <span key={i} style={s.heroH1Accent}>{word} </span> : <span key={i}>{word} </span>
-          )}
-        </h1>
-        <p style={s.heroSub}>{generatedCopy.subheadline}</p>
-        <div style={s.ctaRow}>
-          <button style={s.ctaFilled}>{generatedCopy.ctaPrimary}</button>
-          <button style={s.ctaGhost}>{generatedCopy.ctaSecondary}</button>
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          {businessInfo.awards && <div style={s.awardsTag}>{businessInfo.awards}</div>}
+          <h1 style={s.heroH1}>
+            {generatedCopy.headline.split(' ').map((word, i) =>
+              i % 3 === 2 ? <span key={i} style={s.heroH1Accent}>{word} </span> : <span key={i}>{word} </span>
+            )}
+          </h1>
+          <p style={s.heroSub}>{generatedCopy.subheadline}</p>
+          <div style={s.ctaRow}>
+            <button style={s.ctaFilled}>{generatedCopy.ctaPrimary}</button>
+            <button style={s.ctaGhost}>{generatedCopy.ctaSecondary}</button>
+          </div>
         </div>
       </section>
 

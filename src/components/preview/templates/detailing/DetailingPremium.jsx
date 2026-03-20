@@ -195,13 +195,15 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
         <HeroImage src={images.hero} />
         <div style={s.heroDiag} />
         <div style={s.heroDiag2} />
-        {businessInfo.awards && <div style={s.awardsRibbon}>{businessInfo.awards}</div>}
-        <div style={s.cityBadge}>{businessInfo.city}, {businessInfo.state}</div>
-        <h1 style={s.heroH1}>{generatedCopy.headline}</h1>
-        <p style={s.heroSub}>{generatedCopy.subheadline}</p>
-        <div style={s.ctaRow}>
-          <button style={s.ctaPrimary}>{generatedCopy.ctaPrimary}</button>
-          <button style={s.ctaSecondary}>{generatedCopy.ctaSecondary}</button>
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          {businessInfo.awards && <div style={s.awardsRibbon}>{businessInfo.awards}</div>}
+          <div style={s.cityBadge}>{businessInfo.city}, {businessInfo.state}</div>
+          <h1 style={s.heroH1}>{generatedCopy.headline}</h1>
+          <p style={s.heroSub}>{generatedCopy.subheadline}</p>
+          <div style={s.ctaRow}>
+            <button style={s.ctaPrimary}>{generatedCopy.ctaPrimary}</button>
+            <button style={s.ctaSecondary}>{generatedCopy.ctaSecondary}</button>
+          </div>
         </div>
       </section>
 
