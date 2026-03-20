@@ -85,42 +85,19 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
         {!splitHero && <HeroImage src={images.hero} />}
         {!splitHero && <div style={{ position: 'absolute', inset: 0, background: slashBg }} />}
         {!splitHero && <div style={{ position: 'absolute', top: 0, right: 0, width: '40%', height: '100%', background: `linear-gradient(to left, rgba(249,115,22,0.12), transparent)` }} />}
-        {!splitHero && (
-          <div style={{
-            position: 'absolute', top: 88, right: '5%',
-            background: c.accent, color: '#fff',
-            fontWeight: 900, fontSize: 13, letterSpacing: 2, textTransform: 'uppercase',
-            padding: '8px 20px',
-            clipPath: 'polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%)',
-          }}>
-            WE COME TO YOU
-          </div>
-        )}
 
         <div style={splitHero ? {
           flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
           padding: 'clamp(3rem,6vw,6rem)', background: c.bg,
-        } : { position: 'relative', zIndex: 1, padding: '7rem 5% 4rem', maxWidth: 960 }}>
-          {splitHero && (
-            <div style={{
-              display: 'inline-block', background: c.accent, color: '#fff',
-              fontWeight: 900, fontSize: 11, letterSpacing: 3, textTransform: 'uppercase',
-              padding: '8px 20px', marginBottom: 24,
-              clipPath: 'polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%)',
-            }}>
-              WE COME TO YOU
-            </div>
-          )}
-          {!splitHero && (
-            <div style={{
-              display: 'inline-block', background: c.accent, color: '#fff',
-              fontWeight: 900, fontSize: 11, letterSpacing: 3, textTransform: 'uppercase',
-              padding: '5px 16px', marginBottom: 24,
-              clipPath: 'polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%)',
-            }}>
-              MOBILE DETAILING — {biz.city || 'YOUR CITY'}, {biz.state || ''}
-            </div>
-          )}
+        } : { position: 'relative', zIndex: 2, padding: '7rem 5% 4rem', maxWidth: 960 }}>
+          <div style={{
+            display: 'inline-block', background: c.accent, color: '#fff',
+            fontWeight: 900, fontSize: 11, letterSpacing: 3, textTransform: 'uppercase',
+            padding: '5px 16px', marginBottom: 24,
+            clipPath: 'polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%)',
+          }}>
+            MOBILE DETAILING — {biz.city || 'YOUR CITY'}, {biz.state || ''}
+          </div>
           <h1 style={{
             fontSize: 'clamp(1.8rem, 8vw, 6rem)', fontWeight: 900, lineHeight: 0.95,
             textTransform: 'uppercase', letterSpacing: '-0.02em', margin: '0 0 1.2rem',
@@ -131,7 +108,7 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
             {copy.subheadline || biz.tagline || 'Professional mobile detailing at your door.'}
           </p>
           <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
-            <a href="#pricing" style={{
+            <a href={copy?.ctaPrimaryUrl || '#pricing'} style={{
               background: c.accent, color: '#fff', padding: '15px 36px',
               fontWeight: 900, fontSize: 16, letterSpacing: 1, textTransform: 'uppercase',
               textDecoration: 'none', display: 'inline-block',
@@ -139,12 +116,12 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
             }}>
               {copy.ctaPrimary || 'VIEW PACKAGES'}
             </a>
-            <a href={`tel:${biz.phone}`} style={{
+            <a href={copy?.ctaSecondaryUrl || (`tel:${biz.phone}`)} style={{
               border: `3px solid ${c.accent}`, color: c.accent, padding: '12px 28px',
               fontWeight: 900, fontSize: 16, letterSpacing: 1, textTransform: 'uppercase',
               textDecoration: 'none', display: 'inline-block',
             }}>
-              CALL {biz.phone || 'NOW'}
+              {copy.ctaSecondary || ('CALL ' + (biz.phone || 'NOW'))}
             </a>
           </div>
         </div>
@@ -167,22 +144,6 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
           SERVING: {biz.serviceArea}
         </div>
       )}
-
-      {/* STATS BAR */}
-      <section style={{ background: c.secondary || '#2a2a2a', padding: '3.5rem 5%', borderBottom: '1px solid #333' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 32, textAlign: 'center' }}>
-          {[
-            { val: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'YEARS IN BUSINESS' },
-            { val: '500+', label: 'RIDES DETAILED' },
-            { val: '100%', label: 'MOBILE SERVICE' },
-          ].map((s, i) => (
-            <div key={i}>
-              <div style={{ fontSize: '3rem', fontWeight: 900, color: c.accent, lineHeight: 1 }}>{s.val}</div>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, color: '#777', marginTop: 6, textTransform: 'uppercase' }}>{s.label}</div>
-            </div>
-          ))}
-        </div>
-      </section>
 
       {/* SERVICES */}
       <section id="services" style={{ padding: '80px 5%' }}>
@@ -248,23 +209,42 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
         </div>
       </section>
 
-      {/* ABOUT + HOURS */}
+      {/* ABOUT */}
       <section id="about" style={{ padding: '80px 5%' }}>
-        <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'start' }}>
+        <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'center' }}>
+          <div>
+            {(copy?.aboutLayout || 'image') !== 'stats' ? (
+              images.about
+                ? <img src={images.about} alt="About" style={{ width: '100%', maxWidth: 460, height: 360, objectFit: 'cover', display: 'block' }} />
+                : <div style={{ width: '100%', maxWidth: 460, height: 360, background: c.secondary || '#2a2a2a', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#777', fontSize: '0.85rem', textAlign: 'center', padding: 24, boxSizing: 'border-box' }}>Upload an about photo in the Images tab</div>
+            ) : (
+              <div style={{ width: '100%', maxWidth: 460, background: c.secondary || '#2a2a2a', padding: '40px 32px', boxSizing: 'border-box' }}>
+                {(() => {
+                  const defaultStats = [
+                    { value: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'Years in Business' },
+                    { value: '500+', label: 'Rides Detailed' },
+                    { value: '100%', label: 'Mobile Service' },
+                  ];
+                  const aboutStats = (copy?.aboutStats || []).map((s, i) => ({
+                    value: s.value || defaultStats[i]?.value || '',
+                    label: s.label || defaultStats[i]?.label || '',
+                  }));
+                  if (aboutStats.length === 0) aboutStats.push(...defaultStats);
+                  return aboutStats.map((st, i) => (
+                    <div key={i} style={{ textAlign: 'center', marginBottom: i < aboutStats.length - 1 ? 28 : 0 }}>
+                      <div style={{ fontSize: '3rem', fontWeight: 900, color: c.accent, lineHeight: 1 }}>{st.value}</div>
+                      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, color: '#777', marginTop: 6, textTransform: 'uppercase' }}>{st.label}</div>
+                    </div>
+                  ));
+                })()}
+              </div>
+            )}
+          </div>
           <div>
             <div style={{ color: c.accent, fontWeight: 900, letterSpacing: 3, fontSize: 11, textTransform: 'uppercase', marginBottom: 8 }}>ABOUT US</div>
             <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 24px', lineHeight: 1 }}>
               {biz.businessName || 'WE DETAIL'}
             </h2>
-            {(generatedCopy?.aboutLayout || 'image') !== 'stats' ? (
-              images.about
-                ? <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block', marginBottom: '20px' }} />
-                : <div style={{ width: '100%', height: '360px', background: c.secondary || '#2a2a2a', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#777', fontSize: '0.85rem', marginBottom: '20px' }}>Upload a photo in Images tab</div>
-            ) : (
-              images.about && (
-                <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block', marginBottom: '20px' }} />
-              )
-            )}
             <p style={{ color: '#bbb', lineHeight: 1.8, fontSize: 15, marginBottom: 20 }}>
               {copy.aboutText || `Based in ${biz.city || 'your area'}, we bring professional detailing directly to you.`}
             </p>
@@ -286,25 +266,6 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
                     }}>{p}</span>
                   ))}
                 </div>
-              </div>
-            )}
-          </div>
-          <div>
-            {biz.hours && Object.keys(biz.hours).length > 0 && (
-              <div style={{ background: '#2a2a2a', padding: '28px 24px', borderTop: `4px solid ${c.accent}` }}>
-                <div style={{ color: c.accent, fontWeight: 900, fontSize: 11, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 20 }}>HOURS OF OPERATION</div>
-                {Object.entries(biz.hours).map(([day, hrs], i) => (
-                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #333', paddingBottom: 10, marginBottom: 10 }}>
-                    <span style={{ fontWeight: 700, textTransform: 'uppercase', fontSize: 13, letterSpacing: 1 }}>{day}</span>
-                    <span style={{ color: c.accent, fontWeight: 700, fontSize: 13 }}>{hrs}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-            {biz.specialties && (
-              <div style={{ marginTop: 16, background: '#2a2a2a', padding: '20px 24px', borderLeft: `5px solid ${c.accent}` }}>
-                <div style={{ color: c.accent, fontWeight: 700, fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 8 }}>SPECIALTIES</div>
-                <p style={{ color: '#bbb', fontSize: 14, lineHeight: 1.6, margin: 0 }}>{biz.specialties}</p>
               </div>
             )}
           </div>
