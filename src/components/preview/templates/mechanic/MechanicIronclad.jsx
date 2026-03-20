@@ -620,15 +620,20 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
 
             {/* Brand column */}
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
-                <div style={{ width: 42, height: 42, background: c.accent, clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: bebas, fontSize: 14, color: '#fff', flexShrink: 0 }}>
-                  {(biz.businessName || 'IC').replace(/[^A-Za-z]/g, '').slice(0, 2).toUpperCase() || 'IC'}
+              {/* Footer logo */}
+              {images.logo ? (
+                <img src={images.logo} alt={biz.businessName} style={{ height: 48, maxWidth: 180, objectFit: 'contain', marginBottom: '0.75rem', display: 'block' }} />
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
+                  <div style={{ width: 42, height: 42, background: c.accent, clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: bebas, fontSize: 14, color: '#fff', flexShrink: 0 }}>
+                    {(biz.businessName || 'IC').replace(/[^A-Za-z]/g, '').slice(0, 2).toUpperCase() || 'IC'}
+                  </div>
+                  <div>
+                    <span style={{ fontFamily: bebas, fontSize: 20, letterSpacing: 3, color: c.text, display: 'block', lineHeight: 1 }}>{biz.businessName || 'AUTO REPAIR'}</span>
+                    <span style={{ fontFamily: condensed, fontSize: 9, letterSpacing: 4, color: c.accent, fontWeight: 700, textTransform: 'uppercase', display: 'block', marginTop: 1 }}>{[biz.city, biz.state].filter(Boolean).join(', ')}</span>
+                  </div>
                 </div>
-                <div>
-                  <span style={{ fontFamily: bebas, fontSize: 20, letterSpacing: 3, color: c.text, display: 'block', lineHeight: 1 }}>{biz.businessName || 'AUTO REPAIR'}</span>
-                  <span style={{ fontFamily: condensed, fontSize: 9, letterSpacing: 4, color: c.accent, fontWeight: 700, textTransform: 'uppercase', display: 'block', marginTop: 1 }}>{[biz.city, biz.state].filter(Boolean).join(', ')}</span>
-                </div>
-              </div>
+              )}
               <p style={{ fontSize: 13, color: '#6B6560', lineHeight: 1.8, maxWidth: 260 }}>
                 {copy.footerTagline || biz.tagline || 'Family-owned auto repair. Real mechanics, fair prices, work guaranteed.'}
               </p>

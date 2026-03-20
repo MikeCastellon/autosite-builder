@@ -411,12 +411,17 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
       <footer style={s.footer}>
         <div style={s.footerTop}>
           <div>
-            <div style={s.footerBrandLogo}>
-              <div style={s.footerLogoRing}>
-                <div style={{ ...s.logoRingInner, borderColor: 'rgba(255,255,255,0.4)' }} />
+            {/* Footer logo */}
+            {images.logo ? (
+              <img src={images.logo} alt={businessInfo.businessName} style={{ height: 48, maxWidth: 180, objectFit: 'contain', marginBottom: '0.75rem', display: 'block' }} />
+            ) : (
+              <div style={s.footerBrandLogo}>
+                <div style={s.footerLogoRing}>
+                  <div style={{ ...s.logoRingInner, borderColor: 'rgba(255,255,255,0.4)' }} />
+                </div>
+                {businessInfo.businessName}
               </div>
-              {businessInfo.businessName}
-            </div>
+            )}
             <p style={s.footerBrandP}>{generatedCopy.footerTagline}</p>
           </div>
           <div>

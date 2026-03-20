@@ -11,18 +11,6 @@ export const TEMPLATES = {
     bodyFont: "'Inter', sans-serif",
     mood: 'bold, energetic, performance-driven, aggressive',
   },
-  detailing_minimal: {
-    id: 'detailing_minimal',
-    businessType: 'detailing_shop',
-    label: 'Clean & Minimal',
-    description: 'White space, black & gray. Modern, approachable, professional.',
-    previewColors: ['#ffffff', '#2d3748', '#f7fafc'],
-    colors: { bg: '#ffffff', accent: '#2d3748', text: '#1a202c', secondary: '#f7fafc', muted: '#718096' },
-    font: "'Inter', sans-serif",
-    bodyFont: "'Inter', sans-serif",
-    mood: 'clean, minimal, professional, trustworthy',
-  },
-
   // ─── Mobile Detailing ──────────────────────────────────────────
   mobile_bold: {
     id: 'mobile_bold',
@@ -277,7 +265,6 @@ export const TEMPLATES = {
 
 export const TEMPLATE_COMPONENT_MAP = {
   detailing_sporty:     () => import('../components/preview/templates/detailing/DetailingSporty.jsx'),
-  detailing_minimal:    () => import('../components/preview/templates/detailing/DetailingMinimal.jsx'),
   detailing_coastal:    () => import('../components/preview/templates/detailing/DetailingCoastal.jsx'),
   mobile_bold:          () => import('../components/preview/templates/mobile/MobileBold.jsx'),
   mobile_modern:        () => import('../components/preview/templates/mobile/MobileModern.jsx'),

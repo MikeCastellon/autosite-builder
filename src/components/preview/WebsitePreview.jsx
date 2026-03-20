@@ -40,9 +40,11 @@ export default function WebsitePreview({ businessInfo, generatedCopy, editedCopy
         onImagesChange={onImagesChange}
       />
 
-      {/* Preview frame — transform creates a containing block so template fixed navs stay inside */}
+      {/* Preview frame */}
+      {/* Inject CSS so sticky template navs sit below our fixed toolbar (52px) */}
+      <style>{`.preview-wrap nav { top: 52px !important; }`}</style>
       <div className="pt-14 min-h-screen">
-        <div style={{ ...containerStyle, transform: 'translateZ(0)', position: 'relative' }}>
+        <div className="preview-wrap" style={{ ...containerStyle, position: 'relative' }}>
           <Suspense
               fallback={
                 <div className="flex items-center justify-center min-h-screen">

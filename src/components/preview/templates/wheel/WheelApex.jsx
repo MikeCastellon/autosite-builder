@@ -564,21 +564,26 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
 
             {/* Brand col */}
             <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-                <div style={{ width: 36, height: 36, background: D.blue, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <span style={{ fontFamily: font, fontWeight: 900, fontSize: 14, letterSpacing: 1, color: "#fff" }}>
-                    {(biz.businessName || "WS").substring(0, 2).toUpperCase()}
-                  </span>
+              {/* Footer logo */}
+              {images.logo ? (
+                <img src={images.logo} alt={biz.businessName} style={{ height: 48, maxWidth: 180, objectFit: 'contain', marginBottom: '0.75rem', display: 'block' }} />
+              ) : (
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+                  <div style={{ width: 36, height: 36, background: D.blue, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <span style={{ fontFamily: font, fontWeight: 900, fontSize: 14, letterSpacing: 1, color: "#fff" }}>
+                      {(biz.businessName || "WS").substring(0, 2).toUpperCase()}
+                    </span>
+                  </div>
+                  <div>
+                    <span style={{ fontFamily: font, fontWeight: 700, fontSize: 18, letterSpacing: "3px", textTransform: "uppercase", color: "#fff", display: "block", lineHeight: 1 }}>
+                      {biz.businessName || "Wheel Shop"}
+                    </span>
+                    <span style={{ fontSize: 10, fontWeight: 500, letterSpacing: "2px", textTransform: "uppercase", color: D.alloy2, display: "block", marginTop: 1 }}>
+                      {[biz.city, biz.state].filter(Boolean).join(", ")}
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <span style={{ fontFamily: font, fontWeight: 700, fontSize: 18, letterSpacing: "3px", textTransform: "uppercase", color: "#fff", display: "block", lineHeight: 1 }}>
-                    {biz.businessName || "Wheel Shop"}
-                  </span>
-                  <span style={{ fontSize: 10, fontWeight: 500, letterSpacing: "2px", textTransform: "uppercase", color: D.alloy2, display: "block", marginTop: 1 }}>
-                    {[biz.city, biz.state].filter(Boolean).join(", ")}
-                  </span>
-                </div>
-              </div>
+              )}
               <p style={{ fontSize: 14, color: D.alloy2, lineHeight: 1.8, maxWidth: 270, fontFamily: bodyFont, margin: 0 }}>
                 {copy.footerTagline || "Premier custom wheel studio. Fitment specialists, repair experts, and enthusiasts committed to getting your build exactly right."}
               </p>

@@ -368,7 +368,12 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
       <footer style={{ background: '#f9fafb', borderTop: '1px solid #e5e7eb', padding: '40px 5% 24px' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, marginBottom: 20 }}>
           <div>
-            <div style={{ fontWeight: 800, fontSize: 15, color: c.accent, marginBottom: 4 }}>{biz.businessName}</div>
+            {/* Footer logo */}
+            {images.logo ? (
+              <img src={images.logo} alt={biz.businessName} style={{ height: 48, maxWidth: 180, objectFit: 'contain', marginBottom: '0.75rem', display: 'block' }} />
+            ) : (
+              <div style={{ fontWeight: 800, fontSize: 15, color: c.accent, marginBottom: 4 }}>{biz.businessName}</div>
+            )}
             <p style={{ color: c.muted, fontSize: 13, margin: 0 }}>{copy.footerTagline || biz.tagline}</p>
           </div>
           <SocialRow biz={biz} color={c.accent} size={20} images={images} />

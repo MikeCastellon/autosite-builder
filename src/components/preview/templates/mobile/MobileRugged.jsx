@@ -293,7 +293,12 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
       <footer style={{ background: '#111a0f', padding: '48px 5% 24px', borderTop: `1px solid ${c.accent}33` }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 36, marginBottom: 32 }}>
           <div>
-            <div style={{ fontWeight: 800, fontSize: 14, color: c.accent, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 10 }}>{biz.businessName}</div>
+            {/* Footer logo */}
+            {images.logo ? (
+              <img src={images.logo} alt={biz.businessName} style={{ height: 48, maxWidth: 180, objectFit: 'contain', marginBottom: '0.75rem', display: 'block' }} />
+            ) : (
+              <div style={{ fontWeight: 800, fontSize: 14, color: c.accent, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 10 }}>{biz.businessName}</div>
+            )}
             <p style={{ color: c.muted, fontSize: 13, lineHeight: 1.7 }}>{copy.footerTagline || biz.tagline}</p>
           </div>
           <div>

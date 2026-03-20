@@ -409,7 +409,12 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
       <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
       <footer style={s.footer}>
         <div>
-          <div style={s.footerLogo}>{businessInfo.businessName}</div>
+          {/* Footer logo */}
+          {images.logo ? (
+            <img src={images.logo} alt={businessInfo.businessName} style={{ height: 48, maxWidth: 180, objectFit: 'contain', marginBottom: '0.75rem', display: 'block' }} />
+          ) : (
+            <div style={s.footerLogo}>{businessInfo.businessName}</div>
+          )}
           <div style={s.footerText}>{generatedCopy.footerTagline}</div>
           {businessInfo.address && <div style={{ ...s.footerText, marginTop: '0.4rem' }}>{businessInfo.address}</div>}
         </div>

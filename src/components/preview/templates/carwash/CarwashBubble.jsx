@@ -456,10 +456,15 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
         <div style={{ maxWidth: 1100, margin: '0 auto', position: 'relative', zIndex: 1 }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 48, marginBottom: 52 }}>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                <div style={{ width: 36, height: 36, borderRadius: '50%', background: `radial-gradient(circle at 35% 30%, #fff, ${c.accent})`, border: `2px solid ${c.accent}`, flexShrink: 0 }} />
-                <span style={{ fontFamily: font, fontSize: 15, color: '#fff' }}>{biz.businessName || 'Bubble Rush'}</span>
-              </div>
+              {/* Footer logo */}
+              {images.logo ? (
+                <img src={images.logo} alt={biz.businessName} style={{ height: 48, maxWidth: 180, objectFit: 'contain', marginBottom: '0.75rem', display: 'block' }} />
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: `radial-gradient(circle at 35% 30%, #fff, ${c.accent})`, border: `2px solid ${c.accent}`, flexShrink: 0 }} />
+                  <span style={{ fontFamily: font, fontSize: 15, color: '#fff' }}>{biz.businessName || 'Bubble Rush'}</span>
+                </div>
+              )}
               <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.38)', lineHeight: 1.8, margin: 0, maxWidth: 240, fontWeight: 600 }}>
                 {copy.footerTagline || `${biz.city ? `Serving ${biz.city}` : 'Professional car wash'} — your car deserves the best.`}
               </p>

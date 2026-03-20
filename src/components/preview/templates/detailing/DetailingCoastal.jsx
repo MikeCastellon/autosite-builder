@@ -299,7 +299,12 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '32px', marginBottom: '40px' }}>
             <div>
-              <div style={{ fontFamily: font, fontSize: '1.5rem', fontWeight: 800, color: '#ffffff', marginBottom: '8px' }}>{businessInfo.businessName}</div>
+              {/* Footer logo */}
+              {images.logo ? (
+                <img src={images.logo} alt={businessInfo.businessName} style={{ height: 48, maxWidth: 180, objectFit: 'contain', marginBottom: '0.75rem', display: 'block' }} />
+              ) : (
+                <div style={{ fontFamily: font, fontSize: '1.5rem', fontWeight: 800, color: '#ffffff', marginBottom: '8px' }}>{businessInfo.businessName}</div>
+              )}
               <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem', maxWidth: '300px' }}>{generatedCopy.footerTagline}</p>
             </div>
             <SocialRow biz={businessInfo} color="rgba(255,255,255,0.7)" size={20} images={images} />

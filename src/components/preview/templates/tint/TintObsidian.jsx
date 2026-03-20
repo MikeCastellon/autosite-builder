@@ -651,16 +651,21 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 40, marginBottom: 48 }}>
             {/* Brand */}
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                <div style={{
-                  width: 26, height: 26, borderRadius: 5,
-                  background: `linear-gradient(135deg, ${c.accent}, ${cCyan})`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                }}>
-                  <div style={{ width: 11, height: 11, background: 'rgba(255,255,255,0.9)', clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)', borderRadius: 1 }} />
+              {/* Footer logo */}
+              {images.logo ? (
+                <img src={images.logo} alt={biz.businessName} style={{ height: 48, maxWidth: 180, objectFit: 'contain', marginBottom: '0.75rem', display: 'block' }} />
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                  <div style={{
+                    width: 26, height: 26, borderRadius: 5,
+                    background: `linear-gradient(135deg, ${c.accent}, ${cCyan})`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                  }}>
+                    <div style={{ width: 11, height: 11, background: 'rgba(255,255,255,0.9)', clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)', borderRadius: 1 }} />
+                  </div>
+                  <div style={{ fontFamily: font, fontWeight: 800, fontSize: 14, color: c.text }}>{biz.businessName || 'Tint Studio'}</div>
                 </div>
-                <div style={{ fontFamily: font, fontWeight: 800, fontSize: 14, color: c.text }}>{biz.businessName || 'Tint Studio'}</div>
-              </div>
+              )}
               <p style={{ color: '#2e2e3a', fontSize: 13, lineHeight: 1.7 }}>
                 {copy.footerTagline || biz.tagline || `Premium window film installation. Serving ${biz.city || 'your city'}.`}
               </p>

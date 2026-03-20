@@ -469,15 +469,20 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
       <footer style={s.footer}>
         <div style={s.footerTop}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
-              <div style={{ ...s.logoIcon, width: '32px', height: '32px' }}>
-                <div style={{ ...s.logoIconInner, width: '16px', height: '16px' }} />
+            {/* Footer logo */}
+            {images.logo ? (
+              <img src={images.logo} alt={businessInfo.businessName} style={{ height: 48, maxWidth: 180, objectFit: 'contain', marginBottom: '0.75rem', display: 'block' }} />
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
+                <div style={{ ...s.logoIcon, width: '32px', height: '32px' }}>
+                  <div style={{ ...s.logoIconInner, width: '16px', height: '16px' }} />
+                </div>
+                <div>
+                  <span style={s.logoText}>{businessInfo.businessName ? businessInfo.businessName.toUpperCase() : 'YOUR BUSINESS'}</span>
+                  <span style={s.logoSub}>DETAILING SPECIALISTS</span>
+                </div>
               </div>
-              <div>
-                <span style={s.logoText}>{businessInfo.businessName ? businessInfo.businessName.toUpperCase() : 'YOUR BUSINESS'}</span>
-                <span style={s.logoSub}>DETAILING SPECIALISTS</span>
-              </div>
-            </div>
+            )}
             <p style={s.footerBrandP}>{generatedCopy.footerTagline}</p>
             {businessInfo.address && (
               <p style={{ ...s.footerBrandP, marginTop: '0.5rem', fontSize: '13px' }}>{businessInfo.address}</p>

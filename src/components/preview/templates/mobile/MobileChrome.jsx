@@ -377,10 +377,15 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '32px', marginBottom: '48px' }}>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                <div style={{ width: '20px', height: '20px', background: chromeGradient, borderRadius: '50%' }} />
-                <div style={{ fontFamily: font, fontSize: '1rem', fontWeight: 600, color: '#ffffff', letterSpacing: '3px', textTransform: 'uppercase' }}>{businessInfo.businessName}</div>
-              </div>
+              {/* Footer logo */}
+              {images.logo ? (
+                <img src={images.logo} alt={businessInfo.businessName} style={{ height: 48, maxWidth: 180, objectFit: 'contain', marginBottom: '0.75rem', display: 'block' }} />
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                  <div style={{ width: '20px', height: '20px', background: chromeGradient, borderRadius: '50%' }} />
+                  <div style={{ fontFamily: font, fontSize: '1rem', fontWeight: 600, color: '#ffffff', letterSpacing: '3px', textTransform: 'uppercase' }}>{businessInfo.businessName}</div>
+                </div>
+              )}
               <p style={{ color: 'rgba(148,163,184,0.35)', fontSize: '0.85rem', maxWidth: '300px', lineHeight: 1.6, fontWeight: 300 }}>{generatedCopy.footerTagline}</p>
             </div>
             <SocialRow biz={businessInfo} color={c.accent} size={20} images={images} />

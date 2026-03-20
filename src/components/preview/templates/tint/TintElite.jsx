@@ -446,10 +446,15 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '36px', marginBottom: '48px' }}>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
-                <div style={{ width: '2px', height: '28px', background: goldGradient }} />
-                <div style={{ fontFamily: font, fontSize: '1.35rem', fontWeight: 700, color: '#ffffff', letterSpacing: '0.5px', fontStyle: 'italic' }}>{businessInfo.businessName}</div>
-              </div>
+              {/* Footer logo */}
+              {images.logo ? (
+                <img src={images.logo} alt={businessInfo.businessName} style={{ height: 48, maxWidth: 180, objectFit: 'contain', marginBottom: '0.75rem', display: 'block' }} />
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
+                  <div style={{ width: '2px', height: '28px', background: goldGradient }} />
+                  <div style={{ fontFamily: font, fontSize: '1.35rem', fontWeight: 700, color: '#ffffff', letterSpacing: '0.5px', fontStyle: 'italic' }}>{businessInfo.businessName}</div>
+                </div>
+              )}
               <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.85rem', maxWidth: '300px', lineHeight: 1.65, fontWeight: 300 }}>{generatedCopy.footerTagline}</p>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'flex-end' }}>
