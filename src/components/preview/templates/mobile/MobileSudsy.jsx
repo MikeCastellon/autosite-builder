@@ -407,6 +407,9 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
         </div>
       </section>
 
+      {/* GALLERY */}
+      <GallerySection images={images} colors={c} font={templateMeta.font} bodyFont={bodyFont} />
+
       {/* TESTIMONIALS */}
       {testimonials.length > 0 && (
         <section id="reviews" style={{ padding: "100px 5%", background: c.bg, borderTop: `4px solid ${c.text}` }}>
@@ -488,9 +491,6 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
       </section>
 
       {/* FOOTER */}
-
-      {/* GALLERY */}
-      <GallerySection images={images} colors={c} font={templateMeta.font} bodyFont={bodyFont} />
       <footer style={{ background: c.text, padding: "60px 5% 28px", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 40, background: "#ff6b9d", clipPath: "polygon(0 0, 3% 100%, 6% 0, 9% 100%, 12% 0, 15% 100%, 18% 0, 21% 100%, 24% 0, 27% 100%, 30% 0, 33% 100%, 36% 0, 39% 100%, 42% 0, 45% 100%, 48% 0, 51% 100%, 54% 0, 57% 100%, 60% 0, 63% 100%, 66% 0, 69% 100%, 72% 0, 75% 100%, 78% 0, 81% 100%, 84% 0, 87% 100%, 90% 0, 93% 100%, 96% 0, 99% 100%, 100% 0)" }} />
         <div style={{ maxWidth: 1200, margin: "0 auto", paddingTop: 48, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 48, marginBottom: 48 }}>

@@ -312,6 +312,9 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
         </div>
       </section>
 
+      {/* GALLERY */}
+      <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
+
       {/* SERVICES */}
       <section id="services" style={{ padding: "100px 0", background: D.offwhite, borderTop: `1px solid ${D.border2}` }}>
         <div style={wrap}>
@@ -557,9 +560,6 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
       </section>
 
       {/* FOOTER */}
-
-      {/* GALLERY */}
-      <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
       <footer style={{ background: D.dark, padding: "72px 0 32px", borderTop: `3px solid ${D.blue}` }}>
         <div style={wrap}>
           <div className="tp-4col" style={{ display: "grid", gridTemplateColumns: "minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)", gap: "clamp(24px,4vw,60px)", marginBottom: 56 }}>

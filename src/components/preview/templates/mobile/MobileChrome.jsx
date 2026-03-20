@@ -318,6 +318,9 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
         </div>
       </section>
 
+      {/* GALLERY */}
+      <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
+
       {/* TESTIMONIALS */}
       <section style={{ ...sectionStyle(c.secondary), borderTop: '1px solid rgba(148,163,184,0.08)' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
@@ -373,9 +376,6 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
       </section>
 
       {/* FOOTER */}
-
-      {/* GALLERY */}
-      <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
       <footer style={{ background: '#050505', borderTop: '1px solid rgba(148,163,184,0.08)', padding: '52px 24px', fontFamily: bodyFont }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '32px', marginBottom: '48px' }}>

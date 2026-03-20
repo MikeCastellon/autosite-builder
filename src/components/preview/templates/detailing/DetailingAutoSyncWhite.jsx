@@ -318,6 +318,9 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
         </div>
       </div>
 
+      {/* GALLERY */}
+      <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
+
       {/* TESTIMONIALS */}
       <section id="reviews" style={s.sectionOff}>
         <div style={{ maxWidth: '520px', margin: '0 auto 72px', textAlign: 'center' }}>
@@ -407,9 +410,6 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
       </section>
 
       {/* FOOTER */}
-
-      {/* GALLERY */}
-      <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
       <footer style={s.footer}>
         <div style={s.footerTop}>
           <div>

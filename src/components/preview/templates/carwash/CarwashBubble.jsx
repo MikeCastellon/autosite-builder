@@ -388,6 +388,9 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
         </div>
       </section>
 
+      {/* GALLERY */}
+      <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
+
       {/* ═══ TESTIMONIALS ═══ */}
       {testimonials.length > 0 && (
         <section id='reviews' style={{ background: `linear-gradient(170deg, ${c.bg} 0%, ${c.secondary || '#e0f7fa'} 100%)`, padding: '100px 5%', position: 'relative', overflow: 'hidden' }}>
@@ -450,9 +453,6 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
       </section>
 
       {/* ═══ FOOTER ═══ */}
-
-      {/* GALLERY */}
-      <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
       <footer style={{ background: deepBg, padding: '72px 5% 32px', position: 'relative', overflow: 'hidden', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 120, background: `conic-gradient(from 180deg at 50% 0%, ${c.accent}0e, #14b8a60a, transparent 40%)`, pointerEvents: 'none' }} />
         <div style={{ maxWidth: 1100, margin: '0 auto', position: 'relative', zIndex: 1 }}>

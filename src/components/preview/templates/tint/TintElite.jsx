@@ -380,6 +380,9 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
         </div>
       </section>
 
+      {/* GALLERY */}
+      <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
+
       {/* TESTIMONIALS */}
       <section style={{ ...sectionStyle(c.bg), borderTop: '1px solid rgba(202,138,4,0.08)' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
@@ -441,9 +444,6 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
       </section>
 
       {/* FOOTER */}
-
-      {/* GALLERY */}
-      <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
       <footer style={{ background: '#000000', padding: '56px 24px', fontFamily: bodyFont }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '36px', marginBottom: '48px' }}>

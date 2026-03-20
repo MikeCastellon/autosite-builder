@@ -305,6 +305,9 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
         </div>
       </section>
 
+      {/* GALLERY */}
+      <GallerySection images={images} colors={c} font={font} bodyFont={templateMeta.bodyFont} />
+
       {/* TESTIMONIALS */}
       {testimonials.length > 0 && (
         <section style={{ padding: '80px 5%', background: '#fff', borderTop: '1px solid #e5e7eb' }}>
@@ -364,9 +367,6 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
       </section>
 
       {/* FOOTER */}
-
-      {/* GALLERY */}
-      <GallerySection images={images} colors={c} font={font} bodyFont={templateMeta.bodyFont} />
       <footer style={{ background: '#f9fafb', borderTop: '1px solid #e5e7eb', padding: '40px 5% 24px' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, marginBottom: 20 }}>
           <div>

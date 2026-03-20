@@ -324,6 +324,9 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
         </div>
       </section>
 
+      {/* GALLERY */}
+      <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
+
       {/* TESTIMONIALS */}
       <section style={sectionStyle()}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
@@ -367,9 +370,6 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
       </section>
 
       {/* FOOTER */}
-
-      {/* GALLERY */}
-      <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
       <footer style={{ background: '#0a0a0a', backgroundImage: concreteTexture, padding: '48px 24px', fontFamily: bodyFont }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '32px', marginBottom: '36px' }}>

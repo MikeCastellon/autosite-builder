@@ -551,6 +551,9 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
         </div>
       </section>
 
+      {/* GALLERY */}
+      <GallerySection images={images} colors={c} font={templateMeta.font} bodyFont={bodyFont} />
+
       {/* ============================================================ TESTIMONIALS ============================================================ */}
       {testimonials.length > 0 && (
         <section style={{ padding: '100px 5%', background: panelBg, borderTop: `1px solid ${c.accent}1a` }}>
@@ -645,9 +648,6 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
       </section>
 
       {/* ============================================================ FOOTER ============================================================ */}
-
-      {/* GALLERY */}
-      <GallerySection images={images} colors={c} font={templateMeta.font} bodyFont={bodyFont} />
       <footer style={{ background: '#030305', padding: '60px 5% 28px', borderTop: `1px solid ${c.accent}18` }}>
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 40, marginBottom: 48 }}>

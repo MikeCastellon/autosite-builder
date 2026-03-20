@@ -240,6 +240,9 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
         </div>
       </section>
 
+      {/* GALLERY */}
+      <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
+
       {/* TESTIMONIALS */}
       <section style={sectionStyle(c.secondary)}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
@@ -295,9 +298,6 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
       </section>
 
       {/* FOOTER */}
-
-      {/* GALLERY */}
-      <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
       <footer style={{ background: '#0c4a6e', padding: '48px 24px', fontFamily: bodyFont }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '32px', marginBottom: '40px' }}>

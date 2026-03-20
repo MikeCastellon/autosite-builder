@@ -247,6 +247,9 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
         </div>
       </section>
 
+      {/* GALLERY */}
+      <GallerySection images={images} colors={c} font={font} bodyFont={templateMeta.bodyFont} />
+
       {/* TESTIMONIALS */}
       {testimonials.length > 0 && (
         <section style={{ padding: '80px 5%', borderTop: `1px solid ${c.accent}33` }}>
@@ -289,9 +292,6 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
       </section>
 
       {/* FOOTER */}
-
-      {/* GALLERY */}
-      <GallerySection images={images} colors={c} font={font} bodyFont={templateMeta.bodyFont} />
       <footer style={{ background: '#111a0f', padding: '48px 5% 24px', borderTop: `1px solid ${c.accent}33` }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 36, marginBottom: 32 }}>
           <div>

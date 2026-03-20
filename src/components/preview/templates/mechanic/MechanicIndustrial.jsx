@@ -365,6 +365,9 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
         </div>
       </section>
 
+      {/* GALLERY */}
+      <GallerySection images={images} colors={c} font={font} bodyFont={templateMeta.bodyFont} />
+
       {/* TESTIMONIALS */}
       {testimonials.length > 0 && (
         <section style={{ padding: '80px 5%', borderBottom: '1px solid #333' }}>
@@ -412,9 +415,6 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
       </section>
 
       {/* FOOTER */}
-
-      {/* GALLERY */}
-      <GallerySection images={images} colors={c} font={font} bodyFont={templateMeta.bodyFont} />
       <footer style={{ background: '#111', padding: '48px 5% 24px', borderTop: `3px solid ${c.accent}` }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 36, marginBottom: 32 }}>
           <div>

@@ -320,6 +320,9 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
         </div>
       </section>
 
+      {/* GALLERY */}
+      <GallerySection images={images} colors={c} font={font} bodyFont={templateMeta.bodyFont} />
+
       {/* TESTIMONIALS */}
       {testimonials.length > 0 && (
         <section style={{ padding: '80px 5%', background: c.secondary, borderTop: `1px solid ${c.accent}22` }}>
@@ -361,9 +364,6 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
       </section>
 
       {/* FOOTER with social links */}
-
-      {/* GALLERY */}
-      <GallerySection images={images} colors={c} font={font} bodyFont={templateMeta.bodyFont} />
       <footer style={{ background: '#141b26', padding: '48px 5% 24px', borderTop: `1px solid ${c.accent}22` }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 36, marginBottom: 32 }}>
           <div>

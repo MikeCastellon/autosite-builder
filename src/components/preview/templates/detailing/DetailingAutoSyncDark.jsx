@@ -384,6 +384,9 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
         </section>
       )}
 
+      {/* GALLERY */}
+      <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
+
       {/* TESTIMONIALS */}
       <section id="reviews" style={s.testimonialsSection}>
         <div style={s.sectionLabel}>
@@ -465,9 +468,6 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
       </section>
 
       {/* FOOTER */}
-
-      {/* GALLERY */}
-      <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
       <footer style={s.footer}>
         <div style={s.footerTop}>
           <div>

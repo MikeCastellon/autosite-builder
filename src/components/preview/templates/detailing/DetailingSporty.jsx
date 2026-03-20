@@ -289,6 +289,9 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
         </div>
       </section>
 
+      {/* GALLERY */}
+      <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
+
       {/* TESTIMONIALS */}
       <section id="reviews" style={s.section}>
         <div style={s.sectionTag}>Real Reviews</div>
@@ -326,9 +329,6 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
       </div>
 
       {/* FOOTER */}
-
-      {/* GALLERY */}
-      <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
       <footer style={s.footer}>
         <div>
           {/* Footer logo */}

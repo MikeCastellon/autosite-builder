@@ -277,6 +277,9 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
         </div>
       </section>
 
+      {/* GALLERY */}
+      <GallerySection images={images} colors={c} font={font} bodyFont={templateMeta.bodyFont} />
+
       {/* TESTIMONIALS */}
       {testimonials.length > 0 && (
         <section style={{ padding: '80px 5%', background: c.secondary || '#eff6ff', borderTop: '1px solid #dbeafe' }}>
@@ -318,9 +321,6 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
       </section>
 
       {/* FOOTER */}
-
-      {/* GALLERY */}
-      <GallerySection images={images} colors={c} font={font} bodyFont={templateMeta.bodyFont} />
       <footer style={{ background: '#f1f5f9', borderTop: '1px solid #e5e7eb', padding: '48px 5% 28px' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 32, marginBottom: 32 }}>
           <div>

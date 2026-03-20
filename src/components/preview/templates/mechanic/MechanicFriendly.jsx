@@ -348,6 +348,9 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
         </div>
       </section>
 
+      {/* GALLERY */}
+      <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
+
       {/* TESTIMONIALS */}
       <section id="reviews" style={s.section}>
         <div style={s.sectionEyebrow}>Customer Reviews</div>
@@ -406,9 +409,6 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
       </section>
 
       {/* FOOTER */}
-
-      {/* GALLERY */}
-      <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
       <footer style={s.footer}>
         <div>
           {/* Footer logo */}
