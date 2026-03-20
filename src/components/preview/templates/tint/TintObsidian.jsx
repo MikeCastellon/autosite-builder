@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
+import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 
 // Template: Tint Obsidian -- Ultra-dark void (#050507 bg, #7C3AED accent, #06B6D4 cyan)
@@ -642,9 +643,14 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
             <span style={{ width: 24, height: 1, background: cCyan, flexShrink: 0 }} />
           </div>
           <h2 style={{ ...sectionTitleStyle, marginBottom: 16, fontSize: 'clamp(2rem, 4vw, 3.2rem)' }}>Book Your Install</h2>
-          <p style={{ color: c.muted, fontSize: 16, marginBottom: 40, lineHeight: 1.6 }}>
+          <p style={{ color: c.muted, fontSize: 16, marginBottom: 12, lineHeight: 1.6 }}>
             {copy.ctaSecondary || `Serving ${biz.city || 'your area'}${biz.state ? `, ${biz.state}` : ''} and surrounding areas. Call or stop by for a free consultation.`}
           </p>
+          {biz.hours && (
+            <p style={{ color: c.muted, fontSize: '0.9rem', marginBottom: 40 }}>
+              {formatHours(biz.hours)}
+            </p>
+          )}
           <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'center' }}>
             <a href={`tel:${biz.phone}`} style={{
               background: `linear-gradient(135deg, ${c.accent}, #a855f7)`,

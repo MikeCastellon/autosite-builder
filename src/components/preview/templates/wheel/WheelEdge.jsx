@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
+import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 
 // Template: Wheel Edge — Dark chrome & electric blue (#0d0d0d bg, #00b4d8 accent, #1a1a2e secondary)
@@ -382,6 +383,11 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
         {biz.address && <p style={{ color: c.muted, fontSize: 13, marginTop: 18 }}>
           {biz.address}, {biz.city}, {biz.state}
         </p>}
+        {biz.hours && (
+          <p style={{ color: c.muted, fontSize: '0.9rem', marginTop: '8px' }}>
+            {formatHours(biz.hours)}
+          </p>
+        )}
       </section>
 
       {/* FOOTER */}

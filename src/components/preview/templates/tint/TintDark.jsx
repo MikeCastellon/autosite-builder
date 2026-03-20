@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
+import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 
 // Template: Tint Dark — Black & purple (#080808 bg, #7c3aed accent, #111111 secondary)
@@ -382,6 +383,11 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
             {copy.ctaPrimary || biz.phone || 'Call Now'}
           </a>
           {biz.address && <p style={{ color: '#444', fontSize: 13, marginTop: 20 }}>{biz.address}, {biz.city}, {biz.state}</p>}
+          {biz.hours && (
+            <p style={{ color: '#555', fontSize: '0.9rem', marginTop: '8px' }}>
+              {formatHours(biz.hours)}
+            </p>
+          )}
         </div>
       </section>
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
+import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 
 // Template: Tint Sleek — Gray & teal (#1f2937 bg, #14b8a6 accent, #374151 secondary)
@@ -409,6 +410,11 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
           {copy.ctaPrimary || biz.phone || 'Call Now'}
         </a>
         {biz.address && <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, marginTop: 18 }}>{biz.address}, {biz.city}, {biz.state}</p>}
+        {biz.hours && (
+          <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.9rem', marginTop: '8px' }}>
+            {formatHours(biz.hours)}
+          </p>
+        )}
       </section>
 
       {/* FOOTER with social links */}

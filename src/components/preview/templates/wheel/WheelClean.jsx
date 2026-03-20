@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
+import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 
 // Template: Wheel Clean — White & gunmetal (#f8f9fa bg, #374151 accent)
@@ -400,6 +401,12 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
               <div style={{ background: c.secondary, borderRadius: 12, padding: '20px 24px', border: '1px solid #e5e7eb' }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: c.accent, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 6 }}>PHONE</div>
                 <a href={`tel:${biz.phone}`} style={{ color: c.text, fontSize: 18, fontWeight: 700, textDecoration: 'none' }}>{biz.phone}</a>
+              </div>
+            )}
+            {biz.hours && (
+              <div style={{ background: c.secondary, borderRadius: 12, padding: '20px 24px', border: '1px solid #e5e7eb' }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: c.accent, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 6 }}>HOURS</div>
+                <p style={{ color: c.text, fontSize: 15, fontWeight: 500, margin: 0 }}>{formatHours(biz.hours)}</p>
               </div>
             )}
             <div style={{ background: c.secondary, borderRadius: 12, padding: '20px 24px', border: '1px solid #e5e7eb' }}>

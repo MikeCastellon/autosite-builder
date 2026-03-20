@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
+import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 
 // Template: Mechanic Industrial — Dark steel & yellow (#1c1c1c bg, #eab308 accent, #2c2c2c secondary)
@@ -379,6 +380,11 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
         {biz.address && (
           <p style={{ color: 'rgba(0,0,0,0.5)', fontSize: 13, marginTop: 20 }}>
             📍 {biz.address}, {biz.city}, {biz.state}
+          </p>
+        )}
+        {biz.hours && (
+          <p style={{ color: 'rgba(0,0,0,0.45)', fontSize: '0.9rem', marginTop: '8px' }}>
+            {formatHours(biz.hours)}
           </p>
         )}
       </section>

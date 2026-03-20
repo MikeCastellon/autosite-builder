@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
+import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 
 // Template: Mobile Rugged — Dark green (#1a2318 bg, #8a9a4a accent, #f0ede0 text)
@@ -299,6 +300,11 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
         }}>
           {copy.ctaPrimary || biz.phone || 'CALL NOW'}
         </a>
+        {biz.hours && (
+          <p style={{ color: 'rgba(26,35,24,0.5)', fontSize: '0.9rem', marginTop: '16px' }}>
+            {formatHours(biz.hours)}
+          </p>
+        )}
       </section>
 
       {/* FOOTER */}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
+import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 
 // Template: Wheel Apex -- White & electric blue (#ffffff bg, #1A5CFF accent)
@@ -491,6 +492,11 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
             <p style={{ fontSize: 16, color: "rgba(255,255,255,0.75)", marginTop: 10, maxWidth: 480, fontFamily: bodyFont }}>
               {copy.subheadline || "Tell us your car and goals. We will come back with a full recommendation -- brand, size, offset, tire combo, and real pricing."}
             </p>
+            {biz.hours && (
+              <p style={{ color: "rgba(255,255,255,0.55)", fontSize: "0.9rem", marginTop: 8 }}>
+                {formatHours(biz.hours)}
+              </p>
+            )}
           </div>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap", flexShrink: 0 }}>
             <a href="#contact" style={{ fontSize: 13, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: D.blue, background: "#fff", padding: "15px 36px", textDecoration: "none" }}>

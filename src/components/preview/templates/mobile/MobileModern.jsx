@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
+import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 
 // Template: Mobile Modern — Blue & white (#ffffff bg, #2563eb accent, #eff6ff secondary)
@@ -363,6 +364,11 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
           {copy.ctaPrimary || biz.phone || 'Call Now'}
         </a>
         {biz.serviceArea && <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, marginTop: 16 }}>Service Area: {biz.serviceArea}</p>}
+        {biz.hours && (
+          <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem', marginTop: '8px' }}>
+            {formatHours(biz.hours)}
+          </p>
+        )}
       </section>
 
       {/* FOOTER */}

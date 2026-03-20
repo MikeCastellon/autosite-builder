@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
+import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 
 // Template: Carwash Bubble
@@ -469,6 +470,11 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
             </a>
           </div>
           {biz.address && <p style={{ color: 'rgba(255,255,255,0.32)', fontSize: 13, marginTop: 28, fontWeight: 600 }}>📍 {biz.address}{biz.city ? `, ${biz.city}` : ''}{biz.state ? `, ${biz.state}` : ''}</p>}
+          {biz.hours && (
+            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.9rem', marginTop: '8px' }}>
+              {formatHours(biz.hours)}
+            </p>
+          )}
         </div>
       </section>
 

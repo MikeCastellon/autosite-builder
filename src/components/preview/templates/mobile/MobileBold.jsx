@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
+import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 
 // Template: Mobile Bold — Orange & dark (#1a1a1a bg, #f97316 accent)
@@ -347,6 +348,11 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
           {copy.ctaPrimary || 'CALL ' + (biz.phone || 'NOW')}
         </a>
         {biz.address && <p style={{ color: '#555', fontSize: 13, marginTop: 20 }}>📍 {biz.address}, {biz.city}, {biz.state}</p>}
+        {biz.hours && (
+          <p style={{ color: '#666', fontSize: '0.9rem', marginTop: '8px' }}>
+            {formatHours(biz.hours)}
+          </p>
+        )}
       </section>
 
       {/* FOOTER */}
