@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase.js';
 import { useAuth } from '../../lib/AuthContext.jsx';
+import { publishSite } from '../../lib/publishSite.js';
 
 export default function DashboardPage({ onNewSite }) {
   const { session } = useAuth();
@@ -36,6 +37,28 @@ export default function DashboardPage({ onNewSite }) {
       return;
     }
     setSites((prev) => prev.filter((s) => s.id !== id));
+  };
+
+  const handleRepublish = async (site) => {
+    if (!confirm(`Republish ${site.business_info?.businessName || 'this site'}?`)) return;
+    try {
+      const { TEMPLATES } = await import('../../data/templates.js');
+      const templateMeta = TEMPLATES[site.template_id];
+      await publishSite({
+        siteId: site.id,
+        businessInfo: site.business_info,
+        generatedCopy: site.generated_content,
+        templateId: site.template_id,
+        templateMeta: { ...templateMeta, colors: templateMeta?.colors || {} },
+        images: {},
+        selectedWidgetIds: site.widget_config_ids || [],
+        customDomain: site.custom_domain || null,
+        session,
+      });
+      alert(`${site.business_info?.businessName || 'Site'} republished successfully!`);
+    } catch (err) {
+      alert(`Republish failed: ${err.message}`);
+    }
   };
 
   const handleReExport = async (site) => {
@@ -117,8 +140,26 @@ export default function DashboardPage({ onNewSite }) {
                       </span>
                     )}
                   </p>
+                  {site.published_url && (
+                    <a
+                      href={site.published_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-[#cc0000] underline mt-0.5 block truncate max-w-[260px]"
+                    >
+                      {site.published_url.replace('https://', '')}
+                    </a>
+                  )}
                 </div>
                 <div className="flex gap-2">
+                  {site.published_url && (
+                    <button
+                      onClick={() => handleRepublish(site)}
+                      className="px-3 py-1.5 text-xs font-medium border border-black/10 rounded-lg hover:border-[#cc0000]/30 hover:text-[#cc0000] transition-colors"
+                    >
+                      Republish
+                    </button>
+                  )}
                   <button
                     onClick={() => handleReExport(site)}
                     className="px-3 py-1.5 text-xs font-medium border border-black/10 rounded-lg hover:border-[#cc0000]/30 hover:text-[#cc0000] transition-colors"
