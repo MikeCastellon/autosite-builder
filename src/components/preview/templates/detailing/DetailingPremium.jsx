@@ -220,29 +220,24 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
         <div style={s.sectionLabel}>Our Services</div>
         <h2 style={s.sectionTitle}>Precision. Perfection. Prestige.</h2>
         <p style={s.sectionSub}>{generatedCopy.servicesSection?.intro}</p>
-        <div style={{ ...s.servicesGrid, gridTemplateColumns: `repeat(${svcCols}, 1fr)` }}>
-          {(generatedCopy.servicesSection?.items || []).map((svc, i) => (
-            <div key={i} style={s.serviceCard}>
-              <div style={s.serviceName}>{svc.name}</div>
-              <div style={s.serviceDesc}>{svc.description}</div>
-            </div>
-          ))}
-        </div>
-        {businessInfo.packages?.length > 0 && (
-          <div style={{ marginTop: '3rem' }}>
-            <div style={s.sectionLabel}>Packages</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1px', background: `${c.accent}22`, marginTop: '1rem' }}>
-              {businessInfo.packages.map((pkg, i) => (
-                <div key={i} style={{
-                  background: c.secondary, padding: '1.75rem',
-                  borderTop: `3px solid ${i === 1 ? c.accent : 'transparent'}`,
-                }}>
-                  <div style={{ ...s.sectionLabel, marginBottom: '0.5rem' }}>{pkg.name || pkg}</div>
-                  {pkg.price && <div style={{ fontFamily: font, fontSize: '1.8rem', fontWeight: 700, color: c.text }}>{pkg.price}</div>}
-                  {pkg.description && <p style={{ ...s.serviceDesc, marginTop: '0.75rem' }}>{pkg.description}</p>}
-                </div>
-              ))}
-            </div>
+        {businessInfo.packages?.length > 0 ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1px', background: `${c.accent}22` }}>
+            {businessInfo.packages.map((pkg, i) => (
+              <div key={i} style={{ ...s.serviceCard, borderTop: `3px solid ${i === 1 ? c.accent : 'transparent'}` }}>
+                <div style={s.sectionLabel}>{pkg.name || pkg}</div>
+                {pkg.price && <div style={{ fontFamily: font, fontSize: '1.8rem', fontWeight: 700, color: c.text, margin: '0.4rem 0 0.75rem' }}>{pkg.price}</div>}
+                <div style={s.serviceDesc}>{pkg.description}</div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{ ...s.servicesGrid, gridTemplateColumns: `repeat(${svcCols}, 1fr)` }}>
+            {(generatedCopy.servicesSection?.items || []).map((svc, i) => (
+              <div key={i} style={s.serviceCard}>
+                <div style={s.serviceName}>{svc.name}</div>
+                <div style={s.serviceDesc}>{svc.description}</div>
+              </div>
+            ))}
           </div>
         )}
       </section>
