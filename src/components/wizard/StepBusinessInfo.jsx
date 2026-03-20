@@ -234,7 +234,7 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
                           value={draft.name}
                           onChange={(e) => updateDraft('name', e.target.value)}
                           onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addPackage())}
-                          placeholder="Package name (e.g. Premium)"
+                          placeholder="Name (e.g. Full Detail, Basic)"
                           className="col-span-1 bg-white border border-black/[0.12] rounded-lg px-3 py-2 text-[13px] text-[#1a1a1a] placeholder-[#aaa] focus:outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000] transition"
                         />
                         <input

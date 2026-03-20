@@ -76,27 +76,12 @@ export const COMMON_EXTRA_FIELDS = [
 
 export const TYPE_SPECIFIC_FIELDS = {
   detailing_shop: [
-    {
-      key: 'services',
-      label: 'Services Offered',
-      type: 'multicheck',
-      required: true,
-      options: ['Full Detail', 'Wash & Wax', 'Interior Only', 'Paint Correction', 'Ceramic Coating', 'PPF', 'Engine Bay', 'Headlight Restoration', 'Odor Elimination'],
-    },
-    { key: 'priceRange',  label: 'Starting Price',              type: 'text',     required: false, placeholder: 'e.g. Starting at $150' },
-    { key: 'packages',    label: 'Service Packages / Tiers',    type: 'packages', required: false },
+    { key: 'services',    label: 'Services & Pricing',          type: 'packages', required: true },
     { key: 'specialties', label: 'What makes you stand out?',   type: 'textarea', required: false, placeholder: 'e.g. We specialize in luxury & exotic vehicles' },
   ],
   mobile_detailing: [
-    {
-      key: 'services',
-      label: 'Services Offered',
-      type: 'multicheck',
-      required: true,
-      options: ['Full Detail', 'Wash & Wax', 'Interior Only', 'Ceramic Coating', 'Waterless Wash', 'Fleet Service', 'Engine Bay', 'Odor Elimination'],
-    },
+    { key: 'services',    label: 'Services & Pricing',          type: 'packages', required: true },
     { key: 'serviceArea', label: 'Service Area / Radius',       type: 'text',     required: false, placeholder: 'e.g. 30-mile radius from Las Vegas' },
-    { key: 'packages',    label: 'Service Packages / Tiers',    type: 'packages', required: false },
     { key: 'specialties', label: 'What makes you stand out?',   type: 'textarea', required: false, placeholder: 'e.g. We come to you — home, office, or lot' },
   ],
   wheel_shop: [
@@ -112,16 +97,9 @@ export const TYPE_SPECIFIC_FIELDS = {
     { key: 'specialties', label: 'What makes you stand out?',   type: 'textarea', required: false, placeholder: '' },
   ],
   tint_shop: [
-    {
-      key: 'services',
-      label: 'Services Offered',
-      type: 'multicheck',
-      required: true,
-      options: ['Window Tint', 'Paint Protection Film', 'Ceramic Coating', 'Headlight Tint', 'Vinyl Wrap', 'Carbon Fiber Wrap', 'Color Change Wrap', 'Detailing'],
-    },
+    { key: 'services',    label: 'Services & Pricing',          type: 'packages', required: true },
     { key: 'filmBrands',  label: 'Film Brands Used',            type: 'text',     required: false, placeholder: 'e.g. XPEL, LLumar, 3M, Ceramic Pro' },
     { key: 'warranty',    label: 'Warranty Offered',            type: 'text',     required: false, placeholder: 'e.g. Lifetime warranty on all ceramic tint' },
-    { key: 'packages',    label: 'Tint Packages / Pricing',     type: 'packages', required: false },
     { key: 'specialties', label: 'What makes you stand out?',   type: 'textarea', required: false, placeholder: '' },
   ],
   mechanic_shop: [
@@ -137,15 +115,7 @@ export const TYPE_SPECIFIC_FIELDS = {
     { key: 'warrantyOffered', label: 'Parts & Labor Warranty',         type: 'text',     required: false, placeholder: 'e.g. 12-month / 12,000-mile warranty on all repairs' },
   ],
   car_wash: [
-    {
-      key: 'services',
-      label: 'Wash Packages',
-      type: 'multicheck',
-      required: true,
-      options: ['Basic Wash', 'Deluxe Wash', 'Premium Wash', 'Full Detail', 'Interior Vacuum', 'Wax & Polish', 'Tire Shine', 'Hand Wash', 'Touchless Wash', 'Unlimited Monthly'],
-    },
-    { key: 'priceRange',  label: 'Starting Price',             type: 'text',     required: false, placeholder: 'e.g. Starting at $10' },
-    { key: 'packages',    label: 'Package Pricing',            type: 'packages', required: false },
+    { key: 'services',    label: 'Wash Packages & Pricing',    type: 'packages', required: true },
     { key: 'specialties', label: 'What makes you stand out?',  type: 'textarea', required: false, placeholder: 'e.g. Eco-friendly soap, unlimited monthly membership' },
   ],
 };

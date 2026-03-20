@@ -48,5 +48,17 @@ export function normalizeBusinessInfo(info) {
     normalized.hours = hoursObj;
   }
 
+  // If services is an array of package objects (name/price/description),
+  // copy it into packages so templates that use businessInfo.packages still work.
+  if (
+    Array.isArray(normalized.services) &&
+    normalized.services.length > 0 &&
+    typeof normalized.services[0] === 'object'
+  ) {
+    if (!normalized.packages || normalized.packages.length === 0) {
+      normalized.packages = normalized.services;
+    }
+  }
+
   return normalized;
 }

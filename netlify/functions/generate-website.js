@@ -22,7 +22,7 @@ export const handler = async (event) => {
     }
 
     const servicesText = Array.isArray(businessInfo.services)
-      ? businessInfo.services.join(', ')
+      ? businessInfo.services.map(s => (typeof s === 'object' ? s.name : s)).filter(Boolean).join(', ')
       : businessInfo.services || 'General auto services';
 
     const USER_PROMPT = `Generate website copy for this automotive business:
