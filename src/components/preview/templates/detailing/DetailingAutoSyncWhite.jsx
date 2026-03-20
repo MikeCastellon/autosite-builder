@@ -225,16 +225,6 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
         )}
       </section>
 
-      {/* STATS */}
-      <div style={s.statsBar}>
-        {stats.map((st, i) => (
-          <div key={i} style={s.stat}>
-            <span style={s.statNum}>{st.num}</span>
-            <span style={s.statLabel}>{st.label}</span>
-          </div>
-        ))}
-      </div>
-
       {/* SERVICES BENTO */}
       <section id="services" style={s.sectionWhite}>
         <div style={s.servicesIntro}>
@@ -288,52 +278,45 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
         </div>
       </div>
 
-      {/* SPECIALIZATIONS */}
-      <div style={s.specStrip}>
-        <div>
-          <span style={s.eyebrow}>Specializations</span>
-          <h2 style={s.sectionTitle}>
-            Built for <em style={s.titleItalicBlue}>scale.</em>
-            <br />Trusted by industry.
-          </h2>
-          <p style={s.bodyText}>{generatedCopy.aboutText}</p>
-          <div style={s.specPillsGrid}>
-            {[
-              { label: 'Experience', val: (businessInfo.yearsInBusiness || '8') + '+ Years' },
-              { label: 'Response',   val: 'Same-day quotes' },
-              { label: 'Coverage',   val: businessInfo.city || 'Local Area' },
-              { label: 'Mobile',     val: 'On-site available' },
-            ].map((pill, i) => (
-              <div key={i} style={s.specPill}>
-                <div style={s.specPillLabel}>{pill.label}</div>
-                <div style={s.specPillVal}>{pill.val}</div>
+      {/* ABOUT */}
+      <section id="about" style={{ ...s.sectionWhite, background: off }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', gap: isMobile ? '48px' : '80px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ flex: '1 1 320px', minWidth: '280px' }}>
+            {(generatedCopy?.aboutLayout || 'image') !== 'stats' ? (
+              images.about
+                ? <img src={images.about} alt="About" style={{ width: '100%', maxWidth: '460px', height: '360px', objectFit: 'cover', borderRadius: radius, display: 'block' }} />
+                : <div style={{ width: '100%', maxWidth: '460px', height: '360px', border: '2px dashed ' + border2, borderRadius: radius, display: 'flex', alignItems: 'center', justifyContent: 'center', color: text3, fontSize: '0.85rem', textAlign: 'center', padding: '24px', boxSizing: 'border-box' }}>Upload an about photo in the Images tab</div>
+            ) : (
+              <div style={{ width: '100%', maxWidth: '460px', background: white, borderRadius: radius, padding: '40px', border: '1px solid ' + border, boxSizing: 'border-box' }}>
+                {stats.map((st, i) => (
+                  <div key={i} style={{ textAlign: 'center', marginBottom: i < stats.length - 1 ? '28px' : 0 }}>
+                    <div style={{ fontFamily: dmSerif, fontSize: '3rem', fontWeight: 400, color: text, letterSpacing: '-2px', lineHeight: 1 }}>{st.num}</div>
+                    <div style={{ fontSize: '13px', color: text3, textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 500, marginTop: '6px' }}>{st.label}</div>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
+          </div>
+          <div style={{ flex: '1 1 360px' }}>
+            <span style={s.eyebrow}>About Us</span>
+            <h2 style={{ ...s.sectionTitle, marginBottom: '20px' }}>
+              Built for <em style={s.titleItalicBlue}>scale.</em>
+              <br />Trusted by industry.
+            </h2>
+            <p style={{ ...s.bodyText, marginBottom: '24px' }}>{generatedCopy.aboutText}</p>
+            {businessInfo.awards && businessInfo.awards.length > 0 && (
+              <div style={{ marginTop: '20px' }}>
+                <div style={{ fontSize: '0.85rem', color: text3, fontWeight: 600, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>Awards & Recognition</div>
+                {(Array.isArray(businessInfo.awards) ? businessInfo.awards : [businessInfo.awards]).map((award, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', color: text, fontSize: '0.92rem' }}>
+                    <span style={{ color: '#f59e0b' }}>&#127942;</span> {award}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
-        <div>
-          {images.about && (
-            <img src={images.about} alt="About" style={{ width: '100%', height: '260px', objectFit: 'cover', borderRadius: '12px', display: 'block', marginBottom: '16px' }} />
-          )}
-          {specialtyItems.slice(0, 3).map((sp, i) => (
-            <div key={i} style={s.fleetCard}>
-              <div style={s.fleetCardLine} />
-              <div style={s.fleetCardNum}>0{i + 1}</div>
-              <h3 style={s.fleetCardH3}>{typeof sp === 'object' ? sp.name : sp}</h3>
-              <p style={s.fleetCardP}>
-                {typeof sp === 'object'
-                  ? sp.description
-                  : 'Professional ' + String(sp).toLowerCase() + ' services tailored to your specific needs and operational requirements.'}
-              </p>
-              {Array.isArray(businessInfo.packages) && businessInfo.packages[i] && (
-                <div style={s.fleetTags}>
-                  <span style={s.tag}>{typeof businessInfo.packages[i] === 'object' ? businessInfo.packages[i].name : businessInfo.packages[i]}</span>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
+      </section>
 
       {/* GALLERY */}
       <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
@@ -369,60 +352,18 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
       </section>
 
       {/* CONTACT */}
-      <section id="contact" style={s.sectionWhite}>
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? '48px' : '100px', alignItems: 'start' }}>
-          <div>
-            <span style={s.eyebrow}>Contact</span>
-            <h2 style={{ ...s.sectionTitle, marginBottom: '16px' }}>
-              Let&#8217;s get your vehicle <em style={s.titleItalicBlue}>sorted.</em>
-            </h2>
-            <p style={{ ...s.bodyText, marginBottom: '48px' }}>
-              Whether you need a single detail or a custom fleet contract &#8212; reach out and we&#8217;ll respond within 2 business hours.
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {[
-                { icon: '📞', label: 'Phone',    val: businessInfo.phone },
-                { icon: '📍', label: 'Location', val: businessInfo.address || [businessInfo.city, businessInfo.state].filter(Boolean).join(', ') },
-                { icon: '🕐', label: 'Hours',    val: formatHours(businessInfo.hours) },
-              ].filter(item => item.val).map((item, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '16px 20px', background: off, border: '1px solid ' + border, borderRadius: radiusSm }}>
-                  <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: white, border: '1px solid ' + border, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0, boxShadow: shadowSm }}>{item.icon}</div>
-                  <div>
-                    <div style={{ fontSize: '11px', color: text4, fontWeight: 500, letterSpacing: '0.3px' }}>{item.label}</div>
-                    <div style={{ fontSize: '14px', fontWeight: 500, color: text, marginTop: '1px' }}>{item.val}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div style={{ background: off, border: '1px solid ' + border, borderRadius: radius, padding: '44px' }}>
-            <h3 style={{ fontSize: '20px', fontWeight: 500, color: text, letterSpacing: '-0.3px', marginBottom: '20px' }}>
-              Why Choose {businessInfo.businessName}?
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              {[
-                businessInfo.awards ? 'Award-winning: ' + businessInfo.awards : null,
-                businessInfo.yearsInBusiness ? businessInfo.yearsInBusiness + '+ years of professional experience' : null,
-                '100% satisfaction guarantee on every job',
-                'Professional-grade products — no shortcuts',
-                Array.isArray(businessInfo.packages) && businessInfo.packages.length
-                  ? 'Packages available: ' + businessInfo.packages.slice(0, 3).map(p => typeof p === 'object' ? p.name : p).join(', ')
-                  : null,
-              ].filter(Boolean).map((item, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                  <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: blue + '15', border: '1px solid ' + blue + '30', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '1px' }}>
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
-                      <path d="M1.5 5l2.5 2.5 4.5-4.5" stroke={blue} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </div>
-                  <span style={{ fontSize: '14px', color: text2, lineHeight: 1.5 }}>{item}</span>
-                </div>
-              ))}
-            </div>
-            <a href={generatedCopy?.ctaUrl || ('tel:' + (businessInfo.phone || ''))} style={{ display: 'block', width: '100%', background: blue, color: white, border: 'none', borderRadius: '10px', padding: '14px', fontFamily: dmSans, fontSize: '15px', fontWeight: 500, cursor: 'pointer', marginTop: '28px', boxShadow: '0 4px 16px ' + blue + '40', letterSpacing: '-0.2px', textDecoration: 'none', textAlign: 'center', boxSizing: 'border-box' }}>
-              {generatedCopy.ctaPrimary || 'Get a Free Quote'}
-            </a>
-          </div>
+      <section id="contact" style={{ background: blue, padding: isMobile ? '80px 24px' : '100px 80px', textAlign: 'center' }}>
+        <span style={{ ...s.eyebrow, color: 'rgba(255,255,255,0.6)' }}>Contact</span>
+        <h2 style={{ ...s.sectionTitle, color: white, marginBottom: '16px' }}>
+          Let&#8217;s get your vehicle <em style={{ fontStyle: 'italic' }}>sorted.</em>
+        </h2>
+        <p style={{ fontSize: '17px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.7, fontWeight: 300, maxWidth: '520px', margin: '0 auto 40px' }}>
+          {businessInfo.serviceArea ? `Serving ${businessInfo.serviceArea}` : `Serving ${businessInfo.city || 'your area'} and surrounding areas`}
+        </p>
+        <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <a href={generatedCopy?.ctaUrl || ('tel:' + (businessInfo.phone || ''))} style={{ background: white, color: blue, padding: '15px 36px', borderRadius: '980px', fontWeight: 500, textDecoration: 'none', fontSize: '16px', fontFamily: dmSans, letterSpacing: '-0.2px' }}>
+            {generatedCopy.ctaPrimary || ('Call ' + businessInfo.phone)}
+          </a>
         </div>
       </section>
 
