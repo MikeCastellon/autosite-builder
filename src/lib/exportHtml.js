@@ -75,7 +75,7 @@ function buildSeoHead(businessInfo, generatedCopy) {
   </script>`;
 }
 
-export async function exportHtml(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds = []) {
+async function buildHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds = []) {
   const mod = await TEMPLATE_COMPONENT_MAP[templateId]();
   const TemplateComponent = mod.default;
 
@@ -116,7 +116,7 @@ export async function exportHtml(templateId, businessInfo, generatedCopy, templa
   </a>
 </div>`;
 
-  const fullHtml = `<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
 ${seoHead}
@@ -127,6 +127,14 @@ ${widgetsHtml}
 ${poweredByBar}
 </body>
 </html>`;
+}
+
+export async function exportHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds = []) {
+  return buildHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds);
+}
+
+export async function exportHtml(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds = []) {
+  const fullHtml = await buildHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds);
 
   // Trigger download
   const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
