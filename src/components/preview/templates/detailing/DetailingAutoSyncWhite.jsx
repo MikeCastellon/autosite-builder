@@ -68,7 +68,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
   const s = {
     wrapper: { background: white, color: text, fontFamily: dmSans, WebkitFontSmoothing: 'antialiased', overflowX: 'hidden' },
     nav: {
-      position: 'sticky', top: 0, left: 0, right: 0, zIndex: 100, height: '52px',
+      position: 'sticky', top: 0, zIndex: 100, height: '52px',
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       padding: isMobile ? '0 20px' : '0 48px',
       background: scrolled ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.82)',
@@ -164,11 +164,16 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
             {businessInfo.businessName}
           </div>
         )}
-        <button style={s.navCta}>{generatedCopy.ctaPrimary || 'Book a Detail'}</button>
+        <div className="tp-nav-links" style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
+          <a href="#services" style={{ color: text, textDecoration: 'none', fontFamily: dmSans, fontSize: '0.85rem', letterSpacing: '0.05em', opacity: 0.8 }}>Services</a>
+          <a href="#reviews" style={{ color: text, textDecoration: 'none', fontFamily: dmSans, fontSize: '0.85rem', letterSpacing: '0.05em', opacity: 0.8 }}>Reviews</a>
+          <a href="#contact" style={{ color: text, textDecoration: 'none', fontFamily: dmSans, fontSize: '0.85rem', letterSpacing: '0.05em', opacity: 0.8 }}>Contact</a>
+          <button style={s.navCta}>{generatedCopy.ctaPrimary || 'Book a Detail'}</button>
+        </div>
       </nav>
 
       {/* HERO */}
-      <section style={s.hero}>
+      <section id="hero" style={s.hero}>
         <HeroImage src={images.hero} />
         <div style={s.heroGradient} />
         <div style={s.heroContent}>
@@ -214,7 +219,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
       </div>
 
       {/* SERVICES BENTO */}
-      <section style={s.sectionWhite}>
+      <section id="services" style={s.sectionWhite}>
         <div style={s.servicesIntro}>
           <span style={s.eyebrow}>Services</span>
           <h2 style={s.sectionTitle}>
@@ -312,7 +317,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
       </div>
 
       {/* TESTIMONIALS */}
-      <section style={s.sectionOff}>
+      <section id="reviews" style={s.sectionOff}>
         <div style={{ maxWidth: '520px', margin: '0 auto 72px', textAlign: 'center' }}>
           <span style={s.eyebrow}>Reviews</span>
           <h2 style={s.sectionTitle}>
@@ -342,7 +347,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
       </section>
 
       {/* CONTACT */}
-      <section style={s.sectionWhite}>
+      <section id="contact" style={s.sectionWhite}>
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? '48px' : '100px', alignItems: 'start' }}>
           <div>
             <span style={s.eyebrow}>Contact</span>

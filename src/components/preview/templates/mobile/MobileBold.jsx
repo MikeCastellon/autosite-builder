@@ -38,7 +38,7 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
 
       {/* STICKY NAV */}
       <nav style={{
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000,
+        position: 'sticky', top: 0, zIndex: 1000,
         background: scrolled ? 'rgba(26,26,26,0.96)' : 'transparent',
         borderBottom: scrolled ? `3px solid ${c.accent}` : '3px solid transparent',
         transition: 'all 0.3s ease',

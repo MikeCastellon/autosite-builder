@@ -25,10 +25,8 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
   const svcCols = generatedCopy.servicesSection.items.length >= 6 ? Math.ceil(generatedCopy.servicesSection.items.length / 2) : generatedCopy.servicesSection.items.length || 1;
 
   const navStyle = {
-    position: 'fixed',
+    position: 'sticky',
     top: 0,
-    left: 0,
-    right: 0,
     zIndex: 100,
     background: scrolled ? '#ffffff' : 'rgba(255,255,255,0.95)',
     borderTop: `4px solid ${c.accent}`,

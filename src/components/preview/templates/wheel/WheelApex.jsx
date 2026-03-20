@@ -100,7 +100,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
       <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}.tp-4col{grid-template-columns:1fr 1fr!important}}`}</style>
 
       {/* NAV */}
-      <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 500, height: 68, background: "rgba(255,255,255,0.96)", borderBottom: `1px solid ${D.border}`, backdropFilter: "blur(20px)", display: "flex", alignItems: "center", boxShadow: scrolled ? "0 2px 20px rgba(0,0,0,0.08)" : "none", transition: "box-shadow 0.3s ease" }}>
+      <nav style={{ position: "sticky", top: 0, zIndex: 500, height: 68, background: "rgba(255,255,255,0.96)", borderBottom: `1px solid ${D.border}`, backdropFilter: "blur(20px)", display: "flex", alignItems: "center", boxShadow: scrolled ? "0 2px 20px rgba(0,0,0,0.08)" : "none", transition: "box-shadow 0.3s ease" }}>
         <div style={{ ...wrap, display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{ width: 36, height: 36, background: D.dark, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>

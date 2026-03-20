@@ -32,10 +32,8 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
   const svcCols = _svcItems.length >= 6 ? Math.ceil(_svcItems.length / 2) : _svcItems.length || 1;
 
   const navStyle = {
-    position: 'fixed',
+    position: 'sticky',
     top: 0,
-    left: 0,
-    right: 0,
     zIndex: 100,
     background: scrolled ? 'rgba(3,3,3,0.98)' : 'transparent',
     backdropFilter: scrolled ? 'blur(16px)' : 'none',

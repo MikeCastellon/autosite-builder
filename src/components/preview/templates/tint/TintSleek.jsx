@@ -34,7 +34,7 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
 
       {/* STICKY NAV */}
       <nav style={{
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000,
+        position: 'sticky', top: 0, zIndex: 1000,
         background: scrolled ? 'rgba(31,41,55,0.97)' : 'transparent',
         borderBottom: scrolled ? `1px solid ${c.accent}44` : '1px solid transparent',
         transition: 'all 0.3s ease',

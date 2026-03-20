@@ -110,7 +110,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
 
       {/* ═══ NAV ═══ */}
       <nav style={{
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000, height: 66,
+        position: 'sticky', top: 0, zIndex: 1000, height: 66,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 5%',
         background: scrolled ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.75)',
         backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)',

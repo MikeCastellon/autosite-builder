@@ -1,16 +1,5 @@
 export const TEMPLATES = {
   // ─── Detailing Shop ────────────────────────────────────────────
-  detailing_premium: {
-    id: 'detailing_premium',
-    businessType: 'detailing_shop',
-    label: 'Premium Luxury',
-    description: 'Dark, rich, gold accents. For high-end & exotic car clientele.',
-    previewColors: ['#0a0a0a', '#c9a84c', '#1a1a1a'],
-    colors: { bg: '#0a0a0a', accent: '#c9a84c', text: '#ffffff', secondary: '#1a1a1a', muted: '#999999' },
-    font: "'Playfair Display', Georgia, serif",
-    bodyFont: "'Inter', sans-serif",
-    mood: 'luxury, premium, exclusive, sophisticated',
-  },
   detailing_sporty: {
     id: 'detailing_sporty',
     businessType: 'detailing_shop',
@@ -287,7 +276,6 @@ export const TEMPLATES = {
 };
 
 export const TEMPLATE_COMPONENT_MAP = {
-  detailing_premium:    () => import('../components/preview/templates/detailing/DetailingPremium.jsx'),
   detailing_sporty:     () => import('../components/preview/templates/detailing/DetailingSporty.jsx'),
   detailing_minimal:    () => import('../components/preview/templates/detailing/DetailingMinimal.jsx'),
   detailing_coastal:    () => import('../components/preview/templates/detailing/DetailingCoastal.jsx'),

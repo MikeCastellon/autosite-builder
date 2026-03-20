@@ -48,7 +48,7 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
 
   const s = {
     nav: {
-      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
+      position: 'sticky', top: 0, zIndex: 100,
       background: '#fff',
       boxShadow: scrolled ? '0 2px 16px rgba(0,0,0,0.1)' : '0 1px 0 #eee',
       transition: 'box-shadow 0.3s',
@@ -232,13 +232,18 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
           <span style={s.navLogo}>{businessInfo.businessName}</span>
         )}
         <div style={s.navRight}>
+          <div className="tp-nav-links" style={{ display: 'flex', gap: '2rem', alignItems: 'center', marginRight: '1rem' }}>
+            <a href="#services" style={{ color: c.bg, textDecoration: 'none', fontFamily: bodyFont, fontSize: '0.85rem', letterSpacing: '0.05em', opacity: 0.8 }}>Services</a>
+            <a href="#about" style={{ color: c.bg, textDecoration: 'none', fontFamily: bodyFont, fontSize: '0.85rem', letterSpacing: '0.05em', opacity: 0.8 }}>About</a>
+            <a href="#reviews" style={{ color: c.bg, textDecoration: 'none', fontFamily: bodyFont, fontSize: '0.85rem', letterSpacing: '0.05em', opacity: 0.8 }}>Reviews</a>
+          </div>
           <span style={s.navPhoneText}>{businessInfo.phone}</span>
           <button style={s.navBtn}>Get a Quote</button>
         </div>
       </nav>
 
       {/* HERO */}
-      <section style={s.hero}>
+      <section id="hero" style={s.hero}>
         <HeroImage src={images.hero} />
         <div style={s.heroAccentBar} />
         <div style={{ position: 'relative', zIndex: 1 }}>
@@ -279,7 +284,7 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
       </section>
 
       {/* SERVICES */}
-      <section style={s.section}>
+      <section id="services" style={s.section}>
         <div style={s.sectionEyebrow}>Our Services</div>
         <h2 style={s.sectionTitle}>Everything Your Car Needs</h2>
         <p style={s.sectionSub}>{generatedCopy.servicesSection?.intro}</p>
@@ -311,7 +316,7 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
       </section>
 
       {/* ABOUT */}
-      <section style={s.sectionWhite}>
+      <section id="about" style={s.sectionWhite}>
         <div style={s.aboutGrid}>
           <div>
             <div style={s.sectionEyebrow}>About Us</div>
@@ -342,7 +347,7 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
       </section>
 
       {/* TESTIMONIALS */}
-      <section style={s.section}>
+      <section id="reviews" style={s.section}>
         <div style={s.sectionEyebrow}>Customer Reviews</div>
         <h2 style={{ ...s.sectionTitle, marginBottom: '2rem' }}>Don't Just Take Our Word For It</h2>
         <div style={s.testimonialGrid}>
@@ -357,7 +362,7 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
       </section>
 
       {/* CONTACT */}
-      <section style={s.contactSection}>
+      <section id="contact" style={s.contactSection}>
         <div style={s.contactGrid}>
           <div>
             <div style={{ fontFamily: bodyFont, fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: c.accent, marginBottom: '0.5rem' }}>Contact Us</div>

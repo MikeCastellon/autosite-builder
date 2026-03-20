@@ -115,7 +115,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
 
       {/* NAV */}
       <nav style={{
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000,
+        position: 'sticky', top: 0, zIndex: 1000,
         background: c.accent,
         borderBottom: `3px solid ${c.text}`,
         padding: '12px 5%',

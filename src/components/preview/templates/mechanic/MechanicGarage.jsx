@@ -45,10 +45,8 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
   ];
 
   const navStyle = {
-    position: 'fixed',
+    position: 'sticky',
     top: 0,
-    left: 0,
-    right: 0,
     zIndex: 100,
     background: scrolled ? '#111111' : 'rgba(26,26,26,0.97)',
     borderBottom: `3px solid ${c.accent}`,

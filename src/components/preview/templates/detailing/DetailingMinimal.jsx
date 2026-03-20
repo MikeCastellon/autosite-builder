@@ -17,7 +17,7 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
 
   const s = {
     nav: {
-      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
+      position: 'sticky', top: 0, zIndex: 100,
       background: '#fff',
       boxShadow: scrolled ? '0 1px 20px rgba(0,0,0,0.08)' : 'none',
       transition: 'box-shadow 0.3s ease',
@@ -188,11 +188,16 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
         ) : (
           <span style={s.navLogo}>{businessInfo.businessName}</span>
         )}
-        <button style={s.navPhone}>{businessInfo.phone}</button>
+        <div className="tp-nav-links" style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
+          <a href="#services" style={{ color: c.bg, textDecoration: 'none', fontFamily: bodyFont, fontSize: '0.85rem', letterSpacing: '0.05em', opacity: 0.8 }}>Services</a>
+          <a href="#about" style={{ color: c.bg, textDecoration: 'none', fontFamily: bodyFont, fontSize: '0.85rem', letterSpacing: '0.05em', opacity: 0.8 }}>About</a>
+          <a href="#reviews" style={{ color: c.bg, textDecoration: 'none', fontFamily: bodyFont, fontSize: '0.85rem', letterSpacing: '0.05em', opacity: 0.8 }}>Reviews</a>
+          <button style={s.navPhone}>{businessInfo.phone}</button>
+        </div>
       </nav>
 
       {/* HERO */}
-      <section style={s.hero}>
+      <section id="hero" style={s.hero}>
         <HeroImage src={images.hero} />
         <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
           {businessInfo.awards && <div style={s.awardsChip}>◆ {businessInfo.awards}</div>}
@@ -217,7 +222,7 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
       </div>
 
       {/* SERVICES */}
-      <section style={s.section}>
+      <section id="services" style={s.section}>
         <div style={s.sectionEyebrow}>Services</div>
         <h2 style={s.sectionTitle}>What We Offer</h2>
         <p style={s.sectionSub}>{generatedCopy.servicesSection?.intro}</p>
@@ -245,7 +250,7 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
       </section>
 
       {/* ABOUT */}
-      <section style={s.sectionGray}>
+      <section id="about" style={s.sectionGray}>
         <div style={s.aboutGrid}>
           <div>
             <div style={s.sectionEyebrow}>About Us</div>
@@ -277,7 +282,7 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
       </section>
 
       {/* TESTIMONIALS */}
-      <section style={s.section}>
+      <section id="reviews" style={s.section}>
         <div style={s.sectionEyebrow}>Testimonials</div>
         <h2 style={{ ...s.sectionTitle, marginBottom: '2rem' }}>What Clients Are Saying</h2>
         <div style={s.testimonialGrid}>

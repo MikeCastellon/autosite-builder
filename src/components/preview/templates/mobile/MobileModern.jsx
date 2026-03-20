@@ -30,7 +30,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
 
       {/* STICKY NAV */}
       <nav style={{
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000,
+        position: 'sticky', top: 0, zIndex: 1000,
         background: scrolled ? 'rgba(255,255,255,0.97)' : c.bg,
         borderBottom: scrolled ? '1px solid #e0e9ff' : '1px solid transparent',
         transition: 'all 0.3s ease',

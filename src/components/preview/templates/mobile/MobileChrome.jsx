@@ -29,10 +29,8 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
   const svcCols = _svcItems.length >= 6 ? Math.ceil(_svcItems.length / 2) : _svcItems.length || 1;
 
   const navStyle = {
-    position: 'fixed',
+    position: 'sticky',
     top: 0,
-    left: 0,
-    right: 0,
     zIndex: 100,
     background: scrolled ? 'rgba(10,10,10,0.97)' : 'transparent',
     backdropFilter: scrolled ? 'blur(20px)' : 'none',

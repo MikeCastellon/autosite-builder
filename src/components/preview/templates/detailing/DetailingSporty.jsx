@@ -17,7 +17,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
 
   const s = {
     nav: {
-      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
+      position: 'sticky', top: 0, zIndex: 100,
       background: scrolled ? c.bg : 'rgba(10,5,5,0.85)',
       borderBottom: `3px solid ${c.accent}`,
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -195,11 +195,16 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
             )}
           </span>
         )}
-        <button style={s.navPhone}>{businessInfo.phone}</button>
+        <div className="tp-nav-links" style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
+          <a href="#services" style={{ color: c.text, textDecoration: 'none', fontFamily: bodyFont, fontSize: '0.85rem', letterSpacing: '0.05em', opacity: 0.8 }}>Services</a>
+          <a href="#about" style={{ color: c.text, textDecoration: 'none', fontFamily: bodyFont, fontSize: '0.85rem', letterSpacing: '0.05em', opacity: 0.8 }}>About</a>
+          <a href="#reviews" style={{ color: c.text, textDecoration: 'none', fontFamily: bodyFont, fontSize: '0.85rem', letterSpacing: '0.05em', opacity: 0.8 }}>Reviews</a>
+          <button style={s.navPhone}>{businessInfo.phone}</button>
+        </div>
       </nav>
 
       {/* HERO */}
-      <section style={s.hero}>
+      <section id="hero" style={s.hero}>
         <HeroImage src={images.hero} />
         <div style={s.heroSlash} />
         <div style={s.heroSlash2} />
@@ -229,7 +234,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
       </div>
 
       {/* SERVICES */}
-      <section style={s.section}>
+      <section id="services" style={s.section}>
         <div style={s.sectionTag}>What We Do</div>
         <h2 style={s.sectionTitle}>Our Services</h2>
         <p style={s.sectionSub}>{generatedCopy.servicesSection?.intro}</p>
@@ -256,7 +261,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
       </section>
 
       {/* ABOUT */}
-      <section style={s.sectionAlt}>
+      <section id="about" style={s.sectionAlt}>
         <div style={s.aboutGrid}>
           <div style={s.aboutSidebar}>
             <span style={s.sidebarNum}>{businessInfo.yearsInBusiness || '10'}+</span>
@@ -282,7 +287,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
       </section>
 
       {/* TESTIMONIALS */}
-      <section style={s.section}>
+      <section id="reviews" style={s.section}>
         <div style={s.sectionTag}>Real Reviews</div>
         <h2 style={{ ...s.sectionTitle, marginBottom: '2rem' }}>The People Know</h2>
         <div style={s.testimonialRow}>

@@ -146,7 +146,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
       ═══════════════════════════════════════════════════════════ */}
       <nav
         style={{
-          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000,
+          position: 'sticky', top: 0, zIndex: 1000,
           height: 68, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '0 5%',
           background: scrolled ? 'rgba(8,8,8,0.98)' : 'rgba(10,10,10,0.95)',

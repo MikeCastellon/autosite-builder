@@ -64,7 +64,7 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
   const s = {
     wrapper: { background: c.bg, color: textColor, fontFamily: bodyFont, overflowX: 'hidden', containerType: 'inline-size' },
     nav: {
-      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
+      position: 'sticky', top: 0, zIndex: 100,
       padding: scrolled ? '14px clamp(1.5rem,5vw,3.75rem)' : '20px clamp(1.5rem,5vw,3.75rem)',
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       transition: 'all 0.4s',
@@ -188,11 +188,16 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
             </div>
           </div>
         )}
-        <button style={s.navCta}>{businessInfo.phone}</button>
+        <div className="tp-nav-links" style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
+          <a href="#services" style={{ color: textColor, textDecoration: 'none', fontFamily: bodyFont, fontSize: '0.85rem', letterSpacing: '0.05em', opacity: 0.8 }}>Services</a>
+          <a href="#about" style={{ color: textColor, textDecoration: 'none', fontFamily: bodyFont, fontSize: '0.85rem', letterSpacing: '0.05em', opacity: 0.8 }}>About</a>
+          <a href="#reviews" style={{ color: textColor, textDecoration: 'none', fontFamily: bodyFont, fontSize: '0.85rem', letterSpacing: '0.05em', opacity: 0.8 }}>Reviews</a>
+          <button style={s.navCta}>{businessInfo.phone}</button>
+        </div>
       </nav>
 
       {/* HERO */}
-      <section style={s.hero}>
+      <section id="hero" style={s.hero}>
         <HeroImage src={images.hero} />
         <div style={s.heroBg} />
         <div style={s.heroGrid} />
@@ -230,7 +235,7 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
       </div>
 
       {/* SERVICES */}
-      <section style={s.servicesSection}>
+      <section id="services" style={s.servicesSection}>
         <div style={s.servicesHeader}>
           <div style={s.servicesHeaderLeft}>
             <div style={s.sectionLabel}>
@@ -343,7 +348,7 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
 
       {/* ABOUT */}
       {generatedCopy.aboutText && (
-        <section style={{ background: c.bg, padding: 'clamp(4rem,8vw,7.5rem) clamp(1.5rem,5vw,3.75rem)' }}>
+        <section id="about" style={{ background: c.bg, padding: 'clamp(4rem,8vw,7.5rem) clamp(1.5rem,5vw,3.75rem)' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px,1fr))', gap: 'clamp(2rem,4vw,5rem)', alignItems: 'start' }}>
             <div>
               <div style={s.sectionLabel}>
@@ -378,7 +383,7 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
       )}
 
       {/* TESTIMONIALS */}
-      <section style={s.testimonialsSection}>
+      <section id="reviews" style={s.testimonialsSection}>
         <div style={s.sectionLabel}>
           <div style={s.sectionLabelLine} />
           <span style={s.sectionLabelText}>Client Testimonials</span>

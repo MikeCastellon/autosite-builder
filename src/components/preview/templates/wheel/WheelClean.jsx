@@ -33,7 +33,7 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
 
       {/* STICKY NAV */}
       <nav style={{
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000,
+        position: 'sticky', top: 0, zIndex: 1000,
         background: scrolled ? 'rgba(248,249,250,0.97)' : c.bg,
         borderBottom: scrolled ? '1px solid #e5e7eb' : '1px solid transparent',
         transition: 'all 0.3s ease',
