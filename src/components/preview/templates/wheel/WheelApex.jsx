@@ -260,8 +260,14 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
               <Eyebrow label="Featured Brands" />
               <SecTitle>Wheels built<br />to <span style={{ color: D.blue }}>perform.</span></SecTitle>
             </div>
-            {images.about && (
-              <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block', marginBottom: '16px' }} />
+            {generatedCopy?.aboutLayout === 'image' ? (
+              images.about
+                ? <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block', marginBottom: '16px' }} />
+                : <div style={{ width: '100%', height: '360px', background: D.fog, borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: D.steel, fontSize: '0.85rem', marginBottom: '16px' }}>Upload a photo in Images tab</div>
+            ) : (
+              images.about && (
+                <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block', marginBottom: '16px' }} />
+              )
             )}
             <p style={{ fontSize: 16, color: D.steel, lineHeight: 1.75, fontFamily: bodyFont, margin: 0 }}>
               {copy.aboutText

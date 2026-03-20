@@ -281,8 +281,14 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
             <h2 style={{ fontFamily: font, fontSize: '2rem', fontWeight: 900, color: c.text, textTransform: 'uppercase', marginBottom: '20px' }}>
               {businessInfo.yearsInBusiness ? `${businessInfo.yearsInBusiness} Years` : 'Built'} In The Trenches
             </h2>
-            {images.about && (
-              <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block', marginBottom: '28px' }} />
+            {generatedCopy?.aboutLayout === 'image' ? (
+              images.about
+                ? <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block', marginBottom: '28px' }} />
+                : <div style={{ width: '100%', height: '360px', background: c.bg, borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.muted, fontSize: '0.85rem', marginBottom: '28px' }}>Upload a photo in Images tab</div>
+            ) : (
+              images.about && (
+                <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block', marginBottom: '28px' }} />
+              )
             )}
             <p style={{ color: c.muted, lineHeight: 1.8, fontSize: '0.98rem', marginBottom: '28px' }}>{generatedCopy.aboutText}</p>
             {businessInfo.awards && businessInfo.awards.length > 0 && (

@@ -61,7 +61,20 @@ function ImageSlot({ label, value, onChange }) {
   );
 }
 
-export default function ContentEditor({ isOpen, onClose, copy, images, onCopyChange, onImagesChange }) {
+function Toggle({ value, onChange, options }) {
+  return (
+    <div className="flex gap-1 mb-4">
+      {options.map(opt => (
+        <button key={opt.value} type="button" onClick={() => onChange(opt.value)}
+          className={`flex-1 py-1.5 px-2 rounded-lg text-[12px] font-medium border transition ${value === opt.value ? 'bg-gray-900 text-white border-gray-900' : 'border-gray-200 text-gray-600 hover:border-gray-400'}`}>
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export default function ContentEditor({ isOpen, onClose, copy, images, onCopyChange, onImagesChange, templateMeta, customColors = {}, onCustomColors }) {
   const [activeSection, setActiveSection] = useState('hero');
 
   const setCopy = (path, value) => {
@@ -95,6 +108,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
     { id: 'about', label: 'About' },
     { id: 'testimonials', label: 'Reviews' },
     { id: 'images', label: 'Images' },
+    { id: 'colors', label: 'Colors' },
     { id: 'footer', label: 'Footer' },
   ];
 
@@ -142,6 +156,12 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
 
           {activeSection === 'hero' && (
             <>
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Hero Layout</p>
+              <Toggle
+                value={copy?.heroLayout || 'full'}
+                onChange={(v) => setCopy('heroLayout', v)}
+                options={[{ value: 'full', label: '⬛ Full Background' }, { value: 'split', label: '▥ Split (Image Right)' }]}
+              />
               <Field label="Headline" value={copy.headline} onChange={(v) => setCopy('headline', v)} />
               <Field label="Subheadline" value={copy.subheadline} onChange={(v) => setCopy('subheadline', v)} multiline rows={2} />
               <Field label="Primary Button" value={copy.ctaPrimary} onChange={(v) => setCopy('ctaPrimary', v)} />
@@ -163,7 +183,15 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
           )}
 
           {activeSection === 'about' && (
-            <Field label="About Text" value={copy.aboutText} onChange={(v) => setCopy('aboutText', v)} multiline rows={8} />
+            <>
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Left Panel Style</p>
+              <Toggle
+                value={copy?.aboutLayout || 'stats'}
+                onChange={(v) => setCopy('aboutLayout', v)}
+                options={[{ value: 'stats', label: '📊 Stats Box' }, { value: 'image', label: '🖼 Photo' }]}
+              />
+              <Field label="About Text" value={copy.aboutText} onChange={(v) => setCopy('aboutText', v)} multiline rows={8} />
+            </>
           )}
 
           {activeSection === 'testimonials' && (
@@ -188,6 +216,45 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
               <ImageSlot label="Gallery Photo 1" value={images?.gallery0} onChange={(v) => setImage('gallery0', v)} />
               <ImageSlot label="Gallery Photo 2" value={images?.gallery1} onChange={(v) => setImage('gallery1', v)} />
               <ImageSlot label="Gallery Photo 3" value={images?.gallery2} onChange={(v) => setImage('gallery2', v)} />
+            </>
+          )}
+
+          {activeSection === 'colors' && templateMeta && (
+            <>
+              <p className="text-[11px] text-gray-400 mb-4">Click a swatch to change the color. Changes apply live.</p>
+              {[
+                { key: 'bg', label: 'Background' },
+                { key: 'accent', label: 'Accent / Brand' },
+                { key: 'text', label: 'Text' },
+                { key: 'secondary', label: 'Surface' },
+                { key: 'muted', label: 'Muted Text' },
+              ].map(({ key, label }) => {
+                const base = templateMeta.colors[key] || '#000000';
+                const val = customColors?.[key] ?? base;
+                return (
+                  <div key={key} className="flex items-center justify-between mb-3">
+                    <span className="text-[13px] text-gray-700">{label}</span>
+                    <div className="flex items-center gap-2">
+                      {customColors?.[key] && (
+                        <button onClick={() => onCustomColors(prev => { const n = { ...prev }; delete n[key]; return n; })}
+                          className="text-[11px] text-gray-400 hover:text-red-500 transition">reset</button>
+                      )}
+                      <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-gray-200 cursor-pointer shadow-sm">
+                        <div className="absolute inset-0" style={{ background: val }} />
+                        <input type="color" value={val}
+                          onChange={(e) => onCustomColors(prev => ({ ...prev, [key]: e.target.value }))}
+                          className="absolute inset-0 opacity-0 w-full h-full cursor-pointer" />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              {Object.keys(customColors || {}).length > 0 && (
+                <button onClick={() => onCustomColors({})}
+                  className="mt-2 text-[12px] text-gray-400 hover:text-red-500 border border-gray-200 rounded-lg px-3 py-1.5 w-full transition">
+                  Reset all colors to default
+                </button>
+              )}
             </>
           )}
 

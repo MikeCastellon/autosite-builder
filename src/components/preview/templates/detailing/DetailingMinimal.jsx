@@ -274,7 +274,7 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
             <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>
             {businessInfo.certifications && (
               <div style={{ display: 'inline-block', background: c.accent + '12', border: `1px solid ${c.accent}30`, padding: '8px 16px', borderRadius: '6px' }}>
-                <span style={{ fontFamily: bodyFont, fontSize: '0.82rem', color: c.accent, fontWeight: 600 }}>✦ {businessInfo.certifications}</span>
+                <span style={{ fontFamily: bodyFont, fontSize: '0.82rem', color: c.accent, fontWeight: 600 }}>✦ {Array.isArray(businessInfo.certifications) ? businessInfo.certifications.join(' · ') : businessInfo.certifications}</span>
               </div>
             )}
           </div>

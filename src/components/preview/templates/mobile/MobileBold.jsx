@@ -230,8 +230,14 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
             <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 24px', lineHeight: 1 }}>
               {biz.businessName || 'WE DETAIL'}
             </h2>
-            {images.about && (
-              <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block', marginBottom: '20px' }} />
+            {generatedCopy?.aboutLayout === 'image' ? (
+              images.about
+                ? <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block', marginBottom: '20px' }} />
+                : <div style={{ width: '100%', height: '360px', background: c.secondary || '#2a2a2a', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#777', fontSize: '0.85rem', marginBottom: '20px' }}>Upload a photo in Images tab</div>
+            ) : (
+              images.about && (
+                <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block', marginBottom: '20px' }} />
+              )
             )}
             <p style={{ color: '#bbb', lineHeight: 1.8, fontSize: 15, marginBottom: 20 }}>
               {copy.aboutText || `Based in ${biz.city || 'your area'}, we bring professional detailing directly to you.`}

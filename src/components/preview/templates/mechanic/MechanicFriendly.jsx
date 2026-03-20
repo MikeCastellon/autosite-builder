@@ -259,7 +259,7 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
           <h1 style={s.heroH1}>{generatedCopy.headline}</h1>
           <p style={s.heroSub}>{generatedCopy.subheadline}</p>
           {businessInfo.certifications && (
-            <div style={s.heroCertBadge}>◆ {businessInfo.certifications}</div>
+            <div style={s.heroCertBadge}>◆ {Array.isArray(businessInfo.certifications) ? businessInfo.certifications.join(' · ') : businessInfo.certifications}</div>
           )}
           <div style={s.ctaRow}>
             <button style={s.ctaMain}>{generatedCopy.ctaPrimary}</button>
@@ -321,14 +321,20 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
           <div>
             <div style={s.sectionEyebrow}>About Us</div>
             <h2 style={{ ...s.sectionTitle, marginBottom: '1.25rem' }}>Part of Your Community</h2>
-            {images.about && (
-              <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '12px', display: 'block', marginBottom: '1.25rem' }} />
+            {generatedCopy?.aboutLayout === 'image' ? (
+              images.about
+                ? <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '12px', display: 'block', marginBottom: '1.25rem' }} />
+                : <div style={{ width: '100%', height: '360px', background: c.secondary, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.muted, fontSize: '0.85rem', marginBottom: '1.25rem' }}>Upload a photo in Images tab</div>
+            ) : (
+              images.about && (
+                <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '12px', display: 'block', marginBottom: '1.25rem' }} />
+              )
             )}
             <p style={s.aboutText}>{generatedCopy.aboutText}</p>
             {businessInfo.certifications && (
               <div style={s.certBadge}>
                 <div style={s.certIcon} />
-                <span style={s.certText}>{businessInfo.certifications}</span>
+                <span style={s.certText}>{Array.isArray(businessInfo.certifications) ? businessInfo.certifications.join(' · ') : businessInfo.certifications}</span>
               </div>
             )}
           </div>

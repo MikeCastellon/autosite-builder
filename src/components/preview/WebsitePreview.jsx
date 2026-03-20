@@ -4,7 +4,7 @@ import { normalizeBusinessInfo } from '../../lib/normalizeBusinessInfo.js';
 import PreviewToolbar from './PreviewToolbar.jsx';
 import ContentEditor from './ContentEditor.jsx';
 
-export default function WebsitePreview({ businessInfo, generatedCopy, editedCopy, onEditedCopyChange, images, onImagesChange, templateId, templateMeta, onBack, onExport, onStartOver, isDemoPreview }) {
+export default function WebsitePreview({ businessInfo, generatedCopy, editedCopy, onEditedCopyChange, images, onImagesChange, templateId, templateMeta, customColors, onCustomColors, onBack, onExport, onStartOver, isDemoPreview }) {
   const normalizedInfo = useMemo(() => normalizeBusinessInfo(businessInfo), [businessInfo]);
   const [viewMode, setViewMode] = useState('desktop');
   const [editorOpen, setEditorOpen] = useState(false);
@@ -38,6 +38,9 @@ export default function WebsitePreview({ businessInfo, generatedCopy, editedCopy
         images={images}
         onCopyChange={onEditedCopyChange}
         onImagesChange={onImagesChange}
+        templateMeta={templateMeta}
+        customColors={customColors}
+        onCustomColors={onCustomColors}
       />
 
       {/* Preview frame */}

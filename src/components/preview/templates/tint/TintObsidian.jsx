@@ -481,8 +481,14 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
             <h2 style={{ ...sectionTitleStyle, fontSize: 'clamp(1.8rem, 3vw, 2.6rem)', marginBottom: 20 }}>
               About {biz.businessName || 'Us'}
             </h2>
-            {images.about && (
-              <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block', marginBottom: '24px' }} />
+            {generatedCopy?.aboutLayout === 'image' ? (
+              images.about
+                ? <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block', marginBottom: '24px' }} />
+                : <div style={{ width: '100%', height: '360px', background: c.secondary, borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.muted, fontSize: '0.85rem', marginBottom: '24px' }}>Upload a photo in Images tab</div>
+            ) : (
+              images.about && (
+                <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block', marginBottom: '24px' }} />
+              )
             )}
             <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.85, marginBottom: 24 }}>
               {copy.aboutText || `Serving ${biz.city || 'the area'} with premium window tinting and paint protection film.`}

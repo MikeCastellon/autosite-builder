@@ -325,17 +325,23 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
       <section id="about" style={{ ...sectionStyle(c.secondary), borderTop: '1px solid rgba(202,138,4,0.08)' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', gap: '80px', alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ flex: '1 1 300px', minWidth: '260px' }}>
-            {images.about ? (
-              <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block' }} />
+            {generatedCopy?.aboutLayout === 'image' ? (
+              images.about
+                ? <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block' }} />
+                : <div style={{ width: '100%', maxWidth: '440px', height: '360px', background: c.secondary, borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.muted, fontSize: '0.85rem' }}>Upload a photo in Images tab</div>
             ) : (
-              <div style={{ width: '100%', maxWidth: '440px', height: '360px', border: '1px solid rgba(202,138,4,0.2)', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: c.bg }}>
-                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: goldGradient }} />
-                <div style={diagonalLines} />
-                {/* Corner ornaments */}
-                <div style={{ position: 'absolute', top: '16px', left: '16px', width: '20px', height: '20px', borderTop: `1px solid rgba(202,138,4,0.5)`, borderLeft: `1px solid rgba(202,138,4,0.5)` }} />
-                <div style={{ position: 'absolute', bottom: '16px', right: '16px', width: '20px', height: '20px', borderBottom: `1px solid rgba(202,138,4,0.5)`, borderRight: `1px solid rgba(202,138,4,0.5)` }} />
-                <span style={{ fontFamily: font, fontSize: '5rem', ...goldGradientText, opacity: 0.2, fontStyle: 'italic' }}>✦</span>
-              </div>
+              images.about ? (
+                <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block' }} />
+              ) : (
+                <div style={{ width: '100%', maxWidth: '440px', height: '360px', border: '1px solid rgba(202,138,4,0.2)', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: c.bg }}>
+                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: goldGradient }} />
+                  <div style={diagonalLines} />
+                  {/* Corner ornaments */}
+                  <div style={{ position: 'absolute', top: '16px', left: '16px', width: '20px', height: '20px', borderTop: `1px solid rgba(202,138,4,0.5)`, borderLeft: `1px solid rgba(202,138,4,0.5)` }} />
+                  <div style={{ position: 'absolute', bottom: '16px', right: '16px', width: '20px', height: '20px', borderBottom: `1px solid rgba(202,138,4,0.5)`, borderRight: `1px solid rgba(202,138,4,0.5)` }} />
+                  <span style={{ fontFamily: font, fontSize: '5rem', ...goldGradientText, opacity: 0.2, fontStyle: 'italic' }}>✦</span>
+                </div>
+              )
             )}
           </div>
           <div style={{ flex: '1 1 380px' }}>

@@ -53,6 +53,8 @@ CRITICAL INSTRUCTIONS:
 - Footer tagline should reference serving ${businessInfo.city} and surrounding areas
 - Make it sound authentic and specific to this actual business — not generic
 - Use the business name naturally throughout
+- NEVER invent or fabricate details not provided above (no made-up certifications, awards, years, brands, or claims)
+- If a field says "Not provided", do not mention it at all in the copy
 
 Return ONLY this JSON structure (no markdown, no explanation):
 {

@@ -125,7 +125,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
       padding: '0.6rem 1.4rem',
     },
     priceTagText: { fontFamily: bodyFont, fontSize: '0.9rem', fontWeight: 700, color: '#fff' },
-    aboutGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '3rem', alignItems: 'start' },
+    aboutGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '3rem', alignItems: 'center' },
     aboutSidebar: {
       background: c.accent, padding: '2.5rem 2rem',
     },
@@ -263,20 +263,26 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
       {/* ABOUT */}
       <section id="about" style={s.sectionAlt}>
         <div style={s.aboutGrid}>
-          {images.about ? (
-            <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '8px', display: 'block' }} />
+          {generatedCopy?.aboutLayout === 'image' ? (
+            images.about
+              ? <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '8px', display: 'block' }} />
+              : <div style={{ width: '100%', height: '360px', background: c.secondary, borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.muted, fontSize: '0.85rem' }}>Upload a photo in Images tab</div>
           ) : (
             <div style={s.aboutSidebar}>
               <span style={s.sidebarNum}>{businessInfo.yearsInBusiness || '10'}+</span>
               <span style={s.sidebarLabel}>Years in the Game</span>
               <div style={s.sidebarDivider} />
               <span style={{ fontFamily: bodyFont, color: 'rgba(255,255,255,0.85)', fontSize: '1rem', lineHeight: 1.6 }}>
-                {businessInfo.city}, {businessInfo.state}'s go-to shop for serious car care.
+                {businessInfo.tagline || generatedCopy.subheadline || `${businessInfo.city}, ${businessInfo.state}`}
               </span>
-              {businessInfo.certifications && (
+              {businessInfo.certifications && businessInfo.certifications.length > 0 && (
                 <>
                   <div style={s.sidebarDivider} />
-                  <span style={{ fontFamily: bodyFont, color: 'rgba(255,255,255,0.7)', fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.12em' }}>{businessInfo.certifications}</span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {(Array.isArray(businessInfo.certifications) ? businessInfo.certifications : [businessInfo.certifications]).map((cert, i) => (
+                      <span key={i} style={{ fontFamily: bodyFont, color: 'rgba(255,255,255,0.7)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'rgba(255,255,255,0.12)', padding: '3px 8px', borderRadius: '4px' }}>{cert}</span>
+                    ))}
+                  </div>
                 </>
               )}
             </div>

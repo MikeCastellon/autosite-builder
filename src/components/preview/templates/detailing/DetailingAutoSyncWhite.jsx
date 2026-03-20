@@ -82,7 +82,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
     logoRingInner: { width: '10px', height: '10px', borderRadius: '50%', border: '1.5px solid rgba(255,255,255,0.7)' },
     navCta: { background: blue, color: white, fontSize: '13px', fontWeight: 500, padding: '8px 20px', borderRadius: '980px', border: 'none', cursor: 'pointer', fontFamily: dmSans, letterSpacing: '-0.1px', display: isMobile ? 'none' : 'block' },
     hero: { paddingTop: '52px', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', background: white, position: 'relative', overflow: 'hidden' },
-    heroGradient: { position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 60% 50% at 50% 0%, ' + blue + '0f 0%, transparent 70%), radial-gradient(ellipse 40% 30% at 80% 80%, ' + blue + '0a 0%, transparent 60%)', pointerEvents: 'none' },
+    heroGradient: { position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 60% 50% at 50% 0%, rgba(0,113,227,0.04) 0%, transparent 70%), radial-gradient(ellipse 40% 30% at 80% 80%, rgba(0,113,227,0.04) 0%, transparent 60%)', pointerEvents: 'none' },
     heroContent: { position: 'relative', zIndex: 2, maxWidth: '760px', padding: isMobile ? '60px 24px 80px' : '0 24px' },
     heroChip: { display: 'inline-flex', alignItems: 'center', gap: '6px', background: off, border: '1px solid ' + border2, padding: '6px 14px', borderRadius: '980px', fontSize: '12px', color: text3, fontWeight: 500, marginBottom: '32px', letterSpacing: '0.1px' },
     heroChipDot: { width: '6px', height: '6px', borderRadius: '50%', background: blue, flexShrink: 0 },
@@ -97,7 +97,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
     statNum: { fontFamily: dmSerif, fontSize: isMobile ? '36px' : '52px', fontWeight: 400, lineHeight: 1, color: text, letterSpacing: '-2px', marginBottom: '8px', display: 'block' },
     statLabel: { fontSize: '13px', color: text3, fontWeight: 400, letterSpacing: '-0.1px' },
     sectionWhite: { padding: isMobile ? '80px 24px' : '120px 80px', background: white },
-    sectionOff:   { padding: isMobile ? '80px 24px' : '120px 80px', background: off },
+    sectionOff:   { padding: isMobile ? '80px 24px' : '120px 80px', background: white },
     eyebrow: { fontSize: '12px', fontWeight: 500, color: blue, letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '16px', display: 'block' },
     sectionTitle: { fontFamily: dmSerif, fontSize: isMobile ? '34px' : 'clamp(34px, 4vw, 54px)', fontWeight: 400, lineHeight: 1.1, letterSpacing: '-1px', color: text, marginBottom: '20px' },
     titleItalicBlue: { fontStyle: 'italic', color: blue },
@@ -106,8 +106,8 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
     servicesBento: { display: 'grid', gridTemplateColumns: isMobile ? '1fr' : `repeat(${svcCols}, 1fr)`, gap: '16px' },
     tileBase: { background: off, borderRadius: radius, padding: isMobile ? '28px 24px' : '40px 36px', position: 'relative', overflow: 'hidden', border: '1px solid ' + border },
     tileFeatured: { background: text, borderRadius: radius, padding: isMobile ? '28px 24px' : '40px 36px', position: 'relative', overflow: 'hidden', border: 'none', gridColumn: isMobile ? 'span 1' : 'span 2' },
-    tileGlow: { position: 'absolute', top: '-40px', right: '-40px', width: '180px', height: '180px', borderRadius: '50%', background: 'radial-gradient(circle, ' + blue + '1f, transparent 70%)', pointerEvents: 'none' },
-    tileGlowFeatured: { position: 'absolute', top: '-40px', right: '-40px', width: '180px', height: '180px', borderRadius: '50%', background: 'radial-gradient(circle, ' + blue + '33, transparent 70%)', pointerEvents: 'none' },
+    tileGlow: { position: 'absolute', top: '-40px', right: '-40px', width: '180px', height: '180px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.8), transparent 70%)', pointerEvents: 'none' },
+    tileGlowFeatured: { position: 'absolute', top: '-40px', right: '-40px', width: '180px', height: '180px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.15), transparent 70%)', pointerEvents: 'none' },
     tileBadge: { position: 'absolute', top: '20px', right: '20px', background: blue, color: white, fontSize: '10px', fontWeight: 600, letterSpacing: '0.5px', padding: '4px 10px', borderRadius: '980px', textTransform: 'uppercase' },
     tileIcon: { width: '44px', height: '44px', borderRadius: '10px', background: white, border: '1px solid ' + border, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', marginBottom: '24px', boxShadow: shadowSm },
     tileIconFeatured: { width: '44px', height: '44px', borderRadius: '10px', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', marginBottom: '24px' },
@@ -279,9 +279,6 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
             Built for <em style={s.titleItalicBlue}>scale.</em>
             <br />Trusted by industry.
           </h2>
-          {images.about && (
-            <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '8px', display: 'block', marginBottom: '1.5rem' }} />
-          )}
           <p style={s.bodyText}>{generatedCopy.aboutText}</p>
           <div style={s.specPillsGrid}>
             {[
@@ -298,6 +295,9 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
           </div>
         </div>
         <div>
+          {images.about && (
+            <img src={images.about} alt="About" style={{ width: '100%', height: '260px', objectFit: 'cover', borderRadius: '12px', display: 'block', marginBottom: '16px' }} />
+          )}
           {specialtyItems.slice(0, 3).map((sp, i) => (
             <div key={i} style={s.fleetCard}>
               <div style={s.fleetCardLine} />

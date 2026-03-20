@@ -198,10 +198,10 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
 
       {/* HERO */}
       <section id="hero" style={s.hero}>
-        <HeroImage src={images.hero} />
         <div style={s.heroBg} />
         <div style={s.heroGrid} />
         <div style={s.heroLine} />
+        <HeroImage src={images.hero} />
         <div style={s.heroContent}>
           <div style={s.heroEyebrow}>
             <div style={s.heroEyebrowLine} />
@@ -351,8 +351,14 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
         <section id="about" style={{ background: c.bg, padding: 'clamp(4rem,8vw,7.5rem) clamp(1.5rem,5vw,3.75rem)' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px,1fr))', gap: 'clamp(2rem,4vw,5rem)', alignItems: 'start' }}>
             <div>
-              {images.about && (
-                <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block', marginBottom: '1.5rem' }} />
+              {generatedCopy?.aboutLayout === 'image' ? (
+                images.about
+                  ? <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block', marginBottom: '1.5rem' }} />
+                  : <div style={{ width: '100%', height: '360px', background: mid, borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: textDim, fontSize: '0.85rem', marginBottom: '1.5rem' }}>Upload a photo in Images tab</div>
+              ) : (
+                images.about && (
+                  <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block', marginBottom: '1.5rem' }} />
+                )
               )}
               <div style={s.sectionLabel}>
                 <div style={s.sectionLabelLine} />

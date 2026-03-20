@@ -204,13 +204,19 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
       <section id="about" style={sectionStyle(c.bg)}>
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', gap: '64px', alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ flex: '1 1 320px', minWidth: '280px' }}>
-            {images.about ? (
-              <img src={images.about} alt="About" style={{ width: '100%', maxWidth: '460px', height: '340px', objectFit: 'cover', borderRadius: '20px', display: 'block' }} />
+            {generatedCopy?.aboutLayout === 'image' ? (
+              images.about
+                ? <img src={images.about} alt="About" style={{ width: '100%', maxWidth: '460px', height: '340px', objectFit: 'cover', borderRadius: '20px', display: 'block' }} />
+                : <div style={{ width: '100%', maxWidth: '460px', height: '340px', background: c.secondary, borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.muted, fontSize: '0.85rem' }}>Upload a photo in Images tab</div>
             ) : (
-              <div style={{ width: '100%', maxWidth: '460px', height: '340px', background: c.secondary, borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
-                <div style={{ position: 'absolute', inset: 0, backgroundImage: `repeating-radial-gradient(circle at 30% 70%, rgba(8,145,178,0.07) 0, rgba(8,145,178,0.07) 2px, transparent 2px, transparent 40px)` }} />
-                <span style={{ fontSize: '5rem' }}>🌊</span>
-              </div>
+              images.about ? (
+                <img src={images.about} alt="About" style={{ width: '100%', maxWidth: '460px', height: '340px', objectFit: 'cover', borderRadius: '20px', display: 'block' }} />
+              ) : (
+                <div style={{ width: '100%', maxWidth: '460px', height: '340px', background: c.secondary, borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+                  <div style={{ position: 'absolute', inset: 0, backgroundImage: `repeating-radial-gradient(circle at 30% 70%, rgba(8,145,178,0.07) 0, rgba(8,145,178,0.07) 2px, transparent 2px, transparent 40px)` }} />
+                  <span style={{ fontSize: '5rem' }}>🌊</span>
+                </div>
+              )
             )}
           </div>
           <div style={{ flex: '1 1 360px' }}>

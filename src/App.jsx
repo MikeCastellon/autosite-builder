@@ -125,6 +125,8 @@ export default function App() {
         onImagesChange={setImages}
         templateId={selectedTemplate}
         templateMeta={templateMeta}
+        customColors={customColors}
+        onCustomColors={setCustomColors}
         onBack={isDemoPreview ? handleBackFromDemo : () => goTo(3)}
         onExport={isDemoPreview ? null : () => goTo(5.5)}
         onStartOver={() => { handleStartOver(); setView('dashboard'); }}
