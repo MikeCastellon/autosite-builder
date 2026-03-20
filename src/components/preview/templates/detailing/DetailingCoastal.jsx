@@ -17,11 +17,16 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
   const bodyFont = templateMeta.bodyFont;
   const splitHero = generatedCopy?.heroLayout === 'split';
 
-  const stats = [
+  const defaultStats = [
     { value: businessInfo.yearsInBusiness ? `${businessInfo.yearsInBusiness}+` : '10+', label: 'Years Experience' },
     { value: '500+', label: 'Cars Detailed' },
     { value: '5★', label: 'Avg Rating' },
   ];
+  const stats = (generatedCopy?.aboutStats || []).map((s, i) => ({
+    value: s.value || defaultStats[i]?.value || '',
+    label: s.label || defaultStats[i]?.label || '',
+  }));
+  if (stats.length === 0) stats.push(...defaultStats);
 
   const svcCols = generatedCopy.servicesSection.items.length >= 6 ? Math.ceil(generatedCopy.servicesSection.items.length / 2) : generatedCopy.servicesSection.items.length || 1;
 
@@ -216,10 +221,20 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
       <section id="about" style={sectionStyle(c.bg)}>
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', gap: '64px', alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ flex: '1 1 320px', minWidth: '280px' }}>
-            {images.about
-              ? <img src={images.about} alt="About" style={{ width: '100%', maxWidth: '460px', height: '340px', objectFit: 'cover', borderRadius: '20px', display: 'block' }} />
-              : <div style={{ width: '100%', maxWidth: '460px', height: '340px', border: '2px dashed ' + c.accent, borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.muted, fontSize: '0.85rem', textAlign: 'center', padding: '24px', boxSizing: 'border-box' }}>Upload an about photo in the Images tab</div>
-            }
+            {generatedCopy?.aboutLayout === 'stats' ? (
+              <div style={{ width: '100%', maxWidth: '460px', background: c.secondary, borderRadius: '20px', padding: '40px', boxSizing: 'border-box' }}>
+                {stats.map((s, i) => (
+                  <div key={i} style={{ textAlign: 'center', marginBottom: i < stats.length - 1 ? '24px' : 0 }}>
+                    <div style={{ fontSize: '2.5rem', fontWeight: 800, color: c.accent, fontFamily: font }}>{s.value}</div>
+                    <div style={{ fontSize: '0.85rem', color: c.muted, textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 600 }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              images.about
+                ? <img src={images.about} alt="About" style={{ width: '100%', maxWidth: '460px', height: '340px', objectFit: 'cover', borderRadius: '20px', display: 'block' }} />
+                : <div style={{ width: '100%', maxWidth: '460px', height: '340px', border: '2px dashed ' + c.accent, borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.muted, fontSize: '0.85rem', textAlign: 'center', padding: '24px', boxSizing: 'border-box' }}>Upload an about photo in the Images tab</div>
+            )}
           </div>
           <div style={{ flex: '1 1 360px' }}>
             <div style={{ color: c.accent, fontWeight: 700, fontSize: '0.85rem', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '12px' }}>About Us</div>

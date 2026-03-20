@@ -167,12 +167,17 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
     footerLink: { color: c.accent, textDecoration: 'none', fontFamily: bodyFont, fontSize: '0.85rem', display: 'block', marginBottom: '0.3rem' },
   };
 
-  const stats = [
+  const defaultStats = [
     { num: businessInfo.yearsInBusiness ? `${businessInfo.yearsInBusiness}+` : '10+', label: 'Years of Excellence' },
     { num: '5,000+', label: 'Vehicles Perfected' },
     { num: '5.0', label: 'Star Rating' },
     { num: businessInfo.warranty || 'Lifetime', label: 'Satisfaction Guarantee' },
   ];
+  const stats = (generatedCopy?.aboutStats || []).map((s, i) => ({
+    num: s.value || defaultStats[i]?.num || '',
+    label: s.label || defaultStats[i]?.label || '',
+  }));
+  if (stats.length === 0) stats.push(...defaultStats);
 
   const _svcItems = generatedCopy.servicesSection?.items || [];
   const svcCols = _svcItems.length >= 6 ? Math.ceil(_svcItems.length / 2) : _svcItems.length || 1;

@@ -38,12 +38,17 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
     )
   `;
 
-  const stats = [
+  const defaultStats = [
     { value: businessInfo.yearsInBusiness ? `${businessInfo.yearsInBusiness}+` : '15+', label: 'Years In Business' },
     { value: '2,000+', label: 'Vehicles Serviced' },
     { value: businessInfo.warranty || '12mo', label: 'Warranty' },
     { value: '★★★★★', label: 'Customer Rated' },
   ];
+  const stats = (generatedCopy?.aboutStats || []).map((s, i) => ({
+    value: s.value || defaultStats[i]?.value || '',
+    label: s.label || defaultStats[i]?.label || '',
+  }));
+  if (stats.length === 0) stats.push(...defaultStats);
 
   const navStyle = {
     position: 'sticky',
@@ -288,7 +293,7 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
             <h2 style={{ fontFamily: font, fontSize: '2rem', fontWeight: 900, color: c.text, textTransform: 'uppercase', marginBottom: '20px' }}>
               {businessInfo.yearsInBusiness ? `${businessInfo.yearsInBusiness} Years` : 'Built'} In The Trenches
             </h2>
-            {generatedCopy?.aboutLayout === 'image' ? (
+            {(generatedCopy?.aboutLayout || 'image') !== 'stats' ? (
               images.about
                 ? <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block', marginBottom: '28px' }} />
                 : <div style={{ width: '100%', height: '360px', background: c.bg, borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.muted, fontSize: '0.85rem', marginBottom: '28px' }}>Upload a photo in Images tab</div>

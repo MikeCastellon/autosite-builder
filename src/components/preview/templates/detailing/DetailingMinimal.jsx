@@ -168,12 +168,17 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
     footerHoursLabel: { fontFamily: bodyFont, fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: c.bg, marginBottom: '0.4rem' },
   };
 
-  const stats = [
+  const defaultStats = [
     { num: businessInfo.yearsInBusiness ? `${businessInfo.yearsInBusiness}+` : '10+', label: 'Years Experience' },
     { num: '5,000+', label: 'Happy Clients' },
     { num: '5.0 ★', label: 'Average Rating' },
     { num: businessInfo.warranty || '100%', label: 'Satisfaction Guaranteed' },
   ];
+  const stats = (generatedCopy?.aboutStats || []).map((s, i) => ({
+    num: s.value || defaultStats[i]?.num || '',
+    label: s.label || defaultStats[i]?.label || '',
+  }));
+  if (stats.length === 0) stats.push(...defaultStats);
 
   const _svcItems = generatedCopy.servicesSection?.items || [];
   const svcCols = _svcItems.length >= 6 ? Math.ceil(_svcItems.length / 2) : _svcItems.length || 1;

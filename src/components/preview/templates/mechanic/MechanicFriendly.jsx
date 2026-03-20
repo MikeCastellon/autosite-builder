@@ -330,7 +330,7 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
           <div>
             <div style={s.sectionEyebrow}>About Us</div>
             <h2 style={{ ...s.sectionTitle, marginBottom: '1.25rem' }}>Part of Your Community</h2>
-            {generatedCopy?.aboutLayout === 'image' ? (
+            {(generatedCopy?.aboutLayout || 'image') !== 'stats' ? (
               images.about
                 ? <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '12px', display: 'block', marginBottom: '1.25rem' }} />
                 : <div style={{ width: '100%', height: '360px', background: c.secondary, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.muted, fontSize: '0.85rem', marginBottom: '1.25rem' }}>Upload a photo in Images tab</div>

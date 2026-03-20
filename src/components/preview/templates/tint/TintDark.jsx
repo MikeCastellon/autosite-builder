@@ -285,7 +285,7 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
           <div>
             <div style={{ color: c.accent, fontWeight: 700, letterSpacing: 3, fontSize: 11, textTransform: 'uppercase', marginBottom: 10 }}>ABOUT US</div>
             <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.8rem)', fontWeight: 800, margin: '0 0 20px' }}>About {biz.businessName}</h2>
-            {generatedCopy?.aboutLayout === 'image' ? (
+            {(generatedCopy?.aboutLayout || 'image') !== 'stats' ? (
               images.about
                 ? <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block', marginBottom: '20px' }} />
                 : <div style={{ width: '100%', height: '360px', background: c.secondary, borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.muted, fontSize: '0.85rem', marginBottom: '20px' }}>Upload a photo in Images tab</div>

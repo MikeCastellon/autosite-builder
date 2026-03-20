@@ -71,12 +71,18 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
 
   const svcIcons = ['O', '#', 'W', 'P', 'R', 'T', 'B', 'C', 'A', '*'];
 
-  const statsRow = [
+  const defaultStatsRow = [
     { val: String(biz.yearsInBusiness || '10'), unit: '+', label: 'Years in Business' },
     { val: '100', unit: '%', label: 'Satisfaction' },
     { val: String(serviceNames.length || services.length || 6), unit: '', label: 'Services' },
     { val: biz.city || 'Local', unit: '', label: biz.state || 'Service Area' },
   ];
+  const statsRow = (generatedCopy?.aboutStats || []).map((s, i) => ({
+    val: s.value || defaultStatsRow[i]?.val || '',
+    unit: defaultStatsRow[i]?.unit || '',
+    label: s.label || defaultStatsRow[i]?.label || '',
+  }));
+  if (statsRow.length === 0) statsRow.push(...defaultStatsRow);
 
   const nameInitials = (name) =>
     (name || 'C').split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
@@ -273,7 +279,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
               <Eyebrow label="Featured Brands" />
               <SecTitle>Wheels built<br />to <span style={{ color: D.blue }}>perform.</span></SecTitle>
             </div>
-            {generatedCopy?.aboutLayout === 'image' ? (
+            {(generatedCopy?.aboutLayout || 'image') !== 'stats' ? (
               images.about
                 ? <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block', marginBottom: '16px' }} />
                 : <div style={{ width: '100%', height: '360px', background: D.fog, borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: D.steel, fontSize: '0.85rem', marginBottom: '16px' }}>Upload a photo in Images tab</div>

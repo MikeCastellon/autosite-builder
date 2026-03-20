@@ -52,12 +52,17 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
   const svcCols = services.length >= 6 ? Math.ceil(services.length / 2) : services.length || 1;
   const testimonials = (generatedCopy && generatedCopy.testimonialPlaceholders) ? generatedCopy.testimonialPlaceholders : [];
 
-  const stats = [
+  const defaultStats = [
     { num: '2K+',  label: 'Vehicles Detailed' },
     { num: businessInfo.yearsInBusiness ? businessInfo.yearsInBusiness + '+' : '8+', label: 'Years Experience' },
     { num: '100%', label: 'Satisfaction Rate' },
     { num: businessInfo.city || 'Local', label: 'Serving You' },
   ];
+  const stats = (generatedCopy?.aboutStats || []).map((s, i) => ({
+    num: s.value || defaultStats[i]?.num || '',
+    label: s.label || defaultStats[i]?.label || '',
+  }));
+  if (stats.length === 0) stats.push(...defaultStats);
 
   const specialtyItems = Array.isArray(businessInfo.specialties)
     ? businessInfo.specialties

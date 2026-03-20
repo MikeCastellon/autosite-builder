@@ -294,7 +294,7 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
           <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, color: c.text, marginBottom: 20 }}>About {biz.businessName}</h2>
           <div className="tp-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, alignItems: 'start' }}>
             <div>
-              {generatedCopy?.aboutLayout === 'image' ? (
+              {(generatedCopy?.aboutLayout || 'image') !== 'stats' ? (
                 images.about
                   ? <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '8px', display: 'block', marginBottom: '20px' }} />
                   : <div style={{ width: '100%', height: '360px', background: c.secondary, borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.muted, fontSize: '0.85rem', marginBottom: '20px' }}>Upload a photo in Images tab</div>

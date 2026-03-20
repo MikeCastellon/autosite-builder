@@ -255,7 +255,7 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
             <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 24px', lineHeight: 1 }}>
               {biz.businessName || 'WE DETAIL'}
             </h2>
-            {generatedCopy?.aboutLayout === 'image' ? (
+            {(generatedCopy?.aboutLayout || 'image') !== 'stats' ? (
               images.about
                 ? <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block', marginBottom: '20px' }} />
                 : <div style={{ width: '100%', height: '360px', background: c.secondary || '#2a2a2a', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#777', fontSize: '0.85rem', marginBottom: '20px' }}>Upload a photo in Images tab</div>

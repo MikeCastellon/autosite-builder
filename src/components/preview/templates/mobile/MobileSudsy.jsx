@@ -385,7 +385,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
           <div>
             <div style={sectionTagStyle("-1deg")}>About Us</div>
             <h2 style={{ ...titleStyle, marginTop: 8, marginBottom: 20 }}>{biz.businessName || "We Detail"}</h2>
-            {generatedCopy?.aboutLayout === 'image' ? (
+            {(generatedCopy?.aboutLayout || 'image') !== 'stats' ? (
               images.about
                 ? <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '16px', display: 'block', marginBottom: '20px' }} />
                 : <div style={{ width: '100%', height: '360px', background: c.secondary, borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.muted, fontSize: '0.85rem', marginBottom: '20px' }}>Upload a photo in Images tab</div>

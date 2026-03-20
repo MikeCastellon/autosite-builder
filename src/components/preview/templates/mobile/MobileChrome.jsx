@@ -20,11 +20,16 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
   // Chrome shimmer gradient
   const chromeGradient = `linear-gradient(135deg, #94a3b8 0%, #cbd5e1 30%, #94a3b8 50%, #64748b 70%, #94a3b8 100%)`;
 
-  const stats = [
+  const defaultStats = [
     { value: businessInfo.yearsInBusiness ? `${businessInfo.yearsInBusiness}+` : '10+', label: 'Years Experience' },
     { value: '1,000+', label: 'Vehicles Detailed' },
     { value: '100%', label: 'Satisfaction Rate' },
   ];
+  const stats = (generatedCopy?.aboutStats || []).map((s, i) => ({
+    value: s.value || defaultStats[i]?.value || '',
+    label: s.label || defaultStats[i]?.label || '',
+  }));
+  if (stats.length === 0) stats.push(...defaultStats);
 
   const _svcItems = generatedCopy.servicesSection.items;
   const svcCols = _svcItems.length >= 6 ? Math.ceil(_svcItems.length / 2) : _svcItems.length || 1;
@@ -276,7 +281,7 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
       <section id="about" style={sectionStyle()}>
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', gap: '80px', alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ flex: '1 1 300px', minWidth: '260px' }}>
-            {generatedCopy?.aboutLayout === 'image' ? (
+            {(generatedCopy?.aboutLayout || 'image') !== 'stats' ? (
               images.about
                 ? <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block' }} />
                 : <div style={{ width: '100%', maxWidth: '440px', height: '360px', background: c.secondary, border: '1px solid rgba(148,163,184,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.muted, fontSize: '0.85rem' }}>Upload a photo in Images tab</div>

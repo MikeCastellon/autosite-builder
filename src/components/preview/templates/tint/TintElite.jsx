@@ -23,11 +23,16 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
   const goldGradient = `linear-gradient(135deg, #ca8a04 0%, #eab308 35%, #fde047 55%, #eab308 75%, #ca8a04 100%)`;
   const goldGradientText = { background: goldGradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' };
 
-  const stats = [
+  const defaultStats = [
     { value: businessInfo.yearsInBusiness ? `${businessInfo.yearsInBusiness}+` : '10+', label: 'Years of Excellence' },
     { value: '5,000+', label: 'Windows Tinted' },
     { value: '★★★★★', label: 'Customer Reviews' },
   ];
+  const stats = (generatedCopy?.aboutStats || []).map((s, i) => ({
+    value: s.value || defaultStats[i]?.value || '',
+    label: s.label || defaultStats[i]?.label || '',
+  }));
+  if (stats.length === 0) stats.push(...defaultStats);
 
   const _svcItems = generatedCopy.servicesSection.items;
   const svcCols = _svcItems.length >= 6 ? Math.ceil(_svcItems.length / 2) : _svcItems.length || 1;
@@ -331,7 +336,7 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
       <section id="about" style={{ ...sectionStyle(c.secondary), borderTop: '1px solid rgba(202,138,4,0.08)' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', gap: '80px', alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ flex: '1 1 300px', minWidth: '260px' }}>
-            {generatedCopy?.aboutLayout === 'image' ? (
+            {(generatedCopy?.aboutLayout || 'image') !== 'stats' ? (
               images.about
                 ? <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block' }} />
                 : <div style={{ width: '100%', maxWidth: '440px', height: '360px', background: c.secondary, borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.muted, fontSize: '0.85rem' }}>Upload a photo in Images tab</div>

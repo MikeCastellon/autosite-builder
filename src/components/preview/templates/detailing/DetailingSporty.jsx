@@ -172,12 +172,18 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
     footerLink: { color: c.accent, textDecoration: 'none', fontFamily: bodyFont, fontSize: '0.85rem', display: 'block', marginBottom: '0.35rem', fontWeight: 700 },
   };
 
-  const stats = [
+  const defaultStats = [
     { num: businessInfo.yearsInBusiness ? `${businessInfo.yearsInBusiness}` : '10', label: 'Years Dominating', alt: false },
     { num: '5K+', label: 'Cars Transformed', alt: true },
     { num: '5.0', label: 'Google Rating', alt: false },
     { num: '100%', label: 'Satisfaction Rate', alt: true },
   ];
+  const stats = (generatedCopy?.aboutStats || []).map((s, i) => ({
+    num: s.value || defaultStats[i]?.num || '',
+    label: s.label || defaultStats[i]?.label || '',
+    alt: defaultStats[i]?.alt || false,
+  }));
+  if (stats.length === 0) stats.push(...defaultStats);
 
   const _svcItems = generatedCopy.servicesSection?.items || [];
   const svcCols = _svcItems.length >= 6 ? Math.ceil(_svcItems.length / 2) : _svcItems.length || 1;
@@ -275,7 +281,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
       {/* ABOUT */}
       <section id="about" style={s.sectionAlt}>
         <div style={s.aboutGrid}>
-          {generatedCopy?.aboutLayout === 'image' ? (
+          {(generatedCopy?.aboutLayout || 'image') !== 'stats' ? (
             images.about
               ? <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '8px', display: 'block' }} />
               : <div style={{ width: '100%', height: '360px', background: c.secondary, borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.muted, fontSize: '0.85rem' }}>Upload a photo in Images tab</div>

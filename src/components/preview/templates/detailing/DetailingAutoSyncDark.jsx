@@ -37,12 +37,17 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
   const cityName = businessInfo.city || 'Local';
   const stateName = businessInfo.state || 'FL';
 
-  const stats = [
+  const defaultStats = [
     { num: yearsNum + ' Years', label: 'Experience' },
     { num: '2,000+', label: 'Vehicles Detailed' },
     { num: '100%', label: 'Satisfaction Rate' },
     { num: cityName + ' ' + stateName, label: 'Specialists' },
   ];
+  const stats = (generatedCopy?.aboutStats || []).map((s, i) => ({
+    num: s.value || defaultStats[i]?.num || '',
+    label: s.label || defaultStats[i]?.label || '',
+  }));
+  if (stats.length === 0) stats.push(...defaultStats);
 
   const processSteps = [
     { num: '01', title: 'Consultation', desc: 'We assess your vehicle or fleet, discuss your goals, and recommend the right service package based on condition, timeline, and budget.' },
@@ -363,7 +368,7 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
         <section id="about" style={{ background: c.bg, padding: 'clamp(4rem,8vw,7.5rem) clamp(1.5rem,5vw,3.75rem)' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px,1fr))', gap: 'clamp(2rem,4vw,5rem)', alignItems: 'start' }}>
             <div>
-              {generatedCopy?.aboutLayout === 'image' ? (
+              {(generatedCopy?.aboutLayout || 'image') !== 'stats' ? (
                 images.about
                   ? <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block', marginBottom: '1.5rem' }} />
                   : <div style={{ width: '100%', height: '360px', background: mid, borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: textDim, fontSize: '0.85rem', marginBottom: '1.5rem' }}>Upload a photo in Images tab</div>

@@ -373,7 +373,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
 
         {/* LEFT — garage visual / about image */}
         <div style={{ position: 'relative', minHeight: 520, background: '#242424', overflow: 'hidden' }}>
-          {generatedCopy?.aboutLayout === 'image' ? (
+          {(generatedCopy?.aboutLayout || 'image') !== 'stats' ? (
             images.about
               ? <img src={images.about} alt="About" style={{ width: '100%', height: '100%', minHeight: 520, objectFit: 'cover', display: 'block' }} />
               : <div style={{ width: '100%', minHeight: 520, display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.muted, fontSize: '0.85rem' }}>Upload a photo in Images tab</div>

@@ -188,10 +188,41 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
             <>
               <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Left Panel Style</p>
               <Toggle
-                value={copy?.aboutLayout || 'stats'}
+                value={copy?.aboutLayout || 'image'}
                 onChange={(v) => setCopy('aboutLayout', v)}
                 options={[{ value: 'stats', label: '📊 Stats Box' }, { value: 'image', label: '🖼 Photo' }]}
               />
+              {(copy?.aboutLayout || 'image') === 'stats' && (
+                <div className="mt-3 mb-2 space-y-3">
+                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Stats (value + label)</p>
+                  {[0, 1, 2].map((i) => {
+                    const stat = copy?.aboutStats?.[i] || {};
+                    const updateStat = (key, val) => {
+                      const current = [...(copy?.aboutStats || [{ value: '', label: '' }, { value: '', label: '' }, { value: '', label: '' }])];
+                      current[i] = { ...current[i], [key]: val };
+                      setCopy('aboutStats', current);
+                    };
+                    return (
+                      <div key={i} className="grid grid-cols-2 gap-2">
+                        <input
+                          type="text"
+                          value={stat.value || ''}
+                          onChange={(e) => updateStat('value', e.target.value)}
+                          placeholder={['e.g. 10+', 'e.g. 500+', 'e.g. 5★'][i]}
+                          className="bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 text-[12px] text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                        />
+                        <input
+                          type="text"
+                          value={stat.label || ''}
+                          onChange={(e) => updateStat('label', e.target.value)}
+                          placeholder={['Years Experience', 'Cars Detailed', 'Avg Rating'][i]}
+                          className="bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 text-[12px] text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
               <Field label="About Text" value={copy.aboutText} onChange={(v) => setCopy('aboutText', v)} multiline rows={8} />
             </>
           )}

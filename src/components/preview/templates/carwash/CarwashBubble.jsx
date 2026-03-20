@@ -361,7 +361,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
                 <BubbleBlob size='100px' top='-25px' right='-25px' opacity={0.18} />
                 <span style={{ display: 'inline-block', background: `${c.accent}18`, color: c.accent, borderRadius: 50, padding: '4px 14px', fontSize: 11, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>About Us</span>
                 <h3 style={{ fontFamily: font, fontSize: 20, color: c.text, margin: '0 0 12px' }}>{biz.businessName || 'Who We Are'}</h3>
-                {generatedCopy?.aboutLayout === 'image' ? (
+                {(generatedCopy?.aboutLayout || 'image') !== 'stats' ? (
                   images.about
                     ? <img src={images.about} alt="About" style={{ width: '100%', height: '260px', objectFit: 'cover', borderRadius: '16px', display: 'block', marginBottom: '16px' }} />
                     : <div style={{ width: '100%', height: '260px', background: c.secondary, borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.muted, fontSize: '0.85rem', marginBottom: '16px' }}>Upload a photo in Images tab</div>
