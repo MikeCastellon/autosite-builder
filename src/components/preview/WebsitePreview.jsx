@@ -39,6 +39,7 @@ export default function WebsitePreview({ businessInfo, generatedCopy, editedCopy
         onCopyChange={onEditedCopyChange}
         onImagesChange={onImagesChange}
         templateMeta={templateMeta}
+        templateId={templateId}
         customColors={customColors}
         onCustomColors={onCustomColors}
       />

@@ -74,7 +74,7 @@ function Toggle({ value, onChange, options }) {
   );
 }
 
-export default function ContentEditor({ isOpen, onClose, copy, images, onCopyChange, onImagesChange, templateMeta, customColors = {}, onCustomColors }) {
+export default function ContentEditor({ isOpen, onClose, copy, images, onCopyChange, onImagesChange, templateMeta, templateId, customColors = {}, onCustomColors }) {
   const [activeSection, setActiveSection] = useState('hero');
 
   const setCopy = (path, value) => {
@@ -102,9 +102,12 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
     onImagesChange((prev) => ({ ...prev, [key]: value }));
   };
 
+  const isSudsy = templateId === 'mobile_sudsy';
+
   const sections = [
     { id: 'hero', label: 'Hero' },
     { id: 'services', label: 'Services' },
+    ...(isSudsy ? [{ id: 'howItWorks', label: 'How It Works' }, { id: 'whyUs', label: 'Why Us' }] : []),
     { id: 'about', label: 'About' },
     { id: 'testimonials', label: 'Reviews' },
     { id: 'images', label: 'Images' },
@@ -181,6 +184,82 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
                   <Field label="Description" value={item.description} onChange={(v) => setServiceItem(i, 'description', v)} multiline rows={2} />
                 </div>
               ))}
+            </>
+          )}
+
+          {activeSection === 'howItWorks' && isSudsy && (
+            <>
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-3">How It Works Steps</p>
+              {[0, 1, 2, 3].map((i) => {
+                const defaults = [
+                  { emoji: '📱', title: 'You Book', desc: 'Call, text, or tap — your choice. Takes about 2 minutes.' },
+                  { emoji: '🚐', title: 'We Show Up', desc: 'Our van rolls up to your driveway, parking lot, or office.' },
+                  { emoji: '🪧', title: 'We Clean', desc: 'Pro gear, pro products, pro results — while you chill.' },
+                  { emoji: '😍', title: 'You Love It', desc: 'Spotless car, zero effort on your part. Life is good.' },
+                ];
+                const step = copy?.howSteps?.[i] || {};
+                const def = defaults[i];
+                const updateStep = (key, val) => {
+                  const current = [...(copy?.howSteps || defaults.map(d => ({ ...d })))];
+                  current[i] = { ...current[i], [key]: val };
+                  setCopy('howSteps', current);
+                };
+                return (
+                  <div key={i} className="mb-4 p-3 bg-gray-50 rounded-lg">
+                    <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Step {i + 1}</p>
+                    <div className="grid grid-cols-[60px_1fr] gap-2 mb-2">
+                      <input type="text" value={step.emoji || def.emoji} onChange={(e) => updateStep('emoji', e.target.value)} placeholder="📱" className="bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-[18px] text-center focus:outline-none focus:ring-1 focus:ring-blue-400" />
+                      <input type="text" value={step.title || def.title} onChange={(e) => updateStep('title', e.target.value)} placeholder={def.title} className="bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 text-[12px] text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-400" />
+                    </div>
+                    <textarea rows={2} value={step.desc || def.desc} onChange={(e) => updateStep('desc', e.target.value)} placeholder={def.desc} className="w-full bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 text-[12px] text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-400 resize-none" />
+                  </div>
+                );
+              })}
+            </>
+          )}
+
+          {activeSection === 'whyUs' && isSudsy && (
+            <>
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-3">Why Choose Us Cards</p>
+              {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => {
+                const defaults = [
+                  { icon: '🏠', title: 'We Come To You', desc: 'Zero trips to a shop. We bring the whole operation to your door.' },
+                  { icon: '🏆', title: 'Professional Results', desc: 'Pro-grade products and equipment — not a bucket and a sponge.' },
+                  { icon: '⏰', title: 'Flexible Scheduling', desc: 'Same-day often available. Early mornings, weekends — we work around you.' },
+                  { icon: '💰', title: 'Fair, Honest Pricing', desc: 'No upsell tricks. Just clear pricing for seriously good work.' },
+                  { icon: '😤', title: 'Zero Excuses Policy', desc: "We show up, don't cut corners, and if it's not right — we fix it." },
+                  { icon: '🌎', title: 'Eco-Friendly Methods', desc: 'Water-efficient techniques and biodegradable products.' },
+                  { icon: '', title: '', desc: '' },
+                  { icon: '', title: '', desc: '' },
+                  { icon: '', title: '', desc: '' },
+                ];
+                const card = copy?.whyCards?.[i] || {};
+                const def = defaults[i];
+                // Don't render empty default slots unless user has filled prior ones
+                const hasContent = card.title || card.icon || (i < 6);
+                if (!hasContent) return null;
+                const updateCard = (key, val) => {
+                  const current = [...(copy?.whyCards || defaults.slice(0, 6).map(d => ({ ...d })))];
+                  while (current.length <= i) current.push({ icon: '', title: '', desc: '' });
+                  current[i] = { ...current[i], [key]: val };
+                  setCopy('whyCards', current);
+                };
+                return (
+                  <div key={i} className="mb-4 p-3 bg-gray-50 rounded-lg">
+                    <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Card {i + 1}</p>
+                    <div className="grid grid-cols-[60px_1fr] gap-2 mb-2">
+                      <input type="text" value={card.icon ?? def.icon} onChange={(e) => updateCard('icon', e.target.value)} placeholder="🏠" className="bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-[18px] text-center focus:outline-none focus:ring-1 focus:ring-blue-400" />
+                      <input type="text" value={card.title ?? def.title} onChange={(e) => updateCard('title', e.target.value)} placeholder={def.title} className="bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 text-[12px] text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-400" />
+                    </div>
+                    <textarea rows={2} value={card.desc ?? def.desc} onChange={(e) => updateCard('desc', e.target.value)} placeholder={def.desc} className="w-full bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 text-[12px] text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-400 resize-none" />
+                  </div>
+                );
+              })}
+              <button type="button" onClick={() => {
+                const current = [...(copy?.whyCards || [])];
+                current.push({ icon: '✨', title: '', desc: '' });
+                setCopy('whyCards', current);
+              }} className="w-full py-2 text-[12px] font-semibold text-gray-500 border border-dashed border-gray-300 rounded-lg hover:border-gray-400 hover:text-gray-700 transition mb-2">+ Add Card</button>
             </>
           )}
 

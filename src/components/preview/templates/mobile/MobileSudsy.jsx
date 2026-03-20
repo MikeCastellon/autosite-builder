@@ -90,21 +90,32 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
     }} />
   );
 
-  const howSteps = [
-    { num: '01', emoji: '📱', title: 'You Book',    desc: 'Call, text, or tap — your choice. Takes about 2 minutes.' },
-    { num: '02', emoji: '🚐', title: 'We Show Up',  desc: 'Our van rolls up to your driveway, parking lot, or office.' },
-    { num: '03', emoji: '🪧', title: 'We Clean',    desc: 'Pro gear, pro products, pro results — while you chill.' },
-    { num: '04', emoji: '😍', title: 'You Love It', desc: 'Spotless car, zero effort on your part. Life is good.' },
+  const defaultHowSteps = [
+    { emoji: '📱', title: 'You Book',    desc: 'Call, text, or tap — your choice. Takes about 2 minutes.' },
+    { emoji: '🚐', title: 'We Show Up',  desc: 'Our van rolls up to your driveway, parking lot, or office.' },
+    { emoji: '🪧', title: 'We Clean',    desc: 'Pro gear, pro products, pro results — while you chill.' },
+    { emoji: '😍', title: 'You Love It', desc: 'Spotless car, zero effort on your part. Life is good.' },
   ];
+  const howSteps = (copy?.howSteps || defaultHowSteps).map((s, i) => ({
+    num: String(i + 1).padStart(2, '0'),
+    emoji: s.emoji || defaultHowSteps[i]?.emoji || '✨',
+    title: s.title || defaultHowSteps[i]?.title || '',
+    desc: s.desc || defaultHowSteps[i]?.desc || '',
+  }));
 
-  const whyCards = [
+  const defaultWhyCards = [
     { icon: '🏠', title: 'We Come To You',      desc: 'Zero trips to a shop. We bring the whole operation to your door.' },
     { icon: '🏆', title: 'Professional Results', desc: 'Pro-grade products and equipment — not a bucket and a sponge.' },
-    { icon: '⏰',     title: 'Flexible Scheduling',  desc: 'Same-day often available. Early mornings, weekends — we work around you.' },
+    { icon: '⏰', title: 'Flexible Scheduling',  desc: 'Same-day often available. Early mornings, weekends — we work around you.' },
     { icon: '💰', title: 'Fair, Honest Pricing', desc: 'No upsell tricks. Just clear pricing for seriously good work.' },
     { icon: '😤', title: 'Zero Excuses Policy',  desc: "We show up, don't cut corners, and if it's not right — we fix it." },
     { icon: '🌎', title: 'Eco-Friendly Methods', desc: 'Water-efficient techniques and biodegradable products. Clean car, clean conscience.' },
   ];
+  const whyCards = (copy?.whyCards || defaultWhyCards).filter(c => c.title || c.icon).map((card, i) => ({
+    icon: card.icon || defaultWhyCards[i]?.icon || '✨',
+    title: card.title || defaultWhyCards[i]?.title || '',
+    desc: card.desc || defaultWhyCards[i]?.desc || '',
+  }));
 
   return (
     <div style={{ fontFamily: bodyFont, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, position: 'relative', containerType: 'inline-size' }}>
@@ -268,29 +279,6 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
         )}
       </header>
 
-      {/* TRUST BAR */}
-      <div style={{ background: c.text, padding: '20px 5%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 40, flexWrap: 'wrap' }}>
-        {[
-          { icon: '⭐', label: '5-Star Rated' },
-          { icon: '🚗', label: biz.yearsInBusiness ? biz.yearsInBusiness + '+ Years Experience' : '2,000+ Cars Cleaned' },
-          { icon: '📍', label: 'We Come To You!' },
-          { icon: '⚡', label: 'Same-Day Available' },
-          { icon: '💯', label: 'Satisfaction Guaranteed' },
-        ].map((item, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: font, fontSize: 17, color: c.accent }}>
-            <span style={{ fontSize: 20 }}>{item.icon}</span>
-            {item.label}
-          </div>
-        ))}
-      </div>
-
-      {/* SERVICE AREA BANNER */}
-      {biz.serviceArea && (
-        <div style={{ background: '#2d9cdb', color: '#fff', padding: '14px 5%', textAlign: 'center', fontFamily: font, fontSize: 18, letterSpacing: 1, borderTop: `3px solid ${c.text}`, borderBottom: `3px solid ${c.text}` }}>
-          {String.fromCodePoint(0x1F4CD)} Serving: {biz.serviceArea} — We Come To You!
-        </div>
-      )}
-
       {/* SERVICES */}
       <section id='services' style={{ padding: '100px 5%', background: c.bg, position: 'relative' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
@@ -368,47 +356,55 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
             <div style={{ ...sectionTagStyle(), background: '#fff' }}>{String.fromCodePoint(0x1F4AA)} Why Choose Us</div>
             <h2 style={{ ...titleStyle, color: '#fff' }}>We’re kinda <span style={{ color: c.accent }}>obsessed</span> with clean cars.</h2>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
             {whyCards.map((card, i) => (
-              <div key={i} style={{ background: 'rgba(255,255,255,0.12)', border: '3px solid rgba(255,255,255,0.4)', borderRadius: 24, padding: '36px 28px', backdropFilter: 'blur(10px)' }}>
-                <span style={{ fontSize: 48, marginBottom: 16, display: 'block' }}>{card.icon}</span>
-                <h3 style={{ fontFamily: font, fontSize: 24, color: '#fff', marginBottom: 10 }}>{card.title}</h3>
-                <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.78)', fontWeight: 600, lineHeight: 1.65, margin: 0 }}>{card.desc}</p>
+              <div key={i} style={{ background: 'rgba(255,255,255,0.12)', border: '3px solid rgba(255,255,255,0.4)', borderRadius: 24, padding: '32px 24px', backdropFilter: 'blur(10px)' }}>
+                <span style={{ fontSize: 42, marginBottom: 14, display: 'block' }}>{card.icon}</span>
+                <h3 style={{ fontFamily: font, fontSize: 22, color: '#fff', marginBottom: 8 }}>{card.title}</h3>
+                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.78)', fontWeight: 600, lineHeight: 1.6, margin: 0 }}>{card.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ABOUT + HOURS */}
+      {/* ABOUT */}
       <section id="about" style={{ padding: "100px 5%", background: c.bg }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 56, alignItems: "start" }}>
+        <div className="tp-2col" style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "center" }}>
+          <div>
+            {(copy?.aboutLayout || 'image') !== 'stats' ? (
+              images.about
+                ? <img src={images.about} alt="About" style={{ width: '100%', maxWidth: 460, height: 360, objectFit: 'cover', borderRadius: 20, display: 'block', ...neoBorder }} />
+                : <div style={{ width: '100%', maxWidth: 460, height: 360, background: c.secondary, borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.muted, fontSize: '0.85rem', textAlign: 'center', padding: 24, boxSizing: 'border-box', ...neoBorder }}>Upload an about photo in the Images tab</div>
+            ) : (
+              <div style={{ width: '100%', maxWidth: 460, background: c.secondary, borderRadius: 20, padding: '40px 32px', boxSizing: 'border-box', ...neoBorder }}>
+                {(() => {
+                  const defaultStats = [
+                    { value: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'Years Experience' },
+                    { value: '500+', label: 'Cars Detailed' },
+                    { value: '5★', label: 'Avg Rating' },
+                  ];
+                  const aboutStats = (copy?.aboutStats || []).map((s, i) => ({
+                    value: s.value || defaultStats[i]?.value || '',
+                    label: s.label || defaultStats[i]?.label || '',
+                  }));
+                  if (aboutStats.length === 0) aboutStats.push(...defaultStats);
+                  return aboutStats.map((st, i) => (
+                    <div key={i} style={{ textAlign: 'center', marginBottom: i < aboutStats.length - 1 ? 28 : 0 }}>
+                      <div style={{ fontFamily: font, fontSize: '3rem', color: c.accent, lineHeight: 1 }}>{st.value}</div>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: c.muted, marginTop: 6, textTransform: 'uppercase', letterSpacing: 1 }}>{st.label}</div>
+                    </div>
+                  ));
+                })()}
+              </div>
+            )}
+          </div>
           <div>
             <div style={sectionTagStyle("-1deg")}>About Us</div>
             <h2 style={{ ...titleStyle, marginTop: 8, marginBottom: 20 }}>{biz.businessName || "We Detail"}</h2>
-            {(generatedCopy?.aboutLayout || 'image') !== 'stats' ? (
-              images.about
-                ? <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '16px', display: 'block', marginBottom: '20px' }} />
-                : <div style={{ width: '100%', height: '360px', background: c.secondary, borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.muted, fontSize: '0.85rem', marginBottom: '20px' }}>Upload a photo in Images tab</div>
-            ) : (
-              images.about && (
-                <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '16px', display: 'block', marginBottom: '20px' }} />
-              )
-            )}
             <p style={{ fontSize: 15, fontWeight: 600, color: c.muted, lineHeight: 1.8, marginBottom: 20 }}>
               {copy.aboutText || 'We started with a bucket, a dream, and a serious love for clean cars. Today we bring that same passion to every vehicle we touch.'}
             </p>
-            {biz.yearsInBusiness && (
-              <div style={{ display: "inline-flex", alignItems: "center", gap: 10, background: c.secondary, ...neoBorder, borderRadius: 16, padding: "12px 18px", marginBottom: 16, fontWeight: 800, fontSize: 14, color: c.text }}>
-                {biz.yearsInBusiness}+ Years in Business
-              </div>
-            )}
-            {biz.specialties && (
-              <div style={{ background: "#e8f6fe", border: "2.5px solid #2d9cdb", borderRadius: 14, padding: "16px 20px", boxShadow: "3px 3px 0 #2d9cdb", marginBottom: 16 }}>
-                <div style={{ fontWeight: 800, fontSize: 11, textTransform: "uppercase", color: "#1a6fa8", marginBottom: 6 }}>Specialties</div>
-                <p style={{ fontSize: 14, color: "#1a6fa8", fontWeight: 600, lineHeight: 1.6, margin: 0 }}>{Array.isArray(biz.specialties) ? biz.specialties.join(" · ") : biz.specialties}</p>
-              </div>
-            )}
             {biz.awards && (
               <div style={{ background: "#fffadd", border: `2.5px solid ${c.accent}`, borderRadius: 14, padding: "16px 20px", boxShadow: `3px 3px 0 ${c.accent}`, marginBottom: 16 }}>
                 <div style={{ fontWeight: 800, fontSize: 11, textTransform: "uppercase", color: "#92400e", marginBottom: 6 }}>Awards</div>
@@ -421,31 +417,6 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                   {payments.map((pay, i) => (<span key={i} style={{ background: c.secondary, border: `2px solid ${c.text}`, borderRadius: 980, padding: "4px 14px", fontSize: 12, fontWeight: 800, color: c.text }}>{pay}</span>))}
                 </div>
-              </div>
-            )}
-          </div>
-          <div>
-            {biz.hours && (typeof biz.hours === 'string' ? biz.hours.trim() : Object.keys(biz.hours).length > 0) && (() => {
-              const lines = typeof biz.hours === 'string'
-                ? biz.hours.split(/[·;|]+/).map(s => s.trim()).filter(Boolean)
-                : Object.entries(biz.hours).map(([d, h]) => `${d}: ${h}`);
-              return (
-              <div style={{ background: c.secondary, ...neoBorder, borderRadius: 24, padding: "28px 24px", marginBottom: 16 }}>
-                <div style={{ fontFamily: font, fontSize: 22, color: c.text, marginBottom: 20, display: "flex", alignItems: "center", gap: 8 }}>Hours of Operation</div>
-                {lines.map((line, i) => (
-                  <div key={i} style={{ borderBottom: "2px dashed rgba(28,25,23,0.12)", paddingBottom: 10, marginBottom: 10, fontSize: 14, fontWeight: 700, color: c.text }}>
-                    {line}
-                  </div>
-                ))}
-              </div>
-              );
-            })()}
-            {biz.address && (
-              <div style={{ background: "#fff5f8", border: "2.5px solid #ff6b9d", borderRadius: 14, padding: "16px 20px", boxShadow: "3px 3px 0 #ff6b9d" }}>
-                <div style={{ fontWeight: 800, fontSize: 11, textTransform: "uppercase", color: "#be185d", marginBottom: 6 }}>Location</div>
-                <p style={{ fontSize: 14, color: "#be185d", fontWeight: 600, lineHeight: 1.6, margin: 0 }}>
-                  {biz.address}{biz.city ? `, ${biz.city}` : ""}{biz.state ? `, ${biz.state}` : ""}
-                </p>
               </div>
             )}
           </div>
@@ -491,8 +462,8 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
       )}
 
       {/* CTA SECTION */}
-      <section style={{ background: "#ff6b9d", borderTop: `4px solid ${c.text}`, borderBottom: `4px solid ${c.text}`, padding: "80px 5%" }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 64, alignItems: "center" }}>
+      <section id="contact" style={{ background: "#ff6b9d", borderTop: `4px solid ${c.text}`, borderBottom: `4px solid ${c.text}`, padding: "80px 5%" }}>
+        <div className="tp-2col" style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "center" }}>
           <div>
             <h2 style={{ fontFamily: font, fontSize: "clamp(36px, 4vw, 58px)", color: "#fff", lineHeight: 1.05, marginBottom: 20 }}>
               Ready for the cleanest car of your life?
@@ -501,33 +472,26 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
               {copy.ctaSecondary || "We bring everything — water, power, products. You just point us to the car."}
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              {[{ icon: "📞", label: "Give us a ring!", val: biz.phone || "Call us anytime" },
-                { icon: "📍", label: "We serve!",       val: biz.serviceArea || (biz.city ? biz.city + " & surrounding areas" : "Your area") },
-              ].map((item, i) => (
+              {[
+                biz.phone ? { icon: "📞", label: "Give us a ring!", val: biz.phone } : null,
+                { icon: "📍", label: "We serve!", val: biz.serviceArea || (biz.city ? biz.city + " & surrounding areas" : "Your area") },
+                biz.hours ? { icon: "🕐", label: "Hours!", val: formatHours(biz.hours) } : null,
+              ].filter(Boolean).map((item, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: 14, background: "#fff", ...neoBorder, borderRadius: 16, padding: "14px 20px" }}>
                   <span style={{ fontSize: 28 }}>{item.icon}</span>
                   <div>
                     <div style={{ fontSize: 11, fontWeight: 800, color: "#aaa", textTransform: "uppercase", letterSpacing: 0.5 }}>{item.label}</div>
-                    <div style={{ fontFamily: font, fontSize: 18, color: c.text }}>{item.val}</div>
+                    <div style={{ fontFamily: font, fontSize: 16, color: c.text }}>{item.val}</div>
                   </div>
                 </div>
               ))}
-              {biz.hours && (
-                <div style={{ display: "flex", alignItems: "center", gap: 14, background: "#fff", ...neoBorder, borderRadius: 16, padding: "14px 20px" }}>
-                  <span style={{ fontSize: 28 }}>🕐</span>
-                  <div>
-                    <div style={{ fontSize: 11, fontWeight: 800, color: "#aaa", textTransform: "uppercase", letterSpacing: 0.5 }}>Hours!</div>
-                    <div style={{ fontFamily: font, fontSize: 15, color: c.text }}>{typeof biz.hours === 'string' ? biz.hours : Object.entries(biz.hours).map(([d, h]) => `${d}: ${h}`).join(" · ")}</div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-            <div style={{ background: "#fff", ...neoBorder, borderRadius: 28, padding: "48px 40px", textAlign: "center", boxShadow: `8px 8px 0 ${c.text}`, width: "100%", maxWidth: 420 }}>
+          <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
+            <div style={{ background: "#fff", ...neoBorder, borderRadius: 28, padding: "48px 40px", textAlign: "center", boxShadow: `8px 8px 0 ${c.text}`, width: "100%" }}>
               <h3 style={{ fontFamily: font, fontSize: 28, color: c.text, marginBottom: 16 }}>Book Your Detail!</h3>
               <p style={{ fontSize: 14, color: c.muted, fontWeight: 600, lineHeight: 1.6, marginBottom: 28 }}>Call or text us to schedule. We’ll come to your door.</p>
-              <a href={`tel:${biz.phone}`} style={{ display: "block", background: c.accent, color: c.text, border: `3px solid ${c.text}`, borderRadius: 16, padding: "16px", fontFamily: font, fontSize: 22, textDecoration: "none", boxShadow: `5px 5px 0 ${c.text}`, marginBottom: 12 }}>
+              <a href={copy?.ctaUrl || (`tel:${biz.phone}`)} style={{ display: "block", background: c.accent, color: c.text, border: `3px solid ${c.text}`, borderRadius: 16, padding: "16px", fontFamily: font, fontSize: 22, textDecoration: "none", boxShadow: `5px 5px 0 ${c.text}` }}>
                 📞 {biz.phone || "Call Now!"}
               </a>
             </div>
