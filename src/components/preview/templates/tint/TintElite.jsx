@@ -219,8 +219,8 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
             {generatedCopy.subheadline}
           </p>
           <div style={{ display: 'flex', gap: '16px', justifyContent: splitHero ? 'flex-start' : 'center', flexWrap: 'wrap', marginBottom: '40px' }}>
-            <button style={accentBtnStyle}>{generatedCopy.ctaPrimary}</button>
-            <button style={outlineBtnStyle}>{generatedCopy.ctaSecondary}</button>
+            <a href={generatedCopy?.ctaPrimaryUrl || '#services'} style={{ ...accentBtnStyle, textDecoration: 'none' }}>{generatedCopy.ctaPrimary}</a>
+            <a href={generatedCopy?.ctaSecondaryUrl || ('tel:' + (businessInfo.phone || ''))} style={{ ...outlineBtnStyle, textDecoration: 'none' }}>{generatedCopy.ctaSecondary}</a>
           </div>
           {businessInfo.tagline && (
             <p style={{ color: 'rgba(202,138,4,0.45)', fontSize: '0.85rem', letterSpacing: '2px', textTransform: 'uppercase', fontFamily: bodyFont }}>{businessInfo.tagline}</p>
@@ -367,16 +367,6 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
                 </div>
               </div>
             )}
-            {businessInfo.certifications && businessInfo.certifications.length > 0 && (
-              <div style={{ marginBottom: '24px' }}>
-                <div style={{ fontSize: '0.65rem', letterSpacing: '3px', textTransform: 'uppercase', color: c.muted, marginBottom: '10px', fontFamily: bodyFont }}>Certifications</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                  {businessInfo.certifications.map((cert, i) => (
-                    <span key={i} style={{ border: '1px solid rgba(202,138,4,0.2)', color: c.muted, padding: '5px 14px', fontSize: '0.78rem', letterSpacing: '0.5px', fontFamily: bodyFont }}>{cert}</span>
-                  ))}
-                </div>
-              </div>
-            )}
             {businessInfo.awards && businessInfo.awards.length > 0 && (
               <div>
                 <div style={{ fontSize: '0.65rem', letterSpacing: '3px', textTransform: 'uppercase', color: c.muted, marginBottom: '10px', fontFamily: bodyFont }}>Awards & Recognition</div>
@@ -437,7 +427,7 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
           </p>
           <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '36px' }}>
             <a href={`tel:${businessInfo.phone}`} style={accentBtnStyle}>Call {businessInfo.phone}</a>
-            <button style={outlineBtnStyle}>Get a Free Quote</button>
+            <a href={generatedCopy?.ctaUrl || (`tel:${businessInfo.phone}`)} style={{ ...outlineBtnStyle, textDecoration: 'none' }}>{generatedCopy.ctaPrimary || 'Get a Free Quote'}</a>
           </div>
           {businessInfo.address && (
             <p style={{ color: c.muted, fontSize: '0.85rem', letterSpacing: '1px' }}>

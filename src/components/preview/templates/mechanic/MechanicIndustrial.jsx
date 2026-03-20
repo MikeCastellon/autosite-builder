@@ -111,7 +111,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
             {copy.subheadline || biz.tagline || 'Reliable auto repair with honest pricing and expert technicians.'}
           </p>
           <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
-            <a href={`tel:${biz.phone}`} style={{
+            <a href={copy?.ctaPrimaryUrl || (`tel:${biz.phone}`)} style={{
               background: c.accent, color: '#000', padding: '15px 36px',
               borderRadius: 3, fontWeight: 900, fontSize: 15, letterSpacing: 1, textTransform: 'uppercase',
               textDecoration: 'none', display: 'inline-block',
@@ -137,26 +137,6 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
         )}
       </header>
 
-      {/* CERTIFICATIONS BADGE ROW */}
-      <div style={{ background: c.accent, padding: '16px 5%' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', gap: 24, flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center' }}>
-          {certList.length > 0
-            ? certList.map((cert, i) => (
-              <span key={i} style={{ color: '#000', fontSize: 12, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 1, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontSize: 14 }}>✓</span> {cert}
-              </span>
-            ))
-            : [
-              '✓ ASE Certified Technicians',
-              '✓ Free Diagnostics',
-              '✓ Honest Pricing',
-              '✓ All Makes & Models',
-            ].map((b, i) => (
-              <span key={i} style={{ color: '#000', fontSize: 12, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 1 }}>{b}</span>
-            ))
-          }
-        </div>
-      </div>
 
       {/* STATS */}
       <section style={{ background: c.secondary || '#2c2c2c', padding: '3.5rem 5%', borderBottom: '1px solid #333' }}>
@@ -241,33 +221,6 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
             )}
           </div>
           <div>
-            {/* CERTIFICATIONS as yellow badge row */}
-            {(certList.length > 0 || biz.certifications) && (
-              <div style={{ marginBottom: 24 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
-                  <div style={{ width: 36, height: 4, background: c.accent, borderRadius: 2 }} />
-                  <span style={{ color: c.accent, fontSize: 11, letterSpacing: 4, textTransform: 'uppercase', fontWeight: 700 }}>CERTIFIED</span>
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-                  {certList.length > 0
-                    ? certList.map((cert, i) => (
-                      <span key={i} style={{
-                        background: c.accent, color: '#000', padding: '8px 18px',
-                        fontSize: 12, fontWeight: 900, letterSpacing: 1, textTransform: 'uppercase',
-                        borderRadius: 3,
-                      }}>{cert}</span>
-                    ))
-                    : (
-                      <span style={{
-                        background: c.accent, color: '#000', padding: '8px 18px',
-                        fontSize: 12, fontWeight: 900, letterSpacing: 1, textTransform: 'uppercase',
-                        borderRadius: 3,
-                      }}>{biz.certifications}</span>
-                    )
-                  }
-                </div>
-              </div>
-            )}
 
             {/* AWARDS */}
             {biz.awards && (
@@ -416,12 +369,12 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
         <p style={{ color: 'rgba(0,0,0,0.55)', fontSize: 16, marginBottom: 36 }}>
           {copy.ctaSecondary || `Serving ${biz.city || 'your area'}, ${biz.state || ''} and surrounding areas`}
         </p>
-        <a href={`tel:${biz.phone}`} style={{
+        <a href={copy?.ctaUrl || (`tel:${biz.phone}`)} style={{
           background: '#000', color: c.accent, padding: '17px 48px',
           borderRadius: 3, fontWeight: 900, fontSize: 18, textDecoration: 'none',
           display: 'inline-block', textTransform: 'uppercase', letterSpacing: 1.5,
         }}>
-          {biz.phone || 'CALL NOW'}
+          {copy.ctaPrimary || biz.phone || 'CALL NOW'}
         </a>
         {biz.address && (
           <p style={{ color: 'rgba(0,0,0,0.5)', fontSize: 13, marginTop: 20 }}>

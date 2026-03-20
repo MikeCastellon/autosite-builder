@@ -169,7 +169,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
           <a href="#services" style={{ color: text, textDecoration: 'none', fontFamily: dmSans, fontSize: '0.85rem', letterSpacing: '0.05em', opacity: 0.8 }}>Services</a>
           <a href="#reviews" style={{ color: text, textDecoration: 'none', fontFamily: dmSans, fontSize: '0.85rem', letterSpacing: '0.05em', opacity: 0.8 }}>Reviews</a>
           <a href="#contact" style={{ color: text, textDecoration: 'none', fontFamily: dmSans, fontSize: '0.85rem', letterSpacing: '0.05em', opacity: 0.8 }}>Contact</a>
-          <button style={s.navCta}>{generatedCopy.ctaPrimary || 'Book a Detail'}</button>
+          <a href={generatedCopy?.ctaPrimaryUrl || '#contact'} style={{ ...s.navCta, textDecoration: 'none' }}>{generatedCopy.ctaPrimary || 'Book a Detail'}</a>
         </div>
       </nav>
 
@@ -201,13 +201,13 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
           </h1>
           <p style={splitHero ? { ...s.heroSub, margin: '0 0 40px' } : s.heroSub}>{generatedCopy.subheadline}</p>
           <div style={splitHero ? { ...s.heroActions, justifyContent: 'flex-start' } : s.heroActions}>
-            <button style={s.btnBlue}>{generatedCopy.ctaPrimary || 'Get a Free Quote'}</button>
-            <button style={s.btnGhost}>
+            <a href={generatedCopy?.ctaPrimaryUrl || '#contact'} style={{ ...s.btnBlue, textDecoration: 'none' }}>{generatedCopy.ctaPrimary || 'Get a Free Quote'}</a>
+            <a href={generatedCopy?.ctaSecondaryUrl || ('tel:' + (businessInfo.phone || ''))} style={{ ...s.btnGhost, textDecoration: 'none' }}>
               {generatedCopy.ctaSecondary || 'Explore Services'}
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                 <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-            </button>
+            </a>
           </div>
         </div>
         {splitHero && (
@@ -414,9 +414,9 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
                 </div>
               ))}
             </div>
-            <button style={{ width: '100%', background: blue, color: white, border: 'none', borderRadius: '10px', padding: '14px', fontFamily: dmSans, fontSize: '15px', fontWeight: 500, cursor: 'pointer', marginTop: '28px', boxShadow: '0 4px 16px ' + blue + '40', letterSpacing: '-0.2px' }}>
+            <a href={generatedCopy?.ctaUrl || ('tel:' + (businessInfo.phone || ''))} style={{ display: 'block', width: '100%', background: blue, color: white, border: 'none', borderRadius: '10px', padding: '14px', fontFamily: dmSans, fontSize: '15px', fontWeight: 500, cursor: 'pointer', marginTop: '28px', boxShadow: '0 4px 16px ' + blue + '40', letterSpacing: '-0.2px', textDecoration: 'none', textAlign: 'center', boxSizing: 'border-box' }}>
               {generatedCopy.ctaPrimary || 'Get a Free Quote'}
-            </button>
+            </a>
           </div>
         </div>
       </section>

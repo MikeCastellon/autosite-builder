@@ -200,7 +200,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
           <a href="#services" style={{ color: c.text, textDecoration: 'none', fontFamily: bodyFont, fontSize: '0.85rem', letterSpacing: '0.05em', opacity: 0.8 }}>Services</a>
           <a href="#about" style={{ color: c.text, textDecoration: 'none', fontFamily: bodyFont, fontSize: '0.85rem', letterSpacing: '0.05em', opacity: 0.8 }}>About</a>
           <a href="#reviews" style={{ color: c.text, textDecoration: 'none', fontFamily: bodyFont, fontSize: '0.85rem', letterSpacing: '0.05em', opacity: 0.8 }}>Reviews</a>
-          <button style={s.navPhone}>{businessInfo.phone}</button>
+          <a href={'tel:' + (businessInfo.phone || '')} style={{ ...s.navPhone, textDecoration: 'none' }}>{businessInfo.phone}</a>
         </div>
       </nav>
 
@@ -221,8 +221,8 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
           </h1>
           <p style={s.heroSub}>{generatedCopy.subheadline}</p>
           <div style={s.ctaRow}>
-            <button style={s.ctaFilled}>{generatedCopy.ctaPrimary}</button>
-            <button style={s.ctaGhost}>{generatedCopy.ctaSecondary}</button>
+            <a href={generatedCopy?.ctaPrimaryUrl || '#services'} style={{ ...s.ctaFilled, textDecoration: 'none' }}>{generatedCopy.ctaPrimary}</a>
+            <a href={generatedCopy?.ctaSecondaryUrl || ('tel:' + (businessInfo.phone || ''))} style={{ ...s.ctaGhost, textDecoration: 'none' }}>{generatedCopy.ctaSecondary}</a>
           </div>
         </div>
         {splitHero && (
@@ -287,16 +287,6 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
               <span style={{ fontFamily: bodyFont, color: 'rgba(255,255,255,0.85)', fontSize: '1rem', lineHeight: 1.6 }}>
                 {businessInfo.tagline || generatedCopy.subheadline || `${businessInfo.city}, ${businessInfo.state}`}
               </span>
-              {businessInfo.certifications && businessInfo.certifications.length > 0 && (
-                <>
-                  <div style={s.sidebarDivider} />
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                    {(Array.isArray(businessInfo.certifications) ? businessInfo.certifications : [businessInfo.certifications]).map((cert, i) => (
-                      <span key={i} style={{ fontFamily: bodyFont, color: 'rgba(255,255,255,0.7)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'rgba(255,255,255,0.12)', padding: '3px 8px', borderRadius: '4px' }}>{cert}</span>
-                    ))}
-                  </div>
-                </>
-              )}
             </div>
           )}
           <div>
@@ -331,7 +321,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
           <div style={s.ctaHeading}>Book Your Detail</div>
           <div style={s.ctaPhone}>{businessInfo.phone}</div>
           {businessInfo.hours && <div style={{ fontFamily: bodyFont, color: 'rgba(255,255,255,0.75)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>{formatHours(businessInfo.hours)}</div>}
-          <button style={s.ctaBtn}>{generatedCopy.ctaPrimary}</button>
+          <a href={generatedCopy?.ctaUrl || ('tel:' + (businessInfo.phone || ''))} style={{ ...s.ctaBtn, textDecoration: 'none' }}>{generatedCopy.ctaPrimary}</a>
         </div>
         <div style={s.ctaRight}>
           <div style={s.ctaRightTitle}>Why {businessInfo.businessName}?</div>

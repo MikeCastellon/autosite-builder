@@ -72,6 +72,7 @@ export const COMMON_EXTRA_FIELDS = [
     options: ['Cash', 'Credit Card', 'Debit Card', 'Venmo', 'Zelle', 'CashApp', 'Financing Available'],
   },
   { key: 'awards', label: 'Awards / Recognition', type: 'text', required: false, placeholder: 'e.g. Best Detail Shop 2024 — Miami Herald' },
+  { key: 'certifications', label: 'Certifications', type: 'text', required: false, placeholder: 'e.g. IDA Certified, 3M Authorized, XPEL Certified Installer' },
 ];
 
 export const TYPE_SPECIFIC_FIELDS = {
@@ -111,7 +112,6 @@ export const TYPE_SPECIFIC_FIELDS = {
       options: ['Oil Change', 'Brakes', 'Transmission', 'Engine Repair', 'Diagnostics', 'A/C Service', 'Tires', 'Suspension', 'Exhaust', 'Tune-Up', 'Electrical', 'State Inspection'],
     },
     { key: 'specialties',     label: 'Vehicle Specialties',            type: 'text',     required: false, placeholder: 'e.g. Honda & Toyota specialists, European cars' },
-    { key: 'certifications',  label: 'Certifications / Affiliations',  type: 'text',     required: false, placeholder: 'e.g. ASE Certified, AAA Approved, NAPA AutoCare' },
     { key: 'warrantyOffered', label: 'Parts & Labor Warranty',         type: 'text',     required: false, placeholder: 'e.g. 12-month / 12,000-mile warranty on all repairs' },
   ],
   car_wash: [

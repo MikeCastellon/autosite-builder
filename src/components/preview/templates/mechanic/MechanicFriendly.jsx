@@ -262,12 +262,9 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
           )}
           <h1 style={s.heroH1}>{generatedCopy.headline}</h1>
           <p style={s.heroSub}>{generatedCopy.subheadline}</p>
-          {businessInfo.certifications && (
-            <div style={s.heroCertBadge}>◆ {Array.isArray(businessInfo.certifications) ? businessInfo.certifications.join(' · ') : businessInfo.certifications}</div>
-          )}
           <div style={s.ctaRow}>
-            <button style={s.ctaMain}>{generatedCopy.ctaPrimary}</button>
-            <button style={s.ctaOutline}>{generatedCopy.ctaSecondary}</button>
+            <a href={generatedCopy?.ctaPrimaryUrl || '#services'} style={{ ...s.ctaMain, textDecoration: 'none' }}>{generatedCopy.ctaPrimary}</a>
+            <a href={generatedCopy?.ctaSecondaryUrl || ('tel:' + (businessInfo.phone || ''))} style={{ ...s.ctaOutline, textDecoration: 'none' }}>{generatedCopy.ctaSecondary}</a>
           </div>
         </div>
         {splitHero && (
@@ -343,12 +340,6 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
               )
             )}
             <p style={s.aboutText}>{generatedCopy.aboutText}</p>
-            {businessInfo.certifications && (
-              <div style={s.certBadge}>
-                <div style={s.certIcon} />
-                <span style={s.certText}>{Array.isArray(businessInfo.certifications) ? businessInfo.certifications.join(' · ') : businessInfo.certifications}</span>
-              </div>
-            )}
           </div>
           <div className="tp-2col" style={s.aboutHighlights}>
             {[
@@ -391,7 +382,7 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
             <div style={{ fontFamily: bodyFont, fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: c.accent, marginBottom: '0.5rem' }}>Contact Us</div>
             <h2 style={s.contactTitle}>Let's Get Your Car Fixed</h2>
             <span style={s.contactPhone}>{businessInfo.phone}</span>
-            <button style={s.contactBtn}>{generatedCopy.ctaPrimary}</button>
+            <a href={generatedCopy?.ctaUrl || ('tel:' + (businessInfo.phone || ''))} style={{ ...s.contactBtn, textDecoration: 'none' }}>{generatedCopy.ctaPrimary}</a>
             {businessInfo.paymentMethods?.length > 0 && (
               <div>
                 <span style={{ ...s.contactInfoLabel, marginTop: '1.75rem', display: 'block' }}>We Accept</span>

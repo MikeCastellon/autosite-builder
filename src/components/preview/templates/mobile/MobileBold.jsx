@@ -267,12 +267,6 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
             <p style={{ color: '#bbb', lineHeight: 1.8, fontSize: 15, marginBottom: 20 }}>
               {copy.aboutText || `Based in ${biz.city || 'your area'}, we bring professional detailing directly to you.`}
             </p>
-            {biz.certifications && (
-              <div style={{ marginTop: 16, padding: '14px 18px', background: '#2a2a2a', borderLeft: `4px solid ${c.accent}` }}>
-                <div style={{ color: c.accent, fontWeight: 700, fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 4 }}>CERTIFIED</div>
-                <p style={{ color: '#bbb', fontSize: 14, margin: 0 }}>{biz.certifications}</p>
-              </div>
-            )}
             {biz.awards && (
               <div style={{ marginTop: 12, padding: '14px 18px', background: '#2a2a2a', borderLeft: `4px solid #ffd700` }}>
                 <div style={{ color: '#ffd700', fontWeight: 700, fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 4 }}>AWARDS</div>
@@ -344,13 +338,13 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
       <section style={{ padding: '80px 5%', textAlign: 'center' }}>
         <h2 style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 16px', lineHeight: 1 }}>READY TO BOOK?</h2>
         <p style={{ color: '#888', fontSize: 16, marginBottom: 40 }}>{copy.ctaSecondary || `Serving ${biz.city || 'your area'}. We come to you.`}</p>
-        <a href={`tel:${biz.phone}`} style={{
+        <a href={copy?.ctaUrl || (`tel:${biz.phone}`)} style={{
           display: 'inline-block', background: c.accent, color: '#fff',
           padding: '18px 48px', fontWeight: 900, fontSize: 18,
           letterSpacing: 2, textTransform: 'uppercase', textDecoration: 'none',
           clipPath: 'polygon(16px 0%, 100% 0%, calc(100% - 16px) 100%, 0% 100%)',
         }}>
-          CALL {biz.phone || 'NOW'}
+          {copy.ctaPrimary || 'CALL ' + (biz.phone || 'NOW')}
         </a>
         {biz.address && <p style={{ color: '#555', fontSize: 13, marginTop: 20 }}>📍 {biz.address}, {biz.city}, {biz.state}</p>}
       </section>

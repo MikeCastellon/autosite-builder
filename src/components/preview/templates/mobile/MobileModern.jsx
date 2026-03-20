@@ -286,12 +286,6 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
             <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.8, marginBottom: 20 }}>
               {copy.aboutText || `Based in ${biz.city || 'your area'}, we bring professional detailing directly to you.`}
             </p>
-            {biz.certifications && (
-              <div style={{ background: c.secondary, borderRadius: 10, padding: '16px 20px', marginBottom: 12, borderLeft: `4px solid ${c.accent}` }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: c.accent, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 4 }}>CERTIFIED</div>
-                <p style={{ color: c.text, fontSize: 14, margin: 0, fontWeight: 500 }}>{biz.certifications}</p>
-              </div>
-            )}
             {biz.awards && (
               <div style={{ background: '#fefce8', borderRadius: 10, padding: '16px 20px', marginBottom: 12, borderLeft: '4px solid #eab308' }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: '#92400e', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 4 }}>AWARDS</div>
@@ -361,12 +355,12 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
         <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 16, marginBottom: 36 }}>
           {copy.ctaSecondary || `We come to you anywhere in ${biz.city || 'your area'}, ${biz.state || ''}`}
         </p>
-        <a href={`tel:${biz.phone}`} style={{
+        <a href={copy?.ctaUrl || (`tel:${biz.phone}`)} style={{
           background: '#fff', color: c.accent, padding: '16px 44px',
           borderRadius: 12, fontWeight: 800, fontSize: 18, textDecoration: 'none', display: 'inline-block',
           boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
         }}>
-          {biz.phone || 'Call Now'}
+          {copy.ctaPrimary || biz.phone || 'Call Now'}
         </a>
         {biz.serviceArea && <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, marginTop: 16 }}>Service Area: {biz.serviceArea}</p>}
       </section>

@@ -399,11 +399,6 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
           )}
           {/* Bottom name overlay */}
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 'clamp(24px, 4vw, 40px)', background: 'linear-gradient(to top, rgba(0,0,0,0.9), transparent)' }}>
-            {certList.length > 0 && (
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, border: `1px solid ${c.accent}`, padding: '8px 18px', fontFamily: condensed, fontSize: 12, fontWeight: 700, letterSpacing: 3, color: c.accent, textTransform: 'uppercase', marginBottom: 12 }}>
-                🏆 {certList[0]}
-              </div>
-            )}
             <div style={{ fontFamily: bebas, fontSize: 'clamp(26px, 4vw, 42px)', letterSpacing: 1, color: '#F0EDE8', lineHeight: 1.1 }}>
               {biz.businessName || 'THE SHOP'}<br />
               <span style={{ color: c.accent }}>{[biz.city, biz.state].filter(Boolean).join(', ')}</span>
@@ -423,12 +418,6 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
 
           {/* Credential list */}
           <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 32 }}>
-            {certList.map((cert, i) => (
-              <li key={'c' + i} style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 14, color: '#C0C0C0', fontWeight: 500 }}>
-                <div style={{ width: 36, height: 36, flexShrink: 0, background: '#1C1C1C', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15 }}>🔧</div>
-                <span><strong style={{ color: c.text }}>{cert}</strong></span>
-              </li>
-            ))}
             {biz.warrantyOffered && (
               <li style={{ display: 'flex', alignItems: 'flex-start', gap: 16, fontSize: 14, color: '#C0C0C0', fontWeight: 500 }}>
                 <div style={{ width: 36, height: 36, flexShrink: 0, background: '#1C1C1C', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15 }}>🛡️</div>
@@ -621,10 +610,10 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
               : 'Call us today — no appointment needed for most services.'}
           </p>
           <a
-            href={biz.phone ? `tel:${biz.phone}` : '#contact'}
+            href={copy?.ctaUrl || (biz.phone ? `tel:${biz.phone}` : '#contact')}
             style={{ background: '#000', color: '#fff', fontFamily: bebas, fontSize: 22, letterSpacing: 4, padding: '18px 56px', textDecoration: 'none', display: 'inline-block', clipPath: 'polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%)' }}
           >
-            {biz.phone || 'CALL NOW'}
+            {copy.ctaPrimary || biz.phone || 'CALL NOW'}
           </a>
           {biz.address && (
             <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, marginTop: 20 }}>

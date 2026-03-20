@@ -124,7 +124,7 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
             {copy.subheadline || biz.tagline || 'Custom wheel fitment, tire mounting, and precision balancing.'}
           </p>
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-            <a href={`tel:${biz.phone}`} style={{
+            <a href={copy?.ctaPrimaryUrl || (`tel:${biz.phone}`)} style={{
               background: c.accent, color: '#000', padding: '15px 36px',
               fontWeight: 800, fontSize: 15, letterSpacing: 1.5, textTransform: 'uppercase',
               textDecoration: 'none', display: 'inline-block', borderRadius: 2,
@@ -297,12 +297,6 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
             <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.85, marginBottom: 20 }}>
               {copy.aboutText || `Located in ${biz.city || 'your area'}, we specialize in custom wheel fitment and tire services.`}
             </p>
-            {biz.certifications && (
-              <div style={{ background: c.secondary, borderRadius: 3, padding: '16px 20px', marginBottom: 12, borderLeft: `3px solid ${c.accent}` }}>
-                <div style={{ color: c.accent, fontSize: 10, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 6 }}>CERTIFICATIONS</div>
-                <p style={{ color: c.text, fontSize: 14, margin: 0 }}>{biz.certifications}</p>
-              </div>
-            )}
             {biz.awards && (
               <div style={{ background: c.secondary, borderRadius: 3, padding: '16px 20px', marginBottom: 12, borderLeft: '3px solid #ffd700' }}>
                 <div style={{ color: '#ffd700', fontSize: 10, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 6 }}>AWARDS</div>
@@ -378,12 +372,12 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
         <p style={{ color: c.muted, fontSize: 16, marginBottom: 36 }}>
           {copy.ctaSecondary || `${biz.city || 'Your city'}, ${biz.state || ''} — Call or stop by today`}
         </p>
-        <a href={`tel:${biz.phone}`} style={{
+        <a href={copy?.ctaUrl || (`tel:${biz.phone}`)} style={{
           background: c.accent, color: '#000', padding: '16px 44px',
           fontWeight: 900, fontSize: 17, textDecoration: 'none',
           display: 'inline-block', textTransform: 'uppercase', letterSpacing: 2, borderRadius: 2,
         }}>
-          {biz.phone || 'CALL NOW'}
+          {copy.ctaPrimary || biz.phone || 'CALL NOW'}
         </a>
         {biz.address && <p style={{ color: c.muted, fontSize: 13, marginTop: 18 }}>
           {biz.address}, {biz.city}, {biz.state}

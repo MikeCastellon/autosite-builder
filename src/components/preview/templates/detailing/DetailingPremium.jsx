@@ -187,7 +187,7 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
         ) : (
           <span style={s.navLogo}>{businessInfo.businessName}</span>
         )}
-        <button style={s.navPhone}>{businessInfo.phone}</button>
+        <a href={'tel:' + (businessInfo.phone || '')} style={{ ...s.navPhone, textDecoration: 'none' }}>{businessInfo.phone}</a>
       </nav>
 
       {/* HERO */}
@@ -201,8 +201,8 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
           <h1 style={s.heroH1}>{generatedCopy.headline}</h1>
           <p style={s.heroSub}>{generatedCopy.subheadline}</p>
           <div style={s.ctaRow}>
-            <button style={s.ctaPrimary}>{generatedCopy.ctaPrimary}</button>
-            <button style={s.ctaSecondary}>{generatedCopy.ctaSecondary}</button>
+            <a href={generatedCopy?.ctaPrimaryUrl || '#services'} style={{ ...s.ctaPrimary, textDecoration: 'none' }}>{generatedCopy.ctaPrimary}</a>
+            <a href={generatedCopy?.ctaSecondaryUrl || ('tel:' + (businessInfo.phone || ''))} style={{ ...s.ctaSecondary, textDecoration: 'none' }}>{generatedCopy.ctaSecondary}</a>
           </div>
         </div>
       </section>
@@ -292,7 +292,7 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
           </div>
         )}
         <div style={{ marginTop: '2rem' }}>
-          <button style={s.ctaPrimary}>{generatedCopy.ctaPrimary}</button>
+          <a href={generatedCopy?.ctaUrl || ('tel:' + (businessInfo.phone || ''))} style={{ ...s.ctaPrimary, textDecoration: 'none' }}>{generatedCopy.ctaPrimary}</a>
         </div>
       </section>
 

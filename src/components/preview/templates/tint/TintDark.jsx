@@ -116,7 +116,7 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
             {copy.subheadline || biz.tagline || 'Professional window tinting and paint protection film.'}
           </p>
           <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: splitHero ? 'flex-start' : 'center', alignItems: 'center' }}>
-            <a href={`tel:${biz.phone}`} style={{
+            <a href={copy?.ctaPrimaryUrl || (`tel:${biz.phone}`)} style={{
               background: c.accent, color: '#fff', padding: '15px 36px',
               borderRadius: 8, fontWeight: 700, fontSize: 16, textDecoration: 'none',
               boxShadow: `0 4px 30px ${c.accent}55`,
@@ -297,12 +297,6 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
             <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.85, marginBottom: 20 }}>
               {copy.aboutText || `Serving ${biz.city || 'your area'} with premium window tinting and film protection.`}
             </p>
-            {biz.certifications && (
-              <div style={{ background: c.secondary, borderRadius: 8, padding: '16px 20px', marginBottom: 12, borderLeft: `3px solid ${c.accent}` }}>
-                <div style={{ color: c.accent, fontSize: 10, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 4 }}>CERTIFICATIONS</div>
-                <p style={{ color: c.text, fontSize: 14, margin: 0 }}>{biz.certifications}</p>
-              </div>
-            )}
             {biz.awards && (
               <div style={{ background: c.secondary, borderRadius: 8, padding: '16px 20px', marginBottom: 12, borderLeft: '3px solid #ffd700' }}>
                 <div style={{ color: '#ffd700', fontSize: 10, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 4 }}>AWARDS</div>
@@ -380,12 +374,12 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
           <p style={{ color: c.muted, fontSize: 16, marginBottom: 36 }}>
             {copy.ctaSecondary || `Serving ${biz.city || 'your area'}, ${biz.state || ''} and surrounding areas`}
           </p>
-          <a href={`tel:${biz.phone}`} style={{
+          <a href={copy?.ctaUrl || (`tel:${biz.phone}`)} style={{
             background: c.accent, color: '#fff', padding: '16px 44px',
             borderRadius: 10, fontWeight: 700, fontSize: 17, textDecoration: 'none', display: 'inline-block',
             boxShadow: `0 4px 30px ${c.accent}66`,
           }}>
-            {biz.phone || 'Call Now'}
+            {copy.ctaPrimary || biz.phone || 'Call Now'}
           </a>
           {biz.address && <p style={{ color: '#444', fontSize: 13, marginTop: 20 }}>{biz.address}, {biz.city}, {biz.state}</p>}
         </div>

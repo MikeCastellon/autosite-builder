@@ -215,12 +215,6 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
             <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.85, marginBottom: 20 }}>
               {copy.aboutText || `Serving ${biz.city || 'your area'} and surrounding regions. We bring the shop to you.`}
             </p>
-            {biz.certifications && (
-              <div style={{ background: `${c.accent}15`, border: `1px solid ${c.accent}44`, borderRadius: 4, padding: '14px 18px', marginBottom: 12 }}>
-                <div style={{ color: c.accent, fontWeight: 700, fontSize: 10, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 4 }}>CERTIFIED</div>
-                <p style={{ color: c.text, fontSize: 13, margin: 0 }}>{biz.certifications}</p>
-              </div>
-            )}
             {biz.awards && (
               <div style={{ background: 'rgba(255,215,0,0.08)', border: '1px solid rgba(255,215,0,0.3)', borderRadius: 4, padding: '14px 18px', marginBottom: 12 }}>
                 <div style={{ color: '#c0a020', fontWeight: 700, fontSize: 10, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 4 }}>AWARDS</div>
@@ -298,12 +292,12 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
         <p style={{ color: 'rgba(26,35,24,0.65)', fontSize: 16, marginBottom: 36 }}>
           {copy.ctaSecondary || `We roll out to ${biz.city || 'your area'} and surrounding areas.`}
         </p>
-        <a href={`tel:${biz.phone}`} style={{
+        <a href={copy?.ctaUrl || (`tel:${biz.phone}`)} style={{
           background: '#1a2318', color: c.accent, padding: '16px 44px',
           borderRadius: 3, fontWeight: 900, fontSize: 18, textDecoration: 'none',
           display: 'inline-block', textTransform: 'uppercase', letterSpacing: 1,
         }}>
-          {biz.phone || 'CALL NOW'}
+          {copy.ctaPrimary || biz.phone || 'CALL NOW'}
         </a>
       </section>
 

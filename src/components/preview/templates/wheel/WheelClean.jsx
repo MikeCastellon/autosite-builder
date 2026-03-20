@@ -92,7 +92,7 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
               {copy.subheadline || biz.tagline || 'Professional wheel fitment, balancing, and tire services.'}
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              <a href={`tel:${biz.phone}`} style={{
+              <a href={copy?.ctaPrimaryUrl || (`tel:${biz.phone}`)} style={{
                 background: c.accent, color: '#fff', padding: '14px 32px',
                 borderRadius: 10, fontWeight: 700, fontSize: 15, textDecoration: 'none',
               }}>
@@ -123,7 +123,7 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
                 {copy.subheadline || biz.tagline || 'Professional wheel fitment, balancing, and tire services.'}
               </p>
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                <a href={`tel:${biz.phone}`} style={{
+                <a href={copy?.ctaPrimaryUrl || (`tel:${biz.phone}`)} style={{
                   background: c.accent, color: '#fff', padding: '14px 32px',
                   borderRadius: 10, fontWeight: 700, fontSize: 15, textDecoration: 'none',
                 }}>
@@ -306,12 +306,6 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
               <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.85, marginBottom: 20 }}>
                 {copy.aboutText || `Serving ${biz.city || 'your area'} with expert wheel and tire services.`}
               </p>
-              {biz.certifications && (
-                <div style={{ background: '#fff', borderRadius: 10, padding: '16px 20px', borderLeft: `4px solid ${c.accent}`, marginBottom: 12 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: c.accent, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 4 }}>CERTIFICATIONS</div>
-                  <p style={{ color: c.text, fontSize: 14, margin: 0, fontWeight: 500 }}>{biz.certifications}</p>
-                </div>
-              )}
               {biz.warranty && (
                 <div style={{ background: '#fff', borderRadius: 10, padding: '16px 20px', borderLeft: '4px solid #10b981', marginBottom: 12 }}>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#059669', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 4 }}>WARRANTY</div>
@@ -388,11 +382,11 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
             <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.7, marginBottom: 28 }}>
               {copy.ctaSecondary || `Serving ${biz.city || 'your area'}, ${biz.state || ''} and surrounding areas`}
             </p>
-            <a href={`tel:${biz.phone}`} style={{
+            <a href={copy?.ctaUrl || (`tel:${biz.phone}`)} style={{
               display: 'inline-block', background: c.accent, color: '#fff',
               padding: '14px 32px', borderRadius: 10, fontWeight: 700, fontSize: 16, textDecoration: 'none',
             }}>
-              {biz.phone || 'Call Now'}
+              {copy.ctaPrimary || biz.phone || 'Call Now'}
             </a>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

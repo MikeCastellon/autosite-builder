@@ -148,8 +148,8 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
             {generatedCopy.subheadline}
           </p>
           <div style={{ display: 'flex', gap: '16px', justifyContent: splitHero ? 'flex-start' : 'center', flexWrap: 'wrap' }}>
-            <button style={accentBtnStyle}>{generatedCopy.ctaPrimary}</button>
-            <button style={outlineBtnStyle}>{generatedCopy.ctaSecondary}</button>
+            <a href={generatedCopy?.ctaPrimaryUrl || '#services'} style={{ ...accentBtnStyle, textDecoration: 'none' }}>{generatedCopy.ctaPrimary}</a>
+            <a href={generatedCopy?.ctaSecondaryUrl || ('tel:' + (businessInfo.phone || ''))} style={{ ...outlineBtnStyle, textDecoration: 'none' }}>{generatedCopy.ctaSecondary}</a>
           </div>
           {businessInfo.tagline && (
             <p style={{ marginTop: '32px', color: c.muted, fontSize: '0.95rem', fontStyle: 'italic' }}>"{businessInfo.tagline}"</p>
@@ -216,20 +216,10 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
       <section id="about" style={sectionStyle(c.bg)}>
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', gap: '64px', alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ flex: '1 1 320px', minWidth: '280px' }}>
-            {generatedCopy?.aboutLayout === 'image' ? (
-              images.about
-                ? <img src={images.about} alt="About" style={{ width: '100%', maxWidth: '460px', height: '340px', objectFit: 'cover', borderRadius: '20px', display: 'block' }} />
-                : <div style={{ width: '100%', maxWidth: '460px', height: '340px', background: c.secondary, borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.muted, fontSize: '0.85rem' }}>Upload a photo in Images tab</div>
-            ) : (
-              images.about ? (
-                <img src={images.about} alt="About" style={{ width: '100%', maxWidth: '460px', height: '340px', objectFit: 'cover', borderRadius: '20px', display: 'block' }} />
-              ) : (
-                <div style={{ width: '100%', maxWidth: '460px', height: '340px', background: c.secondary, borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
-                  <div style={{ position: 'absolute', inset: 0, backgroundImage: `repeating-radial-gradient(circle at 30% 70%, rgba(8,145,178,0.07) 0, rgba(8,145,178,0.07) 2px, transparent 2px, transparent 40px)` }} />
-                  <span style={{ fontSize: '5rem' }}>🌊</span>
-                </div>
-              )
-            )}
+            {images.about
+              ? <img src={images.about} alt="About" style={{ width: '100%', maxWidth: '460px', height: '340px', objectFit: 'cover', borderRadius: '20px', display: 'block' }} />
+              : <div style={{ width: '100%', maxWidth: '460px', height: '340px', border: '2px dashed ' + c.accent, borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.muted, fontSize: '0.85rem', textAlign: 'center', padding: '24px', boxSizing: 'border-box' }}>Upload an about photo in the Images tab</div>
+            }
           </div>
           <div style={{ flex: '1 1 360px' }}>
             <div style={{ color: c.accent, fontWeight: 700, fontSize: '0.85rem', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '12px' }}>About Us</div>
@@ -237,13 +227,6 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
               Serving {businessInfo.city} With Pride
             </h2>
             <p style={{ color: c.muted, lineHeight: 1.8, fontSize: '1rem', marginBottom: '24px' }}>{generatedCopy.aboutText}</p>
-            {businessInfo.certifications && businessInfo.certifications.length > 0 && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '20px' }}>
-                {businessInfo.certifications.map((cert, i) => (
-                  <span key={i} style={{ background: `rgba(8,145,178,0.1)`, color: c.accent, borderRadius: '50px', padding: '6px 14px', fontSize: '0.8rem', fontWeight: 600 }}>{cert}</span>
-                ))}
-              </div>
-            )}
             {businessInfo.awards && businessInfo.awards.length > 0 && (
               <div style={{ marginTop: '20px' }}>
                 <div style={{ fontSize: '0.85rem', color: c.muted, fontWeight: 600, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>Awards & Recognition</div>
@@ -286,8 +269,8 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
           {businessInfo.serviceArea ? `Serving ${businessInfo.serviceArea}` : `Serving ${businessInfo.city} and surrounding areas`}
         </p>
         <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <a href={`tel:${businessInfo.phone}`} style={{ background: '#ffffff', color: c.accent, padding: '14px 36px', borderRadius: '50px', fontWeight: 800, textDecoration: 'none', fontSize: '1rem', fontFamily: font }}>
-            Call {businessInfo.phone}
+          <a href={generatedCopy?.ctaUrl || ('tel:' + (businessInfo.phone || ''))} style={{ background: '#ffffff', color: c.accent, padding: '14px 36px', borderRadius: '50px', fontWeight: 800, textDecoration: 'none', fontSize: '1rem', fontFamily: font }}>
+            {generatedCopy.ctaPrimary || ('Call ' + businessInfo.phone)}
           </a>
         </div>
       </section>

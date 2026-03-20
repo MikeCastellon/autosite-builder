@@ -192,7 +192,7 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
           <a href="#services" style={{ color: c.bg, textDecoration: 'none', fontFamily: bodyFont, fontSize: '0.85rem', letterSpacing: '0.05em', opacity: 0.8 }}>Services</a>
           <a href="#about" style={{ color: c.bg, textDecoration: 'none', fontFamily: bodyFont, fontSize: '0.85rem', letterSpacing: '0.05em', opacity: 0.8 }}>About</a>
           <a href="#reviews" style={{ color: c.bg, textDecoration: 'none', fontFamily: bodyFont, fontSize: '0.85rem', letterSpacing: '0.05em', opacity: 0.8 }}>Reviews</a>
-          <button style={s.navPhone}>{businessInfo.phone}</button>
+          <a href={'tel:' + (businessInfo.phone || '')} style={{ ...s.navPhone, textDecoration: 'none' }}>{businessInfo.phone}</a>
         </div>
       </nav>
 
@@ -205,8 +205,8 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
           <h1 style={s.heroH1}>{generatedCopy.headline}</h1>
           <p style={s.heroSub}>{generatedCopy.subheadline}</p>
           <div style={s.ctaRow}>
-            <button style={s.ctaPrimary}>{generatedCopy.ctaPrimary}</button>
-            <button style={s.ctaSecondary}>{generatedCopy.ctaSecondary}</button>
+            <a href={generatedCopy?.ctaPrimaryUrl || '#services'} style={{ ...s.ctaPrimary, textDecoration: 'none' }}>{generatedCopy.ctaPrimary}</a>
+            <a href={generatedCopy?.ctaSecondaryUrl || ('tel:' + (businessInfo.phone || ''))} style={{ ...s.ctaSecondary, textDecoration: 'none' }}>{generatedCopy.ctaSecondary}</a>
           </div>
         </div>
       </section>
@@ -272,11 +272,6 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
           <div>
             <p style={{ ...s.aboutText, marginBottom: '1.5rem' }}>{generatedCopy.aboutText}</p>
             <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>
-            {businessInfo.certifications && (
-              <div style={{ display: 'inline-block', background: c.accent + '12', border: `1px solid ${c.accent}30`, padding: '8px 16px', borderRadius: '6px' }}>
-                <span style={{ fontFamily: bodyFont, fontSize: '0.82rem', color: c.accent, fontWeight: 600 }}>✦ {Array.isArray(businessInfo.certifications) ? businessInfo.certifications.join(' · ') : businessInfo.certifications}</span>
-              </div>
-            )}
           </div>
         </div>
       </section>
@@ -306,7 +301,7 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
         {businessInfo.hours && (
           <p style={{ fontFamily: bodyFont, color: 'rgba(255,255,255,0.75)', fontSize: '0.88rem', marginBottom: '1.5rem' }}>{formatHours(businessInfo.hours)}</p>
         )}
-        <div><button style={s.ctaBandBtn}>{generatedCopy.ctaPrimary}</button></div>
+        <div><a href={generatedCopy?.ctaUrl || ('tel:' + (businessInfo.phone || ''))} style={{ ...s.ctaBandBtn, textDecoration: 'none' }}>{generatedCopy.ctaPrimary}</a></div>
         {businessInfo.paymentMethods?.length > 0 && (
           <div style={s.paymentPills}>
             {businessInfo.paymentMethods.map((pm, i) => (

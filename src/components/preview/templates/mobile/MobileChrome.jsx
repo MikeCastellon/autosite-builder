@@ -199,8 +199,8 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
             {generatedCopy.subheadline}
           </p>
           <div style={{ display: 'flex', gap: '16px', justifyContent: splitHero ? 'flex-start' : 'center', flexWrap: 'wrap' }}>
-            <button style={accentBtnStyle}>{generatedCopy.ctaPrimary}</button>
-            <button style={outlineBtnStyle}>{generatedCopy.ctaSecondary}</button>
+            <a href={generatedCopy?.ctaPrimaryUrl || '#services'} style={{ ...accentBtnStyle, textDecoration: 'none' }}>{generatedCopy.ctaPrimary}</a>
+            <a href={generatedCopy?.ctaSecondaryUrl || ('tel:' + (businessInfo.phone || ''))} style={{ ...outlineBtnStyle, textDecoration: 'none' }}>{generatedCopy.ctaSecondary}</a>
           </div>
           {businessInfo.tagline && (
             <p style={{ marginTop: '36px', color: 'rgba(148,163,184,0.5)', fontSize: '0.82rem', letterSpacing: '2px', textTransform: 'uppercase' }}>{businessInfo.tagline}</p>
@@ -304,16 +304,6 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
               Precision Detailing, Delivered to You
             </h2>
             <p style={{ color: c.muted, lineHeight: 1.85, fontSize: '0.95rem', marginBottom: '32px', fontWeight: 300 }}>{generatedCopy.aboutText}</p>
-            {businessInfo.certifications && businessInfo.certifications.length > 0 && (
-              <div style={{ marginBottom: '24px' }}>
-                <div style={{ fontSize: '0.68rem', letterSpacing: '2.5px', textTransform: 'uppercase', color: 'rgba(148,163,184,0.4)', marginBottom: '10px' }}>Certifications</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                  {businessInfo.certifications.map((cert, i) => (
-                    <span key={i} style={{ border: '1px solid rgba(148,163,184,0.2)', color: c.muted, padding: '5px 14px', fontSize: '0.78rem', letterSpacing: '0.5px' }}>{cert}</span>
-                  ))}
-                </div>
-              </div>
-            )}
             {businessInfo.awards && businessInfo.awards.length > 0 && (
               <div>
                 <div style={{ fontSize: '0.68rem', letterSpacing: '2.5px', textTransform: 'uppercase', color: 'rgba(148,163,184,0.4)', marginBottom: '10px' }}>Recognition</div>
@@ -373,7 +363,7 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
           </p>
           <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '32px' }}>
             <a href={`tel:${businessInfo.phone}`} style={accentBtnStyle}>Call Now</a>
-            <button style={outlineBtnStyle}>Get a Quote</button>
+            <a href={generatedCopy?.ctaUrl || (`tel:${businessInfo.phone}`)} style={{ ...outlineBtnStyle, textDecoration: 'none' }}>{generatedCopy.ctaPrimary || 'Get a Quote'}</a>
           </div>
           {businessInfo.paymentMethods && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center', marginTop: '24px' }}>

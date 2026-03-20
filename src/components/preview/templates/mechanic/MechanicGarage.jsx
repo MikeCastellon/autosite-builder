@@ -198,14 +198,9 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
             {generatedCopy.subheadline}
           </p>
           <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button style={accentBtnStyle}>{generatedCopy.ctaPrimary}</button>
-            <button style={outlineBtnStyle}>{generatedCopy.ctaSecondary}</button>
+            <a href={generatedCopy?.ctaPrimaryUrl || '#services'} style={{ ...accentBtnStyle, textDecoration: 'none' }}>{generatedCopy.ctaPrimary}</a>
+            <a href={generatedCopy?.ctaSecondaryUrl || ('tel:' + (businessInfo.phone || ''))} style={{ ...outlineBtnStyle, textDecoration: 'none' }}>{generatedCopy.ctaSecondary}</a>
           </div>
-          {businessInfo.certifications && businessInfo.certifications.length > 0 && (
-            <div style={{ marginTop: '40px', display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
-              {businessInfo.certifications.map((cert, i) => pillBadge(cert, i))}
-            </div>
-          )}
         </div>
         {splitHero && (
           <div style={{ flex: 1, position: 'relative', minHeight: '85vh', overflow: 'hidden' }}>
@@ -373,8 +368,8 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
             </p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'flex-start' }}>
-            <a href={`tel:${businessInfo.phone}`} style={{ background: '#000000', color: c.accent, padding: '14px 32px', borderRadius: '4px', fontWeight: 900, textDecoration: 'none', fontSize: '1.05rem', fontFamily: font, letterSpacing: '1px', textTransform: 'uppercase' }}>
-              Call {businessInfo.phone}
+            <a href={generatedCopy?.ctaUrl || ('tel:' + (businessInfo.phone || ''))} style={{ background: '#000000', color: c.accent, padding: '14px 32px', borderRadius: '4px', fontWeight: 900, textDecoration: 'none', fontSize: '1.05rem', fontFamily: font, letterSpacing: '1px', textTransform: 'uppercase' }}>
+              {generatedCopy.ctaPrimary || ('Call ' + businessInfo.phone)}
             </a>
             {businessInfo.paymentMethods && (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>

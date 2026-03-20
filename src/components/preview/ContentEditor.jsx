@@ -166,6 +166,8 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
               <Field label="Subheadline" value={copy.subheadline} onChange={(v) => setCopy('subheadline', v)} multiline rows={2} />
               <Field label="Primary Button" value={copy.ctaPrimary} onChange={(v) => setCopy('ctaPrimary', v)} />
               <Field label="Secondary Button" value={copy.ctaSecondary} onChange={(v) => setCopy('ctaSecondary', v)} />
+              <Field label="Button 1 URL (optional)" value={copy?.ctaPrimaryUrl} onChange={(v) => setCopy('ctaPrimaryUrl', v)} />
+              <Field label="Button 2 URL (default: calls phone)" value={copy?.ctaSecondaryUrl} onChange={(v) => setCopy('ctaSecondaryUrl', v)} />
             </>
           )}
 
@@ -261,6 +263,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
           {activeSection === 'footer' && (
             <>
               <Field label="Footer Tagline" value={copy.footerTagline} onChange={(v) => setCopy('footerTagline', v)} />
+              <Field label="CTA Button URL (optional)" value={copy?.ctaUrl} onChange={(v) => setCopy('ctaUrl', v)} />
               <div className="mt-4 mb-2">
                 <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-3">Social Icons</p>
                 <p className="text-[11px] text-gray-400 mb-3">Toggle which social icons appear on your site.</p>

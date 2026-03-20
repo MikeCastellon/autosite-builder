@@ -193,7 +193,7 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
           <a href="#services" style={{ color: textColor, textDecoration: 'none', fontFamily: bodyFont, fontSize: '0.85rem', letterSpacing: '0.05em', opacity: 0.8 }}>Services</a>
           <a href="#about" style={{ color: textColor, textDecoration: 'none', fontFamily: bodyFont, fontSize: '0.85rem', letterSpacing: '0.05em', opacity: 0.8 }}>About</a>
           <a href="#reviews" style={{ color: textColor, textDecoration: 'none', fontFamily: bodyFont, fontSize: '0.85rem', letterSpacing: '0.05em', opacity: 0.8 }}>Reviews</a>
-          <button style={s.navCta}>{businessInfo.phone}</button>
+          <a href={'tel:' + (businessInfo.phone || '')} style={{ ...s.navCta, textDecoration: 'none' }}>{businessInfo.phone}</a>
         </div>
       </nav>
 
@@ -219,11 +219,11 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
           <h1 style={s.heroH1}>{generatedCopy.headline || 'Your Vehicle. Perfected.'}</h1>
           <p style={s.heroDesc}>{generatedCopy.subheadline}</p>
           <div style={s.heroActions}>
-            <button style={s.btnPrimary}>{generatedCopy.ctaPrimary || 'Request a Quote'}</button>
-            <button style={s.btnSecondary}>
+            <a href={generatedCopy?.ctaPrimaryUrl || '#services'} style={{ ...s.btnPrimary, textDecoration: 'none' }}>{generatedCopy.ctaPrimary || 'Request a Quote'}</a>
+            <a href={generatedCopy?.ctaSecondaryUrl || ('tel:' + (businessInfo.phone || ''))} style={{ ...s.btnSecondary, textDecoration: 'none' }}>
               <span style={s.btnSecondaryCircle}>↓</span>
               {generatedCopy.ctaSecondary || 'Explore Services'}
-            </button>
+            </a>
           </div>
         </div>
         {splitHero && (
@@ -478,10 +478,10 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
           )}
         </div>
         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <button style={s.btnPrimary}>{generatedCopy.ctaPrimary || 'Request a Quote'}</button>
-          <button style={{ background: 'transparent', border: '1px solid ' + c.accent, color: c.accent, padding: '16px 40px', fontFamily: bodyFont, fontSize: '12px', letterSpacing: '2.5px', textTransform: 'uppercase', fontWeight: 600, cursor: 'pointer' }}>
+          <a href={generatedCopy?.ctaUrl || ('tel:' + (businessInfo.phone || ''))} style={{ ...s.btnPrimary, textDecoration: 'none' }}>{generatedCopy.ctaPrimary || 'Request a Quote'}</a>
+          <a href={'tel:' + (businessInfo.phone || '')} style={{ background: 'transparent', border: '1px solid ' + c.accent, color: c.accent, padding: '16px 40px', fontFamily: bodyFont, fontSize: '12px', letterSpacing: '2.5px', textTransform: 'uppercase', fontWeight: 600, cursor: 'pointer', textDecoration: 'none' }}>
             {businessInfo.phone}
-          </button>
+          </a>
         </div>
       </section>
 
