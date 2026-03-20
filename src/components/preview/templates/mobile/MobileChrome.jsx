@@ -266,14 +266,18 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
       <section id="about" style={sectionStyle()}>
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', gap: '80px', alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ flex: '1 1 300px', minWidth: '260px' }}>
-            <div style={{ width: '100%', maxWidth: '440px', height: '360px', background: c.secondary, border: '1px solid rgba(148,163,184,0.1)', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: chromeGradient }} />
-              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '1px', background: chromeGradient }} />
-              {[...Array(6)].map((_, i) => (
-                <div key={i} style={{ position: 'absolute', left: 0, right: 0, top: `${15 + i * 15}%`, height: '1px', background: `rgba(148,163,184,${0.04 - i * 0.004})` }} />
-              ))}
-              <span style={{ fontSize: '4rem', opacity: 0.4 }}>◈</span>
-            </div>
+            {images.about ? (
+              <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block' }} />
+            ) : (
+              <div style={{ width: '100%', maxWidth: '440px', height: '360px', background: c.secondary, border: '1px solid rgba(148,163,184,0.1)', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: chromeGradient }} />
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '1px', background: chromeGradient }} />
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} style={{ position: 'absolute', left: 0, right: 0, top: `${15 + i * 15}%`, height: '1px', background: `rgba(148,163,184,${0.04 - i * 0.004})` }} />
+                ))}
+                <span style={{ fontSize: '4rem', opacity: 0.4 }}>◈</span>
+              </div>
+            )}
           </div>
           <div style={{ flex: '1 1 380px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
@@ -284,7 +288,6 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
               Precision Detailing, Delivered to You
             </h2>
             <p style={{ color: c.muted, lineHeight: 1.85, fontSize: '0.95rem', marginBottom: '32px', fontWeight: 300 }}>{generatedCopy.aboutText}</p>
-            <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>
             {businessInfo.certifications && businessInfo.certifications.length > 0 && (
               <div style={{ marginBottom: '24px' }}>
                 <div style={{ fontSize: '0.68rem', letterSpacing: '2.5px', textTransform: 'uppercase', color: 'rgba(148,163,184,0.4)', marginBottom: '10px' }}>Certifications</div>

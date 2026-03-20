@@ -204,10 +204,14 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
       <section id="about" style={sectionStyle(c.bg)}>
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', gap: '64px', alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ flex: '1 1 320px', minWidth: '280px' }}>
-            <div style={{ width: '100%', maxWidth: '460px', height: '340px', background: c.secondary, borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
-              <div style={{ position: 'absolute', inset: 0, backgroundImage: `repeating-radial-gradient(circle at 30% 70%, rgba(8,145,178,0.07) 0, rgba(8,145,178,0.07) 2px, transparent 2px, transparent 40px)` }} />
-              <span style={{ fontSize: '5rem' }}>🌊</span>
-            </div>
+            {images.about ? (
+              <img src={images.about} alt="About" style={{ width: '100%', maxWidth: '460px', height: '340px', objectFit: 'cover', borderRadius: '20px', display: 'block' }} />
+            ) : (
+              <div style={{ width: '100%', maxWidth: '460px', height: '340px', background: c.secondary, borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', inset: 0, backgroundImage: `repeating-radial-gradient(circle at 30% 70%, rgba(8,145,178,0.07) 0, rgba(8,145,178,0.07) 2px, transparent 2px, transparent 40px)` }} />
+                <span style={{ fontSize: '5rem' }}>🌊</span>
+              </div>
+            )}
           </div>
           <div style={{ flex: '1 1 360px' }}>
             <div style={{ color: c.accent, fontWeight: 700, fontSize: '0.85rem', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '12px' }}>About Us</div>
@@ -215,7 +219,6 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
               Serving {businessInfo.city} With Pride
             </h2>
             <p style={{ color: c.muted, lineHeight: 1.8, fontSize: '1rem', marginBottom: '24px' }}>{generatedCopy.aboutText}</p>
-            <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>
             {businessInfo.certifications && businessInfo.certifications.length > 0 && (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '20px' }}>
                 {businessInfo.certifications.map((cert, i) => (

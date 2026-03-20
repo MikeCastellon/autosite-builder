@@ -263,25 +263,28 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
       {/* ABOUT */}
       <section id="about" style={s.sectionAlt}>
         <div style={s.aboutGrid}>
-          <div style={s.aboutSidebar}>
-            <span style={s.sidebarNum}>{businessInfo.yearsInBusiness || '10'}+</span>
-            <span style={s.sidebarLabel}>Years in the Game</span>
-            <div style={s.sidebarDivider} />
-            <span style={{ fontFamily: bodyFont, color: 'rgba(255,255,255,0.85)', fontSize: '1rem', lineHeight: 1.6 }}>
-              {businessInfo.city}, {businessInfo.state}'s go-to shop for serious car care.
-            </span>
-            {businessInfo.certifications && (
-              <>
-                <div style={s.sidebarDivider} />
-                <span style={{ fontFamily: bodyFont, color: 'rgba(255,255,255,0.7)', fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.12em' }}>{businessInfo.certifications}</span>
-              </>
-            )}
-          </div>
+          {images.about ? (
+            <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '8px', display: 'block' }} />
+          ) : (
+            <div style={s.aboutSidebar}>
+              <span style={s.sidebarNum}>{businessInfo.yearsInBusiness || '10'}+</span>
+              <span style={s.sidebarLabel}>Years in the Game</span>
+              <div style={s.sidebarDivider} />
+              <span style={{ fontFamily: bodyFont, color: 'rgba(255,255,255,0.85)', fontSize: '1rem', lineHeight: 1.6 }}>
+                {businessInfo.city}, {businessInfo.state}'s go-to shop for serious car care.
+              </span>
+              {businessInfo.certifications && (
+                <>
+                  <div style={s.sidebarDivider} />
+                  <span style={{ fontFamily: bodyFont, color: 'rgba(255,255,255,0.7)', fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.12em' }}>{businessInfo.certifications}</span>
+                </>
+              )}
+            </div>
+          )}
           <div>
             <div style={s.sectionTag}>About Us</div>
             <h2 style={s.sectionTitle}>Built Different</h2>
             <p style={s.aboutText}>{generatedCopy.aboutText}</p>
-            <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>
           </div>
         </div>
       </section>

@@ -260,12 +260,14 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
               <Eyebrow label="Featured Brands" />
               <SecTitle>Wheels built<br />to <span style={{ color: D.blue }}>perform.</span></SecTitle>
             </div>
+            {images.about && (
+              <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block', marginBottom: '16px' }} />
+            )}
             <p style={{ fontSize: 16, color: D.steel, lineHeight: 1.75, fontFamily: bodyFont, margin: 0 }}>
               {copy.aboutText
                 ? copy.aboutText.substring(0, 200) + (copy.aboutText.length > 200 ? "..." : "")
                 : "We carry the brands that matter -- from forged JDM legends to European luxury to American custom. Every brand we stock is one we would put on our own car."}
             </p>
-            <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>
           </div>
 
           {brandsList.length > 0 ? (

@@ -351,6 +351,9 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
         <section id="about" style={{ background: c.bg, padding: 'clamp(4rem,8vw,7.5rem) clamp(1.5rem,5vw,3.75rem)' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px,1fr))', gap: 'clamp(2rem,4vw,5rem)', alignItems: 'start' }}>
             <div>
+              {images.about && (
+                <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block', marginBottom: '1.5rem' }} />
+              )}
               <div style={s.sectionLabel}>
                 <div style={s.sectionLabelLine} />
                 <span style={s.sectionLabelText}>Our Story</span>
@@ -371,7 +374,6 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
               <p style={{ fontFamily: bodyFont, color: textDim, fontSize: '1rem', lineHeight: 1.85, position: 'relative', zIndex: 1 }}>
                 {generatedCopy.aboutText}
               </p>
-            <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>
               {businessInfo.awards && (
                 <div style={{ marginTop: '1.5rem', display: 'inline-block', background: c.accent, color: c.bg, fontFamily: bodyFont, fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', padding: '6px 16px', fontWeight: 700 }}>
                   {businessInfo.awards}

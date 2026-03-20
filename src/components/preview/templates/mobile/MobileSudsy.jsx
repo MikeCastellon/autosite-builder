@@ -347,10 +347,12 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
           <div>
             <div style={sectionTagStyle("-1deg")}>About Us</div>
             <h2 style={{ ...titleStyle, marginTop: 8, marginBottom: 20 }}>{biz.businessName || "We Detail"}</h2>
+            {images.about && (
+              <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '16px', display: 'block', marginBottom: '20px' }} />
+            )}
             <p style={{ fontSize: 15, fontWeight: 600, color: c.muted, lineHeight: 1.8, marginBottom: 20 }}>
               {copy.aboutText || 'We started with a bucket, a dream, and a serious love for clean cars. Today we bring that same passion to every vehicle we touch.'}
             </p>
-            <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>
             {biz.yearsInBusiness && (
               <div style={{ display: "inline-flex", alignItems: "center", gap: 10, background: c.secondary, ...neoBorder, borderRadius: 16, padding: "12px 18px", marginBottom: 16, fontWeight: 800, fontSize: 14, color: c.text }}>
                 {biz.yearsInBusiness}+ Years in Business

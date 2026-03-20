@@ -230,10 +230,12 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
             <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 24px', lineHeight: 1 }}>
               {biz.businessName || 'WE DETAIL'}
             </h2>
+            {images.about && (
+              <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block', marginBottom: '20px' }} />
+            )}
             <p style={{ color: '#bbb', lineHeight: 1.8, fontSize: 15, marginBottom: 20 }}>
               {copy.aboutText || `Based in ${biz.city || 'your area'}, we bring professional detailing directly to you.`}
             </p>
-            <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>
             {biz.certifications && (
               <div style={{ marginTop: 16, padding: '14px 18px', background: '#2a2a2a', borderLeft: `4px solid ${c.accent}` }}>
                 <div style={{ color: c.accent, fontWeight: 700, fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 4 }}>CERTIFIED</div>

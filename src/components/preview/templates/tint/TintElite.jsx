@@ -325,15 +325,18 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
       <section id="about" style={{ ...sectionStyle(c.secondary), borderTop: '1px solid rgba(202,138,4,0.08)' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', gap: '80px', alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ flex: '1 1 300px', minWidth: '260px' }}>
-            {/* Decorative box */}
-            <div style={{ width: '100%', maxWidth: '440px', height: '360px', border: '1px solid rgba(202,138,4,0.2)', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: c.bg }}>
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: goldGradient }} />
-              <div style={diagonalLines} />
-              {/* Corner ornaments */}
-              <div style={{ position: 'absolute', top: '16px', left: '16px', width: '20px', height: '20px', borderTop: `1px solid rgba(202,138,4,0.5)`, borderLeft: `1px solid rgba(202,138,4,0.5)` }} />
-              <div style={{ position: 'absolute', bottom: '16px', right: '16px', width: '20px', height: '20px', borderBottom: `1px solid rgba(202,138,4,0.5)`, borderRight: `1px solid rgba(202,138,4,0.5)` }} />
-              <span style={{ fontFamily: font, fontSize: '5rem', ...goldGradientText, opacity: 0.2, fontStyle: 'italic' }}>✦</span>
-            </div>
+            {images.about ? (
+              <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block' }} />
+            ) : (
+              <div style={{ width: '100%', maxWidth: '440px', height: '360px', border: '1px solid rgba(202,138,4,0.2)', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: c.bg }}>
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: goldGradient }} />
+                <div style={diagonalLines} />
+                {/* Corner ornaments */}
+                <div style={{ position: 'absolute', top: '16px', left: '16px', width: '20px', height: '20px', borderTop: `1px solid rgba(202,138,4,0.5)`, borderLeft: `1px solid rgba(202,138,4,0.5)` }} />
+                <div style={{ position: 'absolute', bottom: '16px', right: '16px', width: '20px', height: '20px', borderBottom: `1px solid rgba(202,138,4,0.5)`, borderRight: `1px solid rgba(202,138,4,0.5)` }} />
+                <span style={{ fontFamily: font, fontSize: '5rem', ...goldGradientText, opacity: 0.2, fontStyle: 'italic' }}>✦</span>
+              </div>
+            )}
           </div>
           <div style={{ flex: '1 1 380px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '20px' }}>
@@ -344,7 +347,6 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
               {businessInfo.yearsInBusiness ? `${businessInfo.yearsInBusiness} Years of Precision` : 'The Art of Window Tinting'}
             </h2>
             <p style={{ color: c.muted, lineHeight: 1.9, fontSize: '0.95rem', marginBottom: '32px', fontWeight: 300 }}>{generatedCopy.aboutText}</p>
-            <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={templateMeta.colors.accent} /></div>
             {businessInfo.specialties && businessInfo.specialties.length > 0 && (
               <div style={{ marginBottom: '24px' }}>
                 <div style={{ fontSize: '0.65rem', letterSpacing: '3px', textTransform: 'uppercase', color: c.muted, marginBottom: '10px', fontFamily: bodyFont }}>Specialties</div>

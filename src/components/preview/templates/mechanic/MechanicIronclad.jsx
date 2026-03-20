@@ -357,22 +357,28 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
       ═══════════════════════════════════════════════════════════ */}
       <section id="about" style={{ background: c.bg, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
 
-        {/* LEFT — CSS garage scene */}
+        {/* LEFT — garage visual / about image */}
         <div style={{ position: 'relative', minHeight: 520, background: '#242424', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, #0d0d0d 0%, #1a1a1a 60%, #111 100%)' }} />
-          {/* Floor with subtle vertical grid */}
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '35%', background: '#161616', borderTop: '3px solid #2a2a2a', backgroundImage: 'repeating-linear-gradient(90deg, transparent 0px, transparent 39px, rgba(255,255,255,0.03) 39px, rgba(255,255,255,0.03) 40px)' }} />
-          {/* Garage door */}
-          <div style={{ position: 'absolute', top: '10%', left: '50%', transform: 'translateX(-50%)', width: '68%', height: '56%', background: '#202020', border: '3px solid #333', overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: 2, padding: 4 }}>
-            {Array.from({ length: 7 }).map((_, i) => (
-              <div key={i} style={{ flex: 1, background: '#2a2a2a', border: '1px solid #333' }} />
-            ))}
-          </div>
-          {/* Amber work-light strip */}
-          <div style={{ position: 'absolute', top: '8%', left: 0, right: 0, height: 3, background: 'linear-gradient(90deg, transparent, #F39C12, transparent)', boxShadow: '0 0 20px #F39C12, 0 0 60px rgba(243,156,18,0.3)', opacity: 0.7 }} />
-          {/* Silhouette tools */}
-          <div style={{ position: 'absolute', top: '20%', right: '8%', fontSize: 48, color: 'rgba(255,255,255,0.07)', transform: 'rotate(45deg)' }}>🔧</div>
-          <div style={{ position: 'absolute', bottom: '38%', left: '6%', fontSize: 56, color: 'rgba(255,255,255,0.05)' }}>⚙️</div>
+          {images.about ? (
+            <img src={images.about} alt="About" style={{ width: '100%', height: '100%', minHeight: 520, objectFit: 'cover', display: 'block' }} />
+          ) : (
+            <>
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, #0d0d0d 0%, #1a1a1a 60%, #111 100%)' }} />
+              {/* Floor with subtle vertical grid */}
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '35%', background: '#161616', borderTop: '3px solid #2a2a2a', backgroundImage: 'repeating-linear-gradient(90deg, transparent 0px, transparent 39px, rgba(255,255,255,0.03) 39px, rgba(255,255,255,0.03) 40px)' }} />
+              {/* Garage door */}
+              <div style={{ position: 'absolute', top: '10%', left: '50%', transform: 'translateX(-50%)', width: '68%', height: '56%', background: '#202020', border: '3px solid #333', overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: 2, padding: 4 }}>
+                {Array.from({ length: 7 }).map((_, i) => (
+                  <div key={i} style={{ flex: 1, background: '#2a2a2a', border: '1px solid #333' }} />
+                ))}
+              </div>
+              {/* Amber work-light strip */}
+              <div style={{ position: 'absolute', top: '8%', left: 0, right: 0, height: 3, background: 'linear-gradient(90deg, transparent, #F39C12, transparent)', boxShadow: '0 0 20px #F39C12, 0 0 60px rgba(243,156,18,0.3)', opacity: 0.7 }} />
+              {/* Silhouette tools */}
+              <div style={{ position: 'absolute', top: '20%', right: '8%', fontSize: 48, color: 'rgba(255,255,255,0.07)', transform: 'rotate(45deg)' }}>🔧</div>
+              <div style={{ position: 'absolute', bottom: '38%', left: '6%', fontSize: 56, color: 'rgba(255,255,255,0.05)' }}>⚙️</div>
+            </>
+          )}
           {/* Bottom name overlay */}
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 'clamp(24px, 4vw, 40px)', background: 'linear-gradient(to top, rgba(0,0,0,0.9), transparent)' }}>
             {certList.length > 0 && (
@@ -396,7 +402,6 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
           <p style={{ fontSize: 15, color: '#6B6560', lineHeight: 1.85, marginTop: 18, marginBottom: 24, maxWidth: 420 }}>
             {copy.aboutText || `Serving ${biz.city || 'your area'} with expert auto repair built on straight talk, fair prices, and work you can stake your safety on.`}
           </p>
-            <div style={{ marginTop: '2rem' }}><AboutImage src={images.about} accent={c.accent} /></div>
 
           {/* Credential list */}
           <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 32 }}>
