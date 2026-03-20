@@ -88,9 +88,9 @@ export default function App() {
   // Demo preview — shows a template with placeholder data, no AI call needed
   const [isDemoPreview, setIsDemoPreview] = useState(false);
 
-  // Auth gate — placed after all hooks
-  if (loading) return null;
-  if (!session) return <LoginPage />;
+  // Auth gate — disabled until Google OAuth app is configured
+  // if (loading) return null;
+  // if (!session) return <LoginPage />;
 
   if (view === 'dashboard') {
     return <DashboardPage onNewSite={() => { handleStartOver(); setView('wizard'); }} />;
