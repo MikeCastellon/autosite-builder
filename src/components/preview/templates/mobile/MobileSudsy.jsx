@@ -24,6 +24,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
   const payments     = biz.paymentMethods || [];
   const packages     = biz.packages || [];
   const bizServices  = Array.isArray(biz.services) ? biz.services : [];
+  const splitHero    = copy?.heroLayout === 'split';
 
   useEffect(() => {
     const id = 'sudsy-fonts';
@@ -143,17 +144,46 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
       </nav>
 
       {/* HERO */}
-      <header style={{
+      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : {
         minHeight: '100vh', position: 'relative',
         display: 'flex', alignItems: 'center',
         background: `linear-gradient(135deg, ${c.bg} 0%, ${c.secondary} 60%, #fde68a 100%)`,
         overflow: 'hidden', paddingTop: 80,
       }}>
-        <HeroImage src={images.hero} />
-        {/* Top stripe */}
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 8, background: c.accent }} />
-        {heroBubbles.map((b, i) => <StaticBubble key={i} {...b} />)}
-        <div className="tp-2col" style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 1200, margin: '0 auto', padding: '80px 5% 60px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, alignItems: 'center' }}>
+        {!splitHero && <HeroImage src={images.hero} />}
+        {!splitHero && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 8, background: c.accent }} />}
+        {!splitHero && heroBubbles.map((b, i) => <StaticBubble key={i} {...b} />)}
+        {splitHero ? (
+          <div style={{
+            flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
+            padding: 'clamp(3rem,6vw,6rem)', background: c.bg,
+          }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: c.text, color: c.accent, fontFamily: font, fontSize: 15, padding: '7px 18px', borderRadius: 980, marginBottom: 24, alignSelf: 'flex-start' }}>
+              {String.fromCodePoint(0x1F4CD)} We Come To YOU{biz.city ? ` — ${biz.city}` : ''}
+            </div>
+            <h1 style={{ fontFamily: font, fontSize: 'clamp(1.8rem, 7vw, 5.5rem)', lineHeight: 1.05, color: c.text, margin: '0 0 20px' }}>
+              {copy.headline || 'Your Car Deserves Better.'}
+            </h1>
+            <p style={{ fontSize: 17, fontWeight: 600, color: c.muted, lineHeight: 1.7, maxWidth: 480, marginBottom: 36 }}>
+              {copy.subheadline || 'Professional mobile detailing that comes to you. We bring the shine — you bring the car.'}
+            </p>
+            {biz.serviceArea && (
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: '#e8f6fe', border: '2.5px solid #2d9cdb', borderRadius: 14, padding: '10px 18px', marginBottom: 32, boxShadow: '3px 3px 0 #2d9cdb', fontWeight: 700, fontSize: 14, color: '#1a6fa8', alignSelf: 'flex-start' }}>
+                <span style={{ fontSize: 18 }}>{String.fromCodePoint(0x1F5FA)}</span>
+                Serving: {biz.serviceArea}
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
+              <a href='#services' style={{ fontFamily: font, fontSize: 20, background: c.text, color: c.accent, padding: '12px 32px', borderRadius: 980, textDecoration: 'none', border: `3px solid ${c.text}`, boxShadow: `5px 5px 0 ${c.accent}`, display: 'inline-block' }}>
+                {String.fromCodePoint(0x1FAA7)} {copy.ctaPrimary || 'Book a Detail!'}
+              </a>
+              <a href='#services' style={{ fontFamily: font, fontSize: 20, background: 'transparent', color: c.text, padding: '12px 28px', borderRadius: 980, textDecoration: 'none', border: `3px solid ${c.text}`, display: 'inline-block' }}>
+                See Services →
+              </a>
+            </div>
+          </div>
+        ) : (
+          <div className="tp-2col" style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 1200, margin: '0 auto', padding: '80px 5% 60px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, alignItems: 'center' }}>
           {/* Hero left: copy */}
           <div>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: c.text, color: c.accent, fontFamily: font, fontSize: 15, padding: '7px 18px', borderRadius: 980, marginBottom: 24 }}>
@@ -225,8 +255,16 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
             ))}
           </div>
         </div>
-        {/* Bottom zigzag */}
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 40, background: c.text, clipPath: 'polygon(0 100%, 3% 0, 6% 100%, 9% 0, 12% 100%, 15% 0, 18% 100%, 21% 0, 24% 100%, 27% 0, 30% 100%, 33% 0, 36% 100%, 39% 0, 42% 100%, 45% 0, 48% 100%, 51% 0, 54% 100%, 57% 0, 60% 100%, 63% 0, 66% 100%, 69% 0, 72% 100%, 75% 0, 78% 100%, 81% 0, 84% 100%, 87% 0, 90% 100%, 93% 0, 96% 100%, 99% 0, 100% 100%)' }} />
+        )}
+        {!splitHero && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 40, background: c.text, clipPath: 'polygon(0 100%, 3% 0, 6% 100%, 9% 0, 12% 100%, 15% 0, 18% 100%, 21% 0, 24% 100%, 27% 0, 30% 100%, 33% 0, 36% 100%, 39% 0, 42% 100%, 45% 0, 48% 100%, 51% 0, 54% 100%, 57% 0, 60% 100%, 63% 0, 66% 100%, 69% 0, 72% 100%, 75% 0, 78% 100%, 81% 0, 84% 100%, 87% 0, 90% 100%, 93% 0, 96% 100%, 99% 0, 100% 100%)' }} />}
+        {splitHero && (
+          <div style={{ flex: 1, position: 'relative', minHeight: '85vh', overflow: 'hidden' }}>
+            {images.hero
+              ? <img src={images.hero} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              : <div style={{ width: '100%', height: '100%', background: c.secondary }} />
+            }
+          </div>
+        )}
       </header>
 
       {/* TRUST BAR */}

@@ -21,6 +21,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
   const payments = Array.isArray(biz.paymentMethods) ? biz.paymentMethods : [];
   const awards = Array.isArray(biz.awards) ? biz.awards : biz.awards ? [biz.awards] : [];
   const specialties = Array.isArray(biz.specialties) ? biz.specialties : biz.specialties ? [biz.specialties] : [];
+  const splitHero = copy?.heroLayout === 'split';
 
   const [scrolled, setScrolled] = useState(false);
 
@@ -154,23 +155,26 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
       </nav>
 
       {/* ═══ HERO ═══ */}
-      <header style={{
+      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : {
         minHeight: '100vh', position: 'relative', display: 'flex', alignItems: 'center',
         background: 'linear-gradient(160deg, #e0f7ff 0%, #f0f9ff 50%, #eff6ff 100%)',
         overflow: 'hidden', paddingTop: 66,
       }}>
-        <HeroImage src={images.hero} />
-        <BubbleBlob size='480px' top='-120px' left='-120px' opacity={0.22} blur={8} />
-        <BubbleBlob size='320px' bottom='-80px' right='-60px' opacity={0.18} blur={6} />
-        <BubbleBlob size='220px' top='40%' right='6%' opacity={0.28} />
-        <SmallBubble size='70px'  top='18%' left='62%' />
-        <SmallBubble size='42px'  top='62%' left='48%' />
-        <SmallBubble size='28px'  top='78%' left='72%' />
-        <SmallBubble size='52px'  top='30%' right='22%' />
-        <SmallBubble size='36px'  bottom='22%' left='20%' />
-        <SmallBubble size='20px'  top='50%' left='30%' />
+        {!splitHero && <HeroImage src={images.hero} />}
+        {!splitHero && <BubbleBlob size='480px' top='-120px' left='-120px' opacity={0.22} blur={8} />}
+        {!splitHero && <BubbleBlob size='320px' bottom='-80px' right='-60px' opacity={0.18} blur={6} />}
+        {!splitHero && <BubbleBlob size='220px' top='40%' right='6%' opacity={0.28} />}
+        {!splitHero && <SmallBubble size='70px'  top='18%' left='62%' />}
+        {!splitHero && <SmallBubble size='42px'  top='62%' left='48%' />}
+        {!splitHero && <SmallBubble size='28px'  top='78%' left='72%' />}
+        {!splitHero && <SmallBubble size='52px'  top='30%' right='22%' />}
+        {!splitHero && <SmallBubble size='36px'  bottom='22%' left='20%' />}
+        {!splitHero && <SmallBubble size='20px'  top='50%' left='30%' />}
 
-        <div style={{ position: 'relative', zIndex: 1, padding: '6rem 5% 5rem', maxWidth: 800 }}>
+        <div style={splitHero ? {
+          flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          padding: 'clamp(3rem,6vw,6rem)', background: c.bg,
+        } : { position: 'relative', zIndex: 1, padding: '6rem 5% 5rem', maxWidth: 800 }}>
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
             background: 'rgba(255,255,255,0.75)', borderRadius: 50,
@@ -219,11 +223,21 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
           </div>
         </div>
 
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, lineHeight: 0 }}>
-          <svg viewBox='0 0 1440 90' preserveAspectRatio='none' xmlns='http://www.w3.org/2000/svg' style={{ width: '100%', display: 'block' }}>
-            <path d='M0,60 C180,90 360,20 540,55 C720,90 900,25 1080,55 C1260,85 1380,40 1440,60 L1440,90 L0,90 Z' fill='white' />
-          </svg>
-        </div>
+        {!splitHero && (
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, lineHeight: 0 }}>
+            <svg viewBox='0 0 1440 90' preserveAspectRatio='none' xmlns='http://www.w3.org/2000/svg' style={{ width: '100%', display: 'block' }}>
+              <path d='M0,60 C180,90 360,20 540,55 C720,90 900,25 1080,55 C1260,85 1380,40 1440,60 L1440,90 L0,90 Z' fill='white' />
+            </svg>
+          </div>
+        )}
+        {splitHero && (
+          <div style={{ flex: 1, position: 'relative', minHeight: '85vh', overflow: 'hidden' }}>
+            {images.hero
+              ? <img src={images.hero} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              : <div style={{ width: '100%', height: '100%', background: c.secondary || '#e0f7fa' }} />
+            }
+          </div>
+        )}
       </header>
 
       {/* ═══ SOAP MARQUEE ═══ */}

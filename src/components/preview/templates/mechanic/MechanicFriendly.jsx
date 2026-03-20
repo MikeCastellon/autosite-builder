@@ -45,6 +45,7 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
   ];
 
   const svcCols = (() => { const n = generatedCopy?.servicesSection?.items?.length || 0; return n >= 6 ? Math.ceil(n / 2) : n || 1; })();
+  const splitHero = generatedCopy?.heroLayout === 'split';
 
   const s = {
     nav: {
@@ -243,10 +244,13 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
       </nav>
 
       {/* HERO */}
-      <section id="hero" style={s.hero}>
-        <HeroImage src={images.hero} />
-        <div style={s.heroAccentBar} />
-        <div style={{ position: 'relative', zIndex: 1 }}>
+      <section id="hero" style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : s.hero}>
+        {!splitHero && <HeroImage src={images.hero} />}
+        {!splitHero && <div style={s.heroAccentBar} />}
+        <div style={splitHero ? {
+          flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          padding: 'clamp(3rem,6vw,6rem)', background: c.secondary || '#edf2f7',
+        } : { position: 'relative', zIndex: 1 }}>
           {businessInfo.yearsInBusiness && (
             <div style={s.trustedBadge}>
               <div style={s.badgeDot} />
@@ -266,6 +270,14 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
             <button style={s.ctaOutline}>{generatedCopy.ctaSecondary}</button>
           </div>
         </div>
+        {splitHero && (
+          <div style={{ flex: 1, position: 'relative', minHeight: '85vh', overflow: 'hidden' }}>
+            {images.hero
+              ? <img src={images.hero} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              : <div style={{ width: '100%', height: '100%', background: c.secondary || '#edf2f7' }} />
+            }
+          </div>
+        )}
       </section>
 
       {/* WHY CHOOSE US */}

@@ -8,6 +8,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
   const font = templateMeta.font;
   const bodyFont = templateMeta.bodyFont;
   const [scrolled, setScrolled] = useState(false);
+  const splitHero = generatedCopy?.heroLayout === 'split';
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -204,11 +205,14 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
       </nav>
 
       {/* HERO */}
-      <section id="hero" style={s.hero}>
-        <HeroImage src={images.hero} />
-        <div style={s.heroSlash} />
-        <div style={s.heroSlash2} />
-        <div style={{ position: 'relative', zIndex: 1 }}>
+      <section id="hero" style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : s.hero}>
+        {!splitHero && <HeroImage src={images.hero} />}
+        {!splitHero && <div style={s.heroSlash} />}
+        {!splitHero && <div style={s.heroSlash2} />}
+        <div style={splitHero ? {
+          flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          padding: 'clamp(3rem,6vw,6rem)', background: c.bg,
+        } : { position: 'relative', zIndex: 1 }}>
           {businessInfo.awards && <div style={s.awardsTag}>{businessInfo.awards}</div>}
           <h1 style={s.heroH1}>
             {generatedCopy.headline.split(' ').map((word, i) =>
@@ -221,6 +225,14 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
             <button style={s.ctaGhost}>{generatedCopy.ctaSecondary}</button>
           </div>
         </div>
+        {splitHero && (
+          <div style={{ flex: 1, position: 'relative', minHeight: '85vh', overflow: 'hidden' }}>
+            {images.hero
+              ? <img src={images.hero} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              : <div style={{ width: '100%', height: '100%', background: c.secondary }} />
+            }
+          </div>
+        )}
       </section>
 
       {/* STATS BAR */}

@@ -17,6 +17,7 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
   // templateMeta.bodyFont = body font
   const font = templateMeta.font;
   const bodyFont = templateMeta.bodyFont;
+  const splitHero = generatedCopy?.heroLayout === 'split';
 
   // Gold gradient
   const goldGradient = `linear-gradient(135deg, #ca8a04 0%, #eab308 35%, #fde047 55%, #eab308 75%, #ca8a04 100%)`;
@@ -190,37 +191,34 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
       </nav>
 
       {/* HERO */}
-      <section style={heroStyle}>
-        <HeroImage src={images.hero} />
-        {/* Diagonal accent lines */}
-        <div style={diagonalLines} />
-        {/* Corner gold accents */}
-        <div style={{ position: 'absolute', top: '12%', left: '6%', width: '80px', height: '1px', background: goldGradient, opacity: 0.5 }} />
-        <div style={{ position: 'absolute', top: 'calc(12% + 8px)', left: '6%', width: '40px', height: '1px', background: goldGradient, opacity: 0.25 }} />
-        <div style={{ position: 'absolute', bottom: '12%', right: '6%', width: '80px', height: '1px', background: goldGradient, opacity: 0.5 }} />
-        <div style={{ position: 'absolute', bottom: 'calc(12% + 8px)', right: '6%', width: '40px', height: '1px', background: goldGradient, opacity: 0.25 }} />
-        {/* Radial gold glow */}
-        <div style={{ position: 'absolute', top: '40%', left: '50%', transform: 'translate(-50%,-50%)', width: '700px', height: '500px', background: 'radial-gradient(ellipse, rgba(202,138,4,0.04) 0%, transparent 70%)', pointerEvents: 'none' }} />
+      <section style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : heroStyle}>
+        {!splitHero && <HeroImage src={images.hero} />}
+        {!splitHero && <div style={diagonalLines} />}
+        {!splitHero && <div style={{ position: 'absolute', top: '12%', left: '6%', width: '80px', height: '1px', background: goldGradient, opacity: 0.5 }} />}
+        {!splitHero && <div style={{ position: 'absolute', top: 'calc(12% + 8px)', left: '6%', width: '40px', height: '1px', background: goldGradient, opacity: 0.25 }} />}
+        {!splitHero && <div style={{ position: 'absolute', bottom: '12%', right: '6%', width: '80px', height: '1px', background: goldGradient, opacity: 0.5 }} />}
+        {!splitHero && <div style={{ position: 'absolute', bottom: 'calc(12% + 8px)', right: '6%', width: '40px', height: '1px', background: goldGradient, opacity: 0.25 }} />}
+        {!splitHero && <div style={{ position: 'absolute', top: '40%', left: '50%', transform: 'translate(-50%,-50%)', width: '700px', height: '500px', background: 'radial-gradient(ellipse, rgba(202,138,4,0.04) 0%, transparent 70%)', pointerEvents: 'none' }} />}
 
-        <div style={{ textAlign: 'center', maxWidth: '820px', padding: '140px 24px 100px', position: 'relative', zIndex: 1 }}>
-          {/* Awards ribbon */}
+        <div style={splitHero ? {
+          flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          padding: 'clamp(3rem,6vw,6rem)', background: c.bg,
+        } : { textAlign: 'center', maxWidth: '820px', padding: '140px 24px 100px', position: 'relative', zIndex: 1 }}>
           {businessInfo.awards && businessInfo.awards.length > 0 && (
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', border: '1px solid rgba(202,138,4,0.3)', padding: '8px 20px', marginBottom: '28px' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', border: '1px solid rgba(202,138,4,0.3)', padding: '8px 20px', marginBottom: '28px', alignSelf: splitHero ? 'flex-start' : undefined }}>
               <span style={{ fontSize: '0.72rem', letterSpacing: '3px', textTransform: 'uppercase', ...goldGradientText, fontFamily: bodyFont, fontWeight: 600 }}>
                 🏆 {businessInfo.awards[0]}
               </span>
             </div>
           )}
-
-          {/* Heading uses templateMeta.font (Playfair Display) */}
-          <h1 style={{ fontFamily: font, fontSize: 'clamp(2rem, 5.5vw, 4.5rem)', fontWeight: 700, color: c.text, lineHeight: 1.1, marginBottom: '8px', letterSpacing: '-0.5px', fontStyle: 'italic' }}>
+          <h1 style={{ fontFamily: font, fontSize: 'clamp(2rem, 5.5vw, 4.5rem)', fontWeight: 700, color: c.text, lineHeight: 1.1, marginBottom: '8px', letterSpacing: '-0.5px', fontStyle: 'italic', textAlign: splitHero ? 'left' : 'center' }}>
             {generatedCopy.headline}
           </h1>
-          <div style={{ width: '100px', height: '1px', background: goldGradient, margin: '24px auto' }} />
-          <p style={{ fontSize: '1.05rem', color: c.muted, marginBottom: '48px', lineHeight: 1.85, maxWidth: '580px', margin: '0 auto 48px', fontWeight: 300, letterSpacing: '0.3px' }}>
+          <div style={{ width: '100px', height: '1px', background: goldGradient, margin: splitHero ? '24px 0' : '24px auto' }} />
+          <p style={{ fontSize: '1.05rem', color: c.muted, marginBottom: '48px', lineHeight: 1.85, maxWidth: '580px', margin: splitHero ? '0 0 48px' : '0 auto 48px', fontWeight: 300, letterSpacing: '0.3px' }}>
             {generatedCopy.subheadline}
           </p>
-          <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '40px' }}>
+          <div style={{ display: 'flex', gap: '16px', justifyContent: splitHero ? 'flex-start' : 'center', flexWrap: 'wrap', marginBottom: '40px' }}>
             <button style={accentBtnStyle}>{generatedCopy.ctaPrimary}</button>
             <button style={outlineBtnStyle}>{generatedCopy.ctaSecondary}</button>
           </div>
@@ -228,6 +226,14 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
             <p style={{ color: 'rgba(202,138,4,0.45)', fontSize: '0.85rem', letterSpacing: '2px', textTransform: 'uppercase', fontFamily: bodyFont }}>{businessInfo.tagline}</p>
           )}
         </div>
+        {splitHero && (
+          <div style={{ flex: 1, position: 'relative', minHeight: '85vh', overflow: 'hidden' }}>
+            {images.hero
+              ? <img src={images.hero} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              : <div style={{ width: '100%', height: '100%', background: c.secondary }} />
+            }
+          </div>
+        )}
       </section>
 
       {/* STATS BAR */}

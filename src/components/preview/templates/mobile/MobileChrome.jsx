@@ -15,6 +15,7 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
   const c = templateMeta.colors;
   const font = templateMeta.font;
   const bodyFont = templateMeta.bodyFont;
+  const splitHero = generatedCopy?.heroLayout === 'split';
 
   // Chrome shimmer gradient
   const chromeGradient = `linear-gradient(135deg, #94a3b8 0%, #cbd5e1 30%, #94a3b8 50%, #64748b 70%, #94a3b8 100%)`;
@@ -169,34 +170,35 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
       </nav>
 
       {/* HERO */}
-      <section style={heroStyle}>
-        <HeroImage src={images.hero} />
-        <div style={heroGlowStyle} />
-        {/* Chrome horizontal lines */}
-        {[15, 25, 75, 85].map((top, i) => (
+      <section style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : heroStyle}>
+        {!splitHero && <HeroImage src={images.hero} />}
+        {!splitHero && <div style={heroGlowStyle} />}
+        {!splitHero && [15, 25, 75, 85].map((top, i) => (
           <div key={i} style={chromeLine(`${top}%`, i % 2 === 0 ? 0.1 : 0.06)} />
         ))}
-        {/* Vertical chrome accent lines */}
-        <div style={{ position: 'absolute', left: '8%', top: 0, bottom: 0, width: '1px', background: 'linear-gradient(180deg, transparent 0%, rgba(148,163,184,0.08) 30%, rgba(148,163,184,0.08) 70%, transparent 100%)' }} />
-        <div style={{ position: 'absolute', right: '8%', top: 0, bottom: 0, width: '1px', background: 'linear-gradient(180deg, transparent 0%, rgba(148,163,184,0.08) 30%, rgba(148,163,184,0.08) 70%, transparent 100%)' }} />
+        {!splitHero && <div style={{ position: 'absolute', left: '8%', top: 0, bottom: 0, width: '1px', background: 'linear-gradient(180deg, transparent 0%, rgba(148,163,184,0.08) 30%, rgba(148,163,184,0.08) 70%, transparent 100%)' }} />}
+        {!splitHero && <div style={{ position: 'absolute', right: '8%', top: 0, bottom: 0, width: '1px', background: 'linear-gradient(180deg, transparent 0%, rgba(148,163,184,0.08) 30%, rgba(148,163,184,0.08) 70%, transparent 100%)' }} />}
 
-        <div style={{ textAlign: 'center', maxWidth: '800px', padding: '140px 24px 100px', position: 'relative', zIndex: 1 }}>
+        <div style={splitHero ? {
+          flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          padding: 'clamp(3rem,6vw,6rem)', background: c.bg,
+        } : { textAlign: 'center', maxWidth: '800px', padding: '140px 24px 100px', position: 'relative', zIndex: 1 }}>
           {/* Elite badge */}
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', border: '1px solid rgba(148,163,184,0.25)', borderRadius: '1px', padding: '10px 24px', marginBottom: '36px' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', border: '1px solid rgba(148,163,184,0.25)', borderRadius: '1px', padding: '10px 24px', marginBottom: '36px', alignSelf: splitHero ? 'flex-start' : undefined }}>
             <div style={{ width: '6px', height: '6px', background: chromeGradient, borderRadius: '50%' }} />
             <span style={{ fontFamily: font, fontSize: '0.72rem', fontWeight: 600, letterSpacing: '4px', textTransform: 'uppercase', background: chromeGradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               Elite Mobile Detailing
             </span>
             <div style={{ width: '6px', height: '6px', background: chromeGradient, borderRadius: '50%' }} />
           </div>
-          <h1 style={{ fontFamily: font, fontSize: 'clamp(2.4rem, 5vw, 4rem)', fontWeight: 300, color: c.text, lineHeight: 1.15, marginBottom: '24px', letterSpacing: '-1px' }}>
+          <h1 style={{ fontFamily: font, fontSize: 'clamp(2.4rem, 5vw, 4rem)', fontWeight: 300, color: c.text, lineHeight: 1.15, marginBottom: '24px', letterSpacing: '-1px', textAlign: splitHero ? 'left' : 'center' }}>
             {generatedCopy.headline}
           </h1>
-          <div style={{ width: '80px', height: '1px', background: chromeGradient, margin: '0 auto 28px' }} />
-          <p style={{ fontSize: '1.05rem', color: c.muted, marginBottom: '48px', lineHeight: 1.8, maxWidth: '560px', margin: '0 auto 48px', fontWeight: 300, letterSpacing: '0.3px' }}>
+          <div style={{ width: '80px', height: '1px', background: chromeGradient, margin: splitHero ? '0 0 28px' : '0 auto 28px' }} />
+          <p style={{ fontSize: '1.05rem', color: c.muted, marginBottom: '48px', lineHeight: 1.8, maxWidth: '560px', margin: splitHero ? '0 0 48px' : '0 auto 48px', fontWeight: 300, letterSpacing: '0.3px' }}>
             {generatedCopy.subheadline}
           </p>
-          <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '16px', justifyContent: splitHero ? 'flex-start' : 'center', flexWrap: 'wrap' }}>
             <button style={accentBtnStyle}>{generatedCopy.ctaPrimary}</button>
             <button style={outlineBtnStyle}>{generatedCopy.ctaSecondary}</button>
           </div>
@@ -204,6 +206,14 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
             <p style={{ marginTop: '36px', color: 'rgba(148,163,184,0.5)', fontSize: '0.82rem', letterSpacing: '2px', textTransform: 'uppercase' }}>{businessInfo.tagline}</p>
           )}
         </div>
+        {splitHero && (
+          <div style={{ flex: 1, position: 'relative', minHeight: '85vh', overflow: 'hidden' }}>
+            {images.hero
+              ? <img src={images.hero} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              : <div style={{ width: '100%', height: '100%', background: c.secondary }} />
+            }
+          </div>
+        )}
       </section>
 
       {/* STATS BAR */}

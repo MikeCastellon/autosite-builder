@@ -23,6 +23,7 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  const splitHero = generatedCopy?.heroLayout === 'split';
   const dark3 = '#141820';
   const mid = '#1E232E';
   const textDim = c.muted || '#6B7280';
@@ -197,12 +198,15 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
       </nav>
 
       {/* HERO */}
-      <section id="hero" style={s.hero}>
-        <div style={s.heroBg} />
-        <div style={s.heroGrid} />
-        <div style={s.heroLine} />
-        <HeroImage src={images.hero} />
-        <div style={s.heroContent}>
+      <section id="hero" style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : s.hero}>
+        {!splitHero && <div style={s.heroBg} />}
+        {!splitHero && <div style={s.heroGrid} />}
+        {!splitHero && <div style={s.heroLine} />}
+        {!splitHero && <HeroImage src={images.hero} />}
+        <div style={splitHero ? {
+          flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          padding: 'clamp(3rem,6vw,6rem)', background: dark3,
+        } : s.heroContent}>
           <div style={s.heroEyebrow}>
             <div style={s.heroEyebrowLine} />
             <span style={s.heroEyebrowText}>
@@ -222,6 +226,14 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
             </button>
           </div>
         </div>
+        {splitHero && (
+          <div style={{ flex: 1, position: 'relative', minHeight: '85vh', overflow: 'hidden' }}>
+            {images.hero
+              ? <img src={images.hero} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              : <div style={{ width: '100%', height: '100%', background: mid }} />
+            }
+          </div>
+        )}
       </section>
 
       {/* STATS BAR */}

@@ -29,15 +29,15 @@ export default function TemplateCard({ template, selected, onClick }) {
         </div>
       </div>
 
-      {/* Info row */}
-      <div className="bg-white p-3 border-t border-gray-100 flex-1">
+      {/* Info row — fixed height so all cards match */}
+      <div className="bg-white p-3 border-t border-gray-100" style={{ height: 96 }}>
         <div className="flex items-center justify-between mb-0.5">
           <p className="font-semibold text-gray-900 text-[13px]">{template.label}</p>
           {isSelected && (
             <span className="bg-gray-900 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full tracking-wide">SELECTED</span>
           )}
         </div>
-        <p className="text-gray-400 text-[11px] leading-relaxed">{template.description}</p>
+        <p className="text-gray-400 text-[11px] leading-relaxed overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{template.description}</p>
         {/* Color swatches */}
         <div className="flex gap-1 mt-2">
           {template.previewColors.map((c) => (

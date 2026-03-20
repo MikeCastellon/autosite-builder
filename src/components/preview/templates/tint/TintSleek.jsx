@@ -23,6 +23,7 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
   const testimonials = copy.testimonialPlaceholders || [];
   const payments = biz.paymentMethods || [];
   const packages = biz.packages || [];
+  const splitHero = copy?.heroLayout === 'split';
 
   const filmBrandsList = biz.filmBrands
     ? (typeof biz.filmBrands === 'string' ? biz.filmBrands.split(/,|·/).map(b => b.trim()) : biz.filmBrands)
@@ -65,21 +66,23 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
       </nav>
 
       {/* HERO — two-column layout */}
-      <header style={{
+      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : {
         minHeight: '100vh', display: 'flex', alignItems: 'center',
         background: `linear-gradient(135deg, ${c.bg} 0%, #111827 100%)`,
         padding: '96px 5% 72px',
         borderBottom: `2px solid ${c.accent}44`,
         position: 'relative', overflow: 'hidden',
       }}>
-        <HeroImage src={images.hero} />
-        <div className="tp-2col" style={{ position: 'relative', zIndex: 1, maxWidth: 1200, margin: '0 auto', width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'center' }}>
-          {/* Left column */}
-          <div>
+        {!splitHero && <HeroImage src={images.hero} />}
+        {splitHero ? (
+          <div style={{
+            flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
+            padding: 'clamp(3rem,6vw,6rem)', background: c.bg,
+          }}>
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
               background: `${c.accent}18`, border: `1px solid ${c.accent}44`,
-              borderRadius: 30, padding: '6px 16px', marginBottom: 28,
+              borderRadius: 30, padding: '6px 16px', marginBottom: 28, alignSelf: 'flex-start',
             }}>
               <div style={{ width: 6, height: 6, background: c.accent, borderRadius: '50%' }} />
               <span style={{ color: c.accent, fontSize: 11, fontWeight: 700, letterSpacing: 2.5, textTransform: 'uppercase' }}>
@@ -108,33 +111,78 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
               </a>
             </div>
           </div>
-          {/* Right column: info stack */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {biz.phone && (
-              <div style={{ background: c.secondary, borderRadius: 12, padding: '22px 26px', borderLeft: `4px solid ${c.accent}` }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: c.accent, letterSpacing: 2.5, textTransform: 'uppercase', marginBottom: 6 }}>PHONE</div>
-                <a href={`tel:${biz.phone}`} style={{ fontSize: 20, fontWeight: 800, color: c.text, textDecoration: 'none' }}>{biz.phone}</a>
+        ) : (
+          <div className="tp-2col" style={{ position: 'relative', zIndex: 1, maxWidth: 1200, margin: '0 auto', width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'center' }}>
+            {/* Left column */}
+            <div>
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                background: `${c.accent}18`, border: `1px solid ${c.accent}44`,
+                borderRadius: 30, padding: '6px 16px', marginBottom: 28,
+              }}>
+                <div style={{ width: 6, height: 6, background: c.accent, borderRadius: '50%' }} />
+                <span style={{ color: c.accent, fontSize: 11, fontWeight: 700, letterSpacing: 2.5, textTransform: 'uppercase' }}>
+                  {biz.city}, {biz.state}
+                </span>
               </div>
-            )}
-            {biz.hours && Object.keys(biz.hours).length > 0 && (
-              <div style={{ background: c.secondary, borderRadius: 12, padding: '22px 26px', borderLeft: `4px solid ${c.accent}` }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: c.accent, letterSpacing: 2.5, textTransform: 'uppercase', marginBottom: 12 }}>HOURS</div>
-                {Object.entries(biz.hours).slice(0, 5).map(([day, hrs], i) => (
-                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                    <span style={{ color: c.muted, fontSize: 13, fontWeight: 500 }}>{day}</span>
-                    <span style={{ color: c.text, fontSize: 13, fontWeight: 700 }}>{hrs}</span>
-                  </div>
-                ))}
+              <h1 style={{ fontSize: 'clamp(2.2rem, 4.5vw, 3.5rem)', fontWeight: 800, lineHeight: 1.15, marginBottom: 20 }}>
+                {copy.headline || 'Precision Tinting.\nPerfect Finish.'}
+              </h1>
+              <p style={{ color: c.muted, fontSize: 16, lineHeight: 1.75, marginBottom: 36, maxWidth: 440 }}>
+                {copy.subheadline || biz.tagline || 'Professional window film installation with precision and care.'}
+              </p>
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                <a href={`tel:${biz.phone}`} style={{
+                  background: c.accent, color: '#fff', padding: '14px 32px',
+                  borderRadius: 8, fontWeight: 700, fontSize: 15, textDecoration: 'none',
+                  boxShadow: `0 4px 20px ${c.accent}44`,
+                }}>
+                  {copy.ctaPrimary || 'Book Now'}
+                </a>
+                <a href="#services" style={{
+                  border: `1.5px solid ${c.muted}`, color: c.text, padding: '13px 28px',
+                  borderRadius: 8, fontWeight: 600, fontSize: 15, textDecoration: 'none',
+                }}>
+                  {copy.ctaSecondary || 'View Services'}
+                </a>
               </div>
-            )}
-            {biz.yearsInBusiness && (
-              <div style={{ background: c.secondary, borderRadius: 12, padding: '18px 26px', borderLeft: `4px solid ${c.accent}` }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: c.accent, letterSpacing: 2.5, textTransform: 'uppercase', marginBottom: 4 }}>EXPERIENCE</div>
-                <div style={{ fontSize: 16, fontWeight: 700, color: c.text }}>{biz.yearsInBusiness}+ Years</div>
-              </div>
-            )}
+            </div>
+            {/* Right column: info stack */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {biz.phone && (
+                <div style={{ background: c.secondary, borderRadius: 12, padding: '22px 26px', borderLeft: `4px solid ${c.accent}` }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: c.accent, letterSpacing: 2.5, textTransform: 'uppercase', marginBottom: 6 }}>PHONE</div>
+                  <a href={`tel:${biz.phone}`} style={{ fontSize: 20, fontWeight: 800, color: c.text, textDecoration: 'none' }}>{biz.phone}</a>
+                </div>
+              )}
+              {biz.hours && Object.keys(biz.hours).length > 0 && (
+                <div style={{ background: c.secondary, borderRadius: 12, padding: '22px 26px', borderLeft: `4px solid ${c.accent}` }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: c.accent, letterSpacing: 2.5, textTransform: 'uppercase', marginBottom: 12 }}>HOURS</div>
+                  {Object.entries(biz.hours).slice(0, 5).map(([day, hrs], i) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                      <span style={{ color: c.muted, fontSize: 13, fontWeight: 500 }}>{day}</span>
+                      <span style={{ color: c.text, fontSize: 13, fontWeight: 700 }}>{hrs}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {biz.yearsInBusiness && (
+                <div style={{ background: c.secondary, borderRadius: 12, padding: '18px 26px', borderLeft: `4px solid ${c.accent}` }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: c.accent, letterSpacing: 2.5, textTransform: 'uppercase', marginBottom: 4 }}>EXPERIENCE</div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: c.text }}>{biz.yearsInBusiness}+ Years</div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
+        {splitHero && (
+          <div style={{ flex: 1, position: 'relative', minHeight: '85vh', overflow: 'hidden' }}>
+            {images.hero
+              ? <img src={images.hero} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              : <div style={{ width: '100%', height: '100%', background: c.secondary }} />
+            }
+          </div>
+        )}
       </header>
 
       {/* STATS */}

@@ -28,6 +28,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
   const bodyFont = templateMeta?.bodyFont || "'Barlow', sans-serif";
   const biz = businessInfo || {};
   const copy = generatedCopy || {};
+  const splitHero = copy?.heroLayout === 'split';
   const services = copy.servicesSection?.items || [];
   const svcCols = services.length >= 6 ? Math.ceil(services.length / 2) : services.length || 1;
   const testimonials = copy.testimonialPlaceholders || [];
@@ -144,11 +145,14 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
       </nav>
 
       {/* HERO */}
-      <section className="tp-2col" style={{ paddingTop: 68, minHeight: "92vh", background: D.offwhite, display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", alignItems: "stretch", overflow: "hidden", position: "relative" }}>
+      <section className="tp-2col" style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : { paddingTop: 68, minHeight: "92vh", background: D.offwhite, display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", alignItems: "stretch", overflow: "hidden", position: "relative" }}>
 
-        <HeroImage src={images.hero} />
+        {!splitHero && <HeroImage src={images.hero} />}
         {/* Hero Left */}
-        <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "clamp(48px,6vw,80px) clamp(24px,5vw,64px) clamp(48px,6vw,80px) clamp(24px,6vw,80px)", position: "relative", zIndex: 2 }}>
+        <div style={splitHero ? {
+          flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          padding: 'clamp(3rem,6vw,6rem)', background: D.offwhite,
+        } : { display: "flex", flexDirection: "column", justifyContent: "center", padding: "clamp(48px,6vw,80px) clamp(24px,5vw,64px) clamp(48px,6vw,80px) clamp(24px,6vw,80px)", position: "relative", zIndex: 2 }}>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 10, fontSize: 11, fontWeight: 600, letterSpacing: "3px", textTransform: "uppercase", color: D.blue, marginBottom: 24, fontFamily: bodyFont }}>
             <span style={{ width: 24, height: 2, background: D.blue, flexShrink: 0, display: "inline-block" }} />
             {biz.city ? `${biz.city}'s Premier Wheel Studio` : "Custom Wheel Specialists"}
@@ -198,7 +202,15 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
           </div>
         </div>
 
-        {/* Hero Right - brushed alloy panel */}
+        {/* Hero Right - brushed alloy panel or hero image in split mode */}
+        {splitHero ? (
+          <div style={{ flex: 1, position: 'relative', minHeight: '85vh', overflow: 'hidden' }}>
+            {images.hero
+              ? <img src={images.hero} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              : <div style={{ width: '100%', height: '100%', background: D.mist }} />
+            }
+          </div>
+        ) : (
         <div style={{ position: "relative", overflow: "hidden", background: D.mist, minHeight: 400 }}>
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(110deg, #E8EAED 0%, #D8DCE3 20%, #ECEEF2 35%, #C8CDD6 50%, #E2E5EA 65%, #D0D4DD 80%, #E8EAED 100%)" }} />
           <div style={{ position: "absolute", inset: 0, background: "repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,255,255,0.35) 3px, rgba(255,255,255,0.35) 4px)", opacity: 0.6 }} />
@@ -219,6 +231,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
             </div>
           </div>
         </div>
+        )}
       </section>
 
       {/* BRAND STRIP */}

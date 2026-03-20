@@ -24,6 +24,8 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
   const payments = biz.paymentMethods || [];
   const packages = biz.packages || [];
 
+  const splitHero = generatedCopy?.heroLayout === 'split';
+
   const slashBg = `repeating-linear-gradient(
     -55deg,
     transparent,
@@ -74,42 +76,57 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
       </nav>
 
       {/* HERO — full height with diagonal slash overlay */}
-      <header style={{
+      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : {
         minHeight: '100vh', position: 'relative', display: 'flex', alignItems: 'center',
         background: `linear-gradient(135deg, #1a1a1a 0%, #2d1800 55%, #1a1a1a 100%)`,
         overflow: 'hidden',
       }}>
-        <HeroImage src={images.hero} />
-        <div style={{ position: 'absolute', inset: 0, background: slashBg }} />
-        <div style={{ position: 'absolute', top: 0, right: 0, width: '40%', height: '100%', background: `linear-gradient(to left, rgba(249,115,22,0.12), transparent)` }} />
-
-        {/* WE COME TO YOU badge — top right */}
-        <div style={{
-          position: 'absolute', top: 88, right: '5%',
-          background: c.accent, color: '#fff',
-          fontWeight: 900, fontSize: 13, letterSpacing: 2, textTransform: 'uppercase',
-          padding: '8px 20px',
-          clipPath: 'polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%)',
-        }}>
-          WE COME TO YOU
-        </div>
-
-        <div style={{ position: 'relative', zIndex: 1, padding: '7rem 5% 4rem', maxWidth: 960 }}>
+        {!splitHero && <HeroImage src={images.hero} />}
+        {!splitHero && <div style={{ position: 'absolute', inset: 0, background: slashBg }} />}
+        {!splitHero && <div style={{ position: 'absolute', top: 0, right: 0, width: '40%', height: '100%', background: `linear-gradient(to left, rgba(249,115,22,0.12), transparent)` }} />}
+        {!splitHero && (
           <div style={{
-            display: 'inline-block', background: c.accent, color: '#fff',
-            fontWeight: 900, fontSize: 11, letterSpacing: 3, textTransform: 'uppercase',
-            padding: '5px 16px', marginBottom: 24,
-            clipPath: 'polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%)',
+            position: 'absolute', top: 88, right: '5%',
+            background: c.accent, color: '#fff',
+            fontWeight: 900, fontSize: 13, letterSpacing: 2, textTransform: 'uppercase',
+            padding: '8px 20px',
+            clipPath: 'polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%)',
           }}>
-            MOBILE DETAILING — {biz.city || 'YOUR CITY'}, {biz.state || ''}
+            WE COME TO YOU
           </div>
+        )}
+
+        <div style={splitHero ? {
+          flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          padding: 'clamp(3rem,6vw,6rem)', background: c.bg,
+        } : { position: 'relative', zIndex: 1, padding: '7rem 5% 4rem', maxWidth: 960 }}>
+          {splitHero && (
+            <div style={{
+              display: 'inline-block', background: c.accent, color: '#fff',
+              fontWeight: 900, fontSize: 11, letterSpacing: 3, textTransform: 'uppercase',
+              padding: '8px 20px', marginBottom: 24,
+              clipPath: 'polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%)',
+            }}>
+              WE COME TO YOU
+            </div>
+          )}
+          {!splitHero && (
+            <div style={{
+              display: 'inline-block', background: c.accent, color: '#fff',
+              fontWeight: 900, fontSize: 11, letterSpacing: 3, textTransform: 'uppercase',
+              padding: '5px 16px', marginBottom: 24,
+              clipPath: 'polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%)',
+            }}>
+              MOBILE DETAILING — {biz.city || 'YOUR CITY'}, {biz.state || ''}
+            </div>
+          )}
           <h1 style={{
             fontSize: 'clamp(1.8rem, 8vw, 6rem)', fontWeight: 900, lineHeight: 0.95,
             textTransform: 'uppercase', letterSpacing: '-0.02em', margin: '0 0 1.2rem',
           }}>
             {copy.headline || `DETAIL\nCOMES\nTO YOU`}
           </h1>
-          <p style={{ fontSize: 18, color: '#bbb', maxWidth: 500, marginBottom: 40, lineHeight: 1.6 }}>
+          <p style={{ fontSize: 18, color: splitHero ? c.text : '#bbb', maxWidth: 500, marginBottom: 40, lineHeight: 1.6 }}>
             {copy.subheadline || biz.tagline || 'Professional mobile detailing at your door.'}
           </p>
           <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -130,6 +147,14 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
             </a>
           </div>
         </div>
+        {splitHero && (
+          <div style={{ flex: 1, position: 'relative', minHeight: '85vh', overflow: 'hidden' }}>
+            {images.hero
+              ? <img src={images.hero} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              : <div style={{ width: '100%', height: '100%', background: c.secondary }} />
+            }
+          </div>
+        )}
       </header>
 
       {/* SERVICE AREA BANNER */}

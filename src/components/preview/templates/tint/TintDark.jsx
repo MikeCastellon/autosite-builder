@@ -23,6 +23,7 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
   const testimonials = copy.testimonialPlaceholders || [];
   const payments = biz.paymentMethods || [];
   const packages = biz.packages || [];
+  const splitHero = copy?.heroLayout === 'split';
 
   const filmBrandsList = biz.filmBrands
     ? (typeof biz.filmBrands === 'string' ? biz.filmBrands.split(/,|·/).map(b => b.trim()) : biz.filmBrands)
@@ -66,38 +67,38 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
       </nav>
 
       {/* HERO — full height with radial gradient glow effect */}
-      <header style={{
+      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : {
         minHeight: '100vh', position: 'relative', display: 'flex', alignItems: 'center',
         background: c.bg,
         overflow: 'hidden',
       }}>
-        <HeroImage src={images.hero} />
-        {/* Radial glow — top right */}
-        <div style={{
+        {!splitHero && <HeroImage src={images.hero} />}
+        {!splitHero && <div style={{
           position: 'absolute', top: '-20%', right: '-10%',
           width: 700, height: 700,
           background: `radial-gradient(circle, ${c.accent}30 0%, transparent 65%)`,
           pointerEvents: 'none',
-        }} />
-        {/* Secondary glow — bottom left */}
-        <div style={{
+        }} />}
+        {!splitHero && <div style={{
           position: 'absolute', bottom: '-15%', left: '-5%',
           width: 500, height: 500,
           background: `radial-gradient(circle, ${c.accent}18 0%, transparent 70%)`,
           pointerEvents: 'none',
-        }} />
-        {/* Horizontal fade line */}
-        <div style={{
+        }} />}
+        {!splitHero && <div style={{
           position: 'absolute', bottom: 0, left: 0, right: 0,
           height: 200,
           background: `linear-gradient(to top, ${c.bg}, transparent)`,
           pointerEvents: 'none',
-        }} />
+        }} />}
 
-        <div style={{ position: 'relative', zIndex: 1, padding: '7rem 5% 4rem', maxWidth: 900, margin: '0 auto', textAlign: 'center', width: '100%' }}>
+        <div style={splitHero ? {
+          flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          padding: 'clamp(3rem,6vw,6rem)', background: c.bg,
+        } : { position: 'relative', zIndex: 1, padding: '7rem 5% 4rem', maxWidth: 900, margin: '0 auto', textAlign: 'center', width: '100%' }}>
           <div style={{
             display: 'inline-block', border: `1px solid ${c.accent}55`, borderRadius: 30,
-            padding: '6px 20px', marginBottom: 28, fontSize: 11, color: c.accent, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase',
+            padding: '6px 20px', marginBottom: 28, fontSize: 11, color: c.accent, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', alignSelf: splitHero ? 'flex-start' : undefined,
           }}>
             Premium Tint & Film Protection · {biz.city}, {biz.state}
           </div>
@@ -107,15 +108,14 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
           }}>
             {copy.headline || 'Precision Tinting. Premium Results.'}
           </h1>
-          {/* Gradient fade on subheadline */}
           <p style={{
-            fontSize: 17, lineHeight: 1.75, maxWidth: 560, margin: '0 auto 40px',
+            fontSize: 17, lineHeight: 1.75, maxWidth: 560, margin: splitHero ? '0 0 40px' : '0 auto 40px',
             background: `linear-gradient(180deg, ${c.text} 0%, rgba(232,232,232,0.6) 100%)`,
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
           }}>
             {copy.subheadline || biz.tagline || 'Professional window tinting and paint protection film.'}
           </p>
-          <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: splitHero ? 'flex-start' : 'center', alignItems: 'center' }}>
             <a href={`tel:${biz.phone}`} style={{
               background: c.accent, color: '#fff', padding: '15px 36px',
               borderRadius: 8, fontWeight: 700, fontSize: 16, textDecoration: 'none',
@@ -131,6 +131,14 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
             </a>
           </div>
         </div>
+        {splitHero && (
+          <div style={{ flex: 1, position: 'relative', minHeight: '85vh', overflow: 'hidden' }}>
+            {images.hero
+              ? <img src={images.hero} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              : <div style={{ width: '100%', height: '100%', background: c.secondary }} />
+            }
+          </div>
+        )}
       </header>
 
       {/* STATS */}

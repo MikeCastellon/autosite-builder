@@ -15,6 +15,7 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
   const c = templateMeta.colors;
   const font = templateMeta.font;
   const bodyFont = templateMeta.bodyFont;
+  const splitHero = generatedCopy?.heroLayout === 'split';
 
   const stats = [
     { value: businessInfo.yearsInBusiness ? `${businessInfo.yearsInBusiness}+` : '10+', label: 'Years Experience' },
@@ -131,9 +132,12 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
       </nav>
 
       {/* HERO */}
-      <section style={heroStyle}>
-        <HeroImage src={images.hero} />
-        <div style={{ textAlign: 'center', maxWidth: '760px', padding: '120px 24px 100px', position: 'relative', zIndex: 1 }}>
+      <section style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : heroStyle}>
+        {!splitHero && <HeroImage src={images.hero} />}
+        <div style={splitHero ? {
+          flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          padding: 'clamp(3rem,6vw,6rem)', background: c.secondary,
+        } : { textAlign: 'center', maxWidth: '760px', padding: '120px 24px 100px', position: 'relative', zIndex: 1 }}>
           <div style={{ display: 'inline-block', background: 'rgba(8,145,178,0.1)', color: c.accent, borderRadius: '50px', padding: '8px 20px', fontSize: '0.85rem', fontWeight: 700, letterSpacing: '2px', marginBottom: '24px', textTransform: 'uppercase' }}>
             {businessInfo.city}, {businessInfo.state}
           </div>
@@ -143,7 +147,7 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
           <p style={{ fontSize: '1.2rem', color: c.muted, marginBottom: '40px', lineHeight: 1.7 }}>
             {generatedCopy.subheadline}
           </p>
-          <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '16px', justifyContent: splitHero ? 'flex-start' : 'center', flexWrap: 'wrap' }}>
             <button style={accentBtnStyle}>{generatedCopy.ctaPrimary}</button>
             <button style={outlineBtnStyle}>{generatedCopy.ctaSecondary}</button>
           </div>
@@ -151,7 +155,15 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
             <p style={{ marginTop: '32px', color: c.muted, fontSize: '0.95rem', fontStyle: 'italic' }}>"{businessInfo.tagline}"</p>
           )}
         </div>
-        <div style={waveBarStyle} />
+        {!splitHero && <div style={waveBarStyle} />}
+        {splitHero && (
+          <div style={{ flex: 1, position: 'relative', minHeight: '85vh', overflow: 'hidden' }}>
+            {images.hero
+              ? <img src={images.hero} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              : <div style={{ width: '100%', height: '100%', background: c.accent }} />
+            }
+          </div>
+        )}
       </section>
 
       {/* STATS BAR */}

@@ -35,6 +35,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
 
   const certList      = toArray(biz.certifications);
   const specialtyList = toArray(biz.specialties);
+  const splitHero = copy?.heroLayout === 'split';
 
   // ── Google Fonts ──────────────────────────────────────────────────
   useEffect(() => {
@@ -209,24 +210,27 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
           HERO — full-viewport, diagonal steel-plate layout
       ═══════════════════════════════════════════════════════════ */}
       <header
-        style={{ minHeight: '100vh', paddingTop: 68, position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center' }}
+        style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : { minHeight: '100vh', paddingTop: 68, position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center' }}
       >
-        <HeroImage src={images.hero} />
+        {!splitHero && <HeroImage src={images.hero} />}
         {/* Dark diagonal base gradient */}
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #0A0A0A 0%, #1a1a1a 40%, #0f0f0f 100%)' }} />
+        {!splitHero && <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #0A0A0A 0%, #1a1a1a 40%, #0f0f0f 100%)' }} />}
         {/* Rust-tinted grid */}
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: `linear-gradient(rgba(192,57,43,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(192,57,43,0.07) 1px, transparent 1px)`, backgroundSize: '60px 60px' }} />
+        {!splitHero && <div style={{ position: 'absolute', inset: 0, backgroundImage: `linear-gradient(rgba(192,57,43,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(192,57,43,0.07) 1px, transparent 1px)`, backgroundSize: '60px 60px' }} />}
         {/* Steel-plate slash (right side) */}
-        <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: '55%', background: '#1C1C1C', clipPath: 'polygon(12% 0, 100% 0, 100% 100%, 0% 100%)', backgroundImage: hatch }} />
+        {!splitHero && <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: '55%', background: '#1C1C1C', clipPath: 'polygon(12% 0, 100% 0, 100% 100%, 0% 100%)', backgroundImage: hatch }} />}
         {/* Ghost year number */}
-        {biz.yearsInBusiness && (
+        {!splitHero && biz.yearsInBusiness && (
           <div style={{ position: 'absolute', right: '4%', top: '50%', transform: 'translateY(-50%)', fontFamily: bebas, fontSize: 'clamp(160px, 22vw, 340px)', color: 'rgba(255,255,255,0.025)', lineHeight: 1, pointerEvents: 'none', userSelect: 'none', letterSpacing: -8 }}>
             {biz.yearsInBusiness}
           </div>
         )}
 
         {/* Hero content */}
-        <div style={{ position: 'relative', zIndex: 2, padding: 'clamp(40px, 8vw, 80px) 5%', maxWidth: 740 }}>
+        <div style={splitHero ? {
+          flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          padding: 'clamp(3rem,6vw,6rem)', background: c.bg,
+        } : { position: 'relative', zIndex: 2, padding: 'clamp(40px, 8vw, 80px) 5%', maxWidth: 740 }}>
           {/* Kicker line */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 24 }}>
             <div style={{ width: 40, height: 3, background: c.accent, flexShrink: 0 }} />
@@ -270,19 +274,29 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
           </div>
 
           {/* Stat strip */}
-          <div style={{ display: 'flex', gap: 48, marginTop: 60, paddingTop: 40, borderTop: '1px solid rgba(255,255,255,0.08)', flexWrap: 'wrap' }}>
-            {[
-              { val: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'Years in Business' },
-              { val: '5,000+',  label: 'Cars Serviced' },
-              { val: '100%',    label: 'Guaranteed Work' },
-            ].map((s) => (
-              <div key={s.label}>
-                <div style={{ fontFamily: bebas, fontSize: 42, color: c.accent, lineHeight: 1, letterSpacing: 1 }}>{s.val}</div>
-                <div style={{ fontFamily: condensed, fontSize: 11, letterSpacing: 2, color: '#6B6560', textTransform: 'uppercase', fontWeight: 600, marginTop: 4 }}>{s.label}</div>
-              </div>
-            ))}
-          </div>
+          {!splitHero && (
+            <div style={{ display: 'flex', gap: 48, marginTop: 60, paddingTop: 40, borderTop: '1px solid rgba(255,255,255,0.08)', flexWrap: 'wrap' }}>
+              {[
+                { val: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'Years in Business' },
+                { val: '5,000+',  label: 'Cars Serviced' },
+                { val: '100%',    label: 'Guaranteed Work' },
+              ].map((s) => (
+                <div key={s.label}>
+                  <div style={{ fontFamily: bebas, fontSize: 42, color: c.accent, lineHeight: 1, letterSpacing: 1 }}>{s.val}</div>
+                  <div style={{ fontFamily: condensed, fontSize: 11, letterSpacing: 2, color: '#6B6560', textTransform: 'uppercase', fontWeight: 600, marginTop: 4 }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
+        {splitHero && (
+          <div style={{ flex: 1, position: 'relative', minHeight: '85vh', overflow: 'hidden' }}>
+            {images.hero
+              ? <img src={images.hero} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              : <div style={{ width: '100%', height: '100%', background: c.secondary || '#1e1e1e' }} />
+            }
+          </div>
+        )}
       </header>
 
       {/* ═══════════════════════════════════════════════════════════

@@ -19,6 +19,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
   const font = templateMeta?.bodyFont || 'Inter, system-ui, sans-serif';
   const biz = businessInfo || {};
   const copy = generatedCopy || {};
+  const splitHero = copy?.heroLayout === 'split';
   const services = copy.servicesSection?.items || [];
   const svcCols = services.length >= 6 ? Math.ceil(services.length / 2) : services.length || 1;
   const testimonials = copy.testimonialPlaceholders || [];
@@ -66,33 +67,34 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
       </nav>
 
       {/* HERO — full height, industrial feel */}
-      <header style={{
+      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : {
         minHeight: '100vh', position: 'relative', display: 'flex', alignItems: 'center',
         background: `linear-gradient(160deg, ${c.secondary || '#2c2c2c'} 0%, ${c.bg} 70%)`,
         overflow: 'hidden',
         borderBottom: '1px solid #333',
       }}>
-        <HeroImage src={images.hero} />
-        {/* Industrial grid overlay */}
-        <div style={{
+        {!splitHero && <HeroImage src={images.hero} />}
+        {!splitHero && <div style={{
           position: 'absolute', inset: 0,
           backgroundImage: `linear-gradient(rgba(234,179,8,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(234,179,8,0.04) 1px, transparent 1px)`,
           backgroundSize: '50px 50px',
-        }} />
-        {/* Accent corner decoration */}
-        <div style={{
+        }} />}
+        {!splitHero && <div style={{
           position: 'absolute', top: 0, left: 0,
           width: 8, height: '100%',
           background: `linear-gradient(180deg, ${c.accent}, transparent)`,
           opacity: 0.6,
-        }} />
-        <div style={{
+        }} />}
+        {!splitHero && <div style={{
           position: 'absolute', top: 0, right: '30%',
           width: 1, height: '100%',
           background: `linear-gradient(180deg, transparent, ${c.accent}22, transparent)`,
-        }} />
+        }} />}
 
-        <div style={{ position: 'relative', zIndex: 1, padding: '7rem 5% 4rem', maxWidth: 900 }}>
+        <div style={splitHero ? {
+          flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          padding: 'clamp(3rem,6vw,6rem)', background: c.bg,
+        } : { position: 'relative', zIndex: 1, padding: '7rem 5% 4rem', maxWidth: 900 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
             <span style={{ fontSize: 22 }}>⚙️</span>
             <span style={{ color: c.accent, fontSize: 11, letterSpacing: 4, textTransform: 'uppercase', fontWeight: 700 }}>
@@ -125,6 +127,14 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
             </a>
           </div>
         </div>
+        {splitHero && (
+          <div style={{ flex: 1, position: 'relative', minHeight: '85vh', overflow: 'hidden' }}>
+            {images.hero
+              ? <img src={images.hero} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              : <div style={{ width: '100%', height: '100%', background: c.secondary || '#2c2c2c' }} />
+            }
+          </div>
+        )}
       </header>
 
       {/* CERTIFICATIONS BADGE ROW */}

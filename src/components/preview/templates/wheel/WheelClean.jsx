@@ -18,6 +18,7 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
   const font = templateMeta?.bodyFont || 'Inter, system-ui, sans-serif';
   const biz = businessInfo || {};
   const copy = generatedCopy || {};
+  const splitHero = copy?.heroLayout === 'split';
   const services = copy.servicesSection?.items || [];
   const svcCols = services.length >= 6 ? Math.ceil(services.length / 2) : services.length || 1;
   const testimonials = copy.testimonialPlaceholders || [];
@@ -64,20 +65,23 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
       </nav>
 
       {/* HERO — full height, clean split */}
-      <header style={{
+      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : {
         minHeight: '100vh', display: 'flex', alignItems: 'center',
         background: c.secondary || '#e9ecef',
         borderBottom: '1px solid #e5e7eb',
         padding: '96px 5% 72px',
         position: 'relative', overflow: 'hidden',
       }}>
-        <HeroImage src={images.hero} />
-        <div className="tp-2col" style={{ position: 'relative', zIndex: 1, maxWidth: 1100, margin: '0 auto', width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'center' }}>
-          <div>
+        {!splitHero && <HeroImage src={images.hero} />}
+        {splitHero ? (
+          <div style={{
+            flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
+            padding: 'clamp(3rem,6vw,6rem)', background: c.secondary,
+          }}>
             <span style={{
               display: 'inline-block', background: `${c.accent}12`, color: c.accent,
               fontSize: 12, fontWeight: 700, padding: '5px 14px', borderRadius: 20,
-              textTransform: 'uppercase', letterSpacing: 2, marginBottom: 24,
+              textTransform: 'uppercase', letterSpacing: 2, marginBottom: 24, alignSelf: 'flex-start',
             }}>
               {biz.city}, {biz.state}
             </span>
@@ -102,27 +106,67 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
               </a>
             </div>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {biz.yearsInBusiness && (
-              <div style={{ background: '#fff', borderRadius: 12, padding: '24px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', borderLeft: `4px solid ${c.accent}` }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: c.accent, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 6 }}>EXPERIENCE</div>
-                <div style={{ fontWeight: 700, fontSize: 18, color: c.text }}>{biz.yearsInBusiness}+ Years</div>
+        ) : (
+          <div className="tp-2col" style={{ position: 'relative', zIndex: 1, maxWidth: 1100, margin: '0 auto', width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'center' }}>
+            <div>
+              <span style={{
+                display: 'inline-block', background: `${c.accent}12`, color: c.accent,
+                fontSize: 12, fontWeight: 700, padding: '5px 14px', borderRadius: 20,
+                textTransform: 'uppercase', letterSpacing: 2, marginBottom: 24,
+              }}>
+                {biz.city}, {biz.state}
+              </span>
+              <h1 style={{ fontSize: 'clamp(2.2rem, 4.5vw, 3.5rem)', fontWeight: 800, lineHeight: 1.15, color: c.text, marginBottom: 20 }}>
+                {copy.headline || 'Custom Wheels & Tire Experts'}
+              </h1>
+              <p style={{ color: c.muted, fontSize: 17, lineHeight: 1.75, marginBottom: 36 }}>
+                {copy.subheadline || biz.tagline || 'Professional wheel fitment, balancing, and tire services.'}
+              </p>
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                <a href={`tel:${biz.phone}`} style={{
+                  background: c.accent, color: '#fff', padding: '14px 32px',
+                  borderRadius: 10, fontWeight: 700, fontSize: 15, textDecoration: 'none',
+                }}>
+                  {copy.ctaPrimary || 'Get a Quote'}
+                </a>
+                <a href="#services" style={{
+                  background: '#fff', color: c.accent, border: `2px solid ${c.accent}`,
+                  padding: '13px 28px', borderRadius: 10, fontWeight: 600, fontSize: 15, textDecoration: 'none',
+                }}>
+                  {copy.ctaSecondary || 'Our Services'}
+                </a>
               </div>
-            )}
-            {biz.phone && (
-              <div style={{ background: c.accent, borderRadius: 12, padding: '24px', color: '#fff' }}>
-                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', opacity: 0.8, marginBottom: 6 }}>CALL US</div>
-                <a href={`tel:${biz.phone}`} style={{ fontWeight: 800, fontSize: 20, color: '#fff', textDecoration: 'none' }}>{biz.phone}</a>
-              </div>
-            )}
-            {biz.address && (
-              <div style={{ background: '#fff', borderRadius: 12, padding: '20px 24px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', borderLeft: `4px solid ${c.accent}` }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: c.accent, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 6 }}>LOCATION</div>
-                <div style={{ fontWeight: 600, fontSize: 14, color: c.text }}>{biz.address}, {biz.city}, {biz.state}</div>
-              </div>
-            )}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {biz.yearsInBusiness && (
+                <div style={{ background: '#fff', borderRadius: 12, padding: '24px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', borderLeft: `4px solid ${c.accent}` }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: c.accent, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 6 }}>EXPERIENCE</div>
+                  <div style={{ fontWeight: 700, fontSize: 18, color: c.text }}>{biz.yearsInBusiness}+ Years</div>
+                </div>
+              )}
+              {biz.phone && (
+                <div style={{ background: c.accent, borderRadius: 12, padding: '24px', color: '#fff' }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', opacity: 0.8, marginBottom: 6 }}>CALL US</div>
+                  <a href={`tel:${biz.phone}`} style={{ fontWeight: 800, fontSize: 20, color: '#fff', textDecoration: 'none' }}>{biz.phone}</a>
+                </div>
+              )}
+              {biz.address && (
+                <div style={{ background: '#fff', borderRadius: 12, padding: '20px 24px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', borderLeft: `4px solid ${c.accent}` }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: c.accent, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 6 }}>LOCATION</div>
+                  <div style={{ fontWeight: 600, fontSize: 14, color: c.text }}>{biz.address}, {biz.city}, {biz.state}</div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
+        {splitHero && (
+          <div style={{ flex: 1, position: 'relative', minHeight: '85vh', overflow: 'hidden' }}>
+            {images.hero
+              ? <img src={images.hero} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              : <div style={{ width: '100%', height: '100%', background: c.accent }} />
+            }
+          </div>
+        )}
       </header>
 
       {/* AWARDS */}

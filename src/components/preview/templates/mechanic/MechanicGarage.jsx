@@ -18,6 +18,7 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
 
   const _svcItems = generatedCopy.servicesSection?.items || [];
   const svcCols = _svcItems.length >= 6 ? Math.ceil(_svcItems.length / 2) : _svcItems.length || 1;
+  const splitHero = generatedCopy?.heroLayout === 'split';
 
   // Concrete texture via diagonal repeating gradient
   const concreteTexture = `
@@ -178,12 +179,15 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
       </nav>
 
       {/* HERO */}
-      <section style={heroStyle}>
-        <HeroImage src={images.hero} />
-        {[...Array(8)].map((_, i) => (
+      <section style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : heroStyle}>
+        {!splitHero && <HeroImage src={images.hero} />}
+        {!splitHero && [...Array(8)].map((_, i) => (
           <div key={i} style={heroAccentLine(`${10 + i * 12}%`, i % 3 === 0 ? 0.08 : 0.04)} />
         ))}
-        <div style={{ textAlign: 'center', maxWidth: '820px', padding: '140px 24px 100px', position: 'relative', zIndex: 1 }}>
+        <div style={splitHero ? {
+          flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          padding: 'clamp(3rem,6vw,6rem)', background: c.bg,
+        } : { textAlign: 'center', maxWidth: '820px', padding: '140px 24px 100px', position: 'relative', zIndex: 1 }}>
           <div style={{ display: 'inline-block', background: 'rgba(249,115,22,0.12)', border: `1px solid rgba(249,115,22,0.4)`, color: c.accent, borderRadius: '4px', padding: '8px 20px', fontSize: '0.78rem', fontWeight: 800, letterSpacing: '3px', marginBottom: '28px', textTransform: 'uppercase' }}>
             RAW. REAL. RELIABLE.
           </div>
@@ -203,6 +207,14 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
             </div>
           )}
         </div>
+        {splitHero && (
+          <div style={{ flex: 1, position: 'relative', minHeight: '85vh', overflow: 'hidden' }}>
+            {images.hero
+              ? <img src={images.hero} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              : <div style={{ width: '100%', height: '100%', background: c.secondary }} />
+            }
+          </div>
+        )}
       </section>
 
       {/* STATS BAR */}

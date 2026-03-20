@@ -23,6 +23,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
   const testimonials = copy.testimonialPlaceholders || [];
   const payments = biz.paymentMethods || [];
   const packages = biz.packages || [];
+  const splitHero = copy?.heroLayout === 'split';
 
   return (
     <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, containerType: 'inline-size' }}>
@@ -61,16 +62,18 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
       </nav>
 
       {/* HERO — split layout: left headline, right info cards */}
-      <header style={{
+      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : {
         minHeight: '100vh', display: 'flex', alignItems: 'center',
         background: `linear-gradient(160deg, ${c.secondary || '#eff6ff'} 0%, #dbeafe 100%)`,
         padding: '96px 5% 72px',
         position: 'relative', overflow: 'hidden',
       }}>
-        <HeroImage src={images.hero} />
-        <div className="tp-2col" style={{ position: 'relative', zIndex: 1, maxWidth: 1200, margin: '0 auto', width: '100%', display: 'grid', gridTemplateColumns: '1fr 420px', gap: 64, alignItems: 'center' }}>
-          {/* Left: headline */}
-          <div>
+        {!splitHero && <HeroImage src={images.hero} />}
+        {splitHero ? (
+          <div style={{
+            flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
+            padding: 'clamp(3rem,6vw,6rem)', background: c.secondary || '#eff6ff',
+          }}>
             <span style={{
               display: 'inline-block', background: `${c.accent}18`, color: c.accent,
               fontSize: 12, fontWeight: 700, padding: '6px 16px', borderRadius: 20,
@@ -100,36 +103,78 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
               </a>
             </div>
           </div>
-          {/* Right: info cards */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {biz.serviceArea && (
-              <div style={{ background: '#fff', borderRadius: 12, padding: '20px 22px', boxShadow: '0 2px 16px rgba(37,99,235,0.10)', borderLeft: `4px solid ${c.accent}` }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: c.accent, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 6 }}>SERVICE AREA</div>
-                <div style={{ fontWeight: 700, fontSize: 15, color: c.text }}>{biz.serviceArea}</div>
+        ) : (
+          <div className="tp-2col" style={{ position: 'relative', zIndex: 1, maxWidth: 1200, margin: '0 auto', width: '100%', display: 'grid', gridTemplateColumns: '1fr 420px', gap: 64, alignItems: 'center' }}>
+            {/* Left: headline */}
+            <div>
+              <span style={{
+                display: 'inline-block', background: `${c.accent}18`, color: c.accent,
+                fontSize: 12, fontWeight: 700, padding: '6px 16px', borderRadius: 20,
+                textTransform: 'uppercase', letterSpacing: 2, marginBottom: 24,
+              }}>
+                Professional Mobile Detailing · {biz.city}, {biz.state}
+              </span>
+              <h1 style={{ fontSize: 'clamp(2.2rem, 4.5vw, 3.5rem)', fontWeight: 800, lineHeight: 1.15, color: c.text, marginBottom: 20 }}>
+                {copy.headline || 'Premium Detail. We Come To You.'}
+              </h1>
+              <p style={{ color: c.muted || '#475569', fontSize: 17, lineHeight: 1.75, maxWidth: 500, marginBottom: 40 }}>
+                {copy.subheadline || biz.tagline || 'Professional mobile detailing services at your home or office.'}
+              </p>
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                <a href={`tel:${biz.phone}`} style={{
+                  background: c.accent, color: '#fff', padding: '14px 32px',
+                  borderRadius: 10, fontWeight: 700, fontSize: 16, textDecoration: 'none',
+                  boxShadow: `0 4px 16px ${c.accent}44`,
+                }}>
+                  {copy.ctaPrimary || 'Book Now'}
+                </a>
+                <a href="#services" style={{
+                  background: '#fff', color: c.accent, border: `2px solid ${c.accent}`,
+                  padding: '13px 28px', borderRadius: 10, fontWeight: 600, fontSize: 16, textDecoration: 'none',
+                }}>
+                  {copy.ctaSecondary || 'View Services'}
+                </a>
               </div>
-            )}
-            {biz.phone && (
-              <div style={{ background: '#fff', borderRadius: 12, padding: '20px 22px', boxShadow: '0 2px 16px rgba(37,99,235,0.10)', borderLeft: `4px solid ${c.accent}` }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: c.accent, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 6 }}>PHONE</div>
-                <a href={`tel:${biz.phone}`} style={{ fontWeight: 700, fontSize: 18, color: c.text, textDecoration: 'none' }}>{biz.phone}</a>
-              </div>
-            )}
-            {biz.hours && Object.keys(biz.hours).length > 0 && (
-              <div style={{ background: '#fff', borderRadius: 12, padding: '20px 22px', boxShadow: '0 2px 16px rgba(37,99,235,0.10)', borderLeft: `4px solid ${c.accent}` }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: c.accent, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 10 }}>HOURS</div>
-                {Object.entries(biz.hours).slice(0, 4).map(([day, hrs], i) => (
-                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: 13 }}>
-                    <span style={{ color: c.muted, fontWeight: 600 }}>{day}</span>
-                    <span style={{ color: c.text, fontWeight: 700 }}>{hrs}</span>
-                  </div>
-                ))}
-                {Object.keys(biz.hours).length > 4 && (
-                  <div style={{ color: c.accent, fontSize: 12, marginTop: 4, fontWeight: 600 }}>+ more hours</div>
-                )}
-              </div>
-            )}
+            </div>
+            {/* Right: info cards */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {biz.serviceArea && (
+                <div style={{ background: '#fff', borderRadius: 12, padding: '20px 22px', boxShadow: '0 2px 16px rgba(37,99,235,0.10)', borderLeft: `4px solid ${c.accent}` }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: c.accent, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 6 }}>SERVICE AREA</div>
+                  <div style={{ fontWeight: 700, fontSize: 15, color: c.text }}>{biz.serviceArea}</div>
+                </div>
+              )}
+              {biz.phone && (
+                <div style={{ background: '#fff', borderRadius: 12, padding: '20px 22px', boxShadow: '0 2px 16px rgba(37,99,235,0.10)', borderLeft: `4px solid ${c.accent}` }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: c.accent, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 6 }}>PHONE</div>
+                  <a href={`tel:${biz.phone}`} style={{ fontWeight: 700, fontSize: 18, color: c.text, textDecoration: 'none' }}>{biz.phone}</a>
+                </div>
+              )}
+              {biz.hours && Object.keys(biz.hours).length > 0 && (
+                <div style={{ background: '#fff', borderRadius: 12, padding: '20px 22px', boxShadow: '0 2px 16px rgba(37,99,235,0.10)', borderLeft: `4px solid ${c.accent}` }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: c.accent, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 10 }}>HOURS</div>
+                  {Object.entries(biz.hours).slice(0, 4).map(([day, hrs], i) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: 13 }}>
+                      <span style={{ color: c.muted, fontWeight: 600 }}>{day}</span>
+                      <span style={{ color: c.text, fontWeight: 700 }}>{hrs}</span>
+                    </div>
+                  ))}
+                  {Object.keys(biz.hours).length > 4 && (
+                    <div style={{ color: c.accent, fontSize: 12, marginTop: 4, fontWeight: 600 }}>+ more hours</div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
+        {splitHero && (
+          <div style={{ flex: 1, position: 'relative', minHeight: '85vh', overflow: 'hidden' }}>
+            {images.hero
+              ? <img src={images.hero} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              : <div style={{ width: '100%', height: '100%', background: c.accent }} />
+            }
+          </div>
+        )}
       </header>
 
       {/* PROFESSIONAL BADGE ROW */}

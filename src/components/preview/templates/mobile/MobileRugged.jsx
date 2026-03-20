@@ -23,6 +23,7 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
   const testimonials = copy.testimonialPlaceholders || [];
   const payments = biz.paymentMethods || [];
   const packages = biz.packages || [];
+  const splitHero = copy?.heroLayout === 'split';
 
   // Diagonal line texture for hero
   const textureBg = `repeating-linear-gradient(
@@ -70,18 +71,19 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
       </nav>
 
       {/* HERO — full height with diagonal texture */}
-      <header style={{
+      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : {
         minHeight: '100vh', position: 'relative', display: 'flex', alignItems: 'center',
         background: `linear-gradient(160deg, ${c.secondary || '#232e20'} 0%, ${c.bg} 70%)`,
         overflow: 'hidden',
       }}>
-        <HeroImage src={images.hero} />
-        {/* Diagonal line texture overlay */}
-        <div style={{ position: 'absolute', inset: 0, background: textureBg }} />
-        {/* Vignette right side */}
-        <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to right, rgba(26,35,24,0.4) 0%, transparent 60%, rgba(138,154,74,0.08) 100%)` }} />
+        {!splitHero && <HeroImage src={images.hero} />}
+        {!splitHero && <div style={{ position: 'absolute', inset: 0, background: textureBg }} />}
+        {!splitHero && <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to right, rgba(26,35,24,0.4) 0%, transparent 60%, rgba(138,154,74,0.08) 100%)` }} />}
 
-        <div style={{ position: 'relative', zIndex: 1, padding: '7rem 5% 4rem', maxWidth: 900 }}>
+        <div style={splitHero ? {
+          flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          padding: 'clamp(3rem,6vw,6rem)', background: c.bg,
+        } : { position: 'relative', zIndex: 1, padding: '7rem 5% 4rem', maxWidth: 900 }}>
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 10,
             background: `${c.accent}20`, borderRadius: 3, border: `1px solid ${c.accent}44`,
@@ -125,6 +127,14 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
             </a>
           </div>
         </div>
+        {splitHero && (
+          <div style={{ flex: 1, position: 'relative', minHeight: '85vh', overflow: 'hidden' }}>
+            {images.hero
+              ? <img src={images.hero} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              : <div style={{ width: '100%', height: '100%', background: c.secondary }} />
+            }
+          </div>
+        )}
       </header>
 
       {/* SERVICE AREA BANNER */}

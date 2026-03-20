@@ -31,6 +31,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
     return () => window.removeEventListener('resize', check);
   }, []);
 
+  const splitHero = generatedCopy?.heroLayout === 'split';
   const white    = c.bg        || '#ffffff';
   const off      = c.secondary || '#f5f5f7';
   const blue     = c.accent    || '#0071E3';
@@ -173,10 +174,13 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
       </nav>
 
       {/* HERO */}
-      <section id="hero" style={s.hero}>
-        <HeroImage src={images.hero} />
-        <div style={s.heroGradient} />
-        <div style={s.heroContent}>
+      <section id="hero" style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : s.hero}>
+        {!splitHero && <HeroImage src={images.hero} />}
+        {!splitHero && <div style={s.heroGradient} />}
+        <div style={splitHero ? {
+          flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          padding: 'clamp(3rem,6vw,6rem)', background: white,
+        } : s.heroContent}>
           <div style={s.heroChip}>
             <span style={s.heroChipDot} />
             {businessInfo.city}{businessInfo.state ? ', ' + businessInfo.state : ''}
@@ -193,10 +197,10 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
                   <span style={s.heroAccent}>{last}</span>
                 </>
               );
-            })()} 
+            })()}
           </h1>
-          <p style={s.heroSub}>{generatedCopy.subheadline}</p>
-          <div style={s.heroActions}>
+          <p style={splitHero ? { ...s.heroSub, margin: '0 0 40px' } : s.heroSub}>{generatedCopy.subheadline}</p>
+          <div style={splitHero ? { ...s.heroActions, justifyContent: 'flex-start' } : s.heroActions}>
             <button style={s.btnBlue}>{generatedCopy.ctaPrimary || 'Get a Free Quote'}</button>
             <button style={s.btnGhost}>
               {generatedCopy.ctaSecondary || 'Explore Services'}
@@ -206,6 +210,14 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
             </button>
           </div>
         </div>
+        {splitHero && (
+          <div style={{ flex: 1, position: 'relative', minHeight: '85vh', overflow: 'hidden' }}>
+            {images.hero
+              ? <img src={images.hero} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              : <div style={{ width: '100%', height: '100%', background: off }} />
+            }
+          </div>
+        )}
       </section>
 
       {/* STATS */}

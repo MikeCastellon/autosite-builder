@@ -41,6 +41,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
 
   const biz          = businessInfo || {};
   const copy         = generatedCopy || {};
+  const splitHero    = copy?.heroLayout === 'split';
   const services     = copy.servicesSection?.items || [];
   const svcCols = services.length >= 6 ? Math.ceil(services.length / 2) : services.length || 1;
   const testimonials = copy.testimonialPlaceholders || [];
@@ -134,26 +135,29 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
       </nav>
 
       {/* ============================================================ HERO ============================================================ */}
-      <header style={{ minHeight: '100vh', position: 'relative', display: 'flex', alignItems: 'center', background: c.bg, overflow: 'hidden' }}>
-        <HeroImage src={images.hero} />
-        <div style={{
+      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : { minHeight: '100vh', position: 'relative', display: 'flex', alignItems: 'center', background: c.bg, overflow: 'hidden' }}>
+        {!splitHero && <HeroImage src={images.hero} />}
+        {!splitHero && <div style={{
           position: 'absolute', top: '-15%', right: '-8%', width: 800, height: 800,
           background: `radial-gradient(circle, ${c.accent}28 0%, transparent 60%)`, pointerEvents: 'none',
-        }} />
-        <div style={{
+        }} />}
+        {!splitHero && <div style={{
           position: 'absolute', bottom: '-10%', left: '-5%', width: 560, height: 560,
           background: `radial-gradient(circle, ${cCyan}18 0%, transparent 65%)`, pointerEvents: 'none',
-        }} />
-        <div style={{
+        }} />}
+        {!splitHero && <div style={{
           position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.035,
           backgroundImage: `linear-gradient(${c.accent}80 1px, transparent 1px), linear-gradient(90deg, ${c.accent}80 1px, transparent 1px)`,
           backgroundSize: '60px 60px',
-        }} />
-        <div style={{
+        }} />}
+        {!splitHero && <div style={{
           position: 'absolute', bottom: 0, left: 0, right: 0, height: 240,
           background: `linear-gradient(to top, ${c.bg}, transparent)`, pointerEvents: 'none',
-        }} />
-        <div style={{ position: 'relative', zIndex: 1, padding: '8rem 5% 5rem', maxWidth: 1000, margin: '0 auto', textAlign: 'center', width: '100%' }}>
+        }} />}
+        <div style={splitHero ? {
+          flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          padding: 'clamp(3rem,6vw,6rem)', background: c.bg,
+        } : { position: 'relative', zIndex: 1, padding: '8rem 5% 5rem', maxWidth: 1000, margin: '0 auto', textAlign: 'center', width: '100%' }}>
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
             border: `1px solid ${cCyan}44`, borderRadius: 30,
@@ -191,27 +195,37 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
               {copy.ctaSecondary || 'Explore Services'}
             </a>
           </div>
-          <div style={{
-            display: 'flex', flexWrap: 'wrap', justifyContent: 'center',
-            border: `1px solid ${c.accent}18`, borderRadius: 10,
-            background: 'rgba(255,255,255,0.02)', backdropFilter: 'blur(8px)', overflow: 'hidden',
-          }}>
-            {[
-              { key: '// since',    val: biz.yearsInBusiness ? String(new Date().getFullYear() - Number(biz.yearsInBusiness)) : 'Est.' },
-              { key: '// location', val: biz.city || 'Local' },
-              { key: '// warranty', val: (biz.warranty || biz.warrantyOffered) ? 'Backed' : 'Quality' },
-              { key: '// rating',   val: '5.0 ★' },
-            ].map((s, i) => (
-              <div key={i} style={{
-                flex: '1 1 120px', padding: '20px 24px',
-                borderRight: i < 3 ? `1px solid ${c.accent}15` : 'none', textAlign: 'center',
-              }}>
-                <div style={{ fontFamily: 'monospace', fontSize: 9, letterSpacing: 2.5, color: c.accent, textTransform: 'uppercase', marginBottom: 6 }}>{s.key}</div>
-                <div style={{ fontFamily: font, fontSize: 20, fontWeight: 700, color: c.text }}>{s.val}</div>
-              </div>
-            ))}
-          </div>
+          {!splitHero && (
+            <div style={{
+              display: 'flex', flexWrap: 'wrap', justifyContent: 'center',
+              border: `1px solid ${c.accent}18`, borderRadius: 10,
+              background: 'rgba(255,255,255,0.02)', backdropFilter: 'blur(8px)', overflow: 'hidden',
+            }}>
+              {[
+                { key: '// since',    val: biz.yearsInBusiness ? String(new Date().getFullYear() - Number(biz.yearsInBusiness)) : 'Est.' },
+                { key: '// location', val: biz.city || 'Local' },
+                { key: '// warranty', val: (biz.warranty || biz.warrantyOffered) ? 'Backed' : 'Quality' },
+                { key: '// rating',   val: '5.0 ★' },
+              ].map((s, i) => (
+                <div key={i} style={{
+                  flex: '1 1 120px', padding: '20px 24px',
+                  borderRight: i < 3 ? `1px solid ${c.accent}15` : 'none', textAlign: 'center',
+                }}>
+                  <div style={{ fontFamily: 'monospace', fontSize: 9, letterSpacing: 2.5, color: c.accent, textTransform: 'uppercase', marginBottom: 6 }}>{s.key}</div>
+                  <div style={{ fontFamily: font, fontSize: 20, fontWeight: 700, color: c.text }}>{s.val}</div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
+        {splitHero && (
+          <div style={{ flex: 1, position: 'relative', minHeight: '85vh', overflow: 'hidden' }}>
+            {images.hero
+              ? <img src={images.hero} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              : <div style={{ width: '100%', height: '100%', background: c.secondary }} />
+            }
+          </div>
+        )}
       </header>
 
       {/* ============================================================ VLT SHADE GUIDE ============================================================ */}

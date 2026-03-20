@@ -18,6 +18,7 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
   const font = templateMeta?.bodyFont || 'Rajdhani, system-ui, sans-serif';
   const biz = businessInfo || {};
   const copy = generatedCopy || {};
+  const splitHero = copy?.heroLayout === 'split';
   const services = copy.servicesSection?.items || [];
   const svcCols = services.length >= 6 ? Math.ceil(services.length / 2) : services.length || 1;
   const testimonials = copy.testimonialPlaceholders || [];
@@ -65,50 +66,51 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
       </nav>
 
       {/* HERO — full height with circular ring decoration */}
-      <header style={{
+      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : {
         minHeight: '100vh', position: 'relative', display: 'flex', alignItems: 'center',
         background: `radial-gradient(ellipse at 70% 50%, ${c.secondary || '#1a1a2e'} 0%, ${c.bg} 65%)`,
         overflow: 'hidden',
       }}>
-        <HeroImage src={images.hero} />
-        {/* Large decorative circular ring — wheel silhouette */}
-        <div style={{
+        {!splitHero && <HeroImage src={images.hero} />}
+        {!splitHero && <div style={{
           position: 'absolute', right: '-8%', top: '50%', transform: 'translateY(-50%)',
           width: 600, height: 600,
           border: `3px solid ${c.accent}22`,
           borderRadius: '50%',
           pointerEvents: 'none',
-        }} />
-        <div style={{
+        }} />}
+        {!splitHero && <div style={{
           position: 'absolute', right: '-8%', top: '50%', transform: 'translateY(-50%)',
           width: 460, height: 460,
           border: `2px solid ${c.accent}44`,
           borderRadius: '50%',
           pointerEvents: 'none',
-        }} />
-        <div style={{
+        }} />}
+        {!splitHero && <div style={{
           position: 'absolute', right: '-8%', top: '50%', transform: 'translateY(-50%)',
           width: 320, height: 320,
           border: `1px solid ${c.accent}66`,
           borderRadius: '50%',
           pointerEvents: 'none',
-        }} />
-        <div style={{
+        }} />}
+        {!splitHero && <div style={{
           position: 'absolute', right: '-8%', top: '50%', transform: 'translateY(-50%)',
           width: 160, height: 160,
           background: `${c.accent}12`,
           border: `2px solid ${c.accent}`,
           borderRadius: '50%',
           pointerEvents: 'none',
-        }} />
-        {/* Subtle grid background */}
-        <div style={{
+        }} />}
+        {!splitHero && <div style={{
           position: 'absolute', inset: 0,
           backgroundImage: `linear-gradient(rgba(0,180,216,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,180,216,0.04) 1px, transparent 1px)`,
           backgroundSize: '60px 60px',
-        }} />
+        }} />}
 
-        <div style={{ position: 'relative', zIndex: 1, padding: '7rem 5% 4rem', maxWidth: 780 }}>
+        <div style={splitHero ? {
+          flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          padding: 'clamp(3rem,6vw,6rem)', background: c.bg,
+        } : { position: 'relative', zIndex: 1, padding: '7rem 5% 4rem', maxWidth: 780 }}>
           <p style={{ color: c.accent, fontSize: 11, letterSpacing: 5, textTransform: 'uppercase', marginBottom: 20, fontWeight: 700 }}>
             Custom Wheels & Tires · {biz.city}, {biz.state}
           </p>
@@ -138,6 +140,14 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
             </a>
           </div>
         </div>
+        {splitHero && (
+          <div style={{ flex: 1, position: 'relative', minHeight: '85vh', overflow: 'hidden' }}>
+            {images.hero
+              ? <img src={images.hero} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              : <div style={{ width: '100%', height: '100%', background: c.secondary }} />
+            }
+          </div>
+        )}
       </header>
 
       {/* STATS */}
