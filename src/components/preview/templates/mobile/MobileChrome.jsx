@@ -22,7 +22,6 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
   const stats = [
     { value: businessInfo.yearsInBusiness ? `${businessInfo.yearsInBusiness}+` : '10+', label: 'Years Experience' },
     { value: '1,000+', label: 'Vehicles Detailed' },
-    { value: businessInfo.priceRange || '$$$', label: 'Price Range' },
     { value: '100%', label: 'Satisfaction Rate' },
   ];
 
@@ -231,29 +230,7 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
             <h2 style={{ fontFamily: font, fontSize: '2.2rem', fontWeight: 300, color: c.text, marginBottom: '16px', letterSpacing: '-0.5px' }}>Our Services</h2>
             <p style={{ color: c.muted, maxWidth: '520px', margin: '0 auto', fontSize: '0.95rem', lineHeight: 1.8, fontWeight: 300 }}>{generatedCopy.servicesSection.intro}</p>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: '20px' }}>
-            {generatedCopy.servicesSection.items.map((svc, i) => (
-              <div key={i} style={cardStyle}>
-                <div style={cardAccentTop} />
-                <div style={{ fontFamily: font, fontSize: '0.68rem', letterSpacing: '3px', textTransform: 'uppercase', background: chromeGradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '14px' }}>
-                  {String(i + 1).padStart(2, '0')}
-                </div>
-                <h3 style={{ fontFamily: font, fontSize: '1.05rem', fontWeight: 500, color: c.text, marginBottom: '12px', letterSpacing: '0.5px' }}>{svc.name}</h3>
-                <p style={{ color: c.muted, fontSize: '0.88rem', lineHeight: 1.7, fontWeight: 300 }}>{svc.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* PACKAGES - Premium pricing table */}
-      {businessInfo.packages && businessInfo.packages.length > 0 && (
-        <section id="packages" style={{ ...sectionStyle(c.secondary), borderTop: '1px solid rgba(148,163,184,0.08)', borderBottom: '1px solid rgba(148,163,184,0.08)' }}>
-          <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-            <div style={{ textAlign: 'center', marginBottom: '60px' }}>
-              <h2 style={{ fontFamily: font, fontSize: '2.2rem', fontWeight: 300, color: c.text, marginBottom: '12px', letterSpacing: '-0.5px' }}>Premium Packages</h2>
-              <div style={{ width: '60px', height: '1px', background: chromeGradient, margin: '0 auto' }} />
-            </div>
+          {businessInfo.packages?.length > 0 ? (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', justifyContent: 'center' }}>
               {businessInfo.packages.map((pkg, i) => (
                 <div key={i} style={pricingTierStyle(i === 1)}>
@@ -264,18 +241,28 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
                   <div style={{ fontFamily: font, fontSize: '0.72rem', letterSpacing: '3px', textTransform: 'uppercase', color: c.muted, marginBottom: '12px' }}>Package {String(i + 1).padStart(2, '0')}</div>
                   <div style={{ fontFamily: font, fontSize: '1.3rem', fontWeight: 500, color: c.text, marginBottom: '8px' }}>{pkg.name || pkg}</div>
                   {pkg.price && (
-                    <div style={{ fontSize: '2.2rem', fontWeight: 300, background: chromeGradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '16px', fontFamily: font }}>{pkg.price}</div>
+                    <div style={{ fontFamily: font, fontSize: '2rem', fontWeight: 300, background: chromeGradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: '0.4rem 0 0.75rem' }}>{pkg.price}</div>
                   )}
                   {pkg.description && <p style={{ color: c.muted, fontSize: '0.85rem', lineHeight: 1.7, fontWeight: 300 }}>{pkg.description}</p>}
-                  <div style={{ marginTop: '24px' }}>
-                    <button style={{ ...accentBtnStyle, padding: '10px 24px', fontSize: '0.78rem' }}>Select</button>
-                  </div>
                 </div>
               ))}
             </div>
-          </div>
-        </section>
-      )}
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: '20px' }}>
+              {generatedCopy.servicesSection.items.map((svc, i) => (
+                <div key={i} style={cardStyle}>
+                  <div style={cardAccentTop} />
+                  <div style={{ fontFamily: font, fontSize: '0.68rem', letterSpacing: '3px', textTransform: 'uppercase', background: chromeGradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '14px' }}>
+                    {String(i + 1).padStart(2, '0')}
+                  </div>
+                  <h3 style={{ fontFamily: font, fontSize: '1.05rem', fontWeight: 500, color: c.text, marginBottom: '12px', letterSpacing: '0.5px' }}>{svc.name}</h3>
+                  <p style={{ color: c.muted, fontSize: '0.88rem', lineHeight: 1.7, fontWeight: 300 }}>{svc.description}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* ABOUT */}
       <section id="about" style={sectionStyle()}>

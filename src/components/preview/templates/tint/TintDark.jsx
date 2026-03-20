@@ -140,7 +140,6 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
             { val: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'Years in Business' },
             { val: '2K+', label: 'Cars Tinted' },
             { val: '99%', label: 'Customer Satisfaction' },
-            { val: biz.priceRange || '$$', label: 'Competitive Pricing' },
           ].map((s, i) => (
             <div key={i} style={{ padding: '16px 8px' }}>
               <div style={{
@@ -164,30 +163,55 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
               <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.7, maxWidth: 520 }}>{copy.servicesSection.intro}</p>
             )}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 18 }}>
-            {services.length > 0 ? services.map((svc, i) => (
-              <div key={i} style={{
-                background: c.secondary || '#111',
-                border: `1px solid ${c.accent}22`,
-                borderRadius: 10, padding: '28px 24px',
-                position: 'relative', overflow: 'hidden',
-              }}>
-                {/* Subtle glow top-right corner */}
-                <div style={{
-                  position: 'absolute', top: -20, right: -20, width: 80, height: 80,
-                  background: `radial-gradient(circle, ${c.accent}20, transparent 70%)`,
-                }} />
-                <div style={{ width: 3, height: 32, background: `linear-gradient(180deg, ${c.accent}, transparent)`, marginBottom: 16, borderRadius: 2 }} />
-                <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 10, color: c.text }}>{svc.name}</h3>
-                <p style={{ color: c.muted, fontSize: 14, lineHeight: 1.7, margin: 0 }}>{svc.description}</p>
-              </div>
-            )) : (biz.services || []).map((svc, i) => (
-              <div key={i} style={{ background: c.secondary, border: `1px solid ${c.accent}22`, borderRadius: 10, padding: '24px 20px' }}>
-                <div style={{ width: 3, height: 28, background: c.accent, marginBottom: 12, borderRadius: 2 }} />
-                <h3 style={{ fontSize: 15, fontWeight: 700, color: c.text, margin: 0 }}>{svc}</h3>
-              </div>
-            ))}
-          </div>
+          {packages.length > 0 ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20 }}>
+              {packages.map((pkg, i) => {
+                const isFeature = i === Math.floor(packages.length / 2);
+                return (
+                  <div key={i} style={{
+                    background: isFeature ? `linear-gradient(135deg, ${c.accent}, #a855f7)` : c.secondary || '#111',
+                    border: `1px solid ${isFeature ? 'transparent' : `${c.accent}33`}`,
+                    borderRadius: 12, padding: '36px 28px', textAlign: 'center',
+                    boxShadow: isFeature ? `0 8px 40px ${c.accent}44` : 'none',
+                  }}>
+                    <div style={{ fontWeight: 800, fontSize: 18, marginBottom: 8, color: '#fff' }}>
+                      {pkg.name || pkg}
+                    </div>
+                    {pkg.price && (
+                      <div style={{ fontFamily: font, fontSize: '1.8rem', fontWeight: 800, color: isFeature ? '#fff' : c.accent, margin: '0.4rem 0 0.75rem' }}>{pkg.price}</div>
+                    )}
+                    {pkg.description && (
+                      <p style={{ color: isFeature ? 'rgba(255,255,255,0.85)' : c.muted, fontSize: 14, lineHeight: 1.6 }}>{pkg.description}</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 18 }}>
+              {services.length > 0 ? services.map((svc, i) => (
+                <div key={i} style={{
+                  background: c.secondary || '#111',
+                  border: `1px solid ${c.accent}22`,
+                  borderRadius: 10, padding: '28px 24px',
+                  position: 'relative', overflow: 'hidden',
+                }}>
+                  <div style={{
+                    position: 'absolute', top: -20, right: -20, width: 80, height: 80,
+                    background: `radial-gradient(circle, ${c.accent}20, transparent 70%)`,
+                  }} />
+                  <div style={{ width: 3, height: 32, background: `linear-gradient(180deg, ${c.accent}, transparent)`, marginBottom: 16, borderRadius: 2 }} />
+                  <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 10, color: c.text }}>{svc.name}</h3>
+                  <p style={{ color: c.muted, fontSize: 14, lineHeight: 1.7, margin: 0 }}>{svc.description}</p>
+                </div>
+              )) : (biz.services || []).map((svc, i) => (
+                <div key={i} style={{ background: c.secondary, border: `1px solid ${c.accent}22`, borderRadius: 10, padding: '24px 20px' }}>
+                  <div style={{ width: 3, height: 28, background: c.accent, marginBottom: 12, borderRadius: 2 }} />
+                  <h3 style={{ fontSize: 15, fontWeight: 700, color: c.text, margin: 0 }}>{svc}</h3>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -243,48 +267,6 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
             }}>
               {biz.warranty || biz.warrantyOffered}
             </p>
-          </div>
-        </section>
-      )}
-
-      {/* PACKAGES */}
-      {packages.length > 0 && (
-        <section style={{ padding: '80px 5%', background: c.secondary, borderTop: `1px solid ${c.accent}22` }}>
-          <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-            <div style={{ textAlign: 'center', marginBottom: 48 }}>
-              <div style={{ color: c.accent, fontWeight: 700, letterSpacing: 3, fontSize: 11, textTransform: 'uppercase', marginBottom: 10 }}>PACKAGES</div>
-              <h2 style={{ fontSize: 'clamp(2rem, 4vw, 2.8rem)', fontWeight: 800, margin: 0 }}>Choose Your Package</h2>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20 }}>
-              {packages.map((pkg, i) => {
-                const isFeature = i === Math.floor(packages.length / 2);
-                return (
-                  <div key={i} style={{
-                    background: isFeature ? `linear-gradient(135deg, ${c.accent}, #a855f7)` : c.bg,
-                    border: `1px solid ${isFeature ? 'transparent' : `${c.accent}33`}`,
-                    borderRadius: 12, padding: '36px 28px', textAlign: 'center',
-                    boxShadow: isFeature ? `0 8px 40px ${c.accent}44` : 'none',
-                  }}>
-                    <div style={{ fontWeight: 800, fontSize: 18, marginBottom: 8, color: '#fff' }}>
-                      {typeof pkg === 'object' ? pkg.name : pkg}
-                    </div>
-                    {typeof pkg === 'object' && pkg.price && (
-                      <div style={{ fontSize: 26, fontWeight: 800, color: isFeature ? '#fff' : c.accent, marginBottom: 12 }}>{pkg.price}</div>
-                    )}
-                    {typeof pkg === 'object' && pkg.description && (
-                      <p style={{ color: isFeature ? 'rgba(255,255,255,0.85)' : c.muted, fontSize: 14, lineHeight: 1.6, marginBottom: 20 }}>{pkg.description}</p>
-                    )}
-                    <a href={`tel:${biz.phone}`} style={{
-                      display: 'inline-block',
-                      background: isFeature ? 'rgba(255,255,255,0.2)' : c.accent,
-                      color: '#fff', padding: '10px 26px', borderRadius: 8,
-                      fontWeight: 700, fontSize: 14, textDecoration: 'none',
-                      border: isFeature ? '1px solid rgba(255,255,255,0.4)' : 'none',
-                    }}>Book Now</a>
-                  </div>
-                );
-              })}
-            </div>
           </div>
         </section>
       )}

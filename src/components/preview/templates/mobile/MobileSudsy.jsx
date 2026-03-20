@@ -262,23 +262,39 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
               <p style={{ fontSize: 15, color: c.muted, fontWeight: 600, marginTop: 12, maxWidth: 520, margin: '12px auto 0' }}>{copy.servicesSection.intro}</p>
             )}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 24 }}>
-            {services.length > 0
-              ? services.map((s, i) => (
-                  <div key={i} style={{ background: cardBgs[i % cardBgs.length], ...neoBorder, borderRadius: 24, padding: '36px 32px' }}>
-                    <span style={{ fontSize: 48, marginBottom: 14, display: 'block' }}>{cardEmojis[i % cardEmojis.length]}</span>
-                    <h3 style={{ fontFamily: font, fontSize: 26, color: c.text, marginBottom: 10 }}>{s.name}</h3>
-                    <p style={{ fontSize: 14, color: '#555', lineHeight: 1.65, fontWeight: 600, margin: 0 }}>{s.description}</p>
+          {packages.length > 0 ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
+              {packages.map((pkg, i) => {
+                const isFeatured = i === Math.floor(packages.length / 2);
+                return (
+                  <div key={i} style={{ background: isFeatured ? c.text : cardBgs[i % cardBgs.length], ...neoBorder, borderRadius: 24, padding: '36px 28px', textAlign: 'center', position: 'relative' }}>
+                    {isFeatured && (<div style={{ position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', background: c.accent, color: c.text, fontWeight: 900, fontSize: 11, letterSpacing: 2, padding: '4px 16px', borderRadius: 980, whiteSpace: 'nowrap', border: `2px solid ${c.text}` }}>MOST POPULAR</div>)}
+                    <div style={{ fontFamily: font, fontSize: 22, marginBottom: 8, color: isFeatured ? c.accent : c.text }}>{pkg.name || pkg}</div>
+                    {pkg.price && (<div style={{ fontFamily: font, fontSize: '1.8rem', color: isFeatured ? '#fff' : c.text, margin: '0.4rem 0 0.75rem' }}>{pkg.price}</div>)}
+                    {pkg.description && (<p style={{ fontSize: 14, lineHeight: 1.6, color: isFeatured ? 'rgba(255,255,255,0.75)' : '#666', fontWeight: 600 }}>{pkg.description}</p>)}
                   </div>
-                ))
-              : bizServices.map((s, i) => (
-                  <div key={i} style={{ background: cardBgs[i % cardBgs.length], ...neoBorder, borderRadius: 24, padding: '32px 28px' }}>
-                    <span style={{ fontSize: 40, marginBottom: 12, display: 'block' }}>{cardEmojis[i % cardEmojis.length]}</span>
-                    <h3 style={{ fontFamily: font, fontSize: 24, color: c.text, margin: 0 }}>{s}</h3>
-                  </div>
-                ))
-            }
-          </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 24 }}>
+              {services.length > 0
+                ? services.map((s, i) => (
+                    <div key={i} style={{ background: cardBgs[i % cardBgs.length], ...neoBorder, borderRadius: 24, padding: '36px 32px' }}>
+                      <span style={{ fontSize: 48, marginBottom: 14, display: 'block' }}>{cardEmojis[i % cardEmojis.length]}</span>
+                      <h3 style={{ fontFamily: font, fontSize: 26, color: c.text, marginBottom: 10 }}>{s.name}</h3>
+                      <p style={{ fontSize: 14, color: '#555', lineHeight: 1.65, fontWeight: 600, margin: 0 }}>{s.description}</p>
+                    </div>
+                  ))
+                : bizServices.map((s, i) => (
+                    <div key={i} style={{ background: cardBgs[i % cardBgs.length], ...neoBorder, borderRadius: 24, padding: '32px 28px' }}>
+                      <span style={{ fontSize: 40, marginBottom: 12, display: 'block' }}>{cardEmojis[i % cardEmojis.length]}</span>
+                      <h3 style={{ fontFamily: font, fontSize: 24, color: c.text, margin: 0 }}>{s}</h3>
+                    </div>
+                  ))
+              }
+            </div>
+          )}
         </div>
       </section>
 
@@ -324,32 +340,6 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
           </div>
         </div>
       </section>
-
-      {/* PACKAGES */}
-      {packages.length > 0 && (
-        <section id="pricing" style={{ padding: "100px 5%", background: c.secondary, borderBottom: `4px solid ${c.text}` }}>
-          <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-            <div style={{ textAlign: "center", marginBottom: 64 }}>
-              <div style={sectionTagStyle()}>Pricing</div>
-              <h2 style={titleStyle}>Choose Your Package</h2>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 20 }}>
-              {packages.map((pkg, i) => {
-                const isFeatured = i === Math.floor(packages.length / 2);
-                return (
-                  <div key={i} style={{ background: isFeatured ? c.text : "#fff", ...neoBorder, borderRadius: 24, padding: "36px 28px", textAlign: "center", position: "relative" }}>
-                    {isFeatured && (<div style={{ position: "absolute", top: -14, left: "50%", transform: "translateX(-50%)", background: c.accent, color: c.text, fontWeight: 900, fontSize: 11, letterSpacing: 2, padding: "4px 16px", borderRadius: 980, whiteSpace: "nowrap", border: `2px solid ${c.text}` }}>MOST POPULAR</div>)}
-                    <div style={{ fontFamily: font, fontSize: 22, marginBottom: 8, color: isFeatured ? c.accent : c.text }}>{typeof pkg === "object" ? pkg.name : pkg}</div>
-                    {typeof pkg === "object" && pkg.price && (<div style={{ fontFamily: font, fontSize: 36, color: isFeatured ? "#fff" : c.text, marginBottom: 12 }}>{pkg.price}</div>)}
-                    {typeof pkg === "object" && pkg.description && (<p style={{ fontSize: 14, lineHeight: 1.6, color: isFeatured ? "rgba(255,255,255,0.75)" : "#666", fontWeight: 600, marginBottom: 20 }}>{pkg.description}</p>)}
-                    <a href={`tel:${biz.phone}`} style={{ display: "inline-block", marginTop: 8, background: isFeatured ? c.accent : c.text, color: isFeatured ? c.text : c.accent, padding: "10px 28px", fontFamily: font, fontSize: 18, borderRadius: 980, textDecoration: "none", border: `3px solid ${c.text}` }}>Book Now</a>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* ABOUT + HOURS */}
       <section id="about" style={{ padding: "100px 5%", background: c.bg }}>
@@ -490,7 +480,6 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
               <a href={`tel:${biz.phone}`} style={{ display: "block", background: c.accent, color: c.text, border: `3px solid ${c.text}`, borderRadius: 16, padding: "16px", fontFamily: font, fontSize: 22, textDecoration: "none", boxShadow: `5px 5px 0 ${c.text}`, marginBottom: 12 }}>
                 📞 {biz.phone || "Call Now!"}
               </a>
-              {biz.priceRange && <p style={{ fontSize: 12, color: c.muted, fontWeight: 700, margin: 0 }}>Starting price range: {biz.priceRange}</p>}
             </div>
           </div>
         </div>

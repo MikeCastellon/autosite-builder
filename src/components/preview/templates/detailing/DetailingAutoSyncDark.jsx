@@ -246,35 +246,30 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
             </p>
           </div>
         </div>
-        <div style={{ ...s.servicesGrid, gridTemplateColumns: `repeat(${svcCols}, 1fr)` }}>
-          {services.map((svc, i) => (
-            <div key={i} style={s.serviceCard}>
-              <div style={s.serviceNum}>{String(i + 1).padStart(2, '0')}</div>
-              <div style={s.serviceIcon}>{serviceIcons[i % serviceIcons.length]}</div>
-              <h3 style={s.serviceCardH3}>{svc.name}</h3>
-              <p style={s.serviceCardP}>{svc.description}</p>
-            </div>
-          ))}
-        </div>
-        {businessInfo.packages && businessInfo.packages.length > 0 && (
-          <div style={{ marginTop: '3rem' }}>
-            <div style={s.sectionLabel}>
-              <div style={s.sectionLabelLine} />
-              <span style={s.sectionLabelText}>Packages</span>
-            </div>
-            <div style={{ display: 'flex', gap: '1px', flexWrap: 'wrap', marginTop: '1.5rem', background: c.accent + '22' }}>
-              {businessInfo.packages.map((pkg, i) => (
-                <div key={i} style={{
-                  flex: '1 1 200px', background: mid,
-                  borderTop: i === 1 ? '2px solid ' + c.accent : '2px solid transparent',
-                  padding: '1.75rem',
-                }}>
-                  <div style={{ fontSize: '0.65rem', letterSpacing: '2.5px', textTransform: 'uppercase', color: c.accent, fontFamily: bodyFont, marginBottom: '0.5rem' }}>{pkg.name || pkg}</div>
-                  {pkg.price && <div style={{ fontFamily: font, fontSize: '1.8rem', fontWeight: 700, color: c.text }}>{pkg.price}</div>}
-                  {pkg.description && <p style={{ color: textDim, fontSize: '0.82rem', lineHeight: 1.65, marginTop: '0.75rem' }}>{pkg.description}</p>}
-                </div>
-              ))}
-            </div>
+        {businessInfo.packages?.length > 0 ? (
+          <div style={{ display: 'flex', gap: '1px', flexWrap: 'wrap', background: c.accent + '22' }}>
+            {businessInfo.packages.map((pkg, i) => (
+              <div key={i} style={{
+                flex: '1 1 200px', background: mid,
+                borderTop: i === 1 ? '2px solid ' + c.accent : '2px solid transparent',
+                padding: '1.75rem',
+              }}>
+                <div style={{ fontSize: '0.65rem', letterSpacing: '2.5px', textTransform: 'uppercase', color: c.accent, fontFamily: bodyFont, marginBottom: '0.5rem' }}>{pkg.name || pkg}</div>
+                {pkg.price && <div style={{ fontFamily: font, fontSize: '1.8rem', fontWeight: 300, color: c.accent, margin: '0.4rem 0 0.75rem' }}>{pkg.price}</div>}
+                {pkg.description && <p style={{ color: textDim, fontSize: '0.82rem', lineHeight: 1.65, marginTop: '0.5rem' }}>{pkg.description}</p>}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{ ...s.servicesGrid, gridTemplateColumns: `repeat(${svcCols}, 1fr)` }}>
+            {services.map((svc, i) => (
+              <div key={i} style={s.serviceCard}>
+                <div style={s.serviceNum}>{String(i + 1).padStart(2, '0')}</div>
+                <div style={s.serviceIcon}>{serviceIcons[i % serviceIcons.length]}</div>
+                <h3 style={s.serviceCardH3}>{svc.name}</h3>
+                <p style={s.serviceCardP}>{svc.description}</p>
+              </div>
+            ))}
           </div>
         )}
       </section>

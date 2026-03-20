@@ -317,23 +317,35 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
             <Eyebrow label="Our Services" />
             <SecTitle>Everything your<br />wheels <span style={{ color: D.blue }}>need.</span></SecTitle>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 1, background: D.border }}>
-            {(services.length > 0
-              ? services.map((svc, i) => ({ name: svc.name, desc: svc.description, num: String(i + 1).padStart(2, "0") }))
-              : serviceNames.length > 0
-                ? serviceNames.map((name, i) => ({ name, desc: null, num: String(i + 1).padStart(2, "0") }))
-                : ["Wheel Sales", "Mount & Balance", "Wheel Repair", "Powder Coating", "Fitment Consulting", "Show Builds"].map((name, i) => ({ name, desc: null, num: String(i + 1).padStart(2, "0") }))
-            ).map((svc, i) => (
-              <div key={i} style={{ background: D.offwhite, padding: "48px 36px", position: "relative" }}>
-                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "2px", color: D.blue, marginBottom: 24, display: "flex", alignItems: "center", gap: 10, fontFamily: bodyFont }}>
-                  {svc.num}
-                  <span style={{ flex: 1, height: 1, background: D.alloy, display: "block" }} />
+          {biz.packages?.length > 0 ? (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 1, background: D.border }}>
+              {biz.packages.map((pkg, i) => (
+                <div key={i} style={{ background: i === 1 ? D.blue : D.offwhite, padding: "48px 36px", position: "relative", borderTop: `3px solid ${i === 1 ? D.blue : 'transparent'}` }}>
+                  <div style={{ fontFamily: font, fontWeight: 700, fontSize: 20, letterSpacing: "0.5px", color: i === 1 ? '#fff' : D.dark, marginBottom: 8 }}>{pkg.name || pkg}</div>
+                  {pkg.price && <div style={{ fontFamily: font, fontWeight: 700, fontSize: '1.8rem', color: i === 1 ? '#fff' : D.blue, margin: '0.4rem 0 0.75rem' }}>{pkg.price}</div>}
+                  {pkg.description && <p style={{ fontSize: 14, color: i === 1 ? 'rgba(255,255,255,0.8)' : D.steel, lineHeight: 1.75, margin: 0, fontFamily: bodyFont }}>{pkg.description}</p>}
                 </div>
-                <div style={{ fontFamily: font, fontWeight: 700, fontSize: 22, letterSpacing: "0.5px", color: D.dark, marginBottom: svc.desc ? 12 : 0 }}>{svc.name}</div>
-                {svc.desc && <p style={{ fontSize: 14, color: D.steel, lineHeight: 1.75, margin: 0, fontFamily: bodyFont }}>{svc.desc}</p>}
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 1, background: D.border }}>
+              {(services.length > 0
+                ? services.map((svc, i) => ({ name: svc.name, desc: svc.description, num: String(i + 1).padStart(2, "0") }))
+                : serviceNames.length > 0
+                  ? serviceNames.map((name, i) => ({ name, desc: null, num: String(i + 1).padStart(2, "0") }))
+                  : ["Wheel Sales", "Mount & Balance", "Wheel Repair", "Powder Coating", "Fitment Consulting", "Show Builds"].map((name, i) => ({ name, desc: null, num: String(i + 1).padStart(2, "0") }))
+              ).map((svc, i) => (
+                <div key={i} style={{ background: D.offwhite, padding: "48px 36px", position: "relative" }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "2px", color: D.blue, marginBottom: 24, display: "flex", alignItems: "center", gap: 10, fontFamily: bodyFont }}>
+                    {svc.num}
+                    <span style={{ flex: 1, height: 1, background: D.alloy, display: "block" }} />
+                  </div>
+                  <div style={{ fontFamily: font, fontWeight: 700, fontSize: 22, letterSpacing: "0.5px", color: D.dark, marginBottom: svc.desc ? 12 : 0 }}>{svc.name}</div>
+                  {svc.desc && <p style={{ fontSize: 14, color: D.steel, lineHeight: 1.75, margin: 0, fontFamily: bodyFont }}>{svc.desc}</p>}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

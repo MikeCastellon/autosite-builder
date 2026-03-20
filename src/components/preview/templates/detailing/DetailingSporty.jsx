@@ -231,17 +231,24 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
         <div style={s.sectionTag}>What We Do</div>
         <h2 style={s.sectionTitle}>Our Services</h2>
         <p style={s.sectionSub}>{generatedCopy.servicesSection?.intro}</p>
-        <div style={{ ...s.servicesGrid, gridTemplateColumns: `repeat(${svcCols}, 1fr)` }}>
-          {(generatedCopy.servicesSection?.items || []).map((svc, i) => (
-            <div key={i} style={s.serviceCard}>
-              <div style={s.serviceName}>{svc.name}</div>
-              <div style={s.serviceDesc}>{svc.description}</div>
-            </div>
-          ))}
-        </div>
-        {businessInfo.priceRange && (
-          <div style={s.priceTag}>
-            <span style={s.priceTagText}>Starting From: {businessInfo.priceRange}</span>
+        {businessInfo.packages?.length > 0 ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1px', background: c.accent + '22' }}>
+            {businessInfo.packages.map((pkg, i) => (
+              <div key={i} style={{ ...s.serviceCard, borderTop: `3px solid ${i === 1 ? c.accent : 'transparent'}` }}>
+                <div style={s.serviceName}>{pkg.name || pkg}</div>
+                {pkg.price && <div style={{ fontFamily: font, fontSize: '1.8rem', fontWeight: 900, color: c.accent, margin: '0.4rem 0 0.75rem' }}>{pkg.price}</div>}
+                <div style={s.serviceDesc}>{pkg.description}</div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{ ...s.servicesGrid, gridTemplateColumns: `repeat(${svcCols}, 1fr)` }}>
+            {(generatedCopy.servicesSection?.items || []).map((svc, i) => (
+              <div key={i} style={s.serviceCard}>
+                <div style={s.serviceName}>{svc.name}</div>
+                <div style={s.serviceDesc}>{svc.description}</div>
+              </div>
+            ))}
           </div>
         )}
       </section>

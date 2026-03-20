@@ -127,12 +127,6 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
                 ))}
               </div>
             )}
-            {biz.priceRange && (
-              <div style={{ background: c.accent, borderRadius: 12, padding: '20px 26px' }}>
-                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2.5, textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', marginBottom: 4 }}>STARTING AT</div>
-                <div style={{ fontSize: 18, fontWeight: 800, color: '#fff' }}>{biz.priceRange}</div>
-              </div>
-            )}
             {biz.yearsInBusiness && (
               <div style={{ background: c.secondary, borderRadius: 12, padding: '18px 26px', borderLeft: `4px solid ${c.accent}` }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: c.accent, letterSpacing: 2.5, textTransform: 'uppercase', marginBottom: 4 }}>EXPERIENCE</div>
@@ -170,24 +164,50 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
               <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.7, maxWidth: 520 }}>{copy.servicesSection.intro}</p>
             )}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 18 }}>
-            {services.length > 0 ? services.map((svc, i) => (
-              <div key={i} style={{
-                background: c.secondary, border: `1px solid ${c.accent}33`,
-                borderRadius: '0 10px 10px 0', padding: '26px 22px 26px 24px',
-                borderLeft: `4px solid ${c.accent}`,
-              }}>
-                <div style={{ color: c.accent, fontSize: 20, marginBottom: 14 }}>◈</div>
-                <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 10, color: c.text }}>{svc.name}</h3>
-                <p style={{ color: c.muted, fontSize: 14, lineHeight: 1.7, margin: 0 }}>{svc.description}</p>
-              </div>
-            )) : (biz.services || []).map((svc, i) => (
-              <div key={i} style={{ background: c.secondary, border: `1px solid ${c.accent}33`, borderRadius: '0 10px 10px 0', padding: '22px 20px 22px 22px', borderLeft: `4px solid ${c.accent}` }}>
-                <div style={{ color: c.accent, fontSize: 18, marginBottom: 10 }}>◈</div>
-                <h3 style={{ fontSize: 15, fontWeight: 700, color: c.text, margin: 0 }}>{svc}</h3>
-              </div>
-            ))}
-          </div>
+          {packages.length > 0 ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 18 }}>
+              {packages.map((pkg, i) => {
+                const isFeature = i === Math.floor(packages.length / 2);
+                return (
+                  <div key={i} style={{
+                    background: isFeature ? c.accent : c.secondary,
+                    borderRadius: 12, padding: '36px 28px', textAlign: 'center',
+                    border: `1px solid ${isFeature ? 'transparent' : `${c.accent}33`}`,
+                    boxShadow: isFeature ? `0 8px 32px ${c.accent}44` : 'none',
+                  }}>
+                    <div style={{ fontWeight: 800, fontSize: 17, marginBottom: 8, color: isFeature ? '#fff' : c.text }}>
+                      {pkg.name || pkg}
+                    </div>
+                    {pkg.price && (
+                      <div style={{ fontFamily: font, fontSize: '1.8rem', fontWeight: 800, color: isFeature ? '#fff' : c.accent, margin: '0.4rem 0 0.75rem' }}>{pkg.price}</div>
+                    )}
+                    {pkg.description && (
+                      <p style={{ color: isFeature ? 'rgba(255,255,255,0.85)' : c.muted, fontSize: 13, lineHeight: 1.6 }}>{pkg.description}</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 18 }}>
+              {services.length > 0 ? services.map((svc, i) => (
+                <div key={i} style={{
+                  background: c.secondary, border: `1px solid ${c.accent}33`,
+                  borderRadius: '0 10px 10px 0', padding: '26px 22px 26px 24px',
+                  borderLeft: `4px solid ${c.accent}`,
+                }}>
+                  <div style={{ color: c.accent, fontSize: 20, marginBottom: 14 }}>◈</div>
+                  <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 10, color: c.text }}>{svc.name}</h3>
+                  <p style={{ color: c.muted, fontSize: 14, lineHeight: 1.7, margin: 0 }}>{svc.description}</p>
+                </div>
+              )) : (biz.services || []).map((svc, i) => (
+                <div key={i} style={{ background: c.secondary, border: `1px solid ${c.accent}33`, borderRadius: '0 10px 10px 0', padding: '22px 20px 22px 22px', borderLeft: `4px solid ${c.accent}` }}>
+                  <div style={{ color: c.accent, fontSize: 18, marginBottom: 10 }}>◈</div>
+                  <h3 style={{ fontSize: 15, fontWeight: 700, color: c.text, margin: 0 }}>{svc}</h3>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -235,48 +255,6 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
                 <h3 style={{ fontSize: 20, fontWeight: 800, marginBottom: 10, color: c.text }}>Our Guarantee to You</h3>
                 <p style={{ color: c.muted, fontSize: 14, lineHeight: 1.7, margin: 0 }}>{biz.warranty || biz.warrantyOffered}</p>
               </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* PACKAGES */}
-      {packages.length > 0 && (
-        <section style={{ padding: '80px 5%', background: c.secondary, borderTop: `1px solid ${c.accent}22` }}>
-          <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-            <div style={{ textAlign: 'center', marginBottom: 48 }}>
-              <div style={{ color: c.accent, fontWeight: 700, letterSpacing: 3, fontSize: 11, textTransform: 'uppercase', marginBottom: 10 }}>PACKAGES</div>
-              <h2 style={{ fontSize: 'clamp(2rem, 4vw, 2.8rem)', fontWeight: 800, margin: 0 }}>Choose Your Package</h2>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 18 }}>
-              {packages.map((pkg, i) => {
-                const isFeature = i === Math.floor(packages.length / 2);
-                return (
-                  <div key={i} style={{
-                    background: isFeature ? c.accent : c.bg,
-                    borderRadius: 12, padding: '36px 28px', textAlign: 'center',
-                    border: `1px solid ${isFeature ? 'transparent' : `${c.accent}33`}`,
-                    boxShadow: isFeature ? `0 8px 32px ${c.accent}44` : 'none',
-                  }}>
-                    <div style={{ fontWeight: 800, fontSize: 17, marginBottom: 8, color: isFeature ? '#fff' : c.text }}>
-                      {typeof pkg === 'object' ? pkg.name : pkg}
-                    </div>
-                    {typeof pkg === 'object' && pkg.price && (
-                      <div style={{ fontSize: 24, fontWeight: 800, color: isFeature ? '#fff' : c.accent, marginBottom: 12 }}>{pkg.price}</div>
-                    )}
-                    {typeof pkg === 'object' && pkg.description && (
-                      <p style={{ color: isFeature ? 'rgba(255,255,255,0.85)' : c.muted, fontSize: 13, lineHeight: 1.6, marginBottom: 20 }}>{pkg.description}</p>
-                    )}
-                    <a href={`tel:${biz.phone}`} style={{
-                      display: 'inline-block',
-                      background: isFeature ? 'rgba(255,255,255,0.2)' : c.accent,
-                      color: '#fff', padding: '10px 24px', borderRadius: 8,
-                      fontWeight: 700, fontSize: 13, textDecoration: 'none',
-                      border: isFeature ? '1px solid rgba(255,255,255,0.4)' : 'none',
-                    }}>Book Now</a>
-                  </div>
-                );
-              })}
             </div>
           </div>
         </section>

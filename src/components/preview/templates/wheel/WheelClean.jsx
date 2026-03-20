@@ -103,12 +103,6 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {biz.priceRange && (
-              <div style={{ background: '#fff', borderRadius: 12, padding: '24px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', borderLeft: `4px solid ${c.accent}` }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: c.accent, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 6 }}>PRICE RANGE</div>
-                <div style={{ fontWeight: 700, fontSize: 18, color: c.text }}>{biz.priceRange}</div>
-              </div>
-            )}
             {biz.yearsInBusiness && (
               <div style={{ background: '#fff', borderRadius: 12, padding: '24px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', borderLeft: `4px solid ${c.accent}` }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: c.accent, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 6 }}>EXPERIENCE</div>
@@ -179,22 +173,34 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
               )}
             </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 0 }}>
-            {services.length > 0 ? services.map((svc, i) => (
-              <div key={i} style={{
-                borderLeft: `4px solid ${i % 3 === 0 ? c.accent : i % 3 === 1 ? '#9ca3af' : '#d1d5db'}`,
-                paddingLeft: 24, paddingTop: 24, paddingBottom: 24,
-                borderBottom: '1px solid #f3f4f6',
-              }}>
-                <h3 style={{ fontSize: 16, fontWeight: 700, color: c.text, marginBottom: 8 }}>{svc.name}</h3>
-                <p style={{ color: c.muted, fontSize: 14, lineHeight: 1.7, margin: 0 }}>{svc.description}</p>
-              </div>
-            )) : (biz.services || []).map((svc, i) => (
-              <div key={i} style={{ borderLeft: `4px solid ${c.accent}`, paddingLeft: 24, paddingTop: 20, paddingBottom: 20, borderBottom: '1px solid #f3f4f6' }}>
-                <h3 style={{ fontSize: 15, fontWeight: 700, color: c.text, margin: 0 }}>{svc}</h3>
-              </div>
-            ))}
-          </div>
+          {packages.length > 0 ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1px', background: `${c.accent}22` }}>
+              {packages.map((pkg, i) => (
+                <div key={i} style={{ background: '#fff', padding: '32px 28px', borderTop: `3px solid ${i === 1 ? c.accent : 'transparent'}` }}>
+                  <h3 style={{ fontSize: 16, fontWeight: 700, color: c.text, marginBottom: 8 }}>{pkg.name || pkg}</h3>
+                  {pkg.price && <div style={{ fontFamily: font, fontSize: '1.8rem', fontWeight: 800, color: c.accent, margin: '0.4rem 0 0.75rem' }}>{pkg.price}</div>}
+                  {pkg.description && <p style={{ color: c.muted, fontSize: 14, lineHeight: 1.7, margin: 0 }}>{pkg.description}</p>}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 0 }}>
+              {services.length > 0 ? services.map((svc, i) => (
+                <div key={i} style={{
+                  borderLeft: `4px solid ${i % 3 === 0 ? c.accent : i % 3 === 1 ? '#9ca3af' : '#d1d5db'}`,
+                  paddingLeft: 24, paddingTop: 24, paddingBottom: 24,
+                  borderBottom: '1px solid #f3f4f6',
+                }}>
+                  <h3 style={{ fontSize: 16, fontWeight: 700, color: c.text, marginBottom: 8 }}>{svc.name}</h3>
+                  <p style={{ color: c.muted, fontSize: 14, lineHeight: 1.7, margin: 0 }}>{svc.description}</p>
+                </div>
+              )) : (biz.services || []).map((svc, i) => (
+                <div key={i} style={{ borderLeft: `4px solid ${c.accent}`, paddingLeft: 24, paddingTop: 20, paddingBottom: 20, borderBottom: '1px solid #f3f4f6' }}>
+                  <h3 style={{ fontSize: 15, fontWeight: 700, color: c.text, margin: 0 }}>{svc}</h3>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

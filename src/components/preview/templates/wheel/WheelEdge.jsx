@@ -147,7 +147,6 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
             { val: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'YEARS IN BUSINESS' },
             { val: '50+', label: 'BRANDS AVAILABLE' },
             { val: '5K+', label: 'WHEELS INSTALLED' },
-            { val: biz.priceRange || '$$', label: 'COMPETITIVE PRICING' },
           ].map((s, i) => (
             <div key={i}>
               <div style={{ fontSize: '2.5rem', fontWeight: 900, color: c.accent, lineHeight: 1 }}>{s.val}</div>
@@ -170,34 +169,57 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
               <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.7, maxWidth: 520 }}>{copy.servicesSection.intro}</p>
             )}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 2 }}>
-            {services.length > 0 ? services.map((svc, i) => (
-              <div key={i} style={{
-                background: i % 2 === 0 ? c.secondary : '#0f0f1e',
-                padding: '32px 26px',
-                borderTop: `2px solid ${i < 2 ? c.accent : 'transparent'}`,
-                borderBottom: `1px solid ${c.accent}11`,
-                position: 'relative',
-                overflow: 'hidden',
-              }}>
-                <div style={{
-                  position: 'absolute', top: 0, right: 0,
-                  width: 60, height: 60,
-                  background: `${c.accent}08`,
-                  borderRadius: '0 0 0 60px',
-                }} />
-                <div style={{ fontSize: 11, color: c.accent, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 12 }}>
-                  {String(i + 1).padStart(2, '0')}
+          {biz.packages?.length > 0 ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 2 }}>
+              {biz.packages.map((pkg, i) => (
+                <div key={i} style={{
+                  background: i % 2 === 0 ? c.secondary : '#0f0f1e',
+                  padding: '32px 26px',
+                  borderTop: `2px solid ${i === 1 ? c.accent : 'transparent'}`,
+                  position: 'relative', overflow: 'hidden',
+                }}>
+                  <div style={{
+                    position: 'absolute', top: 0, right: 0,
+                    width: 60, height: 60,
+                    background: `${c.accent}08`,
+                    borderRadius: '0 0 0 60px',
+                  }} />
+                  <h3 style={{ fontSize: 15, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, color: c.text }}>{pkg.name || pkg}</h3>
+                  {pkg.price && <div style={{ fontFamily: font, fontSize: '1.8rem', fontWeight: 900, color: c.accent, margin: '0.4rem 0 0.75rem' }}>{pkg.price}</div>}
+                  {pkg.description && <p style={{ color: c.muted, fontSize: 13, lineHeight: 1.7, margin: 0 }}>{pkg.description}</p>}
                 </div>
-                <h3 style={{ fontSize: 15, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10, color: c.text }}>{svc.name}</h3>
-                <p style={{ color: c.muted, fontSize: 13, lineHeight: 1.7, margin: 0 }}>{svc.description}</p>
-              </div>
-            )) : (biz.services || []).map((svc, i) => (
-              <div key={i} style={{ background: i % 2 === 0 ? c.secondary : '#0f0f1e', padding: '28px 24px', borderTop: `2px solid ${i < 2 ? c.accent : 'transparent'}` }}>
-                <h3 style={{ fontSize: 15, fontWeight: 800, textTransform: 'uppercase', color: c.text, margin: 0 }}>{svc}</h3>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 2 }}>
+              {services.length > 0 ? services.map((svc, i) => (
+                <div key={i} style={{
+                  background: i % 2 === 0 ? c.secondary : '#0f0f1e',
+                  padding: '32px 26px',
+                  borderTop: `2px solid ${i < 2 ? c.accent : 'transparent'}`,
+                  borderBottom: `1px solid ${c.accent}11`,
+                  position: 'relative',
+                  overflow: 'hidden',
+                }}>
+                  <div style={{
+                    position: 'absolute', top: 0, right: 0,
+                    width: 60, height: 60,
+                    background: `${c.accent}08`,
+                    borderRadius: '0 0 0 60px',
+                  }} />
+                  <div style={{ fontSize: 11, color: c.accent, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 12 }}>
+                    {String(i + 1).padStart(2, '0')}
+                  </div>
+                  <h3 style={{ fontSize: 15, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10, color: c.text }}>{svc.name}</h3>
+                  <p style={{ color: c.muted, fontSize: 13, lineHeight: 1.7, margin: 0 }}>{svc.description}</p>
+                </div>
+              )) : (biz.services || []).map((svc, i) => (
+                <div key={i} style={{ background: i % 2 === 0 ? c.secondary : '#0f0f1e', padding: '28px 24px', borderTop: `2px solid ${i < 2 ? c.accent : 'transparent'}` }}>
+                  <h3 style={{ fontSize: 15, fontWeight: 800, textTransform: 'uppercase', color: c.text, margin: 0 }}>{svc}</h3>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

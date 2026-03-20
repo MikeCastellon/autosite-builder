@@ -25,7 +25,6 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
   const stats = [
     { value: businessInfo.yearsInBusiness ? `${businessInfo.yearsInBusiness}+` : '10+', label: 'Years of Excellence' },
     { value: '5,000+', label: 'Windows Tinted' },
-    { value: businessInfo.priceRange || '$$$', label: 'Price Range' },
     { value: '★★★★★', label: 'Customer Reviews' },
   ];
 
@@ -270,18 +269,37 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
             <div style={{ width: '80px', height: '1px', background: goldGradient, margin: '0 auto 20px' }} />
             <p style={{ color: c.muted, maxWidth: '520px', margin: '0 auto', fontSize: '0.95rem', lineHeight: 1.85, fontWeight: 300 }}>{generatedCopy.servicesSection.intro}</p>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: '20px' }}>
-            {generatedCopy.servicesSection.items.map((svc, i) => (
-              <div key={i} style={cardStyle}>
-                <div style={cardTopAccent} />
-                <div style={{ fontFamily: bodyFont, fontSize: '0.65rem', letterSpacing: '3.5px', textTransform: 'uppercase', ...goldGradientText, marginBottom: '14px' }}>
-                  {String(i + 1).padStart(2, '0')}
+          {businessInfo.packages?.length > 0 ? (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', justifyContent: 'center' }}>
+              {businessInfo.packages.map((pkg, i) => (
+                <div key={i} style={pricingStyle(i === 1)}>
+                  {i === 1 && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: goldGradient }} />}
+                  {i === 1 && (
+                    <div style={{ position: 'absolute', top: '16px', right: '16px', border: `1px solid rgba(202,138,4,0.5)`, ...goldGradientText, fontSize: '0.6rem', fontWeight: 700, padding: '3px 8px', letterSpacing: '2px', textTransform: 'uppercase', fontFamily: bodyFont }}>FEATURED</div>
+                  )}
+                  <div style={{ fontSize: '0.65rem', letterSpacing: '3.5px', textTransform: 'uppercase', color: c.muted, marginBottom: '12px', fontFamily: bodyFont }}>Package {String(i + 1).padStart(2, '0')}</div>
+                  <div style={{ fontFamily: font, fontSize: '1.35rem', fontWeight: 700, color: c.text, marginBottom: '10px', fontStyle: 'italic' }}>{pkg.name || pkg}</div>
+                  {pkg.price && (
+                    <div style={{ fontFamily: font, fontSize: '1.8rem', fontWeight: 300, ...goldGradientText, margin: '0.4rem 0 0.75rem' }}>{pkg.price}</div>
+                  )}
+                  {pkg.description && <p style={{ color: c.muted, fontSize: '0.85rem', lineHeight: 1.75, fontWeight: 300 }}>{pkg.description}</p>}
                 </div>
-                <h3 style={{ fontFamily: font, fontSize: '1.15rem', fontWeight: 700, color: c.text, marginBottom: '12px', fontStyle: 'italic' }}>{svc.name}</h3>
-                <p style={{ color: c.muted, fontSize: '0.88rem', lineHeight: 1.75, fontWeight: 300 }}>{svc.description}</p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: '20px' }}>
+              {generatedCopy.servicesSection.items.map((svc, i) => (
+                <div key={i} style={cardStyle}>
+                  <div style={cardTopAccent} />
+                  <div style={{ fontFamily: bodyFont, fontSize: '0.65rem', letterSpacing: '3.5px', textTransform: 'uppercase', ...goldGradientText, marginBottom: '14px' }}>
+                    {String(i + 1).padStart(2, '0')}
+                  </div>
+                  <h3 style={{ fontFamily: font, fontSize: '1.15rem', fontWeight: 700, color: c.text, marginBottom: '12px', fontStyle: 'italic' }}>{svc.name}</h3>
+                  <p style={{ color: c.muted, fontSize: '0.88rem', lineHeight: 1.75, fontWeight: 300 }}>{svc.description}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -300,35 +318,6 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
               <p style={{ color: c.muted, fontSize: '0.92rem', lineHeight: 1.75, fontWeight: 300, maxWidth: '480px', margin: '0 auto' }}>
                 {businessInfo.warranty || 'Every installation is backed by our comprehensive warranty. We stand behind our work with the confidence of true craftsmen.'}
               </p>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* PACKAGES - Pricing */}
-      {businessInfo.packages && businessInfo.packages.length > 0 && (
-        <section id="packages" style={sectionStyle()}>
-          <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-            <div style={{ textAlign: 'center', marginBottom: '64px' }}>
-              <h2 style={{ fontFamily: font, fontSize: '2.4rem', fontWeight: 700, color: c.text, marginBottom: '16px', fontStyle: 'italic' }}>Tint Packages</h2>
-              <div style={{ width: '80px', height: '1px', background: goldGradient, margin: '0 auto' }} />
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', justifyContent: 'center' }}>
-              {businessInfo.packages.map((pkg, i) => (
-                <div key={i} style={pricingStyle(i === 1)}>
-                  {i === 1 && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: goldGradient }} />}
-                  {i === 1 && (
-                    <div style={{ position: 'absolute', top: '16px', right: '16px', border: `1px solid rgba(202,138,4,0.5)`, ...goldGradientText, fontSize: '0.6rem', fontWeight: 700, padding: '3px 8px', letterSpacing: '2px', textTransform: 'uppercase', fontFamily: bodyFont }}>FEATURED</div>
-                  )}
-                  <div style={{ fontSize: '0.65rem', letterSpacing: '3.5px', textTransform: 'uppercase', color: c.muted, marginBottom: '12px', fontFamily: bodyFont }}>Package {String(i + 1).padStart(2, '0')}</div>
-                  <div style={{ fontFamily: font, fontSize: '1.35rem', fontWeight: 700, color: c.text, marginBottom: '10px', fontStyle: 'italic' }}>{pkg.name || pkg}</div>
-                  {pkg.price && (
-                    <div style={{ fontFamily: font, fontSize: '2.4rem', fontWeight: 300, ...goldGradientText, marginBottom: '16px' }}>{pkg.price}</div>
-                  )}
-                  {pkg.description && <p style={{ color: c.muted, fontSize: '0.85rem', lineHeight: 1.75, fontWeight: 300, marginBottom: '24px' }}>{pkg.description}</p>}
-                  <button style={{ ...accentBtnStyle, padding: '10px 28px', fontSize: '0.75rem' }}>Select Package</button>
-                </div>
-              ))}
             </div>
           </div>
         </section>

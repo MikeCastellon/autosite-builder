@@ -227,27 +227,35 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
               : 'From a single-car detail to a full fleet program, every service is executed to an exacting standard.'}
           </p>
         </div>
-        <div style={s.servicesBento}>
-          {services.map((svc, i) => {
-            const featured = i === 0;
-            return (
-              <div key={i} style={featured ? s.tileFeatured : s.tileBase}>
-                <div style={featured ? s.tileGlowFeatured : s.tileGlow} />
-                {featured && <div style={s.tileBadge}>Most Popular</div>}
-                <div style={featured ? s.tileIconFeatured : s.tileIcon}>
-                  {tileIcons[i % tileIcons.length]}
-                </div>
-                <h3 style={featured ? s.tileH3Featured : s.tileH3}>{svc.name}</h3>
-                <p style={featured ? s.tilePFeatured : s.tileP}>{svc.description}</p>
-                {businessInfo.priceRange && i === 0 && (
-                  <div style={{ marginTop: '24px', fontSize: '13px', fontWeight: 500, color: 'rgba(255,255,255,0.5)' }}>
-                    {businessInfo.priceRange}
-                  </div>
-                )}
+        {businessInfo.packages?.length > 0 ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1px', background: blue + '22' }}>
+            {businessInfo.packages.map((pkg, i) => (
+              <div key={i} style={{ ...s.tileBase, borderTop: `3px solid ${i === 0 ? blue : 'transparent'}` }}>
+                <div style={s.tileGlow} />
+                <h3 style={s.tileH3}>{pkg.name || pkg}</h3>
+                {pkg.price && <div style={{ fontFamily: dmSerif, fontSize: '1.8rem', fontWeight: 700, color: blue, margin: '0.4rem 0 0.75rem' }}>{pkg.price}</div>}
+                <p style={s.tileP}>{pkg.description}</p>
               </div>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div style={s.servicesBento}>
+            {services.map((svc, i) => {
+              const featured = i === 0;
+              return (
+                <div key={i} style={featured ? s.tileFeatured : s.tileBase}>
+                  <div style={featured ? s.tileGlowFeatured : s.tileGlow} />
+                  {featured && <div style={s.tileBadge}>Most Popular</div>}
+                  <div style={featured ? s.tileIconFeatured : s.tileIcon}>
+                    {tileIcons[i % tileIcons.length]}
+                  </div>
+                  <h3 style={featured ? s.tileH3Featured : s.tileH3}>{svc.name}</h3>
+                  <p style={featured ? s.tilePFeatured : s.tileP}>{svc.description}</p>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       {/* BRANDS */}

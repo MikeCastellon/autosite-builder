@@ -19,7 +19,6 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
   const stats = [
     { value: businessInfo.yearsInBusiness ? `${businessInfo.yearsInBusiness}+` : '10+', label: 'Years Experience' },
     { value: '500+', label: 'Cars Detailed' },
-    { value: businessInfo.priceRange || '$$', label: 'Price Range' },
     { value: '5★', label: 'Avg Rating' },
   ];
 
@@ -176,38 +175,32 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
             <h2 style={{ fontFamily: font, fontSize: '2.4rem', fontWeight: 800, color: c.text, marginBottom: '12px' }}>Our Services</h2>
             <p style={{ color: c.muted, maxWidth: '560px', margin: '0 auto', fontSize: '1.05rem', lineHeight: 1.7 }}>{generatedCopy.servicesSection.intro}</p>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: '24px' }}>
-            {generatedCopy.servicesSection.items.map((svc, i) => (
-              <div key={i} style={cardStyle}>
-                <div style={{ width: '44px', height: '44px', background: `rgba(8,145,178,0.1)`, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px', fontSize: '1.4rem' }}>
-                  {['🌊', '✨', '🚗', '🔵', '🛡️', '💎'][i % 6]}
-                </div>
-                <h3 style={{ fontFamily: font, fontSize: '1.15rem', fontWeight: 700, color: c.text, marginBottom: '10px' }}>{svc.name}</h3>
-                <p style={{ color: c.muted, fontSize: '0.92rem', lineHeight: 1.65 }}>{svc.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* PACKAGES */}
-      {businessInfo.packages && businessInfo.packages.length > 0 && (
-        <section id="packages" style={sectionStyle(c.secondary)}>
-          <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-            <h2 style={{ fontFamily: font, fontSize: '2.2rem', fontWeight: 800, color: c.text, textAlign: 'center', marginBottom: '48px' }}>Detailing Packages</h2>
+          {businessInfo.packages?.length > 0 ? (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', justifyContent: 'center' }}>
               {businessInfo.packages.map((pkg, i) => (
                 <div key={i} style={{ ...cardStyle, border: i === 1 ? `2px solid ${c.accent}` : '2px solid transparent', position: 'relative', overflow: 'hidden' }}>
                   {i === 1 && <div style={{ position: 'absolute', top: '16px', right: '16px', background: c.accent, color: '#fff', fontSize: '0.7rem', fontWeight: 700, padding: '4px 10px', borderRadius: '50px', letterSpacing: '1px' }}>POPULAR</div>}
                   <h3 style={{ fontFamily: font, fontSize: '1.25rem', fontWeight: 700, color: c.text, marginBottom: '8px' }}>{pkg.name || pkg}</h3>
-                  {pkg.price && <div style={{ fontSize: '1.8rem', fontWeight: 800, color: c.accent, marginBottom: '12px', fontFamily: font }}>{pkg.price}</div>}
+                  {pkg.price && <div style={{ fontFamily: font, fontSize: '1.8rem', fontWeight: 800, color: c.accent, margin: '0.4rem 0 0.75rem' }}>{pkg.price}</div>}
                   {pkg.description && <p style={{ color: c.muted, fontSize: '0.9rem', lineHeight: 1.6 }}>{pkg.description}</p>}
                 </div>
               ))}
             </div>
-          </div>
-        </section>
-      )}
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: '24px' }}>
+              {generatedCopy.servicesSection.items.map((svc, i) => (
+                <div key={i} style={cardStyle}>
+                  <div style={{ width: '44px', height: '44px', background: `rgba(8,145,178,0.1)`, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px', fontSize: '1.4rem' }}>
+                    {['🌊', '✨', '🚗', '🔵', '🛡️', '💎'][i % 6]}
+                  </div>
+                  <h3 style={{ fontFamily: font, fontSize: '1.15rem', fontWeight: 700, color: c.text, marginBottom: '10px' }}>{svc.name}</h3>
+                  <p style={{ color: c.muted, fontSize: '0.92rem', lineHeight: 1.65 }}>{svc.description}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* ABOUT */}
       <section id="about" style={sectionStyle(c.bg)}>

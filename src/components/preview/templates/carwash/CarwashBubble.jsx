@@ -257,8 +257,8 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 20 }}>
-            {(services.length > 0 ? services : [
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${biz.packages?.length > 0 ? Math.min(biz.packages.length, 3) : svcCols}, 1fr)`, gap: 20 }}>
+            {(biz.packages?.length > 0 ? biz.packages : services.length > 0 ? services : [
               { name: 'Express', description: 'Quick, fresh, done right. High-pressure pre-rinse, foam wash, spot-free exit.' },
               { name: 'Bubble Rush', description: 'The full foam experience — triple foam cannon, tire scrub, Rain-X protectant.' },
               { name: 'Ultimate Shine', description: 'Showroom-worthy every time. Ceramic spray, clear-coat sealant, wheel brightener.' },
@@ -277,11 +277,9 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
                   <div style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: '50%', background: isFeatured ? 'rgba(255,255,255,0.12)' : `${c.accent}10`, pointerEvents: 'none' }} />
                   {isFeatured && <div style={{ position: 'absolute', top: 16, right: 16, background: 'rgba(255,255,255,0.25)', color: '#fff', borderRadius: 50, padding: '3px 12px', fontSize: 10, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase' }}>Most Popular</div>}
                   <div style={{ fontSize: 36, marginBottom: 12 }}>{packageIcons[i] || '🫧'}</div>
-                  <h3 style={{ fontFamily: font, fontSize: 22, color: isFeatured ? '#fff' : c.text, margin: '0 0 10px' }}>{pkg.name}</h3>
-                  <p style={{ fontSize: 14, lineHeight: 1.65, color: isFeatured ? 'rgba(255,255,255,0.85)' : c.muted || '#64748b', margin: '0 0 28px', fontWeight: 600 }}>{pkg.description}</p>
-                  <a href={biz.phone ? `tel:${biz.phone}` : '#'} style={{ display: 'inline-block', background: isFeatured ? 'rgba(255,255,255,0.22)' : `linear-gradient(135deg, ${c.accent}, #14b8a6)`, color: '#fff', border: isFeatured ? '2px solid rgba(255,255,255,0.5)' : 'none', borderRadius: 50, padding: '11px 28px', fontWeight: 800, fontSize: 14, textDecoration: 'none', boxShadow: isFeatured ? 'none' : `0 4px 16px ${c.accent}44` }}>
-                    {copy.ctaPrimary || 'Book Now'} →
-                  </a>
+                  <h3 style={{ fontFamily: font, fontSize: 22, color: isFeatured ? '#fff' : c.text, margin: '0 0 10px' }}>{pkg.name || pkg}</h3>
+                  {pkg.price && <div style={{ fontFamily: font, fontSize: '1.8rem', fontWeight: 800, color: isFeatured ? '#fff' : c.accent, margin: '0.4rem 0 0.75rem' }}>{pkg.price}</div>}
+                  <p style={{ fontSize: 14, lineHeight: 1.65, color: isFeatured ? 'rgba(255,255,255,0.85)' : c.muted || '#64748b', margin: '0 0 12px', fontWeight: 600 }}>{pkg.description}</p>
                 </div>
               );
             })}

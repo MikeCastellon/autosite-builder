@@ -128,12 +128,6 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
                 )}
               </div>
             )}
-            {biz.priceRange && (
-              <div style={{ background: c.accent, borderRadius: 12, padding: '18px 22px', color: '#fff' }}>
-                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', opacity: 0.8, marginBottom: 4 }}>PRICE RANGE</div>
-                <div style={{ fontWeight: 800, fontSize: 20 }}>{biz.priceRange}</div>
-              </div>
-            )}
           </div>
         </div>
       </header>
@@ -179,38 +173,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
               <p style={{ color: c.muted, fontSize: 16, lineHeight: 1.7, maxWidth: 540 }}>{copy.servicesSection.intro}</p>
             )}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 20 }}>
-            {services.length > 0 ? services.map((svc, i) => (
-              <div key={i} style={{
-                background: c.secondary || '#eff6ff', border: '1px solid #dbeafe',
-                borderRadius: 14, padding: '28px 24px',
-                borderTop: `3px solid ${c.accent}`,
-              }}>
-                <div style={{
-                  width: 36, height: 36, background: `${c.accent}18`, borderRadius: 8,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: c.accent, fontWeight: 900, fontSize: 16, marginBottom: 14,
-                }}>✓</div>
-                <h3 style={{ fontSize: 16, fontWeight: 700, color: c.text, marginBottom: 10 }}>{svc.name}</h3>
-                <p style={{ color: c.muted, fontSize: 14, lineHeight: 1.7, margin: 0 }}>{svc.description}</p>
-              </div>
-            )) : (biz.services || []).map((svc, i) => (
-              <div key={i} style={{ background: c.secondary, border: '1px solid #dbeafe', borderRadius: 14, padding: '24px 20px', borderTop: `3px solid ${c.accent}` }}>
-                <h3 style={{ fontSize: 15, fontWeight: 700, color: c.text, margin: 0 }}>{svc}</h3>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* PACKAGES */}
-      {packages.length > 0 && (
-        <section style={{ padding: '80px 5%', background: c.secondary || '#eff6ff', borderTop: '1px solid #dbeafe' }}>
-          <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-            <div style={{ textAlign: 'center', marginBottom: 48 }}>
-              <span style={{ display: 'inline-block', background: `${c.accent}18`, color: c.accent, fontSize: 12, fontWeight: 700, padding: '5px 14px', borderRadius: 20, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 12 }}>Packages</span>
-              <h2 style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.5rem)', fontWeight: 800, color: c.text, margin: 0 }}>Choose Your Package</h2>
-            </div>
+          {packages.length > 0 ? (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20 }}>
               {packages.map((pkg, i) => {
                 const isFeature = i === Math.floor(packages.length / 2);
@@ -222,27 +185,43 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
                     boxShadow: isFeature ? `0 8px 32px ${c.accent}33` : '0 2px 12px rgba(0,0,0,0.06)',
                   }}>
                     <div style={{ fontWeight: 800, fontSize: 18, marginBottom: 8, color: isFeature ? '#fff' : c.text }}>
-                      {typeof pkg === 'object' ? pkg.name : pkg}
+                      {pkg.name || pkg}
                     </div>
-                    {typeof pkg === 'object' && pkg.price && (
-                      <div style={{ fontSize: 26, fontWeight: 800, color: isFeature ? '#fff' : c.accent, marginBottom: 12 }}>{pkg.price}</div>
+                    {pkg.price && (
+                      <div style={{ fontFamily: font, fontSize: '1.8rem', fontWeight: 800, color: isFeature ? '#fff' : c.accent, margin: '0.4rem 0 0.75rem' }}>{pkg.price}</div>
                     )}
-                    {typeof pkg === 'object' && pkg.description && (
-                      <p style={{ color: isFeature ? 'rgba(255,255,255,0.85)' : c.muted, fontSize: 14, lineHeight: 1.6, marginBottom: 20 }}>{pkg.description}</p>
+                    {pkg.description && (
+                      <p style={{ color: isFeature ? 'rgba(255,255,255,0.85)' : c.muted, fontSize: 14, lineHeight: 1.6 }}>{pkg.description}</p>
                     )}
-                    <a href={`tel:${biz.phone}`} style={{
-                      display: 'inline-block',
-                      background: isFeature ? '#fff' : c.accent,
-                      color: isFeature ? c.accent : '#fff',
-                      padding: '10px 26px', borderRadius: 8, fontWeight: 700, fontSize: 14, textDecoration: 'none',
-                    }}>Book Now</a>
                   </div>
                 );
               })}
             </div>
-          </div>
-        </section>
-      )}
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 20 }}>
+              {services.length > 0 ? services.map((svc, i) => (
+                <div key={i} style={{
+                  background: c.secondary || '#eff6ff', border: '1px solid #dbeafe',
+                  borderRadius: 14, padding: '28px 24px',
+                  borderTop: `3px solid ${c.accent}`,
+                }}>
+                  <div style={{
+                    width: 36, height: 36, background: `${c.accent}18`, borderRadius: 8,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: c.accent, fontWeight: 900, fontSize: 16, marginBottom: 14,
+                  }}>✓</div>
+                  <h3 style={{ fontSize: 16, fontWeight: 700, color: c.text, marginBottom: 10 }}>{svc.name}</h3>
+                  <p style={{ color: c.muted, fontSize: 14, lineHeight: 1.7, margin: 0 }}>{svc.description}</p>
+                </div>
+              )) : (biz.services || []).map((svc, i) => (
+                <div key={i} style={{ background: c.secondary, border: '1px solid #dbeafe', borderRadius: 14, padding: '24px 20px', borderTop: `3px solid ${c.accent}` }}>
+                  <h3 style={{ fontSize: 15, fontWeight: 700, color: c.text, margin: 0 }}>{svc}</h3>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* ABOUT */}
       <section id="about" style={{ padding: '80px 5%', background: c.bg, borderTop: '1px solid #e5e7eb' }}>

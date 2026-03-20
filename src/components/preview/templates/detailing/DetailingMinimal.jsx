@@ -221,18 +221,25 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
         <div style={s.sectionEyebrow}>Services</div>
         <h2 style={s.sectionTitle}>What We Offer</h2>
         <p style={s.sectionSub}>{generatedCopy.servicesSection?.intro}</p>
-        <div style={{ ...s.servicesGrid, gridTemplateColumns: `repeat(${svcCols}, 1fr)` }}>
-          {(generatedCopy.servicesSection?.items || []).map((svc, i) => (
-            <div key={i} style={s.serviceCard}>
-              <div style={s.serviceIcon}><div style={s.serviceIconDot} /></div>
-              <div style={s.serviceName}>{svc.name}</div>
-              <div style={s.serviceDesc}>{svc.description}</div>
-            </div>
-          ))}
-        </div>
-        {businessInfo.priceRange && (
-          <div style={s.priceNote}>
-            <span style={s.priceText}>Investment range: <span style={s.priceVal}>{businessInfo.priceRange}</span></span>
+        {businessInfo.packages?.length > 0 ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem' }}>
+            {businessInfo.packages.map((pkg, i) => (
+              <div key={i} style={{ ...s.serviceCard, borderTop: `3px solid ${i === 1 ? c.accent : 'transparent'}` }}>
+                <div style={s.serviceName}>{pkg.name || pkg}</div>
+                {pkg.price && <div style={{ fontFamily: font, fontSize: '1.8rem', fontWeight: 700, color: c.accent, margin: '0.4rem 0 0.75rem' }}>{pkg.price}</div>}
+                <div style={s.serviceDesc}>{pkg.description}</div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{ ...s.servicesGrid, gridTemplateColumns: `repeat(${svcCols}, 1fr)` }}>
+            {(generatedCopy.servicesSection?.items || []).map((svc, i) => (
+              <div key={i} style={s.serviceCard}>
+                <div style={s.serviceIcon}><div style={s.serviceIconDot} /></div>
+                <div style={s.serviceName}>{svc.name}</div>
+                <div style={s.serviceDesc}>{svc.description}</div>
+              </div>
+            ))}
           </div>
         )}
       </section>

@@ -149,7 +149,6 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
             { val: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'YEARS IN BUSINESS' },
             { val: '500+', label: 'RIDES DETAILED' },
             { val: '100%', label: 'MOBILE SERVICE' },
-            { val: biz.priceRange || '$$', label: 'FAIR PRICING' },
           ].map((s, i) => (
             <div key={i}>
               <div style={{ fontSize: '3rem', fontWeight: 900, color: c.accent, lineHeight: 1 }}>{s.val}</div>
@@ -169,40 +168,13 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
               <p style={{ color: '#888', fontSize: 15, lineHeight: 1.7, maxWidth: 520, marginTop: 16 }}>{copy.servicesSection.intro}</p>
             )}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 16 }}>
-            {services.length > 0 ? services.map((s, i) => (
-              <div key={i} style={{
-                background: c.secondary || '#2a2a2a',
-                borderLeft: `5px solid ${c.accent}`,
-                padding: '28px 24px',
-                clipPath: 'polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)',
-              }}>
-                <h3 style={{ fontWeight: 900, textTransform: 'uppercase', fontSize: 15, letterSpacing: 1, color: c.accent, margin: '0 0 10px' }}>{s.name}</h3>
-                <p style={{ color: '#aaa', lineHeight: 1.7, margin: 0, fontSize: 14 }}>{s.description}</p>
-              </div>
-            )) : (biz.services || []).map((s, i) => (
-              <div key={i} style={{ background: c.secondary || '#2a2a2a', borderLeft: `5px solid ${c.accent}`, padding: '24px 22px' }}>
-                <h3 style={{ fontWeight: 900, textTransform: 'uppercase', fontSize: 15, color: c.accent, margin: 0 }}>{s}</h3>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* PACKAGES / PRICING */}
-      {packages.length > 0 && (
-        <section id="pricing" style={{ padding: '80px 5%', background: c.secondary || '#2a2a2a', borderTop: '1px solid #333' }}>
-          <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-            <div style={{ marginBottom: 48, textAlign: 'center' }}>
-              <div style={{ color: c.accent, fontWeight: 900, letterSpacing: 3, fontSize: 11, textTransform: 'uppercase', marginBottom: 8 }}>PACKAGES</div>
-              <h2 style={{ fontSize: 'clamp(2rem, 5vw, 3rem)', fontWeight: 900, textTransform: 'uppercase', margin: 0 }}>CHOOSE YOUR PACKAGE</h2>
-            </div>
+          {packages.length > 0 ? (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
               {packages.map((pkg, i) => {
                 const isFeature = i === Math.floor(packages.length / 2);
                 return (
                   <div key={i} style={{
-                    background: isFeature ? c.accent : c.bg,
+                    background: isFeature ? c.accent : c.secondary || '#2a2a2a',
                     border: `3px solid ${isFeature ? c.accent : '#444'}`,
                     padding: '36px 28px', textAlign: 'center',
                     clipPath: 'polygon(0 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%)',
@@ -216,28 +188,39 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
                       }}>MOST POPULAR</div>
                     )}
                     <div style={{ fontWeight: 900, fontSize: 18, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, color: isFeature ? '#fff' : c.text }}>
-                      {typeof pkg === 'object' ? pkg.name : pkg}
+                      {pkg.name || pkg}
                     </div>
-                    {typeof pkg === 'object' && pkg.price && (
-                      <div style={{ fontSize: 28, fontWeight: 900, color: isFeature ? '#fff' : c.accent, marginBottom: 12 }}>{pkg.price}</div>
+                    {pkg.price && (
+                      <div style={{ fontFamily: font, fontSize: '1.8rem', fontWeight: 900, color: isFeature ? '#fff' : c.accent, margin: '0.4rem 0 0.75rem' }}>{pkg.price}</div>
                     )}
-                    {typeof pkg === 'object' && pkg.description && (
-                      <p style={{ color: isFeature ? 'rgba(255,255,255,0.85)' : '#aaa', fontSize: 14, lineHeight: 1.6, marginBottom: 20 }}>{pkg.description}</p>
+                    {pkg.description && (
+                      <p style={{ color: isFeature ? 'rgba(255,255,255,0.85)' : '#aaa', fontSize: 14, lineHeight: 1.6 }}>{pkg.description}</p>
                     )}
-                    <a href={`tel:${biz.phone}`} style={{
-                      display: 'inline-block', marginTop: 8,
-                      background: isFeature ? '#fff' : c.accent,
-                      color: isFeature ? c.accent : '#fff',
-                      padding: '10px 28px', fontWeight: 900, fontSize: 13,
-                      letterSpacing: 1, textTransform: 'uppercase', textDecoration: 'none',
-                    }}>BOOK NOW</a>
                   </div>
                 );
               })}
             </div>
-          </div>
-        </section>
-      )}
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 16 }}>
+              {services.length > 0 ? services.map((s, i) => (
+                <div key={i} style={{
+                  background: c.secondary || '#2a2a2a',
+                  borderLeft: `5px solid ${c.accent}`,
+                  padding: '28px 24px',
+                  clipPath: 'polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)',
+                }}>
+                  <h3 style={{ fontWeight: 900, textTransform: 'uppercase', fontSize: 15, letterSpacing: 1, color: c.accent, margin: '0 0 10px' }}>{s.name}</h3>
+                  <p style={{ color: '#aaa', lineHeight: 1.7, margin: 0, fontSize: 14 }}>{s.description}</p>
+                </div>
+              )) : (biz.services || []).map((s, i) => (
+                <div key={i} style={{ background: c.secondary || '#2a2a2a', borderLeft: `5px solid ${c.accent}`, padding: '24px 22px' }}>
+                  <h3 style={{ fontWeight: 900, textTransform: 'uppercase', fontSize: 15, color: c.accent, margin: 0 }}>{s}</h3>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* ABOUT + HOURS */}
       <section id="about" style={{ padding: '80px 5%' }}>
