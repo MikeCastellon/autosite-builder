@@ -256,10 +256,25 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
             </div>
           ))}
         </div>
-        {businessInfo.priceRange && (
-          <div style={{ marginTop: '2.5rem', border: '1px solid ' + c.accent + '44', padding: '1.25rem 1.75rem', display: 'inline-block' }}>
-            <div style={{ fontSize: '10px', letterSpacing: '2px', textTransform: 'uppercase', color: c.accent, fontFamily: bodyFont }}>Investment Range</div>
-            <div style={{ fontFamily: font, fontSize: '1.5rem', color: c.text, marginTop: '0.3rem' }}>{businessInfo.priceRange}</div>
+        {businessInfo.packages && businessInfo.packages.length > 0 && (
+          <div style={{ marginTop: '3rem' }}>
+            <div style={s.sectionLabel}>
+              <div style={s.sectionLabelLine} />
+              <span style={s.sectionLabelText}>Packages</span>
+            </div>
+            <div style={{ display: 'flex', gap: '1px', flexWrap: 'wrap', marginTop: '1.5rem', background: c.accent + '22' }}>
+              {businessInfo.packages.map((pkg, i) => (
+                <div key={i} style={{
+                  flex: '1 1 200px', background: mid,
+                  borderTop: i === 1 ? '2px solid ' + c.accent : '2px solid transparent',
+                  padding: '1.75rem',
+                }}>
+                  <div style={{ fontSize: '0.65rem', letterSpacing: '2.5px', textTransform: 'uppercase', color: c.accent, fontFamily: bodyFont, marginBottom: '0.5rem' }}>{pkg.name || pkg}</div>
+                  {pkg.price && <div style={{ fontFamily: font, fontSize: '1.8rem', fontWeight: 700, color: c.text }}>{pkg.price}</div>}
+                  {pkg.description && <p style={{ color: textDim, fontSize: '0.82rem', lineHeight: 1.65, marginTop: '0.75rem' }}>{pkg.description}</p>}
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </section>
