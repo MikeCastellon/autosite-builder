@@ -1,9 +1,9 @@
 import React, { useRef, useState } from 'react';
 import { useImageEdit } from '../ImageEditContext.jsx';
 
-function CameraIcon({ size = 24, color = 'currentColor' }) {
+function CameraIcon({ size = 14 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
       <circle cx="12" cy="13" r="4"/>
     </svg>
@@ -27,37 +27,38 @@ function useImageSlot(imageKey) {
   return { inputRef, handleClick, handleChange, editable: !!ctx };
 }
 
-function EditOverlay({ src, label }) {
+/* Small floating pill button for editing images */
+function EditPill({ onClick, label, top = 12, right = 12 }) {
   return (
-    <div style={{
-      position: 'absolute', inset: 0, zIndex: 5,
-      background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-      pointerEvents: 'none',
-    }}>
-      <div style={{ textAlign: 'center', color: 'white' }}>
-        <CameraIcon size={28} color="white" />
-        <p style={{ fontSize: '13px', marginTop: '8px', fontWeight: 600, margin: '8px 0 0' }}>
-          {src ? 'Click to change photo' : label}
-        </p>
-      </div>
-    </div>
+    <button
+      onClick={onClick}
+      style={{
+        position: 'absolute', top, right, zIndex: 20,
+        background: 'rgba(0,0,0,0.6)', color: '#fff',
+        border: 'none', borderRadius: 20, padding: '5px 10px 5px 8px',
+        fontSize: 11, fontWeight: 600, cursor: 'pointer',
+        display: 'flex', alignItems: 'center', gap: 5,
+        backdropFilter: 'blur(6px)', letterSpacing: '0.02em',
+        whiteSpace: 'nowrap', transition: 'background 0.15s',
+        pointerEvents: 'auto',
+      }}
+      onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.85)'}
+      onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.6)'}
+    >
+      <CameraIcon size={12} />
+      {label}
+    </button>
   );
 }
 
 /* ── Hero background image with dark overlay ─────────────────────── */
 export function HeroImage({ src, overlay = 'rgba(0,0,0,0.55)' }) {
   const { inputRef, handleClick, handleChange, editable } = useImageSlot('hero');
-  const [hovered, setHovered] = useState(false);
 
   if (!src && !editable) return null;
 
   return (
-    <div
-      style={{ position: 'absolute', inset: 0, zIndex: 0, cursor: editable ? 'pointer' : 'default' }}
-      onClick={editable ? handleClick : undefined}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
+    <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
       {src ? (
         <div style={{
           position: 'absolute', inset: 0,
@@ -67,21 +68,13 @@ export function HeroImage({ src, overlay = 'rgba(0,0,0,0.55)' }) {
         }}>
           <div style={{ position: 'absolute', inset: 0, background: overlay }} />
         </div>
-      ) : (
-        <div style={{
-          position: 'absolute', inset: 0,
-          background: 'rgba(30,30,30,0.5)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.7)' }}>
-            <CameraIcon size={36} color="rgba(255,255,255,0.7)" />
-            <p style={{ fontSize: '14px', marginTop: '10px', fontWeight: 500 }}>Click to add hero photo</p>
-          </div>
-        </div>
-      )}
-      {editable && hovered && <EditOverlay src={src} label="Click to add hero photo" />}
+      ) : null}
+
       {editable && (
-        <input ref={inputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleChange} />
+        <>
+          <EditPill onClick={handleClick} label={src ? 'Change photo' : 'Add hero photo'} top={12} right={12} />
+          <input ref={inputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleChange} />
+        </>
       )}
     </div>
   );
@@ -90,39 +83,40 @@ export function HeroImage({ src, overlay = 'rgba(0,0,0,0.55)' }) {
 /* ── About section image ─────────────────────────────────────────── */
 export function AboutImage({ src, accent = '#888' }) {
   const { inputRef, handleClick, handleChange, editable } = useImageSlot('about');
-  const [hovered, setHovered] = useState(false);
 
   if (!src && !editable) return null;
 
-  return (
-    <div
-      style={{
-        borderRadius: '8px', overflow: 'hidden',
-        border: `2px solid ${accent}22`,
-        position: 'relative',
-        cursor: editable ? 'pointer' : 'default',
-      }}
-      onClick={editable ? handleClick : undefined}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      {src ? (
-        <img src={src} alt="About us" style={{ width: '100%', height: '320px', objectFit: 'cover', display: 'block' }} />
-      ) : (
-        <div style={{
-          width: '100%', height: '240px',
-          background: `${accent}18`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <div style={{ textAlign: 'center', color: accent, opacity: 0.6 }}>
-            <CameraIcon size={32} color={accent} />
-            <p style={{ fontSize: '13px', marginTop: '8px' }}>Click to add photo</p>
-          </div>
-        </div>
-      )}
-      {editable && hovered && <EditOverlay src={src} label="Click to add photo" />}
-      {editable && (
+  if (!src && editable) {
+    return (
+      <div style={{ position: 'relative', display: 'inline-block' }}>
+        <button
+          onClick={handleClick}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 7,
+            padding: '8px 14px', border: `1.5px dashed ${accent}55`,
+            borderRadius: 8, background: `${accent}0d`, color: accent,
+            fontSize: 12, fontWeight: 600, cursor: 'pointer',
+            opacity: 0.75, transition: 'opacity 0.15s',
+          }}
+          onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+          onMouseLeave={e => e.currentTarget.style.opacity = '0.75'}
+        >
+          <CameraIcon size={13} />
+          Add photo
+        </button>
         <input ref={inputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleChange} />
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ borderRadius: '8px', overflow: 'hidden', border: `2px solid ${accent}22`, position: 'relative' }}>
+      <img src={src} alt="About us" style={{ width: '100%', height: '320px', objectFit: 'cover', display: 'block' }} />
+      {editable && (
+        <>
+          <EditPill onClick={handleClick} label="Change photo" top={8} right={8} />
+          <input ref={inputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleChange} />
+        </>
       )}
     </div>
   );
@@ -131,38 +125,40 @@ export function AboutImage({ src, accent = '#888' }) {
 /* ── Single gallery slot ─────────────────────────────────────────── */
 function GallerySlot({ src, imageKey, colors }) {
   const { inputRef, handleClick, handleChange, editable } = useImageSlot(imageKey);
-  const [hovered, setHovered] = useState(false);
 
   if (!src && !editable) return null;
 
-  return (
-    <div
-      style={{
-        borderRadius: '8px', overflow: 'hidden', position: 'relative',
-        cursor: editable ? 'pointer' : 'default',
-      }}
-      onClick={editable ? handleClick : undefined}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      {src ? (
-        <img src={src} alt="" style={{ width: '100%', height: '280px', objectFit: 'cover', display: 'block' }} />
-      ) : (
-        <div style={{
-          width: '100%', height: '280px',
-          background: colors.secondary || '#f0f0f0',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
+  if (!src && editable) {
+    return (
+      <div
+        style={{
+          borderRadius: '8px', height: '280px',
           border: '2px dashed rgba(0,0,0,0.12)',
-        }}>
-          <div style={{ textAlign: 'center', color: colors.text || '#888', opacity: 0.45 }}>
-            <CameraIcon size={28} color={colors.text || '#888'} />
-            <p style={{ fontSize: '12px', marginTop: '6px' }}>Add photo</p>
-          </div>
+          background: colors.secondary || '#f5f5f5',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer', transition: 'border-color 0.15s, background 0.15s',
+        }}
+        onClick={handleClick}
+        onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.25)'; }}
+        onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.12)'; }}
+      >
+        <div style={{ textAlign: 'center', color: colors.text || '#888', opacity: 0.5, pointerEvents: 'none' }}>
+          <CameraIcon size={24} />
+          <p style={{ fontSize: 12, marginTop: 6, fontWeight: 500 }}>Add photo</p>
         </div>
-      )}
-      {editable && hovered && <EditOverlay src={src} label="Add photo" />}
-      {editable && (
         <input ref={inputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleChange} />
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ borderRadius: '8px', overflow: 'hidden', position: 'relative' }}>
+      <img src={src} alt="" style={{ width: '100%', height: '280px', objectFit: 'cover', display: 'block' }} />
+      {editable && (
+        <>
+          <EditPill onClick={handleClick} label="Change" top={8} right={8} />
+          <input ref={inputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleChange} />
+        </>
       )}
     </div>
   );
