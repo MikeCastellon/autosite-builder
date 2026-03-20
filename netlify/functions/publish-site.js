@@ -6,15 +6,15 @@ const CF_TOKEN = process.env.CLOUDFLARE_API_TOKEN;
 const CF_ZONE = process.env.CLOUDFLARE_ZONE_ID;
 const PUBLISH_DOMAIN = process.env.PUBLISH_DOMAIN || 'yourdomain.com';
 
-const CORS = {
+const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Content-Type': 'application/json',
 };
+const CORS = { ...CORS_HEADERS, 'Content-Type': 'application/json' };
 
 export const handler = async (event) => {
-  if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: CORS };
+  if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: CORS_HEADERS };
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, headers: CORS, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
@@ -28,7 +28,7 @@ export const handler = async (event) => {
     process.env.VITE_SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
   );
-  const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
+  const { data: { user }, error: authErr } = await supabase.auth.admin.getUser(token);
   if (authErr || !user) {
     return { statusCode: 401, headers: CORS, body: JSON.stringify({ error: 'Invalid session' }) };
   }
@@ -88,16 +88,18 @@ export const handler = async (event) => {
     if (!deployRes.ok) throw new Error(`Netlify deploy init failed: ${deployRes.status}`);
     const deploy = await deployRes.json();
 
-    // Upload the HTML file
-    const uploadRes = await fetch(`https://api.netlify.com/api/v1/deploys/${deploy.id}/files/index.html`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${NETLIFY_TOKEN}`,
-        'Content-Type': 'application/octet-stream',
-      },
-      body: htmlBuffer,
-    });
-    if (!uploadRes.ok) throw new Error(`Netlify file upload failed: ${uploadRes.status}`);
+    // Upload the HTML file only if Netlify requires it (cache miss)
+    if (deploy.required?.includes('/index.html')) {
+      const uploadRes = await fetch(`https://api.netlify.com/api/v1/deploys/${deploy.id}/files/index.html`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${NETLIFY_TOKEN}`,
+          'Content-Type': 'application/octet-stream',
+        },
+        body: htmlBuffer,
+      });
+      if (!uploadRes.ok) throw new Error(`Netlify file upload failed: ${uploadRes.status}`);
+    }
 
     // --- Step 3: Create Cloudflare CNAME (skip if already exists) ---
     const cnameTarget = `${netlifySiteName}.netlify.app`;

@@ -8,7 +8,8 @@ export function generateSlug(businessName) {
     .replace(/[''']/g, '')          // strip apostrophes
     .replace(/[^a-z0-9]+/g, '-')   // non-alphanumeric → dash
     .replace(/^-+|-+$/g, '')       // trim leading/trailing dashes
-    .slice(0, 40);                  // max 40 chars for readability
+    .slice(0, 40)                   // max 40 chars for readability
+    .replace(/-+$/g, '');           // trim any trailing dash introduced by slice
 }
 
 /**

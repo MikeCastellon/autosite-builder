@@ -48,6 +48,7 @@ export default function StepExport({ businessInfo, generatedCopy, templateId, te
 
   const saveSiteIfNeeded = async () => {
     if (siteId) return siteId;
+    if (!session?.user?.id) throw new Error('You must be signed in to publish.');
     const { data: savedSite, error: saveError } = await supabase.from('sites').insert({
       user_id: session.user.id,
       business_info: businessInfo,
