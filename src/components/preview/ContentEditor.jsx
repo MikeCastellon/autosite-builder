@@ -122,10 +122,10 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 z-[60] bg-black/20" style={{ right: 320 }} onClick={onClose} />
+      <div className="fixed inset-0 bg-black/20" style={{ right: 320, zIndex: 9998 }} onClick={onClose} />
 
       {/* Panel */}
-      <div className="fixed top-0 right-0 bottom-0 z-[70] w-80 bg-white border-l border-gray-200 flex flex-col shadow-2xl" style={{ top: 52 }}>
+      <div className="fixed top-0 right-0 bottom-0 w-80 bg-white border-l border-gray-200 flex flex-col shadow-2xl" style={{ top: 52, zIndex: 9999 }}>
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 shrink-0">
           <div>
