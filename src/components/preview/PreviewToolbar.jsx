@@ -1,6 +1,6 @@
 export default function PreviewToolbar({ viewMode, onViewMode, onBack, onExport, onStartOver, onEdit, editorOpen, isDemoPreview }) {
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 px-5 h-13 flex items-center justify-between gap-4" style={{ height: 52 }}>
+    <div className="fixed top-0 left-0 z-50 bg-white border-b border-gray-200 px-5 h-13 flex items-center justify-between gap-4" style={{ height: 52, right: editorOpen ? 320 : 0, transition: 'right 0.2s ease' }}>
       {/* Left: back */}
       <button
         onClick={onBack}

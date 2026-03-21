@@ -47,7 +47,9 @@ export default function WebsitePreview({ businessInfo, generatedCopy, editedCopy
       {/* Preview frame */}
       {/* Inject CSS so sticky template navs sit below our fixed toolbar (52px) */}
       <style>{`.preview-wrap nav { top: 52px !important; z-index: 10 !important; }`}</style>
-      <div className="pt-14 min-h-screen">
+      <div className="pt-14 min-h-screen" style={{ position: 'relative' }}>
+        {/* Cover bar: hides template content that scrolls up behind toolbar */}
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: 52, background: '#fff', zIndex: 40 }} />
         <div className="preview-wrap" style={{ ...containerStyle, position: 'relative' }}>
           <Suspense
               fallback={

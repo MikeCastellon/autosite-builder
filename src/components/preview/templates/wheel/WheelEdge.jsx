@@ -41,7 +41,7 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
       {/* STICKY NAV — no emoji */}
       <nav style={{
         position: 'sticky', top: 0, zIndex: 1000,
-        background: scrolled ? 'rgba(13,13,13,0.97)' : 'transparent',
+        background: scrolled ? 'rgba(13,13,13,0.97)' : c.bg,
         borderBottom: scrolled ? `1px solid ${c.accent}44` : '1px solid transparent',
         transition: 'all 0.3s ease',
         padding: '0 5%',
