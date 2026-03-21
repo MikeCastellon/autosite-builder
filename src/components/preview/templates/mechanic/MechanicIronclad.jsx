@@ -309,7 +309,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
             (services.length > 0
               ? services.map((s) => s.name)
               : (Array.isArray(biz.services)
-                  ? biz.services
+                  ? biz.services.map(s => typeof s === 'string' ? s : s.name)
                   : ['Engine Repair', 'Brake Service', 'Oil Change', 'Transmission', 'AC Repair', 'Suspension', 'Diagnostics', 'Exhaust'])
             ).map((label, i) => (
               <span

@@ -183,7 +183,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
               </div>
             )) : (biz.services || []).map((svc, i) => (
               <div key={i} style={{ background: i % 2 === 0 ? c.secondary : '#232323', padding: '24px 22px', borderTop: `2px solid ${i < 2 ? c.accent : 'transparent'}` }}>
-                <h3 style={{ fontSize: 14, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, color: c.text, margin: 0 }}>{svc}</h3>
+                <h3 style={{ fontSize: 14, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, color: c.text, margin: 0 }}>{typeof svc === 'string' ? svc : svc.name}</h3>
               </div>
             ))}
           </div>

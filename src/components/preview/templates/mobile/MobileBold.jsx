@@ -201,7 +201,7 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
                 </div>
               )) : (biz.services || []).map((s, i) => (
                 <div key={i} style={{ background: c.secondary || '#2a2a2a', borderLeft: `5px solid ${c.accent}`, padding: '24px 22px' }}>
-                  <h3 style={{ fontWeight: 900, textTransform: 'uppercase', fontSize: 15, color: c.accent, margin: 0 }}>{s}</h3>
+                  <h3 style={{ fontWeight: 900, textTransform: 'uppercase', fontSize: 15, color: c.accent, margin: 0 }}>{typeof s === 'string' ? s : s.name}</h3>
                 </div>
               ))}
             </div>

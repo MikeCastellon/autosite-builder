@@ -324,7 +324,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
               : (biz.services || []).map((svc, i) => (
                 <div key={i} style={{ background: panelBg, border: `1px solid ${c.accent}18`, borderRadius: 10, padding: '26px 22px' }}>
                   <div style={{ width: 3, height: 28, background: `linear-gradient(180deg, ${c.accent}, ${cCyan})`, marginBottom: 14, borderRadius: 2 }} />
-                  <h3 style={{ fontFamily: font, fontSize: 16, fontWeight: 700, color: c.text, margin: 0 }}>{svc}</h3>
+                  <h3 style={{ fontFamily: font, fontSize: 16, fontWeight: 700, color: c.text, margin: 0 }}>{typeof svc === 'string' ? svc : svc.name}</h3>
                 </div>
               ))
             }

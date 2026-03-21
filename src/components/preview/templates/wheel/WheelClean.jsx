@@ -241,7 +241,7 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
                 </div>
               )) : (biz.services || []).map((svc, i) => (
                 <div key={i} style={{ borderLeft: `4px solid ${c.accent}`, paddingLeft: 24, paddingTop: 20, paddingBottom: 20, borderBottom: '1px solid #f3f4f6' }}>
-                  <h3 style={{ fontSize: 15, fontWeight: 700, color: c.text, margin: 0 }}>{svc}</h3>
+                  <h3 style={{ fontSize: 15, fontWeight: 700, color: c.text, margin: 0 }}>{typeof svc === 'string' ? svc : svc.name}</h3>
                 </div>
               ))}
             </div>

@@ -216,7 +216,7 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
               )) : (biz.services || []).map((svc, i) => (
                 <div key={i} style={{ background: c.secondary, border: `1px solid ${c.accent}22`, borderRadius: 10, padding: '24px 20px' }}>
                   <div style={{ width: 3, height: 28, background: c.accent, marginBottom: 12, borderRadius: 2 }} />
-                  <h3 style={{ fontSize: 15, fontWeight: 700, color: c.text, margin: 0 }}>{svc}</h3>
+                  <h3 style={{ fontSize: 15, fontWeight: 700, color: c.text, margin: 0 }}>{typeof svc === 'string' ? svc : svc.name}</h3>
                 </div>
               ))}
             </div>

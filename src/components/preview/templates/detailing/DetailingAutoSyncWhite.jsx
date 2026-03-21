@@ -240,7 +240,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
           </p>
         </div>
         {businessInfo.packages?.length > 0 ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1px', background: blue + '22' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
             {businessInfo.packages.map((pkg, i) => (
               <div key={i} style={{ ...s.tileBase, borderTop: `3px solid ${i === 0 ? blue : 'transparent'}` }}>
                 <div style={s.tileGlow} />

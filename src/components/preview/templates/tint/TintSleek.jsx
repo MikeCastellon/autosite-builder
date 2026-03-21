@@ -252,7 +252,7 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
               )) : (biz.services || []).map((svc, i) => (
                 <div key={i} style={{ background: c.secondary, border: `1px solid ${c.accent}33`, borderRadius: '0 10px 10px 0', padding: '22px 20px 22px 22px', borderLeft: `4px solid ${c.accent}` }}>
                   <div style={{ color: c.accent, fontSize: 18, marginBottom: 10 }}>◈</div>
-                  <h3 style={{ fontSize: 15, fontWeight: 700, color: c.text, margin: 0 }}>{svc}</h3>
+                  <h3 style={{ fontSize: 15, fontWeight: 700, color: c.text, margin: 0 }}>{typeof svc === 'string' ? svc : svc.name}</h3>
                 </div>
               ))}
             </div>

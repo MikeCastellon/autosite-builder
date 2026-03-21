@@ -261,7 +261,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
                 </div>
               )) : (biz.services || []).map((svc, i) => (
                 <div key={i} style={{ background: c.secondary, border: '1px solid #dbeafe', borderRadius: 14, padding: '24px 20px', borderTop: `3px solid ${c.accent}` }}>
-                  <h3 style={{ fontSize: 15, fontWeight: 700, color: c.text, margin: 0 }}>{svc}</h3>
+                  <h3 style={{ fontSize: 15, fontWeight: 700, color: c.text, margin: 0 }}>{typeof svc === 'string' ? svc : svc.name}</h3>
                 </div>
               ))}
             </div>

@@ -98,9 +98,9 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
   ];
   const howSteps = (copy?.howSteps || defaultHowSteps).map((s, i) => ({
     num: String(i + 1).padStart(2, '0'),
-    emoji: s.emoji || defaultHowSteps[i]?.emoji || '✨',
-    title: s.title || defaultHowSteps[i]?.title || '',
-    desc: s.desc || defaultHowSteps[i]?.desc || '',
+    emoji: s.emoji ?? '✨',
+    title: s.title ?? '',
+    desc: s.desc ?? '',
   }));
 
   const defaultWhyCards = [
@@ -111,10 +111,10 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
     { icon: '😤', title: 'Zero Excuses Policy',  desc: "We show up, don't cut corners, and if it's not right — we fix it." },
     { icon: '🌎', title: 'Eco-Friendly Methods', desc: 'Water-efficient techniques and biodegradable products. Clean car, clean conscience.' },
   ];
-  const whyCards = (copy?.whyCards || defaultWhyCards).filter(c => c.title || c.icon).map((card, i) => ({
-    icon: card.icon || defaultWhyCards[i]?.icon || '✨',
-    title: card.title || defaultWhyCards[i]?.title || '',
-    desc: card.desc || defaultWhyCards[i]?.desc || '',
+  const whyCards = (copy?.whyCards || defaultWhyCards).filter(c => c.title || c.icon).map((card) => ({
+    icon: card.icon ?? '✨',
+    title: card.title ?? '',
+    desc: card.desc ?? '',
   }));
 
   return (

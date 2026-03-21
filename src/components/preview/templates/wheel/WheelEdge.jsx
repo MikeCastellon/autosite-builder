@@ -226,7 +226,7 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
                 </div>
               )) : (biz.services || []).map((svc, i) => (
                 <div key={i} style={{ background: i % 2 === 0 ? c.secondary : '#0f0f1e', padding: '28px 24px', borderTop: `2px solid ${i < 2 ? c.accent : 'transparent'}` }}>
-                  <h3 style={{ fontSize: 15, fontWeight: 800, textTransform: 'uppercase', color: c.text, margin: 0 }}>{svc}</h3>
+                  <h3 style={{ fontSize: 15, fontWeight: 800, textTransform: 'uppercase', color: c.text, margin: 0 }}>{typeof svc === 'string' ? svc : svc.name}</h3>
                 </div>
               ))}
             </div>
