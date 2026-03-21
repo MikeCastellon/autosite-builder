@@ -103,11 +103,13 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
   };
 
   const isSudsy = templateId === 'mobile_sudsy';
+  const isWheel = templateId?.startsWith('wheel_');
 
   const sections = [
     { id: 'hero', label: 'Hero' },
     { id: 'services', label: 'Services' },
     ...(isSudsy ? [{ id: 'howItWorks', label: 'How It Works' }, { id: 'whyUs', label: 'Why Us' }] : []),
+    ...(isWheel ? [{ id: 'brands', label: 'Brands' }] : []),
     { id: 'about', label: 'About' },
     { id: 'testimonials', label: 'Reviews' },
     { id: 'images', label: 'Images' },
@@ -276,6 +278,15 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
               </>
             );
           })()}
+
+          {activeSection === 'brands' && isWheel && (
+            <>
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Wheel Brands</p>
+              <Field label="Comma-separated" value={copy?.wheelBrands?.join?.(', ') ?? ''} onChange={(v) => setCopy('wheelBrands', v.split(',').map(s => s.trim()).filter(Boolean))} multiline rows={2} />
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2 mt-4">Tire Brands</p>
+              <Field label="Comma-separated" value={copy?.tireBrandsList?.join?.(', ') ?? ''} onChange={(v) => setCopy('tireBrandsList', v.split(',').map(s => s.trim()).filter(Boolean))} multiline rows={2} />
+            </>
+          )}
 
           {activeSection === 'about' && (
             <>

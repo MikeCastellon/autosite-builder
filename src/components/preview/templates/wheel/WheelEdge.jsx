@@ -25,8 +25,14 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
   const testimonials = copy.testimonialPlaceholders || [];
   const payments = biz.paymentMethods || [];
 
-  const brands = biz.brands ? (typeof biz.brands === 'string' ? biz.brands.split(/,|·/).map(b => b.trim()) : biz.brands) : [];
-  const tireBrands = biz.tireBrands ? (typeof biz.tireBrands === 'string' ? biz.tireBrands.split(/,|·/).map(b => b.trim()) : biz.tireBrands) : [];
+  const parseBrands = (val) => {
+    if (!val) return [];
+    if (Array.isArray(val)) return val.map(b => typeof b === 'object' ? (b.name || '') : b).filter(Boolean);
+    if (typeof val === 'string') return val.split(/,|·/).map(b => b.trim()).filter(Boolean);
+    return [];
+  };
+  const brands = parseBrands(copy?.wheelBrands ?? biz.brands);
+  const tireBrands = parseBrands(copy?.tireBrandsList ?? biz.tireBrands);
 
   return (
     <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, containerType: 'inline-size' }}>
@@ -279,22 +285,41 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
 
       {/* ABOUT */}
       <section id="about" style={{ padding: '80px 5%', borderTop: `1px solid ${c.accent}33` }}>
-        <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'start' }}>
+        <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'center' }}>
+          <div>
+            {(copy?.aboutLayout || 'image') !== 'stats' ? (
+              images.about
+                ? <img src={images.about} alt="About" style={{ width: '100%', maxWidth: 460, height: 360, objectFit: 'cover', borderRadius: 3, display: 'block' }} />
+                : <div style={{ width: '100%', maxWidth: 460, height: 360, background: c.secondary, borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.muted, fontSize: '0.85rem', textAlign: 'center', padding: 24, boxSizing: 'border-box' }}>Upload an about photo in the Images tab</div>
+            ) : (
+              <div style={{ width: '100%', maxWidth: 460, background: c.secondary, padding: '40px 32px', boxSizing: 'border-box', borderRadius: 3, border: `1px solid ${c.accent}33` }}>
+                {(() => {
+                  const defaultStats = [
+                    { value: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'Years in Business' },
+                    { value: '50+', label: 'Brands Available' },
+                    { value: '5K+', label: 'Wheels Installed' },
+                  ];
+                  const aboutStats = (copy?.aboutStats || []).map((s, i) => ({
+                    value: s.value || defaultStats[i]?.value || '',
+                    label: s.label || defaultStats[i]?.label || '',
+                  }));
+                  if (aboutStats.length === 0) aboutStats.push(...defaultStats);
+                  return aboutStats.map((st, i) => (
+                    <div key={i} style={{ textAlign: 'center', marginBottom: i < aboutStats.length - 1 ? 28 : 0 }}>
+                      <div style={{ fontSize: '3rem', fontWeight: 900, color: c.accent, lineHeight: 1 }}>{st.value}</div>
+                      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, color: c.muted, marginTop: 6, textTransform: 'uppercase' }}>{st.label}</div>
+                    </div>
+                  ));
+                })()}
+              </div>
+            )}
+          </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
               <div style={{ width: 40, height: 2, background: c.accent }} />
               <span style={{ color: c.accent, fontSize: 11, letterSpacing: 4, textTransform: 'uppercase', fontWeight: 700 }}>About</span>
             </div>
             <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.8rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 20px', letterSpacing: '-0.01em' }}>ABOUT {biz.businessName || 'US'}</h2>
-            {(generatedCopy?.aboutLayout || 'image') !== 'stats' ? (
-              images.about
-                ? <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block', marginBottom: '20px' }} />
-                : <div style={{ width: '100%', height: '360px', background: c.secondary, borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.muted, fontSize: '0.85rem', marginBottom: '20px' }}>Upload a photo in Images tab</div>
-            ) : (
-              images.about && (
-                <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block', marginBottom: '20px' }} />
-              )
-            )}
             <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.85, marginBottom: 20 }}>
               {copy.aboutText || `Located in ${biz.city || 'your area'}, we specialize in custom wheel fitment and tire services.`}
             </p>
@@ -304,28 +329,9 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
                 <p style={{ color: c.text, fontSize: 14, margin: 0 }}>{biz.awards}</p>
               </div>
             )}
-          </div>
-          <div>
-            {biz.hours && Object.keys(biz.hours).length > 0 && (
-              <div style={{ background: c.secondary, padding: '28px 24px', borderRadius: 3, border: `1px solid ${c.accent}33`, marginBottom: 20 }}>
-                <div style={{ color: c.accent, fontWeight: 700, fontSize: 11, letterSpacing: 4, textTransform: 'uppercase', marginBottom: 18 }}>SHOP HOURS</div>
-                {Object.entries(biz.hours).map(([day, hrs], i) => (
-                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${c.accent}15`, paddingBottom: 10, marginBottom: 10 }}>
-                    <span style={{ fontWeight: 700, textTransform: 'uppercase', fontSize: 12, letterSpacing: 1.5, color: c.text }}>{day}</span>
-                    <span style={{ color: c.accent, fontWeight: 700, fontSize: 13 }}>{hrs}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-            {biz.address && (
-              <div style={{ background: c.secondary, padding: '20px 24px', borderRadius: 3, border: `1px solid ${c.accent}33`, marginBottom: 16 }}>
-                <div style={{ color: c.accent, fontWeight: 700, fontSize: 11, letterSpacing: 4, textTransform: 'uppercase', marginBottom: 8 }}>LOCATION</div>
-                <p style={{ color: c.text, fontSize: 14, margin: 0, lineHeight: 1.6 }}>{biz.address}<br />{biz.city}, {biz.state}</p>
-              </div>
-            )}
             {payments.length > 0 && (
-              <div style={{ background: c.secondary, padding: '20px 24px', borderRadius: 3, border: `1px solid ${c.accent}33` }}>
-                <div style={{ color: c.accent, fontWeight: 700, fontSize: 11, letterSpacing: 4, textTransform: 'uppercase', marginBottom: 12 }}>PAYMENT</div>
+              <div style={{ marginTop: 20 }}>
+                <div style={{ color: c.muted, fontWeight: 700, fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 10 }}>PAYMENT ACCEPTED</div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                   {payments.map((p, i) => (
                     <span key={i} style={{

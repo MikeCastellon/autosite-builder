@@ -41,8 +41,8 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
     return [];
   };
 
-  const brandsList      = normalize(biz.brands);
-  const tireBrandsList  = normalize(biz.tireBrands);
+  const brandsList      = normalize(copy?.wheelBrands ?? biz.brands);
+  const tireBrandsList  = normalize(copy?.tireBrandsList ?? biz.tireBrands);
   const serviceNames    = normalize(biz.services);
   const specialtiesList = normalize(biz.specialties);
 

@@ -26,8 +26,14 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
   const payments = biz.paymentMethods || [];
   const packages = biz.packages || [];
 
-  const brandsList = biz.brands ? (typeof biz.brands === 'string' ? biz.brands.split(/,|·/).map(b => b.trim()) : biz.brands) : [];
-  const tireBrandsList = biz.tireBrands ? (typeof biz.tireBrands === 'string' ? biz.tireBrands.split(/,|·/).map(b => b.trim()) : biz.tireBrands) : [];
+  const parseBrands = (val) => {
+    if (!val) return [];
+    if (Array.isArray(val)) return val.map(b => typeof b === 'object' ? (b.name || '') : b).filter(Boolean);
+    if (typeof val === 'string') return val.split(/,|·/).map(b => b.trim()).filter(Boolean);
+    return [];
+  };
+  const brandsList = parseBrands(copy?.wheelBrands ?? biz.brands);
+  const tireBrandsList = parseBrands(copy?.tireBrandsList ?? biz.tireBrands);
 
   return (
     <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, containerType: 'inline-size' }}>
