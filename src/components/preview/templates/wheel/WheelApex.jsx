@@ -36,7 +36,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
 
   const normalize = (val) => {
     if (!val) return [];
-    if (Array.isArray(val)) return val;
+    if (Array.isArray(val)) return val.map(v => typeof v === 'object' ? (v.name || '') : v);
     if (typeof val === 'string') return val.split(/,\s*/).map(v => v.trim()).filter(Boolean);
     return [];
   };

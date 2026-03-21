@@ -105,7 +105,9 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
               </label>
 
               {field.type === 'multicheck' && (() => {
-                const selected = values[field.key] || [];
+                const rawSelected = values[field.key] || [];
+                // Normalize: if demo data filled objects ({name,price,...}), extract names
+                const selected = rawSelected.map((s) => typeof s === 'object' ? (s.name || '') : s).filter(Boolean);
                 const customOnes = selected.filter((s) => !field.options.includes(s));
                 const allOptions = [...field.options, ...customOnes];
                 const inputVal = customInputs[field.key] || '';
