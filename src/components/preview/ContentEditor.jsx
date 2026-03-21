@@ -122,7 +122,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 z-[60] bg-black/20" onClick={onClose} />
+      <div className="fixed inset-0 z-[60] bg-black/20" style={{ right: 320 }} onClick={onClose} />
 
       {/* Panel */}
       <div className="fixed top-0 right-0 bottom-0 z-[70] w-80 bg-white border-l border-gray-200 flex flex-col shadow-2xl" style={{ top: 52 }}>
@@ -140,11 +140,12 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
         </div>
 
         {/* Section tabs */}
-        <div className="flex gap-0.5 px-3 pt-3 pb-2 shrink-0 flex-wrap">
+        <div className="flex gap-0.5 px-3 pt-3 pb-2 shrink-0 flex-wrap" style={{ position: 'relative', zIndex: 2 }}>
           {sections.map((s) => (
             <button
               key={s.id}
-              onClick={() => setActiveSection(s.id)}
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setActiveSection(s.id); }}
               className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
                 activeSection === s.id
                   ? 'bg-gray-900 text-white'
