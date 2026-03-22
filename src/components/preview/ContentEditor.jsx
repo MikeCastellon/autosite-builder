@@ -229,6 +229,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
   const isApex = templateId === 'wheel_apex';
   const isObsidian = templateId === 'tint_obsidian';
   const isIronclad = templateId === 'mechanic_ironclad';
+  const isBubble = templateId === 'carwash_bubble';
 
   // Section visibility + ordering registry per template
   const TOGGLEABLE = {
@@ -328,9 +329,9 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
     ],
     carwash_bubble: [
       { id: 'hero', label: 'Hero' },
-      { id: 'services', label: 'Services' },
+      { id: 'services', label: 'Packages' },
       { id: 'process', label: 'How It Works' },
-      { id: 'about', label: 'About' },
+      { id: 'about', label: 'About & Features' },
       { id: 'gallery', label: 'Gallery' },
       { id: 'testimonials', label: 'Reviews' },
       { id: 'cta', label: 'Contact / CTA' },
@@ -362,7 +363,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
     { id: 'visibility', label: 'Sections' },
     { id: 'services', label: 'Services' },
     ...(isSudsy ? [{ id: 'howItWorks', label: 'How It Works' }, { id: 'whyUs', label: 'Why Us' }] : []),
-    ...(isIronclad ? [{ id: 'whyUs', label: 'Why Us' }] : []),
+    ...(isIronclad || isBubble ? [{ id: 'whyUs', label: 'Why Us' }] : []),
     ...(isWheel ? [{ id: 'products', label: 'Products' }, { id: 'brands', label: 'Brands' }] : []),
     ...(isTint && !isWheel ? [{ id: 'filmBrands', label: 'Film Brands' }] : []),
     ...(isObsidian ? [{ id: 'shadeGuide', label: 'Shades' }] : []),
@@ -528,7 +529,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
             );
           })()}
 
-          {activeSection === 'whyUs' && (isSudsy || isIronclad) && (() => {
+          {activeSection === 'whyUs' && (isSudsy || isIronclad || isBubble) && (() => {
             const defaultCards = [
               { icon: '🏠', title: 'We Come To You', desc: 'Zero trips to a shop. We bring the whole operation to your door.' },
               { icon: '🏆', title: 'Professional Results', desc: 'Pro-grade products and equipment — not a bucket and a sponge.' },

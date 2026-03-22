@@ -92,12 +92,17 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
     { icon: '😍', title: 'Drive Away Clean', desc: 'Roll out fresh and sparkling. Your car is already turning heads — come back anytime.' },
   ];
 
-  const featuresList = [
+  const defaultFeatures = [
     { icon: '🌊', title: 'Soft-Touch Equipment',   desc: 'Ultra-soft brushes clean thoroughly without scratching your paint or trim.' },
     { icon: '🌿', title: 'Eco-Friendly Soaps',     desc: 'Biodegradable, phosphate-free soaps. We recycle up to 80% of our wash water.' },
     { icon: '⚡',     title: 'In & Out in Minutes',    desc: 'High-throughput tunnel moves fast. Get a full wash without disrupting your day.' },
     { icon: '🛡️', title: 'Satisfaction Guarantee', desc: 'Not happy? Come back and we will rewash — no questions, no forms, guaranteed.' },
   ];
+  const featuresList = (copy?.whyCards || defaultFeatures).map((c2, i) => ({
+    icon: c2.icon || defaultFeatures[i]?.icon || '✨',
+    title: c2.title || defaultFeatures[i]?.title || '',
+    desc: c2.desc || defaultFeatures[i]?.desc || '',
+  }));
 
   const avatarGradients = [
     `linear-gradient(135deg, ${c.accent}, #14b8a6)`,
@@ -185,10 +190,10 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
           padding: 'clamp(3rem,6vw,6rem)', background: c.bg,
         } : { position: 'relative', zIndex: 1, padding: '6rem 5% 5rem', maxWidth: 800 }}>
           <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8,
+            display: 'inline-flex', alignItems: 'center', gap: 6,
             background: 'rgba(255,255,255,0.75)', borderRadius: 50,
-            padding: '6px 18px', marginBottom: 28, border: `1.5px solid ${accentLight}`,
-            fontSize: 13, fontWeight: 700, color: c.text, backdropFilter: 'blur(8px)',
+            padding: '4px 14px', marginBottom: 24, border: `1.5px solid ${accentLight}`,
+            fontSize: 11, fontWeight: 700, color: c.text, backdropFilter: 'blur(8px)',
           }}>
             <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 0 2px #86efac' }} />
             {biz.city || 'Your City'}{biz.state ? `, ${biz.state}` : ''} — Open Now
@@ -360,66 +365,70 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
               Not all car washes are{' '}<span style={gradText}>equal.</span>
             </h2>
           </div>
-          <div className="tp-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, alignItems: 'start' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              {featuresList.map((feat, i) => (
-                <div key={i} style={{ display: 'flex', gap: 18, alignItems: 'flex-start', background: c.bg, border: `1.5px solid ${accentLight}`, borderRadius: 20, padding: '20px 22px', boxShadow: '0 4px 16px rgba(6,182,212,0.06)' }}>
-                  <div style={{ width: 48, height: 48, borderRadius: 14, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, background: `linear-gradient(135deg, ${c.accent}18, #14b8a618)`, border: `1.5px solid ${accentLight}` }}>{feat.icon}</div>
-                  <div>
-                    <h3 style={{ fontFamily: font, fontSize: 16, color: c.text, margin: '0 0 6px' }}>{feat.title}</h3>
-                    <p style={{ color: c.muted || '#64748b', fontSize: 13, lineHeight: 1.65, margin: 0, fontWeight: 600 }}>{feat.desc}</p>
-                  </div>
+          <div className="tp-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, alignItems: 'center', marginBottom: 60 }}>
+            {/* Left: image or stats */}
+            <div>
+              {(copy?.aboutLayout || 'image') !== 'stats' ? (
+                images.about
+                  ? <img src={images.about} alt="About" style={{ width: '100%', maxWidth: 520, height: 400, objectFit: 'cover', borderRadius: 24, display: 'block' }} />
+                  : <div style={{ width: '100%', maxWidth: 520, height: 400, background: c.secondary, borderRadius: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.muted, fontSize: '0.85rem', textAlign: 'center', padding: 24, boxSizing: 'border-box' }}>Upload an about photo in the Images tab</div>
+              ) : (
+                <div style={{ width: '100%', maxWidth: 520, background: 'white', padding: '48px 36px', boxSizing: 'border-box', borderRadius: 24, border: `2px solid ${accentLight}` }}>
+                  {(() => {
+                    const defaultStats = [
+                      { value: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'Years in Business' },
+                      { value: '5,000+', label: 'Cars Washed' },
+                      { value: '4.9★', label: 'Customer Rating' },
+                    ];
+                    const aboutStats = (copy?.aboutStats || []).map((s, i) => ({
+                      value: s.value || defaultStats[i]?.value || '',
+                      label: s.label || defaultStats[i]?.label || '',
+                    }));
+                    if (aboutStats.length === 0) aboutStats.push(...defaultStats);
+                    return aboutStats.map((st, i) => (
+                      <div key={i} style={{ textAlign: 'center', marginBottom: i < aboutStats.length - 1 ? 28 : 0 }}>
+                        <div style={{ fontFamily: font, fontSize: '3rem', fontWeight: 800, color: c.accent, lineHeight: 1 }}>{st.value}</div>
+                        <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 2, color: c.muted, marginTop: 6, textTransform: 'uppercase' }}>{st.label}</div>
+                      </div>
+                    ));
+                  })()}
                 </div>
-              ))}
+              )}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <div style={{ background: c.bg, borderRadius: 24, border: `1.5px solid ${accentLight}`, padding: '28px', position: 'relative', overflow: 'hidden' }}>
-                <BubbleBlob size='100px' top='-25px' right='-25px' opacity={0.18} />
-                <span style={{ display: 'inline-block', background: `${c.accent}18`, color: c.accent, borderRadius: 50, padding: '4px 14px', fontSize: 11, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>About Us</span>
-                <h3 style={{ fontFamily: font, fontSize: 20, color: c.text, margin: '0 0 12px' }}>{biz.businessName || 'Who We Are'}</h3>
-                {(generatedCopy?.aboutLayout || 'image') !== 'stats' ? (
-                  images.about
-                    ? <img src={images.about} alt="About" style={{ width: '100%', height: '260px', objectFit: 'cover', borderRadius: '16px', display: 'block', marginBottom: '16px' }} />
-                    : <div style={{ width: '100%', height: '260px', background: c.secondary, borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.muted, fontSize: '0.85rem', marginBottom: '16px' }}>Upload a photo in Images tab</div>
-                ) : (
-                  images.about && (
-                    <img src={images.about} alt="About" style={{ width: '100%', height: '260px', objectFit: 'cover', borderRadius: '16px', display: 'block', marginBottom: '16px' }} />
-                  )
-                )}
-                <p style={{ color: c.muted || '#64748b', fontSize: 14, lineHeight: 1.75, margin: '0 0 16px', fontWeight: 600 }}>
-                  {copy.aboutText || `Based in ${biz.city || 'your city'}${biz.state ? `, ${biz.state}` : ''}, we deliver a top-tier car wash every time.${biz.yearsInBusiness ? ` Over ${biz.yearsInBusiness} years in business — we know clean.` : ''}`}
-                </p>
-                {specialties.length > 0 && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
-                    {specialties.map((s, idx) => <span key={idx} style={{ background: `${c.accent}15`, color: c.accent, borderRadius: 50, padding: '4px 14px', fontSize: 12, fontWeight: 700 }}>{s}</span>)}
-                  </div>
-                )}
-                {awards.length > 0 && (
-                  <div style={{ padding: '12px 16px', background: '#fefce8', borderRadius: 14, border: '1.5px solid #fde68a' }}>
-                    <span style={{ fontSize: 12, fontWeight: 800, color: '#92400e', letterSpacing: 1, textTransform: 'uppercase' }}>🏆 Awards: </span>
-                    <span style={{ fontSize: 13, color: '#78350f', fontWeight: 600 }}>{awards.join(', ')}</span>
-                  </div>
-                )}
-              </div>
-              {hasHours && (
-                <div style={{ background: 'white', borderRadius: 24, border: `2px solid ${accentLight}`, padding: '24px 26px', boxShadow: '0 4px 20px rgba(6,182,212,0.07)' }}>
-                  <div style={{ fontFamily: font, fontSize: 16, color: c.accent, marginBottom: 16 }}>Hours of Operation</div>
-                  {hoursLines.map((line, i) => (
-                    <div key={i} style={{ borderBottom: i < hoursLines.length - 1 ? `1px solid ${accentLight}` : 'none', padding: '9px 0' }}>
-                      <span style={{ fontWeight: 700, fontSize: 13, color: c.text }}>{line}</span>
-                    </div>
-                  ))}
+            {/* Right: text + awards */}
+            <div>
+              <span style={{ display: 'inline-block', background: `${c.accent}18`, color: c.accent, borderRadius: 50, padding: '4px 14px', fontSize: 11, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>About Us</span>
+              <h3 style={{ fontFamily: font, fontSize: 'clamp(1.5rem, 3vw, 2rem)', color: c.text, margin: '0 0 16px' }}>{biz.businessName || 'Who We Are'}</h3>
+              <p style={{ color: c.muted || '#64748b', fontSize: 15, lineHeight: 1.8, margin: '0 0 20px', fontWeight: 600 }}>
+                {copy.aboutText || `Based in ${biz.city || 'your city'}${biz.state ? `, ${biz.state}` : ''}, we deliver a top-tier car wash every time.${biz.yearsInBusiness ? ` Over ${biz.yearsInBusiness} years in business — we know clean.` : ''}`}
+              </p>
+              {awards.length > 0 && (
+                <div style={{ padding: '12px 16px', background: '#fefce8', borderRadius: 14, border: '1.5px solid #fde68a', marginBottom: 16 }}>
+                  <span style={{ fontSize: 12, fontWeight: 800, color: '#92400e', letterSpacing: 1, textTransform: 'uppercase' }}>🏆 Awards: </span>
+                  <span style={{ fontSize: 13, color: '#78350f', fontWeight: 600 }}>{awards.join(', ')}</span>
                 </div>
               )}
               {payments.length > 0 && (
-                <div style={{ background: c.bg, borderRadius: 20, border: `1.5px solid ${accentLight}`, padding: '18px 22px' }}>
-                  <div style={{ fontSize: 11, fontWeight: 800, color: c.muted || '#64748b', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>Payment Accepted</div>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 800, color: c.muted || '#64748b', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 10 }}>Payment Accepted</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                     {payments.map((p, idx) => <span key={idx} style={{ background: 'white', color: c.text, border: `1.5px solid ${accentLight}`, borderRadius: 50, padding: '4px 14px', fontSize: 12, fontWeight: 700 }}>{p}</span>)}
                   </div>
                 </div>
               )}
             </div>
+          </div>
+          {/* Why Us feature cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
+            {featuresList.map((feat, i) => (
+              <div key={i} style={{ display: 'flex', gap: 16, alignItems: 'flex-start', background: c.bg, border: `1.5px solid ${accentLight}`, borderRadius: 20, padding: '20px', boxShadow: '0 4px 16px rgba(6,182,212,0.06)' }}>
+                <div style={{ width: 44, height: 44, borderRadius: 14, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, background: `linear-gradient(135deg, ${c.accent}18, #14b8a618)`, border: `1.5px solid ${accentLight}` }}>{feat.icon}</div>
+                <div>
+                  <h3 style={{ fontFamily: font, fontSize: 15, color: c.text, margin: '0 0 4px' }}>{feat.title}</h3>
+                  <p style={{ color: c.muted || '#64748b', fontSize: 12, lineHeight: 1.6, margin: 0, fontWeight: 600 }}>{feat.desc}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
