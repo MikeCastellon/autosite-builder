@@ -3,6 +3,7 @@ import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 
 export default function MechanicFriendly({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const c = templateMeta.colors;
@@ -377,6 +378,11 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
 
       {/* TESTIMONIALS */}
       {!hidden('testimonials') && (
+        generatedCopy?.reviewMode === 'google' && generatedCopy?.googleWidgetKey ? (
+          <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+            <GoogleReviewsWidget widgetKey={generatedCopy.googleWidgetKey} />
+          </div>
+        ) : (generatedCopy.testimonialPlaceholders || []).length > 0 ? (
       <section id="reviews" style={{ ...s.section, order: getOrder('testimonials') }}>
         <div style={s.sectionEyebrow}>Customer Reviews</div>
         <h2 style={{ ...s.sectionTitle, marginBottom: '2rem' }}>Don't Just Take Our Word For It</h2>
@@ -390,6 +396,7 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
           ))}
         </div>
       </section>
+        ) : null
       )}
 
       {/* CONTACT */}

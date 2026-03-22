@@ -825,13 +825,38 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
 
           {activeSection === 'testimonials' && (
             <>
-              {copy.testimonialPlaceholders?.map((t, i) => (
-                <div key={i} className="mb-5 p-3 bg-gray-50 rounded-lg">
-                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Review {i + 1}</p>
-                  <Field label="Review Text" value={t.text} onChange={(v) => setTestimonial(i, 'text', v)} multiline rows={3} />
-                  <Field label="Customer Name" value={t.name} onChange={(v) => setTestimonial(i, 'name', v)} />
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Review Source</p>
+              <Toggle
+                value={copy?.reviewMode || 'testimonials'}
+                onChange={(v) => setCopy('reviewMode', v)}
+                options={[{ value: 'google', label: '⭐ Google Reviews' }, { value: 'testimonials', label: '💬 AI Testimonials' }]}
+              />
+
+              {(copy?.reviewMode || 'testimonials') === 'google' ? (
+                <div>
+                  {copy?.googleWidgetKey ? (
+                    <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2.5 mb-3">
+                      <p className="text-[12px] font-semibold text-green-700">✓ Google Reviews connected</p>
+                      <p className="text-[11px] text-green-600">Widget key: {copy.googleWidgetKey}</p>
+                    </div>
+                  ) : (
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5 mb-3">
+                      <p className="text-[12px] font-semibold text-amber-700">No Google Reviews connected</p>
+                      <p className="text-[11px] text-amber-600">Select Google Reviews in the business info form and search for your business to connect.</p>
+                    </div>
+                  )}
                 </div>
-              ))}
+              ) : (
+                <>
+                  {copy.testimonialPlaceholders?.map((t, i) => (
+                    <div key={i} className="mb-5 p-3 bg-gray-50 rounded-lg">
+                      <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Review {i + 1}</p>
+                      <Field label="Review Text" value={t.text} onChange={(v) => setTestimonial(i, 'text', v)} multiline rows={3} />
+                      <Field label="Customer Name" value={t.name} onChange={(v) => setTestimonial(i, 'name', v)} />
+                    </div>
+                  ))}
+                </>
+              )}
             </>
           )}
 

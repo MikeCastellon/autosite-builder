@@ -3,6 +3,7 @@ import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 
 // Template: Carwash Bubble
 // Bright, playful, cheerful car wash aesthetic. No canvas, no custom cursor JS.
@@ -432,7 +433,12 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
       )}
 
       {/* ═══ TESTIMONIALS ═══ */}
-      {!hidden('testimonials') && testimonials.length > 0 && (
+      {!hidden('testimonials') && (
+        copy?.reviewMode === 'google' && copy?.googleWidgetKey ? (
+          <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+            <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} />
+          </div>
+        ) : testimonials.length > 0 ? (
         <section id='reviews' style={{ background: `linear-gradient(170deg, ${c.bg} 0%, ${c.secondary || '#e0f7fa'} 100%)`, padding: '100px 5%', position: 'relative', overflow: 'hidden', order: getOrder('testimonials') }}>
           <BubbleBlob size='280px' top='0' right='5%' opacity={0.13} blur={12} color='#a78bfa' />
           <BubbleBlob size='180px' bottom='0' left='8%' opacity={0.11} blur={8} color='#14b8a6' />
@@ -464,6 +470,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
             </div>
           </div>
         </section>
+        ) : null
       )}
 
       {/* ═══ CTA BAND ═══ */}

@@ -3,6 +3,7 @@ import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 
 // Template: Mechanic Industrial — Dark steel & yellow (#1c1c1c bg, #eab308 accent, #2c2c2c secondary)
 // Gear/wrench feel, shop hours section, certifications as yellow badges, warranty guarantee box,
@@ -357,7 +358,12 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
       )}
 
       {/* TESTIMONIALS */}
-      {!hidden('testimonials') && testimonials.length > 0 && (
+      {!hidden('testimonials') && (
+        copy?.reviewMode === 'google' && copy?.googleWidgetKey ? (
+          <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+            <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} />
+          </div>
+        ) : testimonials.length > 0 ? (
         <section style={{ padding: '80px 5%', borderBottom: '1px solid #333' , order: getOrder('testimonials') }}>
           <div style={{ maxWidth: 1200, margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 48 }}>
@@ -378,6 +384,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
             </div>
           </div>
         </section>
+        ) : null
       )}
 
       {/* CTA */}

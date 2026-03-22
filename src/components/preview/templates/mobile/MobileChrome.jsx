@@ -3,6 +3,7 @@ import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 
 export default function MobileChrome({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
@@ -349,6 +350,11 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
 
       {/* TESTIMONIALS */}
       {!hidden('testimonials') && (
+        generatedCopy?.reviewMode === 'google' && generatedCopy?.googleWidgetKey ? (
+          <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+            <GoogleReviewsWidget widgetKey={generatedCopy.googleWidgetKey} />
+          </div>
+        ) : generatedCopy.testimonialPlaceholders?.length > 0 ? (
       <section style={{ ...sectionStyle(c.secondary), borderTop: '1px solid rgba(148,163,184,0.08)' , order: getOrder('testimonials') }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto'  }}>
           <div style={{ textAlign: 'center', marginBottom: '60px' }}>
@@ -370,6 +376,7 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
           </div>
         </div>
       </section>
+        ) : null
       )}
 
       {/* CONTACT / CTA */}

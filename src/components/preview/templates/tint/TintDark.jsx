@@ -3,6 +3,7 @@ import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 
 // Template: Tint Dark — Black & purple (#080808 bg, #7c3aed accent, #111111 secondary)
 // Radial gradient glow hero, film brands section, shield warranty callout, packages, fade/gradient elements
@@ -357,7 +358,12 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
       )}
 
       {/* TESTIMONIALS */}
-      {!hidden('testimonials') && testimonials.length > 0 && (
+      {!hidden('testimonials') && (
+        copy?.reviewMode === 'google' && copy?.googleWidgetKey ? (
+          <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+            <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} />
+          </div>
+        ) : testimonials.length > 0 ? (
         <section style={{ padding: '80px 5%', background: c.secondary, borderTop: `1px solid ${c.accent}22`, order: getOrder('testimonials') }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ textAlign: 'center', marginBottom: 48 }}>
@@ -379,6 +385,7 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
             </div>
           </div>
         </section>
+        ) : null
       )}
 
       {/* CTA */}

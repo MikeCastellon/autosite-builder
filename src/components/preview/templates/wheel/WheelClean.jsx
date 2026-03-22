@@ -3,6 +3,7 @@ import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 
 // Template: Wheel Clean — White & gunmetal (#f8f9fa bg, #374151 accent)
 // Professional clean, services list with left border accent, brands as styled text
@@ -366,7 +367,12 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
       )}
 
       {/* TESTIMONIALS */}
-      {!hidden('testimonials') && testimonials.length > 0 && (
+      {!hidden('testimonials') && (
+        copy?.reviewMode === 'google' && copy?.googleWidgetKey ? (
+          <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+            <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} />
+          </div>
+        ) : testimonials.length > 0 ? (
         <section style={{ order: getOrder('testimonials'), padding: '80px 5%', background: '#fff', borderTop: '1px solid #e5e7eb' }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ textAlign: 'center', marginBottom: 48 }}>
@@ -384,6 +390,7 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
             </div>
           </div>
         </section>
+        ) : null
       )}
 
       {/* CTA — full-width banner */}

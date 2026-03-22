@@ -4,6 +4,7 @@ import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import IconOrEmoji from '../IconOrEmoji.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 
 // Template: Wheel Apex — Alloy & Bronze e-commerce style
 // Bebas Neue display + DM Sans body, brushed-alloy palette, bronze accents,
@@ -353,7 +354,12 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
       )}
 
       {/* TESTIMONIALS */}
-      {!hidden('testimonials') && testimonials.length > 0 && (
+      {!hidden('testimonials') && (
+        copy?.reviewMode === 'google' && copy?.googleWidgetKey ? (
+          <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+            <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} />
+          </div>
+        ) : testimonials.length > 0 ? (
         <section style={{ order: getOrder('testimonials'), padding: '64px 48px', background: D.card, borderTop: `1px solid ${D.border}` }}>
           <div style={{ marginBottom: 32 }}>
             <p style={{ fontSize: 11, letterSpacing: 3, textTransform: 'uppercase', color: D.bronze, marginBottom: 8, fontWeight: 500 }}>◆ Reviews</p>
@@ -369,6 +375,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
             ))}
           </div>
         </section>
+        ) : null
       )}
 
       {/* CTA / CONTACT */}

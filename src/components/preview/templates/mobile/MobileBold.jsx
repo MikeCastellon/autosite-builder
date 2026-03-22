@@ -3,6 +3,7 @@ import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 
 // Template: Mobile Bold — Orange & dark (#1a1a1a bg, #f97316 accent)
 // Aggressive diagonal slashes, "WE COME TO YOU" badge, truck emoji nav, service area banner, packages pricing
@@ -294,7 +295,12 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
       )}
 
       {/* TESTIMONIALS */}
-      {!hidden('testimonials') && testimonials.length > 0 && (
+      {!hidden('testimonials') && (
+        copy?.reviewMode === 'google' && copy?.googleWidgetKey ? (
+          <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+            <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} />
+          </div>
+        ) : testimonials.length > 0 ? (
         <section style={{ padding: '80px 5%', background: c.secondary || '#2a2a2a', borderTop: '1px solid #333' , order: getOrder('testimonials') }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ textAlign: 'center', marginBottom: 48 }}>
@@ -312,6 +318,7 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
             </div>
           </div>
         </section>
+        ) : null
       )}
 
       {/* CTA SECTION */}

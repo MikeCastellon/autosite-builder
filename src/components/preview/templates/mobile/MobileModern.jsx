@@ -3,6 +3,7 @@ import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 
 // Template: Mobile Modern — Blue & white (#ffffff bg, #2563eb accent, #eff6ff secondary)
 // Split hero layout, info cards, clean card-based services, professional badge row, stats grid
@@ -344,7 +345,12 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
       )}
 
       {/* TESTIMONIALS */}
-      {!hidden('testimonials') && testimonials.length > 0 && (
+      {!hidden('testimonials') && (
+        copy?.reviewMode === 'google' && copy?.googleWidgetKey ? (
+          <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+            <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} />
+          </div>
+        ) : testimonials.length > 0 ? (
         <section style={{ padding: '80px 5%', background: c.secondary || '#eff6ff', borderTop: '1px solid #dbeafe' , order: getOrder('testimonials') }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ textAlign: 'center', marginBottom: 48 }}>
@@ -365,6 +371,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
             </div>
           </div>
         </section>
+        ) : null
       )}
 
       {/* CTA */}

@@ -3,6 +3,7 @@ import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 
 export default function DetailingSporty({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const c = templateMeta.colors;
@@ -324,6 +325,11 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
 
       {/* TESTIMONIALS */}
       {!hidden('testimonials') && (
+        generatedCopy?.reviewMode === 'google' && generatedCopy?.googleWidgetKey ? (
+          <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+            <GoogleReviewsWidget widgetKey={generatedCopy.googleWidgetKey} />
+          </div>
+        ) : (generatedCopy.testimonialPlaceholders || []).length > 0 ? (
       <section id="reviews" style={{ ...s.section, order: getOrder('testimonials') }}>
         <div style={s.sectionTag}>Real Reviews</div>
         <h2 style={{ ...s.sectionTitle, marginBottom: '2rem' }}>The People Know</h2>
@@ -337,6 +343,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
           ))}
         </div>
       </section>
+        ) : null
       )}
 
       {/* CTA SPLIT */}

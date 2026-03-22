@@ -3,6 +3,7 @@ import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 
 // Template: Mechanic Ironclad
 // Industrial dark aesthetic with rust-red accent (#111111 bg, #C0392B accent, #ffffff text)
@@ -501,7 +502,12 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
       {/* ═══════════════════════════════════════════════════════════
           TESTIMONIALS
       ═══════════════════════════════════════════════════════════ */}
-      {!hidden('testimonials') && testimonials.length > 0 && (
+      {!hidden('testimonials') && (
+        copy?.reviewMode === 'google' && copy?.googleWidgetKey ? (
+          <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+            <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} />
+          </div>
+        ) : testimonials.length > 0 ? (
         <section id="testimonials" style={{ background: c.bg, padding: 'clamp(72px, 10vw, 100px) 5%', position: 'relative' , order: getOrder('testimonials') }}>
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, backgroundImage: dashedRust }} />
           <div style={{ maxWidth: 1200, margin: '0 auto' }}>
@@ -542,6 +548,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
             </div>
           </div>
         </section>
+        ) : null
       )}
 
       {/* ═══════════════════════════════════════════════════════════

@@ -3,6 +3,7 @@ import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 
 export default function MechanicGarage({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
@@ -362,6 +363,11 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
 
       {/* TESTIMONIALS */}
       {!hidden('testimonials') && (
+        generatedCopy?.reviewMode === 'google' && generatedCopy?.googleWidgetKey ? (
+          <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+            <GoogleReviewsWidget widgetKey={generatedCopy.googleWidgetKey} />
+          </div>
+        ) : generatedCopy.testimonialPlaceholders?.length > 0 ? (
       <section style={{ ...sectionStyle(), order: getOrder('testimonials') }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto'  }}>
           <h2 style={{ fontFamily: font, fontSize: '2.2rem', fontWeight: 900, color: c.text, textTransform: 'uppercase', marginBottom: '48px' }}>Straight From Our Customers</h2>
@@ -376,6 +382,7 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
           </div>
         </div>
       </section>
+        ) : null
       )}
 
       {/* CONTACT CTA - orange background */}

@@ -3,6 +3,7 @@ import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import IconOrEmoji from '../IconOrEmoji.jsx';
 
 // Template: Mobile Sudsy
@@ -448,7 +449,12 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
       )}
 
       {/* TESTIMONIALS */}
-      {!hidden('testimonials') && testimonials.length > 0 && (
+      {!hidden('testimonials') && (
+        copy?.reviewMode === 'google' && copy?.googleWidgetKey ? (
+          <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+            <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} />
+          </div>
+        ) : testimonials.length > 0 ? (
         <section id="reviews" style={{ padding: "100px 5%", background: c.bg, borderTop: `4px solid ${c.text}` , order: getOrder('testimonials') }}>
           <div style={{ maxWidth: 1200, margin: "0 auto" }}>
             <div style={{ textAlign: "center", marginBottom: 64 }}>
@@ -480,6 +486,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
             </div>
           </div>
         </section>
+        ) : null
       )}
 
       {/* CTA SECTION */}

@@ -3,6 +3,7 @@ import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 
 export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const c = templateMeta.colors;
@@ -416,7 +417,13 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
       {!hidden('gallery') && <div style={{ order: getOrder('gallery') }}><GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} /></div>}
 
       {/* TESTIMONIALS */}
-      {!hidden('testimonials') && <section id="reviews" style={{ ...s.testimonialsSection, order: getOrder('testimonials') }}>
+      {!hidden('testimonials') && (
+        generatedCopy?.reviewMode === 'google' && generatedCopy?.googleWidgetKey ? (
+          <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+            <GoogleReviewsWidget widgetKey={generatedCopy.googleWidgetKey} />
+          </div>
+        ) : testimonials.length > 0 ? (
+        <section id="reviews" style={{ ...s.testimonialsSection, order: getOrder('testimonials') }}>
         <div style={s.sectionLabel}>
           <div style={s.sectionLabelLine} />
           <span style={s.sectionLabelText}>Client Testimonials</span>
@@ -444,7 +451,9 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
             );
           })}
         </div>
-      </section>}
+      </section>
+        ) : null
+      )}
 
       {/* CTA SECTION */}
       {!hidden('cta') && <section style={{ ...s.ctaSection, order: getOrder('cta') }}>

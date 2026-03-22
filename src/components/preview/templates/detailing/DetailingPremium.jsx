@@ -3,6 +3,7 @@ import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 
 export default function DetailingPremium({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const c = templateMeta.colors;
@@ -277,6 +278,11 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
 
       {/* TESTIMONIALS */}
       {!hidden('testimonials') && (
+        generatedCopy?.reviewMode === 'google' && generatedCopy?.googleWidgetKey ? (
+          <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+            <GoogleReviewsWidget widgetKey={generatedCopy.googleWidgetKey} />
+          </div>
+        ) : (generatedCopy.testimonialPlaceholders || []).length > 0 ? (
       <section style={{ ...s.section, order: getOrder('testimonials') }}>
         <div style={s.sectionLabel}>Client Words</div>
         <h2 style={{ ...s.sectionTitle, marginBottom: '2rem' }}>What Our Clients Say</h2>
@@ -290,6 +296,7 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
           ))}
         </div>
       </section>
+        ) : null
       )}
 
       {/* CTA SECTION */}

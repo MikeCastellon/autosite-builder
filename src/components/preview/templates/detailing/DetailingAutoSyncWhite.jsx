@@ -3,6 +3,7 @@ import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 
 export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const c = templateMeta.colors;
@@ -336,6 +337,11 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
 
       {/* TESTIMONIALS */}
       {!hidden('testimonials') && (
+        generatedCopy?.reviewMode === 'google' && generatedCopy?.googleWidgetKey ? (
+          <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+            <GoogleReviewsWidget widgetKey={generatedCopy.googleWidgetKey} />
+          </div>
+        ) : testimonials.length > 0 ? (
       <section id="reviews" style={{ ...s.sectionOff, order: getOrder('testimonials') }}>
         <div style={{ maxWidth: '520px', margin: '0 auto 72px', textAlign: 'center' }}>
           <span style={s.eyebrow}>Reviews</span>
@@ -364,6 +370,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
           })}
         </div>
       </section>
+        ) : null
       )}
 
       {/* CONTACT */}

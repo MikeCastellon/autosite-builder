@@ -3,6 +3,7 @@ import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 
 export default function TintElite({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
@@ -419,6 +420,11 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
 
       {/* TESTIMONIALS */}
       {!hidden('testimonials') && (
+        generatedCopy?.reviewMode === 'google' && generatedCopy?.googleWidgetKey ? (
+          <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+            <GoogleReviewsWidget widgetKey={generatedCopy.googleWidgetKey} />
+          </div>
+        ) : generatedCopy.testimonialPlaceholders?.length > 0 ? (
       <section style={{ ...sectionStyle(c.bg), borderTop: '1px solid rgba(202,138,4,0.08)' , order: getOrder('testimonials') }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto'  }}>
           <div style={{ textAlign: 'center', marginBottom: '64px' }}>
@@ -442,6 +448,7 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
           </div>
         </div>
       </section>
+        ) : null
       )}
 
       {/* CTA / CONTACT */}

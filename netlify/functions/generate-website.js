@@ -99,6 +99,30 @@ Return ONLY this JSON structure (no markdown, no explanation):
       parsed = JSON.parse(cleaned);
     }
 
+    // If user chose Google Reviews, create a widget key via SocialFeeds
+    if (businessInfo.reviewSource === 'google' && businessInfo.googlePlace?.placeId) {
+      try {
+        const widgetRes = await fetch('https://social-feeds-app.netlify.app/.netlify/functions/widget-save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: 'autosite-builder',
+            type: 'google-reviews',
+            place_id: businessInfo.googlePlace.placeId,
+            label: businessInfo.businessName || 'Website',
+          }),
+        });
+        const widgetData = await widgetRes.json();
+        if (widgetData.widget_key) {
+          parsed.googleWidgetKey = widgetData.widget_key;
+          parsed.reviewMode = 'google';
+        }
+      } catch (e) {
+        console.error('Widget save error:', e);
+        // Fallback: AI testimonials will still be available
+      }
+    }
+
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },

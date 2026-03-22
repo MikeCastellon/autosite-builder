@@ -3,6 +3,7 @@ import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 
 // Template: Wheel Edge — Dark chrome & electric blue (#0d0d0d bg, #00b4d8 accent, #1a1a2e secondary)
 // Circular ring decorative element in hero, product-catalog service grid, brands section, no emoji in nav
@@ -365,7 +366,12 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
       )}
 
       {/* TESTIMONIALS */}
-      {!hidden('testimonials') && testimonials.length > 0 && (
+      {!hidden('testimonials') && (
+        copy?.reviewMode === 'google' && copy?.googleWidgetKey ? (
+          <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+            <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} />
+          </div>
+        ) : testimonials.length > 0 ? (
         <section style={{ order: getOrder('testimonials'), padding: '80px 5%', background: c.secondary, borderTop: `1px solid ${c.accent}33` }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 48 }}>
@@ -386,6 +392,7 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
             </div>
           </div>
         </section>
+        ) : null
       )}
 
       {/* CTA */}

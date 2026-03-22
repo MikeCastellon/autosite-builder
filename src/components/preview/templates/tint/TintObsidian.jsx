@@ -3,6 +3,7 @@ import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 
 // Template: Tint Obsidian -- Ultra-dark void (#050507 bg, #7C3AED accent, #06B6D4 cyan)
 // Syne + Outfit fonts, VLT shade guide, film brands, process steps, testimonials
@@ -567,7 +568,12 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
       )}
 
       {/* ============================================================ TESTIMONIALS ============================================================ */}
-      {!hidden('testimonials') && testimonials.length > 0 && (
+      {!hidden('testimonials') && (
+        copy?.reviewMode === 'google' && copy?.googleWidgetKey ? (
+          <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+            <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} />
+          </div>
+        ) : testimonials.length > 0 ? (
         <section style={{ padding: '100px 5%', background: panelBg, borderTop: `1px solid ${c.accent}1a` , order: getOrder('testimonials') }}>
           <div style={{ maxWidth: 1280, margin: '0 auto' }}>
             <div style={{ textAlign: 'center', marginBottom: 64 }}>
@@ -616,6 +622,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
             </div>
           </div>
         </section>
+        ) : null
       )}
 
       {/* ============================================================ CTA BAND ============================================================ */}

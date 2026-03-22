@@ -3,6 +3,7 @@ import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 
 // Template: Tint Sleek — Gray & teal (#1f2937 bg, #14b8a6 accent, #374151 secondary)
 // Modern precision, two-column hero, film brands as styled pills, warranty badge, teal left-border cards, social footer
@@ -390,7 +391,12 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
       )}
 
       {/* TESTIMONIALS */}
-      {!hidden('testimonials') && testimonials.length > 0 && (
+      {!hidden('testimonials') && (
+        copy?.reviewMode === 'google' && copy?.googleWidgetKey ? (
+          <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+            <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} />
+          </div>
+        ) : testimonials.length > 0 ? (
         <section style={{ padding: '80px 5%', background: c.secondary, borderTop: `1px solid ${c.accent}22`, order: getOrder('testimonials') }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ textAlign: 'center', marginBottom: 48 }}>
@@ -411,6 +417,7 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
             </div>
           </div>
         </section>
+        ) : null
       )}
 
       {/* CTA */}

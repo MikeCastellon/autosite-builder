@@ -3,6 +3,7 @@ import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 
 // Template: Mobile Rugged — Dark green (#1a2318 bg, #8a9a4a accent, #f0ede0 text)
 // Repeating diagonal line texture in hero, "ANYWHERE · ANYTIME" subtext, service area, heavy uppercase
@@ -280,7 +281,12 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
       )}
 
       {/* TESTIMONIALS */}
-      {!hidden('testimonials') && testimonials.length > 0 && (
+      {!hidden('testimonials') && (
+        copy?.reviewMode === 'google' && copy?.googleWidgetKey ? (
+          <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+            <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} />
+          </div>
+        ) : testimonials.length > 0 ? (
         <section style={{ padding: '80px 5%', borderTop: `1px solid ${c.accent}33` , order: getOrder('testimonials') }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 48 }}>
@@ -301,6 +307,7 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
             </div>
           </div>
         </section>
+        ) : null
       )}
 
       {/* CTA */}

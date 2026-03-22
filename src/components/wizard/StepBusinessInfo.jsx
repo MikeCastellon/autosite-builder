@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { COMMON_FIELDS, COMMON_EXTRA_FIELDS, TYPE_SPECIFIC_FIELDS, BUSINESS_TYPES } from '../../data/businessTypes.js';
 import { DEMO_BUSINESS_INFO } from '../../data/demoData.js';
 
@@ -10,6 +10,28 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
   const [errors, setErrors] = useState({});
   const [customInputs, setCustomInputs] = useState({});
   const [packageDrafts, setPackageDrafts] = useState({});
+
+  // Google Place search state
+  const reviewSource = values.reviewSource || 'google';
+  const [placeQuery, setPlaceQuery] = useState('');
+  const [placeResults, setPlaceResults] = useState([]);
+  const [placeLoading, setPlaceLoading] = useState(false);
+  const debounceRef = useRef(null);
+
+  useEffect(() => {
+    if (!placeQuery.trim() || placeQuery.length < 3) { setPlaceResults([]); return; }
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      setPlaceLoading(true);
+      try {
+        const res = await fetch(`https://social-feeds-app.netlify.app/.netlify/functions/places-search?q=${encodeURIComponent(placeQuery)}`);
+        const data = await res.json();
+        setPlaceResults(data.results || []);
+      } catch { setPlaceResults([]); }
+      setPlaceLoading(false);
+    }, 400);
+    return () => clearTimeout(debounceRef.current);
+  }, [placeQuery]);
 
   const allFields = [...COMMON_FIELDS, ...specificFields];
 
@@ -337,6 +359,79 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
               />
             </div>
           ))}
+        </div>
+
+        {/* Review Source */}
+        <div className="space-y-4">
+          <p className="text-[11px] font-semibold text-[#cc0000] uppercase tracking-[1.5px]">Customer Reviews</p>
+          <div className="flex gap-2">
+            <button type="button" onClick={() => handleChange('reviewSource', 'google')}
+              className={`flex-1 py-2.5 px-3 rounded-xl text-[13px] font-medium border transition-all ${reviewSource === 'google' ? 'bg-[#1a1a1a] border-[#1a1a1a] text-white' : 'bg-white border-black/[0.12] text-[#555] hover:border-[#cc0000]/40'}`}>
+              ⭐ Google Reviews
+            </button>
+            <button type="button" onClick={() => handleChange('reviewSource', 'testimonials')}
+              className={`flex-1 py-2.5 px-3 rounded-xl text-[13px] font-medium border transition-all ${reviewSource === 'testimonials' ? 'bg-[#1a1a1a] border-[#1a1a1a] text-white' : 'bg-white border-black/[0.12] text-[#555] hover:border-[#cc0000]/40'}`}>
+              💬 AI Testimonials
+            </button>
+          </div>
+
+          {reviewSource === 'google' && (
+            <div>
+              {values.googlePlace ? (
+                <div className="flex items-center justify-between bg-[#f0fdf4] border border-[#86efac] rounded-xl px-4 py-3">
+                  <div>
+                    <div className="text-[13px] font-semibold text-[#166534]">✓ {values.googlePlace.placeName}</div>
+                    <div className="text-[11px] text-[#4ade80]">
+                      {values.googlePlace.rating}★ · {values.googlePlace.reviewCount} reviews
+                    </div>
+                  </div>
+                  <button type="button" onClick={() => { handleChange('googlePlace', null); setPlaceQuery(''); }}
+                    className="text-[12px] text-[#888] hover:text-[#cc0000] transition">Change</button>
+                </div>
+              ) : (
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={placeQuery}
+                    onChange={(e) => setPlaceQuery(e.target.value)}
+                    placeholder="Search your business on Google..."
+                    className="w-full bg-white border border-black/[0.12] rounded-xl px-4 py-2.5 text-[13px] text-[#1a1a1a] placeholder-[#aaa] focus:outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000] transition"
+                  />
+                  {placeLoading && <div className="absolute right-3 top-3 text-[11px] text-[#aaa]">Searching...</div>}
+                  {placeResults.length > 0 && (
+                    <div className="absolute z-10 left-0 right-0 mt-1 bg-white border border-black/[0.12] rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                      {placeResults.map((place) => (
+                        <button key={place.place_id} type="button"
+                          onClick={() => {
+                            handleChange('googlePlace', {
+                              placeId: place.place_id,
+                              placeName: place.name,
+                              rating: place.rating,
+                              reviewCount: place.review_count,
+                            });
+                            setPlaceResults([]);
+                            setPlaceQuery('');
+                          }}
+                          className="w-full text-left px-4 py-3 hover:bg-[#faf9f7] border-b border-black/[0.06] last:border-0 transition">
+                          <div className="text-[13px] font-semibold text-[#1a1a1a]">{place.name}</div>
+                          <div className="text-[11px] text-[#888]">
+                            {place.address}
+                            {place.rating ? ` · ${place.rating}★` : ''}
+                            {place.review_count ? ` · ${place.review_count} reviews` : ''}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+              <p className="text-[11px] text-[#aaa] mt-2">Real Google reviews will appear on your website.</p>
+            </div>
+          )}
+
+          {reviewSource === 'testimonials' && (
+            <p className="text-[11px] text-[#aaa]">AI will generate realistic placeholder testimonials for your site.</p>
+          )}
         </div>
 
         <button
