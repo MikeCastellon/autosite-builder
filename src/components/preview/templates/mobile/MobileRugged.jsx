@@ -16,13 +16,13 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-  const hidden = (id) => copy?.hiddenSections?.includes(id);
-  const getOrder = buildSectionOrder(copy, ['hero','statsBar','services','about','gallery','testimonials','cta']);
 
   const c = templateMeta?.colors || { bg: '#1a2318', accent: '#8a9a4a', text: '#f0ede0', secondary: '#232e20', muted: '#a09880' };
   const font = templateMeta?.bodyFont || 'Georgia, serif';
   const biz = businessInfo || {};
   const copy = generatedCopy || {};
+  const hidden = (id) => copy?.hiddenSections?.includes(id);
+  const getOrder = buildSectionOrder(copy, ['hero','statsBar','services','about','gallery','testimonials','cta']);
   const services = copy.servicesSection?.items || [];
   const svcCols = services.length >= 6 ? Math.ceil(services.length / 2) : services.length || 1;
   const testimonials = copy.testimonialPlaceholders || [];

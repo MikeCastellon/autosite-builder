@@ -68,7 +68,10 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
       setErrors(errs);
       return;
     }
-    onSubmit(values);
+    // Ensure reviewSource default is included
+    const finalValues = { ...values };
+    if (!finalValues.reviewSource) finalValues.reviewSource = 'google';
+    onSubmit(finalValues);
   };
 
   const inputBase = 'w-full bg-white border rounded-xl px-3.5 py-2.5 text-[#1a1a1a] placeholder-[#aaa] text-[14px] focus:outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000] transition';
