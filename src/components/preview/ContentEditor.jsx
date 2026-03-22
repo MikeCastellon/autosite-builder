@@ -1,4 +1,68 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
+
+const EMOJI_GROUPS = {
+  'Common': ['⭐', '✅', '🏆', '💎', '🔧', '🛞', '🚗', '🏎️', '💰', '💳', '🕐', '⏱️', '📞', '📍', '🎯', '✓', '★', '♦'],
+  'Trust': ['🛡️', '🔒', '✔️', '👍', '💪', '🤝', '👑', '🎖️', '🏅', '📋', '📦', '🚚', '⚡', '🔥', '❤️', '💯'],
+  'Business': ['🏢', '🏠', '📊', '📈', '💼', '🎨', '🔨', '⚙️', '🪧', '📱', '💻', '🌟', '🌍', '🌎', '♻️', '🌱'],
+  'Vehicles': ['🚙', '🚘', '🏍️', '🛻', '🚐', '🔩', '🛠️', '🧰', '🪛', '🔋', '⛽', '🧽', '🧹', '💧', '✨', '🫧'],
+};
+
+function EmojiPicker({ value, onChange, placeholder = '⭐' }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  return (
+    <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-[18px] text-center focus:outline-none focus:ring-1 focus:ring-blue-400 hover:border-gray-400 transition"
+        style={{ width: 52, height: 38 }}
+      >
+        {value || <span style={{ opacity: 0.3 }}>{placeholder}</span>}
+      </button>
+      {open && (
+        <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 100, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, boxShadow: '0 8px 30px rgba(0,0,0,0.15)', padding: 10, width: 240, maxHeight: 260, overflowY: 'auto' }}>
+          {Object.entries(EMOJI_GROUPS).map(([group, emojis]) => (
+            <div key={group} style={{ marginBottom: 8 }}>
+              <div style={{ fontSize: 10, fontWeight: 600, color: '#999', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 4, padding: '0 2px' }}>{group}</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                {emojis.map((emoji) => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    onClick={() => { onChange(emoji); setOpen(false); }}
+                    style={{ width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, background: value === emoji ? '#f3f4f6' : 'transparent', border: 'none', borderRadius: 6, cursor: 'pointer' }}
+                    onMouseOver={(e) => e.target.style.background = '#f3f4f6'}
+                    onMouseOut={(e) => e.target.style.background = value === emoji ? '#f3f4f6' : 'transparent'}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+          <div style={{ borderTop: '1px solid #eee', paddingTop: 6, marginTop: 4 }}>
+            <input
+              type="text"
+              value={value ?? ''}
+              onChange={(e) => onChange(e.target.value)}
+              placeholder="Or type any emoji/text"
+              className="w-full bg-gray-50 border border-gray-200 rounded-md px-2 py-1 text-[12px] text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 const SECTION_ICON = {
   hero: '✦',
@@ -225,7 +289,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
                       )}
                     </div>
                     <div className="grid grid-cols-[60px_1fr] gap-2 mb-2">
-                      <input type="text" value={step.emoji ?? ''} onChange={(e) => updateStep(i, 'emoji', e.target.value)} placeholder="📱" className="bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-[18px] text-center focus:outline-none focus:ring-1 focus:ring-blue-400" />
+                      <EmojiPicker value={step.emoji ?? ''} onChange={(v) => updateStep(i, 'emoji', v)} placeholder="📱" />
                       <input type="text" value={step.title ?? ''} onChange={(e) => updateStep(i, 'title', e.target.value)} placeholder="Step title" className="bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 text-[12px] text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-400" />
                     </div>
                     <textarea rows={2} value={step.desc ?? ''} onChange={(e) => updateStep(i, 'desc', e.target.value)} placeholder="Step description" className="w-full bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 text-[12px] text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-400 resize-none" />
@@ -271,7 +335,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
                       )}
                     </div>
                     <div className="grid grid-cols-[60px_1fr] gap-2 mb-2">
-                      <input type="text" value={card.icon ?? ''} onChange={(e) => updateCard(i, 'icon', e.target.value)} placeholder="🏠" className="bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-[18px] text-center focus:outline-none focus:ring-1 focus:ring-blue-400" />
+                      <EmojiPicker value={card.icon ?? ''} onChange={(v) => updateCard(i, 'icon', v)} placeholder="🏠" />
                       <input type="text" value={card.title ?? ''} onChange={(e) => updateCard(i, 'title', e.target.value)} placeholder="Card title" className="bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 text-[12px] text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-400" />
                     </div>
                     <textarea rows={2} value={card.desc ?? ''} onChange={(e) => updateCard(i, 'desc', e.target.value)} placeholder="Card description" className="w-full bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 text-[12px] text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-400 resize-none" />
@@ -403,7 +467,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
                       )}
                     </div>
                     <div className="grid grid-cols-[60px_1fr] gap-2 mb-2">
-                      <input type="text" value={item.emoji ?? ''} onChange={(e) => updateItem(i, 'emoji', e.target.value)} placeholder="🕐" className="bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-[18px] text-center focus:outline-none focus:ring-1 focus:ring-blue-400" />
+                      <EmojiPicker value={item.emoji ?? ''} onChange={(v) => updateItem(i, 'emoji', v)} placeholder="🕐" />
                       <input type="text" value={item.label ?? ''} onChange={(e) => updateItem(i, 'label', e.target.value)} placeholder="Label text" className="bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 text-[12px] text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-400" />
                     </div>
                     <input type="text" value={item.sub ?? ''} onChange={(e) => updateItem(i, 'sub', e.target.value)} placeholder="Sub-text" className="w-full bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 text-[12px] text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-400" />
