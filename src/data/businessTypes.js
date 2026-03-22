@@ -28,7 +28,7 @@ export const BUSINESS_TYPES = [
     label: 'Tint Shop',
     icon: '🌑',
     description: 'Window tint & paint protection film',
-    templates: ['tint_dark', 'tint_sleek', 'tint_elite', 'tint_obsidian'],
+    templates: ['tint_dark', 'tint_elite', 'tint_obsidian'],
     premiumTemplates: [],
   },
   {
