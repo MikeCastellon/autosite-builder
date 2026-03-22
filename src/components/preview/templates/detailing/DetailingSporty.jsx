@@ -13,10 +13,10 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener('scroll', onScroll);
-  const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
-
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
 
   const s = {
     nav: {

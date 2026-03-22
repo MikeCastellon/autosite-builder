@@ -15,10 +15,9 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
     link.rel = 'stylesheet';
     link.href = 'https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=DM+Serif+Display:ital@0;1&display=swap';
     document.head.appendChild(link);
-  const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
-
     return () => { if (document.head.contains(link)) document.head.removeChild(link); };
   }, []);
+  const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);

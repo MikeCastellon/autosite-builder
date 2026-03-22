@@ -13,10 +13,9 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 60);
     window.addEventListener('scroll', handleScroll);
-  const hidden = (id) => copy?.hiddenSections?.includes(id);
-
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+  const hidden = (id) => copy?.hiddenSections?.includes(id);
 
   const c = templateMeta?.colors || { bg: '#1c1c1c', accent: '#eab308', text: '#e8e8e8', secondary: '#2c2c2c', muted: '#888888' };
   const font = templateMeta?.bodyFont || 'Inter, system-ui, sans-serif';

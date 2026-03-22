@@ -12,10 +12,9 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 60);
     window.addEventListener('scroll', handleScroll);
-  const hidden = (id) => copy?.hiddenSections?.includes(id);
-
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+  const hidden = (id) => copy?.hiddenSections?.includes(id);
 
   const c = templateMeta?.colors || { bg: '#1a2318', accent: '#8a9a4a', text: '#f0ede0', secondary: '#232e20', muted: '#a09880' };
   const font = templateMeta?.bodyFont || 'Georgia, serif';

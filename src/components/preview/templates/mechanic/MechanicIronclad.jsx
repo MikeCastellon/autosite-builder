@@ -55,10 +55,9 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
     window.addEventListener('scroll', onScroll);
-  const hidden = (id) => copy?.hiddenSections?.includes(id);
-
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+  const hidden = (id) => copy?.hiddenSections?.includes(id);
 
   // ── Font stacks ───────────────────────────────────────────────────
   const bebas     = "'Bebas Neue', 'Barlow Condensed', sans-serif";

@@ -12,10 +12,9 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 30);
     window.addEventListener('scroll', onScroll);
-  const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
-
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+  const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
 
   // Simple geometric SVG-style icon shapes rendered as divs
   const IconWrench = () => (

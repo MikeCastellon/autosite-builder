@@ -9,10 +9,9 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 80);
     window.addEventListener('scroll', handleScroll);
-  const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
-
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+  const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
 
   const c = templateMeta.colors;
   const font = templateMeta.font;

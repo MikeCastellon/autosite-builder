@@ -41,10 +41,9 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
     window.addEventListener('scroll', onScroll);
-  const hidden = (id) => copy?.hiddenSections?.includes(id);
-
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+  const hidden = (id) => copy?.hiddenSections?.includes(id);
 
   const accentLight = '#bae6fd';
   const deepBg      = '#0c2340';

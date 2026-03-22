@@ -41,10 +41,9 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
   useEffect(() => {
     const h = () => setScrolled(window.scrollY > 60);
     window.addEventListener('scroll', h);
-  const hidden = (id) => copy?.hiddenSections?.includes(id);
-
     return () => window.removeEventListener('scroll', h);
   }, []);
+  const hidden = (id) => copy?.hiddenSections?.includes(id);
 
   const heroBubbles = [
     { w: 80,  h: 80,  top: '12%', left: '5%',  opacity: 0.18, color: '#2d9cdb' },
