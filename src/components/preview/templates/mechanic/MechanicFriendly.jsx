@@ -12,6 +12,8 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 30);
     window.addEventListener('scroll', onScroll);
+  const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
+
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
@@ -278,6 +280,7 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
       </section>
 
       {/* WHY CHOOSE US */}
+      {!hidden('whyUs') && (
       <section style={s.whySection}>
         <div style={s.sectionEyebrow}>Why Choose Us</div>
         <h2 style={s.sectionTitle}>Your Neighborhood's Most Trusted Shop</h2>
@@ -291,8 +294,10 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
           ))}
         </div>
       </section>
+      )}
 
       {/* SERVICES */}
+      {!hidden('services') && (
       <section id="services" style={s.section}>
         <div style={s.sectionEyebrow}>Our Services</div>
         <h2 style={s.sectionTitle}>Everything Your Car Needs</h2>
@@ -323,8 +328,10 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
           </p>
         )}
       </section>
+      )}
 
       {/* ABOUT */}
+      {!hidden('about') && (
       <section id="about" style={s.sectionWhite}>
         <div style={s.aboutGrid}>
           <div>
@@ -356,11 +363,15 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
           </div>
         </div>
       </section>
+      )}
 
       {/* GALLERY */}
+      {!hidden('gallery') && (
       <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
+      )}
 
       {/* TESTIMONIALS */}
+      {!hidden('testimonials') && (
       <section id="reviews" style={s.section}>
         <div style={s.sectionEyebrow}>Customer Reviews</div>
         <h2 style={{ ...s.sectionTitle, marginBottom: '2rem' }}>Don't Just Take Our Word For It</h2>
@@ -374,8 +385,10 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
           ))}
         </div>
       </section>
+      )}
 
       {/* CONTACT */}
+      {!hidden('cta') && (
       <section id="contact" style={s.contactSection}>
         <div style={s.contactGrid}>
           <div>
@@ -416,6 +429,7 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
           </div>
         </div>
       </section>
+      )}
 
       {/* FOOTER */}
       <footer style={s.footer}>

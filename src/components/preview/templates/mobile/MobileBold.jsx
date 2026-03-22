@@ -25,6 +25,8 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
   const payments = biz.paymentMethods || [];
   const packages = biz.packages || [];
 
+  const hidden = (id) => copy?.hiddenSections?.includes(id);
+
   const splitHero = generatedCopy?.heroLayout === 'split';
 
   const slashBg = `repeating-linear-gradient(
@@ -146,6 +148,7 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
       )}
 
       {/* SERVICES */}
+      {!hidden('services') && (
       <section id="services" style={{ padding: '80px 5%' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ marginBottom: 48 }}>
@@ -208,8 +211,10 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
           )}
         </div>
       </section>
+      )}
 
       {/* ABOUT */}
+      {!hidden('about') && (
       <section id="about" style={{ padding: '80px 5%' }}>
         <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'center' }}>
           <div>
@@ -271,12 +276,15 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
           </div>
         </div>
       </section>
+      )}
 
       {/* GALLERY */}
+      {!hidden('gallery') && (
       <GallerySection images={images} colors={c} font={font} bodyFont={templateMeta.bodyFont} />
+      )}
 
       {/* TESTIMONIALS */}
-      {testimonials.length > 0 && (
+      {!hidden('testimonials') && testimonials.length > 0 && (
         <section style={{ padding: '80px 5%', background: c.secondary || '#2a2a2a', borderTop: '1px solid #333' }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ textAlign: 'center', marginBottom: 48 }}>
@@ -297,6 +305,7 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
       )}
 
       {/* CTA SECTION */}
+      {!hidden('cta') && (
       <section style={{ padding: '80px 5%', textAlign: 'center' }}>
         <h2 style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 16px', lineHeight: 1 }}>READY TO BOOK?</h2>
         <p style={{ color: '#888', fontSize: 16, marginBottom: 40 }}>{copy.ctaSecondary || `Serving ${biz.city || 'your area'}. We come to you.`}</p>
@@ -315,6 +324,7 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
           </p>
         )}
       </section>
+      )}
 
       {/* FOOTER */}
       <footer style={{ background: '#111', padding: '48px 5% 28px', borderTop: `3px solid ${c.accent}` }}>

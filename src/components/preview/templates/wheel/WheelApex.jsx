@@ -34,6 +34,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
   const testimonials = copy.testimonialPlaceholders || [];
   const payments = biz.paymentMethods || [];
   const packages = biz.packages || [];
+  const hidden = (id) => copy?.hiddenSections?.includes(id);
 
   const D = {
     bg: '#F0F1F3', bg2: '#E8EAED', bg3: '#DDDFE3',
@@ -153,6 +154,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
       </header>
 
       {/* TICKER */}
+      {!hidden('ticker') && (
       <div style={{ background: D.ink, padding: '10px 0', overflow: 'hidden', whiteSpace: 'nowrap' }}>
         <div style={{ display: 'inline-flex', gap: 40, animation: 'apexTick 22s linear infinite' }}>
           {[...Array(2)].map((_, r) => {
@@ -168,9 +170,10 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
         </div>
         <style>{`@keyframes apexTick { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }`}</style>
       </div>
+      )}
 
       {/* TRUST BAR */}
-      {(() => {
+      {!hidden('trustBar') && (() => {
         const defaultTrust = [
           { emoji: '🕐', label: biz.yearsInBusiness ? `${biz.yearsInBusiness}+ years experience` : 'Professional service', sub: 'Trusted locally' },
           { emoji: '✓', label: 'Fitment guaranteed', sub: 'Or free return' },
@@ -202,7 +205,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
       })()}
 
       {/* SERVICES / PRODUCTS — product card grid */}
-      {copy?.showProducts !== false && (() => {
+      {!hidden('products') && (() => {
         const products = copy?.products?.length > 0 ? copy.products : (packages.length > 0 ? packages : services.length > 0 ? services : [
           { name: 'Custom Wheels', description: '18"–24" alloy wheels', price: '$349+', badge: 'Popular' },
           { name: 'Mount & Balance', description: 'Professional fitment', price: '$89' },
@@ -255,6 +258,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
       })()}
 
       {/* ABOUT — standard pattern: image/stats left, text right */}
+      {!hidden('about') && (
       <section id="about" style={{ padding: '80px 48px', background: D.card, borderTop: `1px solid ${D.border}`, borderBottom: `1px solid ${D.border}` }}>
         <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'center' }}>
           <div>
@@ -310,9 +314,10 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
           </div>
         </div>
       </section>
+      )}
 
       {/* BRANDS */}
-      {(brandsList.length > 0 || tireBrandsList.length > 0) && (
+      {!hidden('brands') && (brandsList.length > 0 || tireBrandsList.length > 0) && (
         <section id="brands" style={{ padding: '48px', background: D.card, borderTop: `1px solid ${D.border}` }}>
           <div style={{ fontSize: 11, letterSpacing: 3, textTransform: 'uppercase', color: D.muted, textAlign: 'center', marginBottom: 24 }}>Brands we carry</div>
           <div style={{ display: 'flex', border: `1px solid ${D.border}` }}>
@@ -337,10 +342,12 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
       )}
 
       {/* GALLERY */}
+      {!hidden('gallery') && (
       <GallerySection images={images} colors={{ ...c, bg: D.bg, accent: D.bronze, text: D.ink, secondary: D.card, muted: D.muted }} font={display} bodyFont={body} />
+      )}
 
       {/* TESTIMONIALS */}
-      {testimonials.length > 0 && (
+      {!hidden('testimonials') && testimonials.length > 0 && (
         <section style={{ padding: '64px 48px', background: D.card, borderTop: `1px solid ${D.border}` }}>
           <div style={{ marginBottom: 32 }}>
             <p style={{ fontSize: 11, letterSpacing: 3, textTransform: 'uppercase', color: D.bronze, marginBottom: 8, fontWeight: 500 }}>◆ Reviews</p>
@@ -359,6 +366,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
       )}
 
       {/* CTA / CONTACT */}
+      {!hidden('cta') && (
       <section id="contact" style={{ background: D.bronzeBg, borderTop: '1px solid #E8D9C0', borderBottom: '1px solid #E8D9C0', padding: '48px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 32, flexWrap: 'wrap' }}>
         <div>
           <p style={{ fontSize: 11, letterSpacing: 3, textTransform: 'uppercase', color: D.bronze, marginBottom: 8, fontWeight: 500 }}>◆ Get in touch</p>
@@ -374,6 +382,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
           </a>
         </div>
       </section>
+      )}
 
       {/* FOOTER */}
       <footer style={{ padding: '36px 48px', background: D.card, borderTop: `1px solid ${D.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>

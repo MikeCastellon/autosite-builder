@@ -13,6 +13,8 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 60);
     window.addEventListener('scroll', handleScroll);
+  const hidden = (id) => copy?.hiddenSections?.includes(id);
+
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -140,6 +142,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
 
 
       {/* STATS */}
+      {!hidden('statsBar') && (
       <section style={{ background: c.secondary || '#2c2c2c', padding: '3.5rem 5%', borderBottom: '1px solid #333' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 24, textAlign: 'center' }}>
           {[
@@ -155,8 +158,10 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
           ))}
         </div>
       </section>
+      )}
 
       {/* SERVICES */}
+      {!hidden('services') && (
       <section id="services" style={{ padding: '80px 5%' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
@@ -189,6 +194,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
           </div>
         </div>
       </section>
+      )}
 
       {/* SHOP HOURS — prominently shown section */}
       <section id="hours" style={{ padding: '80px 5%', background: c.secondary, borderTop: '1px solid #333', borderBottom: '1px solid #333' }}>
@@ -224,7 +230,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
           <div>
 
             {/* AWARDS */}
-            {biz.awards && (
+            {!hidden('awards') && biz.awards && (
               <div style={{ background: 'rgba(255,215,0,0.08)', border: '1px solid rgba(255,215,0,0.25)', borderRadius: 6, padding: '18px 20px', marginBottom: 16 }}>
                 <div style={{ color: '#ffd700', fontSize: 11, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 6 }}>RECOGNITION</div>
                 <p style={{ color: c.text, fontSize: 14, margin: 0, fontWeight: 500 }}>{biz.awards}</p>
@@ -283,6 +289,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
       )}
 
       {/* ABOUT */}
+      {!hidden('about') && (
       <section id="about" style={{ padding: '80px 5%', background: c.secondary, borderBottom: '1px solid #333' }}>
         <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'start' }}>
           <div>
@@ -334,12 +341,15 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
           </div>
         </div>
       </section>
+      )}
 
       {/* GALLERY */}
+      {!hidden('gallery') && (
       <GallerySection images={images} colors={c} font={font} bodyFont={templateMeta.bodyFont} />
+      )}
 
       {/* TESTIMONIALS */}
-      {testimonials.length > 0 && (
+      {!hidden('testimonials') && testimonials.length > 0 && (
         <section style={{ padding: '80px 5%', borderBottom: '1px solid #333' }}>
           <div style={{ maxWidth: 1200, margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 48 }}>
@@ -363,6 +373,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
       )}
 
       {/* CTA */}
+      {!hidden('cta') && (
       <section style={{ background: c.accent, padding: '80px 5%', textAlign: 'center' }}>
         <h2 style={{ fontSize: 'clamp(2rem, 4.5vw, 3.5rem)', fontWeight: 900, color: '#000', textTransform: 'uppercase', margin: '0 0 14px', letterSpacing: '-0.01em' }}>
           SCHEDULE SERVICE
@@ -388,6 +399,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
           </p>
         )}
       </section>
+      )}
 
       {/* FOOTER */}
       <footer style={{ background: '#111', padding: '48px 5% 24px', borderTop: `3px solid ${c.accent}` }}>

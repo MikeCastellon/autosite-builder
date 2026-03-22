@@ -9,6 +9,8 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 60);
     window.addEventListener('scroll', handleScroll);
+  const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
+
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -218,6 +220,7 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
       </section>
 
       {/* STATS BAR */}
+      {!hidden('statsBar') && (
       <section style={{ background: c.accent, padding: '36px 24px', fontFamily: bodyFont }}>
         <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: '24px' }}>
           {stats.map((s, i) => (
@@ -228,8 +231,10 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
           ))}
         </div>
       </section>
+      )}
 
       {/* SERVICES */}
+      {!hidden('services') && (
       <section id="services" style={sectionStyle()}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <div style={{ marginBottom: '56px' }}>
@@ -248,6 +253,7 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
           </div>
         </div>
       </section>
+      )}
 
       {/* WARRANTY GUARANTEE BOX */}
       <section style={{ background: c.secondary, backgroundImage: concreteTexture, padding: '48px 24px', fontFamily: bodyFont }}>
@@ -268,7 +274,7 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
       </section>
 
       {/* PACKAGES */}
-      {businessInfo.packages && businessInfo.packages.length > 0 && (
+      {!hidden('services') && businessInfo.packages && businessInfo.packages.length > 0 && (
         <section id="packages" style={sectionStyle()}>
           <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
             <h2 style={{ fontFamily: font, fontSize: '2.2rem', fontWeight: 900, color: c.text, textTransform: 'uppercase', marginBottom: '48px' }}>Service Packages</h2>
@@ -286,6 +292,7 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
       )}
 
       {/* ABOUT */}
+      {!hidden('about') && (
       <section id="about" style={{ ...sectionStyle(c.secondary), backgroundImage: concreteTexture }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', gap: '64px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
           <div style={{ flex: '1 1 340px' }}>
@@ -341,11 +348,15 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
           </div>
         </div>
       </section>
+      )}
 
       {/* GALLERY */}
+      {!hidden('gallery') && (
       <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
+      )}
 
       {/* TESTIMONIALS */}
+      {!hidden('testimonials') && (
       <section style={sectionStyle()}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <h2 style={{ fontFamily: font, fontSize: '2.2rem', fontWeight: 900, color: c.text, textTransform: 'uppercase', marginBottom: '48px' }}>Straight From Our Customers</h2>
@@ -360,8 +371,10 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
           </div>
         </div>
       </section>
+      )}
 
       {/* CONTACT CTA - orange background */}
+      {!hidden('cta') && (
       <section id="contact" style={{ background: c.accent, padding: '72px 24px', fontFamily: bodyFont }}>
         <div style={{ maxWidth: '900px', margin: '0 auto', display: 'flex', gap: '48px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
@@ -386,6 +399,7 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
           </div>
         </div>
       </section>
+      )}
 
       {/* FOOTER */}
       <footer style={{ background: '#0a0a0a', backgroundImage: concreteTexture, padding: '48px 24px', fontFamily: bodyFont }}>

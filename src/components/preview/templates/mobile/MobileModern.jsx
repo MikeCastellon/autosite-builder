@@ -25,6 +25,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
   const payments = biz.paymentMethods || [];
   const packages = biz.packages || [];
   const splitHero = copy?.heroLayout === 'split';
+  const hidden = (id) => copy?.hiddenSections?.includes(id);
 
   return (
     <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, containerType: 'inline-size' }}>
@@ -193,6 +194,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
       </div>
 
       {/* STATS GRID */}
+      {!hidden('statsBar') && (
       <section style={{ background: c.bg, padding: '56px 5%', borderBottom: '1px solid #e5e7eb' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 24, textAlign: 'center' }}>
           {[
@@ -208,8 +210,10 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
           ))}
         </div>
       </section>
+      )}
 
       {/* SERVICES — clean card grid */}
+      {!hidden('services') && (
       <section id="services" style={{ padding: '80px 5%', background: c.bg }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ marginBottom: 48 }}>
@@ -268,8 +272,10 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
           )}
         </div>
       </section>
+      )}
 
       {/* ABOUT */}
+      {!hidden('about') && (
       <section id="about" style={{ padding: '80px 5%', background: c.bg, borderTop: '1px solid #e5e7eb' }}>
         <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'start' }}>
           <div>
@@ -322,12 +328,15 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
           </div>
         </div>
       </section>
+      )}
 
       {/* GALLERY */}
+      {!hidden('gallery') && (
       <GallerySection images={images} colors={c} font={font} bodyFont={templateMeta.bodyFont} />
+      )}
 
       {/* TESTIMONIALS */}
-      {testimonials.length > 0 && (
+      {!hidden('testimonials') && testimonials.length > 0 && (
         <section style={{ padding: '80px 5%', background: c.secondary || '#eff6ff', borderTop: '1px solid #dbeafe' }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ textAlign: 'center', marginBottom: 48 }}>
@@ -351,6 +360,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
       )}
 
       {/* CTA */}
+      {!hidden('cta') && (
       <section id="contact" style={{ background: c.accent, padding: '80px 5%', textAlign: 'center' }}>
         <h2 style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.8rem)', fontWeight: 800, color: '#fff', marginBottom: 14 }}>Schedule a Mobile Detail</h2>
         <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 16, marginBottom: 36 }}>
@@ -370,6 +380,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
           </p>
         )}
       </section>
+      )}
 
       {/* FOOTER */}
       <footer style={{ background: '#f1f5f9', borderTop: '1px solid #e5e7eb', padding: '48px 5% 28px' }}>

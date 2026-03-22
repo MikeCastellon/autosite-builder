@@ -12,6 +12,8 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 60);
     window.addEventListener('scroll', handleScroll);
+  const hidden = (id) => copy?.hiddenSections?.includes(id);
+
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -149,6 +151,7 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
       )}
 
       {/* STATS BAR */}
+      {!hidden('statsBar') && (
       <section style={{ background: c.secondary || '#232e20', padding: '3.5rem 5%', borderBottom: `1px solid ${c.accent}33` }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 32, textAlign: 'center' }}>
           {[
@@ -164,8 +167,10 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
           ))}
         </div>
       </section>
+      )}
 
       {/* SERVICES */}
+      {!hidden('services') && (
       <section id="services" style={{ padding: '80px 5%' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
@@ -194,8 +199,10 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
           </div>
         </div>
       </section>
+      )}
 
       {/* ABOUT + HOURS */}
+      {!hidden('about') && (
       <section id="about" style={{ background: c.secondary || '#232e20', padding: '80px 5%', borderTop: `1px solid ${c.accent}33` }}>
         <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'start' }}>
           <div>
@@ -257,12 +264,15 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
           </div>
         </div>
       </section>
+      )}
 
       {/* GALLERY */}
+      {!hidden('gallery') && (
       <GallerySection images={images} colors={c} font={font} bodyFont={templateMeta.bodyFont} />
+      )}
 
       {/* TESTIMONIALS */}
-      {testimonials.length > 0 && (
+      {!hidden('testimonials') && testimonials.length > 0 && (
         <section style={{ padding: '80px 5%', borderTop: `1px solid ${c.accent}33` }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 48 }}>
@@ -286,6 +296,7 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
       )}
 
       {/* CTA */}
+      {!hidden('cta') && (
       <section style={{ background: c.accent, padding: '72px 5%', textAlign: 'center' }}>
         <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 900, color: '#1a2318', textTransform: 'uppercase', margin: '0 0 16px', letterSpacing: '-0.01em' }}>
           BOOK YOUR DETAIL
@@ -306,6 +317,7 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
           </p>
         )}
       </section>
+      )}
 
       {/* FOOTER */}
       <footer style={{ background: '#111a0f', padding: '48px 5% 24px', borderTop: `1px solid ${c.accent}33` }}>

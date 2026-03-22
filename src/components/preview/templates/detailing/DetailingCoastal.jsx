@@ -9,6 +9,8 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 60);
     window.addEventListener('scroll', handleScroll);
+  const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
+
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -172,6 +174,7 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
       </section>
 
       {/* STATS BAR */}
+      {!hidden('statsBar') && (
       <section style={{ background: c.accent, padding: '40px 24px', fontFamily: bodyFont }}>
         <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: '24px' }}>
           {stats.map((s, i) => (
@@ -182,8 +185,10 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
           ))}
         </div>
       </section>
+      )}
 
       {/* SERVICES */}
+      {!hidden('services') && (
       <section id="services" style={sectionStyle(c.bg)}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '56px' }}>
@@ -216,8 +221,10 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
           )}
         </div>
       </section>
+      )}
 
       {/* ABOUT */}
+      {!hidden('about') && (
       <section id="about" style={sectionStyle(c.bg)}>
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', gap: '64px', alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ flex: '1 1 320px', minWidth: '280px' }}>
@@ -255,11 +262,15 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
           </div>
         </div>
       </section>
+      )}
 
       {/* GALLERY */}
+      {!hidden('gallery') && (
       <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
+      )}
 
       {/* TESTIMONIALS */}
+      {!hidden('testimonials') && (
       <section style={sectionStyle(c.secondary)}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <h2 style={{ fontFamily: font, fontSize: '2.2rem', fontWeight: 800, color: c.text, textAlign: 'center', marginBottom: '48px' }}>What Our Clients Say</h2>
@@ -274,8 +285,10 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
           </div>
         </div>
       </section>
+      )}
 
       {/* CTA BAND */}
+      {!hidden('cta') && (
       <section style={{ background: c.accent, padding: '72px 24px', textAlign: 'center', fontFamily: bodyFont }}>
         <h2 style={{ fontFamily: font, fontSize: '2.2rem', fontWeight: 800, color: '#ffffff', marginBottom: '16px' }}>
           Ready for a Fresh, Clean Ride?
@@ -289,8 +302,10 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
           </a>
         </div>
       </section>
+      )}
 
       {/* CONTACT */}
+      {!hidden('cta') && (
       <section id="contact" style={sectionStyle(c.bg)}>
         <div style={{ maxWidth: '900px', margin: '0 auto', display: 'flex', gap: '48px', flexWrap: 'wrap' }}>
           <div style={{ flex: '1 1 260px' }}>
@@ -312,6 +327,7 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
           </div>
         </div>
       </section>
+      )}
 
       {/* FOOTER */}
       <footer style={{ background: '#0c4a6e', padding: '48px 24px', fontFamily: bodyFont }}>

@@ -15,6 +15,8 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
     link.rel = 'stylesheet';
     link.href = 'https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=DM+Serif+Display:ital@0;1&display=swap';
     document.head.appendChild(link);
+  const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
+
     return () => { if (document.head.contains(link)) document.head.removeChild(link); };
   }, []);
 
@@ -226,6 +228,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
       </section>
 
       {/* SERVICES BENTO */}
+      {!hidden('services') && (
       <section id="services" style={s.sectionWhite}>
         <div style={s.servicesIntro}>
           <span style={s.eyebrow}>Services</span>
@@ -269,6 +272,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
           </div>
         )}
       </section>
+      )}
 
       {/* BRANDS */}
       <div style={s.brands}>
@@ -279,6 +283,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
       </div>
 
       {/* ABOUT */}
+      {!hidden('about') && (
       <section id="about" style={{ ...s.sectionWhite, background: off }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', gap: isMobile ? '48px' : '80px', alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ flex: '1 1 320px', minWidth: '280px' }}>
@@ -317,11 +322,15 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
           </div>
         </div>
       </section>
+      )}
 
       {/* GALLERY */}
+      {!hidden('gallery') && (
       <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
+      )}
 
       {/* TESTIMONIALS */}
+      {!hidden('testimonials') && (
       <section id="reviews" style={s.sectionOff}>
         <div style={{ maxWidth: '520px', margin: '0 auto 72px', textAlign: 'center' }}>
           <span style={s.eyebrow}>Reviews</span>
@@ -350,8 +359,10 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
           })}
         </div>
       </section>
+      )}
 
       {/* CONTACT */}
+      {!hidden('cta') && (
       <section id="contact" style={{ background: blue, padding: isMobile ? '80px 24px' : '100px 80px', textAlign: 'center' }}>
         <span style={{ ...s.eyebrow, color: 'rgba(255,255,255,0.6)' }}>Contact</span>
         <h2 style={{ ...s.sectionTitle, color: white, marginBottom: '16px' }}>
@@ -371,6 +382,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
           </a>
         </div>
       </section>
+      )}
 
       {/* FOOTER */}
       <footer style={s.footer}>

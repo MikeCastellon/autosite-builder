@@ -13,6 +13,8 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener('scroll', onScroll);
+  const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
+
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
@@ -242,6 +244,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
       </section>
 
       {/* STATS BAR */}
+      {!hidden('statsBar') && (
       <div style={s.statsBar}>
         {stats.map((st, i) => (
           <div key={i} style={st.alt ? s.statBoxAlt : s.statBox}>
@@ -250,8 +253,10 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
           </div>
         ))}
       </div>
+      )}
 
       {/* SERVICES */}
+      {!hidden('services') && (
       <section id="services" style={s.section}>
         <div style={s.sectionTag}>What We Do</div>
         <h2 style={s.sectionTitle}>Our Services</h2>
@@ -277,8 +282,10 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
           </div>
         )}
       </section>
+      )}
 
       {/* ABOUT */}
+      {!hidden('about') && (
       <section id="about" style={s.sectionAlt}>
         <div style={s.aboutGrid}>
           {(generatedCopy?.aboutLayout || 'image') !== 'stats' ? (
@@ -302,11 +309,15 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
           </div>
         </div>
       </section>
+      )}
 
       {/* GALLERY */}
+      {!hidden('gallery') && (
       <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
+      )}
 
       {/* TESTIMONIALS */}
+      {!hidden('testimonials') && (
       <section id="reviews" style={s.section}>
         <div style={s.sectionTag}>Real Reviews</div>
         <h2 style={{ ...s.sectionTitle, marginBottom: '2rem' }}>The People Know</h2>
@@ -320,8 +331,10 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
           ))}
         </div>
       </section>
+      )}
 
       {/* CTA SPLIT */}
+      {!hidden('cta') && (
       <div style={s.ctaBand}>
         <div style={s.ctaLeft}>
           <div style={s.ctaHeading}>Book Your Detail</div>
@@ -341,6 +354,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
           )}
         </div>
       </div>
+      )}
 
       {/* FOOTER */}
       <footer style={s.footer}>

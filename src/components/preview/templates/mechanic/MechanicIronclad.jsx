@@ -55,6 +55,8 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
     window.addEventListener('scroll', onScroll);
+  const hidden = (id) => copy?.hiddenSections?.includes(id);
+
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
@@ -327,6 +329,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
       {/* ═══════════════════════════════════════════════════════════
           SERVICES GRID
       ═══════════════════════════════════════════════════════════ */}
+      {!hidden('services') && (
       <section id="services" style={{ padding: 'clamp(72px, 10vw, 120px) 5%', background: '#141414', position: 'relative' }}>
         {/* Top dashed rust stripe */}
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, backgroundImage: dashedRust }} />
@@ -366,10 +369,12 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
           </div>
         </div>
       </section>
+      )}
 
       {/* ═══════════════════════════════════════════════════════════
           ABOUT / SHOP — split: CSS garage visual | copy
       ═══════════════════════════════════════════════════════════ */}
+      {!hidden('about') && (
       <section id="about" style={{ background: c.bg, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
 
         {/* LEFT — garage visual / about image */}
@@ -447,13 +452,17 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
           </a>
         </div>
       </section>
+      )}
 
       {/* GALLERY */}
+      {!hidden('gallery') && (
       <GallerySection images={images} colors={c} font={templateMeta.font} bodyFont={bodyFont} />
+      )}
 
       {/* ═══════════════════════════════════════════════════════════
           WHY IRONCLAD — 4-cell grid
       ═══════════════════════════════════════════════════════════ */}
+      {!hidden('whyUs') && (
       <section style={{ background: '#1C1C1C', padding: 'clamp(72px, 10vw, 100px) 5%', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ marginBottom: 64 }}>
@@ -479,11 +488,12 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
           </div>
         </div>
       </section>
+      )}
 
       {/* ═══════════════════════════════════════════════════════════
           TESTIMONIALS
       ═══════════════════════════════════════════════════════════ */}
-      {testimonials.length > 0 && (
+      {!hidden('testimonials') && testimonials.length > 0 && (
         <section id="testimonials" style={{ background: c.bg, padding: 'clamp(72px, 10vw, 100px) 5%', position: 'relative' }}>
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, backgroundImage: dashedRust }} />
           <div style={{ maxWidth: 1200, margin: '0 auto' }}>
@@ -529,6 +539,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
       {/* ═══════════════════════════════════════════════════════════
           CONTACT + HOURS — two-column
       ═══════════════════════════════════════════════════════════ */}
+      {!hidden('cta') && (
       <section
         id="contact"
         style={{ background: '#141414', padding: 'clamp(72px, 10vw, 100px) 5%', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'clamp(40px, 6vw, 80px)', alignItems: 'start' }}
@@ -595,6 +606,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
           )}
         </div>
       </section>
+      )}
 
       {/* ═══════════════════════════════════════════════════════════
           CTA BAND

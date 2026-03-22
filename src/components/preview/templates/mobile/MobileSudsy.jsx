@@ -41,6 +41,8 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
   useEffect(() => {
     const h = () => setScrolled(window.scrollY > 60);
     window.addEventListener('scroll', h);
+  const hidden = (id) => copy?.hiddenSections?.includes(id);
+
     return () => window.removeEventListener('scroll', h);
   }, []);
 
@@ -281,6 +283,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
       </header>
 
       {/* SERVICES */}
+      {!hidden('services') && (
       <section id='services' style={{ padding: '100px 5%', background: c.bg, position: 'relative' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 64 }}>
@@ -325,8 +328,10 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
           )}
         </div>
       </section>
+      )}
 
       {/* HOW IT WORKS */}
+      {!hidden('process') && (
       <section id='how' style={{ background: c.accent, padding: '100px 5%', borderTop: `4px solid ${c.text}`, borderBottom: `4px solid ${c.text}`, position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: 10, left: 0, right: 0, fontSize: 20, letterSpacing: 10, opacity: 0.2, whiteSpace: 'nowrap', overflow: 'hidden', pointerEvents: 'none' }}>
           {String.fromCodePoint(0x1FAA7).repeat(40)}
@@ -349,8 +354,10 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
           </div>
         </div>
       </section>
+      )}
 
       {/* WHY US */}
+      {!hidden('whyUs') && (
       <section style={{ padding: '100px 5%', background: '#2d9cdb', borderBottom: `4px solid ${c.text}`, position: 'relative', overflow: 'hidden' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 64 }}>
@@ -368,8 +375,10 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
           </div>
         </div>
       </section>
+      )}
 
       {/* ABOUT */}
+      {!hidden('about') && (
       <section id="about" style={{ padding: "100px 5%", background: c.bg }}>
         <div className="tp-2col" style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "center" }}>
           <div>
@@ -423,12 +432,15 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
           </div>
         </div>
       </section>
+      )}
 
       {/* GALLERY */}
+      {!hidden('gallery') && (
       <GallerySection images={images} colors={c} font={templateMeta.font} bodyFont={bodyFont} />
+      )}
 
       {/* TESTIMONIALS */}
-      {testimonials.length > 0 && (
+      {!hidden('testimonials') && testimonials.length > 0 && (
         <section id="reviews" style={{ padding: "100px 5%", background: c.bg, borderTop: `4px solid ${c.text}` }}>
           <div style={{ maxWidth: 1200, margin: "0 auto" }}>
             <div style={{ textAlign: "center", marginBottom: 64 }}>
@@ -463,6 +475,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
       )}
 
       {/* CTA SECTION */}
+      {!hidden('cta') && (
       <section id="contact" style={{ background: "#ff6b9d", borderTop: `4px solid ${c.text}`, borderBottom: `4px solid ${c.text}`, padding: "80px 5%" }}>
         <div className="tp-2col" style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "center" }}>
           <div>
@@ -499,6 +512,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
           </div>
         </div>
       </section>
+      )}
 
       {/* FOOTER */}
       <footer style={{ background: c.text, padding: "60px 5% 28px", position: "relative", overflow: "hidden" }}>

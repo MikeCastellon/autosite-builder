@@ -41,6 +41,8 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
     window.addEventListener('scroll', onScroll);
+  const hidden = (id) => copy?.hiddenSections?.includes(id);
+
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
@@ -258,6 +260,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
       </div>
 
       {/* ═══ PACKAGES ═══ */}
+      {!hidden('services') && (
       <section id='packages' style={{ background: 'white', padding: '100px 5%', position: 'relative', overflow: 'hidden' }}>
         <BubbleBlob size='300px' top='-80px' right='-60px' opacity={0.08} blur={10} color={c.accent} />
         <BubbleBlob size='180px' bottom='40px' left='-50px' opacity={0.06} blur={8} color='#14b8a6' />
@@ -309,8 +312,10 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
           </div>
         </div>
       </section>
+      )}
 
       {/* ═══ HOW IT WORKS ═══ */}
+      {!hidden('process') && (
       <section id='how' style={{ background: `linear-gradient(160deg, ${c.secondary || '#e0f7fa'} 0%, ${c.bg} 100%)`, padding: '100px 5%', position: 'relative', overflow: 'hidden' }}>
         <BubbleBlob size='500px' top='-180px' left='-120px' opacity={0.14} blur={20} color={c.accent} />
         <BubbleBlob size='350px' bottom='-100px' right='-80px' opacity={0.11} blur={16} color='#a78bfa' />
@@ -334,8 +339,10 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
           </div>
         </div>
       </section>
+      )}
 
       {/* ═══ FEATURES + ABOUT ═══ */}
+      {!hidden('about') && (
       <section style={{ background: 'white', padding: '100px 5%', position: 'relative', overflow: 'hidden' }}>
         <BubbleBlob size='260px' top='-60px' right='-60px' opacity={0.07} blur={10} color={c.accent} />
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
@@ -408,12 +415,15 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
           </div>
         </div>
       </section>
+      )}
 
       {/* GALLERY */}
+      {!hidden('gallery') && (
       <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
+      )}
 
       {/* ═══ TESTIMONIALS ═══ */}
-      {testimonials.length > 0 && (
+      {!hidden('testimonials') && testimonials.length > 0 && (
         <section id='reviews' style={{ background: `linear-gradient(170deg, ${c.bg} 0%, ${c.secondary || '#e0f7fa'} 100%)`, padding: '100px 5%', position: 'relative', overflow: 'hidden' }}>
           <BubbleBlob size='280px' top='0' right='5%' opacity={0.13} blur={12} color='#a78bfa' />
           <BubbleBlob size='180px' bottom='0' left='8%' opacity={0.11} blur={8} color='#14b8a6' />
@@ -448,6 +458,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
       )}
 
       {/* ═══ CTA BAND ═══ */}
+      {!hidden('cta') && (
       <section style={{ padding: '100px 5%', background: `linear-gradient(135deg, ${deepBg} 0%, #0c2340 60%, #0c1a2e 100%)`, position: 'relative', overflow: 'hidden', textAlign: 'center' }}>
         <div style={{ position: 'absolute', inset: 0, background: `conic-gradient(from 0deg at 50% 50%, ${c.accent}12, #a78bfa0c, #14b8a60c, ${c.accent}12)`, pointerEvents: 'none' }} />
         <SmallBubble size='110px' top='10%'  left='5%' />
@@ -477,6 +488,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
           )}
         </div>
       </section>
+      )}
 
       {/* ═══ FOOTER ═══ */}
       <footer style={{ background: deepBg, padding: '72px 5% 32px', position: 'relative', overflow: 'hidden', borderTop: '1px solid rgba(255,255,255,0.06)' }}>

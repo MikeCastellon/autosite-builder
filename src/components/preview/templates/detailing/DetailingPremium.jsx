@@ -12,6 +12,8 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener('scroll', onScroll);
+  const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
+
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
@@ -213,6 +215,7 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
       </section>
 
       {/* STATS BAR */}
+      {!hidden('statsBar') && (
       <div style={s.statsBar}>
         {stats.map((st, i) => (
           <div key={i} style={s.statItem}>
@@ -221,8 +224,10 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
           </div>
         ))}
       </div>
+      )}
 
       {/* SERVICES */}
+      {!hidden('services') && (
       <section style={s.section}>
         <div style={s.sectionLabel}>Our Services</div>
         <h2 style={s.sectionTitle}>Precision. Perfection. Prestige.</h2>
@@ -248,8 +253,10 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
           </div>
         )}
       </section>
+      )}
 
       {/* ABOUT */}
+      {!hidden('about') && (
       <section style={s.sectionAlt}>
         <div style={s.aboutGrid}>
           <div>
@@ -263,8 +270,10 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
           </div>
         </div>
       </section>
+      )}
 
       {/* TESTIMONIALS */}
+      {!hidden('testimonials') && (
       <section style={s.section}>
         <div style={s.sectionLabel}>Client Words</div>
         <h2 style={{ ...s.sectionTitle, marginBottom: '2rem' }}>What Our Clients Say</h2>
@@ -278,8 +287,10 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
           ))}
         </div>
       </section>
+      )}
 
       {/* CTA SECTION */}
+      {!hidden('cta') && (
       <section style={s.ctaSection}>
         <div style={s.sectionLabel}>Ready to Begin?</div>
         <div style={s.ctaBig}>Reserve Your Detail Session</div>
@@ -300,11 +311,14 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
           <a href={generatedCopy?.ctaUrl || ('tel:' + (businessInfo.phone || ''))} style={{ ...s.ctaPrimary, textDecoration: 'none' }}>{generatedCopy.ctaPrimary}</a>
         </div>
       </section>
+      )}
 
       {/* FOOTER */}
 
       {/* GALLERY */}
+      {!hidden('gallery') && (
       <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
+      )}
       <footer style={s.footer}>
         <div>
           <div style={s.footerName}>{businessInfo.businessName}</div>

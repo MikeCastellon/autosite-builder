@@ -24,6 +24,7 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
   const svcCols = services.length >= 6 ? Math.ceil(services.length / 2) : services.length || 1;
   const testimonials = copy.testimonialPlaceholders || [];
   const payments = biz.paymentMethods || [];
+  const hidden = (id) => copy?.hiddenSections?.includes(id);
 
   const parseBrands = (val) => {
     if (!val) return [];
@@ -158,6 +159,7 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
       </header>
 
       {/* STATS */}
+      {!hidden('statsBar') && (
       <section style={{ background: c.secondary || '#1a1a2e', padding: '3rem 5%', borderBottom: `1px solid ${c.accent}33` }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 24, textAlign: 'center' }}>
           {[
@@ -172,8 +174,10 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
           ))}
         </div>
       </section>
+      )}
 
       {/* SERVICES — product-catalog grid */}
+      {!hidden('services') && (
       <section id="services" style={{ padding: '80px 5%' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ marginBottom: 48 }}>
@@ -239,9 +243,10 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
           )}
         </div>
       </section>
+      )}
 
       {/* BRANDS CARRIED */}
-      {(brands.length > 0 || tireBrands.length > 0) && (
+      {!hidden('brands') && (brands.length > 0 || tireBrands.length > 0) && (
         <section id="brands" style={{ padding: '72px 5%', background: c.secondary, borderTop: `1px solid ${c.accent}33` }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 48 }}>
@@ -284,6 +289,7 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
       )}
 
       {/* ABOUT */}
+      {!hidden('about') && (
       <section id="about" style={{ padding: '80px 5%', borderTop: `1px solid ${c.accent}33` }}>
         <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'center' }}>
           <div>
@@ -345,12 +351,15 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
           </div>
         </div>
       </section>
+      )}
 
       {/* GALLERY */}
+      {!hidden('gallery') && (
       <GallerySection images={images} colors={c} font={font} bodyFont={templateMeta.bodyFont} />
+      )}
 
       {/* TESTIMONIALS */}
-      {testimonials.length > 0 && (
+      {!hidden('testimonials') && testimonials.length > 0 && (
         <section style={{ padding: '80px 5%', background: c.secondary, borderTop: `1px solid ${c.accent}33` }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 48 }}>
@@ -374,6 +383,7 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
       )}
 
       {/* CTA */}
+      {!hidden('cta') && (
       <section style={{ background: c.secondary, padding: '80px 5%', textAlign: 'center', borderTop: `1px solid ${c.accent}33` }}>
         <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 16px', letterSpacing: '-0.01em' }}>READY TO UPGRADE?</h2>
         <p style={{ color: c.muted, fontSize: 16, marginBottom: 36 }}>
@@ -395,6 +405,7 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
           </p>
         )}
       </section>
+      )}
 
       {/* FOOTER */}
       <footer style={{ background: '#06060d', padding: '48px 5% 24px', borderTop: `1px solid ${c.accent}22` }}>

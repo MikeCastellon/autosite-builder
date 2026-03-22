@@ -34,6 +34,8 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
   }));
   if (stats.length === 0) stats.push(...defaultStats);
 
+  const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
+
   const _svcItems = generatedCopy.servicesSection.items;
   const svcCols = _svcItems.length >= 6 ? Math.ceil(_svcItems.length / 2) : _svcItems.length || 1;
 
@@ -242,6 +244,7 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
       </section>
 
       {/* STATS BAR */}
+      {!hidden('statsBar') && (
       <section style={{ background: c.secondary, borderTop: '1px solid rgba(202,138,4,0.2)', borderBottom: '1px solid rgba(202,138,4,0.2)', padding: '48px 24px', fontFamily: bodyFont }}>
         <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: '24px' }}>
           {stats.map((s, i) => (
@@ -252,9 +255,10 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
           ))}
         </div>
       </section>
+      )}
 
       {/* FILM BRANDS */}
-      {(() => {
+      {!hidden('brands') && (() => {
         const parseBrands = (val) => {
           if (!val) return [];
           if (Array.isArray(val)) return val.map(b => typeof b === 'object' ? (b.name || '') : b).filter(Boolean);
@@ -280,6 +284,7 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
       })()}
 
       {/* SERVICES */}
+      {!hidden('services') && (
       <section id="services" style={sectionStyle()}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '64px' }}>
@@ -320,6 +325,7 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
           )}
         </div>
       </section>
+      )}
 
       {/* WARRANTY CALLOUT */}
       {(businessInfo.warranty || businessInfo.warrantyOffered) && (
@@ -342,6 +348,7 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
       )}
 
       {/* ABOUT */}
+      {!hidden('about') && (
       <section id="about" style={{ ...sectionStyle(c.secondary), borderTop: '1px solid rgba(202,138,4,0.08)' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', gap: '80px', alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ flex: '1 1 300px', minWidth: '260px' }}>
@@ -397,11 +404,15 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
           </div>
         </div>
       </section>
+      )}
 
       {/* GALLERY */}
+      {!hidden('gallery') && (
       <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
+      )}
 
       {/* TESTIMONIALS */}
+      {!hidden('testimonials') && (
       <section style={{ ...sectionStyle(c.bg), borderTop: '1px solid rgba(202,138,4,0.08)' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '64px' }}>
@@ -425,8 +436,10 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
           </div>
         </div>
       </section>
+      )}
 
       {/* CTA / CONTACT */}
+      {!hidden('cta') && (
       <section id="contact" style={{ background: c.secondary, borderTop: '1px solid rgba(202,138,4,0.15)', borderBottom: '1px solid rgba(202,138,4,0.15)', padding: '88px 24px', fontFamily: bodyFont, textAlign: 'center' }}>
         <div style={{ maxWidth: '680px', margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', justifyContent: 'center', marginBottom: '28px' }}>
@@ -460,6 +473,7 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
           )}
         </div>
       </section>
+      )}
 
       {/* FOOTER */}
       <footer style={{ background: '#000000', padding: '56px 24px', fontFamily: bodyFont }}>

@@ -74,7 +74,8 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
     { vlt: 50, name: 'Light Smoke', legal: 'Universal' },
   ];
   const shades = copy?.shadeGuide?.length > 0 ? copy.shadeGuide : defaultShades;
-  const showShadeGuide = copy?.showShadeGuide !== false;
+
+  const hidden = (id) => copy?.hiddenSections?.includes(id);
 
   const panelBg = c.secondary || '#0d0d12';
 
@@ -231,7 +232,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
       </header>
 
       {/* ============================================================ VLT SHADE GUIDE ============================================================ */}
-      {showShadeGuide && (
+      {!hidden('shadeGuide') && (
       <section style={{ padding: '100px 5%', background: panelBg, borderTop: `1px solid ${c.accent}1a`, position: 'relative', overflow: 'hidden' }}>
         <div style={{
           position: 'absolute', top: -200, right: -200, width: 600, height: 600, borderRadius: '50%',
@@ -302,6 +303,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
       )}
 
       {/* ============================================================ SERVICES ============================================================ */}
+      {!hidden('services') && (
       <section id="services" style={{ padding: '100px 5%' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
           <div style={{ marginBottom: 64 }}>
@@ -360,9 +362,10 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
           )}
         </div>
       </section>
+      )}
 
       {/* ============================================================ FILM BRANDS ============================================================ */}
-      {filmBrandsList.length > 0 && (
+      {!hidden('brands') && filmBrandsList.length > 0 && (
         <section id="films" style={{ padding: '100px 5%', background: panelBg, borderTop: `1px solid ${c.accent}1a`, borderBottom: `1px solid ${c.accent}1a`, position: 'relative', overflow: 'hidden' }}>
           <div style={{
             position: 'absolute', top: -150, right: -150, width: 500, height: 500, borderRadius: '50%',
@@ -453,6 +456,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
       )}
 
       {/* ============================================================ PROCESS ============================================================ */}
+      {!hidden('process') && (
       <section id="process" style={{ padding: '100px 5%', background: panelBg, borderTop: `1px solid ${c.accent}1a` }}>
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
           <div style={{ marginBottom: 72 }}>
@@ -478,8 +482,10 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
           </div>
         </div>
       </section>
+      )}
 
       {/* ============================================================ ABOUT ============================================================ */}
+      {!hidden('about') && (
       <section id="about" style={{ padding: '100px 5%', borderTop: `1px solid ${c.accent}1a` }}>
         <div style={{ maxWidth: 1280, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 60, alignItems: 'start' }}>
           <div>
@@ -565,12 +571,15 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
           </div>
         </div>
       </section>
+      )}
 
       {/* GALLERY */}
+      {!hidden('gallery') && (
       <GallerySection images={images} colors={c} font={templateMeta.font} bodyFont={bodyFont} />
+      )}
 
       {/* ============================================================ TESTIMONIALS ============================================================ */}
-      {testimonials.length > 0 && (
+      {!hidden('testimonials') && testimonials.length > 0 && (
         <section style={{ padding: '100px 5%', background: panelBg, borderTop: `1px solid ${c.accent}1a` }}>
           <div style={{ maxWidth: 1280, margin: '0 auto' }}>
             <div style={{ textAlign: 'center', marginBottom: 64 }}>
@@ -622,6 +631,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
       )}
 
       {/* ============================================================ CTA BAND ============================================================ */}
+      {!hidden('cta') && (
       <section style={{ padding: '90px 5%', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
         <div style={{
           position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
@@ -666,6 +676,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
           </div>
         </div>
       </section>
+      )}
 
       {/* ============================================================ FOOTER ============================================================ */}
       <footer style={{ background: '#030305', padding: '60px 5% 28px', borderTop: `1px solid ${c.accent}18` }}>

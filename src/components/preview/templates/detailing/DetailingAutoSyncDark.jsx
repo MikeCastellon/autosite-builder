@@ -48,6 +48,7 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
     label: s.label || defaultStats[i]?.label || '',
   }));
   if (stats.length === 0) stats.push(...defaultStats);
+  const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
 
   const processSteps = [
     { num: '01', title: 'Consultation', desc: 'We assess your vehicle or fleet, discuss your goals, and recommend the right service package based on condition, timeline, and budget.' },
@@ -242,17 +243,17 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
       </section>
 
       {/* STATS BAR */}
-      <div style={s.statsBar}>
+      {!hidden('statsBar') && <div style={s.statsBar}>
         {stats.map((st, i) => (
           <div key={i} style={i === stats.length - 1 ? s.statItemLast : s.statItem}>
             <span style={s.statNum}>{st.num}</span>
             <span style={s.statLabel}>{st.label}</span>
           </div>
         ))}
-      </div>
+      </div>}
 
       {/* SERVICES */}
-      <section id="services" style={s.servicesSection}>
+      {!hidden('services') && <section id="services" style={s.servicesSection}>
         <div style={s.servicesHeader}>
           <div style={s.servicesHeaderLeft}>
             <div style={s.sectionLabel}>
@@ -294,7 +295,7 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
             ))}
           </div>
         )}
-      </section>
+      </section>}
 
       {/* BRANDS */}
       <div style={s.brandsSection}>
@@ -364,7 +365,7 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
       </section>
 
       {/* ABOUT */}
-      {generatedCopy.aboutText && (
+      {!hidden('about') && generatedCopy.aboutText && (
         <section id="about" style={{ background: c.bg, padding: 'clamp(4rem,8vw,7.5rem) clamp(1.5rem,5vw,3.75rem)' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px,1fr))', gap: 'clamp(2rem,4vw,5rem)', alignItems: 'start' }}>
             <div>
@@ -408,10 +409,10 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
       )}
 
       {/* GALLERY */}
-      <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
+      {!hidden('gallery') && <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />}
 
       {/* TESTIMONIALS */}
-      <section id="reviews" style={s.testimonialsSection}>
+      {!hidden('testimonials') && <section id="reviews" style={s.testimonialsSection}>
         <div style={s.sectionLabel}>
           <div style={s.sectionLabelLine} />
           <span style={s.sectionLabelText}>Client Testimonials</span>
@@ -439,10 +440,10 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
             );
           })}
         </div>
-      </section>
+      </section>}
 
       {/* CTA SECTION */}
-      <section style={s.ctaSection}>
+      {!hidden('cta') && <section style={s.ctaSection}>
         <div style={{ ...s.sectionLabel, justifyContent: 'center', marginBottom: '1rem' }}>
           <div style={s.sectionLabelLine} />
           <span style={s.sectionLabelText}>Ready to Begin?</span>
@@ -488,7 +489,7 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
             {businessInfo.phone}
           </a>
         </div>
-      </section>
+      </section>}
 
       {/* FOOTER */}
       <footer style={s.footer}>

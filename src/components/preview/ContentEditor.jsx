@@ -229,8 +229,105 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
   const isApex = templateId === 'wheel_apex';
   const isObsidian = templateId === 'tint_obsidian';
 
+  // Section visibility toggle registry per template
+  const TOGGLEABLE = {
+    _default: [
+      { id: 'statsBar', label: 'Stats Bar' },
+      { id: 'services', label: 'Services' },
+      { id: 'about', label: 'About' },
+      { id: 'gallery', label: 'Gallery' },
+      { id: 'testimonials', label: 'Reviews' },
+      { id: 'cta', label: 'Contact / CTA' },
+      { id: 'awards', label: 'Awards' },
+    ],
+    wheel_apex: [
+      { id: 'trustBar', label: 'Trust Bar' },
+      { id: 'ticker', label: 'Scrolling Ticker' },
+      { id: 'products', label: 'Products' },
+      { id: 'brands', label: 'Brands' },
+      { id: 'about', label: 'About' },
+      { id: 'gallery', label: 'Gallery' },
+      { id: 'testimonials', label: 'Reviews' },
+      { id: 'cta', label: 'Contact / CTA' },
+    ],
+    wheel_edge: [
+      { id: 'statsBar', label: 'Stats Bar' },
+      { id: 'services', label: 'Services' },
+      { id: 'brands', label: 'Brands' },
+      { id: 'about', label: 'About' },
+      { id: 'gallery', label: 'Gallery' },
+      { id: 'testimonials', label: 'Reviews' },
+      { id: 'cta', label: 'Contact / CTA' },
+    ],
+    wheel_clean: [
+      { id: 'statsBar', label: 'Stats Bar' },
+      { id: 'awards', label: 'Awards' },
+      { id: 'services', label: 'Services' },
+      { id: 'brands', label: 'Brands' },
+      { id: 'about', label: 'About' },
+      { id: 'gallery', label: 'Gallery' },
+      { id: 'testimonials', label: 'Reviews' },
+      { id: 'cta', label: 'Contact / CTA' },
+    ],
+    tint_obsidian: [
+      { id: 'shadeGuide', label: 'Shade Guide' },
+      { id: 'services', label: 'Services' },
+      { id: 'brands', label: 'Film Brands' },
+      { id: 'process', label: 'Process Steps' },
+      { id: 'about', label: 'About' },
+      { id: 'gallery', label: 'Gallery' },
+      { id: 'testimonials', label: 'Reviews' },
+      { id: 'cta', label: 'Contact / CTA' },
+    ],
+    tint_elite: [
+      { id: 'statsBar', label: 'Stats Bar' },
+      { id: 'services', label: 'Services' },
+      { id: 'brands', label: 'Film Brands' },
+      { id: 'about', label: 'About' },
+      { id: 'gallery', label: 'Gallery' },
+      { id: 'testimonials', label: 'Reviews' },
+      { id: 'cta', label: 'Contact / CTA' },
+    ],
+    tint_dark: [
+      { id: 'statsBar', label: 'Stats Bar' },
+      { id: 'services', label: 'Services' },
+      { id: 'brands', label: 'Film Brands' },
+      { id: 'about', label: 'About' },
+      { id: 'gallery', label: 'Gallery' },
+      { id: 'testimonials', label: 'Reviews' },
+      { id: 'cta', label: 'Contact / CTA' },
+    ],
+    mobile_sudsy: [
+      { id: 'services', label: 'Services' },
+      { id: 'process', label: 'How It Works' },
+      { id: 'whyUs', label: 'Why Choose Us' },
+      { id: 'about', label: 'About' },
+      { id: 'gallery', label: 'Gallery' },
+      { id: 'testimonials', label: 'Reviews' },
+      { id: 'cta', label: 'Contact / CTA' },
+    ],
+    carwash_bubble: [
+      { id: 'services', label: 'Services' },
+      { id: 'process', label: 'How It Works' },
+      { id: 'about', label: 'About' },
+      { id: 'gallery', label: 'Gallery' },
+      { id: 'testimonials', label: 'Reviews' },
+      { id: 'cta', label: 'Contact / CTA' },
+    ],
+  };
+  const toggleableSections = TOGGLEABLE[templateId] || TOGGLEABLE._default;
+  const hiddenSections = copy?.hiddenSections || [];
+  const isSectionHidden = (id) => hiddenSections.includes(id);
+  const toggleSection = (id) => {
+    const next = isSectionHidden(id)
+      ? hiddenSections.filter(s => s !== id)
+      : [...hiddenSections, id];
+    setCopy('hiddenSections', next);
+  };
+
   const sections = [
     { id: 'hero', label: 'Hero' },
+    { id: 'visibility', label: 'Sections' },
     { id: 'services', label: 'Services' },
     ...(isSudsy ? [{ id: 'howItWorks', label: 'How It Works' }, { id: 'whyUs', label: 'Why Us' }] : []),
     ...(isWheel ? [{ id: 'products', label: 'Products' }, { id: 'brands', label: 'Brands' }] : []),
@@ -286,6 +383,26 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
 
         {/* Scrollable fields */}
         <div className="flex-1 overflow-y-auto px-4 py-2">
+
+          {activeSection === 'visibility' && (
+            <>
+              <p className="text-[11px] text-gray-400 mb-4">Toggle sections on or off. Hidden sections won't appear on your site.</p>
+              {toggleableSections.map(({ id, label }) => (
+                <label key={id} className="flex items-center justify-between py-2.5 border-b border-gray-100 cursor-pointer">
+                  <span className="text-[13px] text-gray-700">{label}</span>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={!isSectionHidden(id)}
+                    onClick={() => toggleSection(id)}
+                    className={`relative w-9 h-5 rounded-full transition-colors ${!isSectionHidden(id) ? 'bg-gray-900' : 'bg-gray-300'}`}
+                  >
+                    <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${!isSectionHidden(id) ? 'translate-x-4' : 'translate-x-0'}`} />
+                  </button>
+                </label>
+              ))}
+            </>
+          )}
 
           {activeSection === 'hero' && (
             <>

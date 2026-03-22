@@ -9,6 +9,8 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 80);
     window.addEventListener('scroll', handleScroll);
+  const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
+
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -222,6 +224,7 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
       </section>
 
       {/* STATS BAR */}
+      {!hidden('statsBar') && (
       <section style={{ background: c.secondary, borderTop: '1px solid rgba(148,163,184,0.1)', borderBottom: '1px solid rgba(148,163,184,0.1)', padding: '44px 24px', fontFamily: bodyFont }}>
         <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: '24px' }}>
           {stats.map((s, i) => (
@@ -233,8 +236,10 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
           ))}
         </div>
       </section>
+      )}
 
       {/* SERVICES */}
+      {!hidden('services') && (
       <section id="services" style={sectionStyle()}>
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg, transparent, rgba(148,163,184,0.08), transparent)' }} />
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -276,8 +281,10 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
           )}
         </div>
       </section>
+      )}
 
       {/* ABOUT */}
+      {!hidden('about') && (
       <section id="about" style={sectionStyle()}>
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', gap: '80px', alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ flex: '1 1 300px', minWidth: '260px' }}>
@@ -328,11 +335,15 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
           </div>
         </div>
       </section>
+      )}
 
       {/* GALLERY */}
+      {!hidden('gallery') && (
       <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
+      )}
 
       {/* TESTIMONIALS */}
+      {!hidden('testimonials') && (
       <section style={{ ...sectionStyle(c.secondary), borderTop: '1px solid rgba(148,163,184,0.08)' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '60px' }}>
@@ -354,8 +365,10 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
           </div>
         </div>
       </section>
+      )}
 
       {/* CONTACT / CTA */}
+      {!hidden('cta') && (
       <section id="contact" style={{ ...sectionStyle(), borderTop: '1px solid rgba(148,163,184,0.08)', textAlign: 'center' }}>
         <div style={{ maxWidth: '700px', margin: '0 auto' }}>
           <div style={{ width: '1px', height: '60px', background: chromeGradient, margin: '0 auto 40px' }} />
@@ -385,6 +398,7 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
           )}
         </div>
       </section>
+      )}
 
       {/* FOOTER */}
       <footer style={{ background: '#050505', borderTop: '1px solid rgba(148,163,184,0.08)', padding: '52px 24px', fontFamily: bodyFont }}>

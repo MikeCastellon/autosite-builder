@@ -31,6 +31,8 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
     ? (Array.isArray(_fb) ? _fb.map(b => typeof b === 'object' ? (b.name || '') : b).filter(Boolean) : typeof _fb === 'string' ? _fb.split(/,|·/).map(b => b.trim()).filter(Boolean) : [])
     : [];
 
+  const hidden = (id) => copy?.hiddenSections?.includes(id);
+
   return (
     <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, containerType: 'inline-size' }}>
       <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
@@ -144,6 +146,7 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
       </header>
 
       {/* STATS */}
+      {!hidden('statsBar') && (
       <section style={{ background: c.secondary || '#111', padding: '48px 5%', borderTop: `1px solid ${c.accent}22`, borderBottom: `1px solid ${c.accent}22` }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 24, textAlign: 'center' }}>
           {[
@@ -162,8 +165,10 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
           ))}
         </div>
       </section>
+      )}
 
       {/* SERVICES */}
+      {!hidden('services') && (
       <section id="services" style={{ padding: '80px 5%' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ marginBottom: 48 }}>
@@ -224,9 +229,10 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
           )}
         </div>
       </section>
+      )}
 
       {/* FILM BRANDS */}
-      {(filmBrandsList.length > 0 || biz.filmBrands) && (
+      {!hidden('brands') && (filmBrandsList.length > 0 || biz.filmBrands) && (
         <section id="films" style={{ padding: '72px 5%', background: c.secondary, borderTop: `1px solid ${c.accent}22` }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ color: c.accent, fontWeight: 700, letterSpacing: 3, fontSize: 11, textTransform: 'uppercase', marginBottom: 10 }}>PREMIUM FILMS</div>
@@ -282,6 +288,7 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
       )}
 
       {/* ABOUT */}
+      {!hidden('about') && (
       <section id="about" style={{ padding: '80px 5%', borderTop: `1px solid ${c.accent}22` }}>
         <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'start' }}>
           <div>
@@ -334,12 +341,15 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
           </div>
         </div>
       </section>
+      )}
 
       {/* GALLERY */}
+      {!hidden('gallery') && (
       <GallerySection images={images} colors={c} font={font} bodyFont={templateMeta.bodyFont} />
+      )}
 
       {/* TESTIMONIALS */}
-      {testimonials.length > 0 && (
+      {!hidden('testimonials') && testimonials.length > 0 && (
         <section style={{ padding: '80px 5%', background: c.secondary, borderTop: `1px solid ${c.accent}22` }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ textAlign: 'center', marginBottom: 48 }}>
@@ -364,6 +374,7 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
       )}
 
       {/* CTA */}
+      {!hidden('cta') && (
       <section style={{ padding: '80px 5%', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
         <div style={{
           position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
@@ -391,6 +402,7 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
           )}
         </div>
       </section>
+      )}
 
       {/* FOOTER */}
       <footer style={{ background: '#040408', padding: '48px 5% 24px', borderTop: `1px solid ${c.accent}22` }}>

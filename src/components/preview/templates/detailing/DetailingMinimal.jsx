@@ -12,6 +12,8 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 30);
     window.addEventListener('scroll', onScroll);
+  const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
+
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
@@ -217,6 +219,7 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
       </section>
 
       {/* STATS */}
+      {!hidden('statsBar') && (
       <div style={s.statsBar}>
         {stats.map((st, i) => (
           <div key={i} style={s.statItem}>
@@ -225,8 +228,10 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
           </div>
         ))}
       </div>
+      )}
 
       {/* SERVICES */}
+      {!hidden('services') && (
       <section id="services" style={s.section}>
         <div style={s.sectionEyebrow}>Services</div>
         <h2 style={s.sectionTitle}>What We Offer</h2>
@@ -253,8 +258,10 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
           </div>
         )}
       </section>
+      )}
 
       {/* ABOUT */}
+      {!hidden('about') && (
       <section id="about" style={s.sectionGray}>
         <div style={s.aboutGrid}>
           <div>
@@ -280,8 +287,10 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
           </div>
         </div>
       </section>
+      )}
 
       {/* TESTIMONIALS */}
+      {!hidden('testimonials') && (
       <section id="reviews" style={s.section}>
         <div style={s.sectionEyebrow}>Testimonials</div>
         <h2 style={{ ...s.sectionTitle, marginBottom: '2rem' }}>What Clients Are Saying</h2>
@@ -297,8 +306,10 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
           ))}
         </div>
       </section>
+      )}
 
       {/* CTA BAND */}
+      {!hidden('cta') && (
       <section style={s.ctaBand}>
         <div style={s.ctaBandTitle}>Ready for a Perfect Detail?</div>
         <div style={s.ctaBandSub}>{businessInfo.tagline || generatedCopy.subheadline}</div>
@@ -315,11 +326,14 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
           </div>
         )}
       </section>
+      )}
 
       {/* FOOTER */}
 
       {/* GALLERY */}
+      {!hidden('gallery') && (
       <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
+      )}
       <footer style={s.footer}>
         <div>
           <div style={s.footerLogo}>{businessInfo.businessName}</div>
