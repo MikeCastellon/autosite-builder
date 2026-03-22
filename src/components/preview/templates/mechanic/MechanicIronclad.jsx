@@ -104,12 +104,17 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
   const svcIcons = ['🔧', '🛑', '⚙️', '❄️', '🛢️', '🔩', '🔋', '🚗', '🛞'];
 
   // Static "Why Us" value props
-  const whyItems = [
-    { glyph: '⚡', title: 'Fast Turnaround',  body: "Most jobs completed same-day. We know your car is your livelihood — we keep bay time to a minimum." },
-    { glyph: '💯', title: 'No Upsells',        body: "We fix what is broken. If it ain't broke, we won't tell you it is just to pad the bill." },
-    { glyph: '🔩', title: 'Quality Parts',     body: 'OEM or top-tier aftermarket — no junkyard specials. The repair lasts or we do it again.' },
-    { glyph: '🤝', title: 'Family-Owned',      body: "Your car isn't a number here. We remember your vehicle history and treat you like a neighbor." },
+  const defaultWhyItems = [
+    { icon: '⚡', title: 'Fast Turnaround',  desc: "Most jobs completed same-day. We know your car is your livelihood — we keep bay time to a minimum." },
+    { icon: '💯', title: 'No Upsells',        desc: "We fix what is broken. If it ain't broke, we won't tell you it is just to pad the bill." },
+    { icon: '🔩', title: 'Quality Parts',     desc: 'OEM or top-tier aftermarket — no junkyard specials. The repair lasts or we do it again.' },
+    { icon: '🤝', title: 'Family-Owned',      desc: "Your car isn't a number here. We remember your vehicle history and treat you like a neighbor." },
   ];
+  const whyItems = (copy?.whyCards || defaultWhyItems).map((c, i) => ({
+    glyph: c.icon || defaultWhyItems[i]?.icon || '✨',
+    title: c.title || defaultWhyItems[i]?.title || '',
+    body: c.desc || defaultWhyItems[i]?.desc || '',
+  }));
 
   // Extract up-to-2-letter initials for hexagon avatars
   const initials = (name = '') =>

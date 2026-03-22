@@ -228,6 +228,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
   const isTint = templateId?.startsWith('tint_');
   const isApex = templateId === 'wheel_apex';
   const isObsidian = templateId === 'tint_obsidian';
+  const isIronclad = templateId === 'mechanic_ironclad';
 
   // Section visibility + ordering registry per template
   const TOGGLEABLE = {
@@ -361,6 +362,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
     { id: 'visibility', label: 'Sections' },
     { id: 'services', label: 'Services' },
     ...(isSudsy ? [{ id: 'howItWorks', label: 'How It Works' }, { id: 'whyUs', label: 'Why Us' }] : []),
+    ...(isIronclad ? [{ id: 'whyUs', label: 'Why Us' }] : []),
     ...(isWheel ? [{ id: 'products', label: 'Products' }, { id: 'brands', label: 'Brands' }] : []),
     ...(isTint && !isWheel ? [{ id: 'filmBrands', label: 'Film Brands' }] : []),
     ...(isObsidian ? [{ id: 'shadeGuide', label: 'Shades' }] : []),
@@ -526,7 +528,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
             );
           })()}
 
-          {activeSection === 'whyUs' && isSudsy && (() => {
+          {activeSection === 'whyUs' && (isSudsy || isIronclad) && (() => {
             const defaultCards = [
               { icon: '🏠', title: 'We Come To You', desc: 'Zero trips to a shop. We bring the whole operation to your door.' },
               { icon: '🏆', title: 'Professional Results', desc: 'Pro-grade products and equipment — not a bucket and a sponge.' },
