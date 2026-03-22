@@ -109,7 +109,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
     { id: 'hero', label: 'Hero' },
     { id: 'services', label: 'Services' },
     ...(isSudsy ? [{ id: 'howItWorks', label: 'How It Works' }, { id: 'whyUs', label: 'Why Us' }] : []),
-    ...(isWheel ? [{ id: 'brands', label: 'Brands' }] : []),
+    ...(isWheel ? [{ id: 'products', label: 'Products' }, { id: 'brands', label: 'Brands' }] : []),
     { id: 'about', label: 'About' },
     { id: 'testimonials', label: 'Reviews' },
     { id: 'images', label: 'Images' },
@@ -276,6 +276,58 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
                   </div>
                 ))}
                 <button type="button" onClick={addCard} className="w-full py-2 text-[12px] font-semibold text-gray-500 border border-dashed border-gray-300 rounded-lg hover:border-gray-400 hover:text-gray-700 transition mb-2">+ Add Card</button>
+              </>
+            );
+          })()}
+
+          {activeSection === 'products' && isWheel && (() => {
+            const products = copy?.products || [];
+            const showProducts = copy?.showProducts !== false;
+            const updateProduct = (i, key, val) => {
+              const current = [...products];
+              current[i] = { ...current[i], [key]: val };
+              setCopy('products', current);
+            };
+            const removeProduct = (i) => {
+              const current = [...products];
+              current.splice(i, 1);
+              setCopy('products', current);
+            };
+            const addProduct = () => {
+              setCopy('products', [...products, { name: '', price: '', description: '', badge: '' }]);
+            };
+            return (
+              <>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Show Products Section</p>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={showProducts}
+                    onClick={() => setCopy('showProducts', !showProducts)}
+                    className={`relative w-9 h-5 rounded-full transition-colors ${showProducts ? 'bg-gray-900' : 'bg-gray-300'}`}
+                  >
+                    <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${showProducts ? 'translate-x-4' : 'translate-x-0'}`} />
+                  </button>
+                </div>
+                {showProducts && (
+                  <>
+                    <p className="text-[11px] text-gray-400 mb-3">Add products or packages to display in the grid.</p>
+                    {products.map((prod, i) => (
+                      <div key={i} className="mb-4 p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Product {i + 1}</p>
+                          <button type="button" onClick={() => removeProduct(i)} className="text-[11px] text-red-400 hover:text-red-600 transition">Remove</button>
+                        </div>
+                        <Field label="Name" value={prod.name ?? ''} onChange={(v) => updateProduct(i, 'name', v)} />
+                        <Field label="Price" value={prod.price ?? ''} onChange={(v) => updateProduct(i, 'price', v)} />
+                        <Field label="Description" value={prod.description ?? ''} onChange={(v) => updateProduct(i, 'description', v)} />
+                        <Field label="Badge (e.g. Bestseller, New, Sale)" value={prod.badge ?? ''} onChange={(v) => updateProduct(i, 'badge', v)} />
+                      </div>
+                    ))}
+                    <button type="button" onClick={addProduct} className="w-full py-2 text-[12px] font-semibold text-gray-500 border border-dashed border-gray-300 rounded-lg hover:border-gray-400 hover:text-gray-700 transition mb-2">+ Add Product</button>
+                  </>
+                )}
               </>
             );
           })()}
