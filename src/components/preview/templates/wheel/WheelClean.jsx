@@ -4,7 +4,7 @@ import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 
 // Template: Wheel Clean — White & gunmetal (#f8f9fa bg, #374151 accent)
-// Professional clean, services list with left border accent, brands as styled text, tire brands, awards, split contact
+// Professional clean, services list with left border accent, brands as styled text
 
 export default function WheelClean({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
@@ -71,109 +71,46 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
         </div>
       </nav>
 
-      {/* HERO — full height, clean split */}
-      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : {
-        minHeight: '100vh', display: 'flex', alignItems: 'center',
-        background: c.secondary || '#e9ecef',
-        borderBottom: '1px solid #e5e7eb',
-        padding: '96px 5% 72px',
-        position: 'relative', overflow: 'hidden',
-      }}>
-        {!splitHero && <HeroImage src={images.hero} />}
-        {splitHero ? (
-          <div style={{
-            flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
-            padding: 'clamp(3rem,6vw,6rem)', background: c.secondary,
+      {/* HERO — half-and-half: text left, image right */}
+      <header style={{ display: 'flex', flexDirection: 'row', minHeight: '85vh' }}>
+        <div style={{
+          flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          padding: 'clamp(3rem,6vw,6rem)', background: c.secondary,
+        }}>
+          <span style={{
+            display: 'inline-block', background: `${c.accent}12`, color: c.accent,
+            fontSize: 12, fontWeight: 700, padding: '5px 14px', borderRadius: 20,
+            textTransform: 'uppercase', letterSpacing: 2, marginBottom: 24, alignSelf: 'flex-start',
           }}>
-            <span style={{
-              display: 'inline-block', background: `${c.accent}12`, color: c.accent,
-              fontSize: 12, fontWeight: 700, padding: '5px 14px', borderRadius: 20,
-              textTransform: 'uppercase', letterSpacing: 2, marginBottom: 24, alignSelf: 'flex-start',
+            {biz.city}, {biz.state}
+          </span>
+          <h1 style={{ fontSize: 'clamp(2.2rem, 4.5vw, 3.5rem)', fontWeight: 800, lineHeight: 1.15, color: c.text, marginBottom: 20 }}>
+            {copy.headline || 'Custom Wheels & Tire Experts'}
+          </h1>
+          <p style={{ color: c.muted, fontSize: 17, lineHeight: 1.75, marginBottom: 36 }}>
+            {copy.subheadline || biz.tagline || 'Professional wheel fitment, balancing, and tire services.'}
+          </p>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <a href={copy?.ctaPrimaryUrl || (`tel:${biz.phone}`)} style={{
+              background: c.accent, color: '#fff', padding: '14px 32px',
+              borderRadius: 10, fontWeight: 700, fontSize: 15, textDecoration: 'none',
             }}>
-              {biz.city}, {biz.state}
-            </span>
-            <h1 style={{ fontSize: 'clamp(2.2rem, 4.5vw, 3.5rem)', fontWeight: 800, lineHeight: 1.15, color: c.text, marginBottom: 20 }}>
-              {copy.headline || 'Custom Wheels & Tire Experts'}
-            </h1>
-            <p style={{ color: c.muted, fontSize: 17, lineHeight: 1.75, marginBottom: 36 }}>
-              {copy.subheadline || biz.tagline || 'Professional wheel fitment, balancing, and tire services.'}
-            </p>
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              <a href={copy?.ctaPrimaryUrl || (`tel:${biz.phone}`)} style={{
-                background: c.accent, color: '#fff', padding: '14px 32px',
-                borderRadius: 10, fontWeight: 700, fontSize: 15, textDecoration: 'none',
-              }}>
-                {copy.ctaPrimary || 'Get a Quote'}
-              </a>
-              <a href="#services" style={{
-                background: '#fff', color: c.accent, border: `2px solid ${c.accent}`,
-                padding: '13px 28px', borderRadius: 10, fontWeight: 600, fontSize: 15, textDecoration: 'none',
-              }}>
-                {copy.ctaSecondary || 'Our Services'}
-              </a>
-            </div>
+              {copy.ctaPrimary || 'Get a Quote'}
+            </a>
+            <a href={copy?.ctaSecondaryUrl || '#services'} style={{
+              background: '#fff', color: c.accent, border: `2px solid ${c.accent}`,
+              padding: '13px 28px', borderRadius: 10, fontWeight: 600, fontSize: 15, textDecoration: 'none',
+            }}>
+              {copy.ctaSecondary || 'Our Services'}
+            </a>
           </div>
-        ) : (
-          <div className="tp-2col" style={{ position: 'relative', zIndex: 1, maxWidth: 1100, margin: '0 auto', width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'center' }}>
-            <div>
-              <span style={{
-                display: 'inline-block', background: `${c.accent}12`, color: c.accent,
-                fontSize: 12, fontWeight: 700, padding: '5px 14px', borderRadius: 20,
-                textTransform: 'uppercase', letterSpacing: 2, marginBottom: 24,
-              }}>
-                {biz.city}, {biz.state}
-              </span>
-              <h1 style={{ fontSize: 'clamp(2.2rem, 4.5vw, 3.5rem)', fontWeight: 800, lineHeight: 1.15, color: c.text, marginBottom: 20 }}>
-                {copy.headline || 'Custom Wheels & Tire Experts'}
-              </h1>
-              <p style={{ color: c.muted, fontSize: 17, lineHeight: 1.75, marginBottom: 36 }}>
-                {copy.subheadline || biz.tagline || 'Professional wheel fitment, balancing, and tire services.'}
-              </p>
-              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                <a href={copy?.ctaPrimaryUrl || (`tel:${biz.phone}`)} style={{
-                  background: c.accent, color: '#fff', padding: '14px 32px',
-                  borderRadius: 10, fontWeight: 700, fontSize: 15, textDecoration: 'none',
-                }}>
-                  {copy.ctaPrimary || 'Get a Quote'}
-                </a>
-                <a href="#services" style={{
-                  background: '#fff', color: c.accent, border: `2px solid ${c.accent}`,
-                  padding: '13px 28px', borderRadius: 10, fontWeight: 600, fontSize: 15, textDecoration: 'none',
-                }}>
-                  {copy.ctaSecondary || 'Our Services'}
-                </a>
-              </div>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {biz.yearsInBusiness && (
-                <div style={{ background: '#fff', borderRadius: 12, padding: '24px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', borderLeft: `4px solid ${c.accent}` }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: c.accent, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 6 }}>EXPERIENCE</div>
-                  <div style={{ fontWeight: 700, fontSize: 18, color: c.text }}>{biz.yearsInBusiness}+ Years</div>
-                </div>
-              )}
-              {biz.phone && (
-                <div style={{ background: c.accent, borderRadius: 12, padding: '24px', color: '#fff' }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', opacity: 0.8, marginBottom: 6 }}>CALL US</div>
-                  <a href={`tel:${biz.phone}`} style={{ fontWeight: 800, fontSize: 20, color: '#fff', textDecoration: 'none' }}>{biz.phone}</a>
-                </div>
-              )}
-              {biz.address && (
-                <div style={{ background: '#fff', borderRadius: 12, padding: '20px 24px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', borderLeft: `4px solid ${c.accent}` }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: c.accent, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 6 }}>LOCATION</div>
-                  <div style={{ fontWeight: 600, fontSize: 14, color: c.text }}>{biz.address}, {biz.city}, {biz.state}</div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-        {splitHero && (
-          <div style={{ flex: 1, position: 'relative', minHeight: '85vh', overflow: 'hidden' }}>
-            {images.hero
-              ? <img src={images.hero} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-              : <div style={{ width: '100%', height: '100%', background: c.accent }} />
-            }
-          </div>
-        )}
+        </div>
+        <div style={{ flex: 1, position: 'relative', minHeight: '85vh', overflow: 'hidden' }}>
+          {images.hero
+            ? <img src={images.hero} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            : <div style={{ width: '100%', height: '100%', background: c.accent }} />
+          }
+        </div>
       </header>
 
       {/* AWARDS */}
@@ -189,24 +126,7 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
         </section>
       )}
 
-      {/* STATS */}
-      <section style={{ background: '#fff', padding: '48px 5%', borderBottom: '1px solid #e5e7eb' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 24 }}>
-          {[
-            { val: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'Years in Business' },
-            { val: '50+', label: 'Wheel Brands' },
-            { val: '5K+', label: 'Wheels Installed' },
-            { val: '5.0 ★', label: 'Average Rating' },
-          ].map((s, i) => (
-            <div key={i} style={{ textAlign: 'center', padding: '20px', background: c.secondary, borderRadius: 12, border: '1px solid #e5e7eb' }}>
-              <div style={{ fontSize: '2.4rem', fontWeight: 800, color: c.accent, lineHeight: 1 }}>{s.val}</div>
-              <div style={{ fontSize: 13, color: c.muted, marginTop: 6 }}>{s.label}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* SERVICES — list with left border accent */}
+      {/* SERVICES */}
       <section id="services" style={{ padding: '80px 5%', background: c.bg }}>
         <div className="tp-2col" style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 60, alignItems: 'start' }}>
           <div>
@@ -255,7 +175,7 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
         </div>
       </section>
 
-      {/* BRANDS ROW */}
+      {/* BRANDS */}
       {(brandsList.length > 0 || tireBrandsList.length > 0 || biz.brands || biz.tireBrands) && (
         <section id="brands" style={{ padding: '72px 5%', background: '#fff', borderTop: '1px solid #e5e7eb' }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
@@ -294,64 +214,68 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
         </section>
       )}
 
-      {/* ABOUT */}
+      {/* ABOUT — standard pattern: image/stats left, text right */}
       <section id="about" style={{ padding: '80px 5%', background: c.secondary, borderTop: '1px solid #e5e7eb' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <span style={{ display: 'inline-block', background: `${c.accent}12`, color: c.accent, fontSize: 11, fontWeight: 700, padding: '4px 12px', borderRadius: 16, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 16 }}>About</span>
-          <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, color: c.text, marginBottom: 20 }}>About {biz.businessName}</h2>
-          <div className="tp-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, alignItems: 'start' }}>
-            <div>
-              {(generatedCopy?.aboutLayout || 'image') !== 'stats' ? (
-                images.about
-                  ? <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '8px', display: 'block', marginBottom: '20px' }} />
-                  : <div style={{ width: '100%', height: '360px', background: c.secondary, borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.muted, fontSize: '0.85rem', marginBottom: '20px' }}>Upload a photo in Images tab</div>
-              ) : (
-                images.about && (
-                  <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '8px', display: 'block', marginBottom: '20px' }} />
-                )
-              )}
-              <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.85, marginBottom: 20 }}>
-                {copy.aboutText || `Serving ${biz.city || 'your area'} with expert wheel and tire services.`}
-              </p>
-              {biz.warranty && (
-                <div style={{ background: '#fff', borderRadius: 10, padding: '16px 20px', borderLeft: '4px solid #10b981', marginBottom: 12 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#059669', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 4 }}>WARRANTY</div>
-                  <p style={{ color: c.text, fontSize: 14, margin: 0 }}>{biz.warranty}</p>
-                </div>
-              )}
-              {biz.specialties && (
-                <div style={{ background: '#fff', borderRadius: 10, padding: '16px 20px', borderLeft: `4px solid ${c.accent}` }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: c.accent, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 4 }}>SPECIALTIES</div>
-                  <p style={{ color: c.text, fontSize: 14, margin: 0 }}>{biz.specialties}</p>
-                </div>
-              )}
-            </div>
-            <div>
-              {biz.hours && Object.keys(biz.hours).length > 0 && (
-                <div style={{ background: '#fff', borderRadius: 12, padding: '24px', border: '1px solid #e5e7eb', marginBottom: 16 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: c.accent, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 16 }}>Hours</div>
-                  {Object.entries(biz.hours).map(([day, hrs], i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>
-                      <span style={{ color: c.muted, fontWeight: 600, fontSize: 14 }}>{day}</span>
-                      <span style={{ color: c.text, fontWeight: 700, fontSize: 14 }}>{hrs}</span>
+        <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'center' }}>
+          <div>
+            {(copy?.aboutLayout || 'image') !== 'stats' ? (
+              images.about
+                ? <img src={images.about} alt="About" style={{ width: '100%', maxWidth: 460, height: 360, objectFit: 'cover', borderRadius: 10, display: 'block' }} />
+                : <div style={{ width: '100%', maxWidth: 460, height: 360, background: '#fff', borderRadius: 10, border: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.muted, fontSize: '0.85rem', textAlign: 'center', padding: 24, boxSizing: 'border-box' }}>Upload an about photo in the Images tab</div>
+            ) : (
+              <div style={{ width: '100%', maxWidth: 460, background: '#fff', padding: '40px 32px', boxSizing: 'border-box', borderRadius: 10, border: '1px solid #e5e7eb' }}>
+                {(() => {
+                  const defaultStats = [
+                    { value: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'Years in Business' },
+                    { value: '50+', label: 'Brands Available' },
+                    { value: '5K+', label: 'Wheels Installed' },
+                  ];
+                  const aboutStats = (copy?.aboutStats || []).map((s, i) => ({
+                    value: s.value || defaultStats[i]?.value || '',
+                    label: s.label || defaultStats[i]?.label || '',
+                  }));
+                  if (aboutStats.length === 0) aboutStats.push(...defaultStats);
+                  return aboutStats.map((st, i) => (
+                    <div key={i} style={{ textAlign: 'center', marginBottom: i < aboutStats.length - 1 ? 28 : 0 }}>
+                      <div style={{ fontSize: '3rem', fontWeight: 800, color: c.accent, lineHeight: 1 }}>{st.value}</div>
+                      <div style={{ fontSize: 13, color: c.muted, marginTop: 6 }}>{st.label}</div>
                     </div>
+                  ));
+                })()}
+              </div>
+            )}
+          </div>
+          <div>
+            <span style={{ display: 'inline-block', background: `${c.accent}12`, color: c.accent, fontSize: 11, fontWeight: 700, padding: '4px 12px', borderRadius: 16, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 16 }}>About</span>
+            <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, color: c.text, marginBottom: 20 }}>About {biz.businessName}</h2>
+            <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.85, marginBottom: 20 }}>
+              {copy.aboutText || `Serving ${biz.city || 'your area'} with expert wheel and tire services.`}
+            </p>
+            {biz.warranty && (
+              <div style={{ background: '#fff', borderRadius: 10, padding: '16px 20px', borderLeft: '4px solid #10b981', marginBottom: 12 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#059669', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 4 }}>WARRANTY</div>
+                <p style={{ color: c.text, fontSize: 14, margin: 0 }}>{biz.warranty}</p>
+              </div>
+            )}
+            {biz.specialties && (
+              <div style={{ background: '#fff', borderRadius: 10, padding: '16px 20px', borderLeft: `4px solid ${c.accent}`, marginBottom: 12 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: c.accent, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 4 }}>SPECIALTIES</div>
+                <p style={{ color: c.text, fontSize: 14, margin: 0 }}>{biz.specialties}</p>
+              </div>
+            )}
+            {payments.length > 0 && (
+              <div style={{ marginTop: 16 }}>
+                <div style={{ color: c.muted, fontWeight: 700, fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 10 }}>PAYMENT ACCEPTED</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {payments.map((p, i) => (
+                    <span key={i} style={{
+                      background: '#fff', color: c.text, border: '1px solid #e5e7eb',
+                      padding: '5px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600,
+                    }}>{p}</span>
                   ))}
                 </div>
-              )}
-              {payments.length > 0 && (
-                <div style={{ background: '#fff', borderRadius: 12, padding: '20px 24px', border: '1px solid #e5e7eb' }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: c.accent, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Payment Methods</div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    {payments.map((p, i) => (
-                      <span key={i} style={{
-                        background: c.secondary, color: c.text, border: '1px solid #e5e7eb',
-                        padding: '5px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600,
-                      }}>{p}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -380,54 +304,32 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
         </section>
       )}
 
-      {/* SPLIT CONTACT */}
-      <section id="contact" style={{ padding: '80px 5%', borderTop: '1px solid #e5e7eb' }}>
-        <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, alignItems: 'center' }}>
-          <div>
-            <span style={{ display: 'block', background: `${c.accent}12`, color: c.accent, fontSize: 11, fontWeight: 700, padding: '4px 12px', borderRadius: 16, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 16, width: 'fit-content' }}>Get In Touch</span>
-            <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.8rem)', fontWeight: 800, color: c.text, marginBottom: 16, lineHeight: 1.15 }}>Come See Us</h2>
-            <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.7, marginBottom: 28 }}>
-              {copy.ctaSecondary || `Serving ${biz.city || 'your area'}, ${biz.state || ''} and surrounding areas`}
-            </p>
-            <a href={copy?.ctaUrl || (`tel:${biz.phone}`)} style={{
-              display: 'inline-block', background: c.accent, color: '#fff',
-              padding: '14px 32px', borderRadius: 10, fontWeight: 700, fontSize: 16, textDecoration: 'none',
-            }}>
-              {copy.ctaPrimary || biz.phone || 'Call Now'}
-            </a>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {biz.address && (
-              <div style={{ background: c.secondary, borderRadius: 12, padding: '20px 24px', border: '1px solid #e5e7eb' }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: c.accent, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 6 }}>ADDRESS</div>
-                <p style={{ color: c.text, fontSize: 15, fontWeight: 500, margin: 0 }}>{biz.address}, {biz.city}, {biz.state}</p>
-              </div>
-            )}
-            {biz.phone && (
-              <div style={{ background: c.secondary, borderRadius: 12, padding: '20px 24px', border: '1px solid #e5e7eb' }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: c.accent, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 6 }}>PHONE</div>
-                <a href={`tel:${biz.phone}`} style={{ color: c.text, fontSize: 18, fontWeight: 700, textDecoration: 'none' }}>{biz.phone}</a>
-              </div>
-            )}
-            {biz.hours && (
-              <div style={{ background: c.secondary, borderRadius: 12, padding: '20px 24px', border: '1px solid #e5e7eb' }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: c.accent, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 6 }}>HOURS</div>
-                <p style={{ color: c.text, fontSize: 15, fontWeight: 500, margin: 0 }}>{formatHours(biz.hours)}</p>
-              </div>
-            )}
-            <div style={{ background: c.secondary, borderRadius: 12, padding: '20px 24px', border: '1px solid #e5e7eb' }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: c.accent, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 10 }}>SOCIAL</div>
-                <SocialRow biz={biz} color={c.accent} size={20} images={images} />
-              </div>
-          </div>
-        </div>
+      {/* CTA — full-width banner */}
+      <section id="contact" style={{ background: c.accent, padding: '72px 5%', textAlign: 'center' }}>
+        <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 800, color: '#fff', margin: '0 0 12px' }}>Ready to Upgrade?</h2>
+        <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 16, marginBottom: 32, maxWidth: 500, marginLeft: 'auto', marginRight: 'auto' }}>
+          {`${biz.city || 'Your city'}, ${biz.state || ''} — Stop by or give us a call today`}
+        </p>
+        <a href={copy?.ctaUrl || (`tel:${biz.phone}`)} style={{
+          display: 'inline-block', background: '#fff', color: c.accent,
+          padding: '16px 44px', borderRadius: 10, fontWeight: 800, fontSize: 17, textDecoration: 'none',
+        }}>
+          {copy.ctaPrimary || biz.phone || 'Call Now'}
+        </a>
+        {biz.address && <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, marginTop: 20 }}>
+          {biz.address}, {biz.city}, {biz.state}
+        </p>}
+        {biz.hours && (
+          <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, marginTop: 8 }}>
+            {formatHours(biz.hours)}
+          </p>
+        )}
       </section>
 
       {/* FOOTER */}
       <footer style={{ background: '#f9fafb', borderTop: '1px solid #e5e7eb', padding: '40px 5% 24px' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, marginBottom: 20 }}>
           <div>
-            {/* Footer logo */}
             {images.logo ? (
               <img src={images.logo} alt={biz.businessName} style={{ height: 48, maxWidth: 180, objectFit: 'contain', marginBottom: '0.75rem', display: 'block' }} />
             ) : (
