@@ -391,17 +391,17 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
       {!hidden('cta') && (
       <section style={{ background: c.accent, padding: '80px 5%', textAlign: 'center' , order: getOrder('cta') }}>
         <h2 style={{ fontSize: 'clamp(2rem, 4.5vw, 3.5rem)', fontWeight: 900, color: '#000', textTransform: 'uppercase', margin: '0 0 14px', letterSpacing: '-0.01em' }}>
-          SCHEDULE SERVICE
+          {copy.ctaHeadline || 'SCHEDULE SERVICE'}
         </h2>
         <p style={{ color: 'rgba(0,0,0,0.55)', fontSize: 16, marginBottom: 36 }}>
-          {copy.ctaSecondary || `Serving ${biz.city || 'your area'}, ${biz.state || ''} and surrounding areas`}
+          {copy.ctaSubtext || copy.ctaSecondary || `Serving ${biz.city || 'your area'}, ${biz.state || ''} and surrounding areas`}
         </p>
         <a href={copy?.ctaUrl || (`tel:${biz.phone}`)} style={{
           background: '#000', color: c.accent, padding: '17px 48px',
           borderRadius: 3, fontWeight: 900, fontSize: 18, textDecoration: 'none',
           display: 'inline-block', textTransform: 'uppercase', letterSpacing: 1.5,
         }}>
-          {copy.ctaPrimary || biz.phone || 'CALL NOW'}
+          {copy.ctaButtonText || copy.ctaPrimary || biz.phone || 'CALL NOW'}
         </a>
         {biz.address && (
           <p style={{ color: 'rgba(0,0,0,0.5)', fontSize: 13, marginTop: 20 }}>

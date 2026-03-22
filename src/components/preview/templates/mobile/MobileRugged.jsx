@@ -314,17 +314,17 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
       {!hidden('cta') && (
       <section style={{ background: c.accent, padding: '72px 5%', textAlign: 'center' , order: getOrder('cta') }}>
         <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 900, color: '#1a2318', textTransform: 'uppercase', margin: '0 0 16px', letterSpacing: '-0.01em' }}>
-          BOOK YOUR DETAIL
+          {copy.ctaHeadline || 'BOOK YOUR DETAIL'}
         </h2>
         <p style={{ color: 'rgba(26,35,24,0.65)', fontSize: 16, marginBottom: 36 }}>
-          {copy.ctaSecondary || `We roll out to ${biz.city || 'your area'} and surrounding areas.`}
+          {copy.ctaSubtext || copy.ctaSecondary || `We roll out to ${biz.city || 'your area'} and surrounding areas.`}
         </p>
         <a href={copy?.ctaUrl || (`tel:${biz.phone}`)} style={{
           background: '#1a2318', color: c.accent, padding: '16px 44px',
           borderRadius: 3, fontWeight: 900, fontSize: 18, textDecoration: 'none',
           display: 'inline-block', textTransform: 'uppercase', letterSpacing: 1,
         }}>
-          {copy.ctaPrimary || biz.phone || 'CALL NOW'}
+          {copy.ctaButtonText || copy.ctaPrimary || biz.phone || 'CALL NOW'}
         </a>
         {biz.hours && (
           <p style={{ color: 'rgba(26,35,24,0.5)', fontSize: '0.9rem', marginTop: '16px' }}>

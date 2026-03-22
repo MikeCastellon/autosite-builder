@@ -492,15 +492,15 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
         <SmallBubble size='35px'  top='25%'  right='15%' />
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 640, margin: '0 auto' }}>
           <h2 style={{ fontFamily: font, fontSize: 'clamp(2.2rem, 5vw, 3.8rem)', color: '#fff', lineHeight: 1.05, margin: '0 0 20px' }}>
-            Your car is{' '}
+            {copy.ctaHeadline || <>Your car is{' '}
             <span style={{ background: 'linear-gradient(135deg, #93c5fd, #6ee7b7, #c4b5fd)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>one rinse away</span>
-            {' '}from perfect.
+            {' '}from perfect.</>}
           </h2>
           <p style={{ fontSize: 17, color: 'rgba(255,255,255,0.6)', fontWeight: 600, marginBottom: 40, lineHeight: 1.65 }}>
-            {copy.ctaSecondary || `Stop driving around in a dirty car. Come see what all the foam is about${biz.city ? ` in ${biz.city}` : ''}.`}
+            {copy.ctaSubtext || copy.ctaSecondary || `Stop driving around in a dirty car. Come see what all the foam is about${biz.city ? ` in ${biz.city}` : ''}.`}
           </p>
           <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <a href='#packages' style={{ background: `linear-gradient(135deg, ${c.accent}, #14b8a6)`, color: '#fff', padding: '16px 40px', borderRadius: 50, fontWeight: 800, fontSize: 17, textDecoration: 'none', boxShadow: `0 8px 32px ${c.accent}55`, display: 'inline-block' }}>See Packages 🫧</a>
+            <a href='#packages' style={{ background: `linear-gradient(135deg, ${c.accent}, #14b8a6)`, color: '#fff', padding: '16px 40px', borderRadius: 50, fontWeight: 800, fontSize: 17, textDecoration: 'none', boxShadow: `0 8px 32px ${c.accent}55`, display: 'inline-block' }}>{copy.ctaButtonText || 'See Packages 🫧'}</a>
             <a href={biz.phone ? `tel:${biz.phone}` : '#'} style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', padding: '14px 34px', borderRadius: 50, fontWeight: 800, fontSize: 16, textDecoration: 'none', border: '1.5px solid rgba(255,255,255,0.25)', display: 'inline-block' }}>
               {biz.phone ? `Call ${biz.phone}` : 'Call Us Now'}
             </a>

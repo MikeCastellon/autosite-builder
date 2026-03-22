@@ -495,10 +495,10 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
         <div className="tp-2col" style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "center" }}>
           <div>
             <h2 style={{ fontFamily: font, fontSize: "clamp(36px, 4vw, 58px)", color: "#fff", lineHeight: 1.05, marginBottom: 20 }}>
-              Ready for the cleanest car of your life?
+              {copy.ctaHeadline || 'Ready for the cleanest car of your life?'}
             </h2>
             <p style={{ fontSize: 16, color: "rgba(255,255,255,0.85)", fontWeight: 600, lineHeight: 1.65, marginBottom: 32 }}>
-              {copy.ctaSecondary || "We bring everything — water, power, products. You just point us to the car."}
+              {copy.ctaSubtext || copy.ctaSecondary || "We bring everything — water, power, products. You just point us to the car."}
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               {[
@@ -521,7 +521,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
               <h3 style={{ fontFamily: font, fontSize: 28, color: c.text, marginBottom: 16 }}>Book Your Detail!</h3>
               <p style={{ fontSize: 14, color: c.muted, fontWeight: 600, lineHeight: 1.6, marginBottom: 28 }}>Call or text us to schedule. We’ll come to your door.</p>
               <a href={copy?.ctaUrl || (`tel:${biz.phone}`)} style={{ display: "block", background: c.accent, color: c.text, border: `3px solid ${c.text}`, borderRadius: 16, padding: "16px", fontFamily: font, fontSize: 22, textDecoration: "none", boxShadow: `5px 5px 0 ${c.text}` }}>
-                📞 {biz.phone || "Call Now!"}
+                {copy.ctaButtonText || `📞 ${biz.phone || "Call Now!"}`}
               </a>
             </div>
           </div>

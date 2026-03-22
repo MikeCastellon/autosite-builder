@@ -303,14 +303,14 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
       {!hidden('cta') && (
       <section style={{ order: getOrder('cta'), background: c.accent, padding: '72px 24px', textAlign: 'center', fontFamily: bodyFont }}>
         <h2 style={{ fontFamily: font, fontSize: '2.2rem', fontWeight: 800, color: '#ffffff', marginBottom: '16px' }}>
-          Ready for a Fresh, Clean Ride?
+          {generatedCopy.ctaHeadline || 'Ready for a Fresh, Clean Ride?'}
         </h2>
         <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '1.1rem', marginBottom: '36px' }}>
-          {businessInfo.serviceArea ? `Serving ${businessInfo.serviceArea}` : `Serving ${businessInfo.city} and surrounding areas`}
+          {generatedCopy.ctaSubtext || (businessInfo.serviceArea ? `Serving ${businessInfo.serviceArea}` : `Serving ${businessInfo.city} and surrounding areas`)}
         </p>
         <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
           <a href={generatedCopy?.ctaUrl || ('tel:' + (businessInfo.phone || ''))} style={{ background: '#ffffff', color: c.accent, padding: '14px 36px', borderRadius: '50px', fontWeight: 800, textDecoration: 'none', fontSize: '1rem', fontFamily: font }}>
-            {generatedCopy.ctaPrimary || ('Call ' + businessInfo.phone)}
+            {generatedCopy.ctaButtonText || generatedCopy.ctaPrimary || ('Call ' + businessInfo.phone)}
           </a>
         </div>
       </section>

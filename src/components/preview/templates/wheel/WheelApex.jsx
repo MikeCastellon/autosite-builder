@@ -382,8 +382,8 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
       {!hidden('cta') && (
       <section id="contact" style={{ order: getOrder('cta'), background: D.bronzeBg, borderTop: '1px solid #E8D9C0', borderBottom: '1px solid #E8D9C0', padding: '48px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 32, flexWrap: 'wrap' }}>
         <div>
-          <p style={{ fontSize: 11, letterSpacing: 3, textTransform: 'uppercase', color: D.bronze, marginBottom: 8, fontWeight: 500 }}>◆ Get in touch</p>
-          <div style={{ fontFamily: display, fontSize: 38, letterSpacing: 1, color: D.ink, lineHeight: 1 }}>Ready to upgrade?</div>
+          <p style={{ fontSize: 11, letterSpacing: 3, textTransform: 'uppercase', color: D.bronze, marginBottom: 8, fontWeight: 500 }}>{copy.ctaSubtext || '◆ Get in touch'}</p>
+          <div style={{ fontFamily: display, fontSize: 38, letterSpacing: 1, color: D.ink, lineHeight: 1 }}>{copy.ctaHeadline || 'Ready to upgrade?'}</div>
           <div style={{ fontSize: 13, color: D.muted, marginTop: 6 }}>
             {biz.address && <>{biz.address}, {biz.city}, {biz.state}</>}
             {biz.hours && <> · {formatHours(biz.hours)}</>}
@@ -391,7 +391,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
         </div>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           <a href={copy?.ctaUrl || `tel:${biz.phone}`} style={{ background: D.ink, color: '#fff', fontSize: 11, fontWeight: 500, letterSpacing: 1.5, textTransform: 'uppercase', padding: '12px 24px', textDecoration: 'none' }}>
-            {copy.ctaPrimary || biz.phone || 'Contact Us'}
+            {copy.ctaButtonText || copy.ctaPrimary || biz.phone || 'Contact Us'}
           </a>
         </div>
       </section>

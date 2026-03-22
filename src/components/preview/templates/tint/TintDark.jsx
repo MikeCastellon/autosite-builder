@@ -398,16 +398,16 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
           pointerEvents: 'none',
         }} />
         <div style={{ position: 'relative', zIndex: 1 }}>
-          <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 800, margin: '0 0 16px' }}>Get a Free Quote</h2>
+          <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 800, margin: '0 0 16px' }}>{copy.ctaHeadline || 'Get a Free Quote'}</h2>
           <p style={{ color: c.muted, fontSize: 16, marginBottom: 36 }}>
-            {copy.ctaSecondary || `Serving ${biz.city || 'your area'}, ${biz.state || ''} and surrounding areas`}
+            {copy.ctaSubtext || copy.ctaSecondary || `Serving ${biz.city || 'your area'}, ${biz.state || ''} and surrounding areas`}
           </p>
           <a href={copy?.ctaUrl || (`tel:${biz.phone}`)} style={{
             background: c.accent, color: '#fff', padding: '16px 44px',
             borderRadius: 10, fontWeight: 700, fontSize: 17, textDecoration: 'none', display: 'inline-block',
             boxShadow: `0 4px 30px ${c.accent}66`,
           }}>
-            {copy.ctaPrimary || biz.phone || 'Call Now'}
+            {copy.ctaButtonText || copy.ctaPrimary || biz.phone || 'Call Now'}
           </a>
           {biz.address && <p style={{ color: '#444', fontSize: 13, marginTop: 20 }}>{biz.address}, {biz.city}, {biz.state}</p>}
           {biz.hours && (

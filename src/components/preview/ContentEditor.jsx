@@ -928,8 +928,14 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
 
           {activeSection === 'footer' && (
             <>
-              <Field label="Footer Tagline" value={copy.footerTagline} onChange={(v) => setCopy('footerTagline', v)} />
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Contact / CTA Section</p>
+              <Field label="CTA Headline" value={copy?.ctaHeadline} onChange={(v) => setCopy('ctaHeadline', v)} />
+              <Field label="CTA Subtext" value={copy?.ctaSubtext} onChange={(v) => setCopy('ctaSubtext', v)} />
+              <Field label="CTA Button Text" value={copy?.ctaButtonText} onChange={(v) => setCopy('ctaButtonText', v)} />
               <Field label="CTA Button URL (optional)" value={copy?.ctaUrl} onChange={(v) => setCopy('ctaUrl', v)} />
+              <hr className="my-4 border-gray-100" />
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Footer</p>
+              <Field label="Footer Tagline" value={copy.footerTagline} onChange={(v) => setCopy('footerTagline', v)} />
               <div className="mt-4 mb-2">
                 <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-3">Social Icons</p>
                 <p className="text-[11px] text-gray-400 mb-3">Toggle which social icons appear on your site.</p>

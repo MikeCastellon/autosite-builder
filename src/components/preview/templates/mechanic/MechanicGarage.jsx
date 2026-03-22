@@ -391,15 +391,15 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
         <div style={{ maxWidth: '900px', margin: '0 auto', display: 'flex', gap: '48px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between'  }}>
           <div>
             <h2 style={{ fontFamily: font, fontSize: '2rem', fontWeight: 900, color: '#000000', textTransform: 'uppercase', marginBottom: '8px' }}>
-              Get Your Vehicle Fixed Right.
+              {generatedCopy.ctaHeadline || 'Get Your Vehicle Fixed Right.'}
             </h2>
             <p style={{ color: 'rgba(0,0,0,0.65)', fontSize: '1rem' }}>
-              {businessInfo.address}, {businessInfo.city}, {businessInfo.state}
+              {generatedCopy.ctaSubtext || `${businessInfo.address}, ${businessInfo.city}, ${businessInfo.state}`}
             </p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'flex-start' }}>
             <a href={generatedCopy?.ctaUrl || ('tel:' + (businessInfo.phone || ''))} style={{ background: '#000000', color: c.accent, padding: '14px 32px', borderRadius: '4px', fontWeight: 900, textDecoration: 'none', fontSize: '1.05rem', fontFamily: font, letterSpacing: '1px', textTransform: 'uppercase' }}>
-              {generatedCopy.ctaPrimary || ('Call ' + businessInfo.phone)}
+              {generatedCopy.ctaButtonText || generatedCopy.ctaPrimary || ('Call ' + businessInfo.phone)}
             </a>
             {businessInfo.paymentMethods && (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>

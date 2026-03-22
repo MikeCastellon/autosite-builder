@@ -302,8 +302,8 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
       {/* CTA SECTION */}
       {!hidden('cta') && (
       <section style={{ ...s.ctaSection, order: getOrder('cta') }}>
-        <div style={s.sectionLabel}>Ready to Begin?</div>
-        <div style={s.ctaBig}>Reserve Your Detail Session</div>
+        <div style={s.sectionLabel}>{generatedCopy.ctaSubtext || 'Ready to Begin?'}</div>
+        <div style={s.ctaBig}>{generatedCopy.ctaHeadline || 'Reserve Your Detail Session'}</div>
         <div style={s.ctaPhone}>{businessInfo.phone}</div>
         {businessInfo.hours && (
           <p style={{ fontFamily: bodyFont, color: c.muted, fontSize: '0.9rem', marginBottom: '1.5rem' }}>
@@ -318,7 +318,7 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
           </div>
         )}
         <div style={{ marginTop: '2rem' }}>
-          <a href={generatedCopy?.ctaUrl || ('tel:' + (businessInfo.phone || ''))} style={{ ...s.ctaPrimary, textDecoration: 'none' }}>{generatedCopy.ctaPrimary}</a>
+          <a href={generatedCopy?.ctaUrl || ('tel:' + (businessInfo.phone || ''))} style={{ ...s.ctaPrimary, textDecoration: 'none' }}>{generatedCopy.ctaButtonText || generatedCopy.ctaPrimary}</a>
         </div>
       </section>
       )}

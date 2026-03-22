@@ -463,11 +463,10 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
           <div style={s.sectionLabelLine} />
         </div>
         <h2 style={s.ctaH2}>
-          Ready to <em style={s.sectionTitleEm}>Elevate</em><br />
-          Your Vehicle?
+          {generatedCopy.ctaHeadline || <>Ready to <em style={s.sectionTitleEm}>Elevate</em><br />Your Vehicle?</>}
         </h2>
         <p style={s.ctaDesc}>
-          Whether you need a single signature detail or a custom fleet contract, we are ready to deliver. Contact us and we will respond within 2 business hours.
+          {generatedCopy.ctaSubtext || 'Whether you need a single signature detail or a custom fleet contract, we are ready to deliver. Contact us and we will respond within 2 business hours.'}
         </p>
         <div style={s.contactRow}>
           <div style={s.contactItem}>
@@ -497,7 +496,7 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
           )}
         </div>
         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <a href={generatedCopy?.ctaUrl || ('tel:' + (businessInfo.phone || ''))} style={{ ...s.btnPrimary, textDecoration: 'none' }}>{generatedCopy.ctaPrimary || 'Request a Quote'}</a>
+          <a href={generatedCopy?.ctaUrl || ('tel:' + (businessInfo.phone || ''))} style={{ ...s.btnPrimary, textDecoration: 'none' }}>{generatedCopy.ctaButtonText || generatedCopy.ctaPrimary || 'Request a Quote'}</a>
           <a href={'tel:' + (businessInfo.phone || '')} style={{ background: 'transparent', border: '1px solid ' + c.accent, color: c.accent, padding: '16px 40px', fontFamily: bodyFont, fontSize: '12px', letterSpacing: '2.5px', textTransform: 'uppercase', fontWeight: 600, cursor: 'pointer', textDecoration: 'none' }}>
             {businessInfo.phone}
           </a>

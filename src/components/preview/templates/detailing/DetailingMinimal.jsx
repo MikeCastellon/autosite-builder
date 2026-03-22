@@ -321,13 +321,13 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
       {/* CTA BAND */}
       {!hidden('cta') && (
       <section style={{ ...s.ctaBand, order: getOrder('cta') }}>
-        <div style={s.ctaBandTitle}>Ready for a Perfect Detail?</div>
-        <div style={s.ctaBandSub}>{businessInfo.tagline || generatedCopy.subheadline}</div>
+        <div style={s.ctaBandTitle}>{generatedCopy.ctaHeadline || 'Ready for a Perfect Detail?'}</div>
+        <div style={s.ctaBandSub}>{generatedCopy.ctaSubtext || businessInfo.tagline || generatedCopy.subheadline}</div>
         <span style={s.ctaBandPhone}>{businessInfo.phone}</span>
         {businessInfo.hours && (
           <p style={{ fontFamily: bodyFont, color: 'rgba(255,255,255,0.75)', fontSize: '0.88rem', marginBottom: '1.5rem' }}>{formatHours(businessInfo.hours)}</p>
         )}
-        <div><a href={generatedCopy?.ctaUrl || ('tel:' + (businessInfo.phone || ''))} style={{ ...s.ctaBandBtn, textDecoration: 'none' }}>{generatedCopy.ctaPrimary}</a></div>
+        <div><a href={generatedCopy?.ctaUrl || ('tel:' + (businessInfo.phone || ''))} style={{ ...s.ctaBandBtn, textDecoration: 'none' }}>{generatedCopy.ctaButtonText || generatedCopy.ctaPrimary}</a></div>
         {businessInfo.paymentMethods?.length > 0 && (
           <div style={s.paymentPills}>
             {businessInfo.paymentMethods.map((pm, i) => (

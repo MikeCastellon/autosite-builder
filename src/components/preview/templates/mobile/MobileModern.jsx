@@ -377,16 +377,16 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
       {/* CTA */}
       {!hidden('cta') && (
       <section id="contact" style={{ background: c.accent, padding: '80px 5%', textAlign: 'center' , order: getOrder('cta') }}>
-        <h2 style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.8rem)', fontWeight: 800, color: '#fff', marginBottom: 14 }}>Schedule a Mobile Detail</h2>
+        <h2 style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.8rem)', fontWeight: 800, color: '#fff', marginBottom: 14 }}>{copy.ctaHeadline || 'Schedule a Mobile Detail'}</h2>
         <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 16, marginBottom: 36 }}>
-          {copy.ctaSecondary || `We come to you anywhere in ${biz.city || 'your area'}, ${biz.state || ''}`}
+          {copy.ctaSubtext || copy.ctaSecondary || `We come to you anywhere in ${biz.city || 'your area'}, ${biz.state || ''}`}
         </p>
         <a href={copy?.ctaUrl || (`tel:${biz.phone}`)} style={{
           background: '#fff', color: c.accent, padding: '16px 44px',
           borderRadius: 12, fontWeight: 800, fontSize: 18, textDecoration: 'none', display: 'inline-block',
           boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
         }}>
-          {copy.ctaPrimary || biz.phone || 'Call Now'}
+          {copy.ctaButtonText || copy.ctaPrimary || biz.phone || 'Call Now'}
         </a>
         {biz.serviceArea && <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, marginTop: 16 }}>Service Area: {biz.serviceArea}</p>}
         {biz.hours && (

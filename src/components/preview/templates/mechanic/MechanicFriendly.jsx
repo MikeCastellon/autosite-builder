@@ -404,10 +404,10 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
       <section id="contact" style={{ ...s.contactSection, order: getOrder('cta') }}>
         <div style={s.contactGrid}>
           <div>
-            <div style={{ fontFamily: bodyFont, fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: c.accent, marginBottom: '0.5rem'  }}>Contact Us</div>
-            <h2 style={s.contactTitle}>Let's Get Your Car Fixed</h2>
+            <div style={{ fontFamily: bodyFont, fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: c.accent, marginBottom: '0.5rem'  }}>{generatedCopy.ctaSubtext || 'Contact Us'}</div>
+            <h2 style={s.contactTitle}>{generatedCopy.ctaHeadline || "Let's Get Your Car Fixed"}</h2>
             <span style={s.contactPhone}>{businessInfo.phone}</span>
-            <a href={generatedCopy?.ctaUrl || ('tel:' + (businessInfo.phone || ''))} style={{ ...s.contactBtn, textDecoration: 'none' }}>{generatedCopy.ctaPrimary}</a>
+            <a href={generatedCopy?.ctaUrl || ('tel:' + (businessInfo.phone || ''))} style={{ ...s.contactBtn, textDecoration: 'none' }}>{generatedCopy.ctaButtonText || generatedCopy.ctaPrimary}</a>
             {businessInfo.paymentMethods?.length > 0 && (
               <div>
                 <span style={{ ...s.contactInfoLabel, marginTop: '1.75rem', display: 'block' }}>We Accept</span>

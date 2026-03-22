@@ -423,16 +423,16 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
       {/* CTA */}
       {!hidden('cta') && (
       <section style={{ background: c.accent, padding: '80px 5%', textAlign: 'center', order: getOrder('cta') }}>
-        <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 800, color: '#fff', margin: '0 0 16px' }}>Get a Free Quote</h2>
+        <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 800, color: '#fff', margin: '0 0 16px' }}>{copy.ctaHeadline || 'Get a Free Quote'}</h2>
         <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 16, marginBottom: 36 }}>
-          {copy.ctaSecondary || `${biz.city || 'Your city'}, ${biz.state || ''} · Same-day quotes available`}
+          {copy.ctaSubtext || copy.ctaSecondary || `${biz.city || 'Your city'}, ${biz.state || ''} · Same-day quotes available`}
         </p>
         <a href={copy?.ctaUrl || (`tel:${biz.phone}`)} style={{
           background: '#fff', color: c.accent, padding: '16px 44px',
           borderRadius: 10, fontWeight: 800, fontSize: 17, textDecoration: 'none', display: 'inline-block',
           boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
         }}>
-          {copy.ctaPrimary || biz.phone || 'Call Now'}
+          {copy.ctaButtonText || copy.ctaPrimary || biz.phone || 'Call Now'}
         </a>
         {biz.address && <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, marginTop: 18 }}>{biz.address}, {biz.city}, {biz.state}</p>}
         {biz.hours && (

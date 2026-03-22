@@ -324,15 +324,15 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
       {/* CTA SECTION */}
       {!hidden('cta') && (
       <section style={{ padding: '80px 5%', textAlign: 'center' , order: getOrder('cta') }}>
-        <h2 style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 16px', lineHeight: 1 }}>READY TO BOOK?</h2>
-        <p style={{ color: '#888', fontSize: 16, marginBottom: 40 }}>{copy.ctaSecondary || `Serving ${biz.city || 'your area'}. We come to you.`}</p>
+        <h2 style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 16px', lineHeight: 1 }}>{copy.ctaHeadline || 'READY TO BOOK?'}</h2>
+        <p style={{ color: '#888', fontSize: 16, marginBottom: 40 }}>{copy.ctaSubtext || copy.ctaSecondary || `Serving ${biz.city || 'your area'}. We come to you.`}</p>
         <a href={copy?.ctaUrl || (`tel:${biz.phone}`)} style={{
           display: 'inline-block', background: c.accent, color: '#fff',
           padding: '18px 48px', fontWeight: 900, fontSize: 18,
           letterSpacing: 2, textTransform: 'uppercase', textDecoration: 'none',
           clipPath: 'polygon(16px 0%, 100% 0%, calc(100% - 16px) 100%, 0% 100%)',
         }}>
-          {copy.ctaPrimary || 'CALL ' + (biz.phone || 'NOW')}
+          {copy.ctaButtonText || copy.ctaPrimary || 'CALL ' + (biz.phone || 'NOW')}
         </a>
         {biz.address && <p style={{ color: '#555', fontSize: 13, marginTop: 20 }}>📍 {biz.address}, {biz.city}, {biz.state}</p>}
         {biz.hours && (

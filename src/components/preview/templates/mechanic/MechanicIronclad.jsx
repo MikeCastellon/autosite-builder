@@ -640,18 +640,18 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
         <div style={{ position: 'absolute', inset: 0, backgroundImage: hatch, opacity: 0.4 }} />
         <div style={{ position: 'relative', zIndex: 1 }}>
           <h2 style={{ fontFamily: bebas, fontSize: 'clamp(36px, 6vw, 72px)', letterSpacing: 3, color: '#fff', margin: '0 0 14px', lineHeight: 0.95 }}>
-            READY TO GET<br />YOUR CAR FIXED RIGHT?
+            {copy.ctaHeadline || <>{`READY TO GET`}<br />{`YOUR CAR FIXED RIGHT?`}</>}
           </h2>
           <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 16, marginBottom: 40, fontFamily: bodyFont }}>
-            {biz.city
+            {copy.ctaSubtext || (biz.city
               ? `Serving ${biz.city}${biz.state ? ', ' + biz.state : ''} and surrounding areas.`
-              : 'Call us today — no appointment needed for most services.'}
+              : 'Call us today — no appointment needed for most services.')}
           </p>
           <a
             href={copy?.ctaUrl || (biz.phone ? `tel:${biz.phone}` : '#contact')}
             style={{ background: '#000', color: '#fff', fontFamily: bebas, fontSize: 22, letterSpacing: 4, padding: '18px 56px', textDecoration: 'none', display: 'inline-block', clipPath: 'polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%)' }}
           >
-            {copy.ctaPrimary || biz.phone || 'CALL NOW'}
+            {copy.ctaButtonText || copy.ctaPrimary || biz.phone || 'CALL NOW'}
           </a>
           {biz.address && (
             <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, marginTop: 20 }}>

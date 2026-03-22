@@ -641,9 +641,9 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
             Ready When You Are
             <span style={{ width: 24, height: 1, background: cCyan, flexShrink: 0 }} />
           </div>
-          <h2 style={{ ...sectionTitleStyle, marginBottom: 16, fontSize: 'clamp(2rem, 4vw, 3.2rem)' }}>Book Your Install</h2>
+          <h2 style={{ ...sectionTitleStyle, marginBottom: 16, fontSize: 'clamp(2rem, 4vw, 3.2rem)' }}>{copy.ctaHeadline || 'Book Your Install'}</h2>
           <p style={{ color: c.muted, fontSize: 16, marginBottom: 12, lineHeight: 1.6 }}>
-            {copy.ctaSecondary || `Serving ${biz.city || 'your area'}${biz.state ? `, ${biz.state}` : ''} and surrounding areas. Call or stop by for a free consultation.`}
+            {copy.ctaSubtext || copy.ctaSecondary || `Serving ${biz.city || 'your area'}${biz.state ? `, ${biz.state}` : ''} and surrounding areas. Call or stop by for a free consultation.`}
           </p>
           {biz.hours && (
             <p style={{ color: c.muted, fontSize: '0.9rem', marginBottom: 40 }}>
@@ -657,7 +657,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
               boxShadow: `0 4px 36px ${c.accent}55`,
               fontFamily: font, letterSpacing: 0.3,
             }}>
-              {biz.phone || 'Call Now'}
+              {copy.ctaButtonText || biz.phone || 'Call Now'}
             </a>
             {biz.address && (
               <div style={{

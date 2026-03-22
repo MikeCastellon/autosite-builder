@@ -398,16 +398,16 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
       {/* CTA */}
       {!hidden('cta') && (
       <section style={{ order: getOrder('cta'), background: c.secondary, padding: '80px 5%', textAlign: 'center', borderTop: `1px solid ${c.accent}33` }}>
-        <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 16px', letterSpacing: '-0.01em' }}>READY TO UPGRADE?</h2>
+        <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 16px', letterSpacing: '-0.01em' }}>{copy.ctaHeadline || 'READY TO UPGRADE?'}</h2>
         <p style={{ color: c.muted, fontSize: 16, marginBottom: 36 }}>
-          {copy.ctaSecondary || `${biz.city || 'Your city'}, ${biz.state || ''} — Call or stop by today`}
+          {copy.ctaSubtext || copy.ctaSecondary || `${biz.city || 'Your city'}, ${biz.state || ''} — Call or stop by today`}
         </p>
         <a href={copy?.ctaUrl || (`tel:${biz.phone}`)} style={{
           background: c.accent, color: '#000', padding: '16px 44px',
           fontWeight: 900, fontSize: 17, textDecoration: 'none',
           display: 'inline-block', textTransform: 'uppercase', letterSpacing: 2, borderRadius: 2,
         }}>
-          {copy.ctaPrimary || biz.phone || 'CALL NOW'}
+          {copy.ctaButtonText || copy.ctaPrimary || biz.phone || 'CALL NOW'}
         </a>
         {biz.address && <p style={{ color: c.muted, fontSize: 13, marginTop: 18 }}>
           {biz.address}, {biz.city}, {biz.state}

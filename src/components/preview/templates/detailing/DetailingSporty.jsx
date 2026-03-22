@@ -350,10 +350,10 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
       {!hidden('cta') && (
       <div style={{ ...s.ctaBand, order: getOrder('cta') }}>
         <div style={s.ctaLeft}>
-          <div style={s.ctaHeading}>Book Your Detail</div>
+          <div style={s.ctaHeading}>{generatedCopy.ctaHeadline || 'Book Your Detail'}</div>
           <div style={s.ctaPhone}>{businessInfo.phone}</div>
           {businessInfo.hours && <div style={{ fontFamily: bodyFont, color: 'rgba(255,255,255,0.75)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>{formatHours(businessInfo.hours)}</div>}
-          <a href={generatedCopy?.ctaUrl || ('tel:' + (businessInfo.phone || ''))} style={{ ...s.ctaBtn, textDecoration: 'none' }}>{generatedCopy.ctaPrimary}</a>
+          <a href={generatedCopy?.ctaUrl || ('tel:' + (businessInfo.phone || ''))} style={{ ...s.ctaBtn, textDecoration: 'none' }}>{generatedCopy.ctaButtonText || generatedCopy.ctaPrimary}</a>
         </div>
         <div style={s.ctaRight}>
           <div style={s.ctaRightTitle}>Why {businessInfo.businessName}?</div>

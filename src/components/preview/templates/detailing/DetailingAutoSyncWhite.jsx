@@ -378,10 +378,10 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
       <section id="contact" style={{ order: getOrder('cta'), background: blue, padding: isMobile ? '80px 24px' : '100px 80px', textAlign: 'center' }}>
         <span style={{ ...s.eyebrow, color: 'rgba(255,255,255,0.6)' }}>Contact</span>
         <h2 style={{ ...s.sectionTitle, color: white, marginBottom: '16px' }}>
-          Let&#8217;s get your vehicle <em style={{ fontStyle: 'italic' }}>sorted.</em>
+          {generatedCopy.ctaHeadline || <>Let&#8217;s get your vehicle <em style={{ fontStyle: 'italic' }}>sorted.</em></>}
         </h2>
         <p style={{ fontSize: '17px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.7, fontWeight: 300, maxWidth: '520px', margin: '0 auto 12px' }}>
-          {businessInfo.serviceArea ? `Serving ${businessInfo.serviceArea}` : `Serving ${businessInfo.city || 'your area'} and surrounding areas`}
+          {generatedCopy.ctaSubtext || (businessInfo.serviceArea ? `Serving ${businessInfo.serviceArea}` : `Serving ${businessInfo.city || 'your area'} and surrounding areas`)}
         </p>
         {businessInfo.hours && (
           <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem', margin: '0 auto 40px' }}>
@@ -390,7 +390,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
         )}
         <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
           <a href={generatedCopy?.ctaUrl || ('tel:' + (businessInfo.phone || ''))} style={{ background: white, color: blue, padding: '15px 36px', borderRadius: '980px', fontWeight: 500, textDecoration: 'none', fontSize: '16px', fontFamily: dmSans, letterSpacing: '-0.2px' }}>
-            {generatedCopy.ctaPrimary || ('Call ' + businessInfo.phone)}
+            {generatedCopy.ctaButtonText || generatedCopy.ctaPrimary || ('Call ' + businessInfo.phone)}
           </a>
         </div>
       </section>

@@ -396,15 +396,15 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
       {/* CTA — full-width banner */}
       {!hidden('cta') && (
       <section id="contact" style={{ order: getOrder('cta'), background: c.accent, padding: '72px 5%', textAlign: 'center' }}>
-        <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 800, color: '#fff', margin: '0 0 12px' }}>Ready to Upgrade?</h2>
+        <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 800, color: '#fff', margin: '0 0 12px' }}>{copy.ctaHeadline || 'Ready to Upgrade?'}</h2>
         <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 16, marginBottom: 32, maxWidth: 500, marginLeft: 'auto', marginRight: 'auto' }}>
-          {`${biz.city || 'Your city'}, ${biz.state || ''} — Stop by or give us a call today`}
+          {copy.ctaSubtext || `${biz.city || 'Your city'}, ${biz.state || ''} — Stop by or give us a call today`}
         </p>
         <a href={copy?.ctaUrl || (`tel:${biz.phone}`)} style={{
           display: 'inline-block', background: '#fff', color: c.accent,
           padding: '16px 44px', borderRadius: 10, fontWeight: 800, fontSize: 17, textDecoration: 'none',
         }}>
-          {copy.ctaPrimary || biz.phone || 'Call Now'}
+          {copy.ctaButtonText || copy.ctaPrimary || biz.phone || 'Call Now'}
         </a>
         {biz.address && <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, marginTop: 20 }}>
           {biz.address}, {biz.city}, {biz.state}

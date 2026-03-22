@@ -461,15 +461,15 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
             <div style={{ width: '60px', height: '1px', background: goldGradient, opacity: 0.5 }} />
           </div>
           <h2 style={{ fontFamily: font, fontSize: '2.6rem', fontWeight: 700, color: c.text, marginBottom: '16px', fontStyle: 'italic', lineHeight: 1.15 }}>
-            Ready for Elite Window Tinting?
+            {generatedCopy.ctaHeadline || 'Ready for Elite Window Tinting?'}
           </h2>
           <p style={{ color: c.muted, fontSize: '1rem', marginBottom: '44px', lineHeight: 1.8, fontWeight: 300 }}>
-            {businessInfo.serviceArea ? `Serving ${businessInfo.serviceArea}.` : `Serving ${businessInfo.city}, ${businessInfo.state} and surrounding areas.`}
-            {businessInfo.hours && ` ${formatHours(businessInfo.hours)}.`}
+            {generatedCopy.ctaSubtext || (businessInfo.serviceArea ? `Serving ${businessInfo.serviceArea}.` : `Serving ${businessInfo.city}, ${businessInfo.state} and surrounding areas.`)}
+            {!generatedCopy.ctaSubtext && businessInfo.hours && ` ${formatHours(businessInfo.hours)}.`}
           </p>
           <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '36px' }}>
             <a href={`tel:${businessInfo.phone}`} style={accentBtnStyle}>Call {businessInfo.phone}</a>
-            <a href={generatedCopy?.ctaUrl || (`tel:${businessInfo.phone}`)} style={{ ...outlineBtnStyle, textDecoration: 'none' }}>{generatedCopy.ctaPrimary || 'Get a Free Quote'}</a>
+            <a href={generatedCopy?.ctaUrl || (`tel:${businessInfo.phone}`)} style={{ ...outlineBtnStyle, textDecoration: 'none' }}>{generatedCopy.ctaButtonText || generatedCopy.ctaPrimary || 'Get a Free Quote'}</a>
           </div>
           {businessInfo.address && (
             <p style={{ color: c.muted, fontSize: '0.85rem', letterSpacing: '1px' }}>

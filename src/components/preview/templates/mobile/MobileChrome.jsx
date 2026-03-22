@@ -385,15 +385,15 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
         <div style={{ maxWidth: '700px', margin: '0 auto'  }}>
           <div style={{ width: '1px', height: '60px', background: chromeGradient, margin: '0 auto 40px' }} />
           <h2 style={{ fontFamily: font, fontSize: '2.4rem', fontWeight: 300, color: c.text, marginBottom: '16px', letterSpacing: '-1px' }}>
-            Book Your Detail Today
+            {generatedCopy.ctaHeadline || 'Book Your Detail Today'}
           </h2>
           <p style={{ color: c.muted, fontSize: '1rem', marginBottom: '48px', lineHeight: 1.8, fontWeight: 300 }}>
-            {businessInfo.phone && `Call us at ${businessInfo.phone}.`} {businessInfo.address && `We come to you in ${businessInfo.city}, ${businessInfo.state}.`}
-            {businessInfo.hours && ` Available ${formatHours(businessInfo.hours)}.`}
+            {generatedCopy.ctaSubtext || (<>{businessInfo.phone && `Call us at ${businessInfo.phone}.`} {businessInfo.address && `We come to you in ${businessInfo.city}, ${businessInfo.state}.`}
+            {businessInfo.hours && ` Available ${formatHours(businessInfo.hours)}.`}</>)}
           </p>
           <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '32px' }}>
             <a href={`tel:${businessInfo.phone}`} style={accentBtnStyle}>Call Now</a>
-            <a href={generatedCopy?.ctaUrl || (`tel:${businessInfo.phone}`)} style={{ ...outlineBtnStyle, textDecoration: 'none' }}>{generatedCopy.ctaPrimary || 'Get a Quote'}</a>
+            <a href={generatedCopy?.ctaUrl || (`tel:${businessInfo.phone}`)} style={{ ...outlineBtnStyle, textDecoration: 'none' }}>{generatedCopy.ctaButtonText || generatedCopy.ctaPrimary || 'Get a Quote'}</a>
           </div>
           {businessInfo.paymentMethods && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center', marginTop: '24px' }}>
