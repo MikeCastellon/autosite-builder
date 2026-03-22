@@ -316,70 +316,46 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
               <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.75, maxWidth: 520, marginTop: 16 }}>{copy.servicesSection.intro}</p>
             )}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 16 }}>
-            {services.length > 0
-              ? services.map((svc, i) => (
+          {packages.length > 0 ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
+              {packages.map((pkg, i) => (
                 <div key={i} style={{
-                  background: panelBg, border: `1px solid ${c.accent}18`,
-                  borderRadius: 10, padding: '32px 26px', position: 'relative', overflow: 'hidden',
+                  background: panelBg, border: `1px solid ${c.accent}25`,
+                  borderRadius: 10, padding: '28px 22px', position: 'relative', overflow: 'hidden',
                 }}>
-                  <div style={{
-                    position: 'absolute', top: -30, right: -30, width: 100, height: 100,
-                    background: `radial-gradient(circle, ${c.accent}18, transparent 70%)`, pointerEvents: 'none',
-                  }} />
-                  <div style={{
-                    position: 'absolute', bottom: -12, right: 16,
-                    fontFamily: font, fontSize: 80, fontWeight: 800,
-                    color: `${c.accent}08`, lineHeight: 1, pointerEvents: 'none', userSelect: 'none',
-                  }}>
-                    {String(i + 1).padStart(2, '0')}
-                  </div>
                   <div style={{ width: 3, height: 36, background: `linear-gradient(180deg, ${c.accent}, ${cCyan})`, marginBottom: 18, borderRadius: 2 }} />
-                  <h3 style={{ fontFamily: font, fontSize: 17, fontWeight: 700, marginBottom: 12, color: c.text }}>{svc.name}</h3>
-                  <p style={{ color: c.muted, fontSize: 14, lineHeight: 1.75, margin: 0 }}>{svc.description}</p>
+                  <h3 style={{ fontFamily: font, fontSize: 17, fontWeight: 700, marginBottom: 8, color: c.text }}>
+                    {typeof pkg === 'object' ? pkg.name : pkg}
+                  </h3>
+                  {typeof pkg === 'object' && pkg.price && (
+                    <div style={{ fontSize: 24, fontWeight: 800, color: c.accent, marginBottom: 10 }}>{pkg.price}</div>
+                  )}
+                  {typeof pkg === 'object' && pkg.description && (
+                    <p style={{ color: c.muted, fontSize: 13, lineHeight: 1.6, margin: 0 }}>{pkg.description}</p>
+                  )}
                 </div>
-              ))
-              : (biz.services || []).map((svc, i) => (
-                <div key={i} style={{ background: panelBg, border: `1px solid ${c.accent}18`, borderRadius: 10, padding: '26px 22px' }}>
-                  <div style={{ width: 3, height: 28, background: `linear-gradient(180deg, ${c.accent}, ${cCyan})`, marginBottom: 14, borderRadius: 2 }} />
-                  <h3 style={{ fontFamily: font, fontSize: 16, fontWeight: 700, color: c.text, margin: 0 }}>{typeof svc === 'string' ? svc : svc.name}</h3>
-                </div>
-              ))
-            }
-          </div>
-          {packages.length > 0 && (
-            <div style={{ marginTop: 56 }}>
-              <div style={{ color: c.accent, fontWeight: 700, letterSpacing: 3, fontSize: 11, textTransform: 'uppercase', marginBottom: 24, fontFamily: font }}>// Packages</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
-                {packages.map((pkg, i) => {
-                  const isFeature = i === Math.floor(packages.length / 2);
-                  return (
-                    <div key={i} style={{
-                      background: isFeature ? `linear-gradient(135deg, ${c.accent}, #a855f7)` : panelBg,
-                      border: `1px solid ${isFeature ? 'transparent' : `${c.accent}25`}`,
-                      borderRadius: 10, padding: '28px 22px', textAlign: 'center',
-                      boxShadow: isFeature ? `0 8px 40px ${c.accent}44` : 'none',
-                    }}>
-                      <div style={{ fontFamily: font, fontWeight: 800, fontSize: 17, marginBottom: 8, color: '#fff' }}>
-                        {typeof pkg === 'object' ? pkg.name : pkg}
-                      </div>
-                      {typeof pkg === 'object' && pkg.price && (
-                        <div style={{ fontSize: 26, fontWeight: 800, color: isFeature ? '#fff' : c.accent, marginBottom: 12 }}>{pkg.price}</div>
-                      )}
-                      {typeof pkg === 'object' && pkg.description && (
-                        <p style={{ color: isFeature ? 'rgba(255,255,255,0.8)' : c.muted, fontSize: 13, lineHeight: 1.6, marginBottom: 20 }}>{pkg.description}</p>
-                      )}
-                      <a href={`tel:${biz.phone}`} style={{
-                        display: 'inline-block',
-                        background: isFeature ? 'rgba(255,255,255,0.18)' : c.accent,
-                        color: '#fff', padding: '10px 24px', borderRadius: 6,
-                        fontWeight: 700, fontSize: 13, textDecoration: 'none',
-                        border: isFeature ? '1px solid rgba(255,255,255,0.35)' : 'none',
-                      }}>Book Now</a>
-                    </div>
-                  );
-                })}
-              </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 16 }}>
+              {services.length > 0
+                ? services.map((svc, i) => (
+                  <div key={i} style={{
+                    background: panelBg, border: `1px solid ${c.accent}18`,
+                    borderRadius: 10, padding: '32px 26px', position: 'relative', overflow: 'hidden',
+                  }}>
+                    <div style={{ width: 3, height: 36, background: `linear-gradient(180deg, ${c.accent}, ${cCyan})`, marginBottom: 18, borderRadius: 2 }} />
+                    <h3 style={{ fontFamily: font, fontSize: 17, fontWeight: 700, marginBottom: 12, color: c.text }}>{svc.name}</h3>
+                    <p style={{ color: c.muted, fontSize: 14, lineHeight: 1.75, margin: 0 }}>{svc.description}</p>
+                  </div>
+                ))
+                : (biz.services || []).map((svc, i) => (
+                  <div key={i} style={{ background: panelBg, border: `1px solid ${c.accent}18`, borderRadius: 10, padding: '26px 22px' }}>
+                    <div style={{ width: 3, height: 28, background: `linear-gradient(180deg, ${c.accent}, ${cCyan})`, marginBottom: 14, borderRadius: 2 }} />
+                    <h3 style={{ fontFamily: font, fontSize: 16, fontWeight: 700, color: c.text, margin: 0 }}>{typeof svc === 'string' ? svc : svc.name}</h3>
+                  </div>
+                ))
+              }
             </div>
           )}
         </div>
