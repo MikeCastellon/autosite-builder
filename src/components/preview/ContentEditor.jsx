@@ -935,11 +935,11 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
               <hr className="my-3 border-gray-100" />
               <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Primary Button</p>
               <Field label="Button Text" value={copy?.ctaButtonText} onChange={(v) => setCopy('ctaButtonText', v)} />
-              <Field label="Button URL (default: calls phone)" value={copy?.ctaUrl} onChange={(v) => setCopy('ctaUrl', v)} />
+              <Field label="Button URL" value={copy?.ctaUrl} onChange={(v) => setCopy('ctaUrl', v)} />
               <hr className="my-3 border-gray-100" />
-              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Secondary Button</p>
-              <Field label="Button Text" value={copy?.ctaSecondaryText} onChange={(v) => setCopy('ctaSecondaryText', v)} />
-              <Field label="Button URL" value={copy?.ctaSecondaryUrl} onChange={(v) => setCopy('ctaSecondaryUrl', v)} />
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Phone / Secondary Button</p>
+              <Field label="Button Text (default: phone number)" value={copy?.ctaSecondaryText} onChange={(v) => setCopy('ctaSecondaryText', v)} />
+              <Field label="Button URL (default: tel:phone)" value={copy?.ctaSecondaryUrl} onChange={(v) => setCopy('ctaSecondaryUrl', v)} />
             </>
           )}
 
