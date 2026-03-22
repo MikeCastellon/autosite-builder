@@ -487,7 +487,37 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
       {/* ============================================================ ABOUT ============================================================ */}
       {!hidden('about') && (
       <section id="about" style={{ padding: '100px 5%', borderTop: `1px solid ${c.accent}1a` }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 60, alignItems: 'start' }}>
+        <div className="tp-2col" style={{ maxWidth: 1280, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'center' }}>
+          {/* Left: image or stats box */}
+          <div>
+            {(copy?.aboutLayout || 'image') !== 'stats' ? (
+              images.about
+                ? <img src={images.about} alt="About" style={{ width: '100%', maxWidth: 520, height: 400, objectFit: 'cover', borderRadius: 10, display: 'block' }} />
+                : <div style={{ width: '100%', maxWidth: 520, height: 400, background: panelBg, borderRadius: 10, border: `1px solid ${c.accent}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.muted, fontSize: '0.85rem', textAlign: 'center', padding: 24, boxSizing: 'border-box' }}>Upload an about photo in the Images tab</div>
+            ) : (
+              <div style={{ width: '100%', maxWidth: 520, background: panelBg, padding: '48px 36px', boxSizing: 'border-box', borderRadius: 10, border: `1px solid ${c.accent}18` }}>
+                {(() => {
+                  const defaultStats = [
+                    { value: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'Years of Excellence' },
+                    { value: '5,000+', label: 'Windows Tinted' },
+                    { value: '5★', label: 'Customer Rating' },
+                  ];
+                  const aboutStats = (copy?.aboutStats || []).map((s, i) => ({
+                    value: s.value || defaultStats[i]?.value || '',
+                    label: s.label || defaultStats[i]?.label || '',
+                  }));
+                  if (aboutStats.length === 0) aboutStats.push(...defaultStats);
+                  return aboutStats.map((st, i) => (
+                    <div key={i} style={{ textAlign: 'center', marginBottom: i < aboutStats.length - 1 ? 32 : 0 }}>
+                      <div style={{ fontFamily: font, fontSize: '3rem', fontWeight: 800, color: c.accent, lineHeight: 1 }}>{st.value}</div>
+                      <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: 2, color: c.muted, marginTop: 8, textTransform: 'uppercase' }}>{st.label}</div>
+                    </div>
+                  ));
+                })()}
+              </div>
+            )}
+          </div>
+          {/* Right: text + awards */}
           <div>
             <div style={{ ...labelTagStyle, color: cCyan }}>
               <span style={{ width: 24, height: 1, background: cCyan, flexShrink: 0 }} />
@@ -496,35 +526,17 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
             <h2 style={{ ...sectionTitleStyle, fontSize: 'clamp(1.8rem, 3vw, 2.6rem)', marginBottom: 20 }}>
               About {biz.businessName || 'Us'}
             </h2>
-            {(generatedCopy?.aboutLayout || 'image') !== 'stats' ? (
-              images.about
-                ? <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block', marginBottom: '24px' }} />
-                : <div style={{ width: '100%', height: '360px', background: c.secondary, borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.muted, fontSize: '0.85rem', marginBottom: '24px' }}>Upload a photo in Images tab</div>
-            ) : (
-              images.about && (
-                <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block', marginBottom: '24px' }} />
-              )
-            )}
             <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.85, marginBottom: 24 }}>
               {copy.aboutText || `Serving ${biz.city || 'the area'} with premium window tinting and paint protection film.`}
             </p>
-            {biz.yearsInBusiness && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-                <div style={{ width: 3, height: 36, background: `linear-gradient(180deg, ${c.accent}, ${cCyan})`, borderRadius: 2, flexShrink: 0 }} />
-                <div>
-                  <div style={{ fontFamily: font, fontSize: 26, fontWeight: 800, color: c.accent }}>{biz.yearsInBusiness}+</div>
-                  <div style={{ fontSize: 12, color: c.muted, letterSpacing: 1 }}>Years in Business</div>
-                </div>
-              </div>
-            )}
             {biz.awards && (
-              <div style={{ background: panelBg, borderRadius: 8, padding: '16px 20px', marginBottom: 12, borderLeft: '3px solid #ffd700' }}>
+              <div style={{ background: panelBg, borderRadius: 8, padding: '16px 20px', marginBottom: 16, borderLeft: '3px solid #ffd700' }}>
                 <div style={{ color: '#ffd700', fontSize: 10, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 4 }}>AWARDS</div>
                 <p style={{ color: c.text, fontSize: 14, margin: 0 }}>{biz.awards}</p>
               </div>
             )}
             {specialtiesList.length > 0 && (
-              <div style={{ marginTop: 20 }}>
+              <div style={{ marginTop: 16 }}>
                 <div style={{ color: c.muted, fontSize: 10, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 12 }}>SPECIALTIES</div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                   {specialtiesList.map((s, i) => (
@@ -537,42 +549,9 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
               </div>
             )}
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {biz.hours && Object.keys(biz.hours).length > 0 && (
-              <div style={{ background: panelBg, padding: '28px 24px', borderRadius: 10, border: `1px solid ${c.accent}18` }}>
-                <div style={{ color: cCyan, fontWeight: 700, fontSize: 10, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 18, fontFamily: font }}>// SHOP HOURS</div>
-                {Object.entries(biz.hours).map(([day, hrs], i, arr) => (
-                  <div key={i} style={{
-                    display: 'flex', justifyContent: 'space-between',
-                    borderBottom: i < arr.length - 1 ? `1px solid ${c.accent}12` : 'none',
-                    paddingBottom: 10, marginBottom: 10,
-                  }}>
-                    <span style={{ fontWeight: 600, fontSize: 13, color: c.text }}>{day}</span>
-                    <span style={{ color: cCyan, fontWeight: 700, fontSize: 13 }}>{hrs}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-            <div style={{ background: panelBg, padding: '24px', borderRadius: 10, border: `1px solid ${c.accent}18` }}>
-              <div style={{ color: c.accent, fontWeight: 700, fontSize: 10, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 16, fontFamily: font }}>// CONTACT</div>
-              {biz.phone && (
-                <a href={`tel:${biz.phone}`} style={{ display: 'block', color: c.text, textDecoration: 'none', fontSize: 18, fontWeight: 700, fontFamily: font, marginBottom: 8 }}>{biz.phone}</a>
-              )}
-              {biz.address && (
-                <div style={{ color: c.muted, fontSize: 13, lineHeight: 1.6 }}>
-                  {biz.address}{biz.city ? `, ${biz.city}` : ''}{biz.state ? `, ${biz.state}` : ''}
-                </div>
-              )}
-            </div>
-            <div style={{ background: panelBg, padding: '20px 24px', borderRadius: 10, border: `1px solid ${c.accent}18` }}>
-                <div style={{ color: c.accent, fontWeight: 700, fontSize: 10, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 12, fontFamily: font }}>// FOLLOW</div>
-                <SocialRow biz={biz} color={cCyan} size={20} images={images} />
-              </div>
-          </div>
         </div>
       </section>
       )}
-
       {/* GALLERY */}
       {!hidden('gallery') && (
       <GallerySection images={images} colors={c} font={templateMeta.font} bodyFont={bodyFont} />
