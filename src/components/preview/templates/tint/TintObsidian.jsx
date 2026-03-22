@@ -66,13 +66,15 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
     { num: '// 04', icon: '🔬', title: 'Install & Inspect', body: 'Wet installation, heat-gun forming, edge sealing, and final inspection under UV light. We do not release a vehicle until it is perfect.' },
   ];
 
-  const shades = [
+  const defaultShades = [
     { vlt: 5,  name: 'Limo Black',  legal: 'Rear windows only' },
     { vlt: 15, name: 'Midnight',    legal: 'Rear-legal in most states' },
     { vlt: 25, name: 'Dark Smoke',  legal: 'Rear-legal in most states' },
     { vlt: 35, name: 'Medium',      legal: 'Front-legal in most states' },
     { vlt: 50, name: 'Light Smoke', legal: 'Universal' },
   ];
+  const shades = copy?.shadeGuide?.length > 0 ? copy.shadeGuide : defaultShades;
+  const showShadeGuide = copy?.showShadeGuide !== false;
 
   const panelBg = c.secondary || '#0d0d12';
 
@@ -229,51 +231,56 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
       </header>
 
       {/* ============================================================ VLT SHADE GUIDE ============================================================ */}
+      {showShadeGuide && (
       <section style={{ padding: '100px 5%', background: panelBg, borderTop: `1px solid ${c.accent}1a`, position: 'relative', overflow: 'hidden' }}>
         <div style={{
           position: 'absolute', top: -200, right: -200, width: 600, height: 600, borderRadius: '50%',
           background: `radial-gradient(circle, ${c.accent}07, transparent 70%)`, pointerEvents: 'none',
         }} />
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-          <div className="tp-2col" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0 60px', alignItems: 'end', marginBottom: 72 }}>
-            <div>
-              <div style={labelTagStyle}>
-                <span style={{ width: 24, height: 1, background: c.accent, flexShrink: 0 }} />
-                Visual Light Transmission
-              </div>
-              <h2 style={sectionTitleStyle}>
-                Choose your <span style={{ color: '#a855f7' }}>shade.</span>
-              </h2>
+          <div style={{ textAlign: 'center', marginBottom: 64 }}>
+            <div style={{ ...labelTagStyle, justifyContent: 'center' }}>
+              <span style={{ width: 24, height: 1, background: c.accent, flexShrink: 0 }} />
+              Tint Options
             </div>
-            <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.75, maxWidth: 480 }}>
-              VLT percentage measures how much light passes through the film. Lower means darker. Every shade is precision-cut and installed in a climate-controlled bay.
+            <h2 style={{ ...sectionTitleStyle, marginBottom: 16 }}>
+              Choose your <span style={{ color: '#a855f7' }}>shade.</span>
+            </h2>
+            <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.75, maxWidth: 560, margin: '0 auto' }}>
+              Lower VLT means darker tint. Every shade is precision-cut and professionally installed.
             </p>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14 }}>
-            {shades.map((shade) => {
-              const darkness  = 1 - shade.vlt / 100;
-              const paneAlpha = (0.05 + darkness * 0.7).toFixed(2);
-              const paneDark  = (0.05 + darkness * 0.8).toFixed(2);
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+            {shades.map((shade, idx) => {
+              const vlt = Number(shade.vlt) || 50;
+              const opacity = (1 - vlt / 100).toFixed(2);
               return (
-                <div key={shade.vlt} style={{
+                <div key={idx} style={{
                   background: 'rgba(255,255,255,0.02)', border: `1px solid ${c.accent}20`,
-                  borderRadius: 10, overflow: 'hidden',
+                  borderRadius: 12, overflow: 'hidden', transition: 'border-color 0.2s',
                 }}>
                   <div style={{
-                    height: 110,
-                    background: `linear-gradient(135deg, rgba(0,0,0,${paneAlpha}), rgba(5,5,7,${paneDark}))`,
-                    borderBottom: `1px solid ${c.accent}18`, position: 'relative',
+                    height: 140, position: 'relative',
+                    background: `linear-gradient(180deg, rgba(40,120,200,${(0.12 + (1 - Number(opacity)) * 0.15).toFixed(2)}), transparent 70%)`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
+                    {/* Tint overlay */}
+                    <div style={{ position: 'absolute', inset: 0, background: `rgba(0,0,0,${opacity})`, borderBottom: `1px solid ${c.accent}18` }} />
+                    {/* Car window silhouette */}
+                    <svg width="100" height="60" viewBox="0 0 100 60" fill="none" style={{ position: 'relative', zIndex: 1, opacity: 0.5 }}>
+                      <path d="M10 55 Q10 25 30 15 L70 15 Q90 25 90 55 Z" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" fill="none" />
+                      <path d="M20 50 Q20 30 35 22 L65 22 Q80 30 80 50 Z" fill={`rgba(255,255,255,${(0.05 + (vlt / 100) * 0.15).toFixed(2)})`} />
+                    </svg>
                     <div style={{
                       position: 'absolute', top: 10, right: 10,
                       background: `${c.accent}22`, border: `1px solid ${c.accent}44`,
-                      borderRadius: 4, padding: '3px 8px',
-                      fontFamily: 'monospace', fontSize: 9, color: c.accent, letterSpacing: 1,
-                    }}>{shade.vlt}% VLT</div>
+                      borderRadius: 6, padding: '4px 10px',
+                      fontFamily: 'monospace', fontSize: 10, color: c.accent, letterSpacing: 1, zIndex: 2,
+                    }}>{vlt}% VLT</div>
                   </div>
                   <div style={{ padding: '16px 18px' }}>
-                    <div style={{ fontFamily: font, fontSize: 17, fontWeight: 700, color: c.text, marginBottom: 4 }}>{shade.name}</div>
-                    <div style={{ fontSize: 11, color: c.muted }}>{shade.legal}</div>
+                    <div style={{ fontFamily: font, fontSize: 18, fontWeight: 700, color: c.text, marginBottom: 4 }}>{shade.name}</div>
+                    <div style={{ fontSize: 12, color: c.muted }}>{shade.legal}</div>
                   </div>
                 </div>
               );
@@ -281,6 +288,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
           </div>
         </div>
       </section>
+      )}
 
       {/* ============================================================ SERVICES ============================================================ */}
       <section id="services" style={{ padding: '100px 5%' }}>

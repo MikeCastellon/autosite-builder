@@ -227,6 +227,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
   const isWheel = templateId?.startsWith('wheel_');
   const isTint = templateId?.startsWith('tint_');
   const isApex = templateId === 'wheel_apex';
+  const isObsidian = templateId === 'tint_obsidian';
 
   const sections = [
     { id: 'hero', label: 'Hero' },
@@ -234,6 +235,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
     ...(isSudsy ? [{ id: 'howItWorks', label: 'How It Works' }, { id: 'whyUs', label: 'Why Us' }] : []),
     ...(isWheel ? [{ id: 'products', label: 'Products' }, { id: 'brands', label: 'Brands' }] : []),
     ...(isTint && !isWheel ? [{ id: 'filmBrands', label: 'Film Brands' }] : []),
+    ...(isObsidian ? [{ id: 'shadeGuide', label: 'Shades' }] : []),
     ...(isApex ? [{ id: 'trustBar', label: 'Trust Bar' }, { id: 'ticker', label: 'Ticker' }] : []),
     { id: 'about', label: 'About' },
     { id: 'testimonials', label: 'Reviews' },
@@ -500,6 +502,64 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
               <p className="text-[11px] text-gray-400 mt-1">Leave empty to use film brands from your business info form.</p>
             </>
           )}
+
+          {activeSection === 'shadeGuide' && isObsidian && (() => {
+            const defaultShades = [
+              { vlt: '5', name: 'Limo Black', legal: 'Rear windows only' },
+              { vlt: '15', name: 'Midnight', legal: 'Rear-legal in most states' },
+              { vlt: '25', name: 'Dark Smoke', legal: 'Rear-legal in most states' },
+              { vlt: '35', name: 'Medium', legal: 'Front-legal in most states' },
+              { vlt: '50', name: 'Light Smoke', legal: 'Universal' },
+            ];
+            const shades = copy?.shadeGuide?.length > 0 ? copy.shadeGuide : defaultShades.map(d => ({ ...d }));
+            const showShades = copy?.showShadeGuide !== false;
+            const updateShade = (i, key, val) => {
+              const current = [...shades];
+              current[i] = { ...current[i], [key]: val };
+              setCopy('shadeGuide', current);
+            };
+            const removeShade = (i) => {
+              const current = [...shades];
+              current.splice(i, 1);
+              setCopy('shadeGuide', current);
+            };
+            const addShade = () => {
+              setCopy('shadeGuide', [...shades, { vlt: '20', name: '', legal: '' }]);
+            };
+            return (
+              <>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Show Shade Guide</p>
+                  <button type="button" role="switch" aria-checked={showShades}
+                    onClick={() => setCopy('showShadeGuide', !showShades)}
+                    className={`relative w-9 h-5 rounded-full transition-colors ${showShades ? 'bg-gray-900' : 'bg-gray-300'}`}>
+                    <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${showShades ? 'translate-x-4' : 'translate-x-0'}`} />
+                  </button>
+                </div>
+                {showShades && (
+                  <>
+                    <p className="text-[11px] text-gray-400 mb-3">Configure tint shade options shown to customers.</p>
+                    {shades.map((shade, i) => (
+                      <div key={i} className="mb-3 p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Shade {i + 1}</p>
+                          {shades.length > 1 && (
+                            <button type="button" onClick={() => removeShade(i)} className="text-[11px] text-red-400 hover:text-red-600 transition">Remove</button>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 mb-2">
+                          <input type="text" value={shade.vlt ?? ''} onChange={(e) => updateShade(i, 'vlt', e.target.value)} placeholder="VLT %" className="bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 text-[12px] text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-400" />
+                          <input type="text" value={shade.name ?? ''} onChange={(e) => updateShade(i, 'name', e.target.value)} placeholder="Name" className="col-span-2 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 text-[12px] text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-400" />
+                        </div>
+                        <input type="text" value={shade.legal ?? ''} onChange={(e) => updateShade(i, 'legal', e.target.value)} placeholder="Legal note (e.g. Rear-legal)" className="w-full bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 text-[12px] text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-400" />
+                      </div>
+                    ))}
+                    <button type="button" onClick={addShade} className="w-full py-2 text-[12px] font-semibold text-gray-500 border border-dashed border-gray-300 rounded-lg hover:border-gray-400 hover:text-gray-700 transition mb-2">+ Add Shade</button>
+                  </>
+                )}
+              </>
+            );
+          })()}
 
           {activeSection === 'trustBar' && isApex && (() => {
             const defaultTrust = [
