@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
+import IconOrEmoji from '../IconOrEmoji.jsx';
 
 // Template: Mobile Sudsy
 // Warm amber/cream bg, bubbly neo-brutalist mobile detailing aesthetic.
@@ -340,7 +341,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
             {howSteps.map((step, i) => (
               <div key={i} style={{ background: '#fff', ...neoBorder, borderRadius: 24, padding: '36px 28px', textAlign: 'center' }}>
                 <div style={{ fontFamily: font, fontSize: 52, color: '#2d9cdb', lineHeight: 1, marginBottom: 8 }}>{step.num}</div>
-                <span style={{ fontSize: 42, marginBottom: 14, display: 'block' }}>{step.emoji}</span>
+                <span style={{ fontSize: 42, marginBottom: 14, display: 'block' }}><IconOrEmoji value={step.emoji} size={42} color={c.accent} /></span>
                 <h3 style={{ fontFamily: font, fontSize: 22, color: c.text, marginBottom: 8 }}>{step.title}</h3>
                 <p style={{ fontSize: 13, color: '#666', fontWeight: 600, lineHeight: 1.55, margin: 0 }}>{step.desc}</p>
               </div>
@@ -359,7 +360,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
             {whyCards.map((card, i) => (
               <div key={i} style={{ background: 'rgba(255,255,255,0.12)', border: '3px solid rgba(255,255,255,0.4)', borderRadius: 24, padding: '32px 24px', backdropFilter: 'blur(10px)' }}>
-                <span style={{ fontSize: 42, marginBottom: 14, display: 'block' }}>{card.icon}</span>
+                <span style={{ fontSize: 42, marginBottom: 14, display: 'block' }}><IconOrEmoji value={card.icon} size={42} color="#fff" /></span>
                 <h3 style={{ fontFamily: font, fontSize: 22, color: '#fff', marginBottom: 8 }}>{card.title}</h3>
                 <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.78)', fontWeight: 600, lineHeight: 1.6, margin: 0 }}>{card.desc}</p>
               </div>

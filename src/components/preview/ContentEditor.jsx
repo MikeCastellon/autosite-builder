@@ -7,8 +7,45 @@ const EMOJI_GROUPS = {
   'Vehicles': ['🚙', '🚘', '🏍️', '🛻', '🚐', '🔩', '🛠️', '🧰', '🪛', '🔋', '⛽', '🧽', '🧹', '💧', '✨', '🫧'],
 };
 
+// SVG icon paths (16x16 viewBox) — stored as {id, path, label}
+const SVG_ICONS = [
+  { id: 'icon:check', label: 'Check', path: 'M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z' },
+  { id: 'icon:shield', label: 'Shield', path: 'M8 1l6 2.5v4c0 3.5-2.5 6.5-6 7.5-3.5-1-6-4-6-7.5v-4L8 1z' },
+  { id: 'icon:star', label: 'Star', path: 'M8 1.5l2 4.5 4.5.5-3.25 3 1 4.5L8 11.5 3.75 14l1-4.5L1.5 6.5 6 6z' },
+  { id: 'icon:clock', label: 'Clock', path: 'M8 14A6 6 0 108 2a6 6 0 000 12zm0-1A5 5 0 118 3a5 5 0 010 10zM8 4.5v4l2.5 1.5' },
+  { id: 'icon:phone', label: 'Phone', path: 'M5.5 1.5c-.3 0-.6.2-.7.4L3.5 4.5c-.1.3 0 .6.2.8l2 2-2.5 2.5 2 2c.2.2.5.3.8.2l2.6-1.3c.2-.1.4-.4.4-.7v-1.5l3 3v2c0 .6-.4 1-1 1C5.5 14.5 1.5 10.5 1.5 5c0-.6.4-1 1-1h2l3 3H6z' },
+  { id: 'icon:location', label: 'Location', path: 'M8 1C5.2 1 3 3.2 3 6c0 4 5 9 5 9s5-5 5-9c0-2.8-2.2-5-5-5zm0 7a2 2 0 110-4 2 2 0 010 4z' },
+  { id: 'icon:heart', label: 'Heart', path: 'M8 14s-5.5-3.5-5.5-7.5C2.5 4 4 2.5 5.5 2.5c1 0 2 .5 2.5 1.5.5-1 1.5-1.5 2.5-1.5C12 2.5 13.5 4 13.5 6.5 13.5 10.5 8 14 8 14z' },
+  { id: 'icon:bolt', label: 'Bolt', path: 'M7 1l-5 8h5l-1 6 5-8H6l1-6z' },
+  { id: 'icon:car', label: 'Car', path: 'M3 10.5v1a1 1 0 001 1h1a1 1 0 001-1v-1m4 0v1a1 1 0 001 1h1a1 1 0 001-1v-1M3.5 7l1-3.5h7L12.5 7m-9 0h9m-9 0a1.5 1.5 0 00-1.5 1.5v2h12v-2A1.5 1.5 0 0012.5 7' },
+  { id: 'icon:wrench', label: 'Wrench', path: 'M10.5 2A3.5 3.5 0 007.3 6L2.5 10.8a1.5 1.5 0 002.1 2.1L9.4 8.1A3.5 3.5 0 0010.5 2z' },
+  { id: 'icon:cog', label: 'Settings', path: 'M8 10a2 2 0 100-4 2 2 0 000 4zm5.7-1.3l-1-.6a4.8 4.8 0 000-1.2l1-.6c.2-.1.3-.3.2-.5l-1-1.7c-.1-.2-.3-.3-.5-.2l-1 .6a4.8 4.8 0 00-1-.6l-.2-1.2c0-.2-.2-.3-.4-.3H7.2c-.2 0-.4.1-.4.3L6.6 4a4.8 4.8 0 00-1 .6l-1-.6c-.2-.1-.4 0-.5.2l-1 1.7c-.1.2 0 .4.2.5l1 .6a4.8 4.8 0 000 1.2l-1 .6c-.2.1-.3.3-.2.5l1 1.7c.1.2.3.3.5.2l1-.6a4.8 4.8 0 001 .6l.2 1.2c0 .2.2.3.4.3h1.6c.2 0 .4-.1.4-.3l.2-1.2a4.8 4.8 0 001-.6l1 .6c.2.1.4 0 .5-.2l1-1.7c.1-.2 0-.4-.2-.5z' },
+  { id: 'icon:truck', label: 'Truck', path: 'M1 3h9v7H1V3zm9 3h3l2 3v4h-2m-3 0H6m-3 0H1m12 0a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm-9 0a1.5 1.5 0 100-3 1.5 1.5 0 000 3z' },
+  { id: 'icon:dollar', label: 'Dollar', path: 'M8 1v14m3-10.5c0-1.4-1.3-2.5-3-2.5S5 3.1 5 4.5 6.3 7 8 7s3 1.1 3 2.5S9.7 12 8 12s-3-1.1-3-2.5' },
+  { id: 'icon:award', label: 'Award', path: 'M8 10a4 4 0 100-8 4 4 0 000 8zm-2.5 1L4 15l4-2 4 2-1.5-4' },
+  { id: 'icon:globe', label: 'Globe', path: 'M8 14A6 6 0 108 2a6 6 0 000 12zM2 8h12M8 2c2 2 2.5 4 2.5 6S10 12 8 14M8 2C6 4 5.5 6 5.5 8S6 12 8 14' },
+  { id: 'icon:home', label: 'Home', path: 'M2 8l6-6 6 6m-1 0v5a1 1 0 01-1 1H9V10H7v4H4a1 1 0 01-1-1V8' },
+  { id: 'icon:mail', label: 'Mail', path: 'M2 3h12a1 1 0 011 1v8a1 1 0 01-1 1H2a1 1 0 01-1-1V4a1 1 0 011-1zm0 1l6 4 6-4' },
+  { id: 'icon:calendar', label: 'Calendar', path: 'M3 4h10a1 1 0 011 1v8a1 1 0 01-1 1H3a1 1 0 01-1-1V5a1 1 0 011-1zm2-2v3m6-3v3M2 7h12' },
+];
+
+// Render an icon value — if it starts with "icon:" render SVG, otherwise render as text/emoji
+function IconOrEmoji({ value, size = 16, color = 'currentColor' }) {
+  if (!value) return null;
+  const icon = value.startsWith?.('icon:') && SVG_ICONS.find(i => i.id === value);
+  if (icon) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d={icon.path} stroke={color} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+  return <span>{value}</span>;
+}
+
 function EmojiPicker({ value, onChange, placeholder = '⭐' }) {
   const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState('emoji');
   const ref = useRef(null);
 
   useEffect(() => {
@@ -18,45 +55,65 @@ function EmojiPicker({ value, onChange, placeholder = '⭐' }) {
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
+  const isIcon = value?.startsWith?.('icon:');
+
   return (
     <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-[18px] text-center focus:outline-none focus:ring-1 focus:ring-blue-400 hover:border-gray-400 transition"
-        style={{ width: 52, height: 38 }}
+        className="bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-center focus:outline-none focus:ring-1 focus:ring-blue-400 hover:border-gray-400 transition"
+        style={{ width: 52, height: 38, fontSize: isIcon ? 14 : 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
       >
-        {value || <span style={{ opacity: 0.3 }}>{placeholder}</span>}
+        {value ? <IconOrEmoji value={value} size={18} color="#555" /> : <span style={{ opacity: 0.3, fontSize: 18 }}>{placeholder}</span>}
       </button>
       {open && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 100, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, boxShadow: '0 8px 30px rgba(0,0,0,0.15)', padding: 10, width: 240, maxHeight: 260, overflowY: 'auto' }}>
-          {Object.entries(EMOJI_GROUPS).map(([group, emojis]) => (
-            <div key={group} style={{ marginBottom: 8 }}>
-              <div style={{ fontSize: 10, fontWeight: 600, color: '#999', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 4, padding: '0 2px' }}>{group}</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-                {emojis.map((emoji) => (
-                  <button
-                    key={emoji}
-                    type="button"
-                    onClick={() => { onChange(emoji); setOpen(false); }}
-                    style={{ width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, background: value === emoji ? '#f3f4f6' : 'transparent', border: 'none', borderRadius: 6, cursor: 'pointer' }}
-                    onMouseOver={(e) => e.target.style.background = '#f3f4f6'}
-                    onMouseOut={(e) => e.target.style.background = value === emoji ? '#f3f4f6' : 'transparent'}
+        <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 100, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, boxShadow: '0 8px 30px rgba(0,0,0,0.15)', width: 260 }}>
+          {/* Tabs */}
+          <div style={{ display: 'flex', borderBottom: '1px solid #eee', padding: '6px 10px 0' }}>
+            {['emoji', 'icons'].map(t => (
+              <button key={t} type="button" onClick={() => setTab(t)}
+                style={{ flex: 1, padding: '6px 0', fontSize: 11, fontWeight: 600, letterSpacing: 0.5, textTransform: 'uppercase', color: tab === t ? '#111' : '#999', borderBottom: tab === t ? '2px solid #111' : '2px solid transparent', background: 'none', border: 'none', borderBottomStyle: 'solid', cursor: 'pointer' }}>
+                {t === 'emoji' ? '😀 Emoji' : '◇ Icons'}
+              </button>
+            ))}
+          </div>
+          <div style={{ padding: 10, maxHeight: 240, overflowY: 'auto' }}>
+            {tab === 'emoji' ? (
+              <>
+                {Object.entries(EMOJI_GROUPS).map(([group, emojis]) => (
+                  <div key={group} style={{ marginBottom: 8 }}>
+                    <div style={{ fontSize: 10, fontWeight: 600, color: '#999', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 4, padding: '0 2px' }}>{group}</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                      {emojis.map((emoji) => (
+                        <button key={emoji} type="button" onClick={() => { onChange(emoji); setOpen(false); }}
+                          style={{ width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, background: value === emoji ? '#f3f4f6' : 'transparent', border: 'none', borderRadius: 6, cursor: 'pointer' }}
+                          onMouseOver={(e) => e.currentTarget.style.background = '#f3f4f6'}
+                          onMouseOut={(e) => e.currentTarget.style.background = value === emoji ? '#f3f4f6' : 'transparent'}
+                        >{emoji}</button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </>
+            ) : (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                {SVG_ICONS.map((icon) => (
+                  <button key={icon.id} type="button" title={icon.label} onClick={() => { onChange(icon.id); setOpen(false); }}
+                    style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', background: value === icon.id ? '#f3f4f6' : 'transparent', border: value === icon.id ? '1px solid #d1d5db' : '1px solid transparent', borderRadius: 8, cursor: 'pointer' }}
+                    onMouseOver={(e) => e.currentTarget.style.background = '#f3f4f6'}
+                    onMouseOut={(e) => e.currentTarget.style.background = value === icon.id ? '#f3f4f6' : 'transparent'}
                   >
-                    {emoji}
+                    <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><path d={icon.path} stroke="#555" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                   </button>
                 ))}
               </div>
-            </div>
-          ))}
-          <div style={{ borderTop: '1px solid #eee', paddingTop: 6, marginTop: 4 }}>
-            <input
-              type="text"
-              value={value ?? ''}
-              onChange={(e) => onChange(e.target.value)}
+            )}
+          </div>
+          <div style={{ borderTop: '1px solid #eee', padding: '6px 10px' }}>
+            <input type="text" value={value ?? ''} onChange={(e) => onChange(e.target.value)}
               placeholder="Or type any emoji/text"
-              className="w-full bg-gray-50 border border-gray-200 rounded-md px-2 py-1 text-[12px] text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
-            />
+              className="w-full bg-gray-50 border border-gray-200 rounded-md px-2 py-1 text-[12px] text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-400" />
           </div>
         </div>
       )}

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
+import IconOrEmoji from '../IconOrEmoji.jsx';
 
 // Template: Wheel Apex — Alloy & Bronze e-commerce style
 // Bebas Neue display + DM Sans body, brushed-alloy palette, bronze accents,
@@ -187,7 +188,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
             {trustItems.map((item, i) => (
               <div key={i} style={{ flex: 1, padding: '14px 20px', borderRight: i < trustItems.length - 1 ? `1px solid ${D.border}` : 'none', display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div style={{ width: 32, height: 32, background: D.bronzeBg, border: '1px solid #E8D9C0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14 }}>
-                  {item.emoji}
+                  <IconOrEmoji value={item.emoji} size={16} color="#A8813A" />
                 </div>
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 500, color: D.ink2 }}>{item.label}</div>
