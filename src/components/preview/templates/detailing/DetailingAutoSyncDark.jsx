@@ -418,7 +418,7 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
 
       {/* TESTIMONIALS */}
       {!hidden('testimonials') && (
-        generatedCopy?.reviewMode === 'google' && generatedCopy?.googleWidgetKey ? (
+        generatedCopy?.googleWidgetKey ? (
           <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
             <GoogleReviewsWidget widgetKey={generatedCopy.googleWidgetKey} />
           </div>

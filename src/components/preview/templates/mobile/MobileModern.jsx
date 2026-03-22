@@ -346,7 +346,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
 
       {/* TESTIMONIALS */}
       {!hidden('testimonials') && (
-        copy?.reviewMode === 'google' && copy?.googleWidgetKey ? (
+        copy?.googleWidgetKey ? (
           <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
             <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} />
           </div>

@@ -363,7 +363,7 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
 
       {/* TESTIMONIALS */}
       {!hidden('testimonials') && (
-        generatedCopy?.reviewMode === 'google' && generatedCopy?.googleWidgetKey ? (
+        generatedCopy?.googleWidgetKey ? (
           <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
             <GoogleReviewsWidget widgetKey={generatedCopy.googleWidgetKey} />
           </div>

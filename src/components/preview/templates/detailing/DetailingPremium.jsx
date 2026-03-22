@@ -278,7 +278,7 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
 
       {/* TESTIMONIALS */}
       {!hidden('testimonials') && (
-        generatedCopy?.reviewMode === 'google' && generatedCopy?.googleWidgetKey ? (
+        generatedCopy?.googleWidgetKey ? (
           <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
             <GoogleReviewsWidget widgetKey={generatedCopy.googleWidgetKey} />
           </div>
