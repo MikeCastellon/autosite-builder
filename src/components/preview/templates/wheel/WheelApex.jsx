@@ -152,14 +152,14 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
       </nav>
 
       {/* HERO */}
-      <section className="tp-2col" style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : { paddingTop: 68, minHeight: "92vh", background: D.offwhite, display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", alignItems: "stretch", overflow: "hidden", position: "relative" }}>
+      <section className={splitHero ? "tp-2col" : ""} style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : { minHeight: "100vh", background: D.offwhite, display: "flex", alignItems: "center", overflow: "hidden", position: "relative" }}>
 
         {!splitHero && <HeroImage src={images.hero} />}
-        {/* Hero Left */}
+        {/* Hero Content */}
         <div style={splitHero ? {
           flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
           padding: 'clamp(3rem,6vw,6rem)', background: D.offwhite,
-        } : { display: "flex", flexDirection: "column", justifyContent: "center", padding: "clamp(48px,6vw,80px) clamp(24px,5vw,64px) clamp(48px,6vw,80px) clamp(24px,6vw,80px)", position: "relative", zIndex: 2 }}>
+        } : { ...wrap, position: "relative", zIndex: 2, padding: "clamp(48px,6vw,80px) clamp(24px,5vw,64px)", maxWidth: 800 }}>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 10, fontSize: 11, fontWeight: 600, letterSpacing: "3px", textTransform: "uppercase", color: D.blue, marginBottom: 24, fontFamily: bodyFont }}>
             <span style={{ width: 24, height: 2, background: D.blue, flexShrink: 0, display: "inline-block" }} />
             {biz.city ? `${biz.city}'s Premier Wheel Studio` : "Custom Wheel Specialists"}
@@ -209,35 +209,14 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
           </div>
         </div>
 
-        {/* Hero Right - brushed alloy panel or hero image in split mode */}
-        {splitHero ? (
+        {/* Hero Right - image in split mode only */}
+        {splitHero && (
           <div style={{ flex: 1, position: 'relative', minHeight: '85vh', overflow: 'hidden' }}>
             {images.hero
               ? <img src={images.hero} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               : <div style={{ width: '100%', height: '100%', background: D.mist }} />
             }
           </div>
-        ) : (
-        <div style={{ position: "relative", overflow: "hidden", background: D.mist, minHeight: 400 }}>
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(110deg, #E8EAED 0%, #D8DCE3 20%, #ECEEF2 35%, #C8CDD6 50%, #E2E5EA 65%, #D0D4DD 80%, #E8EAED 100%)" }} />
-          <div style={{ position: "absolute", inset: 0, background: "repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,255,255,0.35) 3px, rgba(255,255,255,0.35) 4px)", opacity: 0.6 }} />
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(120deg, transparent 20%, rgba(255,255,255,0.25) 45%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0.2) 55%, transparent 75%)" }} />
-          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <span style={{ fontFamily: font, fontWeight: 900, fontSize: "clamp(100px, 14vw, 190px)", letterSpacing: "-4px", lineHeight: 0.85, color: "rgba(74,82,100,0.12)", userSelect: "none", pointerEvents: "none" }}>
-              {(biz.businessName || "APEX").split(" ")[0].toUpperCase().substring(0, 5)}
-            </span>
-          </div>
-          <div style={{ position: "absolute", top: 40, left: 40, background: D.blue, color: "#fff", padding: "8px 18px", fontSize: 11, fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", fontFamily: bodyFont }}>
-            {biz.city ? `${biz.city}'s #1 Wheel Shop` : "Premier Wheel Studio"}
-          </div>
-          <div style={{ position: "absolute", bottom: 48, right: 48, background: "#fff", padding: "20px 28px", borderLeft: `4px solid ${D.blue}`, boxShadow: "0 8px 40px rgba(0,0,0,0.1)" }}>
-            <div style={{ fontFamily: font, fontWeight: 700, fontSize: 13, letterSpacing: "2.5px", textTransform: "uppercase", color: D.dark, marginBottom: 4 }}>Brands In Stock</div>
-            <div style={{ fontSize: 12, color: D.steel, fontWeight: 500, fontFamily: bodyFont }}>Ready to mount today</div>
-            <div style={{ fontFamily: font, fontWeight: 900, fontSize: 36, color: D.blue, lineHeight: 1, marginTop: 8, letterSpacing: "-1px" }}>
-              {brandsList.length > 0 ? `${brandsList.length}+` : "80+"}
-            </div>
-          </div>
-        </div>
         )}
       </section>
 
