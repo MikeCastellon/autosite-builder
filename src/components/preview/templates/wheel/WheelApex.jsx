@@ -151,50 +151,53 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
         )}
       </header>
 
-      {/* STATS BAR */}
-      <section style={{ background: D.card, borderBottom: `1px solid ${D.border}` }}>
-        <div style={{ display: 'flex', maxWidth: 1100, margin: '0 auto' }}>
-          {heroStats.map((s, i) => (
-            <div key={i} style={{ flex: 1, padding: '20px 24px', borderRight: i < heroStats.length - 1 ? `1px solid ${D.border}` : 'none' }}>
-              <div style={{ fontFamily: display, fontSize: 32, letterSpacing: 1, color: D.bronze, lineHeight: 1 }}>{s.value}</div>
-              <div style={{ fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: D.muted, marginTop: 4 }}>{s.label}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* TICKER */}
       <div style={{ background: D.ink, padding: '10px 0', overflow: 'hidden', whiteSpace: 'nowrap' }}>
         <div style={{ display: 'inline-flex', gap: 40, animation: 'apexTick 22s linear infinite' }}>
-          {[...Array(2)].map((_, r) => (
-            (Array.isArray(biz.specialties) ? biz.specialties : typeof biz.specialties === 'string' && biz.specialties.trim() ? biz.specialties.split(/,\s*/) : ['Custom Wheels', 'Tire Mounting', 'Wheel Balancing', 'Fitment Guaranteed']).flatMap((item, i) => [
+          {[...Array(2)].map((_, r) => {
+            const tickerItems = copy?.tickerItems?.length > 0
+              ? copy.tickerItems
+              : (Array.isArray(biz.specialties) ? biz.specialties : typeof biz.specialties === 'string' && biz.specialties.trim() ? biz.specialties.split(/,\s*/) : ['Custom Wheels', 'Tire Mounting', 'Wheel Balancing', 'Fitment Guaranteed']);
+            return tickerItems.flatMap((item, i) => [
               <span key={`${r}-${i}`} style={{ fontSize: 11, fontWeight: 500, letterSpacing: 2, textTransform: 'uppercase', color: D.alloy }}>{typeof item === 'object' ? item.name : item}</span>,
               <span key={`${r}-d-${i}`} style={{ color: D.bronze, fontSize: 11 }}>◆</span>,
-            ])
-          ))}
+            ]);
+          })}
         </div>
         <style>{`@keyframes apexTick { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }`}</style>
       </div>
 
       {/* TRUST BAR */}
-      <div className="tp-trust-bar" style={{ display: 'flex', borderBottom: `1px solid ${D.border}`, background: D.card }}>
-        {[
-          { label: biz.yearsInBusiness ? `${biz.yearsInBusiness}+ years experience` : 'Professional service', sub: 'Trusted locally' },
-          { label: 'Fitment guaranteed', sub: 'Or free return' },
-          { label: payments.length > 0 ? payments.slice(0, 2).join(' · ') : 'Finance available', sub: payments.length > 0 ? 'Accepted' : '0% for 12 months' },
-          { label: '4.9 star rating', sub: 'Customer reviews' },
-        ].map((item, i) => (
-          <div key={i} style={{ flex: 1, padding: '14px 20px', borderRight: i < 3 ? `1px solid ${D.border}` : 'none', display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ width: 32, height: 32, background: D.bronzeBg, border: '1px solid #E8D9C0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14 }}>
-              {['🕐', '✓', '💳', '★'][i]}
-            </div>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 500, color: D.ink2 }}>{item.label}</div>
-              <div style={{ fontSize: 11, color: D.muted, marginTop: 1 }}>{item.sub}</div>
-            </div>
+      {(() => {
+        const defaultTrust = [
+          { emoji: '🕐', label: biz.yearsInBusiness ? `${biz.yearsInBusiness}+ years experience` : 'Professional service', sub: 'Trusted locally' },
+          { emoji: '✓', label: 'Fitment guaranteed', sub: 'Or free return' },
+          { emoji: '💳', label: payments.length > 0 ? payments.slice(0, 2).join(' · ') : 'Finance available', sub: payments.length > 0 ? 'Accepted' : '0% for 12 months' },
+          { emoji: '★', label: '4.9 star rating', sub: 'Customer reviews' },
+        ];
+        const trustItems = (copy?.trustBar || []).length > 0
+          ? copy.trustBar.map((t, i) => ({
+              emoji: t.emoji ?? defaultTrust[i]?.emoji ?? '★',
+              label: t.label || defaultTrust[i]?.label || '',
+              sub: t.sub || defaultTrust[i]?.sub || '',
+            }))
+          : defaultTrust;
+        return (
+          <div className="tp-trust-bar" style={{ display: 'flex', borderBottom: `1px solid ${D.border}`, background: D.card }}>
+            {trustItems.map((item, i) => (
+              <div key={i} style={{ flex: 1, padding: '14px 20px', borderRight: i < trustItems.length - 1 ? `1px solid ${D.border}` : 'none', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 32, height: 32, background: D.bronzeBg, border: '1px solid #E8D9C0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14 }}>
+                  {item.emoji}
+                </div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: D.ink2 }}>{item.label}</div>
+                  <div style={{ fontSize: 11, color: D.muted, marginTop: 1 }}>{item.sub}</div>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        );
+      })()}
 
       {/* SERVICES / PRODUCTS — product card grid */}
       {copy?.showProducts !== false && (() => {

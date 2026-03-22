@@ -104,12 +104,14 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
 
   const isSudsy = templateId === 'mobile_sudsy';
   const isWheel = templateId?.startsWith('wheel_');
+  const isApex = templateId === 'wheel_apex';
 
   const sections = [
     { id: 'hero', label: 'Hero' },
     { id: 'services', label: 'Services' },
     ...(isSudsy ? [{ id: 'howItWorks', label: 'How It Works' }, { id: 'whyUs', label: 'Why Us' }] : []),
     ...(isWheel ? [{ id: 'products', label: 'Products' }, { id: 'brands', label: 'Brands' }] : []),
+    ...(isApex ? [{ id: 'trustBar', label: 'Trust Bar' }, { id: 'ticker', label: 'Ticker' }] : []),
     { id: 'about', label: 'About' },
     { id: 'testimonials', label: 'Reviews' },
     { id: 'images', label: 'Images' },
@@ -367,6 +369,68 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
               <Field label="Comma-separated" value={copy?.tireBrandsList?.join?.(', ') ?? ''} onChange={(v) => setCopy('tireBrandsList', v.split(',').map(s => s.trim()).filter(Boolean))} multiline rows={2} />
             </>
           )}
+
+          {activeSection === 'trustBar' && isApex && (() => {
+            const defaultTrust = [
+              { emoji: '🕐', label: 'Professional service', sub: 'Trusted locally' },
+              { emoji: '✓', label: 'Fitment guaranteed', sub: 'Or free return' },
+              { emoji: '💳', label: 'Finance available', sub: '0% for 12 months' },
+              { emoji: '★', label: '4.9 star rating', sub: 'Customer reviews' },
+            ];
+            const items = copy?.trustBar?.length > 0 ? copy.trustBar : defaultTrust.map(d => ({ ...d }));
+            const updateItem = (i, key, val) => {
+              const current = [...items];
+              current[i] = { ...current[i], [key]: val };
+              setCopy('trustBar', current);
+            };
+            const removeItem = (i) => {
+              const current = [...items];
+              current.splice(i, 1);
+              setCopy('trustBar', current);
+            };
+            const addItem = () => {
+              setCopy('trustBar', [...items, { emoji: '★', label: '', sub: '' }]);
+            };
+            return (
+              <>
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-3">Trust Bar Items</p>
+                {items.map((item, i) => (
+                  <div key={i} className="mb-4 p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Item {i + 1}</p>
+                      {items.length > 1 && (
+                        <button type="button" onClick={() => removeItem(i)} className="text-[11px] text-red-400 hover:text-red-600 transition">Remove</button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-[60px_1fr] gap-2 mb-2">
+                      <input type="text" value={item.emoji ?? ''} onChange={(e) => updateItem(i, 'emoji', e.target.value)} placeholder="🕐" className="bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-[18px] text-center focus:outline-none focus:ring-1 focus:ring-blue-400" />
+                      <input type="text" value={item.label ?? ''} onChange={(e) => updateItem(i, 'label', e.target.value)} placeholder="Label text" className="bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 text-[12px] text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-400" />
+                    </div>
+                    <input type="text" value={item.sub ?? ''} onChange={(e) => updateItem(i, 'sub', e.target.value)} placeholder="Sub-text" className="w-full bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 text-[12px] text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-400" />
+                  </div>
+                ))}
+                <button type="button" onClick={addItem} className="w-full py-2 text-[12px] font-semibold text-gray-500 border border-dashed border-gray-300 rounded-lg hover:border-gray-400 hover:text-gray-700 transition mb-2">+ Add Item</button>
+              </>
+            );
+          })()}
+
+          {activeSection === 'ticker' && isApex && (() => {
+            const items = copy?.tickerItems || [];
+            return (
+              <>
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Scrolling Ticker Text</p>
+                <p className="text-[11px] text-gray-400 mb-3">Comma-separated items that scroll across the dark bar.</p>
+                <Field
+                  label="Ticker items (comma-separated)"
+                  value={items.length > 0 ? items.join(', ') : ''}
+                  onChange={(v) => setCopy('tickerItems', v.split(',').map(s => s.trim()).filter(Boolean))}
+                  multiline
+                  rows={3}
+                />
+                <p className="text-[11px] text-gray-400 mt-1">Leave empty to use specialties from your business info.</p>
+              </>
+            );
+          })()}
 
           {activeSection === 'about' && (
             <>
