@@ -363,6 +363,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
     { id: 'visibility', label: 'Sections' },
     { id: 'services', label: 'Services' },
     ...(isSudsy ? [{ id: 'howItWorks', label: 'How It Works' }, { id: 'whyUs', label: 'Why Us' }] : []),
+    ...(isBubble ? [{ id: 'howItWorks', label: 'How It Works' }] : []),
     ...(isIronclad || isBubble ? [{ id: 'whyUs', label: 'Why Us' }] : []),
     ...(isWheel ? [{ id: 'products', label: 'Products' }, { id: 'brands', label: 'Brands' }] : []),
     ...(isTint && !isWheel ? [{ id: 'filmBrands', label: 'Film Brands' }] : []),
@@ -486,7 +487,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
             </>
           )}
 
-          {activeSection === 'howItWorks' && isSudsy && (() => {
+          {activeSection === 'howItWorks' && (isSudsy || isBubble) && (() => {
             const defaults = [
               { emoji: '📱', title: 'You Book', desc: 'Call, text, or tap — your choice. Takes about 2 minutes.' },
               { emoji: '🚐', title: 'We Show Up', desc: 'Our van rolls up to your driveway, parking lot, or office.' },

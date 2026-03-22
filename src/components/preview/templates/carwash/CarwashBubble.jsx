@@ -85,12 +85,17 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
       : [];
   const hasHours = hoursLines.length > 0;
 
-  const steps = [
-    { icon: '🚗', title: 'Pull In',          desc: 'Drive up, choose your package on the display, and follow our guide lights into the bay.' },
-    { icon: '🫧', title: 'Foam Attack',      desc: 'High-pressure pre-soak, triple foam cannons, soft-touch brushes, and an underbody flush.' },
-    { icon: '💧', title: 'Rinse & Protect',  desc: 'Spot-free rinse removes every trace of soap. Protectant seals your finish for days.' },
-    { icon: '😍', title: 'Drive Away Clean', desc: 'Roll out fresh and sparkling. Your car is already turning heads — come back anytime.' },
+  const defaultSteps = [
+    { emoji: '🚗', title: 'Pull In',          desc: 'Drive up, choose your package on the display, and follow our guide lights into the bay.' },
+    { emoji: '🫧', title: 'Foam Attack',      desc: 'High-pressure pre-soak, triple foam cannons, soft-touch brushes, and an underbody flush.' },
+    { emoji: '💧', title: 'Rinse & Protect',  desc: 'Spot-free rinse removes every trace of soap. Protectant seals your finish for days.' },
+    { emoji: '😍', title: 'Drive Away Clean', desc: 'Roll out fresh and sparkling. Your car is already turning heads — come back anytime.' },
   ];
+  const steps = (copy?.howSteps || defaultSteps).map((s, i) => ({
+    icon: s.emoji || defaultSteps[i]?.emoji || '✨',
+    title: s.title || defaultSteps[i]?.title || '',
+    desc: s.desc || defaultSteps[i]?.desc || '',
+  }));
 
   const defaultFeatures = [
     { icon: '🌊', title: 'Soft-Touch Equipment',   desc: 'Ultra-soft brushes clean thoroughly without scratching your paint or trim.' },
