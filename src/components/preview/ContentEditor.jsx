@@ -319,6 +319,33 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
                           <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Product {i + 1}</p>
                           <button type="button" onClick={() => removeProduct(i)} className="text-[11px] text-red-400 hover:text-red-600 transition">Remove</button>
                         </div>
+                        <div className="mb-3">
+                          <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Product Image</label>
+                          <label className="block cursor-pointer">
+                            {prod.image ? (
+                              <div className="relative group rounded-lg overflow-hidden border border-gray-200">
+                                <img src={prod.image} alt="Product" className="w-full h-24 object-cover" />
+                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                                  <span className="text-white text-[11px] font-medium">Change</span>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex flex-col items-center justify-center h-16 border-2 border-dashed border-gray-200 rounded-lg hover:border-gray-400 transition text-gray-400 hover:text-gray-600">
+                                <span className="text-[11px]">+ Upload Image</span>
+                              </div>
+                            )}
+                            <input type="file" accept="image/*" onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              const reader = new FileReader();
+                              reader.onload = (ev) => updateProduct(i, 'image', ev.target.result);
+                              reader.readAsDataURL(file);
+                            }} className="sr-only" />
+                          </label>
+                          {prod.image && (
+                            <button onClick={() => updateProduct(i, 'image', null)} className="mt-1 text-[11px] text-red-400 hover:text-red-600 transition">Remove image</button>
+                          )}
+                        </div>
                         <Field label="Name" value={prod.name ?? ''} onChange={(v) => updateProduct(i, 'name', v)} />
                         <Field label="Price" value={prod.price ?? ''} onChange={(v) => updateProduct(i, 'price', v)} />
                         <Field label="Description" value={prod.description ?? ''} onChange={(v) => updateProduct(i, 'description', v)} />

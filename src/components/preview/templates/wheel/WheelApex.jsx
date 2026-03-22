@@ -202,13 +202,17 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
             <div className="tp-3col" style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(products.length, 3)}, 1fr)`, gap: 1, background: D.border }}>
               {products.map((item, i) => (
                 <div key={i} style={{ background: D.card }}>
-                  <div style={{ height: 180, background: D.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: `1px solid ${D.border}`, position: 'relative' }}>
+                  <div style={{ height: 220, background: D.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: `1px solid ${D.border}`, position: 'relative', overflow: 'hidden' }}>
                     {(item.badge || (i === 0 && !copy?.products)) && (
-                      <span style={{ position: 'absolute', top: 12, left: 12, fontSize: 10, fontWeight: 500, letterSpacing: 1.5, textTransform: 'uppercase', padding: '4px 9px', background: D.bronzeBg, color: D.bronze }}>
+                      <span style={{ position: 'absolute', top: 12, left: 12, fontSize: 10, fontWeight: 500, letterSpacing: 1.5, textTransform: 'uppercase', padding: '4px 9px', background: D.bronzeBg, color: D.bronze, zIndex: 1 }}>
                         {item.badge || 'Popular'}
                       </span>
                     )}
-                    <span style={{ fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: D.muted }}>Image</span>
+                    {item.image ? (
+                      <img src={item.image} alt={item.name || 'Product'} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                    ) : (
+                      <span style={{ fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: D.muted }}>Image</span>
+                    )}
                   </div>
                   <div style={{ padding: '18px 20px' }}>
                     <div style={{ fontFamily: display, fontSize: 22, letterSpacing: 0.5, color: D.ink, marginBottom: 3 }}>{typeof item === 'string' ? item : (item.name || 'Product')}</div>
