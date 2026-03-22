@@ -1,16 +1,13 @@
 import { useState } from 'react';
 import { supabase } from '../../lib/supabase.js';
 
-function formatPhone(raw) {
-  return raw.startsWith('+') ? raw : '+1' + raw.replace(/\D/g, '');
-}
-
 export default function LoginPage() {
-  const [phone, setPhone] = useState('');
-  const [otp, setOtp] = useState('');
-  const [otpSent, setOtpSent] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [message, setMessage] = useState(null);
 
   const handleGoogleLogin = async () => {
     setError(null);
@@ -21,33 +18,44 @@ export default function LoginPage() {
     if (error) setError(error.message);
   };
 
-  const handleSendOtp = async (e) => {
+  const handleEmailAuth = async (e) => {
     e.preventDefault();
     setError(null);
+    setMessage(null);
     setLoading(true);
-    const formatted = formatPhone(phone);
-    const { error } = await supabase.auth.signInWithOtp({ phone: formatted });
-    if (error) setError(error.message);
-    else setOtpSent(true);
-    setLoading(false);
-  };
 
-  const handleVerifyOtp = async (e) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-    const formatted = formatPhone(phone);
-    const { error } = await supabase.auth.verifyOtp({ phone: formatted, token: otp, type: 'sms' });
-    if (error) setError(error.message);
+    if (isSignUp) {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: window.location.origin },
+      });
+      if (error) {
+        setError(error.message);
+      } else {
+        setMessage('Check your email for a confirmation link!');
+      }
+    } else {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) setError(error.message);
+    }
+
     setLoading(false);
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#faf9f7] p-4">
       <div className="w-full max-w-sm">
-        <h1 className="text-2xl font-black text-[#1a1a1a] mb-1 tracking-tight">Sign in</h1>
-        <p className="text-[#888] text-sm mb-6">Continue to Website Creator</p>
+        <div className="mb-6">
+          <h1 className="text-2xl font-black text-[#1a1a1a] tracking-tight">
+            {isSignUp ? 'Create Account' : 'Welcome Back'}
+          </h1>
+          <p className="text-[#888] text-sm mt-1">
+            {isSignUp ? 'Sign up to start building' : 'Sign in to your account'}
+          </p>
+        </div>
 
+        {/* Google OAuth */}
         <button
           onClick={handleGoogleLogin}
           className="w-full flex items-center justify-center gap-3 py-3 px-4 border border-black/10 rounded-xl font-medium text-[#1a1a1a] hover:bg-white transition-colors mb-4"
@@ -62,57 +70,44 @@ export default function LoginPage() {
           <div className="flex-1 border-t border-black/10" />
         </div>
 
-        {!otpSent ? (
-          <form onSubmit={handleSendOtp}>
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="Phone number"
-              className="w-full border border-black/10 rounded-xl px-4 py-3 text-sm mb-3 outline-none focus:ring-2 focus:ring-[#cc0000]/30"
-              required
-            />
-            <p className="text-xs text-[#aaa] mb-3">Include country code for non-US numbers (e.g. +44...)</p>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 rounded-xl bg-[#1a1a1a] hover:bg-[#cc0000] text-white font-semibold text-sm transition-colors disabled:opacity-50"
-            >
-              {loading ? 'Sending...' : 'Send Code'}
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={handleVerifyOtp}>
-            <p className="text-sm text-[#555] mb-3">Enter the 6-digit code sent to {phone}</p>
-            <input
-              type="text"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              placeholder="6-digit code"
-              maxLength={6}
-              className="w-full border border-black/10 rounded-xl px-4 py-3 text-sm mb-3 outline-none focus:ring-2 focus:ring-[#cc0000]/30 text-center tracking-widest"
-              required
-            />
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 rounded-xl bg-[#1a1a1a] hover:bg-[#cc0000] text-white font-semibold text-sm transition-colors disabled:opacity-50"
-            >
-              {loading ? 'Verifying...' : 'Verify Code'}
-            </button>
-            <button
-              type="button"
-              onClick={() => setOtpSent(false)}
-              className="w-full mt-2 text-xs text-[#888] hover:text-[#1a1a1a] transition-colors"
-            >
-              Use a different number
-            </button>
-          </form>
-        )}
+        {/* Email / Password Form */}
+        <form onSubmit={handleEmailAuth} className="space-y-3">
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email address"
+            className="w-full border border-black/10 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#cc0000]/30"
+            required
+          />
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Password"
+            minLength={6}
+            className="w-full border border-black/10 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#cc0000]/30"
+            required
+          />
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3 rounded-xl bg-[#1a1a1a] hover:bg-[#cc0000] text-white font-semibold text-sm transition-colors disabled:opacity-50"
+          >
+            {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}
+          </button>
+        </form>
 
-        {error && (
-          <p className="mt-3 text-xs text-[#cc0000] text-center">{error}</p>
-        )}
+        <button
+          type="button"
+          onClick={() => { setIsSignUp(!isSignUp); setError(null); setMessage(null); }}
+          className="w-full mt-3 text-xs text-[#888] hover:text-[#1a1a1a] transition-colors text-center"
+        >
+          {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+        </button>
+
+        {error && <p className="mt-3 text-xs text-[#cc0000] text-center">{error}</p>}
+        {message && <p className="mt-3 text-xs text-green-600 text-center">{message}</p>}
       </div>
     </div>
   );

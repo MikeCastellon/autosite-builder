@@ -4,17 +4,26 @@ import { supabase } from './supabase.js';
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  // Auth temporarily disabled — restore when Google OAuth is configured
-  // const [session, setSession] = useState(undefined);
-  // useEffect(() => {
-  //   const { data: listener } = supabase.auth.onAuthStateChange((_event, s) => {
-  //     setSession(s);
-  //   });
-  //   return () => listener.subscription.unsubscribe();
-  // }, []);
+  const [session, setSession] = useState(undefined);
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session: s } }) => {
+      setSession(s);
+    });
+
+    // Listen for auth changes
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, s) => {
+      setSession(s);
+    });
+
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
+  const loading = session === undefined;
 
   return (
-    <AuthContext.Provider value={{ session: null, loading: false }}>
+    <AuthContext.Provider value={{ session: loading ? null : session, loading }}>
       {children}
     </AuthContext.Provider>
   );

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase.js';
 import { publishSite } from '../../lib/publishSite.js';
 
-export default function DashboardPage({ onNewSite }) {
+export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEmail }) {
   const [sites, setSites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
@@ -72,7 +72,15 @@ export default function DashboardPage({ onNewSite }) {
   return (
     <div className="min-h-screen bg-[#faf9f7]">
       <header className="border-b border-black/[0.07] bg-white px-6 py-4 flex items-center justify-between">
-        <h1 className="text-lg font-black text-[#1a1a1a] tracking-tight">Website Creator</h1>
+        <h1 className="text-lg font-black text-[#1a1a1a] tracking-tight">AutoSite Builder</h1>
+        <div className="flex items-center gap-4">
+          {userEmail && <span className="text-xs text-[#888]">{userEmail}</span>}
+          {onSignOut && (
+            <button onClick={onSignOut} className="text-xs text-[#888] hover:text-[#cc0000] transition-colors">
+              Sign Out
+            </button>
+          )}
+        </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-6 py-10">
@@ -136,6 +144,14 @@ export default function DashboardPage({ onNewSite }) {
                   )}
                 </div>
                 <div className="flex gap-2">
+                  {onEditSite && (
+                    <button
+                      onClick={() => onEditSite(site)}
+                      className="px-3 py-1.5 text-xs font-semibold bg-[#1a1a1a] text-white rounded-lg hover:bg-[#cc0000] transition-colors"
+                    >
+                      Edit
+                    </button>
+                  )}
                   {site.published_url && (
                     <button
                       onClick={() => handleRepublish(site)}
@@ -148,7 +164,7 @@ export default function DashboardPage({ onNewSite }) {
                     onClick={() => handleReExport(site)}
                     className="px-3 py-1.5 text-xs font-medium border border-black/10 rounded-lg hover:border-[#cc0000]/30 hover:text-[#cc0000] transition-colors"
                   >
-                    Re-export
+                    Download
                   </button>
                   <button
                     onClick={() => handleDelete(site.id)}
