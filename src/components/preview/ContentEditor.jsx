@@ -241,6 +241,17 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
       { id: 'cta', label: 'Contact / CTA' },
       { id: 'awards', label: 'Awards' },
     ],
+    mechanic_ironclad: [
+      { id: 'hero', label: 'Hero' },
+      { id: 'ticker', label: 'Service Ticker' },
+      { id: 'ctaBand', label: 'CTA Banner' },
+      { id: 'about', label: 'About / Shop' },
+      { id: 'services', label: 'Services' },
+      { id: 'gallery', label: 'Gallery' },
+      { id: 'whyUs', label: 'Why Choose Us' },
+      { id: 'testimonials', label: 'Reviews' },
+      { id: 'cta', label: 'Contact & Hours' },
+    ],
     wheel_apex: [
       { id: 'hero', label: 'Hero' },
       { id: 'trustBar', label: 'Trust Bar' },

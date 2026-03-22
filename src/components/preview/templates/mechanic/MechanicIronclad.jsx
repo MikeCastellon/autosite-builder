@@ -60,7 +60,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
   const hidden = (id) => copy?.hiddenSections?.includes(id);
-  const getOrder = buildSectionOrder(copy, ['hero','services','about','gallery','whyUs','testimonials','cta']);
+  const getOrder = buildSectionOrder(copy, ['hero','ticker','ctaBand','about','services','gallery','whyUs','testimonials','cta']);
 
   // ── Font stacks ───────────────────────────────────────────────────
   const bebas     = "'Bebas Neue', 'Barlow Condensed', sans-serif";
@@ -314,7 +314,8 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
       {/* ═══════════════════════════════════════════════════════════
           MARQUEE TICKER
       ═══════════════════════════════════════════════════════════ */}
-      <div style={{ background: c.accent, borderTop: '2px solid #8B0000', borderBottom: '2px solid #8B0000', padding: '14px 0', overflow: 'hidden' }}>
+      {!hidden('ticker') && (
+      <div style={{ background: c.accent, borderTop: '2px solid #8B0000', borderBottom: '2px solid #8B0000', padding: '14px 0', overflow: 'hidden', order: getOrder('ticker') }}>
         <div style={{ display: 'flex', animation: 'ironcladMarquee 28s linear infinite', width: 'max-content' }}>
           {[0, 1].map((pass) =>
             (services.length > 0
@@ -334,6 +335,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
           )}
         </div>
       </div>
+      )}
 
       {/* ═══════════════════════════════════════════════════════════
           SERVICES GRID
@@ -628,7 +630,8 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
       {/* ═══════════════════════════════════════════════════════════
           CTA BAND
       ═══════════════════════════════════════════════════════════ */}
-      <section style={{ background: c.accent, padding: 'clamp(64px, 10vw, 96px) 5%', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+      {!hidden('ctaBand') && (
+      <section style={{ background: c.accent, padding: 'clamp(64px, 10vw, 96px) 5%', textAlign: 'center', position: 'relative', overflow: 'hidden', order: getOrder('ctaBand') }}>
         <div style={{ position: 'absolute', inset: 0, backgroundImage: hatch, opacity: 0.4 }} />
         <div style={{ position: 'relative', zIndex: 1 }}>
           <h2 style={{ fontFamily: bebas, fontSize: 'clamp(36px, 6vw, 72px)', letterSpacing: 3, color: '#fff', margin: '0 0 14px', lineHeight: 0.95 }}>
@@ -657,6 +660,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
           )}
         </div>
       </section>
+      )}
 
       {/* ═══════════════════════════════════════════════════════════
           FOOTER
