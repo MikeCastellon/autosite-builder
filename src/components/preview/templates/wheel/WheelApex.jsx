@@ -156,9 +156,10 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
       <div style={{ background: D.ink, padding: '10px 0', overflow: 'hidden', whiteSpace: 'nowrap' }}>
         <div style={{ display: 'inline-flex', gap: 40, animation: 'apexTick 22s linear infinite' }}>
           {[...Array(2)].map((_, r) => {
-            const tickerItems = copy?.tickerItems?.length > 0
+            const rawTicker = copy?.tickerItems?.length > 0
               ? copy.tickerItems
               : (Array.isArray(biz.specialties) ? biz.specialties : typeof biz.specialties === 'string' && biz.specialties.trim() ? biz.specialties.split(/,\s*/) : ['Custom Wheels', 'Tire Mounting', 'Wheel Balancing', 'Fitment Guaranteed']);
+            const tickerItems = Array.isArray(rawTicker) ? rawTicker : [rawTicker];
             return tickerItems.flatMap((item, i) => [
               <span key={`${r}-${i}`} style={{ fontSize: 11, fontWeight: 500, letterSpacing: 2, textTransform: 'uppercase', color: D.alloy }}>{typeof item === 'object' ? item.name : item}</span>,
               <span key={`${r}-d-${i}`} style={{ color: D.bronze, fontSize: 11 }}>◆</span>,

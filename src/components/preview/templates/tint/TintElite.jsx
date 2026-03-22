@@ -383,13 +383,13 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
                 </div>
               </div>
             )}
-            {businessInfo.awards && businessInfo.awards.length > 0 && (
+            {businessInfo.awards && (
               <div>
                 <div style={{ fontSize: '0.65rem', letterSpacing: '3px', textTransform: 'uppercase', color: c.muted, marginBottom: '10px', fontFamily: bodyFont }}>Awards & Recognition</div>
-                {businessInfo.awards.map((award, i) => (
+                {(Array.isArray(businessInfo.awards) ? businessInfo.awards : [businessInfo.awards]).map((award, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '9px 0', borderBottom: '1px solid rgba(202,138,4,0.07)', color: c.muted, fontSize: '0.88rem', fontWeight: 300 }}>
                     <div style={{ width: '5px', height: '5px', background: goldGradient, transform: 'rotate(45deg)', flexShrink: 0 }} />
-                    {award}
+                    {typeof award === 'object' ? award.name || '' : award}
                   </div>
                 ))}
               </div>
