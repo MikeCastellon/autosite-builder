@@ -163,7 +163,7 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
   ];
 
   return (
-    <div style={{ background: c.bg, color: c.text, fontFamily: bodyFont, containerType: 'inline-size' }}>
+    <div style={{ background: c.bg, color: c.text, fontFamily: bodyFont, containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
       <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
       {/* NAV */}
       <nav style={{ ...navStyle, order: -1 }}>

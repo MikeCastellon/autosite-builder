@@ -136,6 +136,8 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
         backgroundImage: noiseBg,
         backgroundRepeat: 'repeat',
         containerType: 'inline-size',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
