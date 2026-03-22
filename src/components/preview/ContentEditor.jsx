@@ -225,6 +225,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
 
   const isSudsy = templateId === 'mobile_sudsy';
   const isWheel = templateId?.startsWith('wheel_');
+  const isTint = templateId?.startsWith('tint_');
   const isApex = templateId === 'wheel_apex';
 
   const sections = [
@@ -232,6 +233,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
     { id: 'services', label: 'Services' },
     ...(isSudsy ? [{ id: 'howItWorks', label: 'How It Works' }, { id: 'whyUs', label: 'Why Us' }] : []),
     ...(isWheel ? [{ id: 'products', label: 'Products' }, { id: 'brands', label: 'Brands' }] : []),
+    ...(isTint && !isWheel ? [{ id: 'filmBrands', label: 'Film Brands' }] : []),
     ...(isApex ? [{ id: 'trustBar', label: 'Trust Bar' }, { id: 'ticker', label: 'Ticker' }] : []),
     { id: 'about', label: 'About' },
     { id: 'testimonials', label: 'Reviews' },
@@ -488,6 +490,14 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
               <Field label="Comma-separated" value={copy?.wheelBrands?.join?.(', ') ?? ''} onChange={(v) => setCopy('wheelBrands', v.split(',').map(s => s.trim()).filter(Boolean))} multiline rows={2} />
               <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2 mt-4">Tire Brands</p>
               <Field label="Comma-separated" value={copy?.tireBrandsList?.join?.(', ') ?? ''} onChange={(v) => setCopy('tireBrandsList', v.split(',').map(s => s.trim()).filter(Boolean))} multiline rows={2} />
+            </>
+          )}
+
+          {activeSection === 'filmBrands' && isTint && (
+            <>
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Film Brands</p>
+              <Field label="Comma-separated (e.g. XPEL, LLumar, 3M)" value={copy?.filmBrandsList?.join?.(', ') ?? ''} onChange={(v) => setCopy('filmBrandsList', v.split(',').map(s => s.trim()).filter(Boolean))} multiline rows={2} />
+              <p className="text-[11px] text-gray-400 mt-1">Leave empty to use film brands from your business info form.</p>
             </>
           )}
 

@@ -26,8 +26,9 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
   const packages = biz.packages || [];
   const splitHero = copy?.heroLayout === 'split';
 
-  const filmBrandsList = biz.filmBrands
-    ? (typeof biz.filmBrands === 'string' ? biz.filmBrands.split(/,|·/).map(b => b.trim()) : biz.filmBrands)
+  const _fb = copy?.filmBrandsList ?? biz.filmBrands;
+  const filmBrandsList = _fb
+    ? (Array.isArray(_fb) ? _fb.map(b => typeof b === 'object' ? (b.name || '') : b).filter(Boolean) : typeof _fb === 'string' ? _fb.split(/,|·/).map(b => b.trim()).filter(Boolean) : [])
     : [];
 
   return (

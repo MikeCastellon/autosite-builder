@@ -254,21 +254,30 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
       </section>
 
       {/* FILM BRANDS */}
-      {businessInfo.filmBrands && businessInfo.filmBrands.length > 0 && (
-        <section id="films" style={{ ...sectionStyle(c.bg), borderBottom: '1px solid rgba(202,138,4,0.08)' }}>
-          <div style={{ maxWidth: '900px', margin: '0 auto', textAlign: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', justifyContent: 'center', marginBottom: '20px' }}>
-              <div style={{ height: '1px', flex: 1, maxWidth: '80px', background: goldGradient, opacity: 0.4 }} />
-              <span style={{ fontSize: '0.72rem', letterSpacing: '4px', textTransform: 'uppercase', color: c.muted, fontFamily: bodyFont }}>Authorized Film Brands</span>
-              <div style={{ height: '1px', flex: 1, maxWidth: '80px', background: goldGradient, opacity: 0.4 }} />
+      {(() => {
+        const parseBrands = (val) => {
+          if (!val) return [];
+          if (Array.isArray(val)) return val.map(b => typeof b === 'object' ? (b.name || '') : b).filter(Boolean);
+          if (typeof val === 'string') return val.split(/,|·/).map(b => b.trim()).filter(Boolean);
+          return [];
+        };
+        const filmBrands = parseBrands(generatedCopy?.filmBrandsList ?? businessInfo.filmBrands);
+        return filmBrands.length > 0 && (
+          <section id="films" style={{ ...sectionStyle(c.bg), borderBottom: '1px solid rgba(202,138,4,0.08)' }}>
+            <div style={{ maxWidth: '900px', margin: '0 auto', textAlign: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', justifyContent: 'center', marginBottom: '20px' }}>
+                <div style={{ height: '1px', flex: 1, maxWidth: '80px', background: goldGradient, opacity: 0.4 }} />
+                <span style={{ fontSize: '0.72rem', letterSpacing: '4px', textTransform: 'uppercase', color: c.muted, fontFamily: bodyFont }}>Authorized Film Brands</span>
+                <div style={{ height: '1px', flex: 1, maxWidth: '80px', background: goldGradient, opacity: 0.4 }} />
+              </div>
+              <h2 style={{ fontFamily: font, fontSize: '2rem', fontWeight: 700, color: c.text, marginBottom: '32px', fontStyle: 'italic' }}>Premium Film Selection</h2>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center' }}>
+                {filmBrands.map((brand, i) => goldPill(brand, i))}
+              </div>
             </div>
-            <h2 style={{ fontFamily: font, fontSize: '2rem', fontWeight: 700, color: c.text, marginBottom: '32px', fontStyle: 'italic' }}>Premium Film Selection</h2>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center' }}>
-              {businessInfo.filmBrands.map((brand, i) => goldPill(brand, i))}
-            </div>
-          </div>
-        </section>
-      )}
+          </section>
+        );
+      })()}
 
       {/* SERVICES */}
       <section id="services" style={sectionStyle()}>
@@ -338,21 +347,23 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
           <div style={{ flex: '1 1 300px', minWidth: '260px' }}>
             {(generatedCopy?.aboutLayout || 'image') !== 'stats' ? (
               images.about
-                ? <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block' }} />
-                : <div style={{ width: '100%', maxWidth: '440px', height: '360px', background: c.secondary, borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.muted, fontSize: '0.85rem' }}>Upload a photo in Images tab</div>
+                ? <img src={images.about} alt="About" style={{ width: '100%', maxWidth: 460, height: '360px', objectFit: 'cover', display: 'block' }} />
+                : <div style={{ width: '100%', maxWidth: 460, height: '360px', border: '1px solid rgba(202,138,4,0.2)', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: c.bg }}>
+                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: goldGradient }} />
+                    <div style={diagonalLines} />
+                    <div style={{ position: 'absolute', top: '16px', left: '16px', width: '20px', height: '20px', borderTop: `1px solid rgba(202,138,4,0.5)`, borderLeft: `1px solid rgba(202,138,4,0.5)` }} />
+                    <div style={{ position: 'absolute', bottom: '16px', right: '16px', width: '20px', height: '20px', borderBottom: `1px solid rgba(202,138,4,0.5)`, borderRight: `1px solid rgba(202,138,4,0.5)` }} />
+                    <span style={{ fontFamily: font, fontSize: '5rem', ...goldGradientText, opacity: 0.2, fontStyle: 'italic' }}>✦</span>
+                  </div>
             ) : (
-              images.about ? (
-                <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block' }} />
-              ) : (
-                <div style={{ width: '100%', maxWidth: '440px', height: '360px', border: '1px solid rgba(202,138,4,0.2)', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: c.bg }}>
-                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: goldGradient }} />
-                  <div style={diagonalLines} />
-                  {/* Corner ornaments */}
-                  <div style={{ position: 'absolute', top: '16px', left: '16px', width: '20px', height: '20px', borderTop: `1px solid rgba(202,138,4,0.5)`, borderLeft: `1px solid rgba(202,138,4,0.5)` }} />
-                  <div style={{ position: 'absolute', bottom: '16px', right: '16px', width: '20px', height: '20px', borderBottom: `1px solid rgba(202,138,4,0.5)`, borderRight: `1px solid rgba(202,138,4,0.5)` }} />
-                  <span style={{ fontFamily: font, fontSize: '5rem', ...goldGradientText, opacity: 0.2, fontStyle: 'italic' }}>✦</span>
-                </div>
-              )
+              <div style={{ width: '100%', maxWidth: 460, background: c.bg, padding: '40px 32px', boxSizing: 'border-box', border: '1px solid rgba(202,138,4,0.15)' }}>
+                {stats.map((st, i) => (
+                  <div key={i} style={{ textAlign: 'center', marginBottom: i < stats.length - 1 ? 28 : 0 }}>
+                    <div style={{ fontFamily: font, fontSize: '3rem', fontWeight: 700, fontStyle: 'italic', lineHeight: 1, ...goldGradientText }}>{st.value}</div>
+                    <div style={{ fontSize: 11, fontWeight: 500, letterSpacing: 2, color: c.muted, marginTop: 6, textTransform: 'uppercase' }}>{st.label}</div>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
           <div style={{ flex: '1 1 380px' }}>

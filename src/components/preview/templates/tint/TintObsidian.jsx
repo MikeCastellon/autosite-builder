@@ -48,10 +48,9 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
   const testimonials = copy.testimonialPlaceholders || [];
   const packages     = biz.packages || [];
 
-  const filmBrandsList = biz.filmBrands
-    ? (Array.isArray(biz.filmBrands)
-        ? biz.filmBrands
-        : biz.filmBrands.split(/,|·/).map(b => b.trim()).filter(Boolean))
+  const _fb = copy?.filmBrandsList ?? biz.filmBrands;
+  const filmBrandsList = _fb
+    ? (Array.isArray(_fb) ? _fb.map(b => typeof b === 'object' ? (b.name || '') : b).filter(Boolean) : typeof _fb === 'string' ? _fb.split(/,|·/).map(b => b.trim()).filter(Boolean) : [])
     : [];
 
   const specialtiesList = biz.specialties
