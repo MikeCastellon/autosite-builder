@@ -253,78 +253,60 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
         );
       })()}
 
-      {/* ABOUT */}
-      <section id="about" className="tp-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', background: D.card, borderTop: `1px solid ${D.border}`, borderBottom: `1px solid ${D.border}` }}>
-        <div style={{ padding: '64px 48px', borderRight: `1px solid ${D.border}` }}>
-          <p style={{ fontSize: 11, letterSpacing: 3, textTransform: 'uppercase', color: D.bronze, marginBottom: 8, fontWeight: 500 }}>◆ About Us</p>
-          <h2 style={{ fontFamily: display, fontSize: 40, letterSpacing: 1, color: D.ink, lineHeight: 1, margin: '0 0 20px' }}>About<br />{biz.businessName || 'Us'}</h2>
-          {(copy?.aboutLayout || 'image') !== 'stats' ? (
-            images.about
-              ? <img src={images.about} alt="About" style={{ width: '100%', height: 280, objectFit: 'cover', marginBottom: 20, display: 'block' }} />
-              : <div style={{ width: '100%', height: 280, background: D.bg2, border: `1px dashed ${D.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
-                  <span style={{ fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase', color: D.muted }}>Upload photo</span>
-                </div>
-          ) : (
-            <div style={{ background: D.bg, padding: '32px 24px', marginBottom: 20, border: `1px solid ${D.border}` }}>
-              {(() => {
-                const defStats = [
-                  { value: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'Years in Business' },
-                  { value: '50+', label: 'Brands Available' },
-                  { value: '5K+', label: 'Wheels Installed' },
-                ];
-                const stats = (copy?.aboutStats || []).map((s, i) => ({
-                  value: s.value || defStats[i]?.value || '',
-                  label: s.label || defStats[i]?.label || '',
-                }));
-                if (stats.length === 0) stats.push(...defStats);
-                return stats.map((st, i) => (
-                  <div key={i} style={{ textAlign: 'center', marginBottom: i < stats.length - 1 ? 20 : 0 }}>
-                    <div style={{ fontFamily: display, fontSize: 36, color: D.bronze, lineHeight: 1 }}>{st.value}</div>
-                    <div style={{ fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: D.muted, marginTop: 4 }}>{st.label}</div>
-                  </div>
-                ));
-              })()}
-            </div>
-          )}
-          <p style={{ fontSize: 14, color: D.muted, lineHeight: 1.75, fontWeight: 300 }}>
-            {copy.aboutText || `Located in ${biz.city || 'your area'}, we specialize in custom wheel fitment and premium tire services.`}
-          </p>
-          {biz.awards && (
-            <div style={{ background: D.bronzeBg, border: '1px solid #E8D9C0', padding: '14px 18px', marginTop: 20 }}>
-              <div style={{ fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase', color: D.bronze, fontWeight: 500, marginBottom: 4 }}>Awards</div>
-              <div style={{ fontSize: 13, color: D.ink2 }}>{biz.awards}</div>
-            </div>
-          )}
-        </div>
-        <div style={{ padding: '64px 48px', background: D.bg }}>
-          <p style={{ fontSize: 11, letterSpacing: 3, textTransform: 'uppercase', color: D.bronze, marginBottom: 8, fontWeight: 500 }}>◆ Shop Info</p>
-          {biz.hours && Object.keys(biz.hours).length > 0 && (
-            <div style={{ background: D.card, border: `1px solid ${D.border}`, padding: '20px', marginBottom: 16 }}>
-              <div style={{ fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase', color: D.bronze, fontWeight: 500, marginBottom: 12 }}>Hours</div>
-              {Object.entries(biz.hours).map(([day, hrs], i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 8, marginBottom: 8, borderBottom: `1px solid ${D.borderLight}`, fontSize: 13 }}>
-                  <span style={{ fontWeight: 500, color: D.ink2 }}>{day}</span>
-                  <span style={{ color: D.muted }}>{hrs}</span>
-                </div>
-              ))}
-            </div>
-          )}
-          {biz.address && (
-            <div style={{ background: D.card, border: `1px solid ${D.border}`, padding: '20px', marginBottom: 16 }}>
-              <div style={{ fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase', color: D.bronze, fontWeight: 500, marginBottom: 8 }}>Location</div>
-              <p style={{ fontSize: 13, color: D.ink2, margin: 0, lineHeight: 1.6 }}>{biz.address}<br />{biz.city}, {biz.state}</p>
-            </div>
-          )}
-          {payments.length > 0 && (
-            <div style={{ background: D.card, border: `1px solid ${D.border}`, padding: '20px' }}>
-              <div style={{ fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase', color: D.bronze, fontWeight: 500, marginBottom: 12 }}>Payment</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {payments.map((p, i) => (
-                  <span key={i} style={{ fontSize: 11, color: D.alloyDark, letterSpacing: 0.5, padding: '4px 10px', background: D.bg2, border: `1px solid ${D.border}` }}>{p}</span>
-                ))}
+      {/* ABOUT — standard pattern: image/stats left, text right */}
+      <section id="about" style={{ padding: '80px 48px', background: D.card, borderTop: `1px solid ${D.border}`, borderBottom: `1px solid ${D.border}` }}>
+        <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'center' }}>
+          <div>
+            {(copy?.aboutLayout || 'image') !== 'stats' ? (
+              images.about
+                ? <img src={images.about} alt="About" style={{ width: '100%', maxWidth: 460, height: 360, objectFit: 'cover', display: 'block' }} />
+                : <div style={{ width: '100%', maxWidth: 460, height: 360, background: D.bg2, border: `1px dashed ${D.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: D.muted, fontSize: '0.85rem', textAlign: 'center', padding: 24, boxSizing: 'border-box' }}>Upload an about photo in the Images tab</div>
+            ) : (
+              <div style={{ width: '100%', maxWidth: 460, background: D.bg, padding: '40px 32px', boxSizing: 'border-box', border: `1px solid ${D.border}` }}>
+                {(() => {
+                  const defStats = [
+                    { value: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'Years in Business' },
+                    { value: '50+', label: 'Brands Available' },
+                    { value: '5K+', label: 'Wheels Installed' },
+                  ];
+                  const stats = (copy?.aboutStats || []).map((s, i) => ({
+                    value: s.value || defStats[i]?.value || '',
+                    label: s.label || defStats[i]?.label || '',
+                  }));
+                  if (stats.length === 0) stats.push(...defStats);
+                  return stats.map((st, i) => (
+                    <div key={i} style={{ textAlign: 'center', marginBottom: i < stats.length - 1 ? 28 : 0 }}>
+                      <div style={{ fontFamily: display, fontSize: '3rem', fontWeight: 900, color: D.bronze, lineHeight: 1 }}>{st.value}</div>
+                      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, color: D.muted, marginTop: 6, textTransform: 'uppercase' }}>{st.label}</div>
+                    </div>
+                  ));
+                })()}
               </div>
-            </div>
-          )}
+            )}
+          </div>
+          <div>
+            <p style={{ fontSize: 11, letterSpacing: 3, textTransform: 'uppercase', color: D.bronze, marginBottom: 8, fontWeight: 500 }}>◆ About Us</p>
+            <h2 style={{ fontFamily: display, fontSize: 40, letterSpacing: 1, color: D.ink, lineHeight: 1, margin: '0 0 20px' }}>About {biz.businessName || 'Us'}</h2>
+            <p style={{ fontSize: 14, color: D.muted, lineHeight: 1.75, fontWeight: 300, marginBottom: 20 }}>
+              {copy.aboutText || `Located in ${biz.city || 'your area'}, we specialize in custom wheel fitment and premium tire services.`}
+            </p>
+            {biz.awards && (
+              <div style={{ background: D.bronzeBg, border: '1px solid #E8D9C0', padding: '14px 18px', marginBottom: 16 }}>
+                <div style={{ fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase', color: D.bronze, fontWeight: 500, marginBottom: 4 }}>Awards</div>
+                <div style={{ fontSize: 13, color: D.ink2 }}>{biz.awards}</div>
+              </div>
+            )}
+            {payments.length > 0 && (
+              <div style={{ marginTop: 16 }}>
+                <div style={{ fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase', color: D.muted, fontWeight: 500, marginBottom: 10 }}>Payment Accepted</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {payments.map((p, i) => (
+                    <span key={i} style={{ fontSize: 11, color: D.alloyDark, letterSpacing: 0.5, padding: '4px 10px', background: D.bg2, border: `1px solid ${D.border}` }}>{p}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
