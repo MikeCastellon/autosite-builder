@@ -211,7 +211,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
                     <span style={{ fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: D.muted }}>Image</span>
                   </div>
                   <div style={{ padding: '18px 20px' }}>
-                    <div style={{ fontFamily: display, fontSize: 22, letterSpacing: 0.5, color: D.ink, marginBottom: 3 }}>{item.name || item}</div>
+                    <div style={{ fontFamily: display, fontSize: 22, letterSpacing: 0.5, color: D.ink, marginBottom: 3 }}>{typeof item === 'string' ? item : (item.name || 'Product')}</div>
                     <div style={{ fontSize: 12, color: D.muted, marginBottom: 16 }}>{item.description || ''}</div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       {item.price && (
