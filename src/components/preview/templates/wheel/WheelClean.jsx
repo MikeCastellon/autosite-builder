@@ -71,46 +71,87 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
         </div>
       </nav>
 
-      {/* HERO — half-and-half: text left, image right */}
-      <header style={{ display: 'flex', flexDirection: 'row', minHeight: '85vh' }}>
-        <div style={{
-          flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
-          padding: 'clamp(3rem,6vw,6rem)', background: c.secondary,
-        }}>
-          <span style={{
-            display: 'inline-block', background: `${c.accent}12`, color: c.accent,
-            fontSize: 12, fontWeight: 700, padding: '5px 14px', borderRadius: 20,
-            textTransform: 'uppercase', letterSpacing: 2, marginBottom: 24, alignSelf: 'flex-start',
+      {/* HERO */}
+      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : {
+        minHeight: '100vh', display: 'flex', alignItems: 'center',
+        background: c.secondary || '#e9ecef',
+        borderBottom: '1px solid #e5e7eb',
+        padding: '96px 5% 72px',
+        position: 'relative', overflow: 'hidden',
+      }}>
+        {!splitHero && <HeroImage src={images.hero} />}
+        {splitHero ? (
+          <div style={{
+            flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
+            padding: 'clamp(3rem,6vw,6rem)', background: c.secondary,
           }}>
-            {biz.city}, {biz.state}
-          </span>
-          <h1 style={{ fontSize: 'clamp(2.2rem, 4.5vw, 3.5rem)', fontWeight: 800, lineHeight: 1.15, color: c.text, marginBottom: 20 }}>
-            {copy.headline || 'Custom Wheels & Tire Experts'}
-          </h1>
-          <p style={{ color: c.muted, fontSize: 17, lineHeight: 1.75, marginBottom: 36 }}>
-            {copy.subheadline || biz.tagline || 'Professional wheel fitment, balancing, and tire services.'}
-          </p>
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            <a href={copy?.ctaPrimaryUrl || (`tel:${biz.phone}`)} style={{
-              background: c.accent, color: '#fff', padding: '14px 32px',
-              borderRadius: 10, fontWeight: 700, fontSize: 15, textDecoration: 'none',
+            <span style={{
+              display: 'inline-block', background: `${c.accent}12`, color: c.accent,
+              fontSize: 12, fontWeight: 700, padding: '5px 14px', borderRadius: 20,
+              textTransform: 'uppercase', letterSpacing: 2, marginBottom: 24, alignSelf: 'flex-start',
             }}>
-              {copy.ctaPrimary || 'Get a Quote'}
-            </a>
-            <a href={copy?.ctaSecondaryUrl || '#services'} style={{
-              background: '#fff', color: c.accent, border: `2px solid ${c.accent}`,
-              padding: '13px 28px', borderRadius: 10, fontWeight: 600, fontSize: 15, textDecoration: 'none',
-            }}>
-              {copy.ctaSecondary || 'Our Services'}
-            </a>
+              {biz.city}, {biz.state}
+            </span>
+            <h1 style={{ fontSize: 'clamp(2.2rem, 4.5vw, 3.5rem)', fontWeight: 800, lineHeight: 1.15, color: c.text, marginBottom: 20 }}>
+              {copy.headline || 'Custom Wheels & Tire Experts'}
+            </h1>
+            <p style={{ color: c.muted, fontSize: 17, lineHeight: 1.75, marginBottom: 36 }}>
+              {copy.subheadline || biz.tagline || 'Professional wheel fitment, balancing, and tire services.'}
+            </p>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              <a href={copy?.ctaPrimaryUrl || (`tel:${biz.phone}`)} style={{
+                background: c.accent, color: '#fff', padding: '14px 32px',
+                borderRadius: 10, fontWeight: 700, fontSize: 15, textDecoration: 'none',
+              }}>
+                {copy.ctaPrimary || 'Get a Quote'}
+              </a>
+              <a href={copy?.ctaSecondaryUrl || '#services'} style={{
+                background: '#fff', color: c.accent, border: `2px solid ${c.accent}`,
+                padding: '13px 28px', borderRadius: 10, fontWeight: 600, fontSize: 15, textDecoration: 'none',
+              }}>
+                {copy.ctaSecondary || 'Our Services'}
+              </a>
+            </div>
           </div>
-        </div>
-        <div style={{ flex: 1, position: 'relative', minHeight: '85vh', overflow: 'hidden' }}>
-          {images.hero
-            ? <img src={images.hero} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-            : <div style={{ width: '100%', height: '100%', background: c.accent }} />
-          }
-        </div>
+        ) : (
+          <div style={{ position: 'relative', zIndex: 1, maxWidth: 700, margin: '0 auto' }}>
+            <span style={{
+              display: 'inline-block', background: `${c.accent}12`, color: c.accent,
+              fontSize: 12, fontWeight: 700, padding: '5px 14px', borderRadius: 20,
+              textTransform: 'uppercase', letterSpacing: 2, marginBottom: 24,
+            }}>
+              {biz.city}, {biz.state}
+            </span>
+            <h1 style={{ fontSize: 'clamp(2.2rem, 4.5vw, 3.5rem)', fontWeight: 800, lineHeight: 1.15, color: c.text, marginBottom: 20 }}>
+              {copy.headline || 'Custom Wheels & Tire Experts'}
+            </h1>
+            <p style={{ color: c.muted, fontSize: 17, lineHeight: 1.75, marginBottom: 36 }}>
+              {copy.subheadline || biz.tagline || 'Professional wheel fitment, balancing, and tire services.'}
+            </p>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              <a href={copy?.ctaPrimaryUrl || (`tel:${biz.phone}`)} style={{
+                background: c.accent, color: '#fff', padding: '14px 32px',
+                borderRadius: 10, fontWeight: 700, fontSize: 15, textDecoration: 'none',
+              }}>
+                {copy.ctaPrimary || 'Get a Quote'}
+              </a>
+              <a href={copy?.ctaSecondaryUrl || '#services'} style={{
+                background: '#fff', color: c.accent, border: `2px solid ${c.accent}`,
+                padding: '13px 28px', borderRadius: 10, fontWeight: 600, fontSize: 15, textDecoration: 'none',
+              }}>
+                {copy.ctaSecondary || 'Our Services'}
+              </a>
+            </div>
+          </div>
+        )}
+        {splitHero && (
+          <div style={{ flex: 1, position: 'relative', minHeight: '85vh', overflow: 'hidden' }}>
+            {images.hero
+              ? <img src={images.hero} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              : <div style={{ width: '100%', height: '100%', background: c.accent }} />
+            }
+          </div>
+        )}
       </header>
 
       {/* AWARDS */}
@@ -125,6 +166,32 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
           </div>
         </section>
       )}
+
+      {/* STATS BAR */}
+      <section style={{ background: '#fff', padding: '48px 5%', borderBottom: '1px solid #e5e7eb' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 24 }}>
+          {(() => {
+            const defaultStats = [
+              { value: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'Years in Business' },
+              { value: '50+', label: 'Wheel Brands' },
+              { value: '5K+', label: 'Wheels Installed' },
+              { value: '5.0 ★', label: 'Average Rating' },
+            ];
+            const stats = (copy?.heroStats || []).length > 0
+              ? copy.heroStats.map((s, i) => ({
+                  value: s.value || defaultStats[i]?.value || '',
+                  label: s.label || defaultStats[i]?.label || '',
+                }))
+              : defaultStats;
+            return stats.map((s, i) => (
+              <div key={i} style={{ textAlign: 'center', padding: '20px', background: c.secondary, borderRadius: 12, border: '1px solid #e5e7eb' }}>
+                <div style={{ fontSize: '2.4rem', fontWeight: 800, color: c.accent, lineHeight: 1 }}>{s.value}</div>
+                <div style={{ fontSize: 13, color: c.muted, marginTop: 6 }}>{s.label}</div>
+              </div>
+            ));
+          })()}
+        </div>
+      </section>
 
       {/* SERVICES */}
       <section id="services" style={{ padding: '80px 5%', background: c.bg }}>
