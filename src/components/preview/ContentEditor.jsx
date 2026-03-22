@@ -229,9 +229,10 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
   const isApex = templateId === 'wheel_apex';
   const isObsidian = templateId === 'tint_obsidian';
 
-  // Section visibility toggle registry per template
+  // Section visibility + ordering registry per template
   const TOGGLEABLE = {
     _default: [
+      { id: 'hero', label: 'Hero' },
       { id: 'statsBar', label: 'Stats Bar' },
       { id: 'services', label: 'Services' },
       { id: 'about', label: 'About' },
@@ -241,6 +242,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
       { id: 'awards', label: 'Awards' },
     ],
     wheel_apex: [
+      { id: 'hero', label: 'Hero' },
       { id: 'trustBar', label: 'Trust Bar' },
       { id: 'ticker', label: 'Scrolling Ticker' },
       { id: 'products', label: 'Products' },
@@ -251,6 +253,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
       { id: 'cta', label: 'Contact / CTA' },
     ],
     wheel_edge: [
+      { id: 'hero', label: 'Hero' },
       { id: 'statsBar', label: 'Stats Bar' },
       { id: 'services', label: 'Services' },
       { id: 'brands', label: 'Brands' },
@@ -260,6 +263,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
       { id: 'cta', label: 'Contact / CTA' },
     ],
     wheel_clean: [
+      { id: 'hero', label: 'Hero' },
       { id: 'statsBar', label: 'Stats Bar' },
       { id: 'awards', label: 'Awards' },
       { id: 'services', label: 'Services' },
@@ -270,6 +274,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
       { id: 'cta', label: 'Contact / CTA' },
     ],
     tint_obsidian: [
+      { id: 'hero', label: 'Hero' },
       { id: 'shadeGuide', label: 'Shade Guide' },
       { id: 'services', label: 'Services' },
       { id: 'brands', label: 'Film Brands' },
@@ -280,6 +285,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
       { id: 'cta', label: 'Contact / CTA' },
     ],
     tint_elite: [
+      { id: 'hero', label: 'Hero' },
       { id: 'statsBar', label: 'Stats Bar' },
       { id: 'services', label: 'Services' },
       { id: 'brands', label: 'Film Brands' },
@@ -289,6 +295,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
       { id: 'cta', label: 'Contact / CTA' },
     ],
     tint_dark: [
+      { id: 'hero', label: 'Hero' },
       { id: 'statsBar', label: 'Stats Bar' },
       { id: 'services', label: 'Services' },
       { id: 'brands', label: 'Film Brands' },
@@ -298,6 +305,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
       { id: 'cta', label: 'Contact / CTA' },
     ],
     mobile_sudsy: [
+      { id: 'hero', label: 'Hero' },
       { id: 'services', label: 'Services' },
       { id: 'process', label: 'How It Works' },
       { id: 'whyUs', label: 'Why Choose Us' },
@@ -307,6 +315,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
       { id: 'cta', label: 'Contact / CTA' },
     ],
     carwash_bubble: [
+      { id: 'hero', label: 'Hero' },
       { id: 'services', label: 'Services' },
       { id: 'process', label: 'How It Works' },
       { id: 'about', label: 'About' },
@@ -315,14 +324,25 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
       { id: 'cta', label: 'Contact / CTA' },
     ],
   };
+  const defaultOrder = (TOGGLEABLE[templateId] || TOGGLEABLE._default).map(s => s.id);
   const toggleableSections = TOGGLEABLE[templateId] || TOGGLEABLE._default;
   const hiddenSections = copy?.hiddenSections || [];
+  const sectionOrder = copy?.sectionOrder?.length > 0 ? copy.sectionOrder : defaultOrder;
+  // Build ordered list: use saved order, append any new sections not in it
+  const orderedSections = [...new Set([...sectionOrder, ...defaultOrder])].map(id => toggleableSections.find(s => s.id === id)).filter(Boolean);
   const isSectionHidden = (id) => hiddenSections.includes(id);
   const toggleSection = (id) => {
     const next = isSectionHidden(id)
       ? hiddenSections.filter(s => s !== id)
       : [...hiddenSections, id];
     setCopy('hiddenSections', next);
+  };
+  const moveSection = (idx, dir) => {
+    const ids = orderedSections.map(s => s.id);
+    const target = idx + dir;
+    if (target < 0 || target >= ids.length) return;
+    [ids[idx], ids[target]] = [ids[target], ids[idx]];
+    setCopy('sectionOrder', ids);
   };
 
   const sections = [
@@ -386,21 +406,38 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
 
           {activeSection === 'visibility' && (
             <>
-              <p className="text-[11px] text-gray-400 mb-4">Toggle sections on or off. Hidden sections won't appear on your site.</p>
-              {toggleableSections.map(({ id, label }) => (
-                <label key={id} className="flex items-center justify-between py-2.5 border-b border-gray-100 cursor-pointer">
-                  <span className="text-[13px] text-gray-700">{label}</span>
+              <p className="text-[11px] text-gray-400 mb-4">Toggle sections on/off and drag to reorder.</p>
+              {orderedSections.map(({ id, label }, idx) => (
+                <div key={id} className="flex items-center gap-2 py-2 border-b border-gray-100">
+                  {/* Move arrows */}
+                  <div className="flex flex-col gap-0.5 shrink-0">
+                    <button type="button" onClick={() => moveSection(idx, -1)} disabled={idx === 0}
+                      className="text-gray-400 hover:text-gray-700 disabled:opacity-20 disabled:cursor-not-allowed transition p-0 leading-none text-[10px]"
+                      title="Move up">▲</button>
+                    <button type="button" onClick={() => moveSection(idx, 1)} disabled={idx === orderedSections.length - 1}
+                      className="text-gray-400 hover:text-gray-700 disabled:opacity-20 disabled:cursor-not-allowed transition p-0 leading-none text-[10px]"
+                      title="Move down">▼</button>
+                  </div>
+                  {/* Label */}
+                  <span className={`flex-1 text-[13px] ${isSectionHidden(id) ? 'text-gray-400 line-through' : 'text-gray-700'}`}>{label}</span>
+                  {/* Toggle */}
                   <button
                     type="button"
                     role="switch"
                     aria-checked={!isSectionHidden(id)}
                     onClick={() => toggleSection(id)}
-                    className={`relative w-9 h-5 rounded-full transition-colors ${!isSectionHidden(id) ? 'bg-gray-900' : 'bg-gray-300'}`}
+                    className={`relative w-9 h-5 rounded-full transition-colors shrink-0 ${!isSectionHidden(id) ? 'bg-gray-900' : 'bg-gray-300'}`}
                   >
                     <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${!isSectionHidden(id) ? 'translate-x-4' : 'translate-x-0'}`} />
                   </button>
-                </label>
+                </div>
               ))}
+              {copy?.sectionOrder?.length > 0 && (
+                <button type="button" onClick={() => setCopy('sectionOrder', null)}
+                  className="mt-3 text-[12px] text-gray-400 hover:text-red-500 border border-gray-200 rounded-lg px-3 py-1.5 w-full transition">
+                  Reset to default order
+                </button>
+              )}
             </>
           )}
 

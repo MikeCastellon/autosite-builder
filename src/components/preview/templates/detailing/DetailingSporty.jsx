@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
+import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 
 export default function DetailingSporty({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const c = templateMeta.colors;
@@ -17,6 +18,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
   }, []);
 
   const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
+  const getOrder = buildSectionOrder(generatedCopy, ['hero', 'statsBar', 'services', 'about', 'gallery', 'testimonials', 'cta']);
 
   const s = {
     nav: {
@@ -191,10 +193,10 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
   const svcCols = _svcItems.length >= 6 ? Math.ceil(_svcItems.length / 2) : _svcItems.length || 1;
 
   return (
-    <div style={{ background: c.bg, color: c.text, fontFamily: bodyFont, containerType: 'inline-size' }}>
+    <div style={{ background: c.bg, color: c.text, fontFamily: bodyFont, containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
       <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
       {/* NAV */}
-      <nav style={s.nav}>
+      <nav style={{ ...s.nav, order: -1 }}>
         {images.logo ? (
           <img src={images.logo} alt={businessInfo.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
         ) : (
@@ -213,7 +215,8 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
       </nav>
 
       {/* HERO */}
-      <section id="hero" style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : s.hero}>
+      {!hidden('hero') && (
+      <section id="hero" style={splitHero ? { order: getOrder('hero'), display: 'flex', flexDirection: 'row', minHeight: '85vh' } : { ...s.hero, order: getOrder('hero') }}>
         {!splitHero && <HeroImage src={images.hero} />}
         {!splitHero && <div style={s.heroSlash} />}
         {!splitHero && <div style={s.heroSlash2} />}
@@ -242,10 +245,11 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
           </div>
         )}
       </section>
+      )}
 
       {/* STATS BAR */}
       {!hidden('statsBar') && (
-      <div style={s.statsBar}>
+      <div style={{ ...s.statsBar, order: getOrder('statsBar') }}>
         {stats.map((st, i) => (
           <div key={i} style={st.alt ? s.statBoxAlt : s.statBox}>
             <span style={st.alt ? s.statNumAlt : s.statNum}>{st.num}</span>
@@ -257,7 +261,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
 
       {/* SERVICES */}
       {!hidden('services') && (
-      <section id="services" style={s.section}>
+      <section id="services" style={{ ...s.section, order: getOrder('services') }}>
         <div style={s.sectionTag}>What We Do</div>
         <h2 style={s.sectionTitle}>Our Services</h2>
         <p style={s.sectionSub}>{generatedCopy.servicesSection?.intro}</p>
@@ -286,7 +290,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
 
       {/* ABOUT */}
       {!hidden('about') && (
-      <section id="about" style={s.sectionAlt}>
+      <section id="about" style={{ ...s.sectionAlt, order: getOrder('about') }}>
         <div style={s.aboutGrid}>
           {(generatedCopy?.aboutLayout || 'image') !== 'stats' ? (
             images.about
@@ -313,12 +317,14 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
 
       {/* GALLERY */}
       {!hidden('gallery') && (
+      <div style={{ order: getOrder('gallery') }}>
       <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
+      </div>
       )}
 
       {/* TESTIMONIALS */}
       {!hidden('testimonials') && (
-      <section id="reviews" style={s.section}>
+      <section id="reviews" style={{ ...s.section, order: getOrder('testimonials') }}>
         <div style={s.sectionTag}>Real Reviews</div>
         <h2 style={{ ...s.sectionTitle, marginBottom: '2rem' }}>The People Know</h2>
         <div style={s.testimonialRow}>
@@ -335,7 +341,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
 
       {/* CTA SPLIT */}
       {!hidden('cta') && (
-      <div style={s.ctaBand}>
+      <div style={{ ...s.ctaBand, order: getOrder('cta') }}>
         <div style={s.ctaLeft}>
           <div style={s.ctaHeading}>Book Your Detail</div>
           <div style={s.ctaPhone}>{businessInfo.phone}</div>
@@ -357,7 +363,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
       )}
 
       {/* FOOTER */}
-      <footer style={s.footer}>
+      <footer style={{ ...s.footer, order: 9999 }}>
         <div>
           {/* Footer logo */}
           {images.logo ? (

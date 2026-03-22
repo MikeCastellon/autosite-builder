@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
+import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 
 export default function DetailingCoastal({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
@@ -12,6 +13,7 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
   const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
+  const getOrder = buildSectionOrder(generatedCopy, ['hero', 'statsBar', 'services', 'about', 'gallery', 'testimonials', 'cta']);
 
   const c = templateMeta.colors;
   const font = templateMeta.font;
@@ -116,10 +118,10 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
   };
 
   return (
-    <div style={{ background: c.bg, color: c.text, fontFamily: bodyFont, containerType: 'inline-size' }}>
+    <div style={{ background: c.bg, color: c.text, fontFamily: bodyFont, containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
       <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
       {/* NAV */}
-      <nav style={navStyle}>
+      <nav style={{ ...navStyle, order: -1 }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '68px' }}>
           <div style={{ fontFamily: font, fontWeight: 800, fontSize: '1.4rem', color: c.accent }}>
             {images.logo ? (
@@ -138,7 +140,8 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
       </nav>
 
       {/* HERO */}
-      <section style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : heroStyle}>
+      {!hidden('hero') && (
+      <section style={splitHero ? { order: getOrder('hero'), display: 'flex', flexDirection: 'row', minHeight: '85vh' } : { ...heroStyle, order: getOrder('hero') }}>
         {!splitHero && <HeroImage src={images.hero} />}
         <div style={splitHero ? {
           flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
@@ -171,10 +174,11 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
           </div>
         )}
       </section>
+      )}
 
       {/* STATS BAR */}
       {!hidden('statsBar') && (
-      <section style={{ background: c.accent, padding: '40px 24px', fontFamily: bodyFont }}>
+      <section style={{ order: getOrder('statsBar'), background: c.accent, padding: '40px 24px', fontFamily: bodyFont }}>
         <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: '24px' }}>
           {stats.map((s, i) => (
             <div key={i} style={{ textAlign: 'center' }}>
@@ -188,7 +192,7 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
 
       {/* SERVICES */}
       {!hidden('services') && (
-      <section id="services" style={sectionStyle(c.bg)}>
+      <section id="services" style={{ ...sectionStyle(c.bg), order: getOrder('services') }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '56px' }}>
             <h2 style={{ fontFamily: font, fontSize: '2.4rem', fontWeight: 800, color: c.text, marginBottom: '12px' }}>Our Services</h2>
@@ -224,7 +228,7 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
 
       {/* ABOUT */}
       {!hidden('about') && (
-      <section id="about" style={sectionStyle(c.bg)}>
+      <section id="about" style={{ ...sectionStyle(c.bg), order: getOrder('about') }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', gap: '64px', alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ flex: '1 1 320px', minWidth: '280px' }}>
             {generatedCopy?.aboutLayout === 'stats' ? (
@@ -265,12 +269,14 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
 
       {/* GALLERY */}
       {!hidden('gallery') && (
+      <div style={{ order: getOrder('gallery') }}>
       <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
+      </div>
       )}
 
       {/* TESTIMONIALS */}
       {!hidden('testimonials') && (
-      <section style={sectionStyle(c.secondary)}>
+      <section style={{ ...sectionStyle(c.secondary), order: getOrder('testimonials') }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <h2 style={{ fontFamily: font, fontSize: '2.2rem', fontWeight: 800, color: c.text, textAlign: 'center', marginBottom: '48px' }}>What Our Clients Say</h2>
           <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -288,7 +294,7 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
 
       {/* CTA BAND */}
       {!hidden('cta') && (
-      <section style={{ background: c.accent, padding: '72px 24px', textAlign: 'center', fontFamily: bodyFont }}>
+      <section style={{ order: getOrder('cta'), background: c.accent, padding: '72px 24px', textAlign: 'center', fontFamily: bodyFont }}>
         <h2 style={{ fontFamily: font, fontSize: '2.2rem', fontWeight: 800, color: '#ffffff', marginBottom: '16px' }}>
           Ready for a Fresh, Clean Ride?
         </h2>
@@ -305,7 +311,7 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
 
       {/* CONTACT */}
       {!hidden('cta') && (
-      <section id="contact" style={sectionStyle(c.bg)}>
+      <section id="contact" style={{ ...sectionStyle(c.bg), order: getOrder('cta') }}>
         <div style={{ maxWidth: '900px', margin: '0 auto', display: 'flex', gap: '48px', flexWrap: 'wrap' }}>
           <div style={{ flex: '1 1 260px' }}>
             <h3 style={{ fontFamily: font, fontSize: '1.4rem', fontWeight: 700, color: c.text, marginBottom: '20px' }}>Contact & Hours</h3>
@@ -329,7 +335,7 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
       )}
 
       {/* FOOTER */}
-      <footer style={{ background: '#0c4a6e', padding: '48px 24px', fontFamily: bodyFont }}>
+      <footer style={{ order: 9999, background: '#0c4a6e', padding: '48px 24px', fontFamily: bodyFont }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '32px', marginBottom: '40px' }}>
             <div>

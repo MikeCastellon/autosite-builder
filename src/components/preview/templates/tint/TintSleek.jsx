@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
+import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 
 // Template: Tint Sleek — Gray & teal (#1f2937 bg, #14b8a6 accent, #374151 secondary)
 // Modern precision, two-column hero, film brands as styled pills, warranty badge, teal left-border cards, social footer
@@ -32,9 +33,10 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
     : [];
 
   const hidden = (id) => copy?.hiddenSections?.includes(id);
+  const getOrder = buildSectionOrder(copy, ['hero', 'statsBar', 'services', 'brands', 'about', 'gallery', 'testimonials', 'cta']);
 
   return (
-    <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, containerType: 'inline-size' }}>
+    <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
       <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
 
       {/* STICKY NAV */}
@@ -45,6 +47,7 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
         transition: 'all 0.3s ease',
         padding: '0 5%',
         backdropFilter: scrolled ? 'blur(12px)' : 'none',
+        order: -1,
       }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 68 }}>
           <div>
@@ -70,12 +73,14 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
       </nav>
 
       {/* HERO — two-column layout */}
-      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : {
+      {!hidden('hero') && (
+      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh', order: getOrder('hero') } : {
         minHeight: '100vh', display: 'flex', alignItems: 'center',
         background: `linear-gradient(135deg, ${c.bg} 0%, #111827 100%)`,
         padding: '96px 5% 72px',
         borderBottom: `2px solid ${c.accent}44`,
         position: 'relative', overflow: 'hidden',
+        order: getOrder('hero'),
       }}>
         {!splitHero && <HeroImage src={images.hero} />}
         {splitHero ? (
@@ -188,9 +193,10 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
           </div>
         )}
       </header>
+      )}
 
       {/* STATS */}
-      <section style={{ background: c.secondary, padding: '48px 5%', borderBottom: `1px solid ${c.accent}22` }}>
+      <section style={{ background: c.secondary, padding: '48px 5%', borderBottom: `1px solid ${c.accent}22`, order: getOrder('statsBar') }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 24, textAlign: 'center' }}>
           {[
             { val: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'Years of Service' },
@@ -208,7 +214,7 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
 
       {/* SERVICES — cards with teal left border */}
       {!hidden('services') && (
-      <section id="services" style={{ padding: '80px 5%' }}>
+      <section id="services" style={{ padding: '80px 5%', order: getOrder('services') }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ marginBottom: 48 }}>
             <div style={{ color: c.accent, fontWeight: 700, letterSpacing: 3, fontSize: 11, textTransform: 'uppercase', marginBottom: 10 }}>SERVICES</div>
@@ -267,7 +273,7 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
 
       {/* FILM BRANDS — styled pills */}
       {!hidden('brands') && (filmBrandsList.length > 0 || biz.filmBrands) && (
-        <section id="films" style={{ padding: '72px 5%', background: c.secondary, borderTop: `1px solid ${c.accent}22` }}>
+        <section id="films" style={{ padding: '72px 5%', background: c.secondary, borderTop: `1px solid ${c.accent}22`, order: getOrder('brands') }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ color: c.accent, fontWeight: 700, letterSpacing: 3, fontSize: 11, textTransform: 'uppercase', marginBottom: 10 }}>FILM PRODUCTS</div>
             <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, marginBottom: 32 }}>Film Brands We Use</h2>
@@ -316,7 +322,7 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
 
       {/* ABOUT */}
       {!hidden('about') && (
-      <section id="about" style={{ padding: '80px 5%', borderTop: `1px solid ${c.accent}22` }}>
+      <section id="about" style={{ padding: '80px 5%', borderTop: `1px solid ${c.accent}22`, order: getOrder('about') }}>
         <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'start' }}>
           <div>
             <div style={{ color: c.accent, fontWeight: 700, letterSpacing: 3, fontSize: 11, textTransform: 'uppercase', marginBottom: 10 }}>ABOUT US</div>
@@ -378,12 +384,14 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
 
       {/* GALLERY */}
       {!hidden('gallery') && (
+      <div style={{ order: getOrder('gallery') }}>
       <GallerySection images={images} colors={c} font={font} bodyFont={templateMeta.bodyFont} />
+      </div>
       )}
 
       {/* TESTIMONIALS */}
       {!hidden('testimonials') && testimonials.length > 0 && (
-        <section style={{ padding: '80px 5%', background: c.secondary, borderTop: `1px solid ${c.accent}22` }}>
+        <section style={{ padding: '80px 5%', background: c.secondary, borderTop: `1px solid ${c.accent}22`, order: getOrder('testimonials') }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ textAlign: 'center', marginBottom: 48 }}>
               <div style={{ color: c.accent, fontWeight: 700, letterSpacing: 3, fontSize: 11, textTransform: 'uppercase', marginBottom: 10 }}>REVIEWS</div>
@@ -407,7 +415,7 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
 
       {/* CTA */}
       {!hidden('cta') && (
-      <section style={{ background: c.accent, padding: '80px 5%', textAlign: 'center' }}>
+      <section style={{ background: c.accent, padding: '80px 5%', textAlign: 'center', order: getOrder('cta') }}>
         <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 800, color: '#fff', margin: '0 0 16px' }}>Get a Free Quote</h2>
         <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 16, marginBottom: 36 }}>
           {copy.ctaSecondary || `${biz.city || 'Your city'}, ${biz.state || ''} · Same-day quotes available`}
@@ -429,7 +437,7 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
       )}
 
       {/* FOOTER with social links */}
-      <footer style={{ background: '#141b26', padding: '48px 5% 24px', borderTop: `1px solid ${c.accent}22` }}>
+      <footer style={{ background: '#141b26', padding: '48px 5% 24px', borderTop: `1px solid ${c.accent}22`, order: 9999 }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 36, marginBottom: 32 }}>
           <div>
             {/* Footer logo */}

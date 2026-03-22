@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
+import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 
 export default function MechanicFriendly({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const c = templateMeta.colors;
@@ -15,6 +16,7 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
   const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
+  const getOrder = buildSectionOrder(generatedCopy, ['hero','whyUs','services','about','gallery','testimonials','cta']);
 
   // Simple geometric SVG-style icon shapes rendered as divs
   const IconWrench = () => (
@@ -224,10 +226,10 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
   };
 
   return (
-    <div style={{ background: '#f8fafc', color: c.bg, fontFamily: bodyFont, containerType: 'inline-size' }}>
+    <div style={{ background: '#f8fafc', color: c.bg, fontFamily: bodyFont, containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
       <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
       {/* NAV */}
-      <nav style={s.nav}>
+      <nav style={{ ...s.nav, order: -1 }}>
         {images.logo ? (
           <img src={images.logo} alt={businessInfo.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
         ) : (
@@ -245,7 +247,8 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
       </nav>
 
       {/* HERO */}
-      <section id="hero" style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : s.hero}>
+      {!hidden('hero') && (
+      <section id="hero" style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh', order: getOrder('hero') } : { ...s.hero, order: getOrder('hero') }}>
         {!splitHero && <HeroImage src={images.hero} />}
         {!splitHero && <div style={s.heroAccentBar} />}
         <div style={splitHero ? {
@@ -277,10 +280,11 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
           </div>
         )}
       </section>
+      )}
 
       {/* WHY CHOOSE US */}
       {!hidden('whyUs') && (
-      <section style={s.whySection}>
+      <section style={{ ...s.whySection, order: getOrder('whyUs') }}>
         <div style={s.sectionEyebrow}>Why Choose Us</div>
         <h2 style={s.sectionTitle}>Your Neighborhood's Most Trusted Shop</h2>
         <div style={s.whyGrid}>
@@ -297,12 +301,12 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
 
       {/* SERVICES */}
       {!hidden('services') && (
-      <section id="services" style={s.section}>
+      <section id="services" style={{ ...s.section, order: getOrder('services') }}>
         <div style={s.sectionEyebrow}>Our Services</div>
         <h2 style={s.sectionTitle}>Everything Your Car Needs</h2>
         <p style={s.sectionSub}>{generatedCopy.servicesSection?.intro}</p>
         {businessInfo.packages?.length > 0 ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1px', background: `${c.accent}22` }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1px', background: `${c.accent}22`  }}>
             {businessInfo.packages.map((pkg, i) => (
               <div key={i} style={{ ...s.serviceCard, borderTop: `3px solid ${i === 1 ? c.accent : 'transparent'}` }}>
                 <div style={s.serviceName}>{pkg.name || pkg}</div>
@@ -331,7 +335,7 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
 
       {/* ABOUT */}
       {!hidden('about') && (
-      <section id="about" style={s.sectionWhite}>
+      <section id="about" style={{ ...s.sectionWhite, order: getOrder('about') }}>
         <div style={s.aboutGrid}>
           <div>
             <div style={s.sectionEyebrow}>About Us</div>
@@ -366,12 +370,14 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
 
       {/* GALLERY */}
       {!hidden('gallery') && (
+      <div style={{ order: getOrder('gallery') }}>
       <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
+      </div>
       )}
 
       {/* TESTIMONIALS */}
       {!hidden('testimonials') && (
-      <section id="reviews" style={s.section}>
+      <section id="reviews" style={{ ...s.section, order: getOrder('testimonials') }}>
         <div style={s.sectionEyebrow}>Customer Reviews</div>
         <h2 style={{ ...s.sectionTitle, marginBottom: '2rem' }}>Don't Just Take Our Word For It</h2>
         <div style={s.testimonialGrid}>
@@ -388,10 +394,10 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
 
       {/* CONTACT */}
       {!hidden('cta') && (
-      <section id="contact" style={s.contactSection}>
+      <section id="contact" style={{ ...s.contactSection, order: getOrder('cta') }}>
         <div style={s.contactGrid}>
           <div>
-            <div style={{ fontFamily: bodyFont, fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: c.accent, marginBottom: '0.5rem' }}>Contact Us</div>
+            <div style={{ fontFamily: bodyFont, fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: c.accent, marginBottom: '0.5rem'  }}>Contact Us</div>
             <h2 style={s.contactTitle}>Let's Get Your Car Fixed</h2>
             <span style={s.contactPhone}>{businessInfo.phone}</span>
             <a href={generatedCopy?.ctaUrl || ('tel:' + (businessInfo.phone || ''))} style={{ ...s.contactBtn, textDecoration: 'none' }}>{generatedCopy.ctaPrimary}</a>
@@ -431,7 +437,7 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
       )}
 
       {/* FOOTER */}
-      <footer style={s.footer}>
+      <footer style={{ ...s.footer, order: 9999 }}>
         <div>
           {/* Footer logo */}
           {images.logo ? (

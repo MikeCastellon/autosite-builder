@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
+import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 
 // Template: Mechanic Ironclad
 // Industrial dark aesthetic with rust-red accent (#111111 bg, #C0392B accent, #ffffff text)
@@ -58,6 +59,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
   const hidden = (id) => copy?.hiddenSections?.includes(id);
+  const getOrder = buildSectionOrder(copy, ['hero','services','about','gallery','whyUs','testimonials','cta']);
 
   // ── Font stacks ───────────────────────────────────────────────────
   const bebas     = "'Bebas Neue', 'Barlow Condensed', sans-serif";
@@ -156,7 +158,9 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
           borderBottom: `2px solid ${c.accent}`,
           backdropFilter: 'blur(12px)',
           transition: 'background 0.3s',
-        }}
+        
+        order: -1,
+      }}
       >
         {/* Logo mark */}
         {images.logo ? (
@@ -211,8 +215,9 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
       {/* ═══════════════════════════════════════════════════════════
           HERO — full-viewport, diagonal steel-plate layout
       ═══════════════════════════════════════════════════════════ */}
+      {!hidden('hero') && (
       <header
-        style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : { minHeight: '100vh', paddingTop: 68, position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center' }}
+        style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh', order: getOrder('hero') } : { minHeight: '100vh', paddingTop: 68, position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', order: getOrder('hero') }}
       >
         {!splitHero && <HeroImage src={images.hero} />}
         {/* Dark diagonal base gradient */}
@@ -300,6 +305,8 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
           </div>
         )}
       </header>
+      )}
+
 
       {/* ═══════════════════════════════════════════════════════════
           MARQUEE TICKER
@@ -329,10 +336,10 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
           SERVICES GRID
       ═══════════════════════════════════════════════════════════ */}
       {!hidden('services') && (
-      <section id="services" style={{ padding: 'clamp(72px, 10vw, 120px) 5%', background: '#141414', position: 'relative' }}>
+      <section id="services" style={{ padding: 'clamp(72px, 10vw, 120px) 5%', background: '#141414', position: 'relative' , order: getOrder('services') }}>
         {/* Top dashed rust stripe */}
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, backgroundImage: dashedRust }} />
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto'  }}>
           {/* Header */}
           <div style={{ marginBottom: 72 }}>
             <EyebrowBar label="What We Do" />
@@ -374,10 +381,10 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
           ABOUT / SHOP — split: CSS garage visual | copy
       ═══════════════════════════════════════════════════════════ */}
       {!hidden('about') && (
-      <section id="about" style={{ background: c.bg, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      <section id="about" style={{ background: c.bg, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', borderTop: '1px solid rgba(255,255,255,0.06)' , order: getOrder('about') }}>
 
         {/* LEFT — garage visual / about image */}
-        <div style={{ position: 'relative', minHeight: 520, background: '#242424', overflow: 'hidden' }}>
+        <div style={{ position: 'relative', minHeight: 520, background: '#242424', overflow: 'hidden'  }}>
           {(generatedCopy?.aboutLayout || 'image') !== 'stats' ? (
             images.about
               ? <img src={images.about} alt="About" style={{ width: '100%', height: '100%', minHeight: 520, objectFit: 'cover', display: 'block' }} />
@@ -455,15 +462,17 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
 
       {/* GALLERY */}
       {!hidden('gallery') && (
+      <div style={{ order: getOrder('gallery') }}>
       <GallerySection images={images} colors={c} font={templateMeta.font} bodyFont={bodyFont} />
+      </div>
       )}
 
       {/* ═══════════════════════════════════════════════════════════
           WHY IRONCLAD — 4-cell grid
       ═══════════════════════════════════════════════════════════ */}
       {!hidden('whyUs') && (
-      <section style={{ background: '#1C1C1C', padding: 'clamp(72px, 10vw, 100px) 5%', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+      <section style={{ background: '#1C1C1C', padding: 'clamp(72px, 10vw, 100px) 5%', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' , order: getOrder('whyUs') }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto'  }}>
           <div style={{ marginBottom: 64 }}>
             <EyebrowBar label="Why Choose Us" />
             <h2 style={sectionTitle}>
@@ -493,7 +502,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
           TESTIMONIALS
       ═══════════════════════════════════════════════════════════ */}
       {!hidden('testimonials') && testimonials.length > 0 && (
-        <section id="testimonials" style={{ background: c.bg, padding: 'clamp(72px, 10vw, 100px) 5%', position: 'relative' }}>
+        <section id="testimonials" style={{ background: c.bg, padding: 'clamp(72px, 10vw, 100px) 5%', position: 'relative' , order: getOrder('testimonials') }}>
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, backgroundImage: dashedRust }} />
           <div style={{ maxWidth: 1200, margin: '0 auto' }}>
             <div style={{ marginBottom: 64 }}>
@@ -541,7 +550,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
       {!hidden('cta') && (
       <section
         id="contact"
-        style={{ background: '#141414', padding: 'clamp(72px, 10vw, 100px) 5%', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'clamp(40px, 6vw, 80px)', alignItems: 'start' }}
+        style={{ background: '#141414', padding: 'clamp(72px, 10vw, 100px) 5%', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'clamp(40px, 6vw, 80px)', alignItems: 'start', order: getOrder('cta') }}
       >
         {/* Left — contact detail cards */}
         <div>
@@ -552,7 +561,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
           <p style={{ fontSize: 15, color: '#6B6560', lineHeight: 1.75, marginBottom: 36, maxWidth: 380 }}>
             {copy.footerTagline || `Serving ${biz.city || 'your area'} and surrounding communities.`}
           </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 3 , order: getOrder('cta') }}>
             {biz.phone && (
               <a href={`tel:${biz.phone}`} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '20px 24px', background: '#1C1C1C', borderLeft: `3px solid ${c.accent}`, textDecoration: 'none' }}>
                 <span style={{ fontSize: 20, width: 28, textAlign: 'center' }}>📞</span>
@@ -643,7 +652,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
       {/* ═══════════════════════════════════════════════════════════
           FOOTER
       ═══════════════════════════════════════════════════════════ */}
-      <footer style={{ background: c.bg, borderTop: `2px solid ${c.accent}`, padding: 'clamp(48px, 8vw, 64px) 5% clamp(24px, 4vw, 32px)' }}>
+      <footer style={{ background: c.bg, borderTop: `2px solid ${c.accent}`, padding: 'clamp(48px, 8vw, 64px) 5% clamp(24px, 4vw, 32px)', order: 9999 }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'clamp(28px, 5vw, 56px)', marginBottom: 48 }}>
 

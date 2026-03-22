@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
+import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 
 // Template: Mobile Modern — Blue & white (#ffffff bg, #2563eb accent, #eff6ff secondary)
 // Split hero layout, info cards, clean card-based services, professional badge row, stats grid
@@ -26,6 +27,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
   const packages = biz.packages || [];
   const splitHero = copy?.heroLayout === 'split';
   const hidden = (id) => copy?.hiddenSections?.includes(id);
+  const getOrder = buildSectionOrder(copy, ['hero','statsBar','services','about','gallery','testimonials','cta']);
 
   return (
     <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, containerType: 'inline-size' }}>
@@ -39,6 +41,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
         transition: 'all 0.3s ease',
         padding: '0 5%',
         boxShadow: scrolled ? '0 2px 20px rgba(37,99,235,0.08)' : 'none',
+        order: -1,
       }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 68 }}>
           <div>
@@ -64,7 +67,8 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
       </nav>
 
       {/* HERO — split layout: left headline, right info cards */}
-      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : {
+      {!hidden('hero') && (
+      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' , order: getOrder('hero') } : {
         minHeight: '100vh', display: 'flex', alignItems: 'center',
         background: `linear-gradient(160deg, ${c.secondary || '#eff6ff'} 0%, #dbeafe 100%)`,
         padding: '96px 5% 72px',
@@ -178,6 +182,8 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
           </div>
         )}
       </header>
+      )}
+
 
       {/* PROFESSIONAL BADGE ROW */}
       <div style={{ background: c.accent, padding: '16px 5%' }}>
@@ -195,8 +201,8 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
 
       {/* STATS GRID */}
       {!hidden('statsBar') && (
-      <section style={{ background: c.bg, padding: '56px 5%', borderBottom: '1px solid #e5e7eb' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 24, textAlign: 'center' }}>
+      <section style={{ background: c.bg, padding: '56px 5%', borderBottom: '1px solid #e5e7eb' , order: getOrder('statsBar') }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 24, textAlign: 'center'  }}>
           {[
             { val: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'Years Experience' },
             { val: '500+', label: 'Clients Served' },
@@ -214,8 +220,8 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
 
       {/* SERVICES — clean card grid */}
       {!hidden('services') && (
-      <section id="services" style={{ padding: '80px 5%', background: c.bg }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+      <section id="services" style={{ padding: '80px 5%', background: c.bg , order: getOrder('services') }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto'  }}>
           <div style={{ marginBottom: 48 }}>
             <span style={{ display: 'inline-block', background: `${c.accent}12`, color: c.accent, fontSize: 12, fontWeight: 700, padding: '5px 14px', borderRadius: 20, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 12 }}>Services</span>
             <h2 style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.8rem)', fontWeight: 800, color: c.text, margin: '0 0 14px' }}>Services We Bring to You</h2>
@@ -276,7 +282,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
 
       {/* ABOUT */}
       {!hidden('about') && (
-      <section id="about" style={{ padding: '80px 5%', background: c.bg, borderTop: '1px solid #e5e7eb' }}>
+      <section id="about" style={{ padding: '80px 5%', background: c.bg, borderTop: '1px solid #e5e7eb' , order: getOrder('about') }}>
         <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'start' }}>
           <div>
             <span style={{ display: 'inline-block', background: `${c.accent}12`, color: c.accent, fontSize: 12, fontWeight: 700, padding: '5px 14px', borderRadius: 20, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 16 }}>About</span>
@@ -294,7 +300,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
               {copy.aboutText || `Based in ${biz.city || 'your area'}, we bring professional detailing directly to you.`}
             </p>
             {biz.awards && (
-              <div style={{ background: '#fefce8', borderRadius: 10, padding: '16px 20px', marginBottom: 12, borderLeft: '4px solid #eab308' }}>
+              <div style={{ background: '#fefce8', borderRadius: 10, padding: '16px 20px', marginBottom: 12, borderLeft: '4px solid #eab308' , order: getOrder('about') }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: '#92400e', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 4 }}>AWARDS</div>
                 <p style={{ color: '#92400e', fontSize: 14, margin: 0, fontWeight: 500 }}>{biz.awards}</p>
               </div>
@@ -332,12 +338,14 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
 
       {/* GALLERY */}
       {!hidden('gallery') && (
+      <div style={{ order: getOrder('gallery') }}>
       <GallerySection images={images} colors={c} font={font} bodyFont={templateMeta.bodyFont} />
+      </div>
       )}
 
       {/* TESTIMONIALS */}
       {!hidden('testimonials') && testimonials.length > 0 && (
-        <section style={{ padding: '80px 5%', background: c.secondary || '#eff6ff', borderTop: '1px solid #dbeafe' }}>
+        <section style={{ padding: '80px 5%', background: c.secondary || '#eff6ff', borderTop: '1px solid #dbeafe' , order: getOrder('testimonials') }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ textAlign: 'center', marginBottom: 48 }}>
               <span style={{ display: 'inline-block', background: `${c.accent}12`, color: c.accent, fontSize: 12, fontWeight: 700, padding: '5px 14px', borderRadius: 20, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 12 }}>Reviews</span>
@@ -361,7 +369,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
 
       {/* CTA */}
       {!hidden('cta') && (
-      <section id="contact" style={{ background: c.accent, padding: '80px 5%', textAlign: 'center' }}>
+      <section id="contact" style={{ background: c.accent, padding: '80px 5%', textAlign: 'center' , order: getOrder('cta') }}>
         <h2 style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.8rem)', fontWeight: 800, color: '#fff', marginBottom: 14 }}>Schedule a Mobile Detail</h2>
         <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 16, marginBottom: 36 }}>
           {copy.ctaSecondary || `We come to you anywhere in ${biz.city || 'your area'}, ${biz.state || ''}`}
@@ -383,8 +391,8 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
       )}
 
       {/* FOOTER */}
-      <footer style={{ background: '#f1f5f9', borderTop: '1px solid #e5e7eb', padding: '48px 5% 28px' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 32, marginBottom: 32 }}>
+      <footer style={{ background: '#f1f5f9', borderTop: '1px solid #e5e7eb', padding: '48px 5% 28px' , order: 9999 }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 32, marginBottom: 32 , order: getOrder('cta') }}>
           <div>
             {/* Footer logo */}
             {images.logo ? (

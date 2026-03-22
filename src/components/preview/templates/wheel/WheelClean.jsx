@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
+import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 
 // Template: Wheel Clean — White & gunmetal (#f8f9fa bg, #374151 accent)
 // Professional clean, services list with left border accent, brands as styled text
@@ -26,6 +27,7 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
   const payments = biz.paymentMethods || [];
   const packages = biz.packages || [];
   const hidden = (id) => copy?.hiddenSections?.includes(id);
+  const getOrder = buildSectionOrder(copy, ['hero', 'awards', 'statsBar', 'services', 'brands', 'about', 'gallery', 'testimonials', 'cta']);
 
   const parseBrands = (val) => {
     if (!val) return [];
@@ -37,11 +39,11 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
   const tireBrandsList = parseBrands(copy?.tireBrandsList ?? biz.tireBrands);
 
   return (
-    <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, containerType: 'inline-size' }}>
+    <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
       <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}.tp-4col{grid-template-columns:1fr 1fr!important}}`}</style>
 
       {/* STICKY NAV */}
-      <nav style={{
+      <nav style={{ order: -1,
         position: 'sticky', top: 0, zIndex: 1000,
         background: scrolled ? 'rgba(248,249,250,0.97)' : c.bg,
         borderBottom: scrolled ? '1px solid #e5e7eb' : '1px solid transparent',
@@ -73,8 +75,9 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
       </nav>
 
       {/* HERO */}
-      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : {
-        minHeight: '100vh', display: 'flex', alignItems: 'center',
+      {!hidden('hero') && (
+      <header style={splitHero ? { order: getOrder('hero'), display: 'flex', flexDirection: 'row', minHeight: '85vh' } : {
+        order: getOrder('hero'), minHeight: '100vh', display: 'flex', alignItems: 'center',
         background: c.secondary || '#e9ecef',
         borderBottom: '1px solid #e5e7eb',
         padding: '96px 5% 72px',
@@ -154,10 +157,11 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
           </div>
         )}
       </header>
+      )}
 
       {/* AWARDS */}
       {!hidden('awards') && biz.awards && (
-        <section style={{ background: '#fefce8', borderTop: '1px solid #fef08a', borderBottom: '1px solid #fef08a', padding: '20px 5%' }}>
+        <section style={{ order: getOrder('awards'), background: '#fefce8', borderTop: '1px solid #fef08a', borderBottom: '1px solid #fef08a', padding: '20px 5%' }}>
           <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 16 }}>
             <div style={{ fontSize: 22 }}>🏆</div>
             <div>
@@ -170,7 +174,7 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
 
       {/* STATS BAR */}
       {!hidden('statsBar') && (
-      <section style={{ background: '#fff', padding: '48px 5%', borderBottom: '1px solid #e5e7eb' }}>
+      <section style={{ order: getOrder('statsBar'), background: '#fff', padding: '48px 5%', borderBottom: '1px solid #e5e7eb' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 24 }}>
           {(() => {
             const defaultStats = [
@@ -198,7 +202,7 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
 
       {/* SERVICES */}
       {!hidden('services') && (
-      <section id="services" style={{ padding: '80px 5%', background: c.bg }}>
+      <section id="services" style={{ order: getOrder('services'), padding: '80px 5%', background: c.bg }}>
         <div className="tp-2col" style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 60, alignItems: 'start' }}>
           <div>
             <div style={{ position: 'sticky', top: 88 }}>
@@ -249,7 +253,7 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
 
       {/* BRANDS */}
       {!hidden('brands') && (brandsList.length > 0 || tireBrandsList.length > 0 || biz.brands || biz.tireBrands) && (
-        <section id="brands" style={{ padding: '72px 5%', background: '#fff', borderTop: '1px solid #e5e7eb' }}>
+        <section id="brands" style={{ order: getOrder('brands'), padding: '72px 5%', background: '#fff', borderTop: '1px solid #e5e7eb' }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <span style={{ display: 'inline-block', background: `${c.accent}12`, color: c.accent, fontSize: 11, fontWeight: 700, padding: '4px 12px', borderRadius: 16, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 16 }}>Brands</span>
             <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.4rem)', fontWeight: 800, color: c.text, marginBottom: 32 }}>Brands We Carry</h2>
@@ -288,7 +292,7 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
 
       {/* ABOUT — standard pattern: image/stats left, text right */}
       {!hidden('about') && (
-      <section id="about" style={{ padding: '80px 5%', background: c.secondary, borderTop: '1px solid #e5e7eb' }}>
+      <section id="about" style={{ order: getOrder('about'), padding: '80px 5%', background: c.secondary, borderTop: '1px solid #e5e7eb' }}>
         <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'center' }}>
           <div>
             {(copy?.aboutLayout || 'image') !== 'stats' ? (
@@ -356,12 +360,14 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
 
       {/* GALLERY */}
       {!hidden('gallery') && (
+      <div style={{ order: getOrder('gallery') }}>
       <GallerySection images={images} colors={c} font={font} bodyFont={templateMeta.bodyFont} />
+      </div>
       )}
 
       {/* TESTIMONIALS */}
       {!hidden('testimonials') && testimonials.length > 0 && (
-        <section style={{ padding: '80px 5%', background: '#fff', borderTop: '1px solid #e5e7eb' }}>
+        <section style={{ order: getOrder('testimonials'), padding: '80px 5%', background: '#fff', borderTop: '1px solid #e5e7eb' }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ textAlign: 'center', marginBottom: 48 }}>
               <span style={{ display: 'inline-block', background: `${c.accent}12`, color: c.accent, fontSize: 11, fontWeight: 700, padding: '4px 12px', borderRadius: 16, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 12 }}>Reviews</span>
@@ -382,7 +388,7 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
 
       {/* CTA — full-width banner */}
       {!hidden('cta') && (
-      <section id="contact" style={{ background: c.accent, padding: '72px 5%', textAlign: 'center' }}>
+      <section id="contact" style={{ order: getOrder('cta'), background: c.accent, padding: '72px 5%', textAlign: 'center' }}>
         <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 800, color: '#fff', margin: '0 0 12px' }}>Ready to Upgrade?</h2>
         <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 16, marginBottom: 32, maxWidth: 500, marginLeft: 'auto', marginRight: 'auto' }}>
           {`${biz.city || 'Your city'}, ${biz.state || ''} — Stop by or give us a call today`}
@@ -405,7 +411,7 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
       )}
 
       {/* FOOTER */}
-      <footer style={{ background: '#f9fafb', borderTop: '1px solid #e5e7eb', padding: '40px 5% 24px' }}>
+      <footer style={{ order: 9999, background: '#f9fafb', borderTop: '1px solid #e5e7eb', padding: '40px 5% 24px' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, marginBottom: 20 }}>
           <div>
             {images.logo ? (

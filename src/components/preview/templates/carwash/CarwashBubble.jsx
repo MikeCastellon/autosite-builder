@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
+import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 
 // Template: Carwash Bubble
 // Bright, playful, cheerful car wash aesthetic. No canvas, no custom cursor JS.
@@ -44,6 +45,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
   const hidden = (id) => copy?.hiddenSections?.includes(id);
+  const getOrder = buildSectionOrder(copy, ['hero','services','process','about','gallery','testimonials','cta']);
 
   const accentLight = '#bae6fd';
   const deepBg      = '#0c2340';
@@ -120,6 +122,8 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
         borderBottom: `1.5px solid rgba(6,182,212,${scrolled ? 0.25 : 0.1})`,
         boxShadow: scrolled ? '0 2px 24px rgba(6,182,212,0.12)' : 'none',
         transition: 'all 0.3s ease',
+      
+        order: -1,
       }}>
         <a href='#' style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
           {images.logo ? (
@@ -157,10 +161,12 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
       </nav>
 
       {/* ═══ HERO ═══ */}
-      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : {
+      {!hidden('hero') && (
+      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh', order: getOrder('hero') } : {
         minHeight: '100vh', position: 'relative', display: 'flex', alignItems: 'center',
         background: 'linear-gradient(160deg, #e0f7ff 0%, #f0f9ff 50%, #eff6ff 100%)',
         overflow: 'hidden', paddingTop: 66,
+        order: getOrder('hero'),
       }}>
         {!splitHero && <HeroImage src={images.hero} />}
         {!splitHero && <BubbleBlob size='480px' top='-120px' left='-120px' opacity={0.22} blur={8} />}
@@ -241,6 +247,8 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
           </div>
         )}
       </header>
+      )}
+
 
       {/* ═══ SOAP MARQUEE ═══ */}
       <div style={{ background: `linear-gradient(135deg, ${c.accent}, #14b8a6)`, overflow: 'hidden', padding: '14px 0' }}>
@@ -260,10 +268,10 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
 
       {/* ═══ PACKAGES ═══ */}
       {!hidden('services') && (
-      <section id='packages' style={{ background: 'white', padding: '100px 5%', position: 'relative', overflow: 'hidden' }}>
+      <section id='packages' style={{ background: 'white', padding: '100px 5%', position: 'relative', overflow: 'hidden', order: getOrder('services') }}>
         <BubbleBlob size='300px' top='-80px' right='-60px' opacity={0.08} blur={10} color={c.accent} />
         <BubbleBlob size='180px' bottom='40px' left='-50px' opacity={0.06} blur={8} color='#14b8a6' />
-        <div style={{ maxWidth: 1100, margin: '0 auto', position: 'relative', zIndex: 1 }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', position: 'relative', zIndex: 1  }}>
           <div style={{ textAlign: 'center', marginBottom: 60 }}>
             <span style={{ display: 'inline-block', background: `${c.accent}18`, color: c.accent, borderRadius: 50, padding: '6px 18px', fontSize: 12, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 16 }}>🫧 Wash Packages</span>
             <h2 style={{ fontFamily: font, fontSize: 'clamp(2rem, 5vw, 3rem)', color: c.text, margin: '0 0 16px', lineHeight: 1.1 }}>
@@ -315,10 +323,10 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
 
       {/* ═══ HOW IT WORKS ═══ */}
       {!hidden('process') && (
-      <section id='how' style={{ background: `linear-gradient(160deg, ${c.secondary || '#e0f7fa'} 0%, ${c.bg} 100%)`, padding: '100px 5%', position: 'relative', overflow: 'hidden' }}>
+      <section id='how' style={{ background: `linear-gradient(160deg, ${c.secondary || '#e0f7fa'} 0%, ${c.bg} 100%)`, padding: '100px 5%', position: 'relative', overflow: 'hidden', order: getOrder('process') }}>
         <BubbleBlob size='500px' top='-180px' left='-120px' opacity={0.14} blur={20} color={c.accent} />
         <BubbleBlob size='350px' bottom='-100px' right='-80px' opacity={0.11} blur={16} color='#a78bfa' />
-        <div style={{ maxWidth: 1100, margin: '0 auto', position: 'relative', zIndex: 1 }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', position: 'relative', zIndex: 1  }}>
           <div style={{ textAlign: 'center', marginBottom: 64 }}>
             <span style={{ display: 'inline-block', background: `${c.accent}18`, color: c.accent, borderRadius: 50, padding: '6px 18px', fontSize: 12, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 16 }}>⚡ The Process</span>
             <h2 style={{ fontFamily: font, fontSize: 'clamp(2rem, 5vw, 3rem)', color: c.text, margin: '0 0 16px', lineHeight: 1.1 }}>
@@ -342,9 +350,9 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
 
       {/* ═══ FEATURES + ABOUT ═══ */}
       {!hidden('about') && (
-      <section style={{ background: 'white', padding: '100px 5%', position: 'relative', overflow: 'hidden' }}>
+      <section style={{ background: 'white', padding: '100px 5%', position: 'relative', overflow: 'hidden' , order: getOrder('about') }}>
         <BubbleBlob size='260px' top='-60px' right='-60px' opacity={0.07} blur={10} color={c.accent} />
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto'  }}>
           <div style={{ textAlign: 'center', marginBottom: 60 }}>
             <span style={{ display: 'inline-block', background: `${c.accent}18`, color: c.accent, borderRadius: 50, padding: '6px 18px', fontSize: 12, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 16 }}>💎 Why {biz.businessName || 'Us'}</span>
             <h2 style={{ fontFamily: font, fontSize: 'clamp(2rem, 5vw, 3rem)', color: c.text, margin: '0 0 16px', lineHeight: 1.1 }}>
@@ -418,15 +426,17 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
 
       {/* GALLERY */}
       {!hidden('gallery') && (
+      <div style={{ order: getOrder('gallery') }}>
       <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
+      </div>
       )}
 
       {/* ═══ TESTIMONIALS ═══ */}
       {!hidden('testimonials') && testimonials.length > 0 && (
-        <section id='reviews' style={{ background: `linear-gradient(170deg, ${c.bg} 0%, ${c.secondary || '#e0f7fa'} 100%)`, padding: '100px 5%', position: 'relative', overflow: 'hidden' }}>
+        <section id='reviews' style={{ background: `linear-gradient(170deg, ${c.bg} 0%, ${c.secondary || '#e0f7fa'} 100%)`, padding: '100px 5%', position: 'relative', overflow: 'hidden', order: getOrder('testimonials') }}>
           <BubbleBlob size='280px' top='0' right='5%' opacity={0.13} blur={12} color='#a78bfa' />
           <BubbleBlob size='180px' bottom='0' left='8%' opacity={0.11} blur={8} color='#14b8a6' />
-          <div style={{ maxWidth: 1100, margin: '0 auto', position: 'relative', zIndex: 1 }}>
+          <div style={{ maxWidth: 1100, margin: '0 auto', position: 'relative', zIndex: 1  }}>
             <div style={{ textAlign: 'center', marginBottom: 60 }}>
               <span style={{ display: 'inline-block', background: `${c.accent}18`, color: c.accent, borderRadius: 50, padding: '6px 18px', fontSize: 12, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 16 }}>⭐ Customer Love</span>
               <h2 style={{ fontFamily: font, fontSize: 'clamp(2rem, 5vw, 3rem)', color: c.text, margin: '0 0 16px', lineHeight: 1.1 }}>
@@ -458,7 +468,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
 
       {/* ═══ CTA BAND ═══ */}
       {!hidden('cta') && (
-      <section style={{ padding: '100px 5%', background: `linear-gradient(135deg, ${deepBg} 0%, #0c2340 60%, #0c1a2e 100%)`, position: 'relative', overflow: 'hidden', textAlign: 'center' }}>
+      <section style={{ padding: '100px 5%', background: `linear-gradient(135deg, ${deepBg} 0%, #0c2340 60%, #0c1a2e 100%)`, position: 'relative', overflow: 'hidden', textAlign: 'center' , order: getOrder('cta') }}>
         <div style={{ position: 'absolute', inset: 0, background: `conic-gradient(from 0deg at 50% 50%, ${c.accent}12, #a78bfa0c, #14b8a60c, ${c.accent}12)`, pointerEvents: 'none' }} />
         <SmallBubble size='110px' top='10%'  left='5%' />
         <SmallBubble size='70px'  top='60%'  right='8%' />
@@ -490,7 +500,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
       )}
 
       {/* ═══ FOOTER ═══ */}
-      <footer style={{ background: deepBg, padding: '72px 5% 32px', position: 'relative', overflow: 'hidden', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      <footer style={{ background: deepBg, padding: '72px 5% 32px', position: 'relative', overflow: 'hidden', borderTop: '1px solid rgba(255,255,255,0.06)' , order: 9999 }}>
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 120, background: `conic-gradient(from 180deg at 50% 0%, ${c.accent}0e, #14b8a60a, transparent 40%)`, pointerEvents: 'none' }} />
         <div style={{ maxWidth: 1100, margin: '0 auto', position: 'relative', zIndex: 1 }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 48, marginBottom: 52 }}>

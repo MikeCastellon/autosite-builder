@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
+import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 
 // Template: Mechanic Industrial — Dark steel & yellow (#1c1c1c bg, #eab308 accent, #2c2c2c secondary)
 // Gear/wrench feel, shop hours section, certifications as yellow badges, warranty guarantee box,
@@ -16,6 +17,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
   const hidden = (id) => copy?.hiddenSections?.includes(id);
+  const getOrder = buildSectionOrder(copy, ['hero','statsBar','services','about','gallery','testimonials','cta']);
 
   const c = templateMeta?.colors || { bg: '#1c1c1c', accent: '#eab308', text: '#e8e8e8', secondary: '#2c2c2c', muted: '#888888' };
   const font = templateMeta?.bodyFont || 'Inter, system-ui, sans-serif';
@@ -43,6 +45,8 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
         transition: 'all 0.3s ease',
         padding: '0 5%',
         backdropFilter: scrolled ? 'blur(12px)' : 'none',
+      
+        order: -1,
       }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 68 }}>
           <div>
@@ -69,7 +73,8 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
       </nav>
 
       {/* HERO — full height, industrial feel */}
-      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : {
+      {!hidden('hero') && (
+      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' , order: getOrder('hero') } : {
         minHeight: '100vh', position: 'relative', display: 'flex', alignItems: 'center',
         background: `linear-gradient(160deg, ${c.secondary || '#2c2c2c'} 0%, ${c.bg} 70%)`,
         overflow: 'hidden',
@@ -138,12 +143,14 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
           </div>
         )}
       </header>
+      )}
+
 
 
       {/* STATS */}
       {!hidden('statsBar') && (
-      <section style={{ background: c.secondary || '#2c2c2c', padding: '3.5rem 5%', borderBottom: '1px solid #333' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 24, textAlign: 'center' }}>
+      <section style={{ background: c.secondary || '#2c2c2c', padding: '3.5rem 5%', borderBottom: '1px solid #333' , order: getOrder('statsBar') }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 24, textAlign: 'center'  }}>
           {[
             { val: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'YEARS IN BUSINESS' },
             { val: '5K+', label: 'VEHICLES REPAIRED' },
@@ -161,8 +168,8 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
 
       {/* SERVICES */}
       {!hidden('services') && (
-      <section id="services" style={{ padding: '80px 5%' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+      <section id="services" style={{ padding: '80px 5%' , order: getOrder('services') }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto'  }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
             <div style={{ width: 36, height: 4, background: c.accent, borderRadius: 2 }} />
             <span style={{ color: c.accent, fontSize: 11, letterSpacing: 4, textTransform: 'uppercase', fontWeight: 700 }}>SERVICES</span>
@@ -231,7 +238,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
             {/* AWARDS */}
             {!hidden('awards') && biz.awards && (
               <div style={{ background: 'rgba(255,215,0,0.08)', border: '1px solid rgba(255,215,0,0.25)', borderRadius: 6, padding: '18px 20px', marginBottom: 16 }}>
-                <div style={{ color: '#ffd700', fontSize: 11, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 6 }}>RECOGNITION</div>
+                <div style={{ color: '#ffd700', fontSize: 11, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 6  }}>RECOGNITION</div>
                 <p style={{ color: c.text, fontSize: 14, margin: 0, fontWeight: 500 }}>{biz.awards}</p>
               </div>
             )}
@@ -289,10 +296,10 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
 
       {/* ABOUT */}
       {!hidden('about') && (
-      <section id="about" style={{ padding: '80px 5%', background: c.secondary, borderBottom: '1px solid #333' }}>
+      <section id="about" style={{ padding: '80px 5%', background: c.secondary, borderBottom: '1px solid #333' , order: getOrder('about') }}>
         <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'start' }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12  }}>
               <div style={{ width: 36, height: 4, background: c.accent, borderRadius: 2 }} />
               <span style={{ color: c.accent, fontSize: 11, letterSpacing: 4, textTransform: 'uppercase', fontWeight: 700 }}>OUR SHOP</span>
             </div>
@@ -344,12 +351,14 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
 
       {/* GALLERY */}
       {!hidden('gallery') && (
+      <div style={{ order: getOrder('gallery') }}>
       <GallerySection images={images} colors={c} font={font} bodyFont={templateMeta.bodyFont} />
+      </div>
       )}
 
       {/* TESTIMONIALS */}
       {!hidden('testimonials') && testimonials.length > 0 && (
-        <section style={{ padding: '80px 5%', borderBottom: '1px solid #333' }}>
+        <section style={{ padding: '80px 5%', borderBottom: '1px solid #333' , order: getOrder('testimonials') }}>
           <div style={{ maxWidth: 1200, margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 48 }}>
               <div style={{ width: 36, height: 4, background: c.accent, borderRadius: 2 }} />
@@ -373,7 +382,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
 
       {/* CTA */}
       {!hidden('cta') && (
-      <section style={{ background: c.accent, padding: '80px 5%', textAlign: 'center' }}>
+      <section style={{ background: c.accent, padding: '80px 5%', textAlign: 'center' , order: getOrder('cta') }}>
         <h2 style={{ fontSize: 'clamp(2rem, 4.5vw, 3.5rem)', fontWeight: 900, color: '#000', textTransform: 'uppercase', margin: '0 0 14px', letterSpacing: '-0.01em' }}>
           SCHEDULE SERVICE
         </h2>
@@ -401,7 +410,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
       )}
 
       {/* FOOTER */}
-      <footer style={{ background: '#111', padding: '48px 5% 24px', borderTop: `3px solid ${c.accent}` }}>
+      <footer style={{ background: '#111', padding: '48px 5% 24px', borderTop: `3px solid ${c.accent}`, order: 9999 }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 36, marginBottom: 32 }}>
           <div>
             {/* Footer logo */}

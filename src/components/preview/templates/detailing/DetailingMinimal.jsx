@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
+import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 
 export default function DetailingMinimal({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const c = templateMeta.colors;
@@ -15,6 +16,7 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
   const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
+  const getOrder = buildSectionOrder(generatedCopy, ['hero', 'statsBar', 'services', 'about', 'testimonials', 'cta', 'gallery']);
 
   const s = {
     nav: {
@@ -185,10 +187,10 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
   const svcCols = _svcItems.length >= 6 ? Math.ceil(_svcItems.length / 2) : _svcItems.length || 1;
 
   return (
-    <div style={{ background: '#f7f7f8', color: c.bg, fontFamily: bodyFont, containerType: 'inline-size' }}>
+    <div style={{ background: '#f7f7f8', color: c.bg, fontFamily: bodyFont, containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
       <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
       {/* NAV */}
-      <nav style={s.nav}>
+      <nav style={{ ...s.nav, order: -1 }}>
         {images.logo ? (
           <img src={images.logo} alt={businessInfo.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
         ) : (
@@ -203,7 +205,8 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
       </nav>
 
       {/* HERO */}
-      <section id="hero" style={s.hero}>
+      {!hidden('hero') && (
+      <section id="hero" style={{ ...s.hero, order: getOrder('hero') }}>
         <HeroImage src={images.hero} />
         <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
           {businessInfo.awards && <div style={s.awardsChip}>◆ {businessInfo.awards}</div>}
@@ -216,10 +219,11 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
           </div>
         </div>
       </section>
+      )}
 
       {/* STATS */}
       {!hidden('statsBar') && (
-      <div style={s.statsBar}>
+      <div style={{ ...s.statsBar, order: getOrder('statsBar') }}>
         {stats.map((st, i) => (
           <div key={i} style={s.statItem}>
             <span style={s.statNum}>{st.num}</span>
@@ -231,7 +235,7 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
 
       {/* SERVICES */}
       {!hidden('services') && (
-      <section id="services" style={s.section}>
+      <section id="services" style={{ ...s.section, order: getOrder('services') }}>
         <div style={s.sectionEyebrow}>Services</div>
         <h2 style={s.sectionTitle}>What We Offer</h2>
         <p style={s.sectionSub}>{generatedCopy.servicesSection?.intro}</p>
@@ -261,7 +265,7 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
 
       {/* ABOUT */}
       {!hidden('about') && (
-      <section id="about" style={s.sectionGray}>
+      <section id="about" style={{ ...s.sectionGray, order: getOrder('about') }}>
         <div style={s.aboutGrid}>
           <div>
             <div style={s.sectionEyebrow}>About Us</div>
@@ -290,7 +294,7 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
 
       {/* TESTIMONIALS */}
       {!hidden('testimonials') && (
-      <section id="reviews" style={s.section}>
+      <section id="reviews" style={{ ...s.section, order: getOrder('testimonials') }}>
         <div style={s.sectionEyebrow}>Testimonials</div>
         <h2 style={{ ...s.sectionTitle, marginBottom: '2rem' }}>What Clients Are Saying</h2>
         <div style={s.testimonialGrid}>
@@ -309,7 +313,7 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
 
       {/* CTA BAND */}
       {!hidden('cta') && (
-      <section style={s.ctaBand}>
+      <section style={{ ...s.ctaBand, order: getOrder('cta') }}>
         <div style={s.ctaBandTitle}>Ready for a Perfect Detail?</div>
         <div style={s.ctaBandSub}>{businessInfo.tagline || generatedCopy.subheadline}</div>
         <span style={s.ctaBandPhone}>{businessInfo.phone}</span>
@@ -331,9 +335,11 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
 
       {/* GALLERY */}
       {!hidden('gallery') && (
+      <div style={{ order: getOrder('gallery') }}>
       <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
+      </div>
       )}
-      <footer style={s.footer}>
+      <footer style={{ ...s.footer, order: 9999 }}>
         <div>
           <div style={s.footerLogo}>{businessInfo.businessName}</div>
           <div style={s.footerText}>{generatedCopy.footerTagline}</div>

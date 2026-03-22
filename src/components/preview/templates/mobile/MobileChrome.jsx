@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
+import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 
 export default function MobileChrome({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
@@ -12,6 +13,7 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
   const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
+  const getOrder = buildSectionOrder(generatedCopy, ['hero','statsBar','services','about','gallery','testimonials','cta']);
 
   const c = templateMeta.colors;
   const font = templateMeta.font;
@@ -154,7 +156,7 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
     <div style={{ background: c.bg, color: c.text, fontFamily: bodyFont, containerType: 'inline-size' }}>
       <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
       {/* NAV */}
-      <nav style={navStyle}>
+      <nav style={{ ...navStyle, order: -1 }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '72px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             <div style={{ width: '28px', height: '28px', background: chromeGradient, borderRadius: '50%' }} />
@@ -176,7 +178,8 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
       </nav>
 
       {/* HERO */}
-      <section style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : heroStyle}>
+      {!hidden('hero') && (
+      <section style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh', order: getOrder('hero') } : { ...heroStyle, order: getOrder('hero') }}>
         {!splitHero && <HeroImage src={images.hero} />}
         {!splitHero && <div style={heroGlowStyle} />}
         {!splitHero && [15, 25, 75, 85].map((top, i) => (
@@ -221,11 +224,12 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
           </div>
         )}
       </section>
+      )}
 
       {/* STATS BAR */}
       {!hidden('statsBar') && (
-      <section style={{ background: c.secondary, borderTop: '1px solid rgba(148,163,184,0.1)', borderBottom: '1px solid rgba(148,163,184,0.1)', padding: '44px 24px', fontFamily: bodyFont }}>
-        <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: '24px' }}>
+      <section style={{ background: c.secondary, borderTop: '1px solid rgba(148,163,184,0.1)', borderBottom: '1px solid rgba(148,163,184,0.1)', padding: '44px 24px', fontFamily: bodyFont , order: getOrder('statsBar') }}>
+        <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: '24px'  }}>
           {stats.map((s, i) => (
             <div key={i} style={{ textAlign: 'center', position: 'relative' }}>
               {i < stats.length - 1 && <div style={{ position: 'absolute', right: '-40px', top: '20%', bottom: '20%', width: '1px', background: 'rgba(148,163,184,0.15)' }} />}
@@ -239,9 +243,9 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
 
       {/* SERVICES */}
       {!hidden('services') && (
-      <section id="services" style={sectionStyle()}>
+      <section id="services" style={{ ...sectionStyle(), order: getOrder('services') }}>
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg, transparent, rgba(148,163,184,0.08), transparent)' }} />
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto'  }}>
           <div style={{ textAlign: 'center', marginBottom: '64px' }}>
             <div style={{ display: 'inline-block', width: '40px', height: '1px', background: chromeGradient, marginBottom: '20px' }} />
             <h2 style={{ fontFamily: font, fontSize: '2.2rem', fontWeight: 300, color: c.text, marginBottom: '16px', letterSpacing: '-0.5px' }}>Our Services</h2>
@@ -284,8 +288,8 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
 
       {/* ABOUT */}
       {!hidden('about') && (
-      <section id="about" style={sectionStyle()}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', gap: '80px', alignItems: 'center', flexWrap: 'wrap' }}>
+      <section id="about" style={{ ...sectionStyle(), order: getOrder('about') }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', gap: '80px', alignItems: 'center', flexWrap: 'wrap'  }}>
           <div style={{ flex: '1 1 300px', minWidth: '260px' }}>
             {(generatedCopy?.aboutLayout || 'image') !== 'stats' ? (
               images.about
@@ -338,13 +342,15 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
 
       {/* GALLERY */}
       {!hidden('gallery') && (
+      <div style={{ order: getOrder('gallery') }}>
       <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
+      </div>
       )}
 
       {/* TESTIMONIALS */}
       {!hidden('testimonials') && (
-      <section style={{ ...sectionStyle(c.secondary), borderTop: '1px solid rgba(148,163,184,0.08)' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+      <section style={{ ...sectionStyle(c.secondary), borderTop: '1px solid rgba(148,163,184,0.08)' , order: getOrder('testimonials') }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto'  }}>
           <div style={{ textAlign: 'center', marginBottom: '60px' }}>
             <h2 style={{ fontFamily: font, fontSize: '2.2rem', fontWeight: 300, color: c.text, letterSpacing: '-0.5px' }}>Client Testimonials</h2>
             <div style={{ width: '60px', height: '1px', background: chromeGradient, margin: '16px auto 0' }} />
@@ -368,8 +374,8 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
 
       {/* CONTACT / CTA */}
       {!hidden('cta') && (
-      <section id="contact" style={{ ...sectionStyle(), borderTop: '1px solid rgba(148,163,184,0.08)', textAlign: 'center' }}>
-        <div style={{ maxWidth: '700px', margin: '0 auto' }}>
+      <section id="contact" style={{ ...sectionStyle(), borderTop: '1px solid rgba(148,163,184,0.08)', textAlign: 'center' , order: getOrder('cta') }}>
+        <div style={{ maxWidth: '700px', margin: '0 auto'  }}>
           <div style={{ width: '1px', height: '60px', background: chromeGradient, margin: '0 auto 40px' }} />
           <h2 style={{ fontFamily: font, fontSize: '2.4rem', fontWeight: 300, color: c.text, marginBottom: '16px', letterSpacing: '-1px' }}>
             Book Your Detail Today
@@ -400,7 +406,7 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
       )}
 
       {/* FOOTER */}
-      <footer style={{ background: '#050505', borderTop: '1px solid rgba(148,163,184,0.08)', padding: '52px 24px', fontFamily: bodyFont }}>
+      <footer style={{ background: '#050505', borderTop: '1px solid rgba(148,163,184,0.08)', padding: '52px 24px', fontFamily: bodyFont , order: 9999 }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '32px', marginBottom: '48px' }}>
             <div>

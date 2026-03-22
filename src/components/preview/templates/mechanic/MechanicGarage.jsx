@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
+import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 
 export default function MechanicGarage({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
@@ -12,6 +13,7 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
   const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
+  const getOrder = buildSectionOrder(generatedCopy, ['hero','statsBar','services','about','gallery','testimonials','cta']);
 
   const c = templateMeta.colors;
   const font = templateMeta.font;
@@ -163,7 +165,7 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
     <div style={{ background: c.bg, color: c.text, fontFamily: bodyFont, containerType: 'inline-size' }}>
       <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
       {/* NAV */}
-      <nav style={navStyle}>
+      <nav style={{ ...navStyle, order: -1 }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '68px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{ width: '10px', height: '36px', background: c.accent, borderRadius: '2px' }} />
@@ -185,7 +187,8 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
       </nav>
 
       {/* HERO */}
-      <section style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : heroStyle}>
+      {!hidden('hero') && (
+      <section style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh', order: getOrder('hero') } : { ...heroStyle, order: getOrder('hero') }}>
         {!splitHero && <HeroImage src={images.hero} />}
         {!splitHero && [...Array(8)].map((_, i) => (
           <div key={i} style={heroAccentLine(`${10 + i * 12}%`, i % 3 === 0 ? 0.08 : 0.04)} />
@@ -217,11 +220,12 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
           </div>
         )}
       </section>
+      )}
 
       {/* STATS BAR */}
       {!hidden('statsBar') && (
-      <section style={{ background: c.accent, padding: '36px 24px', fontFamily: bodyFont }}>
-        <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: '24px' }}>
+      <section style={{ background: c.accent, padding: '36px 24px', fontFamily: bodyFont , order: getOrder('statsBar') }}>
+        <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: '24px'  }}>
           {stats.map((s, i) => (
             <div key={i} style={{ textAlign: 'center' }}>
               <div style={{ fontFamily: font, fontSize: '2rem', fontWeight: 900, color: '#000000', letterSpacing: '-0.5px' }}>{s.value}</div>
@@ -234,8 +238,8 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
 
       {/* SERVICES */}
       {!hidden('services') && (
-      <section id="services" style={sectionStyle()}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+      <section id="services" style={{ ...sectionStyle(), order: getOrder('services') }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto'  }}>
           <div style={{ marginBottom: '56px' }}>
             <div style={{ color: c.accent, fontWeight: 800, fontSize: '0.78rem', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '10px' }}>What We Do</div>
             <h2 style={{ fontFamily: font, fontSize: '2.4rem', fontWeight: 900, color: c.text, marginBottom: '12px', textTransform: 'uppercase' }}>Our Services</h2>
@@ -274,8 +278,8 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
 
       {/* PACKAGES */}
       {!hidden('services') && businessInfo.packages && businessInfo.packages.length > 0 && (
-        <section id="packages" style={sectionStyle()}>
-          <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+        <section id="packages" style={{ ...sectionStyle(), order: getOrder('services') }}>
+          <div style={{ maxWidth: '1100px', margin: '0 auto'  }}>
             <h2 style={{ fontFamily: font, fontSize: '2.2rem', fontWeight: 900, color: c.text, textTransform: 'uppercase', marginBottom: '48px' }}>Service Packages</h2>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
               {businessInfo.packages.map((pkg, i) => (
@@ -292,8 +296,8 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
 
       {/* ABOUT */}
       {!hidden('about') && (
-      <section id="about" style={{ ...sectionStyle(c.secondary), backgroundImage: concreteTexture }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', gap: '64px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+      <section id="about" style={{ ...sectionStyle(c.secondary), backgroundImage: concreteTexture , order: getOrder('about') }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', gap: '64px', alignItems: 'flex-start', flexWrap: 'wrap'  }}>
           <div style={{ flex: '1 1 340px' }}>
             <div style={{ color: c.accent, fontWeight: 800, fontSize: '0.78rem', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '10px' }}>Our Story</div>
             <h2 style={{ fontFamily: font, fontSize: '2rem', fontWeight: 900, color: c.text, textTransform: 'uppercase', marginBottom: '20px' }}>
@@ -351,13 +355,15 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
 
       {/* GALLERY */}
       {!hidden('gallery') && (
+      <div style={{ order: getOrder('gallery') }}>
       <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
+      </div>
       )}
 
       {/* TESTIMONIALS */}
       {!hidden('testimonials') && (
-      <section style={sectionStyle()}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+      <section style={{ ...sectionStyle(), order: getOrder('testimonials') }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto'  }}>
           <h2 style={{ fontFamily: font, fontSize: '2.2rem', fontWeight: 900, color: c.text, textTransform: 'uppercase', marginBottom: '48px' }}>Straight From Our Customers</h2>
           <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
             {generatedCopy.testimonialPlaceholders.map((t, i) => (
@@ -374,8 +380,8 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
 
       {/* CONTACT CTA - orange background */}
       {!hidden('cta') && (
-      <section id="contact" style={{ background: c.accent, padding: '72px 24px', fontFamily: bodyFont }}>
-        <div style={{ maxWidth: '900px', margin: '0 auto', display: 'flex', gap: '48px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+      <section id="contact" style={{ background: c.accent, padding: '72px 24px', fontFamily: bodyFont , order: getOrder('cta') }}>
+        <div style={{ maxWidth: '900px', margin: '0 auto', display: 'flex', gap: '48px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between'  }}>
           <div>
             <h2 style={{ fontFamily: font, fontSize: '2rem', fontWeight: 900, color: '#000000', textTransform: 'uppercase', marginBottom: '8px' }}>
               Get Your Vehicle Fixed Right.
@@ -401,7 +407,7 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
       )}
 
       {/* FOOTER */}
-      <footer style={{ background: '#0a0a0a', backgroundImage: concreteTexture, padding: '48px 24px', fontFamily: bodyFont }}>
+      <footer style={{ background: '#0a0a0a', backgroundImage: concreteTexture, padding: '48px 24px', fontFamily: bodyFont , order: 9999 }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '32px', marginBottom: '36px' }}>
             <div>

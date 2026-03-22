@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
+import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 
 export default function DetailingPremium({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const c = templateMeta.colors;
@@ -15,6 +16,7 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
   const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
+  const getOrder = buildSectionOrder(generatedCopy, ['hero', 'statsBar', 'services', 'about', 'testimonials', 'cta', 'gallery']);
 
   const s = {
     nav: {
@@ -184,10 +186,10 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
   const svcCols = _svcItems.length >= 6 ? Math.ceil(_svcItems.length / 2) : _svcItems.length || 1;
 
   return (
-    <div style={{ background: c.bg, color: c.text, fontFamily: bodyFont, containerType: 'inline-size' }}>
+    <div style={{ background: c.bg, color: c.text, fontFamily: bodyFont, containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
       <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
       {/* NAV */}
-      <nav style={s.nav}>
+      <nav style={{ ...s.nav, order: -1 }}>
         {images.logo ? (
           <img src={images.logo} alt={businessInfo.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
         ) : (
@@ -197,7 +199,8 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
       </nav>
 
       {/* HERO */}
-      <section style={s.hero}>
+      {!hidden('hero') && (
+      <section style={{ ...s.hero, order: getOrder('hero') }}>
         <HeroImage src={images.hero} />
         <div style={s.heroDiag} />
         <div style={s.heroDiag2} />
@@ -212,10 +215,11 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
           </div>
         </div>
       </section>
+      )}
 
       {/* STATS BAR */}
       {!hidden('statsBar') && (
-      <div style={s.statsBar}>
+      <div style={{ ...s.statsBar, order: getOrder('statsBar') }}>
         {stats.map((st, i) => (
           <div key={i} style={s.statItem}>
             <span style={s.statNum}>{st.num}</span>
@@ -227,7 +231,7 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
 
       {/* SERVICES */}
       {!hidden('services') && (
-      <section style={s.section}>
+      <section style={{ ...s.section, order: getOrder('services') }}>
         <div style={s.sectionLabel}>Our Services</div>
         <h2 style={s.sectionTitle}>Precision. Perfection. Prestige.</h2>
         <p style={s.sectionSub}>{generatedCopy.servicesSection?.intro}</p>
@@ -256,7 +260,7 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
 
       {/* ABOUT */}
       {!hidden('about') && (
-      <section style={s.sectionAlt}>
+      <section style={{ ...s.sectionAlt, order: getOrder('about') }}>
         <div style={s.aboutGrid}>
           <div>
             <div style={s.sectionLabel}>Our Story</div>
@@ -273,7 +277,7 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
 
       {/* TESTIMONIALS */}
       {!hidden('testimonials') && (
-      <section style={s.section}>
+      <section style={{ ...s.section, order: getOrder('testimonials') }}>
         <div style={s.sectionLabel}>Client Words</div>
         <h2 style={{ ...s.sectionTitle, marginBottom: '2rem' }}>What Our Clients Say</h2>
         <div style={s.testimonialGrid}>
@@ -290,7 +294,7 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
 
       {/* CTA SECTION */}
       {!hidden('cta') && (
-      <section style={s.ctaSection}>
+      <section style={{ ...s.ctaSection, order: getOrder('cta') }}>
         <div style={s.sectionLabel}>Ready to Begin?</div>
         <div style={s.ctaBig}>Reserve Your Detail Session</div>
         <div style={s.ctaPhone}>{businessInfo.phone}</div>
@@ -316,9 +320,11 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
 
       {/* GALLERY */}
       {!hidden('gallery') && (
+      <div style={{ order: getOrder('gallery') }}>
       <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
+      </div>
       )}
-      <footer style={s.footer}>
+      <footer style={{ ...s.footer, order: 9999 }}>
         <div>
           <div style={s.footerName}>{businessInfo.businessName}</div>
           <div style={s.footerText}>{generatedCopy.footerTagline}</div>

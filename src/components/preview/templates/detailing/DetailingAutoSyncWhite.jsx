@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
+import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 
 export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const c = templateMeta.colors;
@@ -18,6 +19,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
     return () => { if (document.head.contains(link)) document.head.removeChild(link); };
   }, []);
   const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
+  const getOrder = buildSectionOrder(generatedCopy, ['hero', 'services', 'about', 'gallery', 'testimonials', 'cta']);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -73,7 +75,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
   const tileIcons  = ['✦', '◈', '⬡', '◉', '✧', '◆', '◎', '⬟'];
 
   const s = {
-    wrapper: { background: white, color: text, fontFamily: dmSans, WebkitFontSmoothing: 'antialiased', overflowX: 'hidden' },
+    wrapper: { background: white, color: text, fontFamily: dmSans, WebkitFontSmoothing: 'antialiased', overflowX: 'hidden', display: 'flex', flexDirection: 'column' },
     nav: {
       position: 'sticky', top: 0, zIndex: 100, height: '52px',
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -162,7 +164,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
     <div style={s.wrapper}>
 
       {/* NAV */}
-      <nav style={s.nav}>
+      <nav style={{ ...s.nav, order: -1 }}>
         {images.logo ? (
           <img src={images.logo} alt={businessInfo.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
         ) : (
@@ -180,7 +182,8 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
       </nav>
 
       {/* HERO */}
-      <section id="hero" style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : s.hero}>
+      {!hidden('hero') && (
+      <section id="hero" style={splitHero ? { order: getOrder('hero'), display: 'flex', flexDirection: 'row', minHeight: '85vh' } : { ...s.hero, order: getOrder('hero') }}>
         {!splitHero && <HeroImage src={images.hero} />}
         {!splitHero && <div style={s.heroGradient} />}
         <div style={splitHero ? {
@@ -225,10 +228,11 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
           </div>
         )}
       </section>
+      )}
 
       {/* SERVICES BENTO */}
       {!hidden('services') && (
-      <section id="services" style={s.sectionWhite}>
+      <section id="services" style={{ ...s.sectionWhite, order: getOrder('services') }}>
         <div style={s.servicesIntro}>
           <span style={s.eyebrow}>Services</span>
           <h2 style={s.sectionTitle}>
@@ -283,7 +287,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
 
       {/* ABOUT */}
       {!hidden('about') && (
-      <section id="about" style={{ ...s.sectionWhite, background: off }}>
+      <section id="about" style={{ ...s.sectionWhite, background: off, order: getOrder('about') }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', gap: isMobile ? '48px' : '80px', alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ flex: '1 1 320px', minWidth: '280px' }}>
             {(generatedCopy?.aboutLayout || 'image') !== 'stats' ? (
@@ -325,12 +329,14 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
 
       {/* GALLERY */}
       {!hidden('gallery') && (
+      <div style={{ order: getOrder('gallery') }}>
       <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
+      </div>
       )}
 
       {/* TESTIMONIALS */}
       {!hidden('testimonials') && (
-      <section id="reviews" style={s.sectionOff}>
+      <section id="reviews" style={{ ...s.sectionOff, order: getOrder('testimonials') }}>
         <div style={{ maxWidth: '520px', margin: '0 auto 72px', textAlign: 'center' }}>
           <span style={s.eyebrow}>Reviews</span>
           <h2 style={s.sectionTitle}>
@@ -362,7 +368,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
 
       {/* CONTACT */}
       {!hidden('cta') && (
-      <section id="contact" style={{ background: blue, padding: isMobile ? '80px 24px' : '100px 80px', textAlign: 'center' }}>
+      <section id="contact" style={{ order: getOrder('cta'), background: blue, padding: isMobile ? '80px 24px' : '100px 80px', textAlign: 'center' }}>
         <span style={{ ...s.eyebrow, color: 'rgba(255,255,255,0.6)' }}>Contact</span>
         <h2 style={{ ...s.sectionTitle, color: white, marginBottom: '16px' }}>
           Let&#8217;s get your vehicle <em style={{ fontStyle: 'italic' }}>sorted.</em>
@@ -384,7 +390,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
       )}
 
       {/* FOOTER */}
-      <footer style={s.footer}>
+      <footer style={{ ...s.footer, order: 9999 }}>
         <div style={s.footerTop}>
           <div>
             {/* Footer logo */}

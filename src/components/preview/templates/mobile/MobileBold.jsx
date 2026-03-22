@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
+import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 
 // Template: Mobile Bold — Orange & dark (#1a1a1a bg, #f97316 accent)
 // Aggressive diagonal slashes, "WE COME TO YOU" badge, truck emoji nav, service area banner, packages pricing
@@ -26,6 +27,7 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
   const packages = biz.packages || [];
 
   const hidden = (id) => copy?.hiddenSections?.includes(id);
+  const getOrder = buildSectionOrder(copy, ['hero','services','about','gallery','testimonials','cta']);
 
   const splitHero = generatedCopy?.heroLayout === 'split';
 
@@ -49,6 +51,8 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
         transition: 'all 0.3s ease',
         padding: '0 5%',
         backdropFilter: scrolled ? 'blur(12px)' : 'none',
+      
+        order: -1,
       }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 68 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -79,10 +83,12 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
       </nav>
 
       {/* HERO — full height with diagonal slash overlay */}
-      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : {
+      {!hidden('hero') && (
+      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh', order: getOrder('hero') } : {
         minHeight: '100vh', position: 'relative', display: 'flex', alignItems: 'center',
         background: `linear-gradient(135deg, #1a1a1a 0%, #2d1800 55%, #1a1a1a 100%)`,
         overflow: 'hidden',
+        order: getOrder('hero'),
       }}>
         {!splitHero && <HeroImage src={images.hero} />}
         {!splitHero && <div style={{ position: 'absolute', inset: 0, background: slashBg }} />}
@@ -136,6 +142,8 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
           </div>
         )}
       </header>
+      )}
+
 
       {/* SERVICE AREA BANNER */}
       {biz.serviceArea && (
@@ -149,8 +157,8 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
 
       {/* SERVICES */}
       {!hidden('services') && (
-      <section id="services" style={{ padding: '80px 5%' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+      <section id="services" style={{ padding: '80px 5%' , order: getOrder('services') }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto'  }}>
           <div style={{ marginBottom: 48 }}>
             <div style={{ color: c.accent, fontWeight: 900, letterSpacing: 3, fontSize: 11, textTransform: 'uppercase', marginBottom: 8 }}>WHAT WE DO</div>
             <h2 style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 900, textTransform: 'uppercase', margin: 0, lineHeight: 1 }}>OUR SERVICES</h2>
@@ -215,7 +223,7 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
 
       {/* ABOUT */}
       {!hidden('about') && (
-      <section id="about" style={{ padding: '80px 5%' }}>
+      <section id="about" style={{ padding: '80px 5%' , order: getOrder('about') }}>
         <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'center' }}>
           <div>
             {(copy?.aboutLayout || 'image') !== 'stats' ? (
@@ -223,7 +231,7 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
                 ? <img src={images.about} alt="About" style={{ width: '100%', maxWidth: 460, height: 360, objectFit: 'cover', display: 'block' }} />
                 : <div style={{ width: '100%', maxWidth: 460, height: 360, background: c.secondary || '#2a2a2a', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#777', fontSize: '0.85rem', textAlign: 'center', padding: 24, boxSizing: 'border-box' }}>Upload an about photo in the Images tab</div>
             ) : (
-              <div style={{ width: '100%', maxWidth: 460, background: c.secondary || '#2a2a2a', padding: '40px 32px', boxSizing: 'border-box' }}>
+              <div style={{ width: '100%', maxWidth: 460, background: c.secondary || '#2a2a2a', padding: '40px 32px', boxSizing: 'border-box'  }}>
                 {(() => {
                   const defaultStats = [
                     { value: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'Years in Business' },
@@ -280,12 +288,14 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
 
       {/* GALLERY */}
       {!hidden('gallery') && (
+      <div style={{ order: getOrder('gallery') }}>
       <GallerySection images={images} colors={c} font={font} bodyFont={templateMeta.bodyFont} />
+      </div>
       )}
 
       {/* TESTIMONIALS */}
       {!hidden('testimonials') && testimonials.length > 0 && (
-        <section style={{ padding: '80px 5%', background: c.secondary || '#2a2a2a', borderTop: '1px solid #333' }}>
+        <section style={{ padding: '80px 5%', background: c.secondary || '#2a2a2a', borderTop: '1px solid #333' , order: getOrder('testimonials') }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ textAlign: 'center', marginBottom: 48 }}>
               <div style={{ color: c.accent, fontWeight: 900, letterSpacing: 3, fontSize: 11, textTransform: 'uppercase', marginBottom: 8 }}>WHAT CLIENTS SAY</div>
@@ -306,7 +316,7 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
 
       {/* CTA SECTION */}
       {!hidden('cta') && (
-      <section style={{ padding: '80px 5%', textAlign: 'center' }}>
+      <section style={{ padding: '80px 5%', textAlign: 'center' , order: getOrder('cta') }}>
         <h2 style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 16px', lineHeight: 1 }}>READY TO BOOK?</h2>
         <p style={{ color: '#888', fontSize: 16, marginBottom: 40 }}>{copy.ctaSecondary || `Serving ${biz.city || 'your area'}. We come to you.`}</p>
         <a href={copy?.ctaUrl || (`tel:${biz.phone}`)} style={{
@@ -327,7 +337,7 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
       )}
 
       {/* FOOTER */}
-      <footer style={{ background: '#111', padding: '48px 5% 28px', borderTop: `3px solid ${c.accent}` }}>
+      <footer style={{ background: '#111', padding: '48px 5% 28px', borderTop: `3px solid ${c.accent}`, order: 9999 }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 36, marginBottom: 32 }}>
           <div>
             {/* Footer logo */}

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
+import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 
 // Template: Mobile Rugged — Dark green (#1a2318 bg, #8a9a4a accent, #f0ede0 text)
 // Repeating diagonal line texture in hero, "ANYWHERE · ANYTIME" subtext, service area, heavy uppercase
@@ -15,6 +16,7 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
   const hidden = (id) => copy?.hiddenSections?.includes(id);
+  const getOrder = buildSectionOrder(copy, ['hero','statsBar','services','about','gallery','testimonials','cta']);
 
   const c = templateMeta?.colors || { bg: '#1a2318', accent: '#8a9a4a', text: '#f0ede0', secondary: '#232e20', muted: '#a09880' };
   const font = templateMeta?.bodyFont || 'Georgia, serif';
@@ -48,6 +50,8 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
         transition: 'all 0.3s ease',
         padding: '0 5%',
         backdropFilter: scrolled ? 'blur(10px)' : 'none',
+      
+        order: -1,
       }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 68 }}>
           <div>
@@ -73,7 +77,8 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
       </nav>
 
       {/* HERO — full height with diagonal texture */}
-      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : {
+      {!hidden('hero') && (
+      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' , order: getOrder('hero') } : {
         minHeight: '100vh', position: 'relative', display: 'flex', alignItems: 'center',
         background: `linear-gradient(160deg, ${c.secondary || '#232e20'} 0%, ${c.bg} 70%)`,
         overflow: 'hidden',
@@ -138,6 +143,8 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
           </div>
         )}
       </header>
+      )}
+
 
       {/* SERVICE AREA BANNER */}
       {biz.serviceArea && (
@@ -151,7 +158,7 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
 
       {/* STATS BAR */}
       {!hidden('statsBar') && (
-      <section style={{ background: c.secondary || '#232e20', padding: '3.5rem 5%', borderBottom: `1px solid ${c.accent}33` }}>
+      <section style={{ background: c.secondary || '#232e20', padding: '3.5rem 5%', borderBottom: `1px solid ${c.accent}33` , order: getOrder('statsBar') }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 32, textAlign: 'center' }}>
           {[
             { val: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'YEARS EXPERIENCE' },
@@ -170,8 +177,8 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
 
       {/* SERVICES */}
       {!hidden('services') && (
-      <section id="services" style={{ padding: '80px 5%' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+      <section id="services" style={{ padding: '80px 5%' , order: getOrder('services') }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto'  }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
             <div style={{ width: 42, height: 3, background: c.accent, borderRadius: 2 }} />
             <span style={{ color: c.accent, fontSize: 11, letterSpacing: 3, textTransform: 'uppercase', fontWeight: 700 }}>What We Do</span>
@@ -202,7 +209,7 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
 
       {/* ABOUT + HOURS */}
       {!hidden('about') && (
-      <section id="about" style={{ background: c.secondary || '#232e20', padding: '80px 5%', borderTop: `1px solid ${c.accent}33` }}>
+      <section id="about" style={{ background: c.secondary || '#232e20', padding: '80px 5%', borderTop: `1px solid ${c.accent}33` , order: getOrder('about') }}>
         <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'start' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
@@ -267,12 +274,14 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
 
       {/* GALLERY */}
       {!hidden('gallery') && (
+      <div style={{ order: getOrder('gallery') }}>
       <GallerySection images={images} colors={c} font={font} bodyFont={templateMeta.bodyFont} />
+      </div>
       )}
 
       {/* TESTIMONIALS */}
       {!hidden('testimonials') && testimonials.length > 0 && (
-        <section style={{ padding: '80px 5%', borderTop: `1px solid ${c.accent}33` }}>
+        <section style={{ padding: '80px 5%', borderTop: `1px solid ${c.accent}33` , order: getOrder('testimonials') }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 48 }}>
               <div style={{ width: 42, height: 3, background: c.accent, borderRadius: 2 }} />
@@ -296,7 +305,7 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
 
       {/* CTA */}
       {!hidden('cta') && (
-      <section style={{ background: c.accent, padding: '72px 5%', textAlign: 'center' }}>
+      <section style={{ background: c.accent, padding: '72px 5%', textAlign: 'center' , order: getOrder('cta') }}>
         <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 900, color: '#1a2318', textTransform: 'uppercase', margin: '0 0 16px', letterSpacing: '-0.01em' }}>
           BOOK YOUR DETAIL
         </h2>
@@ -319,7 +328,7 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
       )}
 
       {/* FOOTER */}
-      <footer style={{ background: '#111a0f', padding: '48px 5% 24px', borderTop: `1px solid ${c.accent}33` }}>
+      <footer style={{ background: '#111a0f', padding: '48px 5% 24px', borderTop: `1px solid ${c.accent}33`, order: 9999 }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 36, marginBottom: 32 }}>
           <div>
             {/* Footer logo */}

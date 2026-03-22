@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
+import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 
 // Template: Tint Obsidian -- Ultra-dark void (#050507 bg, #7C3AED accent, #06B6D4 cyan)
 // Syne + Outfit fonts, VLT shade guide, film brands, process steps, testimonials
@@ -76,6 +77,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
   const shades = copy?.shadeGuide?.length > 0 ? copy.shadeGuide : defaultShades;
 
   const hidden = (id) => copy?.hiddenSections?.includes(id);
+  const getOrder = buildSectionOrder(copy, ['hero','shadeGuide','services','brands','process','about','gallery','testimonials','cta']);
 
   const panelBg = c.secondary || '#0d0d12';
 
@@ -102,6 +104,8 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
         borderBottom: scrolled ? `1px solid ${c.accent}30` : '1px solid transparent',
         transition: 'all 0.35s ease', padding: '0 5%',
         backdropFilter: scrolled ? 'blur(18px)' : 'none',
+      
+        order: -1,
       }}>
         <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 70 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -138,7 +142,8 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
       </nav>
 
       {/* ============================================================ HERO ============================================================ */}
-      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : { minHeight: '100vh', position: 'relative', display: 'flex', alignItems: 'center', background: c.bg, overflow: 'hidden' }}>
+      {!hidden('hero') && (
+      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' , order: getOrder('hero') } : { minHeight: '100vh', position: 'relative', display: 'flex', alignItems: 'center', background: c.bg, overflow: 'hidden' , order: getOrder('hero') }}>
         {!splitHero && <HeroImage src={images.hero} />}
         {!splitHero && <div style={{
           position: 'absolute', top: '-15%', right: '-8%', width: 800, height: 800,
@@ -230,10 +235,12 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
           </div>
         )}
       </header>
+      )}
+
 
       {/* ============================================================ VLT SHADE GUIDE ============================================================ */}
       {!hidden('shadeGuide') && (
-      <section style={{ padding: '100px 5%', background: panelBg, borderTop: `1px solid ${c.accent}1a`, position: 'relative', overflow: 'hidden' }}>
+      <section style={{ padding: '100px 5%', background: panelBg, borderTop: `1px solid ${c.accent}1a`, position: 'relative', overflow: 'hidden' , order: getOrder('shadeGuide') }}>
         <div style={{
           position: 'absolute', top: -200, right: -200, width: 600, height: 600, borderRadius: '50%',
           background: `radial-gradient(circle, ${c.accent}07, transparent 70%)`, pointerEvents: 'none',
@@ -304,8 +311,8 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
 
       {/* ============================================================ SERVICES ============================================================ */}
       {!hidden('services') && (
-      <section id="services" style={{ padding: '100px 5%' }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto' }}>
+      <section id="services" style={{ padding: '100px 5%' , order: getOrder('services') }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto'  }}>
           <div style={{ marginBottom: 64 }}>
             <div style={labelTagStyle}>
               <span style={{ width: 24, height: 1, background: c.accent, flexShrink: 0 }} />
@@ -366,7 +373,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
 
       {/* ============================================================ FILM BRANDS ============================================================ */}
       {!hidden('brands') && filmBrandsList.length > 0 && (
-        <section id="films" style={{ padding: '100px 5%', background: panelBg, borderTop: `1px solid ${c.accent}1a`, borderBottom: `1px solid ${c.accent}1a`, position: 'relative', overflow: 'hidden' }}>
+        <section id="films" style={{ padding: '100px 5%', background: panelBg, borderTop: `1px solid ${c.accent}1a`, borderBottom: `1px solid ${c.accent}1a`, position: 'relative', overflow: 'hidden' , order: getOrder('brands') }}>
           <div style={{
             position: 'absolute', top: -150, right: -150, width: 500, height: 500, borderRadius: '50%',
             background: `radial-gradient(circle, ${cCyan}08, transparent 70%)`, pointerEvents: 'none',
@@ -457,7 +464,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
 
       {/* ============================================================ PROCESS ============================================================ */}
       {!hidden('process') && (
-      <section id="process" style={{ padding: '100px 5%', background: panelBg, borderTop: `1px solid ${c.accent}1a` }}>
+      <section id="process" style={{ padding: '100px 5%', background: panelBg, borderTop: `1px solid ${c.accent}1a` , order: getOrder('process') }}>
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
           <div style={{ marginBottom: 72 }}>
             <div style={labelTagStyle}>
@@ -486,7 +493,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
 
       {/* ============================================================ ABOUT ============================================================ */}
       {!hidden('about') && (
-      <section id="about" style={{ padding: '100px 5%', borderTop: `1px solid ${c.accent}1a` }}>
+      <section id="about" style={{ padding: '100px 5%', borderTop: `1px solid ${c.accent}1a` , order: getOrder('about') }}>
         <div className="tp-2col" style={{ maxWidth: 1280, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'center' }}>
           {/* Left: image or stats box */}
           <div>
@@ -554,12 +561,14 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
       )}
       {/* GALLERY */}
       {!hidden('gallery') && (
+      <div style={{ order: getOrder('gallery') }}>
       <GallerySection images={images} colors={c} font={templateMeta.font} bodyFont={bodyFont} />
+      </div>
       )}
 
       {/* ============================================================ TESTIMONIALS ============================================================ */}
       {!hidden('testimonials') && testimonials.length > 0 && (
-        <section style={{ padding: '100px 5%', background: panelBg, borderTop: `1px solid ${c.accent}1a` }}>
+        <section style={{ padding: '100px 5%', background: panelBg, borderTop: `1px solid ${c.accent}1a` , order: getOrder('testimonials') }}>
           <div style={{ maxWidth: 1280, margin: '0 auto' }}>
             <div style={{ textAlign: 'center', marginBottom: 64 }}>
               <div style={{ ...labelTagStyle, justifyContent: 'center' }}>
@@ -611,7 +620,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
 
       {/* ============================================================ CTA BAND ============================================================ */}
       {!hidden('cta') && (
-      <section style={{ padding: '90px 5%', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+      <section style={{ padding: '90px 5%', textAlign: 'center', position: 'relative', overflow: 'hidden' , order: getOrder('cta') }}>
         <div style={{
           position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
           width: 700, height: 450,
@@ -619,7 +628,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
         }} />
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${c.accent}40, transparent)` }} />
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${cCyan}30, transparent)` }} />
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: 700, margin: '0 auto' }}>
+        <div style={{ position: 'relative', zIndex: 1, maxWidth: 700, margin: '0 auto'  }}>
           <div style={{ ...labelTagStyle, justifyContent: 'center', marginBottom: 20 }}>
             <span style={{ width: 24, height: 1, background: cCyan, flexShrink: 0 }} />
             Ready When You Are
@@ -658,7 +667,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
       )}
 
       {/* ============================================================ FOOTER ============================================================ */}
-      <footer style={{ background: '#030305', padding: '60px 5% 28px', borderTop: `1px solid ${c.accent}18` }}>
+      <footer style={{ background: '#030305', padding: '60px 5% 28px', borderTop: `1px solid ${c.accent}18`, order: 9999 }}>
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 40, marginBottom: 48 }}>
             {/* Brand */}

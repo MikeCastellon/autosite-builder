@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
+import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 
 // Template: Wheel Edge — Dark chrome & electric blue (#0d0d0d bg, #00b4d8 accent, #1a1a2e secondary)
 // Circular ring decorative element in hero, product-catalog service grid, brands section, no emoji in nav
@@ -25,6 +26,7 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
   const testimonials = copy.testimonialPlaceholders || [];
   const payments = biz.paymentMethods || [];
   const hidden = (id) => copy?.hiddenSections?.includes(id);
+  const getOrder = buildSectionOrder(copy, ['hero', 'statsBar', 'services', 'brands', 'about', 'gallery', 'testimonials', 'cta']);
 
   const parseBrands = (val) => {
     if (!val) return [];
@@ -36,11 +38,11 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
   const tireBrands = parseBrands(copy?.tireBrandsList ?? biz.tireBrands);
 
   return (
-    <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, containerType: 'inline-size' }}>
+    <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
       <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}.tp-4col{grid-template-columns:1fr 1fr!important}}`}</style>
 
       {/* STICKY NAV — no emoji */}
-      <nav style={{
+      <nav style={{ order: -1,
         position: 'sticky', top: 0, zIndex: 1000,
         background: scrolled ? 'rgba(13,13,13,0.97)' : c.bg,
         borderBottom: scrolled ? `1px solid ${c.accent}44` : '1px solid transparent',
@@ -74,8 +76,9 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
       </nav>
 
       {/* HERO — full height with circular ring decoration */}
-      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : {
-        minHeight: '100vh', position: 'relative', display: 'flex', alignItems: 'center',
+      {!hidden('hero') && (
+      <header style={splitHero ? { order: getOrder('hero'), display: 'flex', flexDirection: 'row', minHeight: '85vh' } : {
+        order: getOrder('hero'), minHeight: '100vh', position: 'relative', display: 'flex', alignItems: 'center',
         background: `radial-gradient(ellipse at 70% 50%, ${c.secondary || '#1a1a2e'} 0%, ${c.bg} 65%)`,
         overflow: 'hidden',
       }}>
@@ -157,10 +160,11 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
           </div>
         )}
       </header>
+      )}
 
       {/* STATS */}
       {!hidden('statsBar') && (
-      <section style={{ background: c.secondary || '#1a1a2e', padding: '3rem 5%', borderBottom: `1px solid ${c.accent}33` }}>
+      <section style={{ order: getOrder('statsBar'), background: c.secondary || '#1a1a2e', padding: '3rem 5%', borderBottom: `1px solid ${c.accent}33` }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 24, textAlign: 'center' }}>
           {[
             { val: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'YEARS IN BUSINESS' },
@@ -178,7 +182,7 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
 
       {/* SERVICES — product-catalog grid */}
       {!hidden('services') && (
-      <section id="services" style={{ padding: '80px 5%' }}>
+      <section id="services" style={{ order: getOrder('services'), padding: '80px 5%' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ marginBottom: 48 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
@@ -247,7 +251,7 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
 
       {/* BRANDS CARRIED */}
       {!hidden('brands') && (brands.length > 0 || tireBrands.length > 0) && (
-        <section id="brands" style={{ padding: '72px 5%', background: c.secondary, borderTop: `1px solid ${c.accent}33` }}>
+        <section id="brands" style={{ order: getOrder('brands'), padding: '72px 5%', background: c.secondary, borderTop: `1px solid ${c.accent}33` }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 48 }}>
               <div style={{ width: 40, height: 2, background: c.accent }} />
@@ -290,7 +294,7 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
 
       {/* ABOUT */}
       {!hidden('about') && (
-      <section id="about" style={{ padding: '80px 5%', borderTop: `1px solid ${c.accent}33` }}>
+      <section id="about" style={{ order: getOrder('about'), padding: '80px 5%', borderTop: `1px solid ${c.accent}33` }}>
         <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'center' }}>
           <div>
             {(copy?.aboutLayout || 'image') !== 'stats' ? (
@@ -355,12 +359,14 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
 
       {/* GALLERY */}
       {!hidden('gallery') && (
+      <div style={{ order: getOrder('gallery') }}>
       <GallerySection images={images} colors={c} font={font} bodyFont={templateMeta.bodyFont} />
+      </div>
       )}
 
       {/* TESTIMONIALS */}
       {!hidden('testimonials') && testimonials.length > 0 && (
-        <section style={{ padding: '80px 5%', background: c.secondary, borderTop: `1px solid ${c.accent}33` }}>
+        <section style={{ order: getOrder('testimonials'), padding: '80px 5%', background: c.secondary, borderTop: `1px solid ${c.accent}33` }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 48 }}>
               <div style={{ width: 40, height: 2, background: c.accent }} />
@@ -384,7 +390,7 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
 
       {/* CTA */}
       {!hidden('cta') && (
-      <section style={{ background: c.secondary, padding: '80px 5%', textAlign: 'center', borderTop: `1px solid ${c.accent}33` }}>
+      <section style={{ order: getOrder('cta'), background: c.secondary, padding: '80px 5%', textAlign: 'center', borderTop: `1px solid ${c.accent}33` }}>
         <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 16px', letterSpacing: '-0.01em' }}>READY TO UPGRADE?</h2>
         <p style={{ color: c.muted, fontSize: 16, marginBottom: 36 }}>
           {copy.ctaSecondary || `${biz.city || 'Your city'}, ${biz.state || ''} — Call or stop by today`}
@@ -408,7 +414,7 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
       )}
 
       {/* FOOTER */}
-      <footer style={{ background: '#06060d', padding: '48px 5% 24px', borderTop: `1px solid ${c.accent}22` }}>
+      <footer style={{ order: 9999, background: '#06060d', padding: '48px 5% 24px', borderTop: `1px solid ${c.accent}22` }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 36, marginBottom: 32 }}>
           <div>
             {/* Footer logo */}

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
+import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 
 // Template: Tint Dark — Black & purple (#080808 bg, #7c3aed accent, #111111 secondary)
 // Radial gradient glow hero, film brands section, shield warranty callout, packages, fade/gradient elements
@@ -32,9 +33,10 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
     : [];
 
   const hidden = (id) => copy?.hiddenSections?.includes(id);
+  const getOrder = buildSectionOrder(copy, ['hero', 'statsBar', 'services', 'brands', 'about', 'gallery', 'testimonials', 'cta']);
 
   return (
-    <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, containerType: 'inline-size' }}>
+    <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
       <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
 
       {/* STICKY NAV */}
@@ -45,6 +47,7 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
         transition: 'all 0.3s ease',
         padding: '0 5%',
         backdropFilter: scrolled ? 'blur(14px)' : 'none',
+        order: -1,
       }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 68 }}>
           <div>
@@ -71,10 +74,12 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
       </nav>
 
       {/* HERO — full height with radial gradient glow effect */}
-      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' } : {
+      {!hidden('hero') && (
+      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh', order: getOrder('hero') } : {
         minHeight: '100vh', position: 'relative', display: 'flex', alignItems: 'center',
         background: c.bg,
         overflow: 'hidden',
+        order: getOrder('hero'),
       }}>
         {!splitHero && <HeroImage src={images.hero} />}
         {!splitHero && <div style={{
@@ -144,10 +149,11 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
           </div>
         )}
       </header>
+      )}
 
       {/* STATS */}
       {!hidden('statsBar') && (
-      <section style={{ background: c.secondary || '#111', padding: '48px 5%', borderTop: `1px solid ${c.accent}22`, borderBottom: `1px solid ${c.accent}22` }}>
+      <section style={{ background: c.secondary || '#111', padding: '48px 5%', borderTop: `1px solid ${c.accent}22`, borderBottom: `1px solid ${c.accent}22`, order: getOrder('statsBar') }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 24, textAlign: 'center' }}>
           {[
             { val: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'Years in Business' },
@@ -169,7 +175,7 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
 
       {/* SERVICES */}
       {!hidden('services') && (
-      <section id="services" style={{ padding: '80px 5%' }}>
+      <section id="services" style={{ padding: '80px 5%', order: getOrder('services') }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ marginBottom: 48 }}>
             <div style={{ color: c.accent, fontWeight: 700, letterSpacing: 3, fontSize: 11, textTransform: 'uppercase', marginBottom: 10 }}>WHAT WE DO</div>
@@ -233,7 +239,7 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
 
       {/* FILM BRANDS */}
       {!hidden('brands') && (filmBrandsList.length > 0 || biz.filmBrands) && (
-        <section id="films" style={{ padding: '72px 5%', background: c.secondary, borderTop: `1px solid ${c.accent}22` }}>
+        <section id="films" style={{ padding: '72px 5%', background: c.secondary, borderTop: `1px solid ${c.accent}22`, order: getOrder('brands') }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ color: c.accent, fontWeight: 700, letterSpacing: 3, fontSize: 11, textTransform: 'uppercase', marginBottom: 10 }}>PREMIUM FILMS</div>
             <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, marginBottom: 32 }}>Film Brands We Use</h2>
@@ -289,7 +295,7 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
 
       {/* ABOUT */}
       {!hidden('about') && (
-      <section id="about" style={{ padding: '80px 5%', borderTop: `1px solid ${c.accent}22` }}>
+      <section id="about" style={{ padding: '80px 5%', borderTop: `1px solid ${c.accent}22`, order: getOrder('about') }}>
         <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'start' }}>
           <div>
             <div style={{ color: c.accent, fontWeight: 700, letterSpacing: 3, fontSize: 11, textTransform: 'uppercase', marginBottom: 10 }}>ABOUT US</div>
@@ -345,12 +351,14 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
 
       {/* GALLERY */}
       {!hidden('gallery') && (
+      <div style={{ order: getOrder('gallery') }}>
       <GallerySection images={images} colors={c} font={font} bodyFont={templateMeta.bodyFont} />
+      </div>
       )}
 
       {/* TESTIMONIALS */}
       {!hidden('testimonials') && testimonials.length > 0 && (
-        <section style={{ padding: '80px 5%', background: c.secondary, borderTop: `1px solid ${c.accent}22` }}>
+        <section style={{ padding: '80px 5%', background: c.secondary, borderTop: `1px solid ${c.accent}22`, order: getOrder('testimonials') }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ textAlign: 'center', marginBottom: 48 }}>
               <div style={{ color: c.accent, fontWeight: 700, letterSpacing: 3, fontSize: 11, textTransform: 'uppercase', marginBottom: 10 }}>TESTIMONIALS</div>
@@ -375,7 +383,7 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
 
       {/* CTA */}
       {!hidden('cta') && (
-      <section style={{ padding: '80px 5%', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+      <section style={{ padding: '80px 5%', textAlign: 'center', position: 'relative', overflow: 'hidden', order: getOrder('cta') }}>
         <div style={{
           position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
           width: 600, height: 400,
@@ -405,7 +413,7 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
       )}
 
       {/* FOOTER */}
-      <footer style={{ background: '#040408', padding: '48px 5% 24px', borderTop: `1px solid ${c.accent}22` }}>
+      <footer style={{ background: '#040408', padding: '48px 5% 24px', borderTop: `1px solid ${c.accent}22`, order: 9999 }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 36, marginBottom: 32 }}>
           <div>
             {/* Footer logo */}
