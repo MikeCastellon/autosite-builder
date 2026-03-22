@@ -191,6 +191,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
         ]);
         return (
           <section id="services" style={{ padding: '64px 48px' }}>
+            <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 32 }}>
               <div>
                 <p style={{ fontSize: 11, letterSpacing: 3, textTransform: 'uppercase', color: D.bronze, marginBottom: 8, fontWeight: 500 }}>◆ {copy?.products?.length > 0 ? 'Our Products' : 'Our Services'}</p>
@@ -199,9 +200,9 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
                 </h2>
               </div>
             </div>
-            <div className="tp-3col" style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(products.length, 3)}, 1fr)`, gap: 1, background: D.border }}>
+            <div className="tp-3col" style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(products.length, 3)}, 1fr)`, gap: 16 }}>
               {products.map((item, i) => (
-                <div key={i} style={{ background: D.card }}>
+                <div key={i} style={{ background: D.card, border: `1px solid ${D.border}`, overflow: 'hidden' }}>
                   <div style={{ aspectRatio: '1 / 1', background: D.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: `1px solid ${D.border}`, position: 'relative', overflow: 'hidden' }}>
                     {(item.badge || (i === 0 && !copy?.products)) && (
                       <span style={{ position: 'absolute', top: 12, left: 12, fontSize: 10, fontWeight: 500, letterSpacing: 1.5, textTransform: 'uppercase', padding: '4px 9px', background: D.bronzeBg, color: D.bronze, zIndex: 1 }}>
@@ -228,6 +229,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
                   </div>
                 </div>
               ))}
+            </div>
             </div>
           </section>
         );
