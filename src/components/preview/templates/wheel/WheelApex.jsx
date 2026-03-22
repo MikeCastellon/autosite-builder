@@ -99,11 +99,19 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
       </nav>
 
       {/* HERO */}
-      <section className="tp-2col" style={{
-        display: 'grid', gridTemplateColumns: splitHero ? '1fr 1fr' : '1fr 1fr',
-        minHeight: 500, background: D.card, borderBottom: `1px solid ${D.border}`,
+      <header style={splitHero ? {
+        display: 'grid', gridTemplateColumns: '1fr 1fr', minHeight: 500, background: D.card, borderBottom: `1px solid ${D.border}`,
+      } : {
+        minHeight: '100vh', display: 'flex', alignItems: 'center',
+        background: D.card, borderBottom: `1px solid ${D.border}`,
+        position: 'relative', overflow: 'hidden',
       }}>
-        <div style={{ padding: '72px 48px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        {!splitHero && <HeroImage src={images.hero} />}
+        <div style={splitHero ? {
+          padding: '72px 48px', display: 'flex', flexDirection: 'column', justifyContent: 'center',
+        } : {
+          position: 'relative', zIndex: 1, padding: '96px 48px 72px', maxWidth: 700,
+        }}>
           <p style={{ fontSize: 11, letterSpacing: 3, textTransform: 'uppercase', color: D.bronze, marginBottom: 14, fontWeight: 500 }}>
             ◆ {biz.city || 'Custom'} Wheels & Tires
           </p>
@@ -118,7 +126,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
               <>FORGE<br /><span style={{ color: D.alloyMid }}>YOUR</span><br />RIDE</>
             )}
           </h1>
-          <p style={{ fontSize: 14, color: D.muted, lineHeight: 1.75, maxWidth: 320, marginBottom: 32, fontWeight: 300 }}>
+          <p style={{ fontSize: 14, color: D.muted, lineHeight: 1.75, maxWidth: 420, marginBottom: 32, fontWeight: 300 }}>
             {copy.subheadline || biz.tagline || 'Precision-engineered alloy wheels built for performance and presence.'}
           </p>
           <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -130,22 +138,28 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
             </a>
           </div>
         </div>
-        <div style={{ background: D.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', borderLeft: `1px solid ${D.border}`, minHeight: 400 }}>
-          {images.hero ? (
-            <img src={images.hero} alt="Hero" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-          ) : (
-            <div style={{ width: 320, height: 300, background: D.bg2, border: `1px dashed ${D.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 80 }}>
-              <span style={{ fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase', color: D.muted }}>Hero image</span>
-            </div>
-          )}
-          <div style={{ display: 'flex', width: '100%', position: 'absolute', bottom: 0, borderTop: `1px solid ${D.border}` }}>
-            {heroStats.map((s, i) => (
-              <div key={i} style={{ flex: 1, padding: '16px 20px', borderRight: i < heroStats.length - 1 ? `1px solid ${D.border}` : 'none', background: 'rgba(255,255,255,0.85)' }}>
-                <div style={{ fontFamily: display, fontSize: 28, letterSpacing: 1, color: D.bronze, lineHeight: 1 }}>{s.value}</div>
-                <div style={{ fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: D.muted, marginTop: 3 }}>{s.label}</div>
+        {splitHero && (
+          <div style={{ background: D.bg, position: 'relative', borderLeft: `1px solid ${D.border}`, minHeight: 400, overflow: 'hidden' }}>
+            {images.hero ? (
+              <img src={images.hero} alt="Hero" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            ) : (
+              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase', color: D.muted }}>Hero image</span>
               </div>
-            ))}
+            )}
           </div>
+        )}
+      </header>
+
+      {/* STATS BAR */}
+      <section style={{ background: D.card, borderBottom: `1px solid ${D.border}` }}>
+        <div style={{ display: 'flex', maxWidth: 1100, margin: '0 auto' }}>
+          {heroStats.map((s, i) => (
+            <div key={i} style={{ flex: 1, padding: '20px 24px', borderRight: i < heroStats.length - 1 ? `1px solid ${D.border}` : 'none' }}>
+              <div style={{ fontFamily: display, fontSize: 32, letterSpacing: 1, color: D.bronze, lineHeight: 1 }}>{s.value}</div>
+              <div style={{ fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: D.muted, marginTop: 4 }}>{s.label}</div>
+            </div>
+          ))}
         </div>
       </section>
 
