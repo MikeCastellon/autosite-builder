@@ -254,23 +254,34 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
             {shades.map((shade, idx) => {
               const vlt = Number(shade.vlt) || 50;
               const opacity = (1 - vlt / 100).toFixed(2);
+              const shadeImg = images?.[`shade${idx}`];
               return (
                 <div key={idx} style={{
                   background: 'rgba(255,255,255,0.02)', border: `1px solid ${c.accent}20`,
                   borderRadius: 12, overflow: 'hidden', transition: 'border-color 0.2s',
                 }}>
                   <div style={{
-                    height: 140, position: 'relative',
-                    background: `linear-gradient(180deg, rgba(40,120,200,${(0.12 + (1 - Number(opacity)) * 0.15).toFixed(2)}), transparent 70%)`,
+                    aspectRatio: '1', position: 'relative',
+                    background: shadeImg ? 'transparent' : `linear-gradient(180deg, rgba(40,120,200,${(0.12 + (1 - Number(opacity)) * 0.15).toFixed(2)}), transparent 70%)`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
-                    {/* Tint overlay */}
-                    <div style={{ position: 'absolute', inset: 0, background: `rgba(0,0,0,${opacity})`, borderBottom: `1px solid ${c.accent}18` }} />
-                    {/* Car window silhouette */}
-                    <svg width="100" height="60" viewBox="0 0 100 60" fill="none" style={{ position: 'relative', zIndex: 1, opacity: 0.5 }}>
-                      <path d="M10 55 Q10 25 30 15 L70 15 Q90 25 90 55 Z" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" fill="none" />
-                      <path d="M20 50 Q20 30 35 22 L65 22 Q80 30 80 50 Z" fill={`rgba(255,255,255,${(0.05 + (vlt / 100) * 0.15).toFixed(2)})`} />
-                    </svg>
+                    {shadeImg ? (
+                      <>
+                        <img src={shadeImg} alt={shade.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                        {/* Tint overlay on image */}
+                        <div style={{ position: 'absolute', inset: 0, background: `rgba(0,0,0,${(opacity * 0.4).toFixed(2)})` }} />
+                      </>
+                    ) : (
+                      <>
+                        {/* Tint overlay */}
+                        <div style={{ position: 'absolute', inset: 0, background: `rgba(0,0,0,${opacity})`, borderBottom: `1px solid ${c.accent}18` }} />
+                        {/* Car window silhouette */}
+                        <svg width="100" height="60" viewBox="0 0 100 60" fill="none" style={{ position: 'relative', zIndex: 1, opacity: 0.5 }}>
+                          <path d="M10 55 Q10 25 30 15 L70 15 Q90 25 90 55 Z" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" fill="none" />
+                          <path d="M20 50 Q20 30 35 22 L65 22 Q80 30 80 50 Z" fill={`rgba(255,255,255,${(0.05 + (vlt / 100) * 0.15).toFixed(2)})`} />
+                        </svg>
+                      </>
+                    )}
                     <div style={{
                       position: 'absolute', top: 10, right: 10,
                       background: `${c.accent}22`, border: `1px solid ${c.accent}44`,

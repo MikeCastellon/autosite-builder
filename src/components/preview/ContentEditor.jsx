@@ -552,6 +552,9 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
                           <input type="text" value={shade.name ?? ''} onChange={(e) => updateShade(i, 'name', e.target.value)} placeholder="Name" className="col-span-2 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 text-[12px] text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-400" />
                         </div>
                         <input type="text" value={shade.legal ?? ''} onChange={(e) => updateShade(i, 'legal', e.target.value)} placeholder="Legal note (e.g. Rear-legal)" className="w-full bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 text-[12px] text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-400" />
+                        <div className="mt-2">
+                          <ImageSlot label={`Shade ${i + 1} Photo`} value={images?.[`shade${i}`]} onChange={(v) => setImage(`shade${i}`, v)} />
+                        </div>
                       </div>
                     ))}
                     <button type="button" onClick={addShade} className="w-full py-2 text-[12px] font-semibold text-gray-500 border border-dashed border-gray-300 rounded-lg hover:border-gray-400 hover:text-gray-700 transition mb-2">+ Add Shade</button>
