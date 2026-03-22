@@ -501,8 +501,8 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
           </p>
           <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
             <a href='#packages' style={{ background: `linear-gradient(135deg, ${c.accent}, #14b8a6)`, color: '#fff', padding: '16px 40px', borderRadius: 50, fontWeight: 800, fontSize: 17, textDecoration: 'none', boxShadow: `0 8px 32px ${c.accent}55`, display: 'inline-block' }}>{copy.ctaButtonText || 'See Packages 🫧'}</a>
-            <a href={biz.phone ? `tel:${biz.phone}` : '#'} style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', padding: '14px 34px', borderRadius: 50, fontWeight: 800, fontSize: 16, textDecoration: 'none', border: '1.5px solid rgba(255,255,255,0.25)', display: 'inline-block' }}>
-              {biz.phone ? `Call ${biz.phone}` : 'Call Us Now'}
+            <a href={copy?.ctaSecondaryUrl || (biz.phone ? `tel:${biz.phone}` : '#')} style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', padding: '14px 34px', borderRadius: 50, fontWeight: 800, fontSize: 16, textDecoration: 'none', border: '1.5px solid rgba(255,255,255,0.25)', display: 'inline-block' }}>
+              {copy?.ctaSecondaryText || (biz.phone ? `Call ${biz.phone}` : 'Call Us Now')}
             </a>
           </div>
           {biz.address && <p style={{ color: 'rgba(255,255,255,0.32)', fontSize: 13, marginTop: 28, fontWeight: 600 }}>📍 {biz.address}{biz.city ? `, ${biz.city}` : ''}{biz.state ? `, ${biz.state}` : ''}</p>}

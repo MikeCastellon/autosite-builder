@@ -370,6 +370,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
     ...(isApex ? [{ id: 'trustBar', label: 'Trust Bar' }, { id: 'ticker', label: 'Ticker' }] : []),
     { id: 'about', label: 'About' },
     { id: 'testimonials', label: 'Reviews' },
+    { id: 'contact', label: 'Contact' },
     { id: 'images', label: 'Images' },
     { id: 'colors', label: 'Colors' },
     { id: 'footer', label: 'Footer' },
@@ -926,15 +927,24 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
             </>
           )}
 
-          {activeSection === 'footer' && (
+          {activeSection === 'contact' && (
             <>
               <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Contact / CTA Section</p>
-              <Field label="CTA Headline" value={copy?.ctaHeadline} onChange={(v) => setCopy('ctaHeadline', v)} />
-              <Field label="CTA Subtext" value={copy?.ctaSubtext} onChange={(v) => setCopy('ctaSubtext', v)} />
-              <Field label="CTA Button Text" value={copy?.ctaButtonText} onChange={(v) => setCopy('ctaButtonText', v)} />
-              <Field label="CTA Button URL (optional)" value={copy?.ctaUrl} onChange={(v) => setCopy('ctaUrl', v)} />
-              <hr className="my-4 border-gray-100" />
-              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Footer</p>
+              <Field label="Headline" value={copy?.ctaHeadline} onChange={(v) => setCopy('ctaHeadline', v)} />
+              <Field label="Subtext" value={copy?.ctaSubtext} onChange={(v) => setCopy('ctaSubtext', v)} multiline rows={2} />
+              <hr className="my-3 border-gray-100" />
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Primary Button</p>
+              <Field label="Button Text" value={copy?.ctaButtonText} onChange={(v) => setCopy('ctaButtonText', v)} />
+              <Field label="Button URL (default: calls phone)" value={copy?.ctaUrl} onChange={(v) => setCopy('ctaUrl', v)} />
+              <hr className="my-3 border-gray-100" />
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Secondary Button</p>
+              <Field label="Button Text" value={copy?.ctaSecondaryText} onChange={(v) => setCopy('ctaSecondaryText', v)} />
+              <Field label="Button URL" value={copy?.ctaSecondaryUrl} onChange={(v) => setCopy('ctaSecondaryUrl', v)} />
+            </>
+          )}
+
+          {activeSection === 'footer' && (
+            <>
               <Field label="Footer Tagline" value={copy.footerTagline} onChange={(v) => setCopy('footerTagline', v)} />
               <div className="mt-4 mb-2">
                 <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-3">Social Icons</p>
