@@ -424,9 +424,9 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
 
       {/* INSTAGRAM FEED */}
       {!hidden('instagram') && copy?.instagramWidgetKey && (
-        <section style={{ order: getOrder('instagram'), padding: '80px 5%' }}>
+        <section style={{ order: getOrder('instagram'), padding: '80px 5%', background: c.secondary || '#374151', borderTop: `1px solid ${c.accent}22` }}>
           <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-            {copy.instagramFeedTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.instagramFeedTitle}</h2>}
+            <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.instagramFeedTitle || 'Follow Us on Instagram'}</h2>
             <InstagramFeedWidget widgetKey={copy.instagramWidgetKey} />
           </div>
         </section>

@@ -350,9 +350,9 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
 
       {/* INSTAGRAM FEED */}
       {!hidden('instagram') && generatedCopy?.instagramWidgetKey && (
-        <section style={{ order: getOrder('instagram'), padding: '80px 5%' }}>
+        <section style={{ order: getOrder('instagram'), padding: '80px 5%', background: c.secondary, borderTop: `1px solid ${c.accent}15` }}>
           <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-            {generatedCopy.instagramFeedTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{generatedCopy.instagramFeedTitle}</h2>}
+            <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{generatedCopy.instagramFeedTitle || 'Follow Us on Instagram'}</h2>
             <InstagramFeedWidget widgetKey={generatedCopy.instagramWidgetKey} />
           </div>
         </section>

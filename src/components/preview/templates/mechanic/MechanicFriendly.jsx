@@ -403,9 +403,9 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
 
       {/* INSTAGRAM FEED */}
       {!hidden('instagram') && generatedCopy?.instagramWidgetKey && (
-        <section style={{ order: getOrder('instagram'), padding: '80px 5%' }}>
+        <section style={{ order: getOrder('instagram'), padding: '80px 5%', background: c.secondary || '#eff6ff', borderTop: '1px solid #e5e7eb' }}>
           <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-            {generatedCopy.instagramFeedTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.bg }}>{generatedCopy.instagramFeedTitle}</h2>}
+            <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.bg }}>{generatedCopy.instagramFeedTitle || 'Follow Us on Instagram'}</h2>
             <InstagramFeedWidget widgetKey={generatedCopy.instagramWidgetKey} />
           </div>
         </section>

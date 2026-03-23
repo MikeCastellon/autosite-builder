@@ -382,9 +382,9 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
 
       {/* INSTAGRAM FEED */}
       {!hidden('instagram') && copy?.instagramWidgetKey && (
-        <section style={{ order: getOrder('instagram'), padding: '80px 5%' }}>
+        <section style={{ order: getOrder('instagram'), padding: '80px 5%', background: D.card, borderTop: `1px solid ${D.border}` }}>
           <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-            {copy.instagramFeedTitle && <h2 style={{ fontFamily: display || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: D.ink }}>{copy.instagramFeedTitle}</h2>}
+            <h2 style={{ fontFamily: display || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: D.ink }}>{copy.instagramFeedTitle || 'Follow Us on Instagram'}</h2>
             <InstagramFeedWidget widgetKey={copy.instagramWidgetKey} />
           </div>
         </section>
