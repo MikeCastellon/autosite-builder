@@ -1,20 +1,18 @@
-import { generateSlug, netlifyName } from './publishUtils.js';
+import { generateSlug } from './publishUtils.js';
 import { exportHtmlString } from './exportHtml.js';
 
 /**
- * Publish a site to the web via the publish-site Netlify function.
- * Returns { publishedUrl, netlifyUrl, cnameInstructions }
+ * Publish a site by uploading HTML to Cloudflare R2.
+ * The Worker at *.autocaregeniushub.com serves it automatically.
  */
-export async function publishSite({ siteId, businessInfo, generatedCopy, templateId, templateMeta, images, selectedWidgetIds, customDomain }) {
+export async function publishSite({ siteId, businessInfo, generatedCopy, templateId, templateMeta, images, selectedWidgetIds }) {
   const slug = generateSlug(businessInfo.businessName);
-  const siteName = netlifyName(slug, siteId);
-
   const htmlContent = await exportHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, selectedWidgetIds || []);
 
   const res = await fetch('/.netlify/functions/publish-site', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ siteId, htmlContent, slug, netlifyName: siteName, customDomain: customDomain || null }),
+    body: JSON.stringify({ siteId, htmlContent, slug }),
   });
 
   if (!res.ok) {
