@@ -117,10 +117,21 @@ export const handler = async (event) => {
       }
     }
 
-    const publishedUrl = `https://${slug}.${PUBLISH_DOMAIN}`;
+    // --- Step 3b: Add subdomain as custom domain on Netlify site ---
+    const subdomainFull = `${slug}.${PUBLISH_DOMAIN}`;
+    const addDomainRes = await fetch(`https://api.netlify.com/api/v1/sites/${netlifySiteId}`, {
+      method: 'PATCH',
+      headers: { 'Authorization': `Bearer ${NETLIFY_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ custom_domain: subdomainFull }),
+    });
+    if (!addDomainRes.ok) {
+      console.error('Failed to add custom domain to Netlify:', await addDomainRes.text());
+    }
+
+    const publishedUrl = `https://${subdomainFull}`;
     const netlifyUrl = `https://${cnameTarget}`;
 
-    // --- Step 4: Optional custom domain ---
+    // --- Step 4: Optional custom domain (user's own domain, overrides subdomain) ---
     let cnameInstructions = null;
     if (customDomain) {
       const patchRes = await fetch(`https://api.netlify.com/api/v1/sites/${netlifySiteId}`, {
