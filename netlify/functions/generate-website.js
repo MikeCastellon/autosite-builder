@@ -123,6 +123,11 @@ Return ONLY this JSON structure (no markdown, no explanation):
       }
     }
 
+    // Pass through Instagram widget key if provided from the form
+    if (businessInfo.instagramWidgetKey) {
+      parsed.instagramWidgetKey = businessInfo.instagramWidgetKey;
+    }
+
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
