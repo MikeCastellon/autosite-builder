@@ -8,12 +8,22 @@ export function AuthProvider({ children }) {
   const [isRecovery, setIsRecovery] = useState(false);
 
   useEffect(() => {
-    console.log('[Auth] Initializing... URL hash:', window.location.hash.substring(0, 50));
+    console.log('[Auth] Initializing... URL hash:', window.location.hash.substring(0, 80));
+
+    // Detect recovery from URL hash (type=recovery in the hash fragment)
+    const hash = window.location.hash;
+    if (hash.includes('type=recovery') || hash.includes('reset-password')) {
+      console.log('[Auth] Recovery flow detected from URL');
+      setIsRecovery(true);
+    }
 
     // Listen for auth changes FIRST
     const { data: listener } = supabase.auth.onAuthStateChange((event, s) => {
       console.log('[Auth] onAuthStateChange:', event, s ? `user=${s.user?.email}` : 'no session');
-      if (event === 'PASSWORD_RECOVERY') setIsRecovery(true);
+      if (event === 'PASSWORD_RECOVERY') {
+        console.log('[Auth] PASSWORD_RECOVERY event fired');
+        setIsRecovery(true);
+      }
       setSession(s);
     });
 
