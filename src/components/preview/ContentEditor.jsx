@@ -337,8 +337,12 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
       { id: 'cta', label: 'Contact / CTA' },
     ],
   };
-  const defaultOrder = (TOGGLEABLE[templateId] || TOGGLEABLE._default).map(s => s.id);
-  const toggleableSections = TOGGLEABLE[templateId] || TOGGLEABLE._default;
+  const baseSections = TOGGLEABLE[templateId] || TOGGLEABLE._default;
+  // Dynamically add Instagram section if widget key exists
+  const toggleableSections = copy?.instagramWidgetKey && !baseSections.find(s => s.id === 'instagram')
+    ? [...baseSections.filter(s => s.id !== 'cta'), { id: 'instagram', label: 'Instagram Feed' }, ...baseSections.filter(s => s.id === 'cta')]
+    : baseSections;
+  const defaultOrder = toggleableSections.map(s => s.id);
   const hiddenSections = copy?.hiddenSections || [];
   const sectionOrder = copy?.sectionOrder?.length > 0 ? copy.sectionOrder : defaultOrder;
   // Build ordered list: use saved order, append any new sections not in it
@@ -371,6 +375,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
     ...(isApex ? [{ id: 'trustBar', label: 'Trust Bar' }, { id: 'ticker', label: 'Ticker' }] : []),
     { id: 'about', label: 'About' },
     { id: 'testimonials', label: 'Reviews' },
+    ...(copy?.instagramWidgetKey ? [{ id: 'instagram', label: 'Instagram' }] : []),
     { id: 'contact', label: 'Contact' },
     { id: 'images', label: 'Images' },
     { id: 'colors', label: 'Colors' },
@@ -877,20 +882,25 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
                 </>
               )}
 
-              {/* Instagram Feed */}
-              <hr className="my-4 border-gray-100" />
-              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Instagram Feed</p>
+            </>
+          )}
+
+          {activeSection === 'instagram' && (
+            <>
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-3">Instagram Feed</p>
               {copy?.instagramWidgetKey ? (
                 <>
                   <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2.5 mb-3">
                     <p className="text-[12px] font-semibold text-green-700">✓ Instagram connected</p>
+                    <p className="text-[11px] text-green-600">Your Instagram feed will appear on the site.</p>
                   </div>
-                  <Field label="Instagram Section Title" value={copy?.instagramFeedTitle ?? ''} onChange={(v) => setCopy('instagramFeedTitle', v)} />
+                  <Field label="Section Title" value={copy?.instagramFeedTitle ?? ''} onChange={(v) => setCopy('instagramFeedTitle', v)} />
+                  <p className="text-[11px] text-gray-400 mt-1">Leave empty for no title above the feed.</p>
                 </>
               ) : (
                 <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 mb-3">
                   <p className="text-[12px] text-gray-500">No Instagram connected</p>
-                  <p className="text-[11px] text-gray-400">Connect Instagram in the Finalize step to embed your feed.</p>
+                  <p className="text-[11px] text-gray-400">Connect Instagram in Step 2 (Business Info) to embed your feed.</p>
                 </div>
               )}
             </>
