@@ -186,7 +186,7 @@ export default function App() {
         templateMeta={templateMeta}
         customColors={customColors}
         onCustomColors={setCustomColors}
-        onBack={isDemoPreview ? handleBackFromDemo : () => goTo(3)}
+        onBack={isDemoPreview ? handleBackFromDemo : () => { setView('dashboard'); }}
         onExport={isDemoPreview ? null : () => goTo(6)}
         onStartOver={() => { handleStartOver(); setView('dashboard'); }}
         isDemoPreview={isDemoPreview}

@@ -86,9 +86,16 @@ async function buildHtmlString(templateId, businessInfo, generatedCopy, template
 
   const seoHead = buildSeoHead(businessInfo, generatedCopy);
 
-  // Inject widget divs if any selected
+  // Inject Google Reviews widget if connected
   let widgetsHtml = '';
-  if (widgetConfigIds.length > 0) {
+  const googleWidgetKey = generatedCopy?.googleWidgetKey;
+  if (googleWidgetKey) {
+    widgetsHtml = `
+<section style="padding:60px 24px;max-width:1200px;margin:0 auto;">
+  <div data-widget="google-reviews" data-widget-key="${googleWidgetKey}"></div>
+</section>
+<script src="https://social-feeds-app.netlify.app/widgets.js" defer></script>`;
+  } else if (widgetConfigIds.length > 0) {
     const { data: widgetConfigs, error: widgetError } = await supabase
       .from('widget_configs')
       .select('id, type, widget_key')
@@ -101,10 +108,9 @@ async function buildHtmlString(templateId, businessInfo, generatedCopy, template
       ).join('\n  ');
       widgetsHtml = `
 <section style="padding:60px 24px;max-width:1200px;margin:0 auto;">
-  <h2 style="font-family:'Inter',system-ui,sans-serif;font-size:24px;font-weight:700;color:#1a1a1a;margin-bottom:32px;">Reviews &amp; Social</h2>
   ${divs}
 </section>
-<script src="https://socialfeeds.netlify.app/widgets.js" defer></script>`;
+<script src="https://social-feeds-app.netlify.app/widgets.js" defer></script>`;
     }
   }
 
