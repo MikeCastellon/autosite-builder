@@ -82,15 +82,30 @@ export default function App() {
     goTo(4);
   };
 
-  const handleGenerateSuccess = (copy) => {
-    // Merge widget keys from businessInfo that may not be in AI response
+  const handleGenerateSuccess = async (copy) => {
+    // Merge widget keys — check businessInfo first, then fetch from Supabase
     const merged = { ...copy };
-    if (businessInfo.instagramWidgetKey && !merged.instagramWidgetKey) {
-      merged.instagramWidgetKey = businessInfo.instagramWidgetKey;
+    if (businessInfo.instagramWidgetKey) merged.instagramWidgetKey = businessInfo.instagramWidgetKey;
+    if (businessInfo.googleWidgetKey) merged.googleWidgetKey = businessInfo.googleWidgetKey;
+
+    // If still missing, fetch from Supabase
+    if (session?.user?.id && (!merged.instagramWidgetKey || !merged.googleWidgetKey)) {
+      try {
+        const { data: widgets } = await supabase
+          .from('widget_configs')
+          .select('type, widget_key')
+          .eq('user_id', session.user.id)
+          .in('type', ['instagram-feed', 'google-reviews'])
+          .order('created_at', { ascending: false });
+        if (widgets) {
+          const ig = widgets.find(w => w.type === 'instagram-feed');
+          const gr = widgets.find(w => w.type === 'google-reviews');
+          if (ig && !merged.instagramWidgetKey) merged.instagramWidgetKey = ig.widget_key;
+          if (gr && !merged.googleWidgetKey) merged.googleWidgetKey = gr.widget_key;
+        }
+      } catch (e) { /* ignore */ }
     }
-    if (businessInfo.googleWidgetKey && !merged.googleWidgetKey) {
-      merged.googleWidgetKey = businessInfo.googleWidgetKey;
-    }
+
     setGeneratedCopy(merged);
     setEditedCopy(structuredClone(merged));
     setImages({});
@@ -136,7 +151,7 @@ export default function App() {
     await supabase.auth.signOut();
   };
 
-  const handleEditSite = (site) => {
+  const handleEditSite = async (site) => {
     setSiteId(site.id);
     setBusinessType(site.business_info?.businessType || null);
     setBusinessInfo(site.business_info || {});
@@ -144,6 +159,25 @@ export default function App() {
     const copy = site.generated_content || {};
     const siteImages = copy._images || {};
     delete copy._images;
+
+    // Fetch latest widget keys from Supabase if not already in copy
+    if (session?.user?.id && (!copy.instagramWidgetKey || !copy.googleWidgetKey)) {
+      try {
+        const { data: widgets } = await supabase
+          .from('widget_configs')
+          .select('type, widget_key')
+          .eq('user_id', session.user.id)
+          .in('type', ['instagram-feed', 'google-reviews'])
+          .order('created_at', { ascending: false });
+        if (widgets) {
+          const igWidget = widgets.find(w => w.type === 'instagram-feed');
+          const grWidget = widgets.find(w => w.type === 'google-reviews');
+          if (igWidget && !copy.instagramWidgetKey) copy.instagramWidgetKey = igWidget.widget_key;
+          if (grWidget && !copy.googleWidgetKey) copy.googleWidgetKey = grWidget.widget_key;
+        }
+      } catch (e) { /* ignore */ }
+    }
+
     setGeneratedCopy(copy);
     setEditedCopy(structuredClone(copy));
     setImages(siteImages);
