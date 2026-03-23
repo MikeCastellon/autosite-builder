@@ -297,26 +297,53 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
 
       {/* ABOUT */}
       {!hidden('about') && (
-      <section id="about" style={{ padding: '80px 5%', background: c.secondary, borderBottom: '1px solid #333' , order: getOrder('about') }}>
-        <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'start' }}>
+      <section id="about" style={{ padding: '80px 5%', background: c.secondary, borderBottom: '1px solid #333', order: getOrder('about') }}>
+        <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'center' }}>
+          {/* Left: image or stats box */}
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12  }}>
+            {(copy?.aboutLayout || 'image') !== 'stats' ? (
+              images.about
+                ? <img src={images.about} alt="About" style={{ width: '100%', maxWidth: 460, height: 360, objectFit: 'cover', borderRadius: 4, display: 'block' }} />
+                : <div style={{ width: '100%', maxWidth: 460, height: 360, background: c.bg, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.muted, fontSize: '0.85rem', textAlign: 'center', padding: 24, boxSizing: 'border-box' }}>Upload a photo in Images tab</div>
+            ) : (
+              <div style={{ width: '100%', maxWidth: 460, background: c.bg, padding: '40px 32px', boxSizing: 'border-box', borderRadius: 4, border: '1px solid #333' }}>
+                {(() => {
+                  const defaultStats = [
+                    { value: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'Years in Business' },
+                    { value: '5K+', label: 'Vehicles Serviced' },
+                    { value: '5★', label: 'Average Rating' },
+                  ];
+                  const aboutStats = (copy?.aboutStats || []).map((s, i) => ({
+                    value: s.value || defaultStats[i]?.value || '',
+                    label: s.label || defaultStats[i]?.label || '',
+                  }));
+                  if (aboutStats.length === 0) aboutStats.push(...defaultStats);
+                  return aboutStats.map((st, i) => (
+                    <div key={i} style={{ textAlign: 'center', marginBottom: i < aboutStats.length - 1 ? 28 : 0 }}>
+                      <div style={{ fontSize: '3rem', fontWeight: 900, color: c.accent, lineHeight: 1 }}>{st.value}</div>
+                      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, color: c.muted, marginTop: 6, textTransform: 'uppercase' }}>{st.label}</div>
+                    </div>
+                  ));
+                })()}
+              </div>
+            )}
+          </div>
+          {/* Right: text + awards + specialties */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
               <div style={{ width: 36, height: 4, background: c.accent, borderRadius: 2 }} />
               <span style={{ color: c.accent, fontSize: 11, letterSpacing: 4, textTransform: 'uppercase', fontWeight: 700 }}>OUR SHOP</span>
             </div>
-            <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.8rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 20px', letterSpacing: '-0.01em' }}>ABOUT US</h2>
-            {(generatedCopy?.aboutLayout || 'image') !== 'stats' ? (
-              images.about
-                ? <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block', marginBottom: '20px' }} />
-                : <div style={{ width: '100%', height: '360px', background: c.bg, borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.muted, fontSize: '0.85rem', marginBottom: '20px' }}>Upload a photo in Images tab</div>
-            ) : (
-              images.about && (
-                <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block', marginBottom: '20px' }} />
-              )
-            )}
+            <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.8rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 20px', letterSpacing: '-0.01em' }}>ABOUT {biz.businessName || 'US'}</h2>
             <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.85, marginBottom: 20 }}>
               {copy.aboutText || `Serving ${biz.city || 'your area'} with expert auto repair since day one.`}
             </p>
+            {biz.awards && (
+              <div style={{ background: c.bg, borderRadius: 4, padding: '14px 18px', marginBottom: 12, borderLeft: '3px solid #ffd700' }}>
+                <div style={{ color: '#ffd700', fontSize: 10, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 4 }}>AWARDS</div>
+                <p style={{ color: c.text, fontSize: 14, margin: 0 }}>{biz.awards}</p>
+              </div>
+            )}
             {biz.specialties && (
               <div style={{ background: c.bg, borderRadius: 4, padding: '14px 18px', marginBottom: 12, borderLeft: `4px solid ${c.accent}` }}>
                 <div style={{ color: c.accent, fontSize: 10, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 4 }}>SPECIALTIES</div>
@@ -329,22 +356,6 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
                 <p style={{ color: c.text, fontSize: 14, margin: 0 }}>{biz.brands}</p>
               </div>
             )}
-          </div>
-          <div className="tp-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-            {[
-              { num: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'YEARS' },
-              { num: '5K+', label: 'VEHICLES' },
-              { num: '5★', label: 'RATING' },
-              { num: '100%', label: 'GUARANTEED' },
-            ].map(({ num, label }) => (
-              <div key={label} style={{
-                background: c.bg, border: '1px solid #333', borderRadius: 4, padding: '24px 16px', textAlign: 'center',
-                borderTop: `3px solid ${c.accent}`,
-              }}>
-                <div style={{ fontSize: 32, fontWeight: 900, color: c.accent, lineHeight: 1 }}>{num}</div>
-                <div style={{ color: c.muted, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 2, marginTop: 8 }}>{label}</div>
-              </div>
-            ))}
           </div>
         </div>
       </section>
