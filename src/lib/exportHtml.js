@@ -86,14 +86,11 @@ async function buildHtmlString(templateId, businessInfo, generatedCopy, template
 
   const seoHead = buildSeoHead(businessInfo, generatedCopy);
 
-  // Inject Google Reviews widget if connected
+  // Inject widget script (template already renders the widget div, just need the JS)
   let widgetsHtml = '';
   const googleWidgetKey = generatedCopy?.googleWidgetKey;
   if (googleWidgetKey) {
     widgetsHtml = `
-<section style="padding:60px 24px;max-width:1200px;margin:0 auto;">
-  <div data-widget="google-reviews" data-widget-key="${googleWidgetKey}"></div>
-</section>
 <script src="https://social-feeds-app.netlify.app/widgets.js" defer></script>`;
   } else if (widgetConfigIds.length > 0) {
     const { data: widgetConfigs, error: widgetError } = await supabase
@@ -115,8 +112,8 @@ async function buildHtmlString(templateId, businessInfo, generatedCopy, template
   }
 
   const poweredByBar = `
-<div style="background:#111;padding:14px 24px;display:flex;align-items:center;justify-content:center;gap:8px;">
-  <span style="font-family:'Outfit',system-ui,sans-serif;font-size:12px;color:#888;letter-spacing:0.02em;">Powered by</span>
+<div style="background:#faf9f7;padding:14px 24px;display:flex;align-items:center;justify-content:center;gap:8px;border-top:1px solid #e5e5e5;">
+  <span style="font-family:'Outfit',system-ui,sans-serif;font-size:12px;color:#999;letter-spacing:0.02em;">Powered by</span>
   <a href="https://prohub.autocaregenius.com/" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;">
     <img src="https://www.autocaregenius.com/cdn/shop/files/v11_1.svg?v=1760731533&width=160" alt="Auto Care Genius" style="height:18px;" />
   </a>
