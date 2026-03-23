@@ -41,7 +41,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
       {/* STICKY NAV */}
       <nav style={{
         position: 'sticky', top: 0, zIndex: 1000,
-        background: scrolled ? 'rgba(28,28,28,0.97)' : 'transparent',
+        background: scrolled ? 'rgba(28,28,28,0.97)' : c.bg,
         borderBottom: scrolled ? `3px solid ${c.accent}` : '3px solid transparent',
         transition: 'all 0.3s ease',
         padding: '0 5%',
