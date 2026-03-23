@@ -7,14 +7,15 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(undefined);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session: s } }) => {
+    // Listen for auth changes FIRST (catches OAuth redirects with hash tokens)
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
     });
 
-    // Listen for auth changes
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, s) => {
-      setSession(s);
+    // Then get initial session (for page refreshes with existing cookie)
+    supabase.auth.getSession().then(({ data: { session: s } }) => {
+      // Only set if onAuthStateChange hasn't already set a session
+      setSession(prev => prev === undefined ? s : prev);
     });
 
     return () => listener.subscription.unsubscribe();
