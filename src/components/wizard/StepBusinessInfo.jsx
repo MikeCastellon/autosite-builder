@@ -44,7 +44,7 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
     if (!session?.user?.id) return;
     const fbAppId = import.meta.env.VITE_FB_APP_ID;
     if (!fbAppId) return;
-    const state = session.user.id;
+    const state = `${session.user.id}__sitebuilder`;
     const redirectUrl = encodeURIComponent(`${SOCIALFEEDS_URL}/.netlify/functions/instagram-auth-callback`);
     const authUrl = `https://www.instagram.com/oauth/authorize?client_id=${fbAppId}&redirect_uri=${redirectUrl}&scope=instagram_business_basic,instagram_business_manage_messages&response_type=code&state=${state}`;
     // Open as popup, then poll for the new widget
