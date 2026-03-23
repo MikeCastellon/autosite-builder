@@ -4,12 +4,12 @@ import { generateSlug } from '../../lib/publishUtils.js';
 
 const PUBLISH_DOMAIN = import.meta.env.VITE_PUBLISH_DOMAIN || 'autocaregenius.com';
 
-export default function StepExport({ businessInfo, generatedCopy, templateId, templateMeta, images, selectedWidgetIds, onBack, onStartOver }) {
+export default function StepExport({ siteId: passedSiteId, businessInfo, generatedCopy, templateId, templateMeta, images, selectedWidgetIds, onBack, onStartOver }) {
   const [publishing, setPublishing] = useState(false);
   const [published, setPublished] = useState(null);
   const [publishError, setPublishError] = useState(null);
   const [customDomain, setCustomDomain] = useState('');
-  const [siteId] = useState(() => crypto.randomUUID());
+  const siteId = passedSiteId || crypto.randomUUID();
   const [useCustomDomain, setUseCustomDomain] = useState(false);
 
   const slug = generateSlug(businessInfo.businessName);

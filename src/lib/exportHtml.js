@@ -111,7 +111,7 @@ async function buildHtmlString(templateId, businessInfo, generatedCopy, template
   const poweredByBar = `
 <div style="background:#111;padding:14px 24px;display:flex;align-items:center;justify-content:center;gap:8px;">
   <span style="font-family:'Outfit',system-ui,sans-serif;font-size:12px;color:#888;letter-spacing:0.02em;">Powered by</span>
-  <a href="https://www.autocaregenius.com" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;">
+  <a href="https://prohub.autocaregenius.com/" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;">
     <img src="https://www.autocaregenius.com/cdn/shop/files/v11_1.svg?v=1760731533&width=160" alt="Auto Care Genius" style="height:18px;" />
   </a>
 </div>`;

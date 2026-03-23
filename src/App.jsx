@@ -210,6 +210,7 @@ export default function App() {
   if (step === 6 && generatedCopy) {
     return (
       <StepExport
+        siteId={siteId}
         businessInfo={businessInfo}
         generatedCopy={editedCopy || generatedCopy}
         templateId={selectedTemplate}

@@ -24,11 +24,21 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
   }, []);
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this site?')) return;
+    if (!confirm('Delete this site? This will also unpublish it if live.')) return;
+    // Find the site to get slug for R2 cleanup
+    const site = sites.find(s => s.id === id);
     const { error } = await supabase.from('sites').delete().eq('id', id);
     if (error) {
       alert('Failed to delete site. Please try again.');
       return;
+    }
+    // Delete from R2 if published
+    if (site?.slug) {
+      fetch('/.netlify/functions/unpublish-site', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug: site.slug }),
+      }).catch(() => {}); // Best-effort cleanup
     }
     setSites((prev) => prev.filter((s) => s.id !== id));
   };
