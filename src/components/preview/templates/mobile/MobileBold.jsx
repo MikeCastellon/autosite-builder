@@ -48,7 +48,7 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
       {/* STICKY NAV */}
       <nav style={{
         position: 'sticky', top: 0, zIndex: 1000,
-        background: scrolled ? 'rgba(26,26,26,0.96)' : 'transparent',
+        background: scrolled ? 'rgba(26,26,26,0.96)' : c.bg,
         borderBottom: scrolled ? `3px solid ${c.accent}` : '3px solid transparent',
         transition: 'all 0.3s ease',
         padding: '0 5%',
@@ -58,7 +58,6 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
       }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 68 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 22 }}>🚛</span>
             <div>
               {images.logo ? (
               <img src={images.logo} alt={biz.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
