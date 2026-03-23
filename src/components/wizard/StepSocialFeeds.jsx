@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase.js';
 import { useAuth } from '../../lib/AuthContext.jsx';
 
-const SOCIALFEEDS_URL = import.meta.env.VITE_SOCIALFEEDS_URL || 'https://socialfeeds.netlify.app';
+const SOCIALFEEDS_URL = import.meta.env.VITE_SOCIALFEEDS_URL || 'https://social-feeds-app.netlify.app';
 const PLACES_SEARCH_URL = '/.netlify/functions/places-search';
 
-export default function StepSocialFeeds({ selectedWidgetIds, onWidgetIdsChange, onNext, onBack }) {
+export default function StepSocialFeeds({ selectedWidgetIds, onWidgetIdsChange, onNext, onBack, onWidgetKeysChange }) {
   const { session } = useAuth();
   const [widgets, setWidgets] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -46,7 +46,7 @@ export default function StepSocialFeeds({ selectedWidgetIds, onWidgetIdsChange, 
     }
     const state = session.user.id;
     const redirectUrl = encodeURIComponent(`${SOCIALFEEDS_URL}/.netlify/functions/instagram-auth-callback`);
-    const authUrl = `https://api.instagram.com/oauth/authorize?client_id=${fbAppId}&redirect_uri=${redirectUrl}&scope=user_profile,user_media&response_type=code&state=${state}`;
+    const authUrl = `https://www.instagram.com/oauth/authorize?client_id=${fbAppId}&redirect_uri=${redirectUrl}&scope=instagram_business_basic,instagram_business_manage_messages&response_type=code&state=${state}`;
     window.open(authUrl, '_blank', 'noopener,noreferrer');
   };
 
@@ -109,6 +109,18 @@ export default function StepSocialFeeds({ selectedWidgetIds, onWidgetIdsChange, 
 
   const instagramWidgets = widgets.filter((w) => w.type === 'instagram-feed');
   const googleWidgets = widgets.filter((w) => w.type === 'google-reviews');
+
+  // Sync widget keys back to parent whenever selection or widgets change
+  useEffect(() => {
+    if (!onWidgetKeysChange || widgets.length === 0) return;
+    const selectedWidgets = widgets.filter((w) => selectedWidgetIds.includes(w.id));
+    const googleWidget = selectedWidgets.find((w) => w.type === 'google-reviews');
+    const instaWidget = selectedWidgets.find((w) => w.type === 'instagram-feed');
+    onWidgetKeysChange({
+      googleWidgetKey: googleWidget?.widget_key || null,
+      instagramWidgetKey: instaWidget?.widget_key || null,
+    });
+  }, [selectedWidgetIds, widgets]);
 
   return (
     <div className="max-w-lg mx-auto">

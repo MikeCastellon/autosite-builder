@@ -86,10 +86,11 @@ async function buildHtmlString(templateId, businessInfo, generatedCopy, template
 
   const seoHead = buildSeoHead(businessInfo, generatedCopy);
 
-  // Inject widget script (template already renders the widget div, just need the JS)
+  // Inject widget script (template already renders the widget divs, just need the JS)
   let widgetsHtml = '';
-  const googleWidgetKey = generatedCopy?.googleWidgetKey;
-  if (googleWidgetKey) {
+  const hasGoogleWidget = !!generatedCopy?.googleWidgetKey;
+  const hasInstagramWidget = !!generatedCopy?.instagramWidgetKey;
+  if (hasGoogleWidget || hasInstagramWidget) {
     widgetsHtml = `
 <script src="https://social-feeds-app.netlify.app/widgets.js" defer></script>`;
   } else if (widgetConfigIds.length > 0) {

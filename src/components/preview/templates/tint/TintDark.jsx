@@ -4,6 +4,7 @@ import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
+import InstagramFeedWidget from '../InstagramFeedWidget.jsx';
 
 // Template: Tint Dark — Black & purple (#080808 bg, #7c3aed accent, #111111 secondary)
 // Radial gradient glow hero, film brands section, shield warranty callout, packages, fade/gradient elements
@@ -34,7 +35,7 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
     : [];
 
   const hidden = (id) => copy?.hiddenSections?.includes(id);
-  const getOrder = buildSectionOrder(copy, ['hero', 'statsBar', 'services', 'brands', 'about', 'gallery', 'testimonials', 'cta']);
+  const getOrder = buildSectionOrder(copy, ['hero', 'statsBar', 'services', 'brands', 'about', 'gallery', 'testimonials', 'instagram', 'cta']);
 
   return (
     <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
@@ -361,6 +362,7 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
       {!hidden('testimonials') && (
         copy?.googleWidgetKey ? (
           <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+            {copy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} />
           </div>
         ) : testimonials.length > 0 ? (
@@ -386,6 +388,16 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
           </div>
         </section>
         ) : null
+      )}
+
+      {/* INSTAGRAM FEED */}
+      {!hidden('instagram') && copy?.instagramWidgetKey && (
+        <section style={{ order: getOrder('instagram'), padding: '80px 5%' }}>
+          <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+            {copy.instagramFeedTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.instagramFeedTitle}</h2>}
+            <InstagramFeedWidget widgetKey={copy.instagramWidgetKey} />
+          </div>
+        </section>
       )}
 
       {/* CTA */}

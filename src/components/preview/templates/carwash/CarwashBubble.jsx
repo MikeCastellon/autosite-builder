@@ -4,6 +4,7 @@ import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
+import InstagramFeedWidget from '../InstagramFeedWidget.jsx';
 
 // Template: Carwash Bubble
 // Bright, playful, cheerful car wash aesthetic. No canvas, no custom cursor JS.
@@ -46,7 +47,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
   const hidden = (id) => copy?.hiddenSections?.includes(id);
-  const getOrder = buildSectionOrder(copy, ['hero','services','process','about','gallery','testimonials','cta']);
+  const getOrder = buildSectionOrder(copy, ['hero','services','process','about','gallery','testimonials','instagram','cta']);
 
   const accentLight = '#bae6fd';
   const deepBg      = '#0c2340';
@@ -450,6 +451,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
       {!hidden('testimonials') && (
         copy?.googleWidgetKey ? (
           <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+            {copy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} />
           </div>
         ) : testimonials.length > 0 ? (
@@ -485,6 +487,16 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
           </div>
         </section>
         ) : null
+      )}
+
+      {/* INSTAGRAM FEED */}
+      {!hidden('instagram') && copy?.instagramWidgetKey && (
+        <section style={{ order: getOrder('instagram'), padding: '80px 5%' }}>
+          <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+            {copy.instagramFeedTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.instagramFeedTitle}</h2>}
+            <InstagramFeedWidget widgetKey={copy.instagramWidgetKey} />
+          </div>
+        </section>
       )}
 
       {/* ═══ CTA BAND ═══ */}

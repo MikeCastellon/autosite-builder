@@ -4,6 +4,7 @@ import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
+import InstagramFeedWidget from '../InstagramFeedWidget.jsx';
 
 export default function DetailingSporty({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const c = templateMeta.colors;
@@ -19,7 +20,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
   }, []);
 
   const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
-  const getOrder = buildSectionOrder(generatedCopy, ['hero', 'statsBar', 'services', 'about', 'gallery', 'testimonials', 'cta']);
+  const getOrder = buildSectionOrder(generatedCopy, ['hero', 'statsBar', 'services', 'about', 'gallery', 'testimonials', 'instagram', 'cta']);
 
   const s = {
     nav: {
@@ -327,6 +328,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
       {!hidden('testimonials') && (
         generatedCopy?.googleWidgetKey ? (
           <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+            {generatedCopy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{generatedCopy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={generatedCopy.googleWidgetKey} />
           </div>
         ) : (generatedCopy.testimonialPlaceholders || []).length > 0 ? (
@@ -344,6 +346,16 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
         </div>
       </section>
         ) : null
+      )}
+
+      {/* INSTAGRAM FEED */}
+      {!hidden('instagram') && generatedCopy?.instagramWidgetKey && (
+        <section style={{ order: getOrder('instagram'), padding: '80px 5%' }}>
+          <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+            {generatedCopy.instagramFeedTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{generatedCopy.instagramFeedTitle}</h2>}
+            <InstagramFeedWidget widgetKey={generatedCopy.instagramWidgetKey} />
+          </div>
+        </section>
       )}
 
       {/* CTA SPLIT */}

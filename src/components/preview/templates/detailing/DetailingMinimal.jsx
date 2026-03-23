@@ -4,6 +4,7 @@ import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
+import InstagramFeedWidget from '../InstagramFeedWidget.jsx';
 
 export default function DetailingMinimal({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const c = templateMeta.colors;
@@ -17,7 +18,7 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
   const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
-  const getOrder = buildSectionOrder(generatedCopy, ['hero', 'statsBar', 'services', 'about', 'testimonials', 'cta', 'gallery']);
+  const getOrder = buildSectionOrder(generatedCopy, ['hero', 'statsBar', 'services', 'about', 'testimonials', 'instagram', 'cta', 'gallery']);
 
   const s = {
     nav: {
@@ -297,6 +298,7 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
       {!hidden('testimonials') && (
         generatedCopy?.googleWidgetKey ? (
           <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+            {generatedCopy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.bg }}>{generatedCopy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={generatedCopy.googleWidgetKey} />
           </div>
         ) : (generatedCopy.testimonialPlaceholders || []).length > 0 ? (
@@ -316,6 +318,16 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
         </div>
       </section>
         ) : null
+      )}
+
+      {/* INSTAGRAM FEED */}
+      {!hidden('instagram') && generatedCopy?.instagramWidgetKey && (
+        <section style={{ order: getOrder('instagram'), padding: '80px 5%' }}>
+          <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+            {generatedCopy.instagramFeedTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.bg }}>{generatedCopy.instagramFeedTitle}</h2>}
+            <InstagramFeedWidget widgetKey={generatedCopy.instagramWidgetKey} />
+          </div>
+        </section>
       )}
 
       {/* CTA BAND */}

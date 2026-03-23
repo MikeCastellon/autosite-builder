@@ -851,14 +851,17 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
               {(copy?.reviewMode || 'testimonials') === 'google' ? (
                 <div>
                   {copy?.googleWidgetKey ? (
-                    <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2.5 mb-3">
-                      <p className="text-[12px] font-semibold text-green-700">✓ Google Reviews connected</p>
-                      <p className="text-[11px] text-green-600">Widget key: {copy.googleWidgetKey}</p>
-                    </div>
+                    <>
+                      <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2.5 mb-3">
+                        <p className="text-[12px] font-semibold text-green-700">✓ Google Reviews connected</p>
+                        <p className="text-[11px] text-green-600">Widget key: {copy.googleWidgetKey}</p>
+                      </div>
+                      <Field label="Google Reviews Section Title" value={copy?.googleReviewsTitle ?? ''} onChange={(v) => setCopy('googleReviewsTitle', v)} />
+                    </>
                   ) : (
                     <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5 mb-3">
                       <p className="text-[12px] font-semibold text-amber-700">No Google Reviews connected</p>
-                      <p className="text-[11px] text-amber-600">Select Google Reviews in the business info form and search for your business to connect.</p>
+                      <p className="text-[11px] text-amber-600">Connect Google Reviews in the Finalize step to embed live reviews.</p>
                     </div>
                   )}
                 </div>
@@ -872,6 +875,23 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
                     </div>
                   ))}
                 </>
+              )}
+
+              {/* Instagram Feed */}
+              <hr className="my-4 border-gray-100" />
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Instagram Feed</p>
+              {copy?.instagramWidgetKey ? (
+                <>
+                  <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2.5 mb-3">
+                    <p className="text-[12px] font-semibold text-green-700">✓ Instagram connected</p>
+                  </div>
+                  <Field label="Instagram Section Title" value={copy?.instagramFeedTitle ?? ''} onChange={(v) => setCopy('instagramFeedTitle', v)} />
+                </>
+              ) : (
+                <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 mb-3">
+                  <p className="text-[12px] text-gray-500">No Instagram connected</p>
+                  <p className="text-[11px] text-gray-400">Connect Instagram in the Finalize step to embed your feed.</p>
+                </div>
               )}
             </>
           )}
