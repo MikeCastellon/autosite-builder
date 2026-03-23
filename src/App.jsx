@@ -83,8 +83,16 @@ export default function App() {
   };
 
   const handleGenerateSuccess = (copy) => {
-    setGeneratedCopy(copy);
-    setEditedCopy(structuredClone(copy));
+    // Merge widget keys from businessInfo that may not be in AI response
+    const merged = { ...copy };
+    if (businessInfo.instagramWidgetKey && !merged.instagramWidgetKey) {
+      merged.instagramWidgetKey = businessInfo.instagramWidgetKey;
+    }
+    if (businessInfo.googleWidgetKey && !merged.googleWidgetKey) {
+      merged.googleWidgetKey = businessInfo.googleWidgetKey;
+    }
+    setGeneratedCopy(merged);
+    setEditedCopy(structuredClone(merged));
     setImages({});
     const newSiteId = siteId || crypto.randomUUID();
     setSiteId(newSiteId);
