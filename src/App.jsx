@@ -11,12 +11,13 @@ import { TEMPLATES } from './data/templates.js';
 import { DEMO_BUSINESS_INFO, DEMO_GENERATED_COPY } from './data/demoData.js';
 import { useAuth } from './lib/AuthContext.jsx';
 import LoginPage from './components/auth/LoginPage.jsx';
+import ResetPasswordPage from './components/auth/ResetPasswordPage.jsx';
 import DashboardPage from './components/dashboard/DashboardPage.jsx';
 import { saveSite } from './lib/saveSite.js';
 import { supabase } from './lib/supabase.js';
 
 export default function App() {
-  const { session, loading } = useAuth();
+  const { session, loading, isRecovery, clearRecovery } = useAuth();
 
   const [step, setStep] = useState(1);
   const [businessType, setBusinessType] = useState(null);
@@ -28,6 +29,7 @@ export default function App() {
   const [error, setError] = useState(null);
   const [customColors, setCustomColors] = useState({});
   const [view, setView] = useState('dashboard'); // 'dashboard' | 'wizard'
+  const [showResetPassword, setShowResetPassword] = useState(false);
   const [selectedWidgetIds, setSelectedWidgetIds] = useState([]);
   const [siteId, setSiteId] = useState(null);
   const saveTimerRef = useRef(null);
@@ -146,6 +148,7 @@ export default function App() {
     </div>
   );
   if (!session) return <LoginPage />;
+  if (isRecovery) return <ResetPasswordPage onComplete={() => { clearRecovery(); window.location.hash = ''; }} />;
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();

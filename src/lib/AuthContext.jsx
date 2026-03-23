@@ -5,6 +5,7 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(undefined);
+  const [isRecovery, setIsRecovery] = useState(false);
 
   useEffect(() => {
     console.log('[Auth] Initializing... URL hash:', window.location.hash.substring(0, 50));
@@ -12,6 +13,7 @@ export function AuthProvider({ children }) {
     // Listen for auth changes FIRST
     const { data: listener } = supabase.auth.onAuthStateChange((event, s) => {
       console.log('[Auth] onAuthStateChange:', event, s ? `user=${s.user?.email}` : 'no session');
+      if (event === 'PASSWORD_RECOVERY') setIsRecovery(true);
       setSession(s);
     });
 
@@ -31,7 +33,7 @@ export function AuthProvider({ children }) {
   console.log('[Auth] Render — loading:', loading, 'session:', session ? 'yes' : 'no');
 
   return (
-    <AuthContext.Provider value={{ session: loading ? null : session, loading }}>
+    <AuthContext.Provider value={{ session: loading ? null : session, loading, isRecovery, clearRecovery: () => setIsRecovery(false) }}>
       {children}
     </AuthContext.Provider>
   );
