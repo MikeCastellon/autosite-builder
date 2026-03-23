@@ -8,6 +8,24 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [message, setMessage] = useState(null);
+  const [showForgot, setShowForgot] = useState(false);
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    if (!email) { setError('Enter your email address first'); return; }
+    setError(null);
+    setMessage(null);
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/#reset-password`,
+    });
+    if (error) {
+      setError(error.message);
+    } else {
+      setMessage('Check your email for a password reset link!');
+    }
+    setLoading(false);
+  };
 
   const handleGoogleLogin = async () => {
     setError(null);
@@ -48,10 +66,10 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="mb-6">
           <h1 className="text-2xl font-black text-[#1a1a1a] tracking-tight">
-            {isSignUp ? 'Create Account' : 'Welcome Back'}
+            {showForgot ? 'Reset Password' : isSignUp ? 'Create Account' : 'Welcome Back'}
           </h1>
           <p className="text-[#888] text-sm mt-1">
-            {isSignUp ? 'Sign up to start building' : 'Sign in to your account'}
+            {showForgot ? "Enter your email and we'll send a reset link" : isSignUp ? 'Sign up to start building' : 'Sign in to your account'}
           </p>
         </div>
 
@@ -70,40 +88,68 @@ export default function LoginPage() {
           <div className="flex-1 border-t border-black/10" />
         </div>
 
-        {/* Email / Password Form */}
-        <form onSubmit={handleEmailAuth} className="space-y-3">
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email address"
-            className="w-full border border-black/10 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#cc0000]/30"
-            required
-          />
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
-            minLength={6}
-            className="w-full border border-black/10 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#cc0000]/30"
-            required
-          />
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 rounded-xl bg-[#1a1a1a] hover:bg-[#cc0000] text-white font-semibold text-sm transition-colors disabled:opacity-50"
-          >
-            {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}
-          </button>
-        </form>
+        {showForgot ? (
+          <form onSubmit={handleForgotPassword} className="space-y-3">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email address"
+              className="w-full border border-black/10 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#cc0000]/30"
+              required
+            />
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 rounded-xl bg-[#1a1a1a] hover:bg-[#cc0000] text-white font-semibold text-sm transition-colors disabled:opacity-50"
+            >
+              {loading ? 'Sending...' : 'Send Reset Link'}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleEmailAuth} className="space-y-3">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email address"
+              className="w-full border border-black/10 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#cc0000]/30"
+              required
+            />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              minLength={6}
+              className="w-full border border-black/10 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#cc0000]/30"
+              required
+            />
+            {!isSignUp && (
+              <button
+                type="button"
+                onClick={() => { setShowForgot(true); setError(null); setMessage(null); }}
+                className="text-xs text-[#cc0000] hover:text-[#aa0000] transition-colors"
+              >
+                Forgot password?
+              </button>
+            )}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 rounded-xl bg-[#1a1a1a] hover:bg-[#cc0000] text-white font-semibold text-sm transition-colors disabled:opacity-50"
+            >
+              {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}
+            </button>
+          </form>
+        )}
 
         <button
           type="button"
-          onClick={() => { setIsSignUp(!isSignUp); setError(null); setMessage(null); }}
+          onClick={() => { setIsSignUp(!isSignUp); setShowForgot(false); setError(null); setMessage(null); }}
           className="w-full mt-3 text-xs text-[#888] hover:text-[#1a1a1a] transition-colors text-center"
         >
-          {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+          {showForgot ? '← Back to sign in' : isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
         </button>
 
         {error && <p className="mt-3 text-xs text-[#cc0000] text-center">{error}</p>}
