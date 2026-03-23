@@ -120,26 +120,34 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
                 className="bg-white border border-black/[0.07] rounded-xl p-5 flex items-center justify-between"
               >
                 <div>
-                  <p className="font-semibold text-[#1a1a1a]">
-                    {site.business_info?.businessName || 'Untitled'}
-                  </p>
-                  <p className="text-xs text-[#888] mt-0.5">
-                    {site.business_info?.city}, {site.business_info?.state} &middot;{' '}
-                    {new Date(site.created_at).toLocaleDateString()}
-                    {site.widget_config_ids?.length > 0 && (
-                      <span className="ml-2 text-[#cc0000]">
-                        {site.widget_config_ids.length} widget{site.widget_config_ids.length > 1 ? 's' : ''}
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <p className="font-semibold text-[#1a1a1a]">
+                      {site.business_info?.businessName || 'Untitled'}
+                    </p>
+                    {site.published_url ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-green-50 text-green-700 border border-green-200">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                        Live
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-gray-500 border border-gray-200">
+                        Draft
                       </span>
                     )}
+                  </div>
+                  <p className="text-xs text-[#888]">
+                    {site.business_info?.city}, {site.business_info?.state} &middot;{' '}
+                    {new Date(site.created_at).toLocaleDateString()}
                   </p>
                   {site.published_url && (
                     <a
                       href={site.published_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-xs text-[#cc0000] underline mt-0.5 block truncate max-w-[260px]"
+                      className="text-xs text-green-600 hover:text-green-800 mt-1 inline-flex items-center gap-1 transition-colors"
                     >
-                      {site.published_url.replace('https://', '')}
+                      <span className="truncate max-w-[260px]">{site.published_url.replace('https://', '')}</span>
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3 1h6v6M9 1L1 9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     </a>
                   )}
                 </div>
