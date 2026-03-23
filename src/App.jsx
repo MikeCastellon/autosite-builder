@@ -148,7 +148,7 @@ export default function App() {
     </div>
   );
   if (!session) return <LoginPage />;
-  if (isRecovery) return <ResetPasswordPage onComplete={() => { clearRecovery(); window.location.hash = ''; }} />;
+  if (isRecovery) return <ResetPasswordPage onComplete={() => { clearRecovery(); window.history.replaceState({}, '', window.location.pathname); }} />;
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();

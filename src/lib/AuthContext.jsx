@@ -10,9 +10,10 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     console.log('[Auth] Initializing... URL hash:', window.location.hash.substring(0, 80));
 
-    // Detect recovery from URL hash (type=recovery in the hash fragment)
+    // Detect recovery from URL query param or hash
+    const params = new URLSearchParams(window.location.search);
     const hash = window.location.hash;
-    if (hash.includes('type=recovery') || hash.includes('reset-password')) {
+    if (params.get('reset') === 'true' || hash.includes('type=recovery')) {
       console.log('[Auth] Recovery flow detected from URL');
       setIsRecovery(true);
     }
