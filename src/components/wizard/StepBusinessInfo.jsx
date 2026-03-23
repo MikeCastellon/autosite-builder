@@ -47,7 +47,28 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
     const state = session.user.id;
     const redirectUrl = encodeURIComponent(`${SOCIALFEEDS_URL}/.netlify/functions/instagram-auth-callback`);
     const authUrl = `https://www.instagram.com/oauth/authorize?client_id=${fbAppId}&redirect_uri=${redirectUrl}&scope=instagram_business_basic,instagram_business_manage_messages&response_type=code&state=${state}`;
-    window.open(authUrl, '_blank', 'noopener,noreferrer');
+    // Open as popup, then poll for the new widget
+    const popup = window.open(authUrl, 'instagram-auth', 'width=600,height=700');
+    const pollInterval = setInterval(async () => {
+      // Check if popup closed (user finished or cancelled)
+      if (popup?.closed) {
+        clearInterval(pollInterval);
+        // Check Supabase for newly connected widget
+        const { data } = await supabase
+          .from('widget_configs')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .eq('type', 'instagram-feed')
+          .order('created_at', { ascending: false })
+          .limit(1);
+        if (data?.[0]) {
+          setInstagramAccount(data[0]);
+          setValues((prev) => ({ ...prev, instagramWidgetKey: data[0].widget_key }));
+        }
+      }
+    }, 1500);
+    // Stop polling after 5 minutes
+    setTimeout(() => clearInterval(pollInterval), 300000);
   };
 
   // Google Place search state
