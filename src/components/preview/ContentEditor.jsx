@@ -196,7 +196,7 @@ function Toggle({ value, onChange, options }) {
 }
 
 export default function ContentEditor({ isOpen, onClose, copy, images, onCopyChange, onImagesChange, templateMeta, templateId, customColors = {}, onCustomColors }) {
-  const [activeSection, setActiveSection] = useState('hero');
+  const [activeSection, setActiveSection] = useState('visibility');
 
   const setCopy = (path, value) => {
     const parts = path.split('.');
@@ -240,6 +240,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
       { id: 'about', label: 'About' },
       { id: 'gallery', label: 'Gallery' },
       { id: 'testimonials', label: 'Reviews' },
+      { id: 'instagram', label: 'Instagram Feed' },
       { id: 'cta', label: 'Contact / CTA' },
       { id: 'awards', label: 'Awards' },
     ],
@@ -252,6 +253,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
       { id: 'gallery', label: 'Gallery' },
       { id: 'whyUs', label: 'Why Choose Us' },
       { id: 'testimonials', label: 'Reviews' },
+      { id: 'instagram', label: 'Instagram Feed' },
       { id: 'cta', label: 'Contact & Hours' },
     ],
     wheel_apex: [
@@ -263,6 +265,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
       { id: 'about', label: 'About' },
       { id: 'gallery', label: 'Gallery' },
       { id: 'testimonials', label: 'Reviews' },
+      { id: 'instagram', label: 'Instagram Feed' },
       { id: 'cta', label: 'Contact / CTA' },
     ],
     wheel_edge: [
@@ -273,6 +276,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
       { id: 'about', label: 'About' },
       { id: 'gallery', label: 'Gallery' },
       { id: 'testimonials', label: 'Reviews' },
+      { id: 'instagram', label: 'Instagram Feed' },
       { id: 'cta', label: 'Contact / CTA' },
     ],
     wheel_clean: [
@@ -284,6 +288,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
       { id: 'about', label: 'About' },
       { id: 'gallery', label: 'Gallery' },
       { id: 'testimonials', label: 'Reviews' },
+      { id: 'instagram', label: 'Instagram Feed' },
       { id: 'cta', label: 'Contact / CTA' },
     ],
     tint_obsidian: [
@@ -295,6 +300,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
       { id: 'about', label: 'About' },
       { id: 'gallery', label: 'Gallery' },
       { id: 'testimonials', label: 'Reviews' },
+      { id: 'instagram', label: 'Instagram Feed' },
       { id: 'cta', label: 'Contact / CTA' },
     ],
     tint_elite: [
@@ -305,6 +311,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
       { id: 'about', label: 'About' },
       { id: 'gallery', label: 'Gallery' },
       { id: 'testimonials', label: 'Reviews' },
+      { id: 'instagram', label: 'Instagram Feed' },
       { id: 'cta', label: 'Contact / CTA' },
     ],
     tint_dark: [
@@ -315,6 +322,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
       { id: 'about', label: 'About' },
       { id: 'gallery', label: 'Gallery' },
       { id: 'testimonials', label: 'Reviews' },
+      { id: 'instagram', label: 'Instagram Feed' },
       { id: 'cta', label: 'Contact / CTA' },
     ],
     mobile_sudsy: [
@@ -325,6 +333,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
       { id: 'about', label: 'About' },
       { id: 'gallery', label: 'Gallery' },
       { id: 'testimonials', label: 'Reviews' },
+      { id: 'instagram', label: 'Instagram Feed' },
       { id: 'cta', label: 'Contact / CTA' },
     ],
     carwash_bubble: [
@@ -334,6 +343,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
       { id: 'about', label: 'About & Features' },
       { id: 'gallery', label: 'Gallery' },
       { id: 'testimonials', label: 'Reviews' },
+      { id: 'instagram', label: 'Instagram Feed' },
       { id: 'cta', label: 'Contact / CTA' },
     ],
   };
@@ -370,8 +380,8 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
   const handleDragEnd = () => { setDragIdx(null); setDragOverIdx(null); };
 
   const sections = [
-    { id: 'hero', label: 'Hero' },
     { id: 'visibility', label: 'Sections' },
+    { id: 'hero', label: 'Hero' },
     { id: 'services', label: 'Services' },
     ...(isSudsy ? [{ id: 'howItWorks', label: 'How It Works' }, { id: 'whyUs', label: 'Why Us' }] : []),
     ...(isBubble ? [{ id: 'howItWorks', label: 'How It Works' }] : []),
@@ -381,10 +391,10 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
     ...(isObsidian ? [{ id: 'shadeGuide', label: 'Shades' }] : []),
     ...(isApex ? [{ id: 'trustBar', label: 'Trust Bar' }, { id: 'ticker', label: 'Ticker' }] : []),
     { id: 'about', label: 'About' },
+    { id: 'gallery', label: 'Gallery' },
     { id: 'testimonials', label: 'Reviews' },
     ...(copy?.instagramWidgetKey ? [{ id: 'instagram', label: 'Instagram' }] : []),
     { id: 'contact', label: 'Contact' },
-    { id: 'images', label: 'Images' },
     { id: 'colors', label: 'Colors' },
     { id: 'footer', label: 'Footer' },
   ];
@@ -477,6 +487,9 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
 
           {activeSection === 'hero' && (
             <>
+              <ImageSlot label="Hero Background" value={images?.hero} onChange={(v) => setImage('hero', v)} />
+              <ImageSlot label="Business Logo" value={images?.logo} onChange={(v) => setImage('logo', v)} />
+              <hr className="my-3 border-gray-100" />
               <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Hero Layout</p>
               <Toggle
                 value={copy?.heroLayout || 'full'}
@@ -816,6 +829,9 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
 
           {activeSection === 'about' && (
             <>
+              {(copy?.aboutLayout || 'image') === 'image' && (
+                <ImageSlot label="About Photo" value={images?.about} onChange={(v) => setImage('about', v)} />
+              )}
               <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Left Panel Style</p>
               <Toggle
                 value={copy?.aboutLayout || 'image'}
@@ -919,13 +935,9 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
             </>
           )}
 
-          {activeSection === 'images' && (
+          {activeSection === 'gallery' && (
             <>
-              <p className="text-[11px] text-gray-400 mb-4">Upload photos to replace the placeholder backgrounds on your site.</p>
-              <ImageSlot label="Business Logo" value={images?.logo} onChange={(v) => setImage('logo', v)} />
-              <hr className="my-4 border-gray-100" />
-              <ImageSlot label="Hero Background" value={images?.hero} onChange={(v) => setImage('hero', v)} />
-              <ImageSlot label="About Section" value={images?.about} onChange={(v) => setImage('about', v)} />
+              <p className="text-[11px] text-gray-400 mb-4">Upload photos for your gallery section.</p>
               <ImageSlot label="Gallery Photo 1" value={images?.gallery0} onChange={(v) => setImage('gallery0', v)} />
               <ImageSlot label="Gallery Photo 2" value={images?.gallery1} onChange={(v) => setImage('gallery1', v)} />
               <ImageSlot label="Gallery Photo 3" value={images?.gallery2} onChange={(v) => setImage('gallery2', v)} />
