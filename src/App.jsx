@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import WizardShell from './components/wizard/WizardShell.jsx';
 import StepBusinessType from './components/wizard/StepBusinessType.jsx';
 import StepBusinessInfo from './components/wizard/StepBusinessInfo.jsx';
@@ -33,6 +33,32 @@ export default function App() {
   const [selectedWidgetIds, setSelectedWidgetIds] = useState([]);
   const [siteId, setSiteId] = useState(null);
   const saveTimerRef = useRef(null);
+
+  // Ensure widget keys are always in editedCopy when user is signed in
+  useEffect(() => {
+    if (!session?.user?.id || !editedCopy) return;
+    if (editedCopy.instagramWidgetKey && editedCopy.googleWidgetKey) return;
+    (async () => {
+      try {
+        const { data: widgets } = await supabase
+          .from('widget_configs')
+          .select('type, widget_key')
+          .eq('user_id', session.user.id)
+          .in('type', ['instagram-feed', 'google-reviews'])
+          .order('created_at', { ascending: false });
+        if (!widgets?.length) return;
+        const ig = widgets.find(w => w.type === 'instagram-feed');
+        const gr = widgets.find(w => w.type === 'google-reviews');
+        const updates = {};
+        if (ig?.widget_key && !editedCopy.instagramWidgetKey) updates.instagramWidgetKey = ig.widget_key;
+        if (gr?.widget_key && !editedCopy.googleWidgetKey) updates.googleWidgetKey = gr.widget_key;
+        if (Object.keys(updates).length > 0) {
+          setEditedCopy(prev => ({ ...prev, ...updates }));
+          setGeneratedCopy(prev => prev ? { ...prev, ...updates } : prev);
+        }
+      } catch (e) { /* ignore */ }
+    })();
+  }, [session?.user?.id, editedCopy?.instagramWidgetKey, editedCopy?.googleWidgetKey]); // eslint-disable-line
 
   // Auto-save site to Supabase (debounced)
   const autoSave = useCallback((overrides = {}) => {
