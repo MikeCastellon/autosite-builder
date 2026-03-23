@@ -179,9 +179,9 @@ export default function App() {
         businessInfo={isDemoPreview ? DEMO_BUSINESS_INFO : businessInfo}
         generatedCopy={generatedCopy}
         editedCopy={editedCopy}
-        onEditedCopyChange={setEditedCopy}
+        onEditedCopyChange={(newCopy) => { setEditedCopy(newCopy); autoSave({ editedCopy: newCopy }); }}
         images={images}
-        onImagesChange={setImages}
+        onImagesChange={(newImages) => { const resolved = typeof newImages === 'function' ? newImages(images) : newImages; setImages(resolved); autoSave({ images: resolved }); }}
         templateId={selectedTemplate}
         templateMeta={templateMeta}
         customColors={customColors}
