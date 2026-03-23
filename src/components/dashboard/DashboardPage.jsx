@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase.js';
 import { publishSite } from '../../lib/publishSite.js';
+import { TEMPLATES } from '../../data/templates.js';
 
 export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEmail }) {
   const [sites, setSites] = useState([]);
@@ -146,8 +147,9 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
                     )}
                   </div>
                   <p className="text-xs text-[#888]">
-                    {site.business_info?.city}, {site.business_info?.state} &middot;{' '}
-                    {new Date(site.created_at).toLocaleDateString()}
+                    {site.template_id && <span className="text-[#555] font-medium">{TEMPLATES[site.template_id]?.name || site.template_id}</span>}
+                    {site.template_id && ' · '}
+                    {site.business_info?.city}, {site.business_info?.state} · {new Date(site.created_at).toLocaleDateString()}
                   </p>
                   {site.published_url && (
                     <a
