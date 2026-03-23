@@ -179,12 +179,6 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
                     </button>
                   )}
                   <button
-                    onClick={() => handleReExport(site)}
-                    className="px-3 py-1.5 text-xs font-medium border border-black/10 rounded-lg hover:border-[#cc0000]/30 hover:text-[#cc0000] transition-colors"
-                  >
-                    Download
-                  </button>
-                  <button
                     onClick={() => handleDelete(site.id)}
                     className="px-3 py-1.5 text-xs font-medium text-[#888] hover:text-[#cc0000] transition-colors"
                   >
