@@ -33,25 +33,43 @@ function ColorSwatch({ label, colorKey, baseColor, customColors, onCustomColors 
 
 export default function StepTemplatePicker({ businessType, selected, onSelect, onGenerate, onPreview, error, customColors, onCustomColors }) {
   const typeInfo = BUSINESS_TYPES.find((t) => t.id === businessType);
-  const regularIds = typeInfo?.templates || [];
-  const premiumIds = typeInfo?.premiumTemplates || [];
-  const regularTemplates = regularIds.map((id) => TEMPLATES[id]).filter(Boolean);
-  const premiumTemplates = premiumIds.map((id) => TEMPLATES[id]).filter(Boolean);
-  const hasRegular = regularTemplates.length > 0;
-  const hasPremium = premiumTemplates.length > 0;
-  const hasBoth = hasRegular && hasPremium;
+  const recommendedIds = [...(typeInfo?.templates || []), ...(typeInfo?.premiumTemplates || [])];
 
-  const [activeTab, setActiveTab] = useState(hasRegular ? 'themes' : 'premium');
+  // All templates grouped
+  const allTemplates = Object.values(TEMPLATES).filter(Boolean);
+  const recommended = recommendedIds.map((id) => TEMPLATES[id]).filter(Boolean);
+  const others = allTemplates.filter((t) => !recommendedIds.includes(t.id));
 
-  const displayedTemplates = activeTab === 'themes' ? regularTemplates : premiumTemplates;
+  const [showAll, setShowAll] = useState(false);
   const selectedTpl = selected ? TEMPLATES[selected] : null;
 
-  const tabClass = (tab) =>
-    `px-4 py-2 rounded-lg text-[13px] font-semibold transition-all ${
-      activeTab === tab
-        ? 'bg-[#1a1a1a] text-white shadow-sm'
-        : 'bg-[#faf9f7] text-[#555] hover:bg-[#f2f0ec]'
-    }`;
+  const cols = (count) => count >= 4 ? 4 : count >= 3 ? 3 : count;
+
+  const TemplateGrid = ({ templates, badge }) => (
+    <div className="grid gap-3 mb-2" style={{ gridTemplateColumns: `repeat(${cols(templates.length)}, minmax(0, 1fr))` }}>
+      {templates.map((template) => (
+        <div key={template.id} className="flex flex-col gap-1.5 relative">
+          {badge && (
+            <span className="absolute top-2 left-2 z-10 bg-[#cc0000] text-white text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md shadow-sm">
+              {badge}
+            </span>
+          )}
+          <TemplateCard
+            template={template}
+            selected={selected}
+            onClick={onSelect}
+          />
+          <button
+            type="button"
+            onClick={() => onPreview(template.id)}
+            className="w-full text-[12px] font-medium text-[#555] hover:text-[#cc0000] py-1.5 border border-black/[0.07] hover:border-[#cc0000]/30 rounded-lg transition-colors"
+          >
+            Preview Demo
+          </button>
+        </div>
+      ))}
+    </div>
+  );
 
   return (
     <div>
@@ -63,35 +81,31 @@ export default function StepTemplatePicker({ businessType, selected, onSelect, o
         </p>
       </div>
 
-      {hasBoth && (
-        <div className="flex gap-2 mb-6">
-          <button type="button" className={tabClass('themes')} onClick={() => setActiveTab('themes')}>
-            Themes
-          </button>
-          <button type="button" className={tabClass('premium')} onClick={() => setActiveTab('premium')}>
-            Premium
-          </button>
+      {/* Recommended */}
+      {recommended.length > 0 && (
+        <div className="mb-6">
+          <p className="text-[11px] font-semibold text-[#cc0000] uppercase tracking-[1.5px] mb-3 flex items-center gap-2">
+            <span>⭐</span> Recommended for {typeInfo?.label || 'your business'}
+          </p>
+          <TemplateGrid templates={recommended} badge="Recommended" />
         </div>
       )}
 
-      <div className="grid gap-3 mb-6" style={{ gridTemplateColumns: `repeat(${displayedTemplates.length}, minmax(0, 1fr))` }}>
-        {displayedTemplates.map((template) => (
-          <div key={template.id} className="flex flex-col gap-1.5">
-            <TemplateCard
-              template={template}
-              selected={selected}
-              onClick={onSelect}
-            />
-            <button
-              type="button"
-              onClick={() => onPreview(template.id)}
-              className="w-full text-[12px] font-medium text-[#555] hover:text-[#cc0000] py-1.5 border border-black/[0.07] hover:border-[#cc0000]/30 rounded-lg transition-colors"
-            >
-              Preview Demo
-            </button>
-          </div>
-        ))}
-      </div>
+      {/* Show All toggle */}
+      <button
+        type="button"
+        onClick={() => setShowAll(!showAll)}
+        className="text-[13px] font-medium text-[#555] hover:text-[#1a1a1a] transition-colors mb-4 flex items-center gap-1.5"
+      >
+        {showAll ? '▾ Hide other templates' : '▸ Show all templates'} <span className="text-[11px] text-[#aaa]">({others.length} more)</span>
+      </button>
+
+      {showAll && others.length > 0 && (
+        <div className="mb-6">
+          <p className="text-[11px] font-semibold text-[#888] uppercase tracking-[1.5px] mb-3">All Templates</p>
+          <TemplateGrid templates={others} />
+        </div>
+      )}
 
       {error && (
         <div className="mb-4 p-4 bg-[#cc0000]/5 border border-[#cc0000]/20 rounded-xl text-[#cc0000] text-sm">
