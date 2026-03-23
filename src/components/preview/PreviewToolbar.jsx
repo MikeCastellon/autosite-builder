@@ -54,7 +54,7 @@ export default function PreviewToolbar({ viewMode, onViewMode, onBack, onExport,
             onClick={onExport}
             className="bg-gray-900 hover:bg-gray-800 text-white text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors"
           >
-            Download Site
+            Finalize Website
           </button>
         )}
       </div>

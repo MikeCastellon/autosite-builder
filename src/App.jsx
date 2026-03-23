@@ -187,7 +187,7 @@ export default function App() {
         customColors={customColors}
         onCustomColors={setCustomColors}
         onBack={isDemoPreview ? handleBackFromDemo : () => goTo(3)}
-        onExport={isDemoPreview ? null : () => goTo(5.5)}
+        onExport={isDemoPreview ? null : () => goTo(6)}
         onStartOver={() => { handleStartOver(); setView('dashboard'); }}
         isDemoPreview={isDemoPreview}
       />
