@@ -354,13 +354,20 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
       : [...hiddenSections, id];
     setCopy('hiddenSections', next);
   };
-  const moveSection = (idx, dir) => {
+  const [dragIdx, setDragIdx] = useState(null);
+  const [dragOverIdx, setDragOverIdx] = useState(null);
+  const handleDragStart = (idx) => { setDragIdx(idx); };
+  const handleDragOver = (e, idx) => { e.preventDefault(); setDragOverIdx(idx); };
+  const handleDrop = (idx) => {
+    if (dragIdx === null || dragIdx === idx) { setDragIdx(null); setDragOverIdx(null); return; }
     const ids = orderedSections.map(s => s.id);
-    const target = idx + dir;
-    if (target < 0 || target >= ids.length) return;
-    [ids[idx], ids[target]] = [ids[target], ids[idx]];
+    const [moved] = ids.splice(dragIdx, 1);
+    ids.splice(idx, 0, moved);
     setCopy('sectionOrder', ids);
+    setDragIdx(null);
+    setDragOverIdx(null);
   };
+  const handleDragEnd = () => { setDragIdx(null); setDragOverIdx(null); };
 
   const sections = [
     { id: 'hero', label: 'Hero' },
@@ -427,20 +434,26 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
 
           {activeSection === 'visibility' && (
             <>
-              <p className="text-[11px] text-gray-400 mb-4">Toggle sections on/off and drag to reorder.</p>
+              <p className="text-[11px] text-gray-400 mb-4">Drag to reorder · toggle to show/hide.</p>
               {orderedSections.map(({ id, label }, idx) => (
-                <div key={id} className="flex items-center gap-2 py-2 border-b border-gray-100">
-                  {/* Move arrows */}
-                  <div className="flex flex-col gap-0.5 shrink-0">
-                    <button type="button" onClick={() => moveSection(idx, -1)} disabled={idx === 0}
-                      className="text-gray-400 hover:text-gray-700 disabled:opacity-20 disabled:cursor-not-allowed transition p-0 leading-none text-[10px]"
-                      title="Move up">▲</button>
-                    <button type="button" onClick={() => moveSection(idx, 1)} disabled={idx === orderedSections.length - 1}
-                      className="text-gray-400 hover:text-gray-700 disabled:opacity-20 disabled:cursor-not-allowed transition p-0 leading-none text-[10px]"
-                      title="Move down">▼</button>
-                  </div>
+                <div
+                  key={id}
+                  draggable
+                  onDragStart={() => handleDragStart(idx)}
+                  onDragOver={(e) => handleDragOver(e, idx)}
+                  onDrop={() => handleDrop(idx)}
+                  onDragEnd={handleDragEnd}
+                  className="flex items-center gap-2.5 py-2.5 border-b border-gray-100 select-none"
+                  style={{
+                    opacity: dragIdx === idx ? 0.35 : 1,
+                    borderTop: dragOverIdx === idx && dragIdx !== idx ? '2px solid #3b82f6' : '2px solid transparent',
+                    transition: 'opacity 0.15s',
+                  }}
+                >
+                  {/* Drag handle */}
+                  <span className="text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing shrink-0 text-[14px] leading-none" title="Drag to reorder">⠿</span>
                   {/* Label */}
-                  <span className={`flex-1 text-[13px] ${isSectionHidden(id) ? 'text-gray-400 line-through' : 'text-gray-700'}`}>{label}</span>
+                  <span className={`flex-1 text-[13px] font-medium ${isSectionHidden(id) ? 'text-gray-400 line-through' : 'text-gray-700'}`}>{label}</span>
                   {/* Toggle */}
                   <button
                     type="button"
