@@ -28,7 +28,7 @@ export default function App() {
   const [images, setImages] = useState({});
   const [error, setError] = useState(null);
   const [customColors, setCustomColors] = useState({});
-  const [view, setView] = useState('dashboard'); // 'dashboard' | 'wizard'
+  const [view, setView] = useState('wizard'); // 'wizard' | 'dashboard'
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [selectedWidgetIds, setSelectedWidgetIds] = useState([]);
   const [siteId, setSiteId] = useState(null);
@@ -298,7 +298,7 @@ export default function App() {
   }
 
   return (
-    <WizardShell step={step} onBack={goBack}>
+    <WizardShell step={step} onBack={goBack} userEmail={session?.user?.email} onMySites={() => setView('dashboard')} onSignOut={handleSignOut}>
       {step === 1 && (
         <StepBusinessType onSelect={handleBusinessTypeSelect} />
       )}

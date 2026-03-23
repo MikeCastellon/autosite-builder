@@ -505,7 +505,7 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
           ) : instagramAccount ? (
             <div className="flex items-center justify-between bg-[#f0fdf4] border border-[#86efac] rounded-xl px-4 py-3">
               <div>
-                <div className="text-[13px] font-semibold text-[#166534]">✓ @{instagramAccount.instagram_username || 'Connected'}</div>
+                <div className="text-[13px] font-semibold text-[#166534]">✓ {instagramAccount.instagram_username && instagramAccount.instagram_username !== 'instagram_user' ? `@${instagramAccount.instagram_username}` : 'Instagram Connected'}</div>
                 <div className="text-[11px] text-[#4ade80]">Instagram feed will appear on your site</div>
               </div>
               <button type="button" onClick={() => { setInstagramAccount(null); setValues((prev) => ({ ...prev, instagramWidgetKey: null })); }}
