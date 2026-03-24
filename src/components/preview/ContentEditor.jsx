@@ -877,6 +877,33 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
                         <p className="text-[11px] text-green-600">Widget key: {copy.googleWidgetKey}</p>
                       </div>
                       <Field label="Google Reviews Section Title" value={copy?.googleReviewsTitle ?? ''} onChange={(v) => setCopy('googleReviewsTitle', v)} />
+                      <div className="mb-4">
+                        <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Widget Theme</label>
+                        <div className="grid grid-cols-3 gap-1.5">
+                          {[
+                            { value: '', label: 'Light', preview: 'bg-white border-gray-200', dot: 'bg-white' },
+                            { value: 'dark', label: 'Dark', preview: 'bg-[#1a1f2e] border-[#252d42]', dot: 'bg-[#1a1f2e]' },
+                            { value: 'gray', label: 'Gray', preview: 'bg-gray-100 border-gray-300', dot: 'bg-gray-200' },
+                            { value: 'colorful', label: 'Colorful', preview: 'bg-gradient-to-r from-blue-50 to-purple-50 border-purple-200', dot: 'bg-purple-100' },
+                            { value: 'minimal', label: 'Minimal', preview: 'bg-white border-gray-100', dot: 'bg-gray-50' },
+                            { value: 'warm', label: 'Warm', preview: 'bg-amber-50 border-amber-200', dot: 'bg-amber-100' },
+                          ].map(t => (
+                            <button
+                              key={t.value}
+                              type="button"
+                              onClick={() => setCopy('googleReviewsTheme', t.value)}
+                              className={`flex flex-col items-center gap-1 py-2 px-1 rounded-lg border text-[11px] font-medium transition-all ${
+                                (copy?.googleReviewsTheme || '') === t.value
+                                  ? 'border-gray-900 bg-gray-50 text-gray-900'
+                                  : 'border-gray-200 text-gray-500 hover:border-gray-400'
+                              }`}
+                            >
+                              <div className={`w-8 h-5 rounded border ${t.preview}`} />
+                              {t.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </>
                   ) : (
                     <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5 mb-3">

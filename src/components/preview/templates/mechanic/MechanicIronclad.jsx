@@ -515,7 +515,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
         copy?.googleWidgetKey ? (
           <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
             {copy.googleReviewsTitle && <h2 style={{ fontFamily: bebas || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.googleReviewsTitle}</h2>}
-            <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} />
+            <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} theme={copy?.googleReviewsTheme} />
           </div>
         ) : testimonials.length > 0 ? (
         <section id="testimonials" style={{ background: c.bg, padding: 'clamp(72px, 10vw, 100px) 5%', position: 'relative' , order: getOrder('testimonials') }}>

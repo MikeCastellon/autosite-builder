@@ -2,13 +2,30 @@ import { useEffect, useRef } from 'react';
 
 const WIDGET_SCRIPT_URL = 'https://social-feeds-app.netlify.app/widgets.js';
 
-export default function GoogleReviewsWidget({ widgetKey }) {
+export default function GoogleReviewsWidget({ widgetKey, theme }) {
   const containerRef = useRef(null);
   const mountedRef = useRef(false);
+  const prevThemeRef = useRef(theme);
 
   useEffect(() => {
-    if (!widgetKey || !containerRef.current || mountedRef.current) return;
+    if (!widgetKey || !containerRef.current) return;
+
+    // If theme changed, force remount
+    if (mountedRef.current && prevThemeRef.current !== theme) {
+      mountedRef.current = false;
+      containerRef.current.innerHTML = '';
+    }
+    prevThemeRef.current = theme;
+
+    if (mountedRef.current) return;
     mountedRef.current = true;
+
+    // Update data-theme attribute
+    if (theme) {
+      containerRef.current.setAttribute('data-theme', theme);
+    } else {
+      containerRef.current.removeAttribute('data-theme');
+    }
 
     // Load widget script if not already loaded
     if (!document.getElementById('sf-widget-script')) {
@@ -19,13 +36,11 @@ export default function GoogleReviewsWidget({ widgetKey }) {
       document.body.appendChild(script);
 
       script.onload = () => {
-        // After script loads, it auto-mounts widgets with data-widget attribute
         if (window.SocialFeeds?.mount) {
           window.SocialFeeds.mount(containerRef.current);
         }
       };
     } else {
-      // Script already loaded — mount manually
       setTimeout(() => {
         if (window.SocialFeeds?.mount) {
           window.SocialFeeds.mount(containerRef.current);
@@ -34,7 +49,7 @@ export default function GoogleReviewsWidget({ widgetKey }) {
     }
 
     return () => { mountedRef.current = false; };
-  }, [widgetKey]);
+  }, [widgetKey, theme]);
 
   if (!widgetKey) return null;
 
@@ -43,6 +58,7 @@ export default function GoogleReviewsWidget({ widgetKey }) {
       ref={containerRef}
       data-widget="google-reviews"
       data-widget-key={widgetKey}
+      data-theme={theme || undefined}
       style={{ maxWidth: 1200, margin: '0 auto' }}
     />
   );

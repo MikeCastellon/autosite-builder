@@ -340,7 +340,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
         generatedCopy?.googleWidgetKey ? (
           <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
             {generatedCopy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{generatedCopy.googleReviewsTitle}</h2>}
-            <GoogleReviewsWidget widgetKey={generatedCopy.googleWidgetKey} />
+            <GoogleReviewsWidget widgetKey={generatedCopy.googleWidgetKey} theme={generatedCopy?.googleReviewsTheme} />
           </div>
         ) : testimonials.length > 0 ? (
       <section id="reviews" style={{ ...s.sectionOff, order: getOrder('testimonials') }}>

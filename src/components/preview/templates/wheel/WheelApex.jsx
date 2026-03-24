@@ -358,7 +358,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
         copy?.googleWidgetKey ? (
           <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
             {copy.googleReviewsTitle && <h2 style={{ fontFamily: display || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: D.ink }}>{copy.googleReviewsTitle}</h2>}
-            <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} />
+            <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} theme={copy?.googleReviewsTheme} />
           </div>
         ) : testimonials.length > 0 ? (
         <section style={{ order: getOrder('testimonials'), padding: '64px 48px', background: D.card, borderTop: `1px solid ${D.border}` }}>

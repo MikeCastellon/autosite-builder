@@ -298,7 +298,7 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
         generatedCopy?.googleWidgetKey ? (
           <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
             {generatedCopy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.bg }}>{generatedCopy.googleReviewsTitle}</h2>}
-            <GoogleReviewsWidget widgetKey={generatedCopy.googleWidgetKey} />
+            <GoogleReviewsWidget widgetKey={generatedCopy.googleWidgetKey} theme={generatedCopy?.googleReviewsTheme} />
           </div>
         ) : (generatedCopy.testimonialPlaceholders || []).length > 0 ? (
       <section id="reviews" style={{ ...s.section, order: getOrder('testimonials') }}>
