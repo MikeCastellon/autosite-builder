@@ -4,7 +4,6 @@ import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
-import InstagramFeedWidget from '../InstagramFeedWidget.jsx';
 
 // Template: Mobile Rugged — Dark green (#1a2318 bg, #8a9a4a accent, #f0ede0 text)
 // Repeating diagonal line texture in hero, "ANYWHERE · ANYTIME" subtext, service area, heavy uppercase
@@ -23,7 +22,7 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
   const biz = businessInfo || {};
   const copy = generatedCopy || {};
   const hidden = (id) => copy?.hiddenSections?.includes(id);
-  const getOrder = buildSectionOrder(copy, ['hero','statsBar','services','about','gallery','testimonials','instagram','cta']);
+  const getOrder = buildSectionOrder(copy, ['hero','statsBar','services','about','gallery','testimonials','cta']);
   const services = copy.servicesSection?.items || [];
   const svcCols = services.length >= 6 ? Math.ceil(services.length / 2) : services.length || 1;
   const testimonials = copy.testimonialPlaceholders || [];
@@ -310,16 +309,6 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
           </div>
         </section>
         ) : null
-      )}
-
-      {/* INSTAGRAM FEED */}
-      {!hidden('instagram') && copy?.instagramWidgetKey && (
-        <section style={{ order: getOrder('instagram'), padding: '80px 5%', background: c.secondary || '#232e20', borderTop: `1px solid ${c.accent}33` }}>
-          <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-            <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.instagramFeedTitle || 'Follow Us on Instagram'}</h2>
-            <InstagramFeedWidget widgetKey={copy.instagramWidgetKey} />
-          </div>
-        </section>
       )}
 
       {/* CTA */}

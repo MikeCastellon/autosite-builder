@@ -240,7 +240,6 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
       { id: 'about', label: 'About' },
       { id: 'gallery', label: 'Gallery' },
       { id: 'testimonials', label: 'Reviews' },
-      { id: 'instagram', label: 'Instagram Feed' },
       { id: 'cta', label: 'Contact / CTA' },
       { id: 'awards', label: 'Awards' },
     ],
@@ -253,7 +252,6 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
       { id: 'gallery', label: 'Gallery' },
       { id: 'whyUs', label: 'Why Choose Us' },
       { id: 'testimonials', label: 'Reviews' },
-      { id: 'instagram', label: 'Instagram Feed' },
       { id: 'cta', label: 'Contact & Hours' },
     ],
     wheel_apex: [
@@ -265,7 +263,6 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
       { id: 'about', label: 'About' },
       { id: 'gallery', label: 'Gallery' },
       { id: 'testimonials', label: 'Reviews' },
-      { id: 'instagram', label: 'Instagram Feed' },
       { id: 'cta', label: 'Contact / CTA' },
     ],
     wheel_edge: [
@@ -276,7 +273,6 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
       { id: 'about', label: 'About' },
       { id: 'gallery', label: 'Gallery' },
       { id: 'testimonials', label: 'Reviews' },
-      { id: 'instagram', label: 'Instagram Feed' },
       { id: 'cta', label: 'Contact / CTA' },
     ],
     wheel_clean: [
@@ -288,7 +284,6 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
       { id: 'about', label: 'About' },
       { id: 'gallery', label: 'Gallery' },
       { id: 'testimonials', label: 'Reviews' },
-      { id: 'instagram', label: 'Instagram Feed' },
       { id: 'cta', label: 'Contact / CTA' },
     ],
     tint_obsidian: [
@@ -300,7 +295,6 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
       { id: 'about', label: 'About' },
       { id: 'gallery', label: 'Gallery' },
       { id: 'testimonials', label: 'Reviews' },
-      { id: 'instagram', label: 'Instagram Feed' },
       { id: 'cta', label: 'Contact / CTA' },
     ],
     tint_elite: [
@@ -311,7 +305,6 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
       { id: 'about', label: 'About' },
       { id: 'gallery', label: 'Gallery' },
       { id: 'testimonials', label: 'Reviews' },
-      { id: 'instagram', label: 'Instagram Feed' },
       { id: 'cta', label: 'Contact / CTA' },
     ],
     tint_dark: [
@@ -322,7 +315,6 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
       { id: 'about', label: 'About' },
       { id: 'gallery', label: 'Gallery' },
       { id: 'testimonials', label: 'Reviews' },
-      { id: 'instagram', label: 'Instagram Feed' },
       { id: 'cta', label: 'Contact / CTA' },
     ],
     mobile_sudsy: [
@@ -333,7 +325,6 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
       { id: 'about', label: 'About' },
       { id: 'gallery', label: 'Gallery' },
       { id: 'testimonials', label: 'Reviews' },
-      { id: 'instagram', label: 'Instagram Feed' },
       { id: 'cta', label: 'Contact / CTA' },
     ],
     carwash_bubble: [
@@ -343,15 +334,10 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
       { id: 'about', label: 'About & Features' },
       { id: 'gallery', label: 'Gallery' },
       { id: 'testimonials', label: 'Reviews' },
-      { id: 'instagram', label: 'Instagram Feed' },
       { id: 'cta', label: 'Contact / CTA' },
     ],
   };
-  const baseSections = TOGGLEABLE[templateId] || TOGGLEABLE._default;
-  // Dynamically add Instagram section if widget key exists
-  const toggleableSections = copy?.instagramWidgetKey && !baseSections.find(s => s.id === 'instagram')
-    ? [...baseSections.filter(s => s.id !== 'cta'), { id: 'instagram', label: 'Instagram Feed' }, ...baseSections.filter(s => s.id === 'cta')]
-    : baseSections;
+  const toggleableSections = TOGGLEABLE[templateId] || TOGGLEABLE._default;
   const defaultOrder = toggleableSections.map(s => s.id);
   const hiddenSections = copy?.hiddenSections || [];
   const sectionOrder = copy?.sectionOrder?.length > 0 ? copy.sectionOrder : defaultOrder;
@@ -393,7 +379,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
     { id: 'about', label: 'About' },
     { id: 'gallery', label: 'Gallery' },
     { id: 'testimonials', label: 'Reviews' },
-    ...(copy?.instagramWidgetKey ? [{ id: 'instagram', label: 'Instagram' }] : []),
+    // Instagram tab disabled pending Meta App Review
     { id: 'contact', label: 'Contact' },
     { id: 'colors', label: 'Colors' },
     { id: 'footer', label: 'Footer' },
@@ -911,27 +897,6 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
                 </>
               )}
 
-            </>
-          )}
-
-          {activeSection === 'instagram' && (
-            <>
-              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-3">Instagram Feed</p>
-              {copy?.instagramWidgetKey ? (
-                <>
-                  <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2.5 mb-3">
-                    <p className="text-[12px] font-semibold text-green-700">✓ Instagram connected</p>
-                    <p className="text-[11px] text-green-600">Your Instagram feed will appear on the site.</p>
-                  </div>
-                  <Field label="Section Title" value={copy?.instagramFeedTitle ?? ''} onChange={(v) => setCopy('instagramFeedTitle', v)} />
-                  <p className="text-[11px] text-gray-400 mt-1">Leave empty for no title above the feed.</p>
-                </>
-              ) : (
-                <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 mb-3">
-                  <p className="text-[12px] text-gray-500">No Instagram connected</p>
-                  <p className="text-[11px] text-gray-400">Connect Instagram in Step 2 (Business Info) to embed your feed.</p>
-                </div>
-              )}
             </>
           )}
 

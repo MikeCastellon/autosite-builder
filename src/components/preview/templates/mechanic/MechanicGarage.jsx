@@ -4,7 +4,6 @@ import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
-import InstagramFeedWidget from '../InstagramFeedWidget.jsx';
 
 export default function MechanicGarage({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
@@ -15,7 +14,7 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
   const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
-  const getOrder = buildSectionOrder(generatedCopy, ['hero','statsBar','services','about','gallery','testimonials','instagram','cta']);
+  const getOrder = buildSectionOrder(generatedCopy, ['hero','statsBar','services','about','gallery','testimonials','cta']);
 
   const c = templateMeta.colors;
   const font = templateMeta.font;
@@ -385,16 +384,6 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
         </div>
       </section>
         ) : null
-      )}
-
-      {/* INSTAGRAM FEED */}
-      {!hidden('instagram') && generatedCopy?.instagramWidgetKey && (
-        <section style={{ order: getOrder('instagram'), padding: '80px 5%', background: c.secondary || '#262626', borderTop: `1px solid ${c.accent}22` }}>
-          <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-            <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{generatedCopy.instagramFeedTitle || 'Follow Us on Instagram'}</h2>
-            <InstagramFeedWidget widgetKey={generatedCopy.instagramWidgetKey} />
-          </div>
-        </section>
       )}
 
       {/* CONTACT CTA - orange background */}

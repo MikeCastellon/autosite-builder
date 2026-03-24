@@ -4,7 +4,6 @@ import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
-import InstagramFeedWidget from '../InstagramFeedWidget.jsx';
 
 // Template: Tint Obsidian -- Ultra-dark void (#050507 bg, #7C3AED accent, #06B6D4 cyan)
 // Syne + Outfit fonts, VLT shade guide, film brands, process steps, testimonials
@@ -79,7 +78,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
   const shades = copy?.shadeGuide?.length > 0 ? copy.shadeGuide : defaultShades;
 
   const hidden = (id) => copy?.hiddenSections?.includes(id);
-  const getOrder = buildSectionOrder(copy, ['hero','shadeGuide','services','brands','process','about','gallery','testimonials','instagram','cta']);
+  const getOrder = buildSectionOrder(copy, ['hero','shadeGuide','services','brands','process','about','gallery','testimonials','cta']);
 
   const panelBg = c.secondary || '#0d0d12';
 
@@ -625,16 +624,6 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
           </div>
         </section>
         ) : null
-      )}
-
-      {/* INSTAGRAM FEED */}
-      {!hidden('instagram') && copy?.instagramWidgetKey && (
-        <section style={{ order: getOrder('instagram'), padding: '80px 5%', background: panelBg, borderTop: `1px solid ${c.accent}1a` }}>
-          <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-            <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.instagramFeedTitle || 'Follow Us on Instagram'}</h2>
-            <InstagramFeedWidget widgetKey={copy.instagramWidgetKey} />
-          </div>
-        </section>
       )}
 
       {/* ============================================================ CTA BAND ============================================================ */}

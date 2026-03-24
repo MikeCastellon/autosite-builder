@@ -4,7 +4,6 @@ import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
-import InstagramFeedWidget from '../InstagramFeedWidget.jsx';
 
 // Template: Mechanic Ironclad
 // Industrial dark aesthetic with rust-red accent (#111111 bg, #C0392B accent, #ffffff text)
@@ -61,7 +60,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
   const hidden = (id) => copy?.hiddenSections?.includes(id);
-  const getOrder = buildSectionOrder(copy, ['hero','ticker','ctaBand','about','services','gallery','whyUs','testimonials','instagram','cta']);
+  const getOrder = buildSectionOrder(copy, ['hero','ticker','ctaBand','about','services','gallery','whyUs','testimonials','cta']);
 
   // ── Font stacks ───────────────────────────────────────────────────
   const bebas     = "'Bebas Neue', 'Barlow Condensed', sans-serif";
@@ -560,16 +559,6 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
           </div>
         </section>
         ) : null
-      )}
-
-      {/* INSTAGRAM FEED */}
-      {!hidden('instagram') && copy?.instagramWidgetKey && (
-        <section style={{ order: getOrder('instagram'), padding: '80px 5%', background: c.secondary || '#1e1e1e', borderTop: `1px solid ${c.accent}22` }}>
-          <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-            <h2 style={{ fontFamily: bebas || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.instagramFeedTitle || 'Follow Us on Instagram'}</h2>
-            <InstagramFeedWidget widgetKey={copy.instagramWidgetKey} />
-          </div>
-        </section>
       )}
 
       {/* ═══════════════════════════════════════════════════════════

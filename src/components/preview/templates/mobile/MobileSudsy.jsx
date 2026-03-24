@@ -4,7 +4,6 @@ import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
-import InstagramFeedWidget from '../InstagramFeedWidget.jsx';
 import IconOrEmoji from '../IconOrEmoji.jsx';
 
 // Template: Mobile Sudsy
@@ -47,7 +46,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
     return () => window.removeEventListener('scroll', h);
   }, []);
   const hidden = (id) => copy?.hiddenSections?.includes(id);
-  const getOrder = buildSectionOrder(copy, ['hero','services','process','whyUs','about','gallery','testimonials','instagram','cta']);
+  const getOrder = buildSectionOrder(copy, ['hero','services','process','whyUs','about','gallery','testimonials','cta']);
 
   const heroBubbles = [
     { w: 80,  h: 80,  top: '12%', left: '5%',  opacity: 0.18, color: '#2d9cdb' },
@@ -489,16 +488,6 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
           </div>
         </section>
         ) : null
-      )}
-
-      {/* INSTAGRAM FEED */}
-      {!hidden('instagram') && copy?.instagramWidgetKey && (
-        <section style={{ order: getOrder('instagram'), padding: '80px 5%', background: c.secondary || '#fef3c7', borderTop: '1px solid #e5e7eb' }}>
-          <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-            <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.instagramFeedTitle || 'Follow Us on Instagram'}</h2>
-            <InstagramFeedWidget widgetKey={copy.instagramWidgetKey} />
-          </div>
-        </section>
       )}
 
       {/* CTA SECTION */}

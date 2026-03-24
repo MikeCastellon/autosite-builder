@@ -5,7 +5,6 @@ import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import IconOrEmoji from '../IconOrEmoji.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
-import InstagramFeedWidget from '../InstagramFeedWidget.jsx';
 
 // Template: Wheel Apex — Alloy & Bronze e-commerce style
 // Bebas Neue display + DM Sans body, brushed-alloy palette, bronze accents,
@@ -38,7 +37,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
   const payments = biz.paymentMethods || [];
   const packages = biz.packages || [];
   const hidden = (id) => copy?.hiddenSections?.includes(id);
-  const getOrder = buildSectionOrder(copy, ['hero', 'ticker', 'trustBar', 'products', 'about', 'brands', 'gallery', 'testimonials', 'instagram', 'cta']);
+  const getOrder = buildSectionOrder(copy, ['hero', 'ticker', 'trustBar', 'products', 'about', 'brands', 'gallery', 'testimonials', 'cta']);
 
   const D = {
     bg: '#F0F1F3', bg2: '#E8EAED', bg3: '#DDDFE3',
@@ -378,16 +377,6 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
           </div>
         </section>
         ) : null
-      )}
-
-      {/* INSTAGRAM FEED */}
-      {!hidden('instagram') && copy?.instagramWidgetKey && (
-        <section style={{ order: getOrder('instagram'), padding: '80px 5%', background: D.card, borderTop: `1px solid ${D.border}` }}>
-          <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-            <h2 style={{ fontFamily: display || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: D.ink }}>{copy.instagramFeedTitle || 'Follow Us on Instagram'}</h2>
-            <InstagramFeedWidget widgetKey={copy.instagramWidgetKey} />
-          </div>
-        </section>
       )}
 
       {/* CTA / CONTACT */}

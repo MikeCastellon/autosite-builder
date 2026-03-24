@@ -4,7 +4,6 @@ import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
-import InstagramFeedWidget from '../InstagramFeedWidget.jsx';
 
 export default function TintElite({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
@@ -38,7 +37,7 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
   if (stats.length === 0) stats.push(...defaultStats);
 
   const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
-  const getOrder = buildSectionOrder(generatedCopy, ['hero','statsBar','brands','services','about','gallery','testimonials','instagram','cta']);
+  const getOrder = buildSectionOrder(generatedCopy, ['hero','statsBar','brands','services','about','gallery','testimonials','cta']);
 
   const _svcItems = generatedCopy.servicesSection.items;
   const svcCols = _svcItems.length >= 6 ? Math.ceil(_svcItems.length / 2) : _svcItems.length || 1;
@@ -451,16 +450,6 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
         </div>
       </section>
         ) : null
-      )}
-
-      {/* INSTAGRAM FEED */}
-      {!hidden('instagram') && generatedCopy?.instagramWidgetKey && (
-        <section style={{ order: getOrder('instagram'), padding: '80px 5%', background: c.secondary || '#0f0f0f', borderTop: '1px solid rgba(202,138,4,0.08)' }}>
-          <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-            <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{generatedCopy.instagramFeedTitle || 'Follow Us on Instagram'}</h2>
-            <InstagramFeedWidget widgetKey={generatedCopy.instagramWidgetKey} />
-          </div>
-        </section>
       )}
 
       {/* CTA / CONTACT */}

@@ -4,7 +4,6 @@ import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
-import InstagramFeedWidget from '../InstagramFeedWidget.jsx';
 
 export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const c = templateMeta.colors;
@@ -52,7 +51,7 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
   }));
   if (stats.length === 0) stats.push(...defaultStats);
   const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
-  const getOrder = buildSectionOrder(generatedCopy, ['hero', 'statsBar', 'services', 'about', 'gallery', 'testimonials', 'instagram', 'cta']);
+  const getOrder = buildSectionOrder(generatedCopy, ['hero', 'statsBar', 'services', 'about', 'gallery', 'testimonials', 'cta']);
 
   const processSteps = [
     { num: '01', title: 'Consultation', desc: 'We assess your vehicle or fleet, discuss your goals, and recommend the right service package based on condition, timeline, and budget.' },
@@ -455,16 +454,6 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
         </div>
       </section>
         ) : null
-      )}
-
-      {/* INSTAGRAM FEED */}
-      {!hidden('instagram') && generatedCopy?.instagramWidgetKey && (
-        <section style={{ order: getOrder('instagram'), padding: '80px 5%', background: c.secondary || '#0E1116', borderTop: `1px solid ${c.accent}22` }}>
-          <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-            <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: textColor }}>{generatedCopy.instagramFeedTitle || 'Follow Us on Instagram'}</h2>
-            <InstagramFeedWidget widgetKey={generatedCopy.instagramWidgetKey} />
-          </div>
-        </section>
       )}
 
       {/* CTA SECTION */}

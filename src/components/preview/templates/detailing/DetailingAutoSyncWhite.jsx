@@ -4,7 +4,6 @@ import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
-import InstagramFeedWidget from '../InstagramFeedWidget.jsx';
 
 export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const c = templateMeta.colors;
@@ -21,7 +20,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
     return () => { if (document.head.contains(link)) document.head.removeChild(link); };
   }, []);
   const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
-  const getOrder = buildSectionOrder(generatedCopy, ['hero', 'services', 'about', 'gallery', 'testimonials', 'instagram', 'cta']);
+  const getOrder = buildSectionOrder(generatedCopy, ['hero', 'services', 'about', 'gallery', 'testimonials', 'cta']);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -373,16 +372,6 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
         </div>
       </section>
         ) : null
-      )}
-
-      {/* INSTAGRAM FEED */}
-      {!hidden('instagram') && generatedCopy?.instagramWidgetKey && (
-        <section style={{ order: getOrder('instagram'), padding: '80px 5%', background: off || '#f5f5f7', borderTop: '1px solid #e5e7eb' }}>
-          <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-            <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{generatedCopy.instagramFeedTitle || 'Follow Us on Instagram'}</h2>
-            <InstagramFeedWidget widgetKey={generatedCopy.instagramWidgetKey} />
-          </div>
-        </section>
       )}
 
       {/* CONTACT */}
