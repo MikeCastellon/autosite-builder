@@ -46,7 +46,7 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
     if (!fbAppId) return;
     const state = `${session.user.id}__sitebuilder`;
     const redirectUrl = encodeURIComponent(`${SOCIALFEEDS_URL}/.netlify/functions/instagram-auth-callback`);
-    const authUrl = `https://www.facebook.com/v22.0/dialog/oauth?client_id=${fbAppId}&redirect_uri=${redirectUrl}&scope=instagram_basic,pages_show_list&response_type=code&state=${state}`;
+    const authUrl = `https://www.instagram.com/oauth/authorize?client_id=${fbAppId}&redirect_uri=${redirectUrl}&scope=instagram_business_basic&response_type=code&state=${state}`;
     // Open as popup, then poll for the new widget
     const popup = window.open(authUrl, 'instagram-auth', 'width=600,height=700');
     const pollInterval = setInterval(async () => {
