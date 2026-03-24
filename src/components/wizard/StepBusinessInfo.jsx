@@ -508,7 +508,13 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
                 <div className="text-[13px] font-semibold text-[#166534]">✓ {instagramAccount.instagram_username && instagramAccount.instagram_username !== 'instagram_user' ? `@${instagramAccount.instagram_username}` : 'Instagram Connected'}</div>
                 <div className="text-[11px] text-[#4ade80]">Instagram feed will appear on your site</div>
               </div>
-              <button type="button" onClick={() => { setInstagramAccount(null); setValues((prev) => ({ ...prev, instagramWidgetKey: null })); }}
+              <button type="button" onClick={async () => {
+                if (instagramAccount?.id) {
+                  try { await supabase.from('widget_configs').delete().eq('id', instagramAccount.id); } catch (e) { /* ignore */ }
+                }
+                setInstagramAccount(null);
+                setValues((prev) => ({ ...prev, instagramWidgetKey: null }));
+              }}
                 className="text-[12px] text-[#888] hover:text-[#cc0000] transition">Disconnect</button>
             </div>
           ) : (
