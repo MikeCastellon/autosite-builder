@@ -3,6 +3,7 @@ import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 
 // Template: Carwash Bubble
@@ -17,6 +18,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
   const bodyFont = templateMeta?.bodyFont || 'Nunito, sans-serif';
 
   const biz = businessInfo || {};
+  const fb = getFallbacks(biz.businessType);
   const copy = generatedCopy || {};
   const services = copy.servicesSection?.items || [];
   const svcCols = services.length >= 6 ? Math.ceil(services.length / 2) : services.length || 1;
@@ -149,10 +151,10 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
               }} />
               <div>
                 <span style={{ fontFamily: font, fontSize: 17, color: c.text, display: 'block', lineHeight: 1.1 }}>
-                  {biz.businessName || 'Bubble Rush'}
+                  {biz.businessName || fb.shopName}
                 </span>
                 <span style={{ fontSize: 10, color: c.muted || '#64748b', letterSpacing: 1.5, textTransform: 'uppercase', display: 'block' }}>
-                  Car Wash{biz.city ? ` · ${biz.city}` : ''}
+                  {fb.navSubtitle}{biz.city ? ` · ${biz.city}` : ''}
                 </span>
               </div>
             </>
@@ -167,7 +169,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
             color: '#fff', padding: '9px 22px', borderRadius: 50,
             fontWeight: 800, fontSize: 13, textDecoration: 'none',
             boxShadow: `0 4px 16px ${c.accent}44`,
-          }}>Get Washed 🫧</a>
+          }}>{fb.ctaHeadline} 🫧</a>
         </div>
       </nav>
 
@@ -207,9 +209,9 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
           <h1 style={{ fontFamily: font, fontSize: 'clamp(1.8rem, 9vw, 6.5rem)', lineHeight: 0.95, letterSpacing: '-0.01em', margin: '0 0 1.2rem', color: c.text }}>
             {copy.headline ? copy.headline : (
               <>
-                <span style={gradText}>{biz.businessName || 'Bubble Rush'}</span>
+                <span style={gradText}>{biz.businessName || fb.shopName}</span>
                 <br />
-                <span>Car Wash</span>
+                <span>{fb.navSubtitle}</span>
               </>
             )}
           </h1>
@@ -296,7 +298,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
           <div style={{ display: 'grid', gridTemplateColumns: `repeat(${biz.packages?.length > 0 ? Math.min(biz.packages.length, 3) : svcCols}, 1fr)`, gap: 20 }}>
             {(biz.packages?.length > 0 ? biz.packages : services.length > 0 ? services : [
               { name: 'Express', description: 'Quick, fresh, done right. High-pressure pre-rinse, foam wash, spot-free exit.' },
-              { name: 'Bubble Rush', description: 'The full foam experience — triple foam cannon, tire scrub, Rain-X protectant.' },
+              { name: 'Premium Package', description: 'The full foam experience — triple foam cannon, tire scrub, Rain-X protectant.' },
               { name: 'Ultimate Shine', description: 'Showroom-worthy every time. Ceramic spray, clear-coat sealant, wheel brightener.' },
             ]).map((pkg, i, arr) => {
               const isFeatured = i === Math.floor(arr.length / 2);
@@ -367,7 +369,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
           <div style={{ textAlign: 'center', marginBottom: 60 }}>
             <span style={{ display: 'inline-block', background: `${c.accent}18`, color: c.accent, borderRadius: 50, padding: '6px 18px', fontSize: 12, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 16 }}>💎 Why {biz.businessName || 'Us'}</span>
             <h2 style={{ fontFamily: font, fontSize: 'clamp(2rem, 5vw, 3rem)', color: c.text, margin: '0 0 16px', lineHeight: 1.1 }}>
-              Not all car washes are{' '}<span style={gradText}>equal.</span>
+              Not all shops are{' '}<span style={gradText}>equal.</span>
             </h2>
           </div>
           <div className="tp-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, alignItems: 'center', marginBottom: 60 }}>
@@ -382,7 +384,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
                   {(() => {
                     const defaultStats = [
                       { value: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'Years in Business' },
-                      { value: '5,000+', label: 'Cars Washed' },
+                      { value: '5,000+', label: fb.statLabel },
                       { value: '4.9★', label: 'Customer Rating' },
                     ];
                     const aboutStats = (copy?.aboutStats || []).map((s, i) => ({
@@ -405,7 +407,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
               <span style={{ display: 'inline-block', background: `${c.accent}18`, color: c.accent, borderRadius: 50, padding: '4px 14px', fontSize: 11, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>About Us</span>
               <h3 style={{ fontFamily: font, fontSize: 'clamp(1.5rem, 3vw, 2rem)', color: c.text, margin: '0 0 16px' }}>{biz.businessName || 'Who We Are'}</h3>
               <p style={{ color: c.muted || '#64748b', fontSize: 15, lineHeight: 1.8, margin: '0 0 20px', fontWeight: 600 }}>
-                {copy.aboutText || `Based in ${biz.city || 'your city'}${biz.state ? `, ${biz.state}` : ''}, we deliver a top-tier car wash every time.${biz.yearsInBusiness ? ` Over ${biz.yearsInBusiness} years in business — we know clean.` : ''}`}
+                {copy.aboutText || `Based in ${biz.city || 'your city'}${biz.state ? `, ${biz.state}` : ''}, we deliver ${fb.aboutFallback} every time.${biz.yearsInBusiness ? ` Over ${biz.yearsInBusiness} years in business — we know quality.` : ''}`}
               </p>
               {awards.length > 0 && (
                 <div style={{ padding: '12px 16px', background: '#fefce8', borderRadius: 14, border: '1.5px solid #fde68a', marginBottom: 16 }}>
@@ -533,17 +535,17 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
               ) : (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
                   <div style={{ width: 36, height: 36, borderRadius: '50%', background: `radial-gradient(circle at 35% 30%, #fff, ${c.accent})`, border: `2px solid ${c.accent}`, flexShrink: 0 }} />
-                  <span style={{ fontFamily: font, fontSize: 15, color: '#fff' }}>{biz.businessName || 'Bubble Rush'}</span>
+                  <span style={{ fontFamily: font, fontSize: 15, color: '#fff' }}>{biz.businessName || fb.shopName}</span>
                 </div>
               )}
               <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.38)', lineHeight: 1.8, margin: 0, maxWidth: 240, fontWeight: 600 }}>
-                {copy.footerTagline || `${biz.city ? `Serving ${biz.city}` : 'Professional car wash'} — your car deserves the best.`}
+                {copy.footerTagline || `${biz.city ? `Serving ${biz.city}` : fb.footerDesc} — your car deserves the best.`}
               </p>
             </div>
             <div>
               <h4 style={{ fontFamily: font, fontSize: 15, marginBottom: 18, background: `linear-gradient(135deg, ${c.accent}, #14b8a6)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Services</h4>
               <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {(services.length > 0 ? services.slice(0, 4) : ['Express Wash', 'Bubble Rush', 'Ultimate Shine', 'Unlimited Plans']).map((s, i) => (
+                {(services.length > 0 ? services.slice(0, 4) : ['Express Wash', fb.shopName, 'Ultimate Shine', 'Unlimited Plans']).map((s, i) => (
                   <li key={i}><a href='#packages' style={{ color: 'rgba(255,255,255,0.42)', textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>{typeof s === 'object' ? s.name : s}</a></li>
                 ))}
               </ul>
@@ -564,7 +566,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
           </div>
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
             <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.26)', fontWeight: 600, margin: 0 }}>
-              &copy; {new Date().getFullYear()} {biz.businessName || 'Bubble Rush Car Wash'}. All rights reserved.
+              &copy; {new Date().getFullYear()} {biz.businessName || fb.shopName}. All rights reserved.
             </p>
             <span style={{ fontFamily: font, fontSize: 13, letterSpacing: 0.5, background: 'linear-gradient(135deg, #93c5fd, #6ee7b7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
               {copy.footerTagline || 'Squeaky clean, every time. 🫧'}

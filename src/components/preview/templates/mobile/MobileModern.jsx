@@ -4,6 +4,7 @@ import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
+import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 
 // Template: Mobile Modern — Blue & white (#ffffff bg, #2563eb accent, #eff6ff secondary)
 // Split hero layout, info cards, clean card-based services, professional badge row, stats grid
@@ -20,6 +21,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
   const c = templateMeta?.colors || { bg: '#ffffff', accent: '#2563eb', text: '#1e293b', secondary: '#eff6ff', muted: '#64748b' };
   const font = templateMeta?.bodyFont || 'Inter, system-ui, sans-serif';
   const biz = businessInfo || {};
+  const fb = getFallbacks(biz.businessType);
   const copy = generatedCopy || {};
   const services = copy.servicesSection?.items || [];
   const svcCols = services.length >= 6 ? Math.ceil(services.length / 2) : services.length || 1;
@@ -49,9 +51,9 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
             {images.logo ? (
               <img src={images.logo} alt={biz.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
             ) : (
-              <span style={{ fontSize: 18, fontWeight: 800, color: c.accent }}>{biz.businessName || 'Mobile Detail Co.'}</span>
+              <span style={{ fontSize: 18, fontWeight: 800, color: c.accent }}>{biz.businessName || fb.shopName}</span>
             )}
-            <span style={{ display: 'block', fontSize: 11, color: c.muted || '#64748b', letterSpacing: 1.5, textTransform: 'uppercase' }}>Mobile Detailing · {biz.city}</span>
+            <span style={{ display: 'block', fontSize: 11, color: c.muted || '#64748b', letterSpacing: 1.5, textTransform: 'uppercase' }}>{fb.navSubtitle} · {biz.city}</span>
           </div>
           <div className="tp-nav-links" style={{ display: 'flex', gap: 28, alignItems: 'center' }}>
             <a href="#services" style={{ color: c.text, textDecoration: 'none', fontWeight: 600, fontSize: 14, opacity: 0.7 }}>Services</a>
@@ -86,13 +88,13 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
               fontSize: 12, fontWeight: 700, padding: '6px 16px', borderRadius: 20,
               textTransform: 'uppercase', letterSpacing: 2, marginBottom: 24,
             }}>
-              Professional Mobile Detailing · {biz.city}, {biz.state}
+              {fb.heroBadge} · {biz.city}, {biz.state}
             </span>
             <h1 style={{ fontSize: 'clamp(2.2rem, 4.5vw, 3.5rem)', fontWeight: 800, lineHeight: 1.15, color: c.text, marginBottom: 20 }}>
-              {copy.headline || 'Premium Detail. We Come To You.'}
+              {copy.headline || fb.headline}
             </h1>
             <p style={{ color: c.muted || '#475569', fontSize: 17, lineHeight: 1.75, maxWidth: 500, marginBottom: 40 }}>
-              {copy.subheadline || biz.tagline || 'Professional mobile detailing services at your home or office.'}
+              {copy.subheadline || biz.tagline || fb.subheadline}
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               <a href={`tel:${biz.phone}`} style={{
@@ -119,13 +121,13 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
                 fontSize: 12, fontWeight: 700, padding: '6px 16px', borderRadius: 20,
                 textTransform: 'uppercase', letterSpacing: 2, marginBottom: 24,
               }}>
-                Professional Mobile Detailing · {biz.city}, {biz.state}
+                {fb.heroBadge} · {biz.city}, {biz.state}
               </span>
               <h1 style={{ fontSize: 'clamp(2.2rem, 4.5vw, 3.5rem)', fontWeight: 800, lineHeight: 1.15, color: c.text, marginBottom: 20 }}>
-                {copy.headline || 'Premium Detail. We Come To You.'}
+                {copy.headline || fb.headline}
               </h1>
               <p style={{ color: c.muted || '#475569', fontSize: 17, lineHeight: 1.75, maxWidth: 500, marginBottom: 40 }}>
-                {copy.subheadline || biz.tagline || 'Professional mobile detailing services at your home or office.'}
+                {copy.subheadline || biz.tagline || fb.subheadline}
               </p>
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                 <a href={`tel:${biz.phone}`} style={{
@@ -317,7 +319,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
             <span style={{ display: 'inline-block', background: `${c.accent}12`, color: c.accent, fontSize: 12, fontWeight: 700, padding: '5px 14px', borderRadius: 20, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 16 }}>About</span>
             <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, color: c.text, marginBottom: 20 }}>About {biz.businessName}</h2>
             <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.8, marginBottom: 20 }}>
-              {copy.aboutText || `Based in ${biz.city || 'your area'}, we bring professional detailing directly to you.`}
+              {copy.aboutText || `Based in ${biz.city || 'your area'}, we provide ${fb.aboutFallback}.`}
             </p>
             {biz.awards && (
               <div style={{ background: '#fefce8', borderRadius: 10, padding: '16px 20px', marginBottom: 16, borderLeft: '4px solid #eab308' }}>
@@ -384,7 +386,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
       {/* CTA */}
       {!hidden('cta') && (
       <section id="contact" style={{ background: c.accent, padding: '80px 5%', textAlign: 'center' , order: getOrder('cta') }}>
-        <h2 style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.8rem)', fontWeight: 800, color: '#fff', marginBottom: 14 }}>{copy.ctaHeadline || 'Schedule a Mobile Detail'}</h2>
+        <h2 style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.8rem)', fontWeight: 800, color: '#fff', marginBottom: 14 }}>{copy.ctaHeadline || fb.ctaHeadline}</h2>
         <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 16, marginBottom: 36 }}>
           {copy.ctaSubtext || copy.ctaSecondary || `We come to you anywhere in ${biz.city || 'your area'}, ${biz.state || ''}`}
         </p>

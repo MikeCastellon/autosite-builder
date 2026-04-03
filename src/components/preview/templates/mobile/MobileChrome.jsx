@@ -4,6 +4,7 @@ import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
+import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 
 export default function MobileChrome({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
@@ -16,6 +17,7 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
   const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
   const getOrder = buildSectionOrder(generatedCopy, ['hero','statsBar','services','about','gallery','testimonials','cta']);
 
+  const fb = getFallbacks(businessInfo.businessType);
   const c = templateMeta.colors;
   const font = templateMeta.font;
   const bodyFont = templateMeta.bodyFont;
@@ -26,7 +28,7 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
 
   const defaultStats = [
     { value: businessInfo.yearsInBusiness ? `${businessInfo.yearsInBusiness}+` : '10+', label: 'Years Experience' },
-    { value: '1,000+', label: 'Vehicles Detailed' },
+    { value: '1,000+', label: fb.statLabel },
     { value: '100%', label: 'Satisfaction Rate' },
   ];
   const stats = (generatedCopy?.aboutStats || []).map((s, i) => ({
@@ -197,7 +199,7 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', border: '1px solid rgba(148,163,184,0.25)', borderRadius: '1px', padding: '10px 24px', marginBottom: '36px', alignSelf: splitHero ? 'flex-start' : undefined }}>
             <div style={{ width: '6px', height: '6px', background: chromeGradient, borderRadius: '50%' }} />
             <span style={{ fontFamily: font, fontSize: '0.72rem', fontWeight: 600, letterSpacing: '4px', textTransform: 'uppercase', background: chromeGradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              Elite Mobile Detailing
+              {fb.heroBadge}
             </span>
             <div style={{ width: '6px', height: '6px', background: chromeGradient, borderRadius: '50%' }} />
           </div>
@@ -386,7 +388,7 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
         <div style={{ maxWidth: '700px', margin: '0 auto'  }}>
           <div style={{ width: '1px', height: '60px', background: chromeGradient, margin: '0 auto 40px' }} />
           <h2 style={{ fontFamily: font, fontSize: '2.4rem', fontWeight: 300, color: c.text, marginBottom: '16px', letterSpacing: '-1px' }}>
-            {generatedCopy.ctaHeadline || 'Book Your Detail Today'}
+            {generatedCopy.ctaHeadline || fb.ctaHeadline}
           </h2>
           <p style={{ color: c.muted, fontSize: '1rem', marginBottom: '48px', lineHeight: 1.8, fontWeight: 300 }}>
             {generatedCopy.ctaSubtext || (<>{businessInfo.phone && `Call us at ${businessInfo.phone}.`} {businessInfo.address && `We come to you in ${businessInfo.city}, ${businessInfo.state}.`}

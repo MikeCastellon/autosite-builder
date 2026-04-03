@@ -4,6 +4,7 @@ import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
+import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 
 // Template: Tint Dark — Black & purple (#080808 bg, #7c3aed accent, #111111 secondary)
 // Radial gradient glow hero, film brands section, shield warranty callout, packages, fade/gradient elements
@@ -20,6 +21,7 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
   const c = templateMeta?.colors || { bg: '#080808', accent: '#7c3aed', text: '#e8e8e8', secondary: '#111111', muted: '#888888' };
   const font = templateMeta?.bodyFont || 'Inter, system-ui, sans-serif';
   const biz = businessInfo || {};
+  const fb = getFallbacks(biz.businessType);
   const copy = generatedCopy || {};
   const services = copy.servicesSection?.items || [];
   const svcCols = services.length >= 6 ? Math.ceil(services.length / 2) : services.length || 1;
@@ -55,9 +57,9 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
             {images.logo ? (
               <img src={images.logo} alt={biz.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
             ) : (
-              <span style={{ fontSize: 17, fontWeight: 800, color: c.text, letterSpacing: -0.5 }}>{biz.businessName || 'Premium Tint'}</span>
+              <span style={{ fontSize: 17, fontWeight: 800, color: c.text, letterSpacing: -0.5 }}>{biz.businessName || fb.shopName}</span>
             )}
-            <span style={{ display: 'block', fontSize: 10, color: c.accent, letterSpacing: 3, textTransform: 'uppercase' }}>Tint & Protection · {biz.city}</span>
+            <span style={{ display: 'block', fontSize: 10, color: c.accent, letterSpacing: 3, textTransform: 'uppercase' }}>{fb.navSubtitle} · {biz.city}</span>
           </div>
           <div className="tp-nav-links" style={{ display: 'flex', gap: 28, alignItems: 'center' }}>
             <a href="#services" style={{ color: c.text, textDecoration: 'none', fontWeight: 500, fontSize: 14, opacity: 0.65 }}>Services</a>
@@ -110,20 +112,20 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
             display: 'inline-block', border: `1px solid ${c.accent}55`, borderRadius: 30,
             padding: '6px 20px', marginBottom: 28, fontSize: 11, color: c.accent, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', alignSelf: splitHero ? 'flex-start' : undefined,
           }}>
-            Premium Tint & Film Protection · {biz.city}, {biz.state}
+            {fb.heroBadge} · {biz.city}, {biz.state}
           </div>
           <h1 style={{
             fontSize: 'clamp(2.5rem, 6vw, 5rem)', fontWeight: 800, lineHeight: 1.1,
             margin: '0 0 20px',
           }}>
-            {copy.headline || 'Precision Tinting. Premium Results.'}
+            {copy.headline || fb.headline}
           </h1>
           <p style={{
             fontSize: 17, lineHeight: 1.75, maxWidth: 560, margin: splitHero ? '0 0 40px' : '0 auto 40px',
             background: `linear-gradient(180deg, ${c.text} 0%, rgba(232,232,232,0.6) 100%)`,
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
           }}>
-            {copy.subheadline || biz.tagline || 'Professional window tinting and paint protection film.'}
+            {copy.subheadline || biz.tagline || fb.subheadline}
           </p>
           <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: splitHero ? 'flex-start' : 'center', alignItems: 'center' }}>
             <a href={copy?.ctaPrimaryUrl || (`tel:${biz.phone}`)} style={{
@@ -158,7 +160,7 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 24, textAlign: 'center' }}>
           {[
             { val: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'Years in Business' },
-            { val: '2K+', label: 'Cars Tinted' },
+            { val: '2K+', label: fb.statLabel },
             { val: '99%', label: 'Customer Satisfaction' },
           ].map((s, i) => (
             <div key={i} style={{ padding: '16px 8px' }}>
@@ -311,7 +313,7 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
               )
             )}
             <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.85, marginBottom: 20 }}>
-              {copy.aboutText || `Serving ${biz.city || 'your area'} with premium window tinting and film protection.`}
+              {copy.aboutText || `Serving ${biz.city || 'your area'} with ${fb.aboutFallback}.`}
             </p>
             {biz.awards && (
               <div style={{ background: c.secondary, borderRadius: 8, padding: '16px 20px', marginBottom: 12, borderLeft: '3px solid #ffd700' }}>

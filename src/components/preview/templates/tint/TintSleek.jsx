@@ -4,6 +4,7 @@ import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
+import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 
 // Template: Tint Sleek — Gray & teal (#1f2937 bg, #14b8a6 accent, #374151 secondary)
 // Modern precision, two-column hero, film brands as styled pills, warranty badge, teal left-border cards, social footer
@@ -20,6 +21,7 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
   const c = templateMeta?.colors || { bg: '#1f2937', accent: '#14b8a6', text: '#f9fafb', secondary: '#374151', muted: '#9ca3af' };
   const font = templateMeta?.bodyFont || 'Inter, system-ui, sans-serif';
   const biz = businessInfo || {};
+  const fb = getFallbacks(biz.businessType);
   const copy = generatedCopy || {};
   const services = copy.servicesSection?.items || [];
   const svcCols = services.length >= 6 ? Math.ceil(services.length / 2) : services.length || 1;
@@ -55,9 +57,9 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
             {images.logo ? (
               <img src={images.logo} alt={biz.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
             ) : (
-              <span style={{ fontSize: 17, fontWeight: 800, color: c.text }}>{biz.businessName || 'Precision Tint'}</span>
+              <span style={{ fontSize: 17, fontWeight: 800, color: c.text }}>{biz.businessName || fb.shopName}</span>
             )}
-            <span style={{ display: 'block', fontSize: 10, color: c.accent, letterSpacing: 3, textTransform: 'uppercase' }}>Tint & PPF · {biz.city}, {biz.state}</span>
+            <span style={{ display: 'block', fontSize: 10, color: c.accent, letterSpacing: 3, textTransform: 'uppercase' }}>{fb.navSubtitle} · {biz.city}, {biz.state}</span>
           </div>
           <div className="tp-nav-links" style={{ display: 'flex', gap: 28, alignItems: 'center' }}>
             <a href="#services" style={{ color: c.muted, textDecoration: 'none', fontWeight: 500, fontSize: 14 }}>Services</a>
@@ -100,10 +102,10 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
               </span>
             </div>
             <h1 style={{ fontSize: 'clamp(2.2rem, 4.5vw, 3.5rem)', fontWeight: 800, lineHeight: 1.15, marginBottom: 20 }}>
-              {copy.headline || 'Precision Tinting.\nPerfect Finish.'}
+              {copy.headline || fb.headline}
             </h1>
             <p style={{ color: c.muted, fontSize: 16, lineHeight: 1.75, marginBottom: 36, maxWidth: 440 }}>
-              {copy.subheadline || biz.tagline || 'Professional window film installation with precision and care.'}
+              {copy.subheadline || biz.tagline || fb.subheadline}
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               <a href={copy?.ctaPrimaryUrl || (`tel:${biz.phone}`)} style={{
@@ -136,10 +138,10 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
                 </span>
               </div>
               <h1 style={{ fontSize: 'clamp(2.2rem, 4.5vw, 3.5rem)', fontWeight: 800, lineHeight: 1.15, marginBottom: 20 }}>
-                {copy.headline || 'Precision Tinting.\nPerfect Finish.'}
+                {copy.headline || fb.headline}
               </h1>
               <p style={{ color: c.muted, fontSize: 16, lineHeight: 1.75, marginBottom: 36, maxWidth: 440 }}>
-                {copy.subheadline || biz.tagline || 'Professional window film installation with precision and care.'}
+                {copy.subheadline || biz.tagline || fb.subheadline}
               </p>
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                 <a href={copy?.ctaPrimaryUrl || (`tel:${biz.phone}`)} style={{
@@ -201,7 +203,7 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 24, textAlign: 'center' }}>
           {[
             { val: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'Years of Service' },
-            { val: '1K+', label: 'Cars Tinted' },
+            { val: '1K+', label: fb.statLabel },
             { val: '5.0 ★', label: 'Average Rating' },
             { val: '100%', label: 'Satisfaction' },
           ].map((s, i) => (
@@ -338,7 +340,7 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
               )
             )}
             <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.85, marginBottom: 20 }}>
-              {copy.aboutText || `Serving ${biz.city || 'your area'} with precision tint and film installation.`}
+              {copy.aboutText || `Serving ${biz.city || 'your area'} with ${fb.aboutFallback}.`}
             </p>
             {biz.awards && (
               <div style={{ background: c.secondary, borderRadius: 8, padding: '14px 18px', marginBottom: 12, borderLeft: '3px solid #fbbf24' }}>

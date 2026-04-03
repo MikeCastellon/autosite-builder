@@ -4,8 +4,10 @@ import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
+import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 
 export default function DetailingPremium({ businessInfo, generatedCopy, templateMeta, images = {} }) {
+  const fb = getFallbacks(businessInfo.businessType);
   const c = templateMeta.colors;
   const font = templateMeta.font;
   const bodyFont = templateMeta.bodyFont;
@@ -304,7 +306,7 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
       {!hidden('cta') && (
       <section style={{ ...s.ctaSection, order: getOrder('cta') }}>
         <div style={s.sectionLabel}>{generatedCopy.ctaSubtext || 'Ready to Begin?'}</div>
-        <div style={s.ctaBig}>{generatedCopy.ctaHeadline || 'Reserve Your Detail Session'}</div>
+        <div style={s.ctaBig}>{generatedCopy.ctaHeadline || fb.ctaHeadline}</div>
         <div style={s.ctaPhone}>{businessInfo.phone}</div>
         {businessInfo.hours && (
           <p style={{ fontFamily: bodyFont, color: c.muted, fontSize: '0.9rem', marginBottom: '1.5rem' }}>

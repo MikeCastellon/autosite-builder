@@ -4,8 +4,10 @@ import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
+import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 
 export default function TintElite({ businessInfo, generatedCopy, templateMeta, images = {} }) {
+  const fb = getFallbacks(businessInfo?.businessType);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -27,7 +29,7 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
 
   const defaultStats = [
     { value: businessInfo.yearsInBusiness ? `${businessInfo.yearsInBusiness}+` : '10+', label: 'Years of Excellence' },
-    { value: '5,000+', label: 'Windows Tinted' },
+    { value: '5,000+', label: fb.statLabel },
     { value: '★★★★★', label: 'Customer Reviews' },
   ];
   const stats = (generatedCopy?.aboutStats || []).map((s, i) => ({
@@ -384,7 +386,7 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
               <span style={{ fontSize: '0.72rem', letterSpacing: '4px', textTransform: 'uppercase', color: c.muted, fontFamily: bodyFont }}>Our Story</span>
             </div>
             <h2 style={{ fontFamily: font, fontSize: '2.2rem', fontWeight: 700, color: c.text, marginBottom: '24px', lineHeight: 1.25, fontStyle: 'italic' }}>
-              {businessInfo.yearsInBusiness ? `${businessInfo.yearsInBusiness} Years of Precision` : 'The Art of Window Tinting'}
+              {businessInfo.yearsInBusiness ? `${businessInfo.yearsInBusiness} Years of Precision` : fb.headline}
             </h2>
             <p style={{ color: c.muted, lineHeight: 1.9, fontSize: '0.95rem', marginBottom: '32px', fontWeight: 300 }}>{generatedCopy.aboutText}</p>
             {businessInfo.specialties && businessInfo.specialties.length > 0 && (
@@ -462,7 +464,7 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
             <div style={{ width: '60px', height: '1px', background: goldGradient, opacity: 0.5 }} />
           </div>
           <h2 style={{ fontFamily: font, fontSize: '2.6rem', fontWeight: 700, color: c.text, marginBottom: '16px', fontStyle: 'italic', lineHeight: 1.15 }}>
-            {generatedCopy.ctaHeadline || 'Ready for Elite Window Tinting?'}
+            {generatedCopy.ctaHeadline || fb.ctaHeadline}
           </h2>
           <p style={{ color: c.muted, fontSize: '1rem', marginBottom: '44px', lineHeight: 1.8, fontWeight: 300 }}>
             {generatedCopy.ctaSubtext || (businessInfo.serviceArea ? `Serving ${businessInfo.serviceArea}.` : `Serving ${businessInfo.city}, ${businessInfo.state} and surrounding areas.`)}

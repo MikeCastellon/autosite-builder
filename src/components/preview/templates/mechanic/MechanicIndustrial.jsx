@@ -4,6 +4,7 @@ import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
+import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 
 // Template: Mechanic Industrial — Dark steel & yellow (#1c1c1c bg, #eab308 accent, #2c2c2c secondary)
 // Gear/wrench feel, shop hours section, certifications as yellow badges, warranty guarantee box,
@@ -21,6 +22,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
   const c = templateMeta?.colors || { bg: '#1c1c1c', accent: '#eab308', text: '#e8e8e8', secondary: '#2c2c2c', muted: '#888888' };
   const font = templateMeta?.bodyFont || 'Inter, system-ui, sans-serif';
   const biz = businessInfo || {};
+  const fb = getFallbacks(biz.businessType);
   const copy = generatedCopy || {};
   const hidden = (id) => copy?.hiddenSections?.includes(id);
   const getOrder = buildSectionOrder(copy, ['hero','statsBar','services','about','gallery','testimonials','cta']);
@@ -54,9 +56,9 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
             {images.logo ? (
               <img src={images.logo} alt={biz.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
             ) : (
-              <span style={{ fontSize: 17, fontWeight: 900, color: c.text, textTransform: 'uppercase', letterSpacing: 1 }}>{biz.businessName || 'AUTO REPAIR'}</span>
+              <span style={{ fontSize: 17, fontWeight: 900, color: c.text, textTransform: 'uppercase', letterSpacing: 1 }}>{biz.businessName || fb.shopName.toUpperCase()}</span>
             )}
-            <span style={{ display: 'block', fontSize: 10, color: c.accent, letterSpacing: 2, textTransform: 'uppercase' }}>Auto Repair · {biz.city}, {biz.state}</span>
+            <span style={{ display: 'block', fontSize: 10, color: c.accent, letterSpacing: 2, textTransform: 'uppercase' }}>{fb.navSubtitle} · {biz.city}, {biz.state}</span>
           </div>
           <div className="tp-nav-links" style={{ display: 'flex', gap: 28, alignItems: 'center' }}>
             <a href="#services" style={{ color: c.text, textDecoration: 'none', fontWeight: 700, fontSize: 13, letterSpacing: 0.5, textTransform: 'uppercase', opacity: 0.75 }}>Services</a>
@@ -106,17 +108,17 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
             <span style={{ fontSize: 22 }}>⚙️</span>
             <span style={{ color: c.accent, fontSize: 11, letterSpacing: 4, textTransform: 'uppercase', fontWeight: 700 }}>
-              Trusted Auto Repair · {biz.city}, {biz.state}
+              {fb.heroBadge} · {biz.city}, {biz.state}
             </span>
           </div>
           <h1 style={{
             fontSize: 'clamp(2.5rem, 6vw, 5rem)', fontWeight: 900, lineHeight: 1.05,
             textTransform: 'uppercase', letterSpacing: '-0.01em', margin: '0 0 20px',
           }}>
-            {copy.headline || `WE FIX\nWHAT OTHERS\nCAN'T.`}
+            {copy.headline || fb.headline}
           </h1>
           <p style={{ color: c.muted, fontSize: 16, lineHeight: 1.75, maxWidth: 500, marginBottom: 40 }}>
-            {copy.subheadline || biz.tagline || 'Reliable auto repair with honest pricing and expert technicians.'}
+            {copy.subheadline || biz.tagline || fb.subheadline}
           </p>
           <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
             <a href={copy?.ctaPrimaryUrl || (`tel:${biz.phone}`)} style={{
@@ -154,7 +156,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 24, textAlign: 'center'  }}>
           {[
             { val: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'YEARS IN BUSINESS' },
-            { val: '5K+', label: 'VEHICLES REPAIRED' },
+            { val: '5K+', label: fb.statLabel.toUpperCase() },
             { val: '5★', label: 'AVERAGE RATING' },
             { val: '100%', label: 'SATISFACTION GUARANTEED' },
           ].map((s, i) => (
@@ -310,7 +312,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
                 {(() => {
                   const defaultStats = [
                     { value: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'Years in Business' },
-                    { value: '5K+', label: 'Vehicles Serviced' },
+                    { value: '5K+', label: fb.statLabel },
                     { value: '5★', label: 'Average Rating' },
                   ];
                   const aboutStats = (copy?.aboutStats || []).map((s, i) => ({
@@ -336,7 +338,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
             </div>
             <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.8rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 20px', letterSpacing: '-0.01em' }}>ABOUT {biz.businessName || 'US'}</h2>
             <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.85, marginBottom: 20 }}>
-              {copy.aboutText || `Serving ${biz.city || 'your area'} with expert auto repair since day one.`}
+              {copy.aboutText || `Serving ${biz.city || 'your area'} with ${fb.aboutFallback} since day one.`}
             </p>
             {biz.awards && (
               <div style={{ background: c.bg, borderRadius: 4, padding: '14px 18px', marginBottom: 12, borderLeft: '3px solid #ffd700' }}>
@@ -403,7 +405,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
       {!hidden('cta') && (
       <section style={{ background: c.accent, padding: '80px 5%', textAlign: 'center' , order: getOrder('cta') }}>
         <h2 style={{ fontSize: 'clamp(2rem, 4.5vw, 3.5rem)', fontWeight: 900, color: '#000', textTransform: 'uppercase', margin: '0 0 14px', letterSpacing: '-0.01em' }}>
-          {copy.ctaHeadline || 'SCHEDULE SERVICE'}
+          {copy.ctaHeadline || fb.ctaHeadline.toUpperCase()}
         </h2>
         <p style={{ color: 'rgba(0,0,0,0.55)', fontSize: 16, marginBottom: 36 }}>
           {copy.ctaSubtext || copy.ctaSecondary || `Serving ${biz.city || 'your area'}, ${biz.state || ''} and surrounding areas`}

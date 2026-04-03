@@ -5,6 +5,7 @@ import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import IconOrEmoji from '../IconOrEmoji.jsx';
+import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 
 // Template: Mobile Sudsy
 // Warm amber/cream bg, bubbly neo-brutalist mobile detailing aesthetic.
@@ -21,6 +22,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
   const bodyFont = templateMeta?.bodyFont || "'Nunito', sans-serif";
 
   const biz          = businessInfo || {};
+  const fb           = getFallbacks(biz.businessType);
   const copy         = generatedCopy || {};
   const services     = copy.servicesSection?.items || [];
   const svcCols = services.length >= 6 ? Math.ceil(services.length / 2) : services.length || 1;
@@ -109,7 +111,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
   }));
 
   const defaultWhyCards = [
-    { icon: '🏠', title: 'We Come To You',      desc: 'Zero trips to a shop. We bring the whole operation to your door.' },
+    { icon: '🏠', title: fb.whyUsTitle,           desc: 'Zero trips to a shop. We bring the whole operation to your door.' },
     { icon: '🏆', title: 'Professional Results', desc: 'Pro-grade products and equipment — not a bucket and a sponge.' },
     { icon: '⏰', title: 'Flexible Scheduling',  desc: 'Same-day often available. Early mornings, weekends — we work around you.' },
     { icon: '💰', title: 'Fair, Honest Pricing', desc: 'No upsell tricks. Just clear pricing for seriously good work.' },
@@ -148,7 +150,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
           ) : (
             <>
               <span style={{ fontSize: 22 }}>{String.fromCodePoint(0x1FAA7)}</span>
-              {biz.businessName || 'Mobile Detailing'}
+              {biz.businessName || fb.navSubtitle}
             </>
           )}
         </a>
@@ -185,7 +187,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
               {copy.headline || 'Your Car Deserves Better.'}
             </h1>
             <p style={{ fontSize: 17, fontWeight: 600, color: c.muted, lineHeight: 1.7, maxWidth: 480, marginBottom: 36 }}>
-              {copy.subheadline || 'Professional mobile detailing that comes to you. We bring the shine — you bring the car.'}
+              {copy.subheadline || fb.subheadline}
             </p>
             {biz.serviceArea && (
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: '#e8f6fe', border: '2.5px solid #2d9cdb', borderRadius: 14, padding: '10px 18px', marginBottom: 32, boxShadow: '3px 3px 0 #2d9cdb', fontWeight: 700, fontSize: 14, color: '#1a6fa8', alignSelf: 'flex-start' }}>
@@ -213,7 +215,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
               {copy.headline || 'Your Car Deserves Better.'}
             </h1>
             <p style={{ fontSize: 17, fontWeight: 600, color: c.muted, lineHeight: 1.7, maxWidth: 480, marginBottom: 36 }}>
-              {copy.subheadline || 'Professional mobile detailing that comes to you. We bring the shine — you bring the car.'}
+              {copy.subheadline || fb.subheadline}
             </p>
             {biz.serviceArea && (
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: '#e8f6fe', border: '2.5px solid #2d9cdb', borderRadius: 14, padding: '10px 18px', marginBottom: 32, boxShadow: '3px 3px 0 #2d9cdb', fontWeight: 700, fontSize: 14, color: '#1a6fa8' }}>
@@ -398,7 +400,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
                 {(() => {
                   const defaultStats = [
                     { value: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'Years Experience' },
-                    { value: '500+', label: 'Cars Detailed' },
+                    { value: '500+', label: fb.statLabel },
                     { value: '5★', label: 'Avg Rating' },
                   ];
                   const aboutStats = (copy?.aboutStats || []).map((s, i) => ({
@@ -418,7 +420,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
           </div>
           <div>
             <div style={sectionTagStyle("-1deg")}>About Us</div>
-            <h2 style={{ ...titleStyle, marginTop: 8, marginBottom: 20 }}>{biz.businessName || "We Detail"}</h2>
+            <h2 style={{ ...titleStyle, marginTop: 8, marginBottom: 20 }}>{biz.businessName || fb.shopName}</h2>
             <p style={{ fontSize: 15, fontWeight: 600, color: c.muted, lineHeight: 1.8, marginBottom: 20 }}>
               {copy.aboutText || 'We started with a bucket, a dream, and a serious love for clean cars. Today we bring that same passion to every vehicle we touch.'}
             </p>
@@ -519,7 +521,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
           </div>
           <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
             <div style={{ background: "#fff", ...neoBorder, borderRadius: 28, padding: "48px 40px", textAlign: "center", boxShadow: `8px 8px 0 ${c.text}`, width: "100%" }}>
-              <h3 style={{ fontFamily: font, fontSize: 28, color: c.text, marginBottom: 16 }}>Book Your Detail!</h3>
+              <h3 style={{ fontFamily: font, fontSize: 28, color: c.text, marginBottom: 16 }}>{fb.ctaHeadline}!</h3>
               <p style={{ fontSize: 14, color: c.muted, fontWeight: 600, lineHeight: 1.6, marginBottom: 28 }}>Call or text us to schedule. We’ll come to your door.</p>
               <a href={copy?.ctaUrl || (`tel:${biz.phone}`)} style={{ display: "block", background: c.accent, color: c.text, border: `3px solid ${c.text}`, borderRadius: 16, padding: "16px", fontFamily: font, fontSize: 22, textDecoration: "none", boxShadow: `5px 5px 0 ${c.text}` }}>
                 {copy.ctaButtonText || `📞 ${biz.phone || "Call Now!"}`}
@@ -541,7 +543,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
             ) : (
               <div style={{ fontFamily: font, fontSize: 26, color: c.accent, display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
                 <span>🪧</span>
-                {biz.businessName || "Mobile Detailing"}
+                {biz.businessName || fb.navSubtitle}
               </div>
             )}
             <p style={{ fontSize: 13, color: "rgba(255,255,255,0.55)", lineHeight: 1.7, fontWeight: 600, maxWidth: 240 }}>
@@ -576,7 +578,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
         </div>
         <div style={{ borderTop: "2px dashed rgba(255,255,255,0.12)", paddingTop: 24, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
           <p style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.4)", margin: 0 }}>
-            &copy; {new Date().getFullYear()} {biz.businessName || "Mobile Detailing"}{biz.city ? " · " + biz.city : ""}{biz.state ? ", " + biz.state : ""} · All rights reserved
+            &copy; {new Date().getFullYear()} {biz.businessName || fb.navSubtitle}{biz.city ? " · " + biz.city : ""}{biz.state ? ", " + biz.state : ""} · All rights reserved
           </p>
           <div style={{ fontFamily: font, fontSize: 18, color: c.accent, display: "flex", alignItems: "center", gap: 6 }}>
             <span>🪧</span>

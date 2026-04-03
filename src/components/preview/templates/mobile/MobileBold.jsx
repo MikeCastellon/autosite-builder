@@ -4,6 +4,7 @@ import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
+import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 
 // Template: Mobile Bold — Orange & dark (#1a1a1a bg, #f97316 accent)
 // Aggressive diagonal slashes, "WE COME TO YOU" badge, truck emoji nav, service area banner, packages pricing
@@ -20,6 +21,7 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
   const c = templateMeta?.colors || { bg: '#1a1a1a', accent: '#f97316', text: '#ffffff', secondary: '#2a2a2a', muted: '#888888' };
   const font = templateMeta?.bodyFont || 'Impact, Arial Black, sans-serif';
   const biz = businessInfo || {};
+  const fb = getFallbacks(biz.businessType);
   const copy = generatedCopy || {};
   const services = copy.servicesSection?.items || [];
   const svcCols = services.length >= 6 ? Math.ceil(services.length / 2) : services.length || 1;
@@ -61,9 +63,9 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
               {images.logo ? (
               <img src={images.logo} alt={biz.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
             ) : (
-              <span style={{ fontSize: 17, fontWeight: 900, color: c.text, textTransform: 'uppercase', letterSpacing: 1 }}>{biz.businessName || 'MOBILE DETAIL'}</span>
+              <span style={{ fontSize: 17, fontWeight: 900, color: c.text, textTransform: 'uppercase', letterSpacing: 1 }}>{biz.businessName || fb.shopName.toUpperCase()}</span>
             )}
-              <span style={{ display: 'block', fontSize: 10, color: c.accent, letterSpacing: 2, textTransform: 'uppercase' }}>Mobile Detailing · {biz.city}</span>
+              <span style={{ display: 'block', fontSize: 10, color: c.accent, letterSpacing: 2, textTransform: 'uppercase' }}>{fb.navSubtitle} · {biz.city}</span>
             </div>
           </div>
           <div className="tp-nav-links" style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
@@ -104,16 +106,16 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
             padding: '5px 16px', marginBottom: 24,
             clipPath: 'polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%)',
           }}>
-            MOBILE DETAILING — {biz.city || 'YOUR CITY'}, {biz.state || ''}
+            {fb.navSubtitle.toUpperCase()} — {biz.city || 'YOUR CITY'}, {biz.state || ''}
           </div>
           <h1 style={{
             fontSize: 'clamp(1.8rem, 8vw, 6rem)', fontWeight: 900, lineHeight: 0.95,
             textTransform: 'uppercase', letterSpacing: '-0.02em', margin: '0 0 1.2rem',
           }}>
-            {copy.headline || `DETAIL\nCOMES\nTO YOU`}
+            {copy.headline || fb.headline.toUpperCase()}
           </h1>
           <p style={{ fontSize: 18, color: splitHero ? c.text : '#bbb', maxWidth: 500, marginBottom: 40, lineHeight: 1.6 }}>
-            {copy.subheadline || biz.tagline || 'Professional mobile detailing at your door.'}
+            {copy.subheadline || biz.tagline || fb.subheadline}
           </p>
           <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
             <a href={copy?.ctaPrimaryUrl || '#pricing'} style={{
@@ -235,7 +237,7 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
                 {(() => {
                   const defaultStats = [
                     { value: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'Years in Business' },
-                    { value: '500+', label: 'Rides Detailed' },
+                    { value: '500+', label: fb.statLabel },
                     { value: '100%', label: 'Mobile Service' },
                   ];
                   const aboutStats = (copy?.aboutStats || []).map((s, i) => ({
@@ -256,10 +258,10 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
           <div>
             <div style={{ color: c.accent, fontWeight: 900, letterSpacing: 3, fontSize: 11, textTransform: 'uppercase', marginBottom: 8 }}>ABOUT US</div>
             <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 24px', lineHeight: 1 }}>
-              {biz.businessName || 'WE DETAIL'}
+              {biz.businessName || fb.shopName.toUpperCase()}
             </h2>
             <p style={{ color: '#bbb', lineHeight: 1.8, fontSize: 15, marginBottom: 20 }}>
-              {copy.aboutText || `Based in ${biz.city || 'your area'}, we bring professional detailing directly to you.`}
+              {copy.aboutText || `Based in ${biz.city || 'your area'}, we provide ${fb.aboutFallback}.`}
             </p>
             {biz.awards && (
               <div style={{ marginTop: 12, padding: '14px 18px', background: '#2a2a2a', borderLeft: `4px solid #ffd700` }}>

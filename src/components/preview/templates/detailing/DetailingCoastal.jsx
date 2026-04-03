@@ -4,8 +4,10 @@ import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
+import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 
 export default function DetailingCoastal({ businessInfo, generatedCopy, templateMeta, images = {} }) {
+  const fb = getFallbacks(businessInfo.businessType);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -23,7 +25,7 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
 
   const defaultStats = [
     { value: businessInfo.yearsInBusiness ? `${businessInfo.yearsInBusiness}+` : '10+', label: 'Years Experience' },
-    { value: '500+', label: 'Cars Detailed' },
+    { value: '500+', label: fb.statLabel },
     { value: '5★', label: 'Avg Rating' },
   ];
   const stats = (generatedCopy?.aboutStats || []).map((s, i) => ({
@@ -304,7 +306,7 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
       {!hidden('cta') && (
       <section style={{ order: getOrder('cta'), background: c.accent, padding: '72px 24px', textAlign: 'center', fontFamily: bodyFont }}>
         <h2 style={{ fontFamily: font, fontSize: '2.2rem', fontWeight: 800, color: '#ffffff', marginBottom: '16px' }}>
-          {generatedCopy.ctaHeadline || 'Ready for a Fresh, Clean Ride?'}
+          {generatedCopy.ctaHeadline || fb.ctaHeadline}
         </h2>
         <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '1.1rem', marginBottom: '36px' }}>
           {generatedCopy.ctaSubtext || (businessInfo.serviceArea ? `Serving ${businessInfo.serviceArea}` : `Serving ${businessInfo.city} and surrounding areas`)}

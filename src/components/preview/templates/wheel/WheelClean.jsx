@@ -4,6 +4,7 @@ import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
+import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 
 // Template: Wheel Clean — White & gunmetal (#f8f9fa bg, #374151 accent)
 // Professional clean, services list with left border accent, brands as styled text
@@ -20,6 +21,7 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
   const c = templateMeta?.colors || { bg: '#f8f9fa', accent: '#374151', text: '#111827', secondary: '#e9ecef', muted: '#6b7280' };
   const font = templateMeta?.bodyFont || 'Inter, system-ui, sans-serif';
   const biz = businessInfo || {};
+  const fb = getFallbacks(biz.businessType);
   const copy = generatedCopy || {};
   const splitHero = copy?.heroLayout === 'split';
   const services = copy.servicesSection?.items || [];
@@ -57,9 +59,9 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
             {images.logo ? (
               <img src={images.logo} alt={biz.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
             ) : (
-              <span style={{ fontSize: 18, fontWeight: 800, color: c.accent }}>{biz.businessName || 'Wheel Shop'}</span>
+              <span style={{ fontSize: 18, fontWeight: 800, color: c.accent }}>{biz.businessName || fb.shopName}</span>
             )}
-            <span style={{ display: 'block', fontSize: 11, color: c.muted, letterSpacing: 1.5, textTransform: 'uppercase' }}>Custom Wheels · {biz.city}, {biz.state}</span>
+            <span style={{ display: 'block', fontSize: 11, color: c.muted, letterSpacing: 1.5, textTransform: 'uppercase' }}>{fb.navSubtitle} · {biz.city}, {biz.state}</span>
           </div>
           <div className="tp-nav-links" style={{ display: 'flex', gap: 28, alignItems: 'center' }}>
             <a href="#services" style={{ color: c.text, textDecoration: 'none', fontWeight: 600, fontSize: 14, opacity: 0.7 }}>Services</a>
@@ -98,10 +100,10 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
               {biz.city}, {biz.state}
             </span>
             <h1 style={{ fontSize: 'clamp(2.2rem, 4.5vw, 3.5rem)', fontWeight: 800, lineHeight: 1.15, color: c.text, marginBottom: 20 }}>
-              {copy.headline || 'Custom Wheels & Tire Experts'}
+              {copy.headline || fb.headline}
             </h1>
             <p style={{ color: c.muted, fontSize: 17, lineHeight: 1.75, marginBottom: 36 }}>
-              {copy.subheadline || biz.tagline || 'Professional wheel fitment, balancing, and tire services.'}
+              {copy.subheadline || biz.tagline || fb.subheadline}
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               <a href={copy?.ctaPrimaryUrl || (`tel:${biz.phone}`)} style={{
@@ -128,10 +130,10 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
               {biz.city}, {biz.state}
             </span>
             <h1 style={{ fontSize: 'clamp(2.2rem, 4.5vw, 3.5rem)', fontWeight: 800, lineHeight: 1.15, color: c.text, marginBottom: 20 }}>
-              {copy.headline || 'Custom Wheels & Tire Experts'}
+              {copy.headline || fb.headline}
             </h1>
             <p style={{ color: c.muted, fontSize: 17, lineHeight: 1.75, marginBottom: 36 }}>
-              {copy.subheadline || biz.tagline || 'Professional wheel fitment, balancing, and tire services.'}
+              {copy.subheadline || biz.tagline || fb.subheadline}
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               <a href={copy?.ctaPrimaryUrl || (`tel:${biz.phone}`)} style={{
@@ -181,7 +183,7 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
             const defaultStats = [
               { value: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'Years in Business' },
               { value: '50+', label: 'Wheel Brands' },
-              { value: '5K+', label: 'Wheels Installed' },
+              { value: '5K+', label: fb.statLabel },
               { value: '5.0 ★', label: 'Average Rating' },
             ];
             const stats = (copy?.heroStats || []).length > 0
@@ -306,7 +308,7 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
                   const defaultStats = [
                     { value: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'Years in Business' },
                     { value: '50+', label: 'Brands Available' },
-                    { value: '5K+', label: 'Wheels Installed' },
+                    { value: '5K+', label: fb.statLabel },
                   ];
                   const aboutStats = (copy?.aboutStats || []).map((s, i) => ({
                     value: s.value || defaultStats[i]?.value || '',
@@ -327,7 +329,7 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
             <span style={{ display: 'inline-block', background: `${c.accent}12`, color: c.accent, fontSize: 11, fontWeight: 700, padding: '4px 12px', borderRadius: 16, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 16 }}>About</span>
             <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, color: c.text, marginBottom: 20 }}>About {biz.businessName}</h2>
             <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.85, marginBottom: 20 }}>
-              {copy.aboutText || `Serving ${biz.city || 'your area'} with expert wheel and tire services.`}
+              {copy.aboutText || `Serving ${biz.city || 'your area'} with ${fb.aboutFallback}.`}
             </p>
             {biz.warranty && (
               <div style={{ background: '#fff', borderRadius: 10, padding: '16px 20px', borderLeft: '4px solid #10b981', marginBottom: 12 }}>

@@ -4,6 +4,7 @@ import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
+import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 
 export default function MechanicGarage({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
@@ -19,6 +20,7 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
   const c = templateMeta.colors;
   const font = templateMeta.font;
   const bodyFont = templateMeta.bodyFont;
+  const fb = getFallbacks(businessInfo?.businessType);
 
   const _svcItems = generatedCopy.servicesSection?.items || [];
   const svcCols = _svcItems.length >= 6 ? Math.ceil(_svcItems.length / 2) : _svcItems.length || 1;
@@ -44,7 +46,7 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
 
   const defaultStats = [
     { value: businessInfo.yearsInBusiness ? `${businessInfo.yearsInBusiness}+` : '15+', label: 'Years In Business' },
-    { value: '2,000+', label: 'Vehicles Serviced' },
+    { value: '2,000+', label: fb.statLabel },
     { value: businessInfo.warranty || '12mo', label: 'Warranty' },
     { value: '★★★★★', label: 'Customer Rated' },
   ];
@@ -392,7 +394,7 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
         <div style={{ maxWidth: '900px', margin: '0 auto', display: 'flex', gap: '48px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between'  }}>
           <div>
             <h2 style={{ fontFamily: font, fontSize: '2rem', fontWeight: 900, color: '#000000', textTransform: 'uppercase', marginBottom: '8px' }}>
-              {generatedCopy.ctaHeadline || 'Get Your Vehicle Fixed Right.'}
+              {generatedCopy.ctaHeadline || fb.ctaHeadline}
             </h2>
             <p style={{ color: 'rgba(0,0,0,0.65)', fontSize: '1rem' }}>
               {generatedCopy.ctaSubtext || `${businessInfo.address}, ${businessInfo.city}, ${businessInfo.state}`}

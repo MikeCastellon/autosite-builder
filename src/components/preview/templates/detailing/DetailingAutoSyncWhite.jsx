@@ -4,8 +4,10 @@ import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
+import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 
 export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, templateMeta, images = {} }) {
+  const fb = getFallbacks(businessInfo.businessType);
   const c = templateMeta.colors;
   const font = templateMeta.font;
   const bodyFont = templateMeta.bodyFont;
@@ -57,7 +59,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
   const testimonials = (generatedCopy && generatedCopy.testimonialPlaceholders) ? generatedCopy.testimonialPlaceholders : [];
 
   const defaultStats = [
-    { num: '2K+',  label: 'Vehicles Detailed' },
+    { num: '2K+',  label: fb.statLabel },
     { num: businessInfo.yearsInBusiness ? businessInfo.yearsInBusiness + '+' : '8+', label: 'Years Experience' },
     { num: '100%', label: 'Satisfaction Rate' },
     { num: businessInfo.city || 'Local', label: 'Serving You' },
@@ -379,7 +381,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
       <section id="contact" style={{ order: getOrder('cta'), background: blue, padding: isMobile ? '80px 24px' : '100px 80px', textAlign: 'center' }}>
         <span style={{ ...s.eyebrow, color: 'rgba(255,255,255,0.6)' }}>Contact</span>
         <h2 style={{ ...s.sectionTitle, color: white, marginBottom: '16px' }}>
-          {generatedCopy.ctaHeadline || <>Let&#8217;s get your vehicle <em style={{ fontStyle: 'italic' }}>sorted.</em></>}
+          {generatedCopy.ctaHeadline || fb.ctaHeadline}
         </h2>
         <p style={{ fontSize: '17px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.7, fontWeight: 300, maxWidth: '520px', margin: '0 auto 12px' }}>
           {generatedCopy.ctaSubtext || (businessInfo.serviceArea ? `Serving ${businessInfo.serviceArea}` : `Serving ${businessInfo.city || 'your area'} and surrounding areas`)}

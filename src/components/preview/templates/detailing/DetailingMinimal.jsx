@@ -4,8 +4,10 @@ import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
+import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 
 export default function DetailingMinimal({ businessInfo, generatedCopy, templateMeta, images = {} }) {
+  const fb = getFallbacks(businessInfo.businessType);
   const c = templateMeta.colors;
   const font = templateMeta.font;
   const bodyFont = templateMeta.bodyFont;
@@ -322,7 +324,7 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
       {/* CTA BAND */}
       {!hidden('cta') && (
       <section style={{ ...s.ctaBand, order: getOrder('cta') }}>
-        <div style={s.ctaBandTitle}>{generatedCopy.ctaHeadline || 'Ready for a Perfect Detail?'}</div>
+        <div style={s.ctaBandTitle}>{generatedCopy.ctaHeadline || fb.ctaHeadline}</div>
         <div style={s.ctaBandSub}>{generatedCopy.ctaSubtext || businessInfo.tagline || generatedCopy.subheadline}</div>
         <span style={s.ctaBandPhone}>{businessInfo.phone}</span>
         {businessInfo.hours && (

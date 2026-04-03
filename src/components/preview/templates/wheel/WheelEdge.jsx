@@ -4,6 +4,7 @@ import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
+import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 
 // Template: Wheel Edge — Dark chrome & electric blue (#0d0d0d bg, #00b4d8 accent, #1a1a2e secondary)
 // Circular ring decorative element in hero, product-catalog service grid, brands section, no emoji in nav
@@ -20,6 +21,7 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
   const c = templateMeta?.colors || { bg: '#0d0d0d', accent: '#00b4d8', text: '#e0e0e0', secondary: '#1a1a2e', muted: '#666688' };
   const font = templateMeta?.bodyFont || 'Rajdhani, system-ui, sans-serif';
   const biz = businessInfo || {};
+  const fb = getFallbacks(biz.businessType);
   const copy = generatedCopy || {};
   const splitHero = copy?.heroLayout === 'split';
   const services = copy.servicesSection?.items || [];
@@ -56,9 +58,9 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
             {images.logo ? (
               <img src={images.logo} alt={biz.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
             ) : (
-              <span style={{ fontSize: 18, fontWeight: 900, color: c.text, textTransform: 'uppercase', letterSpacing: 3 }}>{biz.businessName || 'WHEEL SHOP'}</span>
+              <span style={{ fontSize: 18, fontWeight: 900, color: c.text, textTransform: 'uppercase', letterSpacing: 3 }}>{biz.businessName || fb.shopName.toUpperCase()}</span>
             )}
-            <span style={{ display: 'block', fontSize: 10, color: c.accent, letterSpacing: 4, textTransform: 'uppercase' }}>Wheels · Tires · {biz.city}</span>
+            <span style={{ display: 'block', fontSize: 10, color: c.accent, letterSpacing: 4, textTransform: 'uppercase' }}>{fb.navSubtitle} · {biz.city}</span>
           </div>
           <div className="tp-nav-links" style={{ display: 'flex', gap: 28, alignItems: 'center' }}>
             <a href="#services" style={{ color: c.text, textDecoration: 'none', fontWeight: 600, fontSize: 13, letterSpacing: 1.5, textTransform: 'uppercase', opacity: 0.7 }}>Services</a>
@@ -124,7 +126,7 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
           padding: 'clamp(3rem,6vw,6rem)', background: c.bg,
         } : { position: 'relative', zIndex: 1, padding: '7rem 5% 4rem', maxWidth: 780 }}>
           <p style={{ color: c.accent, fontSize: 11, letterSpacing: 5, textTransform: 'uppercase', marginBottom: 20, fontWeight: 700 }}>
-            Custom Wheels & Tires · {biz.city}, {biz.state}
+            {fb.heroBadge} · {biz.city}, {biz.state}
           </p>
           <h1 style={{
             fontSize: 'clamp(2.5rem, 6vw, 5rem)', fontWeight: 900, lineHeight: 1.05,
@@ -133,7 +135,7 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
             {copy.headline || 'UPGRADE YOUR RIDE'}
           </h1>
           <p style={{ color: c.muted, fontSize: 16, lineHeight: 1.75, maxWidth: 480, marginBottom: 44 }}>
-            {copy.subheadline || biz.tagline || 'Custom wheel fitment, tire mounting, and precision balancing.'}
+            {copy.subheadline || biz.tagline || fb.subheadline}
           </p>
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
             <a href={copy?.ctaPrimaryUrl || (`tel:${biz.phone}`)} style={{
@@ -170,7 +172,7 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
           {[
             { val: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'YEARS IN BUSINESS' },
             { val: '50+', label: 'BRANDS AVAILABLE' },
-            { val: '5K+', label: 'WHEELS INSTALLED' },
+            { val: '5K+', label: fb.statLabel.toUpperCase() },
           ].map((s, i) => (
             <div key={i}>
               <div style={{ fontSize: '2.5rem', fontWeight: 900, color: c.accent, lineHeight: 1 }}>{s.val}</div>
@@ -308,7 +310,7 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
                   const defaultStats = [
                     { value: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'Years in Business' },
                     { value: '50+', label: 'Brands Available' },
-                    { value: '5K+', label: 'Wheels Installed' },
+                    { value: '5K+', label: fb.statLabel },
                   ];
                   const aboutStats = (copy?.aboutStats || []).map((s, i) => ({
                     value: s.value || defaultStats[i]?.value || '',
@@ -332,7 +334,7 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
             </div>
             <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.8rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 20px', letterSpacing: '-0.01em' }}>ABOUT {biz.businessName || 'US'}</h2>
             <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.85, marginBottom: 20 }}>
-              {copy.aboutText || `Located in ${biz.city || 'your area'}, we specialize in custom wheel fitment and tire services.`}
+              {copy.aboutText || `Located in ${biz.city || 'your area'}, we specialize in ${fb.aboutFallback}.`}
             </p>
             {biz.awards && (
               <div style={{ background: c.secondary, borderRadius: 3, padding: '16px 20px', marginBottom: 12, borderLeft: '3px solid #ffd700' }}>

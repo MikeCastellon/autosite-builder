@@ -4,6 +4,7 @@ import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
+import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 
 // Template: Mobile Rugged — Dark green (#1a2318 bg, #8a9a4a accent, #f0ede0 text)
 // Repeating diagonal line texture in hero, "ANYWHERE · ANYTIME" subtext, service area, heavy uppercase
@@ -20,6 +21,7 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
   const c = templateMeta?.colors || { bg: '#1a2318', accent: '#8a9a4a', text: '#f0ede0', secondary: '#232e20', muted: '#a09880' };
   const font = templateMeta?.bodyFont || 'Georgia, serif';
   const biz = businessInfo || {};
+  const fb = getFallbacks(biz.businessType);
   const copy = generatedCopy || {};
   const hidden = (id) => copy?.hiddenSections?.includes(id);
   const getOrder = buildSectionOrder(copy, ['hero','statsBar','services','about','gallery','testimonials','cta']);
@@ -59,9 +61,9 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
             {images.logo ? (
               <img src={images.logo} alt={biz.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
             ) : (
-              <span style={{ fontSize: 17, fontWeight: 800, color: c.text, textTransform: 'uppercase', letterSpacing: 2 }}>{biz.businessName || 'MOBILE DETAIL'}</span>
+              <span style={{ fontSize: 17, fontWeight: 800, color: c.text, textTransform: 'uppercase', letterSpacing: 2 }}>{biz.businessName || fb.shopName.toUpperCase()}</span>
             )}
-            <span style={{ display: 'block', fontSize: 10, color: c.accent, letterSpacing: 3, textTransform: 'uppercase' }}>Mobile Detail · {biz.city}, {biz.state}</span>
+            <span style={{ display: 'block', fontSize: 10, color: c.accent, letterSpacing: 3, textTransform: 'uppercase' }}>{fb.navSubtitle} · {biz.city}, {biz.state}</span>
           </div>
           <div className="tp-nav-links" style={{ display: 'flex', gap: 28, alignItems: 'center' }}>
             <a href="#services" style={{ color: c.text, textDecoration: 'none', fontWeight: 700, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', opacity: 0.75 }}>Services</a>
@@ -99,7 +101,7 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
           }}>
             <div style={{ width: 6, height: 6, background: c.accent, borderRadius: '50%' }} />
             <span style={{ color: c.accent, fontWeight: 700, fontSize: 11, letterSpacing: 3, textTransform: 'uppercase' }}>
-              {biz.city || 'YOUR CITY'}, {biz.state || ''} — MOBILE DETAILING
+              {biz.city || 'YOUR CITY'}, {biz.state || ''} — {fb.navSubtitle.toUpperCase()}
             </span>
           </div>
           <h1 style={{
@@ -116,7 +118,7 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
             ANYWHERE · ANYTIME
           </div>
           <p style={{ fontSize: 16, color: c.muted || '#a09880', maxWidth: 480, marginBottom: 40, lineHeight: 1.75 }}>
-            {copy.subheadline || biz.tagline || 'Rugged, reliable mobile detailing — on your schedule, at your location.'}
+            {copy.subheadline || biz.tagline || fb.subheadline}
           </p>
           <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
             <a href={`tel:${biz.phone}`} style={{
@@ -228,7 +230,7 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
               )
             )}
             <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.85, marginBottom: 20 }}>
-              {copy.aboutText || `Serving ${biz.city || 'your area'} and surrounding regions. We bring the shop to you.`}
+              {copy.aboutText || `Serving ${biz.city || 'your area'} and surrounding regions with ${fb.aboutFallback}.`}
             </p>
             {biz.awards && (
               <div style={{ background: 'rgba(255,215,0,0.08)', border: '1px solid rgba(255,215,0,0.3)', borderRadius: 4, padding: '14px 18px', marginBottom: 12 }}>
@@ -315,7 +317,7 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
       {!hidden('cta') && (
       <section style={{ background: c.accent, padding: '72px 5%', textAlign: 'center' , order: getOrder('cta') }}>
         <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 900, color: '#1a2318', textTransform: 'uppercase', margin: '0 0 16px', letterSpacing: '-0.01em' }}>
-          {copy.ctaHeadline || 'BOOK YOUR DETAIL'}
+          {copy.ctaHeadline || fb.ctaHeadline.toUpperCase()}
         </h2>
         <p style={{ color: 'rgba(26,35,24,0.65)', fontSize: 16, marginBottom: 36 }}>
           {copy.ctaSubtext || copy.ctaSecondary || `We roll out to ${biz.city || 'your area'} and surrounding areas.`}

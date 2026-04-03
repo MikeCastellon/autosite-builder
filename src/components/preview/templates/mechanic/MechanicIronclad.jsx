@@ -4,6 +4,7 @@ import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
+import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 
 // Template: Mechanic Ironclad
 // Industrial dark aesthetic with rust-red accent (#111111 bg, #C0392B accent, #ffffff text)
@@ -24,6 +25,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
   const bodyFont = templateMeta?.bodyFont || "'Barlow', sans-serif";
 
   const biz          = businessInfo || {};
+  const fb           = getFallbacks(biz.businessType);
   const copy         = generatedCopy || {};
   const services     = copy.servicesSection?.items || [];
   const svcCols = services.length >= 6 ? Math.ceil(services.length / 2) : services.length || 1;
@@ -105,7 +107,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
 
   // Static "Why Us" value props
   const defaultWhyItems = [
-    { icon: '⚡', title: 'Fast Turnaround',  desc: "Most jobs completed same-day. We know your car is your livelihood — we keep bay time to a minimum." },
+    { icon: '⚡', title: 'Fast Turnaround',  desc: "Most jobs completed same-day. We know your time matters — we keep turnaround to a minimum." },
     { icon: '💯', title: 'No Upsells',        desc: "We fix what is broken. If it ain't broke, we won't tell you it is just to pad the bill." },
     { icon: '🔩', title: 'Quality Parts',     desc: 'OEM or top-tier aftermarket — no junkyard specials. The repair lasts or we do it again.' },
     { icon: '🤝', title: 'Family-Owned',      desc: "Your car isn't a number here. We remember your vehicle history and treat you like a neighbor." },
@@ -187,7 +189,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
             </div>
             <div>
               <span style={{ fontFamily: bebas, fontSize: 22, letterSpacing: 3, color: c.text, lineHeight: 1, display: 'block' }}>
-                {biz.businessName || 'AUTO REPAIR'}
+                {biz.businessName || fb.shopName.toUpperCase()}
               </span>
               <span style={{ fontFamily: condensed, fontSize: 9, letterSpacing: 4, color: c.accent, fontWeight: 700, textTransform: 'uppercase', display: 'block', marginTop: 1 }}>
                 {[biz.city, biz.state].filter(Boolean).join(', ')}
@@ -269,7 +271,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
           </h1>
 
           <p style={{ fontFamily: bodyFont, fontSize: 17, lineHeight: 1.7, color: '#8A8A8A', maxWidth: 460, marginBottom: 44, fontWeight: 400 }}>
-            {copy.subheadline || biz.tagline || `Real mechanics. Real tools. No shortcuts. Serving ${biz.city || 'your area'} with honest, quality auto repair.`}
+            {copy.subheadline || biz.tagline || fb.subheadline}
           </p>
 
           {/* CTA buttons */}
@@ -293,8 +295,8 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
             <div style={{ display: 'flex', gap: 48, marginTop: 60, paddingTop: 40, borderTop: '1px solid rgba(255,255,255,0.08)', flexWrap: 'wrap' }}>
               {[
                 { val: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'Years in Business' },
-                { val: '5,000+',  label: 'Cars Serviced' },
-                { val: '100%',    label: 'Guaranteed Work' },
+                { val: '5,000+',  label: fb.statLabel },
+                { val: '100%',    label: fb.guaranteeLabel },
               ].map((s) => (
                 <div key={s.label}>
                   <div style={{ fontFamily: bebas, fontSize: 42, color: c.accent, lineHeight: 1, letterSpacing: 1 }}>{s.val}</div>
@@ -422,7 +424,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
           {/* Bottom name overlay */}
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 'clamp(24px, 4vw, 40px)', background: 'linear-gradient(to top, rgba(0,0,0,0.9), transparent)' }}>
             <div style={{ fontFamily: bebas, fontSize: 'clamp(26px, 4vw, 42px)', letterSpacing: 1, color: '#F0EDE8', lineHeight: 1.1 }}>
-              {biz.businessName || 'THE SHOP'}<br />
+              {biz.businessName || fb.shopName.toUpperCase()}<br />
               <span style={{ color: c.accent }}>{[biz.city, biz.state].filter(Boolean).join(', ')}</span>
             </div>
           </div>
@@ -435,7 +437,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
             WE DON&apos;T<br />CUT <span style={{ color: c.accent }}>CORNERS.</span>
           </h2>
           <p style={{ fontSize: 15, color: '#6B6560', lineHeight: 1.85, marginTop: 18, marginBottom: 24, maxWidth: 420 }}>
-            {copy.aboutText || `Serving ${biz.city || 'your area'} with expert auto repair built on straight talk, fair prices, and work you can stake your safety on.`}
+            {copy.aboutText || `Serving ${biz.city || 'your area'} with ${fb.aboutFallback} built on straight talk, fair prices, and work you can stake your safety on.`}
           </p>
 
           {/* Credential list */}
@@ -641,7 +643,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
         <div style={{ position: 'absolute', inset: 0, backgroundImage: hatch, opacity: 0.4 }} />
         <div style={{ position: 'relative', zIndex: 1 }}>
           <h2 style={{ fontFamily: bebas, fontSize: 'clamp(36px, 6vw, 72px)', letterSpacing: 3, color: '#fff', margin: '0 0 14px', lineHeight: 0.95 }}>
-            {copy.ctaHeadline || <>{`READY TO GET`}<br />{`YOUR CAR FIXED RIGHT?`}</>}
+            {copy.ctaHeadline || fb.ctaHeadline.toUpperCase()}
           </h2>
           <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 16, marginBottom: 40, fontFamily: bodyFont }}>
             {copy.ctaSubtext || (biz.city
@@ -686,13 +688,13 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
                     {(biz.businessName || 'IC').replace(/[^A-Za-z]/g, '').slice(0, 2).toUpperCase() || 'IC'}
                   </div>
                   <div>
-                    <span style={{ fontFamily: bebas, fontSize: 20, letterSpacing: 3, color: c.text, display: 'block', lineHeight: 1 }}>{biz.businessName || 'AUTO REPAIR'}</span>
+                    <span style={{ fontFamily: bebas, fontSize: 20, letterSpacing: 3, color: c.text, display: 'block', lineHeight: 1 }}>{biz.businessName || fb.shopName.toUpperCase()}</span>
                     <span style={{ fontFamily: condensed, fontSize: 9, letterSpacing: 4, color: c.accent, fontWeight: 700, textTransform: 'uppercase', display: 'block', marginTop: 1 }}>{[biz.city, biz.state].filter(Boolean).join(', ')}</span>
                   </div>
                 </div>
               )}
               <p style={{ fontSize: 13, color: '#6B6560', lineHeight: 1.8, maxWidth: 260 }}>
-                {copy.footerTagline || biz.tagline || 'Family-owned auto repair. Real mechanics, fair prices, work guaranteed.'}
+                {copy.footerTagline || biz.tagline || fb.footerDesc}
               </p>
             </div>
 
@@ -732,7 +734,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
           {/* Bottom bar */}
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
             <p style={{ fontSize: 12, color: '#6B6560', letterSpacing: 0.5, margin: 0 }}>
-              &copy; {new Date().getFullYear()} {biz.businessName || 'Auto Repair'}
+              &copy; {new Date().getFullYear()} {biz.businessName || fb.shopName}
               {biz.city ? ` · ${biz.city}` : ''}{biz.state ? `, ${biz.state}` : ''} · All rights reserved
             </p>
             <span style={{ fontFamily: bebas, fontSize: 16, letterSpacing: 3, color: c.accent }}>

@@ -4,8 +4,10 @@ import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
+import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 
 export default function DetailingSporty({ businessInfo, generatedCopy, templateMeta, images = {} }) {
+  const fb = getFallbacks(businessInfo.businessType);
   const c = templateMeta.colors;
   const font = templateMeta.font;
   const bodyFont = templateMeta.bodyFont;
@@ -178,8 +180,8 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
   };
 
   const defaultStats = [
-    { num: businessInfo.yearsInBusiness ? `${businessInfo.yearsInBusiness}` : '10', label: 'Years Dominating', alt: false },
-    { num: '5K+', label: 'Cars Transformed', alt: true },
+    { num: businessInfo.yearsInBusiness ? `${businessInfo.yearsInBusiness}` : '10', label: 'Years in Business', alt: false },
+    { num: '5K+', label: fb.statLabel2, alt: true },
     { num: '5.0', label: 'Google Rating', alt: false },
     { num: '100%', label: 'Satisfaction Rate', alt: true },
   ];
@@ -351,7 +353,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
       {!hidden('cta') && (
       <div style={{ ...s.ctaBand, order: getOrder('cta') }}>
         <div style={s.ctaLeft}>
-          <div style={s.ctaHeading}>{generatedCopy.ctaHeadline || 'Book Your Detail'}</div>
+          <div style={s.ctaHeading}>{generatedCopy.ctaHeadline || fb.ctaHeadline}</div>
           <div style={s.ctaPhone}>{businessInfo.phone}</div>
           {businessInfo.hours && <div style={{ fontFamily: bodyFont, color: 'rgba(255,255,255,0.75)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>{formatHours(businessInfo.hours)}</div>}
           <a href={generatedCopy?.ctaUrl || ('tel:' + (businessInfo.phone || ''))} style={{ ...s.ctaBtn, textDecoration: 'none' }}>{generatedCopy.ctaButtonText || generatedCopy.ctaPrimary}</a>

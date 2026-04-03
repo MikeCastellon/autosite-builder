@@ -4,6 +4,7 @@ import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
+import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 
 // Template: Tint Obsidian -- Ultra-dark void (#050507 bg, #7C3AED accent, #06B6D4 cyan)
 // Syne + Outfit fonts, VLT shade guide, film brands, process steps, testimonials
@@ -43,6 +44,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
   const bodyFont = templateMeta?.bodyFont || 'Outfit, system-ui, sans-serif';
 
   const biz          = businessInfo || {};
+  const fb           = getFallbacks(biz.businessType);
   const copy         = generatedCopy || {};
   const splitHero    = copy?.heroLayout === 'split';
   const services     = copy.servicesSection?.items || [];
@@ -122,7 +124,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
               <img src={images.logo} alt={biz.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
             ) : (
               <div>
-                <div style={{ fontFamily: font, fontSize: 16, fontWeight: 800, color: c.text, letterSpacing: -0.5, lineHeight: 1 }}>{biz.businessName || 'Obsidian Tint'}</div>
+                <div style={{ fontFamily: font, fontSize: 16, fontWeight: 800, color: c.text, letterSpacing: -0.5, lineHeight: 1 }}>{biz.businessName || fb.shopName}</div>
                 <div style={{ fontSize: 10, color: cCyan, letterSpacing: 3, textTransform: 'uppercase', marginTop: 2 }}>{biz.city || 'Studio'}</div>
               </div>
             )}
@@ -174,7 +176,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
             fontSize: 11, color: cCyan, fontWeight: 600, letterSpacing: 3, textTransform: 'uppercase',
           }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: cCyan, display: 'inline-block', boxShadow: `0 0 8px ${cCyan}` }} />
-            {biz.city && biz.state ? `${biz.city}, ${biz.state}` : 'Premium Tint Studio'} · Certified Installers
+            {biz.city && biz.state ? `${biz.city}, ${biz.state}` : fb.heroBadge} · Certified Installers
           </div>
           <h1 style={{
             fontFamily: font, fontSize: 'clamp(1.8rem, 7vw, 6rem)', fontWeight: 800,
@@ -187,7 +189,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
             background: `linear-gradient(180deg, ${c.text} 0%, rgba(255,255,255,0.5) 100%)`,
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
           }}>
-            {copy.subheadline || biz.tagline || 'Professional window film installation for automotive, residential, and commercial applications.'}
+            {copy.subheadline || biz.tagline || fb.subheadline}
           </p>
           <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 64 }}>
             <a href={`tel:${biz.phone}`} style={{
@@ -250,13 +252,13 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
           <div style={{ textAlign: 'center', marginBottom: 64 }}>
             <div style={{ ...labelTagStyle, justifyContent: 'center' }}>
               <span style={{ width: 24, height: 1, background: c.accent, flexShrink: 0 }} />
-              Tint Options
+              {fb.navSubtitle}
             </div>
             <h2 style={{ ...sectionTitleStyle, marginBottom: 16 }}>
               Choose your <span style={{ color: '#a855f7' }}>shade.</span>
             </h2>
             <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.75, maxWidth: 560, margin: '0 auto' }}>
-              Lower VLT means darker tint. Every shade is precision-cut and professionally installed.
+              Each option is precision-cut and professionally installed to your exact specifications.
             </p>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
@@ -507,7 +509,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
                 {(() => {
                   const defaultStats = [
                     { value: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'Years of Excellence' },
-                    { value: '5,000+', label: 'Windows Tinted' },
+                    { value: '5,000+', label: fb.statLabel },
                     { value: '5★', label: 'Customer Rating' },
                   ];
                   const aboutStats = (copy?.aboutStats || []).map((s, i) => ({
@@ -535,7 +537,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
               About {biz.businessName || 'Us'}
             </h2>
             <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.85, marginBottom: 24 }}>
-              {copy.aboutText || `Serving ${biz.city || 'the area'} with premium window tinting and paint protection film.`}
+              {copy.aboutText || `Serving ${biz.city || 'the area'} with ${fb.aboutFallback}.`}
             </p>
             {biz.awards && (
               <div style={{ background: panelBg, borderRadius: 8, padding: '16px 20px', marginBottom: 16, borderLeft: '3px solid #ffd700' }}>
@@ -692,7 +694,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
                   }}>
                     <div style={{ width: 11, height: 11, background: 'rgba(255,255,255,0.9)', clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)', borderRadius: 1 }} />
                   </div>
-                  <div style={{ fontFamily: font, fontWeight: 800, fontSize: 14, color: c.text }}>{biz.businessName || 'Tint Studio'}</div>
+                  <div style={{ fontFamily: font, fontWeight: 800, fontSize: 14, color: c.text }}>{biz.businessName || fb.shopName}</div>
                 </div>
               )}
               <p style={{ color: '#2e2e3a', fontSize: 13, lineHeight: 1.7 }}>
@@ -737,7 +739,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
             display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 12,
           }}>
             <p style={{ color: '#252530', fontSize: 12 }}>
-              &copy; {new Date().getFullYear()} {biz.businessName || 'Tint Studio'}{biz.city ? ` · ${biz.city}` : ''}{biz.state ? `, ${biz.state}` : ''} · All rights reserved
+              &copy; {new Date().getFullYear()} {biz.businessName || fb.shopName}{biz.city ? ` · ${biz.city}` : ''}{biz.state ? `, ${biz.state}` : ''} · All rights reserved
             </p>
             <span style={{ fontFamily: 'monospace', fontSize: 11, color: '#1e1e28', letterSpacing: 2 }}>// see less. look more.</span>
           </div>

@@ -4,8 +4,10 @@ import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
+import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 
 export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, templateMeta, images = {} }) {
+  const fb = getFallbacks(businessInfo.businessType);
   const c = templateMeta.colors;
   const font = templateMeta.font;
   const bodyFont = templateMeta.bodyFont;
@@ -41,7 +43,7 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
 
   const defaultStats = [
     { num: yearsNum + ' Years', label: 'Experience' },
-    { num: '2,000+', label: 'Vehicles Detailed' },
+    { num: '2,000+', label: fb.statLabel },
     { num: '100%', label: 'Satisfaction Rate' },
     { num: cityName + ' ' + stateName, label: 'Specialists' },
   ];
@@ -194,7 +196,7 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
             </div>
             <div>
               <span style={s.logoText}>{businessInfo.businessName ? businessInfo.businessName.toUpperCase() : 'YOUR BUSINESS'}</span>
-              <span style={s.logoSub}>DETAILING SPECIALISTS</span>
+              <span style={s.logoSub}>{fb.navSubtitle.toUpperCase()}</span>
             </div>
           </div>
         )}
@@ -226,7 +228,7 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
                 : ''}
             </span>
           </div>
-          <h1 style={s.heroH1}>{generatedCopy.headline || 'Your Vehicle. Perfected.'}</h1>
+          <h1 style={s.heroH1}>{generatedCopy.headline || fb.headline}</h1>
           <p style={s.heroDesc}>{generatedCopy.subheadline}</p>
           <div style={s.heroActions}>
             <a href={generatedCopy?.ctaPrimaryUrl || '#services'} style={{ ...s.btnPrimary, textDecoration: 'none' }}>{generatedCopy.ctaPrimary || 'Request a Quote'}</a>
@@ -464,7 +466,7 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
           <div style={s.sectionLabelLine} />
         </div>
         <h2 style={s.ctaH2}>
-          {generatedCopy.ctaHeadline || <>Ready to <em style={s.sectionTitleEm}>Elevate</em><br />Your Vehicle?</>}
+          {generatedCopy.ctaHeadline || fb.ctaHeadline}
         </h2>
         <p style={s.ctaDesc}>
           {generatedCopy.ctaSubtext || 'Whether you need a single signature detail or a custom fleet contract, we are ready to deliver. Contact us and we will respond within 2 business hours.'}
@@ -518,7 +520,7 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
                 </div>
                 <div>
                   <span style={s.logoText}>{businessInfo.businessName ? businessInfo.businessName.toUpperCase() : 'YOUR BUSINESS'}</span>
-                  <span style={s.logoSub}>DETAILING SPECIALISTS</span>
+                  <span style={s.logoSub}>{fb.navSubtitle.toUpperCase()}</span>
                 </div>
               </div>
             )}
@@ -546,7 +548,7 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
         </div>
         <div style={s.footerBottom}>
           <p style={s.footerBottomP}>
-            © {new Date().getFullYear()} {businessInfo.businessName} — Professional Vehicle Detailing. All rights reserved.
+            © {new Date().getFullYear()} {businessInfo.businessName} — {fb.footerDesc}. All rights reserved.
           </p>
           <div style={s.footerBadge}>
             {businessInfo.city} · {businessInfo.state}

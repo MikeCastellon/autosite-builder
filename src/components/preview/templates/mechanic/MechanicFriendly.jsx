@@ -4,11 +4,13 @@ import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
+import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 
 export default function MechanicFriendly({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const c = templateMeta.colors;
   const font = templateMeta.font;
   const bodyFont = templateMeta.bodyFont;
+  const fb = getFallbacks(businessInfo?.businessType);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -42,8 +44,8 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
   );
 
   const whyItems = [
-    { icon: <IconWrench />, title: 'Expert Technicians', desc: 'Trained and certified mechanics with years of hands-on experience.' },
-    { icon: <IconShield />, title: 'Guaranteed Work', desc: businessInfo.warranty ? `We stand behind our work with a ${businessInfo.warranty} guarantee.` : 'Every job is backed by our satisfaction guarantee.' },
+    { icon: <IconWrench />, title: fb.whyUsTitle, desc: 'Trained and certified professionals with years of hands-on experience.' },
+    { icon: <IconShield />, title: fb.guaranteeLabel, desc: businessInfo.warranty ? `We stand behind our work with a ${businessInfo.warranty} guarantee.` : 'Every job is backed by our satisfaction guarantee.' },
     { icon: <IconClock />, title: 'Fast Turnaround', desc: 'We respect your time and get you back on the road quickly.' },
     { icon: <IconStar />, title: 'Local & Trusted', desc: `Proudly serving ${businessInfo.city} and surrounding areas since ${new Date().getFullYear() - (parseInt(businessInfo.yearsInBusiness) || 10)}.` },
   ];
@@ -355,7 +357,7 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
           <div className="tp-2col" style={s.aboutHighlights}>
             {[
               { num: `${businessInfo.yearsInBusiness || '10'}+`, label: 'Years Serving the Area' },
-              { num: '5,000+', label: 'Satisfied Customers' },
+              { num: '5,000+', label: fb.statLabel2 },
               { num: '5.0 ★', label: 'Average Review Score' },
               { num: businessInfo.warranty || '100%', label: 'Satisfaction Guaranteed' },
             ].map((item, i) => (
@@ -406,7 +408,7 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
         <div style={s.contactGrid}>
           <div>
             <div style={{ fontFamily: bodyFont, fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: c.accent, marginBottom: '0.5rem'  }}>{generatedCopy.ctaSubtext || 'Contact Us'}</div>
-            <h2 style={s.contactTitle}>{generatedCopy.ctaHeadline || "Let's Get Your Car Fixed"}</h2>
+            <h2 style={s.contactTitle}>{generatedCopy.ctaHeadline || fb.ctaHeadline}</h2>
             <span style={s.contactPhone}>{businessInfo.phone}</span>
             <a href={generatedCopy?.ctaUrl || ('tel:' + (businessInfo.phone || ''))} style={{ ...s.contactBtn, textDecoration: 'none' }}>{generatedCopy.ctaButtonText || generatedCopy.ctaPrimary}</a>
             {businessInfo.paymentMethods?.length > 0 && (
