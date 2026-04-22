@@ -42,7 +42,7 @@ export const BUSINESS_TYPES = [
   {
     id: 'car_wash',
     label: 'Car Wash',
-    icon: '🫧',
+    icon: '🚿',
     description: 'Automated or hand car wash',
     templates: ['carwash_bubble'],
     premiumTemplates: [],
