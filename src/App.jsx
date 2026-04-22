@@ -14,6 +14,7 @@ import LoginPage from './components/auth/LoginPage.jsx';
 import ResetPasswordPage from './components/auth/ResetPasswordPage.jsx';
 import DashboardPage from './components/dashboard/DashboardPage.jsx';
 import BookingSettingsPage from './components/dashboard/booking-settings/BookingSettingsPage.jsx';
+import BookingsPage from './components/dashboard/bookings-page/BookingsPage.jsx';
 import AdminPage from './components/admin/AdminPage.jsx';
 import { saveSite } from './lib/saveSite.js';
 import { supabase } from './lib/supabase.js';
@@ -31,8 +32,7 @@ export default function App() {
   const [error, setError] = useState(null);
   const [customColors, setCustomColors] = useState({});
   const [customFonts, setCustomFonts] = useState({});
-  const [view, setView] = useState('wizard'); // 'wizard' | 'dashboard' | 'admin'
-  const [dashboardInitialView, setDashboardInitialView] = useState('sites'); // 'sites' | 'bookings'
+  const [view, setView] = useState('wizard'); // 'wizard' | 'dashboard' | 'admin' | 'bookings-page' | 'booking-settings'
   const [settingsSiteId, setSettingsSiteId] = useState(null);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [selectedWidgetIds, setSelectedWidgetIds] = useState([]);
@@ -234,6 +234,10 @@ export default function App() {
     setView('wizard');
   };
 
+  if (view === 'bookings-page') {
+    return <BookingsPage userId={session?.user?.id} onExit={() => setView('dashboard')} />;
+  }
+
   if (view === 'booking-settings' && settingsSiteId) {
     return <BookingSettingsPage siteId={settingsSiteId} onExit={() => { setSettingsSiteId(null); setView('dashboard'); }} />;
   }
@@ -249,8 +253,8 @@ export default function App() {
       onSignOut={handleSignOut}
       userEmail={session?.user?.email}
       profile={profile}
-      initialView={dashboardInitialView}
       onOpenAdmin={() => setView('admin')}
+      onOpenBookings={() => setView('bookings-page')}
       onOpenBookingSettings={(siteId) => { setSettingsSiteId(siteId); setView('booking-settings'); }}
     />;
   }
@@ -337,7 +341,7 @@ export default function App() {
   }
 
   return (
-    <WizardShell step={step} onBack={goBack} userEmail={session?.user?.email} profile={profile} onMySites={() => setView('dashboard')} onOpenBookings={() => { setDashboardInitialView('bookings'); setView('dashboard'); }} onOpenAdmin={() => setView('admin')} onSignOut={handleSignOut}>
+    <WizardShell step={step} onBack={goBack} userEmail={session?.user?.email} profile={profile} onMySites={() => setView('dashboard')} onOpenBookings={() => setView('bookings-page')} onOpenAdmin={() => setView('admin')} onSignOut={handleSignOut}>
       {step === 1 && (
         <StepBusinessType onSelect={handleBusinessTypeSelect} />
       )}

@@ -2,18 +2,15 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase.js';
 import { publishSite } from '../../lib/publishSite.js';
 import { TEMPLATES } from '../../data/templates.js';
-import BookingsView from './bookings/BookingsView.jsx';
 
 const MAX_SITES = 1;
 
-export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEmail, profile, onOpenAdmin, initialView = 'sites', onOpenBookingSettings }) {
+export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEmail, profile, onOpenAdmin, onOpenBookings, onOpenBookingSettings }) {
   const [sites, setSites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
-  const [view, setView] = useState(initialView); // 'sites' | 'bookings'
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  useEffect(() => { setView(initialView); }, [initialView]);
   const schedulerEnabled = !!profile?.scheduler_enabled;
   const isAdmin = !!profile?.is_super_admin;
   const canCreateSite = isAdmin || sites.length < MAX_SITES;
@@ -93,8 +90,8 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
 
   const initial = userEmail ? userEmail[0].toUpperCase() : '?';
   const navItems = [
-    { label: 'Sites', onClick: () => setView('sites'), active: view === 'sites' },
-    schedulerEnabled && { label: 'Bookings', onClick: () => setView('bookings'), active: view === 'bookings' },
+    { label: 'Sites', onClick: () => {}, active: true },
+    schedulerEnabled && onOpenBookings && { label: 'Bookings', onClick: onOpenBookings, active: false },
     isAdmin && onOpenAdmin && { label: 'Admin', onClick: onOpenAdmin, active: false },
   ].filter(Boolean);
 
@@ -197,10 +194,6 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
       )}
 
       <main className="max-w-4xl mx-auto px-6 py-10">
-        {view === 'bookings' ? (
-          <BookingsView userId={profile?.id} />
-        ) : (
-          <>
         <div className="flex items-center justify-between mb-8">
           <div>
             <h2 className="text-2xl font-black text-[#1a1a1a] tracking-tight">Your Sites</h2>
@@ -290,14 +283,6 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
                       Republish
                     </button>
                   )}
-                  {schedulerEnabled && (
-                    <button
-                      onClick={() => onOpenBookingSettings && onOpenBookingSettings(site.id)}
-                      className="px-3 py-1.5 text-xs font-medium border border-black/10 rounded-lg hover:border-[#1a1a1a]/30 hover:text-[#1a1a1a] transition-colors"
-                    >
-                      Bookings
-                    </button>
-                  )}
                   <button
                     onClick={() => handleDelete(site.id)}
                     className="px-3 py-1.5 text-xs font-medium text-[#888] hover:text-[#cc0000] transition-colors"
@@ -308,8 +293,6 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
               </div>
             ))}
           </div>
-        )}
-          </>
         )}
       </main>
     </div>
