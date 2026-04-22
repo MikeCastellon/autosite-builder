@@ -137,12 +137,12 @@ export default function LoginPage() {
         {error && (
           <div
             role="alert"
-            className="mt-4 flex items-start gap-3 rounded-xl border-2 border-[#cc0000] bg-[#cc0000] text-white px-4 py-3 shadow-md"
+            className="mt-4 flex items-start gap-3 rounded-xl border-2 border-[#cc0000] bg-red-50 text-[#8a0000] px-4 py-3 shadow-sm"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="shrink-0 mt-0.5" aria-hidden="true">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="rgba(255,255,255,0.15)"/>
-              <path d="M12 7v6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/>
-              <circle cx="12" cy="16.5" r="1.2" fill="currentColor"/>
+              <circle cx="12" cy="12" r="10" fill="#cc0000"/>
+              <path d="M12 7v6" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"/>
+              <circle cx="12" cy="16.5" r="1.2" fill="#fff"/>
             </svg>
             <p className="text-[14px] font-semibold leading-snug">{error}</p>
           </div>
