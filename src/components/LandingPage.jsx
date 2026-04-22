@@ -32,8 +32,8 @@ export default function LandingPage({ onSignIn }) {
           Free for Auto Businesses
         </p>
         <h1 className="text-[clamp(36px,6vw,64px)] font-[900] text-[#1a1a1a] tracking-[-1.5px] leading-[1.02] mb-6">
-          A professional website for your shop,<br className="hidden sm:block" />
-          <span className="text-[#cc0000]">built in minutes.</span>
+          Your shop's website.<br />
+          <span className="text-[#cc0000]">Built in minutes.</span>
         </h1>
         <p className="text-[#555] text-[clamp(15px,2vw,18px)] leading-[1.6] max-w-2xl mx-auto mb-10">
           Answer a few questions about your auto shop. Our AI writes every line of copy and ships a fast, mobile‑ready site on your own subdomain — no designers, no developers, no monthly fee.
