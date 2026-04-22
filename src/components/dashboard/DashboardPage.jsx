@@ -3,10 +3,12 @@ import { supabase } from '../../lib/supabase.js';
 import { publishSite } from '../../lib/publishSite.js';
 import { TEMPLATES } from '../../data/templates.js';
 import { canSeeBookingsNav } from '../../lib/subscriptionGating.js';
+import { useAlert } from '../ui/AlertProvider.jsx';
 
 const MAX_SITES = 1;
 
 export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEmail, profile, onOpenAdmin, onOpenBookings, onOpenBookingSettings }) {
+  const { toast, confirm: confirmDialog } = useAlert();
   const [sites, setSites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
@@ -34,12 +36,17 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
   }, []);
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this site? This will also unpublish it if live.')) return;
+    const ok = await confirmDialog('This will also unpublish it if currently live. This cannot be undone.', {
+      title: 'Delete site?',
+      confirmText: 'Delete',
+      danger: true,
+    });
+    if (!ok) return;
     // Find the site to get slug for R2 cleanup
     const site = sites.find(s => s.id === id);
     const { error } = await supabase.from('sites').delete().eq('id', id);
     if (error) {
-      alert('Failed to delete site. Please try again.');
+      toast('Failed to delete site. Please try again.', 'error');
       return;
     }
     // Delete from R2 if published
@@ -51,10 +58,15 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
       }).catch(() => {}); // Best-effort cleanup
     }
     setSites((prev) => prev.filter((s) => s.id !== id));
+    toast('Site deleted', 'success');
   };
 
   const handleRepublish = async (site) => {
-    if (!confirm(`Republish ${site.business_info?.businessName || 'this site'}?`)) return;
+    const ok = await confirmDialog(`Republish ${site.business_info?.businessName || 'this site'} with the latest template updates?`, {
+      title: 'Republish site?',
+      confirmText: 'Republish',
+    });
+    if (!ok) return;
     try {
       const { TEMPLATES } = await import('../../data/templates.js');
       const templateMeta = TEMPLATES[site.template_id];
@@ -68,9 +80,9 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
         selectedWidgetIds: site.widget_config_ids || [],
         customDomain: site.custom_domain || null,
       });
-      alert(`${site.business_info?.businessName || 'Site'} republished successfully!`);
+      toast(`${site.business_info?.businessName || 'Site'} republished successfully`, 'success');
     } catch (err) {
-      alert(`Republish failed: ${err.message}`);
+      toast(`Republish failed: ${err.message}`, 'error');
     }
   };
 

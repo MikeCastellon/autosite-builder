@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { saveSchedulerConfig } from '../../../lib/schedulerConfig.js';
+import { useAlert } from '../../ui/AlertProvider.jsx';
 
 function newService() {
   const id = 'svc_' + (crypto.randomUUID ? crypto.randomUUID().replace(/-/g, '').slice(0, 12) : Math.random().toString(36).slice(2, 14));
@@ -7,6 +8,7 @@ function newService() {
 }
 
 export default function ServicesTab({ siteId, config, onSaved }) {
+  const { confirm: confirmDialog } = useAlert();
   const [services, setServices] = useState(config?.services || []);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
@@ -16,8 +18,13 @@ export default function ServicesTab({ siteId, config, onSaved }) {
     setServices((prev) => prev.map((s) => (s.id === id ? { ...s, ...fields } : s)));
   }
 
-  function remove(id) {
-    if (!confirm('Remove this service from booking? Existing bookings keep their service name.')) return;
+  async function remove(id) {
+    const ok = await confirmDialog('Existing bookings keep their service name. You can always add it back later.', {
+      title: 'Remove service from booking?',
+      confirmText: 'Remove',
+      danger: true,
+    });
+    if (!ok) return;
     setServices((prev) => prev.filter((s) => s.id !== id));
   }
 

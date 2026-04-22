@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase.js';
+import { useAlert } from '../ui/AlertProvider.jsx';
 
 export default function AdminAccountsTab({ onViewOwnerBookings }) {
+  const { toast, confirm: confirmDialog } = useAlert();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
@@ -43,12 +45,16 @@ export default function AdminAccountsTab({ onViewOwnerBookings }) {
 
   async function toggle(id, field, current) {
     if (field === 'is_super_admin' && !current) {
-      const ok = confirm('Grant super admin to this user?');
+      const ok = await confirmDialog('Grant super admin to this user?', {
+        title: 'Grant super admin',
+        confirmText: 'Grant',
+        danger: true,
+      });
       if (!ok) return;
     }
     const { error } = await supabase
       .from('profiles').update({ [field]: !current, updated_at: new Date().toISOString() }).eq('id', id);
-    if (error) { alert(error.message); return; }
+    if (error) { toast(error.message, 'error'); return; }
     setRows((prev) => prev.map((r) => r.id === id ? { ...r, [field]: !current } : r));
   }
 
