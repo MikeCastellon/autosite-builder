@@ -185,11 +185,6 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
       <section style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh', order: getOrder('hero') } : { ...heroStyle, order: getOrder('hero') }}>
         {!splitHero && <HeroImage src={images.hero} />}
         {!splitHero && <div style={heroGlowStyle} />}
-        {!splitHero && [15, 25, 75, 85].map((top, i) => (
-          <div key={i} style={chromeLine(`${top}%`, i % 2 === 0 ? 0.1 : 0.06)} />
-        ))}
-        {!splitHero && <div style={{ position: 'absolute', left: '8%', top: 0, bottom: 0, width: '1px', background: 'linear-gradient(180deg, transparent 0%, rgba(148,163,184,0.08) 30%, rgba(148,163,184,0.08) 70%, transparent 100%)' }} />}
-        {!splitHero && <div style={{ position: 'absolute', right: '8%', top: 0, bottom: 0, width: '1px', background: 'linear-gradient(180deg, transparent 0%, rgba(148,163,184,0.08) 30%, rgba(148,163,184,0.08) 70%, transparent 100%)' }} />}
 
         <div style={splitHero ? {
           flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
