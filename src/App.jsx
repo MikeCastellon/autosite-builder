@@ -13,6 +13,7 @@ import { useAuth } from './lib/AuthContext.jsx';
 import LoginPage from './components/auth/LoginPage.jsx';
 import ResetPasswordPage from './components/auth/ResetPasswordPage.jsx';
 import DashboardPage from './components/dashboard/DashboardPage.jsx';
+import AdminPage from './components/admin/AdminPage.jsx';
 import { saveSite } from './lib/saveSite.js';
 import { supabase } from './lib/supabase.js';
 
@@ -229,6 +230,10 @@ export default function App() {
     setStep(5);
     setView('wizard');
   };
+
+  if (view === 'admin') {
+    return <AdminPage onExit={() => setView('dashboard')} />;
+  }
 
   if (view === 'dashboard') {
     return <DashboardPage
