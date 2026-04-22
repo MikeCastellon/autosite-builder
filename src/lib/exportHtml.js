@@ -56,8 +56,32 @@ function buildSeoHead(businessInfo, generatedCopy) {
 
   <style>
     *, *::before, *::after { box-sizing: border-box; }
-    body { margin: 0; font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    body { margin: 0; font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; padding-bottom: 48px; }
     img { max-width: 100%; height: auto; }
+    #acg-powered-by {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 9999;
+      background: rgba(250, 249, 247, 0.96);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border-top: 1px solid rgba(0, 0, 0, 0.08);
+      box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.04);
+    }
+    #acg-powered-by .acg-label {
+      font-family: 'Outfit', system-ui, sans-serif;
+      font-size: 12px;
+      color: #999;
+      letter-spacing: 0.02em;
+    }
+    #acg-powered-by img { height: 18px; }
     @media (max-width: 768px) {
       div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
       div[style*="1fr 1fr"] { grid-template-columns: 1fr !important; }
@@ -113,10 +137,10 @@ async function buildHtmlString(templateId, businessInfo, generatedCopy, template
   }
 
   const poweredByBar = `
-<div style="background:#faf9f7;padding:14px 24px;display:flex;align-items:center;justify-content:center;gap:8px;border-top:1px solid #e5e5e5;">
-  <span style="font-family:'Outfit',system-ui,sans-serif;font-size:12px;color:#999;letter-spacing:0.02em;">Powered by</span>
+<div id="acg-powered-by">
+  <span class="acg-label">Powered by</span>
   <a href="https://prohub.autocaregenius.com/" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;">
-    <img src="https://www.autocaregenius.com/cdn/shop/files/v11_1.svg?v=1760731533&width=160" alt="Auto Care Genius" style="height:18px;" />
+    <img src="https://www.autocaregenius.com/cdn/shop/files/v11_1.svg?v=1760731533&width=160" alt="Auto Care Genius" />
   </a>
 </div>`;
 
