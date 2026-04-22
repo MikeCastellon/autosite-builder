@@ -38,7 +38,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
 
   return (
     <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
-      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}.tp-services-grid{grid-template-columns:1fr!important}.tp-nav-subtitle{display:none!important}}`}</style>
 
       {/* STICKY NAV */}
       <nav style={{
@@ -58,7 +58,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
             ) : (
               <span style={{ fontSize: 17, fontWeight: 900, color: c.text, textTransform: 'uppercase', letterSpacing: 1 }}>{biz.businessName || fb.shopName.toUpperCase()}</span>
             )}
-            <span style={{ display: 'block', fontSize: 10, color: c.accent, letterSpacing: 2, textTransform: 'uppercase' }}>{fb.navSubtitle} · {biz.city}, {biz.state}</span>
+            <span className="tp-nav-subtitle" style={{ display: 'block', fontSize: 10, color: c.accent, letterSpacing: 2, textTransform: 'uppercase' }}>{fb.navSubtitle} · {biz.city}, {biz.state}</span>
           </div>
           <div className="tp-nav-links" style={{ display: 'flex', gap: 28, alignItems: 'center' }}>
             <a href="#services" style={{ color: c.text, textDecoration: 'none', fontWeight: 700, fontSize: 13, letterSpacing: 0.5, textTransform: 'uppercase', opacity: 0.75 }}>Services</a>
@@ -177,11 +177,11 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
             <div style={{ width: 36, height: 4, background: c.accent, borderRadius: 2 }} />
             <span style={{ color: c.accent, fontSize: 11, letterSpacing: 4, textTransform: 'uppercase', fontWeight: 700 }}>SERVICES</span>
           </div>
-          <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 14px', letterSpacing: '-0.01em' }}>WHAT WE FIX</h2>
+          <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 14px', letterSpacing: '-0.01em' }}>{copy.servicesSection?.title || 'Our Services'}</h2>
           {copy.servicesSection?.intro && (
             <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.7, maxWidth: 520, marginBottom: 48 }}>{copy.servicesSection.intro}</p>
           )}
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 2 }}>
+          <div className="tp-services-grid" style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, minmax(0, 1fr))`, gap: 2 }}>
             {services.length > 0 ? services.map((svc, i) => (
               <div key={i} style={{
                 background: i % 2 === 0 ? c.secondary : '#232323',
