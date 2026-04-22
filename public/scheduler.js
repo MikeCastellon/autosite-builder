@@ -216,7 +216,13 @@
           ) +
           row(
             field('vehicle_year', 'Year', 'number', true, 'min="1900" max="2100"'),
-            select('vehicle_size', 'Size', ['sedan','suv','truck','van','other'])
+            select('vehicle_size', 'Size', [
+              {value:'sedan', label:'Sedan'},
+              {value:'suv', label:'SUV'},
+              {value:'truck', label:'Truck'},
+              {value:'van', label:'Van'},
+              {value:'other', label:'Other'},
+            ])
           ) +
           field('service_address', 'Service address (if mobile)', 'text', false) +
           fieldTextarea('notes', 'Notes', false) +
@@ -307,7 +313,11 @@
         '</label>';
     }
     function select(name, label, options) {
-      var opts = options.map(function (o) { return '<option value="' + o + '">' + o + '</option>'; }).join('');
+      var opts = options.map(function (o) {
+        var value = typeof o === 'string' ? o : o.value;
+        var display = typeof o === 'string' ? (o.charAt(0).toUpperCase() + o.slice(1)) : o.label;
+        return '<option value="' + value + '">' + display + '</option>';
+      }).join('');
       return '<label style="display:block;margin-bottom:10px;font-size:12px;color:#555;">' + label + ' <span style="color:#c00">*</span>' +
         '<select name="' + name + '" required style="width:100%;margin-top:3px;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font:13px Inter;background:#fff;">' + opts + '</select></label>';
     }
