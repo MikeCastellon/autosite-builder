@@ -241,7 +241,7 @@ export default function App() {
   };
 
   if (view === 'bookings-page') {
-    return <BookingsPage userId={session?.user?.id} onExit={() => setView('dashboard')} />;
+    return <BookingsPage userId={session?.user?.id} profile={profile} onExit={() => setView('dashboard')} />;
   }
 
   if (view === 'booking-settings' && settingsSiteId) {
