@@ -100,29 +100,30 @@ function buildSeoHead(businessInfo, generatedCopy, siteId) {
       .tp-4col { grid-template-columns: 1fr 1fr !important; }
     }
     @media (max-width: 600px) {
-      [data-widget="google-reviews"], [data-widget="google-reviews"] * { min-width: 0 !important; }
       [data-widget="google-reviews"] [class*="track"],
       [data-widget="google-reviews"] [class*="carousel"],
       [data-widget="google-reviews"] [class*="slider"],
       [data-widget="google-reviews"] [class*="list"],
       [data-widget="google-reviews"] [class*="cards"] {
-        display: flex !important;
-        flex-wrap: nowrap !important;
-        overflow-x: auto !important;
-        -webkit-overflow-scrolling: touch;
-        scroll-snap-type: x mandatory;
-        gap: 12px !important;
-        padding-bottom: 8px;
+        min-width: 0 !important;
+        overflow-x: visible !important;
       }
       [data-widget="google-reviews"] [class*="track"] > *,
       [data-widget="google-reviews"] [class*="carousel"] > *,
       [data-widget="google-reviews"] [class*="slider"] > *,
       [data-widget="google-reviews"] [class*="list"] > *,
       [data-widget="google-reviews"] [class*="cards"] > * {
-        flex: 0 0 calc(100% - 32px) !important;
-        min-width: calc(100% - 32px) !important;
-        max-width: calc(100% - 32px) !important;
-        scroll-snap-align: start;
+        flex: 0 0 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+      }
+      [data-widget="google-reviews"] [class*="card"],
+      [data-widget="google-reviews"] [class*="review"] {
+        min-width: 0 !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
       }
     }
   </style>

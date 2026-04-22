@@ -78,7 +78,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
   const tileIcons  = ['✦', '◈', '⬡', '◉', '✧', '◆', '◎', '⬟'];
 
   const s = {
-    wrapper: { background: white, color: text, fontFamily: dmSans, WebkitFontSmoothing: 'antialiased', overflowX: 'hidden', display: 'flex', flexDirection: 'column' },
+    wrapper: { background: white, color: text, fontFamily: dmSans, WebkitFontSmoothing: 'antialiased', overflowX: 'clip', display: 'flex', flexDirection: 'column' },
     nav: {
       position: 'sticky', top: 0, zIndex: 100, height: '52px',
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',

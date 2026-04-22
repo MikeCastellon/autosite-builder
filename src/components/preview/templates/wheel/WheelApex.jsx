@@ -71,7 +71,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
   if (heroStats.length === 0) heroStats.push(...defaultStats);
 
   return (
-    <div style={{ fontFamily: body, background: D.bg, color: D.ink, minHeight: '100vh', overflowX: 'hidden', containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ fontFamily: body, background: D.bg, color: D.ink, minHeight: '100vh', overflowX: 'clip', containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
       <style>{`@container(max-width:600px){.tp-nav-links{display:none!important}.tp-2col{grid-template-columns:1fr!important}.tp-3col{grid-template-columns:1fr 1fr!important}.tp-trust-bar{flex-wrap:wrap}.tp-trust-bar>div{min-width:50%;border-bottom:1px solid ${D.border}}.tp-apex-nav{padding:0 16px!important;height:56px!important;gap:8px}.tp-apex-brand{font-size:16px!important;letter-spacing:1.5px!important;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tp-apex-phone{display:none!important}.tp-apex-cta{font-size:10px!important;padding:7px 12px!important;letter-spacing:1px!important;white-space:nowrap}}`}</style>
 
       {/* NAV */}

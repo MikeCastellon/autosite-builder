@@ -125,7 +125,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
   }));
 
   return (
-    <div style={{ fontFamily: bodyFont, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, position: 'relative', containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ fontFamily: bodyFont, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'clip', margin: 0, padding: 0, position: 'relative', containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
       <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}.tp-3col{grid-template-columns:1fr!important}.tp-sudsy-brand{font-size:18px!important;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tp-sudsy-cta{font-size:13px!important;padding:6px 14px!important}}`}</style>
 
       {/* STATIC BACKGROUND BUBBLES */}

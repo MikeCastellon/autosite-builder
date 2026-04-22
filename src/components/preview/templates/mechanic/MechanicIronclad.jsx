@@ -137,7 +137,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
         background: c.bg,
         color: c.text,
         minHeight: '100vh',
-        overflowX: 'hidden',
+        overflowX: 'clip',
         margin: 0,
         padding: 0,
         backgroundImage: noiseBg,

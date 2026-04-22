@@ -74,7 +74,7 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
   const serviceIcons = ['✦', '◈', '⬡', '◉', '✧', '◆', '◇', '✣'];
 
   const s = {
-    wrapper: { background: c.bg, color: textColor, fontFamily: bodyFont, overflowX: 'hidden', containerType: 'inline-size', display: 'flex', flexDirection: 'column' },
+    wrapper: { background: c.bg, color: textColor, fontFamily: bodyFont, overflowX: 'clip', containerType: 'inline-size', display: 'flex', flexDirection: 'column' },
     nav: {
       position: 'sticky', top: 0, zIndex: 100,
       padding: scrolled ? '14px clamp(1.5rem,5cqi,3.75rem)' : '20px clamp(1.5rem,5cqi,3.75rem)',

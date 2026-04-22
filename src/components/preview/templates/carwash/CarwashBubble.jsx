@@ -120,7 +120,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
   const packageIcons = ['💧', '🫧', '✨', '🌟'];
 
   return (
-    <div style={{ fontFamily: bodyFont, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ fontFamily: bodyFont, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'clip', margin: 0, padding: 0, containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
       <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}.tp-3col{grid-template-columns:1fr!important}.tp-bubble-brand-name{font-size:15px!important;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}.tp-bubble-brand-sub{display:none!important}.tp-bubble-orb{width:30px!important;height:30px!important}.tp-bubble-cta{font-size:11px!important;padding:7px 14px!important}}`}</style>
 
       {/* Marquee keyframe */}
