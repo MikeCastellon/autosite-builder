@@ -123,9 +123,15 @@ export default function LoginPage() {
         <button
           type="button"
           onClick={() => { setIsSignUp(!isSignUp); setShowForgot(false); setError(null); setMessage(null); }}
-          className="w-full mt-3 text-xs text-[#888] hover:text-[#1a1a1a] transition-colors text-center"
+          className="w-full mt-4 text-[15px] font-medium text-[#555] hover:text-[#1a1a1a] transition-colors text-center"
         >
-          {showForgot ? '← Back to sign in' : isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+          {showForgot ? (
+            <>← Back to sign in</>
+          ) : isSignUp ? (
+            <>Already have an account? <span className="text-[#cc0000] font-semibold">Sign in</span></>
+          ) : (
+            <>Don't have an account? <span className="text-[#cc0000] font-semibold">Sign up</span></>
+          )}
         </button>
 
         {error && (
@@ -142,8 +148,15 @@ export default function LoginPage() {
           </div>
         )}
         {message && (
-          <div role="status" className="mt-4 rounded-xl border-2 border-green-600 bg-green-600 text-white px-4 py-3 text-[14px] font-semibold text-center shadow-md">
-            {message}
+          <div
+            role="status"
+            className="mt-4 flex items-start gap-3 rounded-xl border-2 border-green-700 bg-green-50 text-green-900 px-4 py-3 shadow-sm"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="shrink-0 mt-0.5" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" fill="#16a34a"/>
+              <path d="M8 12.5l2.5 2.5L16 9.5" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <p className="text-[14px] font-semibold leading-snug">{message}</p>
           </div>
         )}
       </div>
