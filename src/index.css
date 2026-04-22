@@ -15,48 +15,33 @@ body {
   color: #1a1a1a;
 }
 
-/* Google Reviews widget — force one card per view on narrow containers.
-   Widget shows partial neighbor cards by default; we want a single clean
-   card at mobile width. Force overflow:hidden on the track and resize
-   each card to fill the viewport width. */
+/* Google Reviews widget — the external widget decides cards-per-view
+   from window viewport width (4 on desktop, 1 on mobile ≤768px). In our
+   preview the viewport stays desktop even when the template is
+   constrained, so it shows 4 tiny crammed cards. We force 1-per-view
+   using the widget's real class names: .sf-gr-carousel / .sf-gr-card. */
 @media (max-width: 600px) {
-  [data-widget="google-reviews"] [class*="track"],
-  [data-widget="google-reviews"] [class*="carousel"],
-  [data-widget="google-reviews"] [class*="slider"],
-  [data-widget="google-reviews"] [class*="list"],
-  [data-widget="google-reviews"] [class*="cards"] {
-    overflow-x: hidden !important;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
+  [data-widget="google-reviews"] .sf-gr-carousel {
+    overflow: hidden !important;
+    padding: 0 !important;
   }
-  [data-widget="google-reviews"] [class*="track"] > *,
-  [data-widget="google-reviews"] [class*="carousel"] > *,
-  [data-widget="google-reviews"] [class*="slider"] > *,
-  [data-widget="google-reviews"] [class*="list"] > *,
-  [data-widget="google-reviews"] [class*="cards"] > * {
+  [data-widget="google-reviews"] .sf-gr-card {
     flex: 0 0 100% !important;
     width: 100% !important;
+    min-width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
   }
 }
 @container (max-width: 600px) {
-  [data-widget="google-reviews"] [class*="track"],
-  [data-widget="google-reviews"] [class*="carousel"],
-  [data-widget="google-reviews"] [class*="slider"],
-  [data-widget="google-reviews"] [class*="list"],
-  [data-widget="google-reviews"] [class*="cards"] {
-    overflow-x: hidden !important;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
+  [data-widget="google-reviews"] .sf-gr-carousel {
+    overflow: hidden !important;
+    padding: 0 !important;
   }
-  [data-widget="google-reviews"] [class*="track"] > *,
-  [data-widget="google-reviews"] [class*="carousel"] > *,
-  [data-widget="google-reviews"] [class*="slider"] > *,
-  [data-widget="google-reviews"] [class*="list"] > *,
-  [data-widget="google-reviews"] [class*="cards"] > * {
+  [data-widget="google-reviews"] .sf-gr-card {
     flex: 0 0 100% !important;
     width: 100% !important;
+    min-width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
   }
