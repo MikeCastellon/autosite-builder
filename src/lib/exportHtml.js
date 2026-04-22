@@ -106,12 +106,15 @@ function buildSeoHead(businessInfo, generatedCopy, siteId) {
         flex-direction: column !important;
         width: 100% !important;
         gap: 12px !important;
+        align-items: center !important;
+        justify-content: center !important;
       }
       [data-widget="google-reviews"] .sf-gr-card {
         flex: none !important;
         width: 100% !important;
         min-width: 0 !important;
-        max-width: 100% !important;
+        max-width: 440px !important;
+        margin: 0 auto !important;
         box-sizing: border-box !important;
         display: block !important;
       }
