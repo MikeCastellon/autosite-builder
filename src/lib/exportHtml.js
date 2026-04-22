@@ -100,28 +100,13 @@ function buildSeoHead(businessInfo, generatedCopy, siteId) {
       .tp-4col { grid-template-columns: 1fr 1fr !important; }
     }
     @media (max-width: 600px) {
-      [data-widget="google-reviews"] [class*="track"],
-      [data-widget="google-reviews"] [class*="carousel"],
-      [data-widget="google-reviews"] [class*="slider"],
-      [data-widget="google-reviews"] [class*="list"],
-      [data-widget="google-reviews"] [class*="cards"] {
-        min-width: 0 !important;
-        overflow-x: visible !important;
-      }
       [data-widget="google-reviews"] [class*="track"] > *,
       [data-widget="google-reviews"] [class*="carousel"] > *,
       [data-widget="google-reviews"] [class*="slider"] > *,
       [data-widget="google-reviews"] [class*="list"] > *,
       [data-widget="google-reviews"] [class*="cards"] > * {
         flex: 0 0 100% !important;
-        min-width: 100% !important;
-        max-width: 100% !important;
         width: 100% !important;
-        box-sizing: border-box !important;
-      }
-      [data-widget="google-reviews"] [class*="card"],
-      [data-widget="google-reviews"] [class*="review"] {
-        min-width: 0 !important;
         max-width: 100% !important;
         box-sizing: border-box !important;
       }
