@@ -38,13 +38,12 @@ export default function BookingDetailDrawer({ booking, onClose, onUpdated }) {
 
   async function run(action) {
     if (action === 'decline' && !showDecline) { setShowDecline(true); return; }
-    if (action === 'decline' && !declineReason.trim()) { setErr('Enter a reason'); return; }
     setBusy(true); setErr(null);
     try {
       const updated = await updateBooking({
         bookingId: b.id,
         action,
-        reason: action === 'decline' ? declineReason : undefined,
+        reason: action === 'decline' ? (declineReason.trim() || undefined) : undefined,
       });
       setB(updated);
       onUpdated && onUpdated(updated);

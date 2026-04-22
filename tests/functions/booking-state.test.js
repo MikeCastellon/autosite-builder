@@ -7,8 +7,8 @@ describe('applyAction', () => {
     expect(next).toEqual({ ok: true, status: 'confirmed' });
   });
 
-  it('decline: pending -> declined, requires reason', () => {
-    expect(applyAction('pending', 'decline')).toEqual({ ok: false, error: 'reason required for decline' });
+  it('decline: pending -> declined (reason optional)', () => {
+    expect(applyAction('pending', 'decline')).toEqual({ ok: true, status: 'declined' });
     expect(applyAction('pending', 'decline', { reason: 'full that day' })).toEqual({ ok: true, status: 'declined' });
   });
 

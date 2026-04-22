@@ -7,6 +7,14 @@ const client = process.env.POSTMARK_API_KEY
 const FROM = process.env.POSTMARK_FROM_EMAIL || 'bookings@example.com';
 const APP_URL = process.env.MAIN_APP_URL || 'https://app.example.com';
 
+function logPostmarkFailure(where, err) {
+  // Postmark errors have .code and .message (server response) — surface both.
+  const code = err?.code ?? err?.status ?? 'unknown';
+  const message = err?.message ?? String(err);
+  console.error(`[postmark:${where}] code=${code} from=${FROM} error=${message}`);
+  if (err?.response) console.error(`[postmark:${where}] response=`, JSON.stringify(err.response));
+}
+
 function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, (c) => ({
     '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;',
@@ -38,14 +46,21 @@ export async function newBookingToOwner({ booking, site, ownerEmail }) {
   `;
   const text = `New booking request for ${name}\n\n${b.customer_name} (${b.customer_email}, ${b.customer_phone}) wants to book for ${formatWhen(b.preferred_at)}.\nVehicle: ${b.vehicle_year} ${b.vehicle_make} ${b.vehicle_model} (${b.vehicle_size})\n${b.service_address ? 'Service address: ' + b.service_address + '\n' : ''}${b.notes ? 'Notes: ' + b.notes + '\n' : ''}Open: ${dashLink}`;
 
-  return client.sendEmail({
-    From: FROM,
-    To: ownerEmail,
-    Subject: `New booking request from ${b.customer_name} — ${formatWhen(b.preferred_at)}`,
-    HtmlBody: html,
-    TextBody: text,
-    MessageStream: 'outbound',
-  });
+  try {
+    const res = await client.sendEmail({
+      From: FROM,
+      To: ownerEmail,
+      Subject: `New booking request from ${b.customer_name} — ${formatWhen(b.preferred_at)}`,
+      HtmlBody: html,
+      TextBody: text,
+      MessageStream: 'outbound',
+    });
+    console.log(`[postmark:newBookingToOwner] sent to=${ownerEmail} messageId=${res?.MessageID}`);
+    return res;
+  } catch (err) {
+    logPostmarkFailure('newBookingToOwner', err);
+    throw err;
+  }
 }
 
 export async function statusUpdateToCustomer({ booking, site, status, reason }) {
@@ -76,12 +91,19 @@ export async function statusUpdateToCustomer({ booking, site, status, reason }) 
   const html = `<h2>${m.heading}</h2><p>${m.body}</p>`;
   const text = `${m.heading}\n\n${m.body.replace(/<[^>]+>/g,'')}`;
 
-  return client.sendEmail({
-    From: FROM,
-    To: b.customer_email,
-    Subject: m.subject,
-    HtmlBody: html,
-    TextBody: text,
-    MessageStream: 'outbound',
-  });
+  try {
+    const res = await client.sendEmail({
+      From: FROM,
+      To: b.customer_email,
+      Subject: m.subject,
+      HtmlBody: html,
+      TextBody: text,
+      MessageStream: 'outbound',
+    });
+    console.log(`[postmark:statusUpdateToCustomer] status=${status} to=${b.customer_email} messageId=${res?.MessageID}`);
+    return res;
+  } catch (err) {
+    logPostmarkFailure('statusUpdateToCustomer', err);
+    throw err;
+  }
 }

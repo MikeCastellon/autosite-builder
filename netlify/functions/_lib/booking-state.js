@@ -16,8 +16,5 @@ export function applyAction(currentStatus, action, opts = {}) {
   if (!allowed || !allowed[action]) {
     return { ok: false, error: `cannot ${action} from ${currentStatus}` };
   }
-  if (action === 'decline' && !opts.reason) {
-    return { ok: false, error: 'reason required for decline' };
-  }
   return { ok: true, status: allowed[action] };
 }
