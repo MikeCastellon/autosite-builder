@@ -84,7 +84,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
 
   const sectionTitle = {
     fontFamily: bebas,
-    fontSize: 'clamp(44px, 5vw, 68px)',
+    fontSize: 'clamp(44px, 5cqi, 68px)',
     letterSpacing: 2,
     lineHeight: 0.95,
     color: c.text,
@@ -241,7 +241,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
         {!splitHero && <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: '55%', background: '#1C1C1C', clipPath: 'polygon(12% 0, 100% 0, 100% 100%, 0% 100%)', backgroundImage: hatch }} />}
         {/* Ghost year number */}
         {!splitHero && biz.yearsInBusiness && (
-          <div style={{ position: 'absolute', right: '4%', top: '50%', transform: 'translateY(-50%)', fontFamily: bebas, fontSize: 'clamp(160px, 22vw, 340px)', color: 'rgba(255,255,255,0.025)', lineHeight: 1, pointerEvents: 'none', userSelect: 'none', letterSpacing: -8 }}>
+          <div style={{ position: 'absolute', right: '4%', top: '50%', transform: 'translateY(-50%)', fontFamily: bebas, fontSize: 'clamp(160px, 22cqi, 340px)', color: 'rgba(255,255,255,0.025)', lineHeight: 1, pointerEvents: 'none', userSelect: 'none', letterSpacing: -8 }}>
             {biz.yearsInBusiness}
           </div>
         )}
@@ -249,8 +249,8 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
         {/* Hero content */}
         <div style={splitHero ? {
           flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
-          padding: 'clamp(3rem,6vw,6rem)', background: c.bg,
-        } : { position: 'relative', zIndex: 2, padding: 'clamp(40px, 8vw, 80px) 5%', maxWidth: 740 }}>
+          padding: 'clamp(3rem,6cqi,6rem)', background: c.bg,
+        } : { position: 'relative', zIndex: 2, padding: 'clamp(40px, 8cqi, 80px) 5%', maxWidth: 740 }}>
           {/* Kicker line */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 24 }}>
             <div style={{ width: 40, height: 3, background: c.accent, flexShrink: 0 }} />
@@ -261,7 +261,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
           </div>
 
           {/* H1 */}
-          <h1 style={{ fontFamily: bebas, fontSize: 'clamp(32px, 7vw, 90px)', lineHeight: 0.95, letterSpacing: 2, color: c.text, margin: '0 0 28px' }}>
+          <h1 style={{ fontFamily: bebas, fontSize: 'clamp(32px, 7cqi, 90px)', lineHeight: 0.95, letterSpacing: 2, color: c.text, margin: '0 0 28px' }}>
             {copy.headline ? (
               copy.headline
             ) : (
@@ -351,7 +351,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
           SERVICES GRID
       ═══════════════════════════════════════════════════════════ */}
       {!hidden('services') && (
-      <section id="services" style={{ padding: 'clamp(72px, 10vw, 120px) 5%', background: '#141414', position: 'relative' , order: getOrder('services') }}>
+      <section id="services" style={{ padding: 'clamp(72px, 10cqi, 120px) 5%', background: '#141414', position: 'relative' , order: getOrder('services') }}>
         {/* Top dashed rust stripe */}
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, backgroundImage: dashedRust }} />
         <div style={{ maxWidth: 1200, margin: '0 auto'  }}>
@@ -373,7 +373,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
             {(services.length > 0 ? services : []).map((svc, i) => (
               <div
                 key={i}
-                style={{ background: '#1C1C1C', padding: 'clamp(28px, 4vw, 44px) clamp(20px, 3vw, 36px)', position: 'relative', overflow: 'hidden', borderTop: '3px solid transparent', transition: 'background 0.25s, border-color 0.25s' }}
+                style={{ background: '#1C1C1C', padding: 'clamp(28px, 4cqi, 44px) clamp(20px, 3cqi, 36px)', position: 'relative', overflow: 'hidden', borderTop: '3px solid transparent', transition: 'background 0.25s, border-color 0.25s' }}
                 onMouseEnter={(e) => { e.currentTarget.style.background = '#202020'; e.currentTarget.style.borderTopColor = c.accent; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = '#1C1C1C'; e.currentTarget.style.borderTopColor = 'transparent'; }}
               >
@@ -425,8 +425,8 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
             </>
           )}
           {/* Bottom name overlay */}
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 'clamp(24px, 4vw, 40px)', background: 'linear-gradient(to top, rgba(0,0,0,0.9), transparent)' }}>
-            <div style={{ fontFamily: bebas, fontSize: 'clamp(26px, 4vw, 42px)', letterSpacing: 1, color: '#F0EDE8', lineHeight: 1.1 }}>
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 'clamp(24px, 4cqi, 40px)', background: 'linear-gradient(to top, rgba(0,0,0,0.9), transparent)' }}>
+            <div style={{ fontFamily: bebas, fontSize: 'clamp(26px, 4cqi, 42px)', letterSpacing: 1, color: '#F0EDE8', lineHeight: 1.1 }}>
               {biz.businessName || fb.shopName.toUpperCase()}<br />
               <span style={{ color: c.accent }}>{[biz.city, biz.state].filter(Boolean).join(', ')}</span>
             </div>
@@ -434,7 +434,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
         </div>
 
         {/* RIGHT — About copy */}
-        <div style={{ padding: 'clamp(48px, 8vw, 80px) clamp(32px, 6vw, 64px)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        <div style={{ padding: 'clamp(48px, 8cqi, 80px) clamp(32px, 6cqi, 64px)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <EyebrowBar label="About the Shop" />
           <h2 style={{ ...sectionTitle, marginBottom: 0 }}>
             WE DON&apos;T<br />CUT <span style={{ color: c.accent }}>CORNERS.</span>
@@ -486,7 +486,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
           WHY IRONCLAD — 4-cell grid
       ═══════════════════════════════════════════════════════════ */}
       {!hidden('whyUs') && (
-      <section style={{ background: '#1C1C1C', padding: 'clamp(72px, 10vw, 100px) 5%', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' , order: getOrder('whyUs') }}>
+      <section style={{ background: '#1C1C1C', padding: 'clamp(72px, 10cqi, 100px) 5%', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' , order: getOrder('whyUs') }}>
         <div style={{ maxWidth: 1200, margin: '0 auto'  }}>
           <div style={{ marginBottom: 64 }}>
             <EyebrowBar label="Why Choose Us" />
@@ -499,7 +499,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
             {whyItems.map((item, i) => (
               <div
                 key={i}
-                style={{ background: '#141414', padding: 'clamp(28px, 4vw, 44px) clamp(20px, 3vw, 32px)', position: 'relative', transition: 'background 0.25s' }}
+                style={{ background: '#141414', padding: 'clamp(28px, 4cqi, 44px) clamp(20px, 3cqi, 32px)', position: 'relative', transition: 'background 0.25s' }}
                 onMouseEnter={(e) => { e.currentTarget.style.background = '#1C1C1C'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = '#141414'; }}
               >
@@ -519,11 +519,11 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
       {!hidden('testimonials') && (
         copy?.googleWidgetKey ? (
           <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
-            {copy.googleReviewsTitle && <h2 style={{ fontFamily: bebas || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.googleReviewsTitle}</h2>}
+            {copy.googleReviewsTitle && <h2 style={{ fontFamily: bebas || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} theme={copy?.googleReviewsTheme} />
           </div>
         ) : testimonials.length > 0 ? (
-        <section id="testimonials" style={{ background: c.bg, padding: 'clamp(72px, 10vw, 100px) 5%', position: 'relative' , order: getOrder('testimonials') }}>
+        <section id="testimonials" style={{ background: c.bg, padding: 'clamp(72px, 10cqi, 100px) 5%', position: 'relative' , order: getOrder('testimonials') }}>
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, backgroundImage: dashedRust }} />
           <div style={{ maxWidth: 1200, margin: '0 auto' }}>
             <div style={{ marginBottom: 64 }}>
@@ -572,7 +572,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
       {!hidden('cta') && (
       <section
         id="contact"
-        style={{ background: '#141414', padding: 'clamp(72px, 10vw, 100px) 5%', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'clamp(40px, 6vw, 80px)', alignItems: 'start', order: getOrder('cta') }}
+        style={{ background: '#141414', padding: 'clamp(72px, 10cqi, 100px) 5%', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'clamp(40px, 6cqi, 80px)', alignItems: 'start', order: getOrder('cta') }}
       >
         {/* Left — contact detail cards */}
         <div>
@@ -610,7 +610,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
         {/* Right — hours table + warranty callout */}
         <div>
           <EyebrowBar label="Shop Hours" />
-          <h2 style={{ ...sectionTitle, marginBottom: 28, fontSize: 'clamp(32px, 4vw, 52px)' }}>
+          <h2 style={{ ...sectionTitle, marginBottom: 28, fontSize: 'clamp(32px, 4cqi, 52px)' }}>
             WE&apos;RE OPEN<br /><span style={{ color: c.accent }}>WHEN YOU NEED US.</span>
           </h2>
           {biz.hours && Object.keys(biz.hours).length > 0 ? (
@@ -642,10 +642,10 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
           CTA BAND
       ═══════════════════════════════════════════════════════════ */}
       {!hidden('ctaBand') && (
-      <section style={{ background: c.accent, padding: 'clamp(64px, 10vw, 96px) 5%', textAlign: 'center', position: 'relative', overflow: 'hidden', order: getOrder('ctaBand') }}>
+      <section style={{ background: c.accent, padding: 'clamp(64px, 10cqi, 96px) 5%', textAlign: 'center', position: 'relative', overflow: 'hidden', order: getOrder('ctaBand') }}>
         <div style={{ position: 'absolute', inset: 0, backgroundImage: hatch, opacity: 0.4 }} />
         <div style={{ position: 'relative', zIndex: 1 }}>
-          <h2 style={{ fontFamily: bebas, fontSize: 'clamp(36px, 6vw, 72px)', letterSpacing: 3, color: '#fff', margin: '0 0 14px', lineHeight: 0.95 }}>
+          <h2 style={{ fontFamily: bebas, fontSize: 'clamp(36px, 6cqi, 72px)', letterSpacing: 3, color: '#fff', margin: '0 0 14px', lineHeight: 0.95 }}>
             {copy.ctaHeadline || fb.ctaHeadline.toUpperCase()}
           </h2>
           <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 16, marginBottom: 40, fontFamily: bodyFont }}>
@@ -676,9 +676,9 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
       {/* ═══════════════════════════════════════════════════════════
           FOOTER
       ═══════════════════════════════════════════════════════════ */}
-      <footer style={{ background: c.bg, borderTop: `2px solid ${c.accent}`, padding: 'clamp(48px, 8vw, 64px) 5% clamp(24px, 4vw, 32px)', order: 9999 }}>
+      <footer style={{ background: c.bg, borderTop: `2px solid ${c.accent}`, padding: 'clamp(48px, 8cqi, 64px) 5% clamp(24px, 4cqi, 32px)', order: 9999 }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'clamp(28px, 5vw, 56px)', marginBottom: 48 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'clamp(28px, 5cqi, 56px)', marginBottom: 48 }}>
 
             {/* Brand column */}
             <div>

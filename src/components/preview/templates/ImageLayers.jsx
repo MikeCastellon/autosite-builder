@@ -38,7 +38,7 @@ export function GallerySection({ images = {}, colors = {}, font, bodyFont }) {
 
   return (
     <section style={{
-      padding: 'clamp(3rem, 7vw, 6rem) clamp(1.5rem, 7vw, 5rem)',
+      padding: 'clamp(3rem, 7cqi, 6rem) clamp(1.5rem, 7cqi, 5rem)',
       background: colors.secondary || colors.bg,
     }}>
       <div style={{
@@ -48,7 +48,7 @@ export function GallerySection({ images = {}, colors = {}, font, bodyFont }) {
         Our Work
       </div>
       <h2 style={{
-        fontFamily: font, fontSize: 'clamp(1.8rem, 3.5vw, 2.8rem)',
+        fontFamily: font, fontSize: 'clamp(1.8rem, 3.5cqi, 2.8rem)',
         color: colors.text, marginBottom: '2rem', fontWeight: 700,
       }}>
         Gallery

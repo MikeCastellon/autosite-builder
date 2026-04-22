@@ -103,7 +103,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
 
         <div style={splitHero ? {
           flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
-          padding: 'clamp(3rem,6vw,6rem)', background: c.bg,
+          padding: 'clamp(3rem,6cqi,6rem)', background: c.bg,
         } : { position: 'relative', zIndex: 1, padding: '7rem 5% 4rem', maxWidth: 900 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
             <span style={{ fontSize: 22 }}>⚙️</span>
@@ -112,7 +112,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
             </span>
           </div>
           <h1 style={{
-            fontSize: 'clamp(2.5rem, 6vw, 5rem)', fontWeight: 900, lineHeight: 1.05,
+            fontSize: 'clamp(2.5rem, 6cqi, 5rem)', fontWeight: 900, lineHeight: 1.05,
             textTransform: 'uppercase', letterSpacing: '-0.01em', margin: '0 0 20px',
           }}>
             {copy.headline || fb.headline}
@@ -177,7 +177,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
             <div style={{ width: 36, height: 4, background: c.accent, borderRadius: 2 }} />
             <span style={{ color: c.accent, fontSize: 11, letterSpacing: 4, textTransform: 'uppercase', fontWeight: 700 }}>SERVICES</span>
           </div>
-          <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 14px', letterSpacing: '-0.01em' }}>{copy.servicesSection?.title || 'Our Services'}</h2>
+          <h2 style={{ fontSize: 'clamp(2rem, 4cqi, 3rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 14px', letterSpacing: '-0.01em' }}>{copy.servicesSection?.title || 'Our Services'}</h2>
           {copy.servicesSection?.intro && (
             <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.7, maxWidth: 520, marginBottom: 48 }}>{copy.servicesSection.intro}</p>
           )}
@@ -213,7 +213,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
               <div style={{ width: 36, height: 4, background: c.accent, borderRadius: 2 }} />
               <span style={{ color: c.accent, fontSize: 11, letterSpacing: 4, textTransform: 'uppercase', fontWeight: 700 }}>SCHEDULE</span>
             </div>
-            <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.8rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 8px', letterSpacing: '-0.01em' }}>SHOP HOURS</h2>
+            <h2 style={{ fontSize: 'clamp(2rem, 3.5cqi, 2.8rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 8px', letterSpacing: '-0.01em' }}>SHOP HOURS</h2>
             <p style={{ color: c.muted, fontSize: 14, marginBottom: 28 }}>We're open and ready to serve you.</p>
             {biz.hours && Object.keys(biz.hours).length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
@@ -336,7 +336,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
               <div style={{ width: 36, height: 4, background: c.accent, borderRadius: 2 }} />
               <span style={{ color: c.accent, fontSize: 11, letterSpacing: 4, textTransform: 'uppercase', fontWeight: 700 }}>OUR SHOP</span>
             </div>
-            <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.8rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 20px', letterSpacing: '-0.01em' }}>ABOUT {biz.businessName || 'US'}</h2>
+            <h2 style={{ fontSize: 'clamp(2rem, 3.5cqi, 2.8rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 20px', letterSpacing: '-0.01em' }}>ABOUT {biz.businessName || 'US'}</h2>
             <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.85, marginBottom: 20 }}>
               {copy.aboutText || `Serving ${biz.city || 'your area'} with ${fb.aboutFallback} since day one.`}
             </p>
@@ -374,7 +374,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
       {!hidden('testimonials') && (
         copy?.googleWidgetKey ? (
           <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
-            {copy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.googleReviewsTitle}</h2>}
+            {copy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} theme={copy?.googleReviewsTheme} />
           </div>
         ) : testimonials.length > 0 ? (
@@ -382,7 +382,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
           <div style={{ maxWidth: 1200, margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 48 }}>
               <div style={{ width: 36, height: 4, background: c.accent, borderRadius: 2 }} />
-              <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.5rem)', fontWeight: 900, textTransform: 'uppercase', margin: 0 }}>REVIEWS</h2>
+              <h2 style={{ fontSize: 'clamp(2rem, 3.5cqi, 2.5rem)', fontWeight: 900, textTransform: 'uppercase', margin: 0 }}>REVIEWS</h2>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
               {testimonials.map((t, i) => (
@@ -404,7 +404,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
       {/* CTA */}
       {!hidden('cta') && (
       <section style={{ background: c.accent, padding: '80px 5%', textAlign: 'center' , order: getOrder('cta') }}>
-        <h2 style={{ fontSize: 'clamp(2rem, 4.5vw, 3.5rem)', fontWeight: 900, color: '#000', textTransform: 'uppercase', margin: '0 0 14px', letterSpacing: '-0.01em' }}>
+        <h2 style={{ fontSize: 'clamp(2rem, 4.5cqi, 3.5rem)', fontWeight: 900, color: '#000', textTransform: 'uppercase', margin: '0 0 14px', letterSpacing: '-0.01em' }}>
           {copy.ctaHeadline || fb.ctaHeadline.toUpperCase()}
         </h2>
         <p style={{ color: 'rgba(0,0,0,0.55)', fontSize: 16, marginBottom: 36 }}>

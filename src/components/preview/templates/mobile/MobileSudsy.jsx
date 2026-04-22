@@ -82,7 +82,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
   });
 
   const titleStyle = {
-    fontFamily: font, fontSize: 'clamp(32px, 4vw, 52px)',
+    fontFamily: font, fontSize: 'clamp(32px, 4cqi, 52px)',
     color: c.text, lineHeight: 1.1, margin: 0,
   };
 
@@ -178,12 +178,12 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
         {splitHero ? (
           <div style={{
             flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
-            padding: 'clamp(3rem,6vw,6rem)', background: c.bg,
+            padding: 'clamp(3rem,6cqi,6rem)', background: c.bg,
           }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: c.text, color: c.accent, fontFamily: font, fontSize: 15, padding: '7px 18px', borderRadius: 980, marginBottom: 24, alignSelf: 'flex-start' }}>
               {String.fromCodePoint(0x1F4CD)} We Come To YOU{biz.city ? ` — ${biz.city}` : ''}
             </div>
-            <h1 style={{ fontFamily: font, fontSize: 'clamp(1.8rem, 5vw, 4rem)', lineHeight: 1.05, color: c.text, margin: '0 0 20px' }}>
+            <h1 style={{ fontFamily: font, fontSize: 'clamp(1.8rem, 5cqi, 4rem)', lineHeight: 1.05, color: c.text, margin: '0 0 20px' }}>
               {copy.headline || 'Your Car Deserves Better.'}
             </h1>
             <p style={{ fontSize: 17, fontWeight: 600, color: c.muted, lineHeight: 1.7, maxWidth: 480, marginBottom: 36 }}>
@@ -211,7 +211,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: c.text, color: c.accent, fontFamily: font, fontSize: 15, padding: '7px 18px', borderRadius: 980, marginBottom: 24 }}>
               {String.fromCodePoint(0x1F4CD)} We Come To YOU{biz.city ? ` — ${biz.city}` : ''}
             </div>
-            <h1 style={{ fontFamily: font, fontSize: 'clamp(1.8rem, 5vw, 4rem)', lineHeight: 1.05, color: c.text, margin: '0 0 20px' }}>
+            <h1 style={{ fontFamily: font, fontSize: 'clamp(1.8rem, 5cqi, 4rem)', lineHeight: 1.05, color: c.text, margin: '0 0 20px' }}>
               {copy.headline || 'Your Car Deserves Better.'}
             </h1>
             <p style={{ fontSize: 17, fontWeight: 600, color: c.muted, lineHeight: 1.7, maxWidth: 480, marginBottom: 36 }}>
@@ -454,7 +454,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
       {!hidden('testimonials') && (
         copy?.googleWidgetKey ? (
           <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
-            {copy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.googleReviewsTitle}</h2>}
+            {copy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} theme={copy?.googleReviewsTheme} />
           </div>
         ) : testimonials.length > 0 ? (
@@ -497,7 +497,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
       <section id="contact" style={{ background: "#ff6b9d", borderTop: `4px solid ${c.text}`, borderBottom: `4px solid ${c.text}`, padding: "80px 5%" , order: getOrder('cta') }}>
         <div className="tp-2col" style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "center" }}>
           <div>
-            <h2 style={{ fontFamily: font, fontSize: "clamp(36px, 4vw, 58px)", color: "#fff", lineHeight: 1.05, marginBottom: 20 }}>
+            <h2 style={{ fontFamily: font, fontSize: "clamp(36px, 4cqi, 58px)", color: "#fff", lineHeight: 1.05, marginBottom: 20 }}>
               {copy.ctaHeadline || 'Ready for the cleanest car of your life?'}
             </h2>
             <p style={{ fontSize: 16, color: "rgba(255,255,255,0.85)", fontWeight: 600, lineHeight: 1.65, marginBottom: 32 }}>

@@ -77,7 +77,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
   };
 
   const sectionTitleStyle = {
-    fontFamily: font, fontSize: 'clamp(2.2rem, 4vw, 3.6rem)', fontWeight: 800,
+    fontFamily: font, fontSize: 'clamp(2.2rem, 4cqi, 3.6rem)', fontWeight: 800,
     lineHeight: 1.05, letterSpacing: -1, color: c.text, margin: 0,
   };
 
@@ -153,7 +153,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
         }} />}
         <div style={splitHero ? {
           flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
-          padding: 'clamp(3rem,6vw,6rem)', background: c.bg,
+          padding: 'clamp(3rem,6cqi,6rem)', background: c.bg,
         } : { position: 'relative', zIndex: 1, padding: '8rem 5% 5rem', maxWidth: 1000, margin: '0 auto', textAlign: 'center', width: '100%' }}>
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
@@ -165,13 +165,13 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
             {biz.city && biz.state ? `${biz.city}, ${biz.state}` : fb.heroBadge}
           </div>
           <h1 style={{
-            fontFamily: font, fontSize: 'clamp(1.8rem, 5vw, 4.2rem)', fontWeight: 800,
+            fontFamily: font, fontSize: 'clamp(1.8rem, 5cqi, 4.2rem)', fontWeight: 800,
             lineHeight: 1.05, letterSpacing: -1, margin: '0 0 24px', color: c.text,
           }}>
             {copy.headline || fb.headline || 'Precision. Zero Compromise.'}
           </h1>
           <p style={{
-            fontSize: 'clamp(15px, 2vw, 18px)', lineHeight: 1.75, maxWidth: 600, margin: '0 auto 44px',
+            fontSize: 'clamp(15px, 2cqi, 18px)', lineHeight: 1.75, maxWidth: 600, margin: '0 auto 44px',
             background: `linear-gradient(180deg, ${c.text} 0%, rgba(255,255,255,0.5) 100%)`,
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
           }}>
@@ -307,7 +307,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
               fontSize: 30, boxShadow: `0 0 50px ${c.accent}30`,
             }}>🛡</div>
             <div style={{ color: cCyan, fontWeight: 700, fontSize: 10, letterSpacing: 4, textTransform: 'uppercase', marginBottom: 12, fontFamily: font }}>BACKED BY A GUARANTEE</div>
-            <h2 style={{ ...sectionTitleStyle, fontSize: 'clamp(1.8rem, 3.5vw, 2.6rem)', marginBottom: 20 }}>Our Warranty Promise</h2>
+            <h2 style={{ ...sectionTitleStyle, fontSize: 'clamp(1.8rem, 3.5cqi, 2.6rem)', marginBottom: 20 }}>Our Warranty Promise</h2>
             <div style={{
               color: c.text, fontSize: 16, lineHeight: 1.8, maxWidth: 560, margin: '0 auto',
               padding: '28px 32px',
@@ -389,7 +389,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
               <span style={{ width: 24, height: 1, background: cCyan, flexShrink: 0 }} />
               About the Studio
             </div>
-            <h2 style={{ ...sectionTitleStyle, fontSize: 'clamp(1.8rem, 3vw, 2.6rem)', marginBottom: 20 }}>
+            <h2 style={{ ...sectionTitleStyle, fontSize: 'clamp(1.8rem, 3cqi, 2.6rem)', marginBottom: 20 }}>
               About {biz.businessName || 'Us'}
             </h2>
             <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.85, marginBottom: 24 }}>
@@ -429,7 +429,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
       {!hidden('testimonials') && (
         copy?.googleWidgetKey ? (
           <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
-            {copy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.googleReviewsTitle}</h2>}
+            {copy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} theme={copy?.googleReviewsTheme} />
           </div>
         ) : testimonials.length > 0 ? (
@@ -500,7 +500,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
             Ready When You Are
             <span style={{ width: 24, height: 1, background: cCyan, flexShrink: 0 }} />
           </div>
-          <h2 style={{ ...sectionTitleStyle, marginBottom: 16, fontSize: 'clamp(2rem, 4vw, 3.2rem)' }}>{copy.ctaHeadline || fb.ctaHeadline || 'Get in Touch'}</h2>
+          <h2 style={{ ...sectionTitleStyle, marginBottom: 16, fontSize: 'clamp(2rem, 4cqi, 3.2rem)' }}>{copy.ctaHeadline || fb.ctaHeadline || 'Get in Touch'}</h2>
           <p style={{ color: c.muted, fontSize: 16, marginBottom: 12, lineHeight: 1.6 }}>
             {copy.ctaSubtext || copy.ctaSecondary || `Serving ${biz.city || 'your area'}${biz.state ? `, ${biz.state}` : ''} and surrounding areas. Call or stop by for a free consultation.`}
           </p>

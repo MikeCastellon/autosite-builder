@@ -116,14 +116,14 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
       }}>
         {!splitHero && <HeroImage src={images.hero} />}
         <div style={splitHero ? {
-          padding: 'clamp(36px, 8vw, 72px) clamp(16px, 6vw, 48px)', display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          padding: 'clamp(36px, 8cqi, 72px) clamp(16px, 6cqi, 48px)', display: 'flex', flexDirection: 'column', justifyContent: 'center',
         } : {
-          position: 'relative', zIndex: 1, padding: 'clamp(48px, 10vw, 96px) clamp(16px, 6vw, 48px) clamp(32px, 8vw, 72px)', maxWidth: 700,
+          position: 'relative', zIndex: 1, padding: 'clamp(48px, 10cqi, 96px) clamp(16px, 6cqi, 48px) clamp(32px, 8cqi, 72px)', maxWidth: 700,
         }}>
           <p style={{ fontSize: 11, letterSpacing: 3, textTransform: 'uppercase', color: D.bronze, marginBottom: 14, fontWeight: 500 }}>
             ◆ {fb.heroBadge}{biz.city ? ` · ${biz.city}` : ''}
           </p>
-          <h1 style={{ fontFamily: display, fontSize: 'clamp(36px, 5vw, 64px)', lineHeight: 1, letterSpacing: 1, color: D.ink, marginBottom: 24 }}>
+          <h1 style={{ fontFamily: display, fontSize: 'clamp(36px, 5cqi, 64px)', lineHeight: 1, letterSpacing: 1, color: D.ink, marginBottom: 24 }}>
             {copy.headline ? (
               (() => {
                 const words = copy.headline.trim().split(' ');
@@ -215,7 +215,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
       {!hidden('products') && (() => {
         const products = copy?.products?.length > 0 ? copy.products : (packages.length > 0 ? packages : services.length > 0 ? services : fb.defaultProducts);
         return (
-          <section id="services" style={{ order: getOrder('products'), padding: 'clamp(40px, 8vw, 64px) clamp(16px, 6vw, 48px)' }}>
+          <section id="services" style={{ order: getOrder('products'), padding: 'clamp(40px, 8cqi, 64px) clamp(16px, 6cqi, 48px)' }}>
             <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 32 }}>
               <div>
@@ -262,7 +262,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
 
       {/* ABOUT — standard pattern: image/stats left, text right */}
       {!hidden('about') && (
-      <section id="about" style={{ order: getOrder('about'), padding: 'clamp(48px, 8vw, 80px) clamp(16px, 6vw, 48px)', background: D.card, borderTop: `1px solid ${D.border}`, borderBottom: `1px solid ${D.border}` }}>
+      <section id="about" style={{ order: getOrder('about'), padding: 'clamp(48px, 8cqi, 80px) clamp(16px, 6cqi, 48px)', background: D.card, borderTop: `1px solid ${D.border}`, borderBottom: `1px solid ${D.border}` }}>
         <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'center' }}>
           <div>
             {(copy?.aboutLayout || 'image') !== 'stats' ? (
@@ -355,11 +355,11 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
       {!hidden('testimonials') && (
         copy?.googleWidgetKey ? (
           <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
-            {copy.googleReviewsTitle && <h2 style={{ fontFamily: display || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: D.ink }}>{copy.googleReviewsTitle}</h2>}
+            {copy.googleReviewsTitle && <h2 style={{ fontFamily: display || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: D.ink }}>{copy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} theme={copy?.googleReviewsTheme} />
           </div>
         ) : testimonials.length > 0 ? (
-        <section style={{ order: getOrder('testimonials'), padding: 'clamp(40px, 8vw, 64px) clamp(16px, 6vw, 48px)', background: D.card, borderTop: `1px solid ${D.border}` }}>
+        <section style={{ order: getOrder('testimonials'), padding: 'clamp(40px, 8cqi, 64px) clamp(16px, 6cqi, 48px)', background: D.card, borderTop: `1px solid ${D.border}` }}>
           <div style={{ marginBottom: 32 }}>
             <p style={{ fontSize: 11, letterSpacing: 3, textTransform: 'uppercase', color: D.bronze, marginBottom: 8, fontWeight: 500 }}>◆ Reviews</p>
             <h2 style={{ fontFamily: display, fontSize: 44, letterSpacing: 1, color: D.ink, lineHeight: 1, margin: 0 }}>Customer Reviews</h2>
@@ -397,7 +397,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
       )}
 
       {/* FOOTER */}
-      <footer style={{ order: 9999, padding: 'clamp(24px, 6vw, 36px) clamp(16px, 6vw, 48px)', background: D.card, borderTop: `1px solid ${D.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+      <footer style={{ order: 9999, padding: 'clamp(24px, 6cqi, 36px) clamp(16px, 6cqi, 48px)', background: D.card, borderTop: `1px solid ${D.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           {images.logo ? (
             <img src={images.logo} alt={biz.businessName} style={{ height: 24, objectFit: 'contain' }} />

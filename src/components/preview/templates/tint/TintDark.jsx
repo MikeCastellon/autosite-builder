@@ -106,7 +106,7 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
 
         <div style={splitHero ? {
           flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
-          padding: 'clamp(3rem,6vw,6rem)', background: c.bg,
+          padding: 'clamp(3rem,6cqi,6rem)', background: c.bg,
         } : { position: 'relative', zIndex: 1, padding: '7rem 5% 4rem', maxWidth: 900, margin: '0 auto', textAlign: 'center', width: '100%' }}>
           <div style={{
             display: 'inline-block', border: `1px solid ${c.accent}55`, borderRadius: 30,
@@ -115,7 +115,7 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
             {fb.heroBadge} · {biz.city}, {biz.state}
           </div>
           <h1 style={{
-            fontSize: 'clamp(2.5rem, 6vw, 5rem)', fontWeight: 800, lineHeight: 1.1,
+            fontSize: 'clamp(2.5rem, 6cqi, 5rem)', fontWeight: 800, lineHeight: 1.1,
             margin: '0 0 20px',
           }}>
             {copy.headline || fb.headline}
@@ -182,7 +182,7 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ marginBottom: 48 }}>
             <div style={{ color: c.accent, fontWeight: 700, letterSpacing: 3, fontSize: 11, textTransform: 'uppercase', marginBottom: 10 }}>WHAT WE DO</div>
-            <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 800, margin: '0 0 14px' }}>Our Services</h2>
+            <h2 style={{ fontSize: 'clamp(2rem, 4cqi, 3rem)', fontWeight: 800, margin: '0 0 14px' }}>Our Services</h2>
             {copy.servicesSection?.intro && (
               <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.7, maxWidth: 520 }}>{copy.servicesSection.intro}</p>
             )}
@@ -245,7 +245,7 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
         <section id="films" style={{ padding: '72px 5%', background: c.secondary, borderTop: `1px solid ${c.accent}22`, order: getOrder('brands') }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ color: c.accent, fontWeight: 700, letterSpacing: 3, fontSize: 11, textTransform: 'uppercase', marginBottom: 10 }}>PREMIUM FILMS</div>
-            <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, marginBottom: 32 }}>Film Brands We Use</h2>
+            <h2 style={{ fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, marginBottom: 32 }}>Film Brands We Use</h2>
             {filmBrandsList.length > 0 ? (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14 }}>
                 {filmBrandsList.map((brand, i) => (
@@ -282,7 +282,7 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
               🛡
             </div>
             <div style={{ color: c.accent, fontWeight: 700, fontSize: 11, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 10 }}>BACKED BY A GUARANTEE</div>
-            <h2 style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.5rem)', fontWeight: 800, marginBottom: 16 }}>Our Warranty Promise</h2>
+            <h2 style={{ fontSize: 'clamp(1.8rem, 3.5cqi, 2.5rem)', fontWeight: 800, marginBottom: 16 }}>Our Warranty Promise</h2>
             <p style={{
               color: c.text, fontSize: 16, lineHeight: 1.75, maxWidth: 580, margin: '0 auto 24px',
               padding: '24px 28px',
@@ -302,7 +302,7 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
         <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'start' }}>
           <div>
             <div style={{ color: c.accent, fontWeight: 700, letterSpacing: 3, fontSize: 11, textTransform: 'uppercase', marginBottom: 10 }}>ABOUT US</div>
-            <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.8rem)', fontWeight: 800, margin: '0 0 20px' }}>About {biz.businessName}</h2>
+            <h2 style={{ fontSize: 'clamp(2rem, 3.5cqi, 2.8rem)', fontWeight: 800, margin: '0 0 20px' }}>About {biz.businessName}</h2>
             {(generatedCopy?.aboutLayout || 'image') !== 'stats' ? (
               images.about
                 ? <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block', marginBottom: '20px' }} />
@@ -363,7 +363,7 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
       {!hidden('testimonials') && (
         copy?.googleWidgetKey ? (
           <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
-            {copy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.googleReviewsTitle}</h2>}
+            {copy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} theme={copy?.googleReviewsTheme} />
           </div>
         ) : testimonials.length > 0 ? (
@@ -371,7 +371,7 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ textAlign: 'center', marginBottom: 48 }}>
               <div style={{ color: c.accent, fontWeight: 700, letterSpacing: 3, fontSize: 11, textTransform: 'uppercase', marginBottom: 10 }}>TESTIMONIALS</div>
-              <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.5rem)', fontWeight: 800, margin: 0 }}>What Clients Say</h2>
+              <h2 style={{ fontSize: 'clamp(2rem, 3.5cqi, 2.5rem)', fontWeight: 800, margin: 0 }}>What Clients Say</h2>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 18 }}>
               {testimonials.map((t, i) => (
@@ -401,7 +401,7 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
           pointerEvents: 'none',
         }} />
         <div style={{ position: 'relative', zIndex: 1 }}>
-          <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 800, margin: '0 0 16px' }}>{copy.ctaHeadline || 'Get a Free Quote'}</h2>
+          <h2 style={{ fontSize: 'clamp(2rem, 4cqi, 3rem)', fontWeight: 800, margin: '0 0 16px' }}>{copy.ctaHeadline || 'Get a Free Quote'}</h2>
           <p style={{ color: c.muted, fontSize: 16, marginBottom: 36 }}>
             {copy.ctaSubtext || copy.ctaSecondary || `Serving ${biz.city || 'your area'}, ${biz.state || ''} and surrounding areas`}
           </p>

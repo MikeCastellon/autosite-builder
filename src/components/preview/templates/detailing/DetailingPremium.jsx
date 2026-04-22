@@ -28,10 +28,10 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
       borderBottom: `1px solid ${scrolled ? c.accent : 'transparent'}`,
       transition: 'all 0.3s ease',
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '0 clamp(1rem, 5vw, 3rem)', height: '70px',
+      padding: '0 clamp(1rem, 5cqi, 3rem)', height: '70px',
     },
     navLogo: {
-      fontFamily: font, fontSize: 'clamp(1rem, 2vw, 1.3rem)',
+      fontFamily: font, fontSize: 'clamp(1rem, 2cqi, 1.3rem)',
       color: c.accent, letterSpacing: '0.12em', fontWeight: 700,
     },
     navPhone: {
@@ -42,7 +42,7 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
     hero: {
       minHeight: '100vh', background: c.bg,
       display: 'flex', flexDirection: 'column', justifyContent: 'center',
-      padding: 'clamp(5rem, 10vw, 8rem) clamp(1.5rem, 7vw, 5rem) clamp(3rem, 6vw, 5rem)',
+      padding: 'clamp(5rem, 10cqi, 8rem) clamp(1.5rem, 7cqi, 5rem) clamp(3rem, 6cqi, 5rem)',
       position: 'relative', overflow: 'hidden',
     },
     heroDiag: {
@@ -60,12 +60,12 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
       textTransform: 'uppercase',
     },
     heroH1: {
-      fontFamily: font, fontSize: 'clamp(2.4rem, 6vw, 5rem)',
+      fontFamily: font, fontSize: 'clamp(2.4rem, 6cqi, 5rem)',
       color: c.text, lineHeight: 1.1, marginBottom: '1.5rem',
       fontWeight: 700, maxWidth: '700px',
     },
     heroSub: {
-      fontFamily: bodyFont, fontSize: 'clamp(1rem, 2vw, 1.2rem)',
+      fontFamily: bodyFont, fontSize: 'clamp(1rem, 2cqi, 1.2rem)',
       color: c.muted, marginBottom: '2.5rem', maxWidth: '500px', lineHeight: 1.7,
     },
     awardsRibbon: {
@@ -86,26 +86,26 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
       textTransform: 'uppercase', cursor: 'pointer', border: `1px solid ${c.accent}`,
     },
     statsBar: {
-      background: c.secondary, padding: 'clamp(2rem, 4vw, 3rem) clamp(1.5rem, 5vw, 4rem)',
+      background: c.secondary, padding: 'clamp(2rem, 4cqi, 3rem) clamp(1.5rem, 5cqi, 4rem)',
       display: 'flex', flexWrap: 'wrap', justifyContent: 'space-around', gap: '2rem',
     },
     statItem: { textAlign: 'center', minWidth: '120px' },
     statNum: {
-      fontFamily: font, fontSize: 'clamp(2rem, 4vw, 3rem)',
+      fontFamily: font, fontSize: 'clamp(2rem, 4cqi, 3rem)',
       color: c.accent, display: 'block', fontWeight: 700,
     },
     statLabel: {
       fontFamily: bodyFont, fontSize: '0.75rem', color: c.muted,
       letterSpacing: '0.15em', textTransform: 'uppercase', marginTop: '0.4rem',
     },
-    section: { padding: 'clamp(3rem, 7vw, 6rem) clamp(1.5rem, 7vw, 5rem)', background: c.bg },
-    sectionAlt: { padding: 'clamp(3rem, 7vw, 6rem) clamp(1.5rem, 7vw, 5rem)', background: c.secondary },
+    section: { padding: 'clamp(3rem, 7cqi, 6rem) clamp(1.5rem, 7cqi, 5rem)', background: c.bg },
+    sectionAlt: { padding: 'clamp(3rem, 7cqi, 6rem) clamp(1.5rem, 7cqi, 5rem)', background: c.secondary },
     sectionLabel: {
       fontFamily: bodyFont, fontSize: '0.7rem', letterSpacing: '0.25em',
       textTransform: 'uppercase', color: c.accent, marginBottom: '0.75rem',
     },
     sectionTitle: {
-      fontFamily: font, fontSize: 'clamp(1.8rem, 3.5vw, 2.8rem)',
+      fontFamily: font, fontSize: 'clamp(1.8rem, 3.5cqi, 2.8rem)',
       color: c.text, marginBottom: '1rem', fontWeight: 700,
     },
     sectionSub: {
@@ -153,19 +153,19 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
     testimonialText: { fontFamily: bodyFont, color: c.muted, fontSize: '0.95rem', lineHeight: 1.7, marginBottom: '1.2rem' },
     testimonialName: { fontFamily: font, color: c.text, fontSize: '0.95rem' },
     ctaSection: {
-      background: c.secondary, padding: 'clamp(3rem, 7vw, 6rem) clamp(1.5rem, 7vw, 5rem)',
+      background: c.secondary, padding: 'clamp(3rem, 7cqi, 6rem) clamp(1.5rem, 7cqi, 5rem)',
       textAlign: 'center',
     },
     ctaBig: {
-      fontFamily: font, fontSize: 'clamp(1.8rem, 4vw, 3rem)',
+      fontFamily: font, fontSize: 'clamp(1.8rem, 4cqi, 3rem)',
       color: c.text, marginBottom: '0.75rem', fontWeight: 700,
     },
     ctaPhone: {
-      fontFamily: font, fontSize: 'clamp(1.5rem, 3vw, 2.2rem)',
+      fontFamily: font, fontSize: 'clamp(1.5rem, 3cqi, 2.2rem)',
       color: c.accent, marginBottom: '1.75rem', letterSpacing: '0.05em',
     },
     footer: {
-      background: '#050403', padding: 'clamp(2rem, 5vw, 3.5rem) clamp(1.5rem, 7vw, 5rem)',
+      background: '#050403', padding: 'clamp(2rem, 5cqi, 3.5rem) clamp(1.5rem, 7cqi, 5rem)',
       display: 'flex', flexWrap: 'wrap', gap: '2rem', justifyContent: 'space-between',
     },
     footerName: { fontFamily: font, fontSize: '1.1rem', color: c.accent, marginBottom: '0.5rem' },
@@ -282,7 +282,7 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
       {!hidden('testimonials') && (
         generatedCopy?.googleWidgetKey ? (
           <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
-            {generatedCopy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{generatedCopy.googleReviewsTitle}</h2>}
+            {generatedCopy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{generatedCopy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={generatedCopy.googleWidgetKey} theme={generatedCopy?.googleReviewsTheme} />
           </div>
         ) : (generatedCopy.testimonialPlaceholders || []).length > 0 ? (

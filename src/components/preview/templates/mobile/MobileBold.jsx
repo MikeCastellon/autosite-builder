@@ -98,7 +98,7 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
 
         <div style={splitHero ? {
           flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
-          padding: 'clamp(3rem,6vw,6rem)', background: c.bg,
+          padding: 'clamp(3rem,6cqi,6rem)', background: c.bg,
         } : { position: 'relative', zIndex: 2, padding: '7rem 5% 4rem', maxWidth: 960 }}>
           <div style={{
             display: 'inline-block', background: c.accent, color: '#fff',
@@ -109,7 +109,7 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
             {fb.navSubtitle.toUpperCase()} — {biz.city || 'YOUR CITY'}, {biz.state || ''}
           </div>
           <h1 style={{
-            fontSize: 'clamp(1.8rem, 8vw, 6rem)', fontWeight: 900, lineHeight: 0.95,
+            fontSize: 'clamp(1.8rem, 8cqi, 6rem)', fontWeight: 900, lineHeight: 0.95,
             textTransform: 'uppercase', letterSpacing: '-0.02em', margin: '0 0 1.2rem',
           }}>
             {copy.headline || fb.headline.toUpperCase()}
@@ -163,7 +163,7 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
         <div style={{ maxWidth: 1200, margin: '0 auto'  }}>
           <div style={{ marginBottom: 48 }}>
             <div style={{ color: c.accent, fontWeight: 900, letterSpacing: 3, fontSize: 11, textTransform: 'uppercase', marginBottom: 8 }}>WHAT WE DO</div>
-            <h2 style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 900, textTransform: 'uppercase', margin: 0, lineHeight: 1 }}>OUR SERVICES</h2>
+            <h2 style={{ fontSize: 'clamp(2rem, 5cqi, 3.5rem)', fontWeight: 900, textTransform: 'uppercase', margin: 0, lineHeight: 1 }}>OUR SERVICES</h2>
             {copy.servicesSection?.intro && (
               <p style={{ color: '#888', fontSize: 15, lineHeight: 1.7, maxWidth: 520, marginTop: 16 }}>{copy.servicesSection.intro}</p>
             )}
@@ -257,7 +257,7 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
           </div>
           <div>
             <div style={{ color: c.accent, fontWeight: 900, letterSpacing: 3, fontSize: 11, textTransform: 'uppercase', marginBottom: 8 }}>ABOUT US</div>
-            <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 24px', lineHeight: 1 }}>
+            <h2 style={{ fontSize: 'clamp(2rem, 4cqi, 3rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 24px', lineHeight: 1 }}>
               {biz.businessName || fb.shopName.toUpperCase()}
             </h2>
             <p style={{ color: '#bbb', lineHeight: 1.8, fontSize: 15, marginBottom: 20 }}>
@@ -299,7 +299,7 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
       {!hidden('testimonials') && (
         copy?.googleWidgetKey ? (
           <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
-            {copy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.googleReviewsTitle}</h2>}
+            {copy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} theme={copy?.googleReviewsTheme} />
           </div>
         ) : testimonials.length > 0 ? (
@@ -307,7 +307,7 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ textAlign: 'center', marginBottom: 48 }}>
               <div style={{ color: c.accent, fontWeight: 900, letterSpacing: 3, fontSize: 11, textTransform: 'uppercase', marginBottom: 8 }}>WHAT CLIENTS SAY</div>
-              <h2 style={{ fontSize: 'clamp(2rem, 4vw, 2.5rem)', fontWeight: 900, textTransform: 'uppercase', margin: 0 }}>CUSTOMER REVIEWS</h2>
+              <h2 style={{ fontSize: 'clamp(2rem, 4cqi, 2.5rem)', fontWeight: 900, textTransform: 'uppercase', margin: 0 }}>CUSTOMER REVIEWS</h2>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
               {testimonials.map((t, i) => (
@@ -326,7 +326,7 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
       {/* CTA SECTION */}
       {!hidden('cta') && (
       <section style={{ padding: '80px 5%', textAlign: 'center' , order: getOrder('cta') }}>
-        <h2 style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 16px', lineHeight: 1 }}>{copy.ctaHeadline || 'READY TO BOOK?'}</h2>
+        <h2 style={{ fontSize: 'clamp(2rem, 5cqi, 3.5rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 16px', lineHeight: 1 }}>{copy.ctaHeadline || 'READY TO BOOK?'}</h2>
         <p style={{ color: '#888', fontSize: 16, marginBottom: 40 }}>{copy.ctaSubtext || copy.ctaSecondary || `Serving ${biz.city || 'your area'}. We come to you.`}</p>
         <a href={copy?.ctaUrl || (`tel:${biz.phone}`)} style={{
           display: 'inline-block', background: c.accent, color: '#fff',

@@ -60,11 +60,11 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
       boxShadow: scrolled ? '0 2px 16px rgba(0,0,0,0.1)' : '0 1px 0 #eee',
       transition: 'box-shadow 0.3s',
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '0 clamp(1.25rem, 5vw, 3rem)', height: '68px',
+      padding: '0 clamp(1.25rem, 5cqi, 3rem)', height: '68px',
       borderTop: `4px solid ${c.accent}`,
     },
     navLogo: {
-      fontFamily: font, fontSize: 'clamp(0.95rem, 1.8vw, 1.15rem)',
+      fontFamily: font, fontSize: 'clamp(0.95rem, 1.8cqi, 1.15rem)',
       color: c.bg, letterSpacing: '0.02em', fontWeight: 700,
     },
     navRight: { display: 'flex', alignItems: 'center', gap: '1rem' },
@@ -77,7 +77,7 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
     hero: {
       minHeight: '90vh', background: c.secondary || '#edf2f7',
       display: 'flex', flexDirection: 'column', justifyContent: 'center',
-      padding: 'clamp(6rem, 12vw, 9rem) clamp(1.5rem, 7vw, 5rem) clamp(4rem, 7vw, 6rem)',
+      padding: 'clamp(6rem, 12cqi, 9rem) clamp(1.5rem, 7cqi, 5rem) clamp(4rem, 7cqi, 6rem)',
       position: 'relative', overflow: 'hidden',
     },
     heroAccentBar: {
@@ -94,12 +94,12 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
     },
     badgeDot: { width: 8, height: 8, background: '#fff', borderRadius: '50%' },
     heroH1: {
-      fontFamily: font, fontSize: 'clamp(2.2rem, 5.5vw, 4.2rem)',
+      fontFamily: font, fontSize: 'clamp(2.2rem, 5.5cqi, 4.2rem)',
       color: c.bg, lineHeight: 1.15, marginBottom: '1.25rem', fontWeight: 700,
       maxWidth: '680px',
     },
     heroSub: {
-      fontFamily: bodyFont, fontSize: 'clamp(1rem, 1.8vw, 1.1rem)',
+      fontFamily: bodyFont, fontSize: 'clamp(1rem, 1.8cqi, 1.1rem)',
       color: c.text, marginBottom: '2.25rem', maxWidth: '520px', lineHeight: 1.8,
     },
     heroCertBadge: {
@@ -119,7 +119,7 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
       cursor: 'pointer', border: `2px solid ${c.bg}33`, borderRadius: '4px',
     },
     whySection: {
-      background: '#fff', padding: 'clamp(3rem, 7vw, 5rem) clamp(1.5rem, 7vw, 5rem)',
+      background: '#fff', padding: 'clamp(3rem, 7cqi, 5rem) clamp(1.5rem, 7cqi, 5rem)',
     },
     whyGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginTop: '2.5rem' },
     whyCard: {
@@ -133,15 +133,15 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
     },
     whyTitle: { fontFamily: font, fontSize: '1rem', color: c.bg, fontWeight: 700, marginBottom: '0.5rem' },
     whyDesc: { fontFamily: bodyFont, fontSize: '0.88rem', color: c.text, lineHeight: 1.7 },
-    section: { padding: 'clamp(3rem, 7vw, 5.5rem) clamp(1.5rem, 7vw, 5rem)', background: '#f8fafc' },
-    sectionWhite: { padding: 'clamp(3rem, 7vw, 5.5rem) clamp(1.5rem, 7vw, 5rem)', background: '#fff' },
+    section: { padding: 'clamp(3rem, 7cqi, 5.5rem) clamp(1.5rem, 7cqi, 5rem)', background: '#f8fafc' },
+    sectionWhite: { padding: 'clamp(3rem, 7cqi, 5.5rem) clamp(1.5rem, 7cqi, 5rem)', background: '#fff' },
     sectionEyebrow: {
       fontFamily: bodyFont, fontSize: '0.72rem', fontWeight: 700,
       textTransform: 'uppercase', letterSpacing: '0.2em', color: c.accent,
       marginBottom: '0.5rem',
     },
     sectionTitle: {
-      fontFamily: font, fontSize: 'clamp(1.7rem, 3.2vw, 2.5rem)', fontWeight: 700,
+      fontFamily: font, fontSize: 'clamp(1.7rem, 3.2cqi, 2.5rem)', fontWeight: 700,
       color: c.bg, marginBottom: '0.75rem',
     },
     sectionSub: { fontFamily: bodyFont, color: c.text, fontSize: '1rem', lineHeight: 1.75, maxWidth: '560px', marginBottom: '2.75rem' },
@@ -175,7 +175,7 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
       background: '#fff', padding: '1.25rem', borderRadius: '8px',
       boxShadow: '0 1px 8px rgba(0,0,0,0.05)', border: '1px solid #e8edf2', textAlign: 'center',
     },
-    highlightNum: { fontFamily: font, fontSize: 'clamp(1.5rem, 2.5vw, 2rem)', color: c.accent, fontWeight: 700, display: 'block' },
+    highlightNum: { fontFamily: font, fontSize: 'clamp(1.5rem, 2.5cqi, 2rem)', color: c.accent, fontWeight: 700, display: 'block' },
     highlightLabel: { fontFamily: bodyFont, fontSize: '0.78rem', color: c.text, marginTop: '0.25rem' },
     testimonialGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.25rem' },
     testimonialCard: {
@@ -186,15 +186,15 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
     testimonialText: { fontFamily: bodyFont, color: c.text, fontSize: '0.93rem', lineHeight: 1.7, marginBottom: '1.1rem' },
     testimonialName: { fontFamily: font, fontSize: '0.9rem', color: c.bg, fontWeight: 700 },
     contactSection: {
-      background: c.bg, padding: 'clamp(3rem, 7vw, 5.5rem) clamp(1.5rem, 7vw, 5rem)',
+      background: c.bg, padding: 'clamp(3rem, 7cqi, 5.5rem) clamp(1.5rem, 7cqi, 5rem)',
     },
     contactGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '2.5rem' },
     contactTitle: {
-      fontFamily: font, fontSize: 'clamp(1.8rem, 3.5vw, 2.8rem)', color: '#fff',
+      fontFamily: font, fontSize: 'clamp(1.8rem, 3.5cqi, 2.8rem)', color: '#fff',
       fontWeight: 700, marginBottom: '1rem',
     },
     contactPhone: {
-      fontFamily: font, fontSize: 'clamp(1.6rem, 3vw, 2.2rem)', color: c.accent,
+      fontFamily: font, fontSize: 'clamp(1.6rem, 3cqi, 2.2rem)', color: c.accent,
       marginBottom: '1.25rem', display: 'block',
     },
     contactBtn: {
@@ -218,7 +218,7 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
       padding: '4px 12px', borderRadius: '100px', fontSize: '0.78rem', fontFamily: bodyFont,
     },
     footer: {
-      background: '#0d1117', padding: 'clamp(2rem, 4vw, 3rem) clamp(1.5rem, 7vw, 5rem)',
+      background: '#0d1117', padding: 'clamp(2rem, 4cqi, 3rem) clamp(1.5rem, 7cqi, 5rem)',
       display: 'flex', flexWrap: 'wrap', gap: '2rem', justifyContent: 'space-between',
       borderTop: `4px solid ${c.accent}`,
     },
@@ -256,7 +256,7 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
         {!splitHero && <div style={s.heroAccentBar} />}
         <div style={splitHero ? {
           flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
-          padding: 'clamp(3rem,6vw,6rem)', background: c.secondary || '#edf2f7',
+          padding: 'clamp(3rem,6cqi,6rem)', background: c.secondary || '#edf2f7',
         } : { position: 'relative', zIndex: 1 }}>
           {businessInfo.yearsInBusiness && (
             <div style={s.trustedBadge}>
@@ -382,7 +382,7 @@ export default function MechanicFriendly({ businessInfo, generatedCopy, template
       {!hidden('testimonials') && (
         generatedCopy?.googleWidgetKey ? (
           <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
-            {generatedCopy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.bg }}>{generatedCopy.googleReviewsTitle}</h2>}
+            {generatedCopy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.bg }}>{generatedCopy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={generatedCopy.googleWidgetKey} theme={generatedCopy?.googleReviewsTheme} />
           </div>
         ) : (generatedCopy.testimonialPlaceholders || []).length > 0 ? (

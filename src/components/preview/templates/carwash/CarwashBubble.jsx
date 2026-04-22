@@ -194,7 +194,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
 
         <div style={splitHero ? {
           flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
-          padding: 'clamp(3rem,6vw,6rem)', background: c.bg,
+          padding: 'clamp(3rem,6cqi,6rem)', background: c.bg,
         } : { position: 'relative', zIndex: 1, padding: '6rem 5% 5rem', maxWidth: 800 }}>
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
@@ -206,7 +206,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
             {biz.city || 'Your City'}{biz.state ? `, ${biz.state}` : ''} — Open Now
           </div>
 
-          <h1 style={{ fontFamily: font, fontSize: 'clamp(1.8rem, 6vw, 4.5rem)', lineHeight: 1, letterSpacing: '-0.01em', margin: '0 0 1.2rem', color: c.text }}>
+          <h1 style={{ fontFamily: font, fontSize: 'clamp(1.8rem, 6cqi, 4.5rem)', lineHeight: 1, letterSpacing: '-0.01em', margin: '0 0 1.2rem', color: c.text }}>
             {copy.headline ? copy.headline : (
               <>
                 <span style={gradText}>{biz.businessName || fb.shopName}</span>
@@ -216,7 +216,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
             )}
           </h1>
 
-          <p style={{ fontSize: 'clamp(1rem, 2.2vw, 1.2rem)', color: c.muted || '#64748b', maxWidth: 520, marginBottom: 40, lineHeight: 1.7, fontWeight: 600 }}>
+          <p style={{ fontSize: 'clamp(1rem, 2.2cqi, 1.2rem)', color: c.muted || '#64748b', maxWidth: 520, marginBottom: 40, lineHeight: 1.7, fontWeight: 600 }}>
             {copy.subheadline || 'Thick foam. Sparkling rinse. A finish so clean you will want to park and just stare.'}
           </p>
 
@@ -287,7 +287,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
         <div style={{ maxWidth: 1100, margin: '0 auto', position: 'relative', zIndex: 1  }}>
           <div style={{ textAlign: 'center', marginBottom: 60 }}>
             <span style={{ display: 'inline-block', background: `${c.accent}18`, color: c.accent, borderRadius: 50, padding: '6px 18px', fontSize: 12, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 16 }}>🫧 Wash Packages</span>
-            <h2 style={{ fontFamily: font, fontSize: 'clamp(2rem, 5vw, 3rem)', color: c.text, margin: '0 0 16px', lineHeight: 1.1 }}>
+            <h2 style={{ fontFamily: font, fontSize: 'clamp(2rem, 5cqi, 3rem)', color: c.text, margin: '0 0 16px', lineHeight: 1.1 }}>
               Pick your{' '}<span style={gradText}>perfect wash.</span>
             </h2>
             <p style={{ color: c.muted || '#64748b', fontSize: 15, maxWidth: 560, margin: '0 auto', lineHeight: 1.7, fontWeight: 600 }}>
@@ -342,7 +342,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
         <div style={{ maxWidth: 1100, margin: '0 auto', position: 'relative', zIndex: 1  }}>
           <div style={{ textAlign: 'center', marginBottom: 64 }}>
             <span style={{ display: 'inline-block', background: `${c.accent}18`, color: c.accent, borderRadius: 50, padding: '6px 18px', fontSize: 12, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 16 }}>⚡ The Process</span>
-            <h2 style={{ fontFamily: font, fontSize: 'clamp(2rem, 5vw, 3rem)', color: c.text, margin: '0 0 16px', lineHeight: 1.1 }}>
+            <h2 style={{ fontFamily: font, fontSize: 'clamp(2rem, 5cqi, 3rem)', color: c.text, margin: '0 0 16px', lineHeight: 1.1 }}>
               Wash to{' '}<span style={gradText}>wow</span>{' '}in minutes.
             </h2>
             <p style={{ color: c.muted || '#64748b', fontSize: 15, maxWidth: 480, margin: '0 auto', lineHeight: 1.7, fontWeight: 600 }}>Pull in, ride through, drive out spotless. The whole thing takes under 5 minutes.</p>
@@ -368,7 +368,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
         <div style={{ maxWidth: 1100, margin: '0 auto'  }}>
           <div style={{ textAlign: 'center', marginBottom: 60 }}>
             <span style={{ display: 'inline-block', background: `${c.accent}18`, color: c.accent, borderRadius: 50, padding: '6px 18px', fontSize: 12, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 16 }}>💎 Why {biz.businessName || 'Us'}</span>
-            <h2 style={{ fontFamily: font, fontSize: 'clamp(2rem, 5vw, 3rem)', color: c.text, margin: '0 0 16px', lineHeight: 1.1 }}>
+            <h2 style={{ fontFamily: font, fontSize: 'clamp(2rem, 5cqi, 3rem)', color: c.text, margin: '0 0 16px', lineHeight: 1.1 }}>
               Not all shops are{' '}<span style={gradText}>equal.</span>
             </h2>
           </div>
@@ -405,7 +405,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
             {/* Right: text + awards */}
             <div>
               <span style={{ display: 'inline-block', background: `${c.accent}18`, color: c.accent, borderRadius: 50, padding: '4px 14px', fontSize: 11, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>About Us</span>
-              <h3 style={{ fontFamily: font, fontSize: 'clamp(1.5rem, 3vw, 2rem)', color: c.text, margin: '0 0 16px' }}>{biz.businessName || 'Who We Are'}</h3>
+              <h3 style={{ fontFamily: font, fontSize: 'clamp(1.5rem, 3cqi, 2rem)', color: c.text, margin: '0 0 16px' }}>{biz.businessName || 'Who We Are'}</h3>
               <p style={{ color: c.muted || '#64748b', fontSize: 15, lineHeight: 1.8, margin: '0 0 20px', fontWeight: 600 }}>
                 {copy.aboutText || `Based in ${biz.city || 'your city'}${biz.state ? `, ${biz.state}` : ''}, we deliver ${fb.aboutFallback} every time.${biz.yearsInBusiness ? ` Over ${biz.yearsInBusiness} years in business — we know quality.` : ''}`}
               </p>
@@ -452,7 +452,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
       {!hidden('testimonials') && (
         copy?.googleWidgetKey ? (
           <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
-            {copy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.googleReviewsTitle}</h2>}
+            {copy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} theme={copy?.googleReviewsTheme} />
           </div>
         ) : testimonials.length > 0 ? (
@@ -462,7 +462,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
           <div style={{ maxWidth: 1100, margin: '0 auto', position: 'relative', zIndex: 1  }}>
             <div style={{ textAlign: 'center', marginBottom: 60 }}>
               <span style={{ display: 'inline-block', background: `${c.accent}18`, color: c.accent, borderRadius: 50, padding: '6px 18px', fontSize: 12, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 16 }}>⭐ Customer Love</span>
-              <h2 style={{ fontFamily: font, fontSize: 'clamp(2rem, 5vw, 3rem)', color: c.text, margin: '0 0 16px', lineHeight: 1.1 }}>
+              <h2 style={{ fontFamily: font, fontSize: 'clamp(2rem, 5cqi, 3rem)', color: c.text, margin: '0 0 16px', lineHeight: 1.1 }}>
                 {biz.city ? `${biz.city}'s` : 'Our'}{' '}<span style={gradText}>cleanest fans.</span>
               </h2>
             </div>
@@ -499,7 +499,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
         <SmallBubble size='45px'  bottom='20%' left='18%' />
         <SmallBubble size='35px'  top='25%'  right='15%' />
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 640, margin: '0 auto' }}>
-          <h2 style={{ fontFamily: font, fontSize: 'clamp(2.2rem, 5vw, 3.8rem)', color: '#fff', lineHeight: 1.05, margin: '0 0 20px' }}>
+          <h2 style={{ fontFamily: font, fontSize: 'clamp(2.2rem, 5cqi, 3.8rem)', color: '#fff', lineHeight: 1.05, margin: '0 0 20px' }}>
             {copy.ctaHeadline || <>Your car is{' '}
             <span style={{ background: 'linear-gradient(135deg, #93c5fd, #6ee7b7, #c4b5fd)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>one rinse away</span>
             {' '}from perfect.</>}

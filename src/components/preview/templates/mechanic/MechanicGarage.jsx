@@ -198,12 +198,12 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
         ))}
         <div style={splitHero ? {
           flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
-          padding: 'clamp(3rem,6vw,6rem)', background: c.bg,
+          padding: 'clamp(3rem,6cqi,6rem)', background: c.bg,
         } : { textAlign: 'center', maxWidth: '820px', padding: '140px 24px 100px', position: 'relative', zIndex: 1 }}>
           <div style={{ display: 'inline-block', background: 'rgba(249,115,22,0.12)', border: `1px solid rgba(249,115,22,0.4)`, color: c.accent, borderRadius: '4px', padding: '8px 20px', fontSize: '0.78rem', fontWeight: 800, letterSpacing: '3px', marginBottom: '28px', textTransform: 'uppercase' }}>
             RAW. REAL. RELIABLE.
           </div>
-          <h1 style={{ fontFamily: font, fontSize: 'clamp(2.5rem, 5.5vw, 4.2rem)', fontWeight: 900, color: c.text, lineHeight: 1.1, marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '-0.5px' }}>
+          <h1 style={{ fontFamily: font, fontSize: 'clamp(2.5rem, 5.5cqi, 4.2rem)', fontWeight: 900, color: c.text, lineHeight: 1.1, marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '-0.5px' }}>
             {generatedCopy.headline}
           </h1>
           <p style={{ fontSize: '1.1rem', color: c.muted, marginBottom: '44px', lineHeight: 1.75, maxWidth: '600px', margin: '0 auto 44px' }}>
@@ -367,7 +367,7 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
       {!hidden('testimonials') && (
         generatedCopy?.googleWidgetKey ? (
           <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
-            {generatedCopy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{generatedCopy.googleReviewsTitle}</h2>}
+            {generatedCopy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{generatedCopy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={generatedCopy.googleWidgetKey} theme={generatedCopy?.googleReviewsTheme} />
           </div>
         ) : generatedCopy.testimonialPlaceholders?.length > 0 ? (

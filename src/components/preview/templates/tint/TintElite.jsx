@@ -215,7 +215,7 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
 
         <div style={splitHero ? {
           flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
-          padding: 'clamp(3rem,6vw,6rem)', background: c.bg,
+          padding: 'clamp(3rem,6cqi,6rem)', background: c.bg,
         } : { textAlign: 'center', maxWidth: '820px', padding: '140px 24px 100px', position: 'relative', zIndex: 1 }}>
           {businessInfo.awards && businessInfo.awards.length > 0 && (
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', border: '1px solid rgba(202,138,4,0.3)', padding: '8px 20px', marginBottom: '28px', alignSelf: splitHero ? 'flex-start' : undefined }}>
@@ -224,7 +224,7 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
               </span>
             </div>
           )}
-          <h1 style={{ fontFamily: font, fontSize: 'clamp(2rem, 5.5vw, 4.5rem)', fontWeight: 700, color: c.text, lineHeight: 1.1, marginBottom: '8px', letterSpacing: '-0.5px', fontStyle: 'italic', textAlign: splitHero ? 'left' : 'center' }}>
+          <h1 style={{ fontFamily: font, fontSize: 'clamp(2rem, 5.5cqi, 4.5rem)', fontWeight: 700, color: c.text, lineHeight: 1.1, marginBottom: '8px', letterSpacing: '-0.5px', fontStyle: 'italic', textAlign: splitHero ? 'left' : 'center' }}>
             {generatedCopy.headline}
           </h1>
           <div style={{ width: '100px', height: '1px', background: goldGradient, margin: splitHero ? '24px 0' : '24px auto' }} />
@@ -424,7 +424,7 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
       {!hidden('testimonials') && (
         generatedCopy?.reviewMode === 'google' && generatedCopy?.googleWidgetKey ? (
           <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
-            {generatedCopy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{generatedCopy.googleReviewsTitle}</h2>}
+            {generatedCopy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{generatedCopy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={generatedCopy.googleWidgetKey} theme={generatedCopy?.googleReviewsTheme} />
           </div>
         ) : generatedCopy.testimonialPlaceholders?.length > 0 ? (
