@@ -64,10 +64,14 @@ create index if not exists profiles_shopify_customer_id_idx
 No data backfill needed. Existing `scheduler_enabled` column on `profiles` is **kept and still respected** — super-admin flag + direct DB toggles still work for testing/comp'd accounts. Effective gating becomes:
 
 ```
-effective_scheduler = is_super_admin
-                      OR scheduler_enabled
-                      OR subscription_status = 'active'
+effective_scheduler =
+     is_super_admin
+  OR scheduler_enabled
+  OR subscription_status = 'active'
+  OR (subscription_status = 'cancelled' AND subscription_ends_at > now())
 ```
+
+The last branch is the grace period: when a subscription is cancelled, Shopify still honors access through the already-paid-for period. We mirror that — feature stays on until `subscription_ends_at`. `past_due` explicitly fails (locks access immediately on payment failure to apply pressure to update the card).
 
 Call this `isEffectiveSchedulerActive(profile)` in both server and client.
 
