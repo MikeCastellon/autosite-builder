@@ -5,6 +5,7 @@ export default function GeneralTab({ siteId, config, onSaved }) {
   const [welcome, setWelcome] = useState(config?.welcome_text || '');
   const [label, setLabel] = useState(config?.button_label || 'Book Now');
   const [lead, setLead] = useState(String(config?.lead_time_hours ?? 24));
+  const [ctaSelector, setCtaSelector] = useState(config?.cta_selector || '');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
 
@@ -12,6 +13,7 @@ export default function GeneralTab({ siteId, config, onSaved }) {
     setWelcome(config?.welcome_text || '');
     setLabel(config?.button_label || 'Book Now');
     setLead(String(config?.lead_time_hours ?? 24));
+    setCtaSelector(config?.cta_selector || '');
   }, [config]);
 
   async function save() {
@@ -21,6 +23,7 @@ export default function GeneralTab({ siteId, config, onSaved }) {
         welcome_text: welcome,
         button_label: label || 'Book Now',
         lead_time_hours: Math.max(0, Number(lead) || 0),
+        cta_selector: ctaSelector.trim(),
       });
       onSaved && onSaved(updated);
     } catch (e) { setErr(e.message); }
@@ -57,6 +60,19 @@ export default function GeneralTab({ siteId, config, onSaved }) {
           className="w-32 border border-gray-200 rounded-lg p-2 text-sm focus:outline-none focus:border-gray-400"
         />
         <p className="text-xs text-gray-500 mt-1">Customers can't book slots less than this far into the future.</p>
+      </div>
+      <div>
+        <label className="block text-xs font-semibold text-gray-600 mb-1">CTA button selector <span className="font-normal text-gray-400">(optional)</span></label>
+        <input
+          value={ctaSelector}
+          onChange={(e) => setCtaSelector(e.target.value)}
+          placeholder=".book-btn, #book-cta"
+          className="w-full border border-gray-200 rounded-lg p-2 text-sm focus:outline-none focus:border-gray-400 font-mono"
+        />
+        <p className="text-xs text-gray-500 mt-1">
+          CSS selector that points at your existing Book Now button(s) on the site. If set, it overrides auto-detection.
+          Leave blank to auto-bind any button or link whose text contains <span className="font-mono">"book"</span>.
+        </p>
       </div>
       {err && <p className="text-sm text-red-600">{err}</p>}
       <button

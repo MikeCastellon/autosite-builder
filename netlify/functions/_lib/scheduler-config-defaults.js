@@ -8,6 +8,7 @@ export function defaultSchedulerConfig() {
     button_label: 'Book Now',
     lead_time_hours: 24,
     slot_granularity_minutes: 30,
+    cta_selector: '',
     services: [],
     availability: {
       mon: [...DEFAULT_HOURS],

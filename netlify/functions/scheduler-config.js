@@ -68,6 +68,7 @@ export const handler = async (event) => {
       button_label: cfg.button_label || 'Book Now',
       lead_time_hours: cfg.lead_time_hours ?? 24,
       slot_granularity_minutes: cfg.slot_granularity_minutes ?? 30,
+      cta_selector: cfg.cta_selector || '',
       services: enabledServices.map((s) => ({
         id: s.id,
         name: s.name,

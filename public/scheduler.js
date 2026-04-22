@@ -37,9 +37,45 @@
     btn.addEventListener('click', function () { openModal(cfg, { inline: false }); });
     document.body.appendChild(btn);
 
+    bindCtaTriggers(cfg);
+  }
+
+  function bindCtaTriggers(cfg) {
+    // 1) Always honor explicit opt-in attribute.
     document.querySelectorAll('[data-scheduler-trigger]').forEach(function (el) {
-      el.addEventListener('click', function (e) { e.preventDefault(); openModal(cfg, { inline: false }); });
+      attachOpen(el, cfg);
     });
+
+    // 2) If owner provided a CSS selector, it wins over auto-detect.
+    var sel = (cfg.cta_selector || '').trim();
+    if (sel) {
+      try {
+        document.querySelectorAll(sel).forEach(function (el) { attachOpen(el, cfg); });
+      } catch (e) {
+        // Invalid selector — fall through to auto-detect so the button still works.
+        autoDetectBookNow(cfg);
+      }
+      return;
+    }
+
+    // 3) Default: scan for buttons/anchors whose text contains "book" (as a whole word).
+    autoDetectBookNow(cfg);
+  }
+
+  function autoDetectBookNow(cfg) {
+    var candidates = document.querySelectorAll('button, a');
+    var re = /\bbook\b/i;
+    candidates.forEach(function (el) {
+      if (el.hasAttribute('data-scheduler-bound')) return;
+      var text = (el.textContent || '').trim();
+      if (re.test(text)) attachOpen(el, cfg);
+    });
+  }
+
+  function attachOpen(el, cfg) {
+    if (el.hasAttribute('data-scheduler-bound')) return;
+    el.setAttribute('data-scheduler-bound', 'true');
+    el.addEventListener('click', function (e) { e.preventDefault(); openModal(cfg, { inline: false }); });
   }
 
   function openModal(cfg, opts) {

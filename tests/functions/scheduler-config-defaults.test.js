@@ -12,6 +12,7 @@ describe('defaultSchedulerConfig', () => {
     expect(cfg.button_label).toBe('Book Now');
     expect(cfg.lead_time_hours).toBe(24);
     expect(cfg.slot_granularity_minutes).toBe(30);
+    expect(cfg.cta_selector).toBe('');
     expect(cfg.services).toEqual([]);
     expect(Object.keys(cfg.availability)).toEqual(['mon','tue','wed','thu','fri','sat','sun']);
     expect(cfg.availability.mon).toEqual([{ start: '09:00', end: '17:00' }]);
