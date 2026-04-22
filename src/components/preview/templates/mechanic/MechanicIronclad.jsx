@@ -147,7 +147,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
         flexDirection: 'column',
       }}
     >
-      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}.tp-iron-brand{font-size:16px!important;letter-spacing:2px!important;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}.tp-iron-sub{display:none!important}.tp-iron-badge{width:34px!important;height:34px!important;font-size:12px!important}.tp-iron-cta{font-size:11px!important;padding:8px 16px!important;letter-spacing:1px!important}}`}</style>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}.tp-3col{grid-template-columns:1fr!important}.tp-iron-brand{font-size:16px!important;letter-spacing:2px!important;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}.tp-iron-sub{display:none!important}.tp-iron-badge{width:34px!important;height:34px!important;font-size:12px!important}.tp-iron-cta{font-size:11px!important;padding:8px 16px!important;letter-spacing:1px!important}}`}</style>
       {/* Marquee keyframe injection */}
       <style>{`
         @keyframes ironcladMarquee {
@@ -369,7 +369,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
             )}
           </div>
           {/* Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 3, background: 'rgba(255,255,255,0.04)' }}>
+          <div className="tp-3col" style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, minmax(0, 1fr))`, gap: 3, background: 'rgba(255,255,255,0.04)' }}>
             {(services.length > 0 ? services : []).map((svc, i) => (
               <div
                 key={i}

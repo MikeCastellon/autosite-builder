@@ -166,7 +166,7 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
 
   return (
     <div style={{ background: c.bg, color: c.text, fontFamily: bodyFont, containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
-      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}.tp-garage-nav{padding:0 16px!important;height:58px!important}.tp-garage-brand{font-size:1rem!important;letter-spacing:0.5px!important;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tp-garage-bar{height:28px!important;width:6px!important}.tp-garage-cta{font-size:11px!important;padding:7px 14px!important}}`}</style>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}.tp-3col{grid-template-columns:1fr!important}.tp-garage-nav{padding:0 16px!important;height:58px!important}.tp-garage-brand{font-size:1rem!important;letter-spacing:0.5px!important;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tp-garage-bar{height:28px!important;width:6px!important}.tp-garage-cta{font-size:11px!important;padding:7px 14px!important}}`}</style>
       {/* NAV */}
       <nav style={{ ...navStyle, order: -1 }}>
         <div className="tp-garage-nav" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, height: '68px' }}>
@@ -248,7 +248,7 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
             <h2 style={{ fontFamily: font, fontSize: '2.4rem', fontWeight: 900, color: c.text, marginBottom: '12px', textTransform: 'uppercase' }}>Our Services</h2>
             <p style={{ color: c.muted, maxWidth: '540px', fontSize: '1rem', lineHeight: 1.7 }}>{generatedCopy.servicesSection.intro}</p>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: '20px' }}>
+          <div className="tp-3col" style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, minmax(0, 1fr))`, gap: '20px' }}>
             {generatedCopy.servicesSection.items.map((svc, i) => (
               <div key={i} style={cardStyle}>
                 <div style={{ color: c.accent, fontSize: '0.75rem', fontWeight: 800, letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '10px' }}>0{i + 1}</div>

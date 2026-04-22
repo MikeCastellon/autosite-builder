@@ -197,7 +197,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
 
   return (
     <div style={{ background: c.bg, color: c.text, fontFamily: bodyFont, containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
-      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}.tp-sporty-logo{font-size:0.9rem!important;letter-spacing:0.04em!important;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block}.tp-sporty-phone{font-size:0.72rem!important;padding:7px 12px!important;letter-spacing:0.03em!important;white-space:nowrap}}`}</style>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}.tp-3col{grid-template-columns:1fr!important}.tp-sporty-logo{font-size:0.9rem!important;letter-spacing:0.04em!important;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block}.tp-sporty-phone{font-size:0.72rem!important;padding:7px 12px!important;letter-spacing:0.03em!important;white-space:nowrap}}`}</style>
       {/* NAV */}
       <nav style={{ ...s.nav, order: -1, gap: 12 }}>
         {images.logo ? (
@@ -279,7 +279,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
             ))}
           </div>
         ) : (
-          <div style={{ ...s.servicesGrid, gridTemplateColumns: `repeat(${svcCols}, 1fr)` }}>
+          <div className="tp-3col" style={{ ...s.servicesGrid, gridTemplateColumns: `repeat(${svcCols}, minmax(0, 1fr))` }}>
             {(generatedCopy.servicesSection?.items || []).map((svc, i) => (
               <div key={i} style={s.serviceCard}>
                 <div style={s.serviceName}>{svc.name}</div>

@@ -126,7 +126,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
 
   return (
     <div style={{ fontFamily: bodyFont, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, position: 'relative', containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
-      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}.tp-sudsy-brand{font-size:18px!important;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tp-sudsy-cta{font-size:13px!important;padding:6px 14px!important}}`}</style>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}.tp-3col{grid-template-columns:1fr!important}.tp-sudsy-brand{font-size:18px!important;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tp-sudsy-cta{font-size:13px!important;padding:6px 14px!important}}`}</style>
 
       {/* STATIC BACKGROUND BUBBLES */}
       <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
@@ -317,7 +317,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
               })}
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 24 }}>
+            <div className="tp-3col" style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, minmax(0, 1fr))`, gap: 24 }}>
               {services.length > 0
                 ? services.map((s, i) => (
                     <div key={i} style={{ background: cardBgs[i % cardBgs.length], ...neoBorder, borderRadius: 24, padding: '36px 32px' }}>
@@ -373,7 +373,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
             <div style={{ ...sectionTagStyle(), background: '#fff' }}>{String.fromCodePoint(0x1F4AA)} Why Choose Us</div>
             <h2 style={{ ...titleStyle, color: '#fff' }}>We’re kinda <span style={{ color: c.accent }}>obsessed</span> with clean cars.</h2>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+          <div className="tp-3col" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 20 }}>
             {whyCards.map((card, i) => (
               <div key={i} style={{ background: 'rgba(255,255,255,0.12)', border: '3px solid rgba(255,255,255,0.4)', borderRadius: 24, padding: '32px 24px', backdropFilter: 'blur(10px)' }}>
                 <span style={{ fontSize: 42, marginBottom: 14, display: 'block' }}><IconOrEmoji value={card.icon} size={42} color="#fff" /></span>

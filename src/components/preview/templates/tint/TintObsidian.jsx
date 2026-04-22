@@ -84,7 +84,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
   return (
 
     <div style={{ fontFamily: bodyFont, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, WebkitFontSmoothing: 'antialiased', containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
-      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}.tp-obsidian-name{font-size:14px!important;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tp-obsidian-sub{display:none!important}.tp-obsidian-orb{width:26px!important;height:26px!important}.tp-obsidian-cta{font-size:11px!important;padding:7px 14px!important}}`}</style>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}.tp-3col{grid-template-columns:1fr!important}.tp-obsidian-name{font-size:14px!important;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tp-obsidian-sub{display:none!important}.tp-obsidian-orb{width:26px!important;height:26px!important}.tp-obsidian-cta{font-size:11px!important;padding:7px 14px!important}}`}</style>
 
       {/* ============================================================ NAV ============================================================ */}
       <nav style={{
@@ -264,7 +264,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
               ))}
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 16 }}>
+            <div className="tp-3col" style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, minmax(0, 1fr))`, gap: 16 }}>
               {services.length > 0
                 ? services.map((svc, i) => (
                   <div key={i} style={{

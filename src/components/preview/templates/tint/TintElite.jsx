@@ -179,7 +179,7 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
 
   return (
     <div style={{ background: c.bg, color: c.text, fontFamily: bodyFont, containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
-      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}.tp-elite-nav{padding:0 16px!important;height:60px!important}.tp-elite-brand{font-size:1rem!important;letter-spacing:0.5px!important;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tp-elite-cta{font-size:11px!important;padding:7px 12px!important}}`}</style>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}.tp-3col{grid-template-columns:1fr!important}.tp-elite-nav{padding:0 16px!important;height:60px!important}.tp-elite-brand{font-size:1rem!important;letter-spacing:0.5px!important;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tp-elite-cta{font-size:11px!important;padding:7px 12px!important}}`}</style>
       {/* NAV */}
       <nav style={{ ...navStyle, order: -1 }}>
         <div className="tp-elite-nav" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, height: '72px' }}>
@@ -317,7 +317,7 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
               ))}
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: '20px' }}>
+            <div className="tp-3col" style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, minmax(0, 1fr))`, gap: '20px' }}>
               {generatedCopy.servicesSection.items.map((svc, i) => (
                 <div key={i} style={cardStyle}>
                   <div style={cardTopAccent} />

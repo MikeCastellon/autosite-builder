@@ -121,7 +121,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
 
   return (
     <div style={{ fontFamily: bodyFont, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
-      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}.tp-bubble-brand-name{font-size:15px!important;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}.tp-bubble-brand-sub{display:none!important}.tp-bubble-orb{width:30px!important;height:30px!important}.tp-bubble-cta{font-size:11px!important;padding:7px 14px!important}}`}</style>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}.tp-3col{grid-template-columns:1fr!important}.tp-bubble-brand-name{font-size:15px!important;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}.tp-bubble-brand-sub{display:none!important}.tp-bubble-orb{width:30px!important;height:30px!important}.tp-bubble-cta{font-size:11px!important;padding:7px 14px!important}}`}</style>
 
       {/* Marquee keyframe */}
       <style>{'@keyframes soapScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }'}</style>
@@ -295,7 +295,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${biz.packages?.length > 0 ? Math.min(biz.packages.length, 3) : svcCols}, 1fr)`, gap: 20 }}>
+          <div className="tp-3col" style={{ display: 'grid', gridTemplateColumns: `repeat(${biz.packages?.length > 0 ? Math.min(biz.packages.length, 3) : svcCols}, minmax(0, 1fr))`, gap: 20 }}>
             {(biz.packages?.length > 0 ? biz.packages : services.length > 0 ? services : [
               { name: 'Express', description: 'Quick, fresh, done right. High-pressure pre-rinse, foam wash, spot-free exit.' },
               { name: 'Premium Package', description: 'The full foam experience — triple foam cannon, tire scrub, Rain-X protectant.' },
