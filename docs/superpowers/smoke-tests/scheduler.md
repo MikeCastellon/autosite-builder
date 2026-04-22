@@ -37,3 +37,38 @@ Run after any change to scheduler code. Checkbox each step.
 ## RLS sanity
 - [ ] In Supabase SQL editor as anon: `select count(*) from bookings;` → 0 or permission denied.
 - [ ] Sign in as one owner, the other owner's bookings do not appear in their list.
+
+---
+
+## v2 — Calendly-style flow + Booking Settings
+
+### Setup
+- [ ] Migration `20260422_scheduler_v2.sql` applied (adds `sites.scheduler_enabled`, `sites.scheduler_config`, `bookings.service_id`, `bookings.service_name`).
+- [ ] Existing users on scheduler_enabled profile keep seeing the Bookings tab.
+
+### Owner settings
+- [ ] Sign in as super-admin owner.
+- [ ] Open any site → click "Bookings" button → Booking Settings page opens.
+- [ ] Toggle "Bookings" ON at the top → services auto-seed from site's business_info.services.
+- [ ] Services tab: all services visible, enabled, duration=60 default. Edit one to 120 min, save.
+- [ ] Availability tab: Mon-Fri 9-5, Sat/Sun closed (default). Change Sat to open 10-2, save.
+- [ ] General tab: change welcome text, save.
+- [ ] Preview tab: widget renders inline, shows new services + welcome text.
+
+### Customer flow on preview
+- [ ] Click Book Now button in Preview.
+- [ ] Step 1 shows services list (if 2+ services). Pick one.
+- [ ] Step 2 shows calendar. Sun/Mon-Fri/Sat/Sun rules honored (closed days gray).
+- [ ] Click a valid day → time chips load from scheduler-slots.
+- [ ] Pick a time → Step 3 contact form.
+- [ ] Submit → success panel appears.
+- [ ] Booking row appears in dashboard Bookings tab with service_id + service_name populated.
+
+### Slot exclusivity
+- [ ] Confirm the booking from step above (Bookings → detail drawer → Confirm).
+- [ ] Open widget again, try same date. The confirmed slot is now missing from the chip list.
+
+### Failure paths
+- [ ] Disable all services → widget still loads but no services shown → submit blocked.
+- [ ] Set availability to all-closed → widget calendar grays out all days.
+- [ ] Book less than lead_time_hours in advance → server returns "too close to now".
