@@ -7,7 +7,7 @@ import { exportHtmlString } from './exportHtml.js';
  */
 export async function publishSite({ siteId, businessInfo, generatedCopy, templateId, templateMeta, images, selectedWidgetIds }) {
   const slug = generateSlug(businessInfo.businessName);
-  const htmlContent = await exportHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, selectedWidgetIds || []);
+  const htmlContent = await exportHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, selectedWidgetIds || [], siteId);
 
   const res = await fetch('/.netlify/functions/publish-site', {
     method: 'POST',
