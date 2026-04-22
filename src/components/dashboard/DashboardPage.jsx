@@ -2,15 +2,17 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase.js';
 import { publishSite } from '../../lib/publishSite.js';
 import { TEMPLATES } from '../../data/templates.js';
+import BookingsView from './bookings/BookingsView.jsx';
 
-const ADMIN_EMAILS = ['dev@639hz.com'];
 const MAX_SITES = 1;
 
-export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEmail }) {
+export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEmail, profile, onOpenAdmin }) {
   const [sites, setSites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
-  const isAdmin = ADMIN_EMAILS.includes(userEmail);
+  const [view, setView] = useState('sites'); // 'sites' | 'bookings'
+  const schedulerEnabled = !!profile?.scheduler_enabled;
+  const isAdmin = !!profile?.is_super_admin;
   const canCreateSite = isAdmin || sites.length < MAX_SITES;
 
   useEffect(() => {
@@ -89,18 +91,31 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
   return (
     <div className="min-h-screen bg-[#faf9f7]">
       <header className="border-b border-black/[0.07] bg-white px-6 py-4 flex items-center justify-between">
-        <h1 className="text-lg font-black text-[#1a1a1a] tracking-tight">Genius Websites</h1>
+        <div className="flex items-center gap-6">
+          <h1 className="text-lg font-black text-[#1a1a1a] tracking-tight">Genius Websites</h1>
+          <nav className="flex gap-4 text-sm">
+            <button onClick={() => setView('sites')} className={view === 'sites' ? 'font-semibold text-[#1a1a1a]' : 'text-gray-500 hover:text-[#1a1a1a]'}>Sites</button>
+            {schedulerEnabled && (
+              <button onClick={() => setView('bookings')} className={view === 'bookings' ? 'font-semibold text-[#1a1a1a]' : 'text-gray-500 hover:text-[#1a1a1a]'}>Bookings</button>
+            )}
+          </nav>
+        </div>
         <div className="flex items-center gap-4">
+          {isAdmin && onOpenAdmin && (
+            <button onClick={onOpenAdmin} className="text-xs text-[#1a1a1a] font-semibold hover:text-[#cc0000]">Admin</button>
+          )}
           {userEmail && <span className="text-xs text-[#888]">{userEmail}</span>}
           {onSignOut && (
-            <button onClick={onSignOut} className="text-xs text-[#888] hover:text-[#cc0000] transition-colors">
-              Sign Out
-            </button>
+            <button onClick={onSignOut} className="text-xs text-[#888] hover:text-[#cc0000] transition-colors">Sign Out</button>
           )}
         </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-6 py-10">
+        {view === 'bookings' ? (
+          <BookingsView userId={profile?.id} />
+        ) : (
+          <>
         <div className="flex items-center justify-between mb-8">
           <div>
             <h2 className="text-2xl font-black text-[#1a1a1a] tracking-tight">Your Sites</h2>
@@ -200,6 +215,8 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
               </div>
             ))}
           </div>
+        )}
+          </>
         )}
       </main>
     </div>

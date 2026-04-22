@@ -17,7 +17,7 @@ import { saveSite } from './lib/saveSite.js';
 import { supabase } from './lib/supabase.js';
 
 export default function App() {
-  const { session, loading, isRecovery, clearRecovery } = useAuth();
+  const { session, loading, isRecovery, clearRecovery, profile } = useAuth();
 
   const [step, setStep] = useState(1);
   const [businessType, setBusinessType] = useState(null);
@@ -236,6 +236,8 @@ export default function App() {
       onEditSite={handleEditSite}
       onSignOut={handleSignOut}
       userEmail={session?.user?.email}
+      profile={profile}
+      onOpenAdmin={() => setView('admin')}
     />;
   }
 
