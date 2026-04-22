@@ -126,7 +126,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
 
   return (
     <div style={{ fontFamily: bodyFont, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, position: 'relative', containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
-      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}.tp-sudsy-brand{font-size:18px!important;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tp-sudsy-cta{font-size:13px!important;padding:6px 14px!important}}`}</style>
 
       {/* STATIC BACKGROUND BUBBLES */}
       <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
@@ -144,13 +144,13 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
       
         order: -1,
       }}>
-        <a href='#' style={{ fontFamily: font, fontSize: 24, color: c.text, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <a href='#' className="tp-sudsy-brand" style={{ fontFamily: font, fontSize: 24, color: c.text, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: '0 1 auto' }}>
           {images.logo ? (
             <img src={images.logo} alt={biz.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
           ) : (
             <>
-              <span style={{ fontSize: 22 }}>{String.fromCodePoint(0x1FAA7)}</span>
-              {biz.businessName || fb.navSubtitle}
+              <span style={{ fontSize: 22, flexShrink: 0 }}>{String.fromCodePoint(0x1FAA7)}</span>
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{biz.businessName || fb.navSubtitle}</span>
             </>
           )}
         </a>
@@ -158,7 +158,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
           {[{ label: 'Services', href: '#services' }, { label: 'How It Works', href: '#how' }, { label: 'Reviews', href: '#reviews' }].map(({ label, href }) => (
             <a key={label} href={href} style={{ fontFamily: bodyFont, fontWeight: 800, fontSize: 14, color: c.text, textDecoration: 'none', opacity: 0.8 }}>{label}</a>
           ))}
-          <a href={`tel:${biz.phone}`} style={{ fontFamily: font, fontSize: 17, background: c.text, color: c.accent, padding: '8px 22px', borderRadius: 980, textDecoration: 'none', border: `2px solid ${c.text}`, boxShadow: '3px 3px 0 rgba(0,0,0,0.25)', whiteSpace: 'nowrap' }}>
+          <a href={`tel:${biz.phone}`} className="tp-sudsy-cta" style={{ fontFamily: font, fontSize: 17, background: c.text, color: c.accent, padding: '8px 22px', borderRadius: 980, textDecoration: 'none', border: `2px solid ${c.text}`, boxShadow: '3px 3px 0 rgba(0,0,0,0.25)', whiteSpace: 'nowrap' }}>
             {String.fromCodePoint(0x1F4DE)} Call Us!
           </a>
         </div>

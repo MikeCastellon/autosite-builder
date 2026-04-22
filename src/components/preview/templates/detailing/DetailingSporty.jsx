@@ -197,23 +197,23 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
 
   return (
     <div style={{ background: c.bg, color: c.text, fontFamily: bodyFont, containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
-      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}.tp-sporty-logo{font-size:0.9rem!important;letter-spacing:0.04em!important;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block}.tp-sporty-phone{font-size:0.72rem!important;padding:7px 12px!important;letter-spacing:0.03em!important;white-space:nowrap}}`}</style>
       {/* NAV */}
-      <nav style={{ ...s.nav, order: -1 }}>
+      <nav style={{ ...s.nav, order: -1, gap: 12 }}>
         {images.logo ? (
           <img src={images.logo} alt={businessInfo.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
         ) : (
-          <span style={s.navLogo}>
+          <span className="tp-sporty-logo" style={{ ...s.navLogo, minWidth: 0, flex: '0 1 auto' }}>
             {businessInfo.businessName.split(' ').map((w, i) =>
               i === 0 ? <span key={i}>{w} </span> : <span key={i} style={s.navAccent}>{w} </span>
             )}
           </span>
         )}
-        <div className="tp-nav-links" style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
+        <div className="tp-nav-links" style={{ display: 'flex', gap: '2rem', alignItems: 'center', flexShrink: 0 }}>
           <a href="#services" style={{ color: c.text, textDecoration: 'none', fontFamily: bodyFont, fontSize: '0.85rem', letterSpacing: '0.05em', opacity: 0.8 }}>Services</a>
           <a href="#about" style={{ color: c.text, textDecoration: 'none', fontFamily: bodyFont, fontSize: '0.85rem', letterSpacing: '0.05em', opacity: 0.8 }}>About</a>
           <a href="#reviews" style={{ color: c.text, textDecoration: 'none', fontFamily: bodyFont, fontSize: '0.85rem', letterSpacing: '0.05em', opacity: 0.8 }}>Reviews</a>
-          <a href={'tel:' + (businessInfo.phone || '')} style={{ ...s.navPhone, textDecoration: 'none' }}>{businessInfo.phone}</a>
+          <a href={'tel:' + (businessInfo.phone || '')} className="tp-sporty-phone" style={{ ...s.navPhone, textDecoration: 'none' }}>{businessInfo.phone}</a>
         </div>
       </nav>
 

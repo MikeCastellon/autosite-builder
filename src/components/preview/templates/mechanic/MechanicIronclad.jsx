@@ -147,7 +147,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
         flexDirection: 'column',
       }}
     >
-      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}.tp-iron-brand{font-size:16px!important;letter-spacing:2px!important;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}.tp-iron-sub{display:none!important}.tp-iron-badge{width:34px!important;height:34px!important;font-size:12px!important}.tp-iron-cta{font-size:11px!important;padding:8px 16px!important;letter-spacing:1px!important}}`}</style>
       {/* Marquee keyframe injection */}
       <style>{`
         @keyframes ironcladMarquee {
@@ -176,8 +176,9 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
         {images.logo ? (
           <img src={images.logo} alt={biz.businessName || 'Logo'} style={{ height: 42, objectFit: 'contain' }} />
         ) : (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0, flex: '0 1 auto' }}>
             <div
+              className="tp-iron-badge"
               style={{
                 width: 42, height: 42, background: c.accent,
                 clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
@@ -187,11 +188,11 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
             >
               {(biz.businessName || 'IC').replace(/[^A-Za-z]/g, '').slice(0, 2).toUpperCase() || 'IC'}
             </div>
-            <div>
-              <span style={{ fontFamily: bebas, fontSize: 22, letterSpacing: 3, color: c.text, lineHeight: 1, display: 'block' }}>
+            <div style={{ minWidth: 0 }}>
+              <span className="tp-iron-brand" style={{ fontFamily: bebas, fontSize: 22, letterSpacing: 3, color: c.text, lineHeight: 1, display: 'block' }}>
                 {biz.businessName || fb.shopName.toUpperCase()}
               </span>
-              <span style={{ fontFamily: condensed, fontSize: 9, letterSpacing: 4, color: c.accent, fontWeight: 700, textTransform: 'uppercase', display: 'block', marginTop: 1 }}>
+              <span className="tp-iron-sub" style={{ fontFamily: condensed, fontSize: 9, letterSpacing: 4, color: c.accent, fontWeight: 700, textTransform: 'uppercase', display: 'block', marginTop: 1 }}>
                 {[biz.city, biz.state].filter(Boolean).join(', ')}
               </span>
             </div>
@@ -210,11 +211,13 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
           ))}
           <a
             href={biz.phone ? `tel:${biz.phone}` : '#contact'}
+            className="tp-iron-cta"
             style={{
               background: c.accent, color: '#fff', fontFamily: condensed,
               fontSize: 14, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase',
               padding: '11px 26px', textDecoration: 'none',
               clipPath: 'polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%)',
+              whiteSpace: 'nowrap',
             }}
           >
             {copy.ctaPrimary || 'Book Service'}

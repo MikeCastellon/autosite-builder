@@ -121,7 +121,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
 
   return (
     <div style={{ fontFamily: bodyFont, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
-      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}.tp-bubble-brand-name{font-size:15px!important;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}.tp-bubble-brand-sub{display:none!important}.tp-bubble-orb{width:30px!important;height:30px!important}.tp-bubble-cta{font-size:11px!important;padding:7px 14px!important}}`}</style>
 
       {/* Marquee keyframe */}
       <style>{'@keyframes soapScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }'}</style>
@@ -138,22 +138,22 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
       
         order: -1,
       }}>
-        <a href='#' style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+        <a href='#' style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', minWidth: 0, flex: '0 1 auto' }}>
           {images.logo ? (
             <img src={images.logo} alt={biz.businessName || 'Logo'} style={{ height: 38, objectFit: 'contain' }} />
           ) : (
             <>
-              <div style={{
+              <div className="tp-bubble-orb" style={{
                 width: 38, height: 38, borderRadius: '50%',
                 background: `radial-gradient(circle at 35% 30%, #fff, ${c.accent})`,
                 border: `2px solid ${c.accent}`, flexShrink: 0,
                 boxShadow: `0 0 0 3px ${accentLight}55`,
               }} />
-              <div>
-                <span style={{ fontFamily: font, fontSize: 17, color: c.text, display: 'block', lineHeight: 1.1 }}>
+              <div style={{ minWidth: 0 }}>
+                <span className="tp-bubble-brand-name" style={{ fontFamily: font, fontSize: 17, color: c.text, display: 'block', lineHeight: 1.1 }}>
                   {biz.businessName || fb.shopName}
                 </span>
-                <span style={{ fontSize: 10, color: c.muted || '#64748b', letterSpacing: 1.5, textTransform: 'uppercase', display: 'block' }}>
+                <span className="tp-bubble-brand-sub" style={{ fontSize: 10, color: c.muted || '#64748b', letterSpacing: 1.5, textTransform: 'uppercase', display: 'block' }}>
                   {fb.navSubtitle}{biz.city ? ` · ${biz.city}` : ''}
                 </span>
               </div>
@@ -164,11 +164,11 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
           {[['#packages', 'Packages'], ['#how', 'How It Works'], ['#reviews', 'Reviews']].map(([href, label]) => (
             <a key={href} href={href} style={{ color: c.text, textDecoration: 'none', fontWeight: 700, fontSize: 13, opacity: 0.8 }}>{label}</a>
           ))}
-          <a href={biz.phone ? `tel:${biz.phone}` : '#'} style={{
+          <a href={biz.phone ? `tel:${biz.phone}` : '#'} className="tp-bubble-cta" style={{
             background: `linear-gradient(135deg, ${c.accent}, #14b8a6)`,
             color: '#fff', padding: '9px 22px', borderRadius: 50,
             fontWeight: 800, fontSize: 13, textDecoration: 'none',
-            boxShadow: `0 4px 16px ${c.accent}44`,
+            boxShadow: `0 4px 16px ${c.accent}44`, whiteSpace: 'nowrap',
           }}>{fb.ctaHeadline} 🫧</a>
         </div>
       </nav>

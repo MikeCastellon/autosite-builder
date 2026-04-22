@@ -84,7 +84,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
   return (
 
     <div style={{ fontFamily: bodyFont, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, WebkitFontSmoothing: 'antialiased', containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
-      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}.tp-obsidian-name{font-size:14px!important;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tp-obsidian-sub{display:none!important}.tp-obsidian-orb{width:26px!important;height:26px!important}.tp-obsidian-cta{font-size:11px!important;padding:7px 14px!important}}`}</style>
 
       {/* ============================================================ NAV ============================================================ */}
       <nav style={{
@@ -97,8 +97,8 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
         order: -1,
       }}>
         <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 70 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: '0 1 auto' }}>
+            <div className="tp-obsidian-orb" style={{
               width: 32, height: 32, borderRadius: 6,
               background: `linear-gradient(135deg, ${c.accent}, ${cCyan})`,
               display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
@@ -109,20 +109,20 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
             {images.logo ? (
               <img src={images.logo} alt={biz.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
             ) : (
-              <div>
-                <div style={{ fontFamily: font, fontSize: 16, fontWeight: 800, color: c.text, letterSpacing: -0.5, lineHeight: 1 }}>{biz.businessName || fb.shopName}</div>
-                <div style={{ fontSize: 10, color: cCyan, letterSpacing: 3, textTransform: 'uppercase', marginTop: 2 }}>{biz.city || 'Studio'}</div>
+              <div style={{ minWidth: 0 }}>
+                <div className="tp-obsidian-name" style={{ fontFamily: font, fontSize: 16, fontWeight: 800, color: c.text, letterSpacing: -0.5, lineHeight: 1 }}>{biz.businessName || fb.shopName}</div>
+                <div className="tp-obsidian-sub" style={{ fontSize: 10, color: cCyan, letterSpacing: 3, textTransform: 'uppercase', marginTop: 2 }}>{biz.city || 'Studio'}</div>
               </div>
             )}
           </div>
-          <div className="tp-nav-links" style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
+          <div className="tp-nav-links" style={{ display: 'flex', gap: 32, alignItems: 'center', flexShrink: 0 }}>
             {[['#services', 'Services'], ['#process', 'Process'], ['#about', 'About']].map(([href, label]) => (
               <a key={href} href={href} style={{ color: c.text, textDecoration: 'none', fontWeight: 500, fontSize: 13, opacity: 0.55 }}>{label}</a>
             ))}
-            <a href={`tel:${biz.phone}`} style={{
+            <a href={`tel:${biz.phone}`} className="tp-obsidian-cta" style={{
               background: `linear-gradient(135deg, ${c.accent}, ${cCyan})`,
               color: '#fff', padding: '10px 22px', borderRadius: 6, fontWeight: 700, fontSize: 13, textDecoration: 'none',
-              boxShadow: `0 0 24px ${c.accent}44`,
+              boxShadow: `0 0 24px ${c.accent}44`, whiteSpace: 'nowrap',
             }}>
               {biz.phone ? 'Call Now' : 'Get a Quote'}
             </a>

@@ -179,25 +179,25 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
 
   return (
     <div style={{ background: c.bg, color: c.text, fontFamily: bodyFont, containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
-      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}.tp-elite-nav{padding:0 16px!important;height:60px!important}.tp-elite-brand{font-size:1rem!important;letter-spacing:0.5px!important;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tp-elite-cta{font-size:11px!important;padding:7px 12px!important}}`}</style>
       {/* NAV */}
       <nav style={{ ...navStyle, order: -1 }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '72px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <div style={{ width: '2px', height: '32px', background: goldGradient }} />
+        <div className="tp-elite-nav" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, height: '72px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', minWidth: 0, flex: '0 1 auto' }}>
+            <div style={{ width: '2px', height: '32px', background: goldGradient, flexShrink: 0 }} />
             {images.logo ? (
               <img src={images.logo} alt={businessInfo.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
             ) : (
-              <div style={{ fontFamily: font, fontWeight: 700, fontSize: '1.25rem', color: '#ffffff', letterSpacing: '1px' }}>
+              <div className="tp-elite-brand" style={{ fontFamily: font, fontWeight: 700, fontSize: '1.25rem', color: '#ffffff', letterSpacing: '1px' }}>
                 {businessInfo.businessName}
               </div>
             )}
           </div>
-          <div className="tp-nav-links" style={{ display: 'flex', gap: '36px', alignItems: 'center' }}>
+          <div className="tp-nav-links" style={{ display: 'flex', gap: '36px', alignItems: 'center', flexShrink: 0 }}>
             {['Services', 'Films', 'Packages', 'Contact'].map(link => (
               <a key={link} href={`#${link.toLowerCase()}`} style={{ color: c.muted, textDecoration: 'none', fontWeight: 400, fontSize: '0.82rem', letterSpacing: '2px', textTransform: 'uppercase' }}>{link}</a>
             ))}
-            <a href={`tel:${businessInfo.phone}`} style={accentBtnStyle}>{businessInfo.phone}</a>
+            <a href={`tel:${businessInfo.phone}`} className="tp-elite-cta" style={{ ...accentBtnStyle, whiteSpace: 'nowrap' }}>{businessInfo.phone}</a>
           </div>
         </div>
       </nav>

@@ -166,25 +166,25 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
 
   return (
     <div style={{ background: c.bg, color: c.text, fontFamily: bodyFont, containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
-      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}.tp-garage-nav{padding:0 16px!important;height:58px!important}.tp-garage-brand{font-size:1rem!important;letter-spacing:0.5px!important;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tp-garage-bar{height:28px!important;width:6px!important}.tp-garage-cta{font-size:11px!important;padding:7px 14px!important}}`}</style>
       {/* NAV */}
       <nav style={{ ...navStyle, order: -1 }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '68px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '10px', height: '36px', background: c.accent, borderRadius: '2px' }} />
+        <div className="tp-garage-nav" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, height: '68px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: '0 1 auto' }}>
+            <div className="tp-garage-bar" style={{ width: '10px', height: '36px', background: c.accent, borderRadius: '2px', flexShrink: 0 }} />
             {images.logo ? (
               <img src={images.logo} alt={businessInfo.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
             ) : (
-              <div style={{ fontFamily: font, fontWeight: 900, fontSize: '1.35rem', color: '#ffffff', letterSpacing: '1px', textTransform: 'uppercase' }}>
+              <div className="tp-garage-brand" style={{ fontFamily: font, fontWeight: 900, fontSize: '1.35rem', color: '#ffffff', letterSpacing: '1px', textTransform: 'uppercase' }}>
                 {businessInfo.businessName}
               </div>
             )}
           </div>
-          <div className="tp-nav-links" style={{ display: 'flex', gap: '28px', alignItems: 'center' }}>
+          <div className="tp-nav-links" style={{ display: 'flex', gap: '28px', alignItems: 'center', flexShrink: 0 }}>
             {['Services', 'Hours', 'About', 'Contact'].map(link => (
               <a key={link} href={`#${link.toLowerCase()}`} style={{ color: c.muted, textDecoration: 'none', fontWeight: 600, fontSize: '0.88rem', letterSpacing: '1px', textTransform: 'uppercase' }}>{link}</a>
             ))}
-            <a href={`tel:${businessInfo.phone}`} style={accentBtnStyle}>{businessInfo.phone}</a>
+            <a href={`tel:${businessInfo.phone}`} className="tp-garage-cta" style={{ ...accentBtnStyle, whiteSpace: 'nowrap' }}>{businessInfo.phone}</a>
           </div>
         </div>
       </nav>
