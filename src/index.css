@@ -14,3 +14,71 @@ body {
   -webkit-font-smoothing: antialiased;
   color: #1a1a1a;
 }
+
+/* Google Reviews widget — force one card per view on narrow containers.
+   The external widget uses viewport width (not container width) to decide
+   cards-per-view, so in the "Mobile" preview it crams 5 cards side-by-side.
+   These overrides kick in whether the browser viewport OR our containerType
+   wrapper is narrow, and also on real mobile. */
+@media (max-width: 600px) {
+  [data-widget="google-reviews"],
+  [data-widget="google-reviews"] * {
+    min-width: 0 !important;
+  }
+  [data-widget="google-reviews"] [class*="track"],
+  [data-widget="google-reviews"] [class*="carousel"],
+  [data-widget="google-reviews"] [class*="slider"],
+  [data-widget="google-reviews"] [class*="list"],
+  [data-widget="google-reviews"] [class*="cards"] {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    gap: 12px !important;
+    padding-bottom: 8px;
+  }
+  [data-widget="google-reviews"] [class*="track"] > *,
+  [data-widget="google-reviews"] [class*="carousel"] > *,
+  [data-widget="google-reviews"] [class*="slider"] > *,
+  [data-widget="google-reviews"] [class*="list"] > *,
+  [data-widget="google-reviews"] [class*="cards"] > * {
+    flex: 0 0 calc(100% - 32px) !important;
+    min-width: calc(100% - 32px) !important;
+    max-width: calc(100% - 32px) !important;
+    scroll-snap-align: start;
+  }
+}
+
+/* Same rules but based on container width — catches the app's "Mobile"
+   preview toggle where the viewport is desktop-sized but the template is
+   constrained to a 390px wrapper with containerType:inline-size. */
+@container (max-width: 600px) {
+  [data-widget="google-reviews"],
+  [data-widget="google-reviews"] * {
+    min-width: 0 !important;
+  }
+  [data-widget="google-reviews"] [class*="track"],
+  [data-widget="google-reviews"] [class*="carousel"],
+  [data-widget="google-reviews"] [class*="slider"],
+  [data-widget="google-reviews"] [class*="list"],
+  [data-widget="google-reviews"] [class*="cards"] {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    gap: 12px !important;
+    padding-bottom: 8px;
+  }
+  [data-widget="google-reviews"] [class*="track"] > *,
+  [data-widget="google-reviews"] [class*="carousel"] > *,
+  [data-widget="google-reviews"] [class*="slider"] > *,
+  [data-widget="google-reviews"] [class*="list"] > *,
+  [data-widget="google-reviews"] [class*="cards"] > * {
+    flex: 0 0 calc(100% - 32px) !important;
+    min-width: calc(100% - 32px) !important;
+    max-width: calc(100% - 32px) !important;
+    scroll-snap-align: start;
+  }
+}
