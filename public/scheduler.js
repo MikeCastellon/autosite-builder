@@ -95,7 +95,7 @@
       container.id = 'acg-scheduler-modal';
       container.style.cssText = 'font-family:' + FONT + ';';
       card = document.createElement('div');
-      card.style.cssText = 'background:#fff;border:1px solid rgba(0,0,0,0.07);border-radius:16px;max-width:520px;overflow:hidden;box-shadow:0 6px 24px rgba(0,0,0,0.04);';
+      card.style.cssText = 'background:#fff;border:1px solid rgba(0,0,0,0.07);border-radius:16px;max-width:760px;overflow:hidden;box-shadow:0 6px 24px rgba(0,0,0,0.04);';
       container.appendChild(card);
       var host = document.getElementById('acg-scheduler-preview-host') || document.body;
       host.innerHTML = '';
@@ -112,7 +112,7 @@
         'font-family:' + FONT + ';';
       card = document.createElement('div');
       card.style.cssText =
-        'background:#fff;border-radius:16px;max-width:520px;width:100%;' +
+        'background:#fff;border-radius:16px;max-width:760px;width:100%;' +
         'max-height:92vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,0.35);' +
         'overflow-x:hidden;';
       container.appendChild(card);
@@ -310,15 +310,14 @@
         sectionTitle('Your details', subtitle) +
         bodyOpen() +
           '<form id="acg-booking-form" novalidate>' +
-            field('customer_name', 'Name', 'text', true) +
-            field('customer_email', 'Email', 'email', true) +
-            field('customer_phone', 'Phone', 'tel', true) +
+            // Row 1: Name | Email
             row(
-              field('vehicle_make', 'Make', 'text', true),
-              field('vehicle_model', 'Model', 'text', true)
+              field('customer_name', 'Name', 'text', true),
+              field('customer_email', 'Email', 'email', true)
             ) +
+            // Row 2: Phone | Size
             row(
-              field('vehicle_year', 'Year', 'number', true, 'min="1900" max="2100"'),
+              field('customer_phone', 'Phone', 'tel', true),
               select('vehicle_size', 'Size', [
                 {value:'sedan', label:'Sedan'},
                 {value:'suv', label:'SUV'},
@@ -327,14 +326,23 @@
                 {value:'other', label:'Other'},
               ])
             ) +
-            field('service_address', 'Service address (if mobile)', 'text', false) +
+            // Row 3: Make | Model | Year (3-up)
+            row3(
+              field('vehicle_make', 'Make', 'text', true),
+              field('vehicle_model', 'Model', 'text', true),
+              field('vehicle_year', 'Year', 'number', true, 'min="1900" max="2100"')
+            ) +
+            // Row 4: Address | Referral
+            row(
+              field('service_address', 'Service address (if mobile)', 'text', false),
+              field('referral_source', 'How did you hear about us?', 'text', false)
+            ) +
             fieldTextarea('notes', 'Notes', false) +
-            field('referral_source', 'How did you hear about us?', 'text', false) +
             '<input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;" aria-hidden="true" />' +
             '<div id="acg-form-error" style="color:' + brand + ';font-size:13px;margin:8px 0;display:none;font-weight:600;"></div>' +
-            '<div style="display:flex;gap:10px;margin-top:16px;">' +
-              '<button type="button" data-back style="padding:14px 18px;background:#fff;border:1px solid #ddd;border-radius:12px;font-family:' + FONT + ';font-weight:600;font-size:14px;cursor:pointer;color:#555;">Back</button>' +
-              '<button type="submit" style="flex:1;padding:15px;background:' + brand + ';color:#fff;border:0;border-radius:12px;font-family:' + FONT + ';font-weight:700;font-size:15px;cursor:pointer;letter-spacing:0.2px;">Submit request</button>' +
+            '<div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;">' +
+              '<button type="button" data-back style="padding:14px 22px;background:#fff;border:1px solid #ddd;border-radius:12px;font-family:' + FONT + ';font-weight:600;font-size:14px;cursor:pointer;color:#555;">Back</button>' +
+              '<button type="submit" style="padding:14px 32px;background:' + brand + ';color:#fff;border:0;border-radius:12px;font-family:' + FONT + ';font-weight:700;font-size:15px;cursor:pointer;letter-spacing:0.2px;">Submit request</button>' +
             '</div>' +
           '</form>' +
         bodyClose();
@@ -449,7 +457,10 @@
         '<select name="' + name + '" required style="' + inputStyle() + 'appearance:none;-webkit-appearance:none;background-image:url(\'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 12 12%22><path d=%22M2 4l4 4 4-4%22 stroke=%22%23888%22 stroke-width=%221.5%22 fill=%22none%22 stroke-linecap=%22round%22/></svg>\');background-repeat:no-repeat;background-position:right 12px center;background-size:12px;padding-right:36px;" onfocus="this.style.borderColor=\'' + brand + '\';" onblur="this.style.borderColor=\'#e2e2e2\';">' + opts + '</select></label>';
     }
     function row(a, b) {
-      return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">' + a + b + '</div>';
+      return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' + a + b + '</div>';
+    }
+    function row3(a, b, c) {
+      return '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">' + a + b + c + '</div>';
     }
 
     render();
