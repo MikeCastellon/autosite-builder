@@ -258,7 +258,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
           </div>
 
           {/* H1 */}
-          <h1 style={{ fontFamily: bebas, fontSize: 'clamp(32px, 10vw, 130px)', lineHeight: 0.92, letterSpacing: 2, color: c.text, margin: '0 0 28px' }}>
+          <h1 style={{ fontFamily: bebas, fontSize: 'clamp(32px, 7vw, 90px)', lineHeight: 0.95, letterSpacing: 2, color: c.text, margin: '0 0 28px' }}>
             {copy.headline ? (
               copy.headline
             ) : (

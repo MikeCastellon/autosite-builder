@@ -206,7 +206,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
             {biz.city || 'Your City'}{biz.state ? `, ${biz.state}` : ''} — Open Now
           </div>
 
-          <h1 style={{ fontFamily: font, fontSize: 'clamp(1.8rem, 9vw, 6.5rem)', lineHeight: 0.95, letterSpacing: '-0.01em', margin: '0 0 1.2rem', color: c.text }}>
+          <h1 style={{ fontFamily: font, fontSize: 'clamp(1.8rem, 6vw, 4.5rem)', lineHeight: 1, letterSpacing: '-0.01em', margin: '0 0 1.2rem', color: c.text }}>
             {copy.headline ? copy.headline : (
               <>
                 <span style={gradText}>{biz.businessName || fb.shopName}</span>

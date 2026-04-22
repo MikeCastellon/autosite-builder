@@ -123,7 +123,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
           <p style={{ fontSize: 11, letterSpacing: 3, textTransform: 'uppercase', color: D.bronze, marginBottom: 14, fontWeight: 500 }}>
             ◆ {fb.heroBadge}{biz.city ? ` · ${biz.city}` : ''}
           </p>
-          <h1 style={{ fontFamily: display, fontSize: 'clamp(48px, 7vw, 88px)', lineHeight: 0.92, letterSpacing: 1, color: D.ink, marginBottom: 24 }}>
+          <h1 style={{ fontFamily: display, fontSize: 'clamp(36px, 5vw, 64px)', lineHeight: 1, letterSpacing: 1, color: D.ink, marginBottom: 24 }}>
             {copy.headline ? (
               (() => {
                 const words = copy.headline.trim().split(' ');

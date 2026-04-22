@@ -23,7 +23,7 @@ export const DEMO_BUSINESS_INFO = {
   serviceArea: '30-mile radius from Miami',
   brands: 'Forgiato, Vossen, ADV.1, HRE',
   filmBrands: 'XPEL, LLumar, 3M, Ceramic Pro',
-  warranty: 'Lifetime warranty on all ceramic tint',
+  warranty: 'Lifetime warranty on all ceramic coatings',
   certifications: 'ASE Certified · AAA Approved',
   warrantyOffered: '12-month / 12,000-mile warranty on all repairs',
   tireBrands: 'Michelin, Nitto, Toyo, Continental',

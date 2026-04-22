@@ -183,7 +183,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: c.text, color: c.accent, fontFamily: font, fontSize: 15, padding: '7px 18px', borderRadius: 980, marginBottom: 24, alignSelf: 'flex-start' }}>
               {String.fromCodePoint(0x1F4CD)} We Come To YOU{biz.city ? ` — ${biz.city}` : ''}
             </div>
-            <h1 style={{ fontFamily: font, fontSize: 'clamp(1.8rem, 7vw, 5.5rem)', lineHeight: 1.05, color: c.text, margin: '0 0 20px' }}>
+            <h1 style={{ fontFamily: font, fontSize: 'clamp(1.8rem, 5vw, 4rem)', lineHeight: 1.05, color: c.text, margin: '0 0 20px' }}>
               {copy.headline || 'Your Car Deserves Better.'}
             </h1>
             <p style={{ fontSize: 17, fontWeight: 600, color: c.muted, lineHeight: 1.7, maxWidth: 480, marginBottom: 36 }}>
@@ -211,7 +211,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: c.text, color: c.accent, fontFamily: font, fontSize: 15, padding: '7px 18px', borderRadius: 980, marginBottom: 24 }}>
               {String.fromCodePoint(0x1F4CD)} We Come To YOU{biz.city ? ` — ${biz.city}` : ''}
             </div>
-            <h1 style={{ fontFamily: font, fontSize: 'clamp(1.8rem, 7vw, 5.5rem)', lineHeight: 1.05, color: c.text, margin: '0 0 20px' }}>
+            <h1 style={{ fontFamily: font, fontSize: 'clamp(1.8rem, 5vw, 4rem)', lineHeight: 1.05, color: c.text, margin: '0 0 20px' }}>
               {copy.headline || 'Your Car Deserves Better.'}
             </h1>
             <p style={{ fontSize: 17, fontWeight: 600, color: c.muted, lineHeight: 1.7, maxWidth: 480, marginBottom: 36 }}>

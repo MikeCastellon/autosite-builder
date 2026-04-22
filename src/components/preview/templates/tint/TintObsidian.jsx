@@ -162,11 +162,11 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
             fontSize: 11, color: cCyan, fontWeight: 600, letterSpacing: 3, textTransform: 'uppercase',
           }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: cCyan, display: 'inline-block', boxShadow: `0 0 8px ${cCyan}` }} />
-            {biz.city && biz.state ? `${biz.city}, ${biz.state}` : fb.heroBadge} · Certified Installers
+            {biz.city && biz.state ? `${biz.city}, ${biz.state}` : fb.heroBadge}
           </div>
           <h1 style={{
-            fontFamily: font, fontSize: 'clamp(1.8rem, 7vw, 6rem)', fontWeight: 800,
-            lineHeight: 1.0, letterSpacing: -2, margin: '0 0 24px', color: c.text,
+            fontFamily: font, fontSize: 'clamp(1.8rem, 5vw, 4.2rem)', fontWeight: 800,
+            lineHeight: 1.05, letterSpacing: -1, margin: '0 0 24px', color: c.text,
           }}>
             {copy.headline || fb.headline || 'Precision. Zero Compromise.'}
           </h1>
@@ -183,7 +183,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
               color: '#fff', padding: '15px 38px', borderRadius: 8, fontWeight: 700, fontSize: 15, textDecoration: 'none',
               boxShadow: `0 4px 32px ${c.accent}55`,
             }}>
-              {copy.ctaPrimary || 'Book an Install'}
+              {copy.ctaPrimary || fb.ctaHeadline || 'Get a Quote'}
             </a>
             <a href="#services" style={{
               border: `1px solid ${cCyan}33`, color: cCyan, padding: '14px 30px',
@@ -328,7 +328,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
           <div style={{ marginBottom: 72 }}>
             <div style={labelTagStyle}>
               <span style={{ width: 24, height: 1, background: c.accent, flexShrink: 0 }} />
-              The Install
+              Our Process
             </div>
             <h2 style={sectionTitleStyle}>
               Precision is <span style={{ color: '#a855f7' }}>the standard.</span>
@@ -500,7 +500,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
             Ready When You Are
             <span style={{ width: 24, height: 1, background: cCyan, flexShrink: 0 }} />
           </div>
-          <h2 style={{ ...sectionTitleStyle, marginBottom: 16, fontSize: 'clamp(2rem, 4vw, 3.2rem)' }}>{copy.ctaHeadline || 'Book Your Install'}</h2>
+          <h2 style={{ ...sectionTitleStyle, marginBottom: 16, fontSize: 'clamp(2rem, 4vw, 3.2rem)' }}>{copy.ctaHeadline || fb.ctaHeadline || 'Get in Touch'}</h2>
           <p style={{ color: c.muted, fontSize: 16, marginBottom: 12, lineHeight: 1.6 }}>
             {copy.ctaSubtext || copy.ctaSecondary || `Serving ${biz.city || 'your area'}${biz.state ? `, ${biz.state}` : ''} and surrounding areas. Call or stop by for a free consultation.`}
           </p>
