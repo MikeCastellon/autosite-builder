@@ -3,6 +3,10 @@
 
 begin;
 
+-- Ensure gen_random_uuid() is available. Supabase enables this by default
+-- in the `extensions` schema, but be explicit for fresh projects.
+create extension if not exists pgcrypto with schema extensions;
+
 -- ---------- profiles ----------
 create table if not exists profiles (
   id uuid primary key references auth.users(id) on delete cascade,
@@ -30,6 +34,15 @@ create trigger on_auth_user_created
 insert into profiles (id, email)
 select id, email from auth.users
 on conflict (id) do nothing;
+
+-- Keep updated_at in sync on any row UPDATE.
+create or replace function public.tg_set_updated_at() returns trigger
+language plpgsql as $$ begin new.updated_at = now(); return new; end; $$;
+
+drop trigger if exists set_updated_at_profiles on profiles;
+create trigger set_updated_at_profiles
+  before update on profiles
+  for each row execute function public.tg_set_updated_at();
 
 alter table profiles enable row level security;
 
@@ -96,6 +109,12 @@ $$;
 
 alter table bookings enable row level security;
 
+-- Keep updated_at in sync on bookings too.
+drop trigger if exists set_updated_at_bookings on bookings;
+create trigger set_updated_at_bookings
+  before update on bookings
+  for each row execute function public.tg_set_updated_at();
+
 -- Anonymous visitors can INSERT only
 create policy "bookings_insert_anon_when_enabled" on bookings
   for insert to anon
@@ -113,6 +132,14 @@ create policy "bookings_update_owner_or_admin" on bookings
     owner_user_id = auth.uid()
     or exists (select 1 from profiles p where p.id = auth.uid() and p.is_super_admin)
   );
+
+-- Explicit grants. Supabase auto-grants most of these but we state them
+-- clearly so the RLS policies actually apply (esp. EXECUTE on can_book_site
+-- which is called inside the anon INSERT WITH CHECK clause).
+grant execute on function public.can_book_site(uuid) to anon, authenticated;
+grant insert on table bookings to anon;
+grant select, update on table bookings to authenticated;
+grant select, update on table profiles to authenticated;
 
 -- ---------- seed super admins ----------
 update profiles
