@@ -88,7 +88,7 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
   return (
     <div className="min-h-screen bg-[#faf9f7]">
       <header className="border-b border-black/[0.07] bg-white px-6 py-4 flex items-center justify-between">
-        <h1 className="text-lg font-black text-[#1a1a1a] tracking-tight">AutoSite Builder</h1>
+        <h1 className="text-lg font-black text-[#1a1a1a] tracking-tight">Genius Websites</h1>
         <div className="flex items-center gap-4">
           {userEmail && <span className="text-xs text-[#888]">{userEmail}</span>}
           {onSignOut && (
