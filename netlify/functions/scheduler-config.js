@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { isEffectiveSchedulerActive } from './_lib/subscription-gating.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -40,11 +41,11 @@ export const handler = async (event) => {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('scheduler_enabled')
+    .select('is_super_admin, scheduler_enabled, subscription_status, subscription_ends_at')
     .eq('id', site.user_id)
     .maybeSingle();
 
-  if (!profile?.scheduler_enabled) return disabled();
+  if (!isEffectiveSchedulerActive(profile)) return disabled();
 
   const businessName = site.business_info?.businessName || 'Book Now';
   const customColors = site.generated_content?._customColors || {};
