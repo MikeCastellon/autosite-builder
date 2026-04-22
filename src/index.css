@@ -20,41 +20,67 @@ body {
    preview the viewport stays desktop even when the template is
    constrained, so it shows 4 tiny crammed cards. We force 1-per-view
    using the widget's real class names: .sf-gr-carousel / .sf-gr-card. */
+/* Google Reviews widget on mobile: the widget's JS-driven carousel
+   assumes desktop card widths and mispaginates when we force cards
+   to 100% width. Simpler solution — turn the carousel into a vertical
+   stack (first 3 reviews) and hide arrows/dots entirely. */
 @media (max-width: 600px) {
   [data-widget="google-reviews"] .sf-gr-carousel {
-    overflow: hidden !important;
+    overflow: visible !important;
     padding: 0 !important;
   }
-  [data-widget="google-reviews"] .sf-gr-card {
-    flex: 0 0 100% !important;
+  [data-widget="google-reviews"] .sf-gr-carousel > * {
+    transform: none !important;
+    flex-direction: column !important;
     width: 100% !important;
-    min-width: 100% !important;
+    gap: 12px !important;
+  }
+  [data-widget="google-reviews"] .sf-gr-card {
+    flex: none !important;
+    width: 100% !important;
+    min-width: 0 !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
+    display: block !important;
   }
-  /* Arrow buttons obscure the single card on mobile; dots pagination
-     is enough for swiping. Hide the prev/next arrows. */
+  [data-widget="google-reviews"] .sf-gr-card:nth-child(n+4) {
+    display: none !important;
+  }
   [data-widget="google-reviews"] .sf-gr-arrow,
   [data-widget="google-reviews"] .sf-gr-prev,
-  [data-widget="google-reviews"] .sf-gr-next {
+  [data-widget="google-reviews"] .sf-gr-next,
+  [data-widget="google-reviews"] .sf-gr-dot,
+  [data-widget="google-reviews"] [class*="dots"] {
     display: none !important;
   }
 }
 @container (max-width: 600px) {
   [data-widget="google-reviews"] .sf-gr-carousel {
-    overflow: hidden !important;
+    overflow: visible !important;
     padding: 0 !important;
   }
-  [data-widget="google-reviews"] .sf-gr-card {
-    flex: 0 0 100% !important;
+  [data-widget="google-reviews"] .sf-gr-carousel > * {
+    transform: none !important;
+    flex-direction: column !important;
     width: 100% !important;
-    min-width: 100% !important;
+    gap: 12px !important;
+  }
+  [data-widget="google-reviews"] .sf-gr-card {
+    flex: none !important;
+    width: 100% !important;
+    min-width: 0 !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
+    display: block !important;
+  }
+  [data-widget="google-reviews"] .sf-gr-card:nth-child(n+4) {
+    display: none !important;
   }
   [data-widget="google-reviews"] .sf-gr-arrow,
   [data-widget="google-reviews"] .sf-gr-prev,
-  [data-widget="google-reviews"] .sf-gr-next {
+  [data-widget="google-reviews"] .sf-gr-next,
+  [data-widget="google-reviews"] .sf-gr-dot,
+  [data-widget="google-reviews"] [class*="dots"] {
     display: none !important;
   }
 }

@@ -100,17 +100,27 @@ function buildSeoHead(businessInfo, generatedCopy, siteId) {
       .tp-4col { grid-template-columns: 1fr 1fr !important; }
     }
     @media (max-width: 600px) {
-      [data-widget="google-reviews"] .sf-gr-carousel { overflow: hidden !important; padding: 0 !important; }
-      [data-widget="google-reviews"] .sf-gr-card {
-        flex: 0 0 100% !important;
+      [data-widget="google-reviews"] .sf-gr-carousel { overflow: visible !important; padding: 0 !important; }
+      [data-widget="google-reviews"] .sf-gr-carousel > * {
+        transform: none !important;
+        flex-direction: column !important;
         width: 100% !important;
-        min-width: 100% !important;
+        gap: 12px !important;
+      }
+      [data-widget="google-reviews"] .sf-gr-card {
+        flex: none !important;
+        width: 100% !important;
+        min-width: 0 !important;
         max-width: 100% !important;
         box-sizing: border-box !important;
+        display: block !important;
       }
+      [data-widget="google-reviews"] .sf-gr-card:nth-child(n+4) { display: none !important; }
       [data-widget="google-reviews"] .sf-gr-arrow,
       [data-widget="google-reviews"] .sf-gr-prev,
-      [data-widget="google-reviews"] .sf-gr-next { display: none !important; }
+      [data-widget="google-reviews"] .sf-gr-next,
+      [data-widget="google-reviews"] .sf-gr-dot,
+      [data-widget="google-reviews"] [class*="dots"] { display: none !important; }
     }
   </style>
 
