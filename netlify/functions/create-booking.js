@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { validateBookingPayload } from './_lib/booking-validation.js';
-import { newBookingToOwner } from './_lib/postmark.js';
+import { newBookingToOwner, bookingReceivedToCustomer } from './_lib/postmark.js';
 import { computeSlots } from './_lib/slot-math.js';
 
 const CORS = {
@@ -50,7 +50,7 @@ export const handler = async (event) => {
 
   const { data: site } = await supabase
     .from('sites')
-    .select('id, user_id, business_info, scheduler_enabled, scheduler_config')
+    .select('id, user_id, business_info, scheduler_enabled, scheduler_config, slug, published_url, generated_content')
     .eq('id', payload.siteId)
     .maybeSingle();
   if (!site || !site.scheduler_enabled) {
@@ -81,41 +81,48 @@ export const handler = async (event) => {
   }
 
   const when = new Date(payload.preferred_at);
-  const dateISO = when.toISOString().slice(0, 10);
-  const weekday = WEEKDAY_KEYS[when.getUTCDay()];
-  const availability = (cfg.availability || {})[weekday] || [];
+  const isSimple = cfg.booking_mode === 'simple' || payload.is_simple_request === true;
 
-  const leadMs = (cfg.lead_time_hours ?? 24) * 3600 * 1000;
-  if (when.getTime() < Date.now() + leadMs) {
-    return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Too close to now; please pick a later time.' }) };
-  }
+  // Simple mode: no calendar, preferred_at is a placeholder — skip all
+  // slot / lead-time / availability validation. The owner will follow up
+  // manually with the preferred_time_text the customer included.
+  if (!isSimple) {
+    const dateISO = when.toISOString().slice(0, 10);
+    const weekday = WEEKDAY_KEYS[when.getUTCDay()];
+    const availability = (cfg.availability || {})[weekday] || [];
 
-  const granularityMin = cfg.slot_granularity_minutes ?? 30;
-  const durationMin = chosenService?.duration_minutes ?? 60;
+    const leadMs = (cfg.lead_time_hours ?? 24) * 3600 * 1000;
+    if (when.getTime() < Date.now() + leadMs) {
+      return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Too close to now; please pick a later time.' }) };
+    }
 
-  const { data: confirmed } = await supabase
-    .from('bookings')
-    .select('preferred_at, service_id')
-    .eq('site_id', site.id)
-    .eq('status', 'confirmed')
-    .gte('preferred_at', `${dateISO}T00:00:00.000Z`)
-    .lte('preferred_at', `${dateISO}T23:59:59.999Z`);
+    const granularityMin = cfg.slot_granularity_minutes ?? 30;
+    const durationMin = chosenService?.duration_minutes ?? 60;
 
-  const confirmedBookings = (confirmed || []).map((b) => {
-    const s = services.find((sv) => sv.id === b.service_id);
-    return { start: b.preferred_at, durationMin: s?.duration_minutes ?? 60 };
-  });
+    const { data: confirmed } = await supabase
+      .from('bookings')
+      .select('preferred_at, service_id')
+      .eq('site_id', site.id)
+      .eq('status', 'confirmed')
+      .gte('preferred_at', `${dateISO}T00:00:00.000Z`)
+      .lte('preferred_at', `${dateISO}T23:59:59.999Z`);
 
-  const validSlots = computeSlots({
-    dateISO,
-    availability,
-    serviceDurationMin: durationMin,
-    granularityMin,
-    confirmedBookings,
-  });
+    const confirmedBookings = (confirmed || []).map((b) => {
+      const s = services.find((sv) => sv.id === b.service_id);
+      return { start: b.preferred_at, durationMin: s?.duration_minutes ?? 60 };
+    });
 
-  if (!validSlots.includes(when.toISOString())) {
-    return { statusCode: 409, headers: CORS, body: JSON.stringify({ error: 'That time is no longer available. Please pick another.' }) };
+    const validSlots = computeSlots({
+      dateISO,
+      availability,
+      serviceDurationMin: durationMin,
+      granularityMin,
+      confirmedBookings,
+    });
+
+    if (!validSlots.includes(when.toISOString())) {
+      return { statusCode: 409, headers: CORS, body: JSON.stringify({ error: 'That time is no longer available. Please pick another.' }) };
+    }
   }
 
   const { data: inserted, error: insErr } = await supabase
@@ -148,6 +155,8 @@ export const handler = async (event) => {
 
   newBookingToOwner({ booking: inserted, site, ownerEmail: owner.email })
     .catch((err) => console.error('owner email failed:', err));
+  bookingReceivedToCustomer({ booking: inserted, site, isSimple })
+    .catch((err) => console.error('customer email failed:', err));
 
   return { statusCode: 200, headers: CORS, body: JSON.stringify({ ok: true, bookingId: inserted.id }) };
 };

@@ -146,14 +146,13 @@
 
     function brandHeader() {
       var hasLogo = !!cfg.logo_url;
-      var bizLine = esc(cfg.businessName || '') + (cfg.city ? ' <span style="color:#999;font-weight:400;"> · ' + esc(cfg.city) + '</span>' : '');
       return '<div style="padding:22px 28px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #f0f0f0;">' +
         '<div style="display:flex;align-items:center;gap:12px;min-width:0;">' +
           (hasLogo
             ? '<img src="' + esc(cfg.logo_url) + '" alt="" style="height:40px;width:auto;max-width:160px;object-fit:contain;display:block;" />'
             : '<div style="width:40px;height:40px;border-radius:10px;background:' + brand + ';color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;font-family:' + FONT + ';">' + esc((cfg.businessName || 'B').charAt(0).toUpperCase()) + '</div>') +
           '<div style="min-width:0;overflow:hidden;">' +
-            '<div style="font-size:14px;font-weight:700;color:#1a1a1a;letter-spacing:-0.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + bizLine + '</div>' +
+            '<div style="font-size:14px;font-weight:700;color:#1a1a1a;letter-spacing:-0.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(cfg.businessName || '') + '</div>' +
             '<div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:' + brand + ';font-weight:700;margin-top:2px;">Book an Appointment</div>' +
           '</div>' +
         '</div>' +
