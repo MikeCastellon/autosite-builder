@@ -11,6 +11,7 @@ import { TEMPLATES } from './data/templates.js';
 import { DEMO_BUSINESS_INFO, DEMO_GENERATED_COPY } from './data/demoData.js';
 import { useAuth } from './lib/AuthContext.jsx';
 import LoginPage from './components/auth/LoginPage.jsx';
+import LandingPage from './components/LandingPage.jsx';
 import ResetPasswordPage from './components/auth/ResetPasswordPage.jsx';
 import DashboardPage from './components/dashboard/DashboardPage.jsx';
 import { saveSite } from './lib/saveSite.js';
@@ -28,6 +29,7 @@ export default function App() {
   const [images, setImages] = useState({});
   const [error, setError] = useState(null);
   const [customColors, setCustomColors] = useState({});
+  const [showLogin, setShowLogin] = useState(false);
   const [customFonts, setCustomFonts] = useState({});
   const [view, setView] = useState('wizard'); // 'wizard' | 'dashboard'
   const [showResetPassword, setShowResetPassword] = useState(false);
@@ -181,7 +183,11 @@ export default function App() {
       <div className="w-8 h-8 border-4 border-gray-300 border-t-[#cc0000] rounded-full animate-spin" />
     </div>
   );
-  if (!session) return <LoginPage />;
+  if (!session) {
+    return showLogin
+      ? <LoginPage />
+      : <LandingPage onSignIn={() => setShowLogin(true)} />;
+  }
   if (isRecovery) return <ResetPasswordPage onComplete={() => { clearRecovery(); window.history.replaceState({}, '', window.location.pathname); }} />;
 
   const handleSignOut = async () => {
