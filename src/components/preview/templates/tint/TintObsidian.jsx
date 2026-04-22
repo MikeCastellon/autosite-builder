@@ -165,8 +165,8 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
             {biz.city && biz.state ? `${biz.city}, ${biz.state}` : fb.heroBadge}
           </div>
           <h1 style={{
-            fontFamily: font, fontSize: 'clamp(1.8rem, 5cqi, 4.2rem)', fontWeight: 800,
-            lineHeight: 1.05, letterSpacing: -1, margin: '0 0 24px', color: c.text,
+            fontFamily: font, fontSize: 'clamp(1.8rem, 4.5cqi, 3.6rem)', fontWeight: 600,
+            lineHeight: 1.15, letterSpacing: 0, margin: '0 0 24px', color: c.text,
           }}>
             {copy.headline || fb.headline || 'Precision. Zero Compromise.'}
           </h1>
@@ -287,38 +287,6 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
           )}
         </div>
       </section>
-      )}
-
-      {/* ============================================================ WARRANTY ============================================================ */}
-      {(biz.warranty || biz.warrantyOffered) && (
-        <section id="warranty" style={{ padding: '90px 5%', position: 'relative', overflow: 'hidden' }}>
-          <div style={{
-            position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
-            width: 700, height: 450,
-            background: `radial-gradient(ellipse, ${c.accent}12 0%, transparent 70%)`, pointerEvents: 'none',
-          }} />
-          <div style={{ maxWidth: 720, margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 1 }}>
-            <div style={{
-              width: 80, height: 80, margin: '0 auto 24px',
-              background: `linear-gradient(135deg, ${c.accent}30, ${cCyan}20)`,
-              border: `2px solid ${c.accent}60`,
-              borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 30, boxShadow: `0 0 50px ${c.accent}30`,
-            }}>🛡</div>
-            <div style={{ color: cCyan, fontWeight: 700, fontSize: 10, letterSpacing: 4, textTransform: 'uppercase', marginBottom: 12, fontFamily: font }}>BACKED BY A GUARANTEE</div>
-            <h2 style={{ ...sectionTitleStyle, fontSize: 'clamp(1.8rem, 3.5cqi, 2.6rem)', marginBottom: 20 }}>Our Warranty Promise</h2>
-            <div style={{
-              color: c.text, fontSize: 16, lineHeight: 1.8, maxWidth: 560, margin: '0 auto',
-              padding: '28px 32px',
-              background: `linear-gradient(135deg, ${c.accent}10, ${cCyan}08)`,
-              border: `1px solid ${c.accent}30`, borderRadius: 12,
-              boxShadow: `inset 0 1px 0 ${c.accent}20`,
-            }}>
-              {biz.warranty || biz.warrantyOffered}
-            </div>
-          </div>
-        </section>
       )}
 
       {/* ============================================================ PROCESS ============================================================ */}
