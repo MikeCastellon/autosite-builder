@@ -7,7 +7,9 @@ export default function GeneralTab({ siteId, config, siteImages, onSaved }) {
   const [lead, setLead] = useState(String(config?.lead_time_hours ?? 24));
   const [ctaSelector, setCtaSelector] = useState(config?.cta_selector || '');
   const [logoUrl, setLogoUrl] = useState(config?.logo_url || '');
+  const [bookingMode, setBookingMode] = useState(config?.booking_mode === 'simple' ? 'simple' : 'full');
   const [busy, setBusy] = useState(false);
+  const [logoBusy, setLogoBusy] = useState(false);
   const [err, setErr] = useState(null);
   const fileInputRef = useRef(null);
 
@@ -20,7 +22,17 @@ export default function GeneralTab({ siteId, config, siteImages, onSaved }) {
     setLead(String(config?.lead_time_hours ?? 24));
     setCtaSelector(config?.cta_selector || '');
     setLogoUrl(config?.logo_url || '');
+    setBookingMode(config?.booking_mode === 'simple' ? 'simple' : 'full');
   }, [config]);
+
+  async function persistLogo(url) {
+    setLogoBusy(true); setErr(null);
+    try {
+      const updated = await saveSchedulerConfig(siteId, { logo_url: url || null });
+      onSaved && onSaved(updated);
+    } catch (e) { setErr(e.message); }
+    finally { setLogoBusy(false); }
+  }
 
   function handleLogoUpload(e) {
     const file = e.target.files?.[0];
@@ -30,8 +42,25 @@ export default function GeneralTab({ siteId, config, siteImages, onSaved }) {
       return;
     }
     const reader = new FileReader();
-    reader.onload = () => setLogoUrl(reader.result);
+    reader.onload = () => {
+      const dataUrl = reader.result;
+      setLogoUrl(dataUrl);
+      persistLogo(dataUrl);
+    };
     reader.readAsDataURL(file);
+  }
+
+  function removeLogo() {
+    setLogoUrl('');
+    persistLogo(null);
+  }
+
+  async function setMode(next) {
+    setBookingMode(next);
+    try {
+      const updated = await saveSchedulerConfig(siteId, { booking_mode: next });
+      onSaved && onSaved(updated);
+    } catch (e) { setErr(e.message); }
   }
 
   async function save() {
@@ -42,7 +71,6 @@ export default function GeneralTab({ siteId, config, siteImages, onSaved }) {
         button_label: label || 'Book Now',
         lead_time_hours: Math.max(0, Number(lead) || 0),
         cta_selector: ctaSelector.trim(),
-        logo_url: logoUrl || null,
       });
       onSaved && onSaved(updated);
     } catch (e) { setErr(e.message); }
@@ -56,6 +84,43 @@ export default function GeneralTab({ siteId, config, siteImages, onSaved }) {
 
   return (
     <div className="max-w-2xl space-y-6">
+      {/* Booking mode */}
+      <div>
+        <label className={labelBase}>Booking style</label>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => setMode('full')}
+            className={`text-left p-4 rounded-xl border-2 transition-colors ${bookingMode === 'full' ? 'border-[#cc0000] bg-[#cc0000]/5' : 'border-black/10 bg-white hover:border-black/30'}`}
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <span className={`w-4 h-4 rounded-full border-2 ${bookingMode === 'full' ? 'border-[#cc0000] bg-[#cc0000]' : 'border-gray-300'}`}>
+                {bookingMode === 'full' && <span className="block w-1.5 h-1.5 bg-white rounded-full m-[3px]" />}
+              </span>
+              <span className="font-bold text-[#1a1a1a] text-[14px]">Full date & time picker</span>
+            </div>
+            <p className="text-[12px] text-[#666] leading-relaxed pl-6">
+              Customer picks a service, a date on the calendar, and an available time slot based on your availability.
+            </p>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode('simple')}
+            className={`text-left p-4 rounded-xl border-2 transition-colors ${bookingMode === 'simple' ? 'border-[#cc0000] bg-[#cc0000]/5' : 'border-black/10 bg-white hover:border-black/30'}`}
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <span className={`w-4 h-4 rounded-full border-2 ${bookingMode === 'simple' ? 'border-[#cc0000] bg-[#cc0000]' : 'border-gray-300'}`}>
+                {bookingMode === 'simple' && <span className="block w-1.5 h-1.5 bg-white rounded-full m-[3px]" />}
+              </span>
+              <span className="font-bold text-[#1a1a1a] text-[14px]">Simple contact form</span>
+            </div>
+            <p className="text-[12px] text-[#666] leading-relaxed pl-6">
+              Skip the calendar. Customer writes a free-text preferred time and you follow up manually to confirm.
+            </p>
+          </button>
+        </div>
+      </div>
+
       {/* Logo */}
       <div>
         <label className={labelBase}>Booking modal logo</label>
@@ -72,15 +137,17 @@ export default function GeneralTab({ siteId, config, siteImages, onSaved }) {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="text-[13px] font-semibold px-3.5 py-2 rounded-lg border border-black/10 bg-white text-[#1a1a1a] hover:border-[#cc0000] hover:text-[#cc0000] transition-colors"
+                disabled={logoBusy}
+                className="text-[13px] font-semibold px-3.5 py-2 rounded-lg border border-black/10 bg-white text-[#1a1a1a] hover:border-[#cc0000] hover:text-[#cc0000] transition-colors disabled:opacity-50"
               >
-                {logoUrl ? 'Replace logo' : 'Upload logo'}
+                {logoBusy ? 'Saving…' : (logoUrl ? 'Replace logo' : 'Upload logo')}
               </button>
               {logoUrl && (
                 <button
                   type="button"
-                  onClick={() => setLogoUrl('')}
-                  className="text-[13px] font-semibold px-3.5 py-2 rounded-lg border border-black/10 bg-white text-[#888] hover:text-[#cc0000] hover:border-[#cc0000] transition-colors"
+                  onClick={removeLogo}
+                  disabled={logoBusy}
+                  className="text-[13px] font-semibold px-3.5 py-2 rounded-lg border border-black/10 bg-white text-[#888] hover:text-[#cc0000] hover:border-[#cc0000] transition-colors disabled:opacity-50"
                 >
                   Remove
                 </button>
@@ -95,9 +162,9 @@ export default function GeneralTab({ siteId, config, siteImages, onSaved }) {
             </div>
             <p className={helpBase}>
               {logoUrl
-                ? 'Custom booking logo. Shown at the top of the customer-facing booking modal.'
+                ? 'Custom booking logo (saved automatically). Shown at the top of the customer-facing modal.'
                 : siteLogo
-                  ? 'Using the logo uploaded in your site editor. Upload a different one here to override just the booking modal.'
+                  ? 'Using the logo uploaded in your site editor. Upload here to override just for the booking modal.'
                   : 'No logo yet. Upload one in the site editor (Images tab → Logo) or here. PNG / SVG, under 500KB.'}
             </p>
           </div>

@@ -13,7 +13,13 @@
 
   var API = script.src.replace(/\/scheduler\.js.*$/, '');
 
-  fetch(API + '/.netlify/functions/scheduler-config?siteId=' + encodeURIComponent(siteId))
+  var cfgUrl = API + '/.netlify/functions/scheduler-config?siteId=' + encodeURIComponent(siteId);
+  // In preview/auto-open mode (owner previewing their own settings), bypass
+  // the browser cache so owners see their settings changes immediately.
+  var fetchOpts = (previewMode || autoOpen) ? { cache: 'no-store' } : undefined;
+  if (previewMode || autoOpen) cfgUrl += '&t=' + Date.now();
+
+  fetch(cfgUrl, fetchOpts)
     .then(function (r) { return r.ok ? r.json() : { enabled: false }; })
     .catch(function () { return { enabled: false }; })
     .then(function (cfg) {
@@ -185,10 +191,135 @@
 
     function render() {
       var enabledServices = (cfg.services || []).filter(function (s) { return s.enabled !== false; });
+      // Simple mode: skip service picker + calendar + slot picker entirely.
+      if (cfg.booking_mode === 'simple') {
+        if (!state.details.submitted) return renderSimpleForm(enabledServices);
+        return renderSuccess();
+      }
       if (!state.service && enabledServices.length > 1) return renderServices(enabledServices);
       if (!state.dateISO || !state.slotISO) return renderDateTime();
       if (!state.details.submitted) return renderDetails();
       return renderSuccess();
+    }
+
+    function renderSimpleForm(services) {
+      var firstService = services && services.length > 0 ? services[0] : null;
+      state.service = firstService;
+      var serviceOptionsHtml = '';
+      if (services && services.length > 1) {
+        var opts = services.map(function (s) {
+          return '<option value="' + esc(s.id) + '">' + esc(s.name) + (s.price ? ' · ' + esc(s.price) : '') + '</option>';
+        }).join('');
+        serviceOptionsHtml =
+          '<label style="' + labelStyle() + '">Service <span style="color:' + brand + '">*</span>' +
+            '<select name="service_id" required style="' + inputStyle() + 'appearance:none;-webkit-appearance:none;background-image:url(\'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 12 12%22><path d=%22M2 4l4 4 4-4%22 stroke=%22%23888%22 stroke-width=%221.5%22 fill=%22none%22 stroke-linecap=%22round%22/></svg>\');background-repeat:no-repeat;background-position:right 12px center;background-size:12px;padding-right:36px;" onfocus="this.style.borderColor=\'' + brand + '\';" onblur="this.style.borderColor=\'#e2e2e2\';">' + opts + '</select>' +
+          '</label>';
+      }
+
+      card.innerHTML = brandBar() + brandHeader() +
+        sectionTitle('Request an appointment', cfg.welcome_text || '') +
+        bodyOpen() +
+          '<form id="acg-booking-form" novalidate>' +
+            (serviceOptionsHtml ||
+              (firstService ? '<input type="hidden" name="service_id" value="' + esc(firstService.id) + '" />' : '')) +
+            row(
+              field('customer_name', 'Name', 'text', true),
+              field('customer_email', 'Email', 'email', true)
+            ) +
+            row(
+              field('customer_phone', 'Phone', 'tel', true),
+              field('preferred_time_text', 'Preferred time', 'text', true, 'placeholder="e.g. Next Tuesday afternoon"')
+            ) +
+            row3(
+              field('vehicle_make', 'Make', 'text', true),
+              field('vehicle_model', 'Model', 'text', true),
+              field('vehicle_year', 'Year', 'number', true, 'min="1900" max="2100"')
+            ) +
+            row(
+              select('vehicle_size', 'Size', [
+                {value:'sedan', label:'Sedan'},
+                {value:'suv', label:'SUV'},
+                {value:'truck', label:'Truck'},
+                {value:'van', label:'Van'},
+                {value:'other', label:'Other'},
+              ]),
+              field('service_address', 'Service address (if mobile)', 'text', false)
+            ) +
+            fieldTextarea('notes', 'What can we help with?', false) +
+            '<input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;" aria-hidden="true" />' +
+            '<div id="acg-form-error" style="color:' + brand + ';font-size:13px;margin:8px 0;display:none;font-weight:600;"></div>' +
+            '<div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;">' +
+              '<button type="submit" style="padding:14px 32px;background:' + brand + ';color:#fff;border:0;border-radius:12px;font-family:' + FONT + ';font-weight:700;font-size:15px;cursor:pointer;letter-spacing:0.2px;">Send request</button>' +
+            '</div>' +
+          '</form>' +
+        bodyClose();
+      wireClose();
+      card.querySelector('#acg-booking-form').addEventListener('submit', function (e) { e.preventDefault(); submitSimple(services); });
+    }
+
+    function submitSimple(services) {
+      var form = card.querySelector('#acg-booking-form');
+      var errBox = card.querySelector('#acg-form-error');
+      errBox.style.display = 'none';
+      var data = Object.fromEntries(new FormData(form).entries());
+
+      // Resolve selected service if the user picked one from a dropdown.
+      if (data.service_id && services) {
+        state.service = services.find(function (s) { return s.id === data.service_id; }) || state.service;
+      }
+
+      // Simple mode has no slot — stash a far-future placeholder so the
+      // validator passes, and prepend the user's free-text preferred time
+      // to the notes so the owner sees it.
+      var placeholderWhen = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      var preferredTimeText = (data.preferred_time_text || '').trim();
+      var combinedNotes = (preferredTimeText ? 'Preferred time: ' + preferredTimeText + '\n\n' : '') + (data.notes || '');
+
+      var payload = {
+        siteId: siteId,
+        customer_name: data.customer_name,
+        customer_email: data.customer_email,
+        customer_phone: data.customer_phone,
+        preferred_at: placeholderWhen,
+        vehicle_make: data.vehicle_make,
+        vehicle_model: data.vehicle_model,
+        vehicle_year: Number(data.vehicle_year),
+        vehicle_size: data.vehicle_size,
+        service_address: data.service_address || undefined,
+        notes: combinedNotes || undefined,
+        referral_source: undefined,
+        website: data.website || undefined,
+        service_id: state.service ? state.service.id : undefined,
+        is_simple_request: true,
+      };
+
+      var submitBtn = form.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Sending…';
+
+      if (previewMode || autoOpen) {
+        setTimeout(function () { state.details.submitted = true; state.details.isPreview = true; render(); }, 300);
+        return;
+      }
+
+      fetch(API + '/.netlify/functions/create-booking', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+      }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+        .then(function (res) {
+          if (res.ok) { state.details.submitted = true; render(); }
+          else {
+            errBox.textContent = (res.j && res.j.error) || 'Something went wrong. Please try again.';
+            errBox.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Send request';
+          }
+        })
+        .catch(function () {
+          errBox.textContent = 'Network error. Please try again.';
+          errBox.style.display = 'block';
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Send request';
+        });
     }
 
     function renderServices(services) {

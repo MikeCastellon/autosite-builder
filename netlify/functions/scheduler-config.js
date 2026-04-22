@@ -6,7 +6,9 @@ const CORS = {
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
   'Content-Type': 'application/json',
-  'Cache-Control': 'public, max-age=60',
+  // Short cache so settings changes land on the customer-facing widget
+  // within ~10s instead of a minute.
+  'Cache-Control': 'public, max-age=10',
 };
 
 const TEMPLATE_FALLBACK_COLORS = { default: '#1a1a1a' };
@@ -71,6 +73,7 @@ export const handler = async (event) => {
       brandColor,
       logo_url: logoUrl,
       city: site.business_info?.city || '',
+      booking_mode: cfg.booking_mode === 'simple' ? 'simple' : 'full',
       welcome_text: cfg.welcome_text || "Tell us about your car and we'll be in touch.",
       button_label: cfg.button_label || 'Book Now',
       lead_time_hours: cfg.lead_time_hours ?? 24,
