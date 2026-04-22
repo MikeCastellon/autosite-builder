@@ -1,5 +1,12 @@
 import { useEffect, useState } from 'react';
-import { loadSchedulerConfig, setSchedulerEnabled, initializeSchedulerConfig, defaultSchedulerConfig } from '../../../lib/schedulerConfig.js';
+import {
+  loadSchedulerConfig,
+  setSchedulerEnabled,
+  initializeSchedulerConfig,
+  defaultSchedulerConfig,
+  mergeServicesFromBusinessInfo,
+  saveSchedulerConfig,
+} from '../../../lib/schedulerConfig.js';
 import GeneralTab from './GeneralTab.jsx';
 import ServicesTab from './ServicesTab.jsx';
 import AvailabilityTab from './AvailabilityTab.jsx';
@@ -10,16 +17,28 @@ export default function SchedulerSettings({ siteId, onExit }) {
   const [site, setSite] = useState(null);
   const [err, setErr] = useState(null);
 
+  // Auto-sync: if the site's business_info.services has items the scheduler
+  // config doesn't yet know about, merge them in and persist silently.
+  async function autoSyncServices(siteRow) {
+    const cfg = siteRow.scheduler_config || {};
+    const existing = cfg.services || [];
+    const merged = mergeServicesFromBusinessInfo(existing, siteRow.business_info?.services);
+    if (merged.length === existing.length) return cfg;
+    return saveSchedulerConfig(siteId, { services: merged });
+  }
+
   async function refresh() {
     try {
       const s = await loadSchedulerConfig(siteId);
       if (!s) { setErr('Site not found'); return; }
+      let cfg;
       if (s.scheduler_enabled && (!s.scheduler_config || !s.scheduler_config.availability)) {
-        const cfg = await initializeSchedulerConfig(siteId);
-        setSite({ ...s, scheduler_config: cfg });
+        cfg = await initializeSchedulerConfig(siteId);
       } else {
-        setSite({ ...s, scheduler_config: s.scheduler_config || defaultSchedulerConfig() });
+        cfg = s.scheduler_config || defaultSchedulerConfig();
       }
+      const synced = await autoSyncServices({ ...s, scheduler_config: cfg });
+      setSite({ ...s, scheduler_config: synced });
     } catch (e) { setErr(e.message); }
   }
 
@@ -65,7 +84,7 @@ export default function SchedulerSettings({ siteId, onExit }) {
       </div>
 
       {tab === 'general' && <GeneralTab siteId={siteId} config={site.scheduler_config} onSaved={onSaved} />}
-      {tab === 'services' && <ServicesTab siteId={siteId} config={site.scheduler_config} businessInfo={site.business_info} onSaved={onSaved} />}
+      {tab === 'services' && <ServicesTab siteId={siteId} config={site.scheduler_config} onSaved={onSaved} />}
       {tab === 'availability' && <AvailabilityTab siteId={siteId} config={site.scheduler_config} onSaved={onSaved} />}
       {tab === 'preview' && site.scheduler_enabled && <PreviewTab siteId={siteId} />}
     </div>

@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { saveSchedulerConfig, mergeServicesFromBusinessInfo } from '../../../lib/schedulerConfig.js';
+import { saveSchedulerConfig } from '../../../lib/schedulerConfig.js';
 
 function newService() {
   const id = 'svc_' + (crypto.randomUUID ? crypto.randomUUID().replace(/-/g, '').slice(0, 12) : Math.random().toString(36).slice(2, 14));
   return { id, name: '', duration_minutes: 60, price: '', description: '', enabled: true };
 }
 
-export default function ServicesTab({ siteId, config, businessInfo, onSaved }) {
+export default function ServicesTab({ siteId, config, onSaved }) {
   const [services, setServices] = useState(config?.services || []);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
@@ -27,11 +27,6 @@ export default function ServicesTab({ siteId, config, businessInfo, onSaved }) {
     setEditingId(s.id);
   }
 
-  function resync() {
-    const merged = mergeServicesFromBusinessInfo(services, businessInfo?.services);
-    setServices(merged);
-  }
-
   async function save() {
     const cleaned = services.filter((s) => s.name.trim() !== '')
       .map((s) => ({ ...s, duration_minutes: Math.max(15, Number(s.duration_minutes) || 60) }));
@@ -48,11 +43,8 @@ export default function ServicesTab({ siteId, config, businessInfo, onSaved }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <p className="text-sm text-gray-600">Customers pick one of these when booking. Duration is used to block off time on your calendar.</p>
-        <div className="flex gap-2">
-          <button onClick={resync} className="text-xs text-gray-600 hover:text-[#1a1a1a] underline">Re-sync from site</button>
-          <button onClick={add} className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#1a1a1a] text-white hover:bg-[#cc0000]">+ Add service</button>
-        </div>
+        <p className="text-sm text-gray-600">Customers pick one of these when booking. Services from your site sync in automatically. Duration is used to block off time on your calendar.</p>
+        <button onClick={add} className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#1a1a1a] text-white hover:bg-[#cc0000]">+ Add service</button>
       </div>
 
       <div className="bg-white border border-black/[0.07] rounded-xl overflow-hidden">
