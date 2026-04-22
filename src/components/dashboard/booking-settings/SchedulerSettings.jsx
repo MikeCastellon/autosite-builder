@@ -54,6 +54,22 @@ export default function SchedulerSettings({ siteId, onExit }) {
     refresh();
   }
 
+  function openCustomerPreview() {
+    // Tear down any previous preview
+    const oldScript = document.getElementById('acg-scheduler-customer-preview-script');
+    if (oldScript) oldScript.remove();
+    const oldModal = document.getElementById('acg-scheduler-modal');
+    if (oldModal) oldModal.remove();
+
+    const s = document.createElement('script');
+    s.id = 'acg-scheduler-customer-preview-script';
+    s.src = window.location.origin + '/scheduler.js?t=' + Date.now();
+    s.setAttribute('data-site-id', siteId);
+    s.setAttribute('data-auto-open', 'true');
+    s.defer = true;
+    document.body.appendChild(s);
+  }
+
   if (err) return (
     <div className="text-center py-10">
       <p className="text-red-600 mb-3">{err}</p>
@@ -64,7 +80,7 @@ export default function SchedulerSettings({ siteId, onExit }) {
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-6 text-sm text-gray-600">
+      <div className="flex flex-wrap items-center gap-3 mb-6 text-sm text-gray-600">
         <span>Bookings:</span>
         <label className="inline-flex items-center gap-1.5">
           <input
@@ -74,6 +90,19 @@ export default function SchedulerSettings({ siteId, onExit }) {
           />
           <span className="font-semibold">{site.scheduler_enabled ? 'Live on site' : 'Off'}</span>
         </label>
+        {site.scheduler_enabled && (
+          <button
+            onClick={openCustomerPreview}
+            className="ml-auto inline-flex items-center gap-1.5 text-sm font-semibold text-[#1a1a1a] hover:text-[#cc0000] transition-colors"
+            title="Opens the real customer-facing modal in an overlay"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+            Preview as customer
+          </button>
+        )}
       </div>
 
       <div className="flex gap-1 mb-6 border-b border-gray-200">

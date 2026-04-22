@@ -8,6 +8,7 @@
   })();
   var siteId = script && script.getAttribute('data-site-id');
   var previewMode = script && script.getAttribute('data-preview-mode') === 'true';
+  var autoOpen = script && script.getAttribute('data-auto-open') === 'true';
   if (!siteId) return;
 
   var API = script.src.replace(/\/scheduler\.js.*$/, '');
@@ -18,6 +19,7 @@
     .then(function (cfg) {
       if (!cfg || !cfg.enabled) return;
       if (previewMode) openModal(cfg, { inline: true });
+      else if (autoOpen) openModal(cfg, { inline: false });
       else mountButton(cfg);
     });
 
