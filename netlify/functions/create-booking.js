@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { validateBookingPayload } from './_lib/booking-validation.js';
 import { newBookingToOwner } from './_lib/postmark.js';
+import { computeSlots } from './_lib/slot-math.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -9,8 +10,8 @@ const CORS = {
   'Content-Type': 'application/json',
 };
 
-// Cheap in-memory rate limit: 5 submissions per IP per hour per site.
-// Resets when the Lambda instance recycles — that's fine for MVP.
+const WEEKDAY_KEYS = ['sun','mon','tue','wed','thu','fri','sat'];
+
 const rateBuckets = new Map();
 function rateLimited(ip, siteId) {
   const key = `${ip}:${siteId}`;
@@ -34,13 +35,8 @@ export const handler = async (event) => {
   catch { return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Invalid JSON' }) }; }
 
   const v = validateBookingPayload(payload);
-  if (v.honeypot) {
-    // Silent success so bots don't get signal.
-    return { statusCode: 200, headers: CORS, body: JSON.stringify({ ok: true }) };
-  }
-  if (!v.ok) {
-    return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: v.error }) };
-  }
+  if (v.honeypot) return { statusCode: 200, headers: CORS, body: JSON.stringify({ ok: true }) };
+  if (!v.ok) return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: v.error }) };
 
   const ip = event.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown';
   if (rateLimited(ip, payload.siteId)) {
@@ -52,25 +48,74 @@ export const handler = async (event) => {
     process.env.SUPABASE_SERVICE_ROLE_KEY
   );
 
-  // Re-check that the site exists and owner has scheduler enabled.
   const { data: site } = await supabase
     .from('sites')
-    .select('id, user_id, business_info')
+    .select('id, user_id, business_info, scheduler_enabled, scheduler_config')
     .eq('id', payload.siteId)
     .maybeSingle();
-
-  if (!site) {
-    return { statusCode: 404, headers: CORS, body: JSON.stringify({ error: 'Site not found' }) };
+  if (!site || !site.scheduler_enabled) {
+    return { statusCode: 403, headers: CORS, body: JSON.stringify({ error: 'Bookings not available for this site' }) };
   }
 
   const { data: owner } = await supabase
-    .from('profiles')
-    .select('email, scheduler_enabled')
-    .eq('id', site.user_id)
-    .maybeSingle();
-
+    .from('profiles').select('email, scheduler_enabled').eq('id', site.user_id).maybeSingle();
   if (!owner?.scheduler_enabled) {
     return { statusCode: 403, headers: CORS, body: JSON.stringify({ error: 'Bookings not available for this site' }) };
+  }
+
+  const cfg = site.scheduler_config || {};
+  const services = cfg.services || [];
+  const enabledServices = services.filter((s) => s.enabled !== false);
+
+  let chosenService = null;
+  if (enabledServices.length > 1) {
+    if (!payload.service_id) {
+      return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'service_id required' }) };
+    }
+    chosenService = enabledServices.find((s) => s.id === payload.service_id);
+    if (!chosenService) {
+      return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Unknown or disabled service' }) };
+    }
+  } else if (enabledServices.length === 1) {
+    chosenService = enabledServices[0];
+  }
+
+  const when = new Date(payload.preferred_at);
+  const dateISO = when.toISOString().slice(0, 10);
+  const weekday = WEEKDAY_KEYS[when.getUTCDay()];
+  const availability = (cfg.availability || {})[weekday] || [];
+
+  const leadMs = (cfg.lead_time_hours ?? 24) * 3600 * 1000;
+  if (when.getTime() < Date.now() + leadMs) {
+    return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Too close to now; please pick a later time.' }) };
+  }
+
+  const granularityMin = cfg.slot_granularity_minutes ?? 30;
+  const durationMin = chosenService?.duration_minutes ?? 60;
+
+  const { data: confirmed } = await supabase
+    .from('bookings')
+    .select('preferred_at, service_id')
+    .eq('site_id', site.id)
+    .eq('status', 'confirmed')
+    .gte('preferred_at', `${dateISO}T00:00:00.000Z`)
+    .lte('preferred_at', `${dateISO}T23:59:59.999Z`);
+
+  const confirmedBookings = (confirmed || []).map((b) => {
+    const s = services.find((sv) => sv.id === b.service_id);
+    return { start: b.preferred_at, durationMin: s?.duration_minutes ?? 60 };
+  });
+
+  const validSlots = computeSlots({
+    dateISO,
+    availability,
+    serviceDurationMin: durationMin,
+    granularityMin,
+    confirmedBookings,
+  });
+
+  if (!validSlots.includes(when.toISOString())) {
+    return { statusCode: 409, headers: CORS, body: JSON.stringify({ error: 'That time is no longer available. Please pick another.' }) };
   }
 
   const { data: inserted, error: insErr } = await supabase
@@ -90,6 +135,8 @@ export const handler = async (event) => {
       service_address: payload.service_address || null,
       notes: payload.notes || null,
       referral_source: payload.referral_source || null,
+      service_id: chosenService?.id || null,
+      service_name: chosenService?.name || null,
     })
     .select()
     .single();
@@ -99,7 +146,6 @@ export const handler = async (event) => {
     return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: 'Failed to create booking' }) };
   }
 
-  // Fire-and-forget email. Don't block the response on mail delivery.
   newBookingToOwner({ booking: inserted, site, ownerEmail: owner.email })
     .catch((err) => console.error('owner email failed:', err));
 
