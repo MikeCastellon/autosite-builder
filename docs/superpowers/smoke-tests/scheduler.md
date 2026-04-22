@@ -72,3 +72,36 @@ Run after any change to scheduler code. Checkbox each step.
 - [ ] Disable all services → widget still loads but no services shown → submit blocked.
 - [ ] Set availability to all-closed → widget calendar grays out all days.
 - [ ] Book less than lead_time_hours in advance → server returns "too close to now".
+
+---
+
+## Shopify Subscriptions gate
+
+### Setup
+- [ ] Migration `20260422_shopify_subscriptions.sql` applied.
+- [ ] Netlify env vars set on autosite-builder: `SHOPIFY_STORE_DOMAIN`, `SHOPIFY_ADMIN_API_TOKEN`, `SHOPIFY_WEBHOOK_SECRET`, `SHOPIFY_API_VERSION`, `SHOPIFY_SCHEDULER_VARIANT_ID=46224674816188`, `SHOPIFY_SCHEDULER_SELLING_PLAN_ID=1833992380`.
+- [ ] Webhooks registered: invoke `GET /.netlify/functions/setup-shopify-webhooks?setup_key=<SHOPIFY_WEBHOOK_SECRET>` once and confirm JSON response lists all 3 topics bound to our URL.
+- [ ] Verify in Shopify admin → Settings → Notifications → Webhooks that `orders/paid`, `subscription_contracts/update`, `subscription_contracts/cancel` all point to `https://sitebuilder.autocaregenius.com/.netlify/functions/shopify-subscription-webhook`.
+
+### Happy path (new subscriber)
+- [ ] Sign in as a non-admin test account with `scheduler_enabled=false` and `subscription_status='inactive'`.
+- [ ] Navigate to Bookings → see the "Enable bookings for your site" upgrade card, NOT the Schedule/Settings tabs.
+- [ ] Click "Subscribe through Shopify →" → new tab opens on Shopify checkout with email pre-filled.
+- [ ] Complete checkout using a Shopify test card.
+- [ ] Within a few seconds (webhook latency), refresh our Bookings page → Schedule/Settings tabs render.
+- [ ] In Supabase, the user's row shows `subscription_status='active'`, `shopify_customer_id`, `shopify_subscription_id` populated.
+
+### Super admin bypass
+- [ ] Sign in as super admin → Bookings tab shows Schedule/Settings immediately, no gate, regardless of subscription_status.
+
+### Cancellation
+- [ ] Customer cancels in Shopify account → webhook fires → profile shows `subscription_status='cancelled'`, `subscription_ends_at` set.
+- [ ] Bookings page still renders Schedule/Settings until `subscription_ends_at` passes.
+- [ ] After `subscription_ends_at`, upgrade card returns on page reload.
+
+### Past-due
+- [ ] Force a failed charge in Shopify → `subscription_status='past_due'` → upgrade card shows with payment-issue banner at top.
+
+### HMAC safety
+- [ ] `curl -X POST .../shopify-subscription-webhook -d '{"x":1}'` (no HMAC header) returns 401.
+- [ ] Bad HMAC returns 401.

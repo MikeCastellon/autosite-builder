@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase.js';
 import { publishSite } from '../../lib/publishSite.js';
 import { TEMPLATES } from '../../data/templates.js';
+import { canSeeBookingsNav } from '../../lib/subscriptionGating.js';
 
 const MAX_SITES = 1;
 
@@ -12,6 +13,7 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const schedulerEnabled = !!profile?.scheduler_enabled;
+  const showBookingsNav = canSeeBookingsNav(profile);
   const isAdmin = !!profile?.is_super_admin;
   const canCreateSite = isAdmin || sites.length < MAX_SITES;
 
@@ -91,7 +93,7 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
   const initial = userEmail ? userEmail[0].toUpperCase() : '?';
   const navItems = [
     { label: 'Sites', onClick: () => {}, active: true },
-    schedulerEnabled && onOpenBookings && { label: 'Bookings', onClick: onOpenBookings, active: false },
+    showBookingsNav && onOpenBookings && { label: 'Bookings', onClick: onOpenBookings, active: false },
     isAdmin && onOpenAdmin && { label: 'Admin', onClick: onOpenAdmin, active: false },
   ].filter(Boolean);
 

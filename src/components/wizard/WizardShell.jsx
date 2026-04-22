@@ -1,18 +1,19 @@
 import { useState } from 'react';
 import ProgressBar from '../ui/ProgressBar.jsx';
+import { canSeeBookingsNav } from '../../lib/subscriptionGating.js';
 
 const STEP_LABELS = ['Business Type', 'Your Info', 'Template', 'Generating', 'Preview', 'Export'];
 
 export default function WizardShell({ step, onBack, children, userEmail, onMySites, onSignOut, profile, onOpenBookings, onOpenAdmin }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const schedulerEnabled = !!profile?.scheduler_enabled;
+  const showBookingsNav = canSeeBookingsNav(profile);
   const isAdmin = !!profile?.is_super_admin;
   const initial = userEmail ? userEmail[0].toUpperCase() : '?';
 
   const navItems = [
     onMySites && { label: 'Sites', onClick: onMySites },
-    schedulerEnabled && onOpenBookings && { label: 'Bookings', onClick: onOpenBookings },
+    showBookingsNav && onOpenBookings && { label: 'Bookings', onClick: onOpenBookings },
     isAdmin && onOpenAdmin && { label: 'Admin', onClick: onOpenAdmin },
   ].filter(Boolean);
 

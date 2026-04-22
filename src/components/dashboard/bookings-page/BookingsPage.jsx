@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase.js';
 import BookingsView from '../bookings/BookingsView.jsx';
 import SchedulerSettings from '../booking-settings/SchedulerSettings.jsx';
+import SubscribeGate from './SubscribeGate.jsx';
 
-export default function BookingsPage({ userId, onExit }) {
+export default function BookingsPage({ userId, profile, onExit }) {
   const [tab, setTab] = useState('schedule');
   const [sites, setSites] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -43,37 +44,39 @@ export default function BookingsPage({ userId, onExit }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#faf9f7]">
-      <header className="border-b border-black/[0.07] bg-white px-6 py-4 flex items-center justify-between">
-        <h1 className="text-lg font-black text-[#1a1a1a]">Bookings</h1>
-        {onExit && <button onClick={onExit} className="text-sm text-gray-500 hover:text-[#1a1a1a]">← Back</button>}
-      </header>
+    <SubscribeGate profile={profile} onExit={onExit}>
+      <div className="min-h-screen bg-[#faf9f7]">
+        <header className="border-b border-black/[0.07] bg-white px-6 py-4 flex items-center justify-between">
+          <h1 className="text-lg font-black text-[#1a1a1a]">Bookings</h1>
+          {onExit && <button onClick={onExit} className="text-sm text-gray-500 hover:text-[#1a1a1a]">← Back</button>}
+        </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-6">
-        <div className="flex gap-1 mb-6 border-b border-gray-200">
-          <TabBtn on={tab === 'schedule'} onClick={() => setTab('schedule')}>Schedule</TabBtn>
-          <TabBtn on={tab === 'settings'} onClick={() => setTab('settings')}>Settings</TabBtn>
-        </div>
-
-        {tab === 'settings' && sites.length > 1 && (
-          <div className="mb-4">
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Site</label>
-            <select
-              value={activeSiteId || ''}
-              onChange={(e) => setActiveSiteId(e.target.value)}
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm"
-            >
-              {sites.map((s) => (
-                <option key={s.id} value={s.id}>{s.business_info?.businessName || s.id}</option>
-              ))}
-            </select>
+        <main className="max-w-5xl mx-auto px-6 py-6">
+          <div className="flex gap-1 mb-6 border-b border-gray-200">
+            <TabBtn on={tab === 'schedule'} onClick={() => setTab('schedule')}>Schedule</TabBtn>
+            <TabBtn on={tab === 'settings'} onClick={() => setTab('settings')}>Settings</TabBtn>
           </div>
-        )}
 
-        {tab === 'schedule' && <BookingsView userId={userId} />}
-        {tab === 'settings' && activeSiteId && <SchedulerSettings siteId={activeSiteId} />}
-      </main>
-    </div>
+          {tab === 'settings' && sites.length > 1 && (
+            <div className="mb-4">
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Site</label>
+              <select
+                value={activeSiteId || ''}
+                onChange={(e) => setActiveSiteId(e.target.value)}
+                className="border border-gray-200 rounded-lg px-3 py-2 text-sm"
+              >
+                {sites.map((s) => (
+                  <option key={s.id} value={s.id}>{s.business_info?.businessName || s.id}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {tab === 'schedule' && <BookingsView userId={userId} />}
+          {tab === 'settings' && activeSiteId && <SchedulerSettings siteId={activeSiteId} />}
+        </main>
+      </div>
+    </SubscribeGate>
   );
 }
 

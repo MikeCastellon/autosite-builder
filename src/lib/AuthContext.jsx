@@ -48,7 +48,7 @@ export function AuthProvider({ children }) {
     if (!session?.user?.id) { setProfile(null); return; }
     const { data } = await supabase
       .from('profiles')
-      .select('id, email, is_super_admin, scheduler_enabled')
+      .select('id, email, is_super_admin, scheduler_enabled, subscription_status, subscription_ends_at, shopify_customer_id')
       .eq('id', session.user.id)
       .maybeSingle();
     setProfile(data || null);
