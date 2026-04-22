@@ -48,7 +48,7 @@ export default function StepTemplatePicker({ businessType, selected, onSelect, o
   const selectedTpl = selected ? TEMPLATES[selected] : null;
 
   const TemplateGrid = ({ templates }) => (
-    <div className="grid gap-3 mb-2 grid-cols-2 sm:grid-cols-3 md:grid-cols-4">
+    <div className="grid gap-3 mb-2 grid-cols-2 md:grid-cols-5">
       {templates.map((template) => {
         const isRecommended = recommendedSet.has(template.id);
         return (
