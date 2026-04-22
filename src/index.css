@@ -16,10 +16,19 @@ body {
 }
 
 /* Google Reviews widget — force one card per view on narrow containers.
-   The external widget uses viewport width (not container width) to decide
-   cards-per-view. We keep the widget's native carousel (overflow-x:hidden +
-   translateX paging) and just resize each card to fill the viewport width. */
+   Widget shows partial neighbor cards by default; we want a single clean
+   card at mobile width. Force overflow:hidden on the track and resize
+   each card to fill the viewport width. */
 @media (max-width: 600px) {
+  [data-widget="google-reviews"] [class*="track"],
+  [data-widget="google-reviews"] [class*="carousel"],
+  [data-widget="google-reviews"] [class*="slider"],
+  [data-widget="google-reviews"] [class*="list"],
+  [data-widget="google-reviews"] [class*="cards"] {
+    overflow-x: hidden !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
   [data-widget="google-reviews"] [class*="track"] > *,
   [data-widget="google-reviews"] [class*="carousel"] > *,
   [data-widget="google-reviews"] [class*="slider"] > *,
@@ -32,6 +41,15 @@ body {
   }
 }
 @container (max-width: 600px) {
+  [data-widget="google-reviews"] [class*="track"],
+  [data-widget="google-reviews"] [class*="carousel"],
+  [data-widget="google-reviews"] [class*="slider"],
+  [data-widget="google-reviews"] [class*="list"],
+  [data-widget="google-reviews"] [class*="cards"] {
+    overflow-x: hidden !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
   [data-widget="google-reviews"] [class*="track"] > *,
   [data-widget="google-reviews"] [class*="carousel"] > *,
   [data-widget="google-reviews"] [class*="slider"] > *,

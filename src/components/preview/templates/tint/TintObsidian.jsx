@@ -89,10 +89,10 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
       {/* ============================================================ NAV ============================================================ */}
       <nav style={{
         position: 'sticky', top: 0, zIndex: 1000,
-        background: scrolled ? 'rgba(5,5,7,0.96)' : 'transparent',
-        borderBottom: scrolled ? `1px solid ${c.accent}30` : '1px solid transparent',
+        background: 'rgba(5,5,7,0.92)',
+        borderBottom: `1px solid ${c.accent}30`,
         transition: 'all 0.35s ease', padding: '0 5%',
-        backdropFilter: scrolled ? 'blur(18px)' : 'none',
+        backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
       
         order: -1,
       }}>
