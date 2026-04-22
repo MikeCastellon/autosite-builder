@@ -58,6 +58,10 @@ export const handler = async (event) => {
   const cfg = site.scheduler_config || {};
   const enabledServices = (cfg.services || []).filter((s) => s.enabled !== false);
 
+  // Logo: explicit booking logo override > site logo uploaded in the editor.
+  const siteLogo = site.generated_content?._images?.logo || null;
+  const logoUrl = cfg.logo_url || siteLogo || null;
+
   return {
     statusCode: 200,
     headers: CORS,
@@ -65,6 +69,8 @@ export const handler = async (event) => {
       enabled: true,
       businessName,
       brandColor,
+      logo_url: logoUrl,
+      city: site.business_info?.city || '',
       welcome_text: cfg.welcome_text || "Tell us about your car and we'll be in touch.",
       button_label: cfg.button_label || 'Book Now',
       lead_time_hours: cfg.lead_time_hours ?? 24,

@@ -70,29 +70,44 @@ export default function SchedulerSettings({ siteId, onExit }) {
   }
 
   if (err) return (
-    <div className="text-center py-10">
-      <p className="text-red-600 mb-3">{err}</p>
-      {onExit && <button onClick={onExit} className="text-sm underline text-[#1a1a1a]">Back</button>}
+    <div className="text-center py-16 bg-white rounded-2xl border border-black/[0.07] shadow-sm">
+      <p className="text-[#cc0000] font-semibold mb-3">{err}</p>
+      {onExit && <button onClick={onExit} className="text-sm font-semibold underline text-[#1a1a1a]">Back</button>}
     </div>
   );
-  if (!site) return <div className="p-10 text-gray-500">Loading…</div>;
+  if (!site) return <div className="p-16 text-center text-gray-500 bg-white rounded-2xl border border-black/[0.07] shadow-sm">Loading…</div>;
+
+  const isEnabled = !!site.scheduler_enabled;
 
   return (
     <div>
-      <div className="flex flex-wrap items-center gap-3 mb-6 text-sm text-gray-600">
-        <span>Bookings:</span>
-        <label className="inline-flex items-center gap-1.5">
-          <input
-            type="checkbox"
-            checked={!!site.scheduler_enabled}
-            onChange={(e) => toggleEnabled(e.target.checked)}
-          />
-          <span className="font-semibold">{site.scheduler_enabled ? 'Live on site' : 'Off'}</span>
-        </label>
-        {site.scheduler_enabled && (
+      {/* Status card: toggle + preview */}
+      <div className="bg-white rounded-2xl border border-black/[0.07] shadow-sm p-5 sm:p-6 mb-6 flex flex-wrap items-center gap-4">
+        <div className="flex items-center gap-4 flex-1 min-w-0">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={isEnabled}
+            onClick={() => toggleEnabled(!isEnabled)}
+            className={`relative w-12 h-7 rounded-full transition-colors shrink-0 ${isEnabled ? 'bg-[#cc0000]' : 'bg-gray-300'}`}
+          >
+            <span className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform ${isEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+          </button>
+          <div className="min-w-0">
+            <p className="text-[15px] font-bold text-[#1a1a1a] tracking-[-0.2px]">
+              {isEnabled ? 'Bookings are live' : 'Bookings are off'}
+            </p>
+            <p className="text-[12px] text-[#888] mt-0.5">
+              {isEnabled
+                ? 'Customers see your Book Now button on the published site.'
+                : 'Turn on to enable the Book Now button on your published site.'}
+            </p>
+          </div>
+        </div>
+        {isEnabled && (
           <button
             onClick={openCustomerPreview}
-            className="ml-auto inline-flex items-center gap-1.5 text-sm font-semibold text-[#1a1a1a] hover:text-[#cc0000] transition-colors"
+            className="inline-flex items-center gap-1.5 text-[13px] font-semibold px-4 py-2 rounded-lg border border-black/10 bg-white text-[#1a1a1a] hover:border-[#cc0000] hover:text-[#cc0000] transition-colors shrink-0"
             title="Opens the real customer-facing modal in an overlay"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -104,15 +119,19 @@ export default function SchedulerSettings({ siteId, onExit }) {
         )}
       </div>
 
-      <div className="flex gap-1 mb-6 border-b border-gray-200">
-        <TabBtn on={tab === 'general'} onClick={() => setTab('general')}>General</TabBtn>
-        <TabBtn on={tab === 'services'} onClick={() => setTab('services')}>Services</TabBtn>
-        <TabBtn on={tab === 'availability'} onClick={() => setTab('availability')}>Availability</TabBtn>
+      {/* Tabs */}
+      <div className="bg-white rounded-2xl border border-black/[0.07] shadow-sm overflow-hidden">
+        <div className="flex gap-1 border-b border-black/[0.05] px-4 sm:px-6 pt-3">
+          <TabBtn on={tab === 'general'} onClick={() => setTab('general')}>General</TabBtn>
+          <TabBtn on={tab === 'services'} onClick={() => setTab('services')}>Services</TabBtn>
+          <TabBtn on={tab === 'availability'} onClick={() => setTab('availability')}>Availability</TabBtn>
+        </div>
+        <div className="p-5 sm:p-6">
+          {tab === 'general' && <GeneralTab siteId={siteId} config={site.scheduler_config} siteImages={site.generated_content?._images} onSaved={onSaved} />}
+          {tab === 'services' && <ServicesTab siteId={siteId} config={site.scheduler_config} onSaved={onSaved} />}
+          {tab === 'availability' && <AvailabilityTab siteId={siteId} config={site.scheduler_config} onSaved={onSaved} />}
+        </div>
       </div>
-
-      {tab === 'general' && <GeneralTab siteId={siteId} config={site.scheduler_config} onSaved={onSaved} />}
-      {tab === 'services' && <ServicesTab siteId={siteId} config={site.scheduler_config} onSaved={onSaved} />}
-      {tab === 'availability' && <AvailabilityTab siteId={siteId} config={site.scheduler_config} onSaved={onSaved} />}
     </div>
   );
 }
@@ -122,7 +141,7 @@ function TabBtn({ on, onClick, children, disabled }) {
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`px-4 py-2 text-sm font-semibold border-b-2 -mb-px ${on ? 'border-[#1a1a1a] text-[#1a1a1a]' : 'border-transparent text-gray-500 hover:text-gray-700'} disabled:opacity-40 disabled:cursor-not-allowed`}
+      className={`px-4 py-2.5 text-[13px] font-semibold border-b-2 -mb-px transition-colors ${on ? 'border-[#cc0000] text-[#1a1a1a]' : 'border-transparent text-gray-500 hover:text-gray-900'} disabled:opacity-40 disabled:cursor-not-allowed`}
     >
       {children}
     </button>

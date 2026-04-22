@@ -27,13 +27,19 @@
     var brand = cfg.brandColor || '#1a1a1a';
     var btn = document.createElement('button');
     btn.type = 'button';
-    btn.textContent = cfg.button_label || 'Book Now';
     btn.setAttribute('aria-label', 'Open booking form');
+    btn.innerHTML =
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:8px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>' +
+      (cfg.button_label || 'Book Now');
     btn.style.cssText =
       'position:fixed;right:20px;bottom:72px;z-index:9998;padding:14px 22px;' +
       'background:' + brand + ';color:#fff;border:0;border-radius:999px;' +
-      'font:600 14px/1 Inter,system-ui,sans-serif;cursor:pointer;' +
-      'box-shadow:0 10px 30px rgba(0,0,0,0.18);';
+      "font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;" +
+      'font-weight:700;font-size:14px;line-height:1;letter-spacing:0.2px;cursor:pointer;' +
+      'box-shadow:0 12px 36px rgba(0,0,0,0.22),0 2px 6px rgba(0,0,0,0.08);' +
+      'display:inline-flex;align-items:center;transition:transform 0.15s,box-shadow 0.15s;';
+    btn.addEventListener('mouseover', function () { btn.style.transform = 'translateY(-1px)'; btn.style.boxShadow = '0 16px 44px rgba(0,0,0,0.26),0 2px 8px rgba(0,0,0,0.1)'; });
+    btn.addEventListener('mouseout', function () { btn.style.transform = 'translateY(0)'; btn.style.boxShadow = '0 12px 36px rgba(0,0,0,0.22),0 2px 6px rgba(0,0,0,0.08)'; });
     btn.addEventListener('click', function () { openModal(cfg, { inline: false }); });
     document.body.appendChild(btn);
 
@@ -81,14 +87,15 @@
   function openModal(cfg, opts) {
     if (document.getElementById('acg-scheduler-modal')) return;
     var brand = cfg.brandColor || '#1a1a1a';
+    var FONT = "Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif";
 
     var container, card;
     if (opts.inline) {
       container = document.createElement('div');
       container.id = 'acg-scheduler-modal';
-      container.style.cssText = 'font-family:Inter,system-ui,sans-serif;';
+      container.style.cssText = 'font-family:' + FONT + ';';
       card = document.createElement('div');
-      card.style.cssText = 'background:#fff;border:1px solid #eee;border-radius:12px;max-width:520px;padding:24px;';
+      card.style.cssText = 'background:#fff;border:1px solid rgba(0,0,0,0.07);border-radius:16px;max-width:520px;overflow:hidden;box-shadow:0 6px 24px rgba(0,0,0,0.04);';
       container.appendChild(card);
       var host = document.getElementById('acg-scheduler-preview-host') || document.body;
       host.innerHTML = '';
@@ -99,13 +106,15 @@
       container.setAttribute('role', 'dialog');
       container.setAttribute('aria-modal', 'true');
       container.style.cssText =
-        'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;' +
+        'position:fixed;inset:0;background:rgba(10,10,10,0.55);z-index:9999;' +
         'display:flex;align-items:center;justify-content:center;padding:16px;' +
-        'font-family:Inter,system-ui,sans-serif;';
+        'backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);' +
+        'font-family:' + FONT + ';';
       card = document.createElement('div');
       card.style.cssText =
-        'background:#fff;border-radius:14px;max-width:520px;width:100%;' +
-        'max-height:90vh;overflow:auto;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,0.3);';
+        'background:#fff;border-radius:16px;max-width:520px;width:100%;' +
+        'max-height:92vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,0.35);' +
+        'overflow-x:hidden;';
       container.appendChild(card);
       document.body.appendChild(container);
       container.addEventListener('click', function (e) { if (e.target === container) close(); });
@@ -124,12 +133,53 @@
 
     function close() { container.remove(); }
 
-    function header(title, stepLabel) {
-      return '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:8px;">' +
-        '<div><h2 style="margin:0;font-size:20px;font-weight:800;color:#111;">' + esc(title) + '</h2>' +
-        (stepLabel ? '<div style="color:#888;font-size:12px;margin-top:4px;">' + esc(stepLabel) + '</div>' : '') +
+    function brandBar() {
+      // Top red-accent stripe (Pro Hub signature)
+      return '<div style="height:4px;background:' + brand + ';"></div>';
+    }
+
+    function brandHeader() {
+      var hasLogo = !!cfg.logo_url;
+      var bizLine = esc(cfg.businessName || '') + (cfg.city ? ' <span style="color:#999;font-weight:400;"> · ' + esc(cfg.city) + '</span>' : '');
+      return '<div style="padding:22px 28px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #f0f0f0;">' +
+        '<div style="display:flex;align-items:center;gap:12px;min-width:0;">' +
+          (hasLogo
+            ? '<img src="' + esc(cfg.logo_url) + '" alt="" style="height:40px;width:auto;max-width:160px;object-fit:contain;display:block;" />'
+            : '<div style="width:40px;height:40px;border-radius:10px;background:' + brand + ';color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;font-family:' + FONT + ';">' + esc((cfg.businessName || 'B').charAt(0).toUpperCase()) + '</div>') +
+          '<div style="min-width:0;overflow:hidden;">' +
+            '<div style="font-size:14px;font-weight:700;color:#1a1a1a;letter-spacing:-0.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + bizLine + '</div>' +
+            '<div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:' + brand + ';font-weight:700;margin-top:2px;">Book an Appointment</div>' +
+          '</div>' +
         '</div>' +
-        (opts.inline ? '' : '<button type="button" data-close aria-label="Close" style="background:none;border:0;font-size:24px;line-height:1;cursor:pointer;color:#888;">×</button>') +
+        (opts.inline ? '' : '<button type="button" data-close aria-label="Close" style="flex-shrink:0;background:#faf9f7;border:0;width:32px;height:32px;border-radius:50%;cursor:pointer;color:#666;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;">×</button>') +
+      '</div>';
+    }
+
+    function stepBar(currentStep, totalSteps) {
+      if (!totalSteps || totalSteps < 2) return '';
+      var dots = '';
+      for (var i = 1; i <= totalSteps; i++) {
+        var active = i <= currentStep;
+        dots += '<div style="flex:1;height:3px;border-radius:2px;background:' + (active ? brand : '#eee') + ';"></div>';
+      }
+      return '<div style="display:flex;gap:4px;padding:0 28px 14px;">' + dots + '</div>';
+    }
+
+    function sectionTitle(title, subtitle) {
+      return '<div style="padding:16px 28px 4px;">' +
+        '<h2 style="margin:0;font-size:22px;font-weight:800;color:#1a1a1a;letter-spacing:-0.5px;line-height:1.2;">' + esc(title) + '</h2>' +
+        (subtitle ? '<p style="margin:6px 0 0;color:#666;font-size:13px;line-height:1.5;">' + esc(subtitle) + '</p>' : '') +
+      '</div>';
+    }
+
+    function bodyOpen() { return '<div style="padding:12px 28px 24px;">'; }
+    function bodyClose() { return '</div>'; }
+
+    function header(title, stepLabel) {
+      // Back-compat shim: legacy helper retained only if called elsewhere.
+      return '<div style="padding:18px 28px;">' +
+        '<h2 style="margin:0;font-size:20px;font-weight:800;color:#1a1a1a;">' + esc(title) + '</h2>' +
+        (stepLabel ? '<div style="color:#888;font-size:12px;margin-top:4px;">' + esc(stepLabel) + '</div>' : '') +
       '</div>';
     }
 
@@ -142,16 +192,20 @@
     }
 
     function renderServices(services) {
+      var totalSteps = 3;
       var items = services.map(function (s) {
-        return '<button type="button" data-svc="' + esc(s.id) + '" style="display:block;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:1px solid #eee;border-radius:10px;background:#fff;cursor:pointer;">' +
-          '<div style="font-weight:700;color:#111;">' + esc(s.name) + '</div>' +
-          '<div style="font-size:13px;color:#666;margin-top:2px;">' + esc(s.duration_minutes) + ' min' + (s.price ? ' · ' + esc(s.price) : '') + '</div>' +
-          (s.description ? '<div style="font-size:12px;color:#888;margin-top:4px;">' + esc(s.description) + '</div>' : '') +
+        return '<button type="button" data-svc="' + esc(s.id) + '" style="display:block;width:100%;text-align:left;padding:16px 18px;margin-bottom:10px;border:1px solid #e8e8e8;border-radius:12px;background:#fff;cursor:pointer;transition:all 0.15s ease;font-family:' + FONT + ';" onmouseover="this.style.borderColor=\'' + brand + '\';this.style.background=\'#fafafa\';" onmouseout="this.style.borderColor=\'#e8e8e8\';this.style.background=\'#fff\';">' +
+          '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;">' +
+            '<div style="font-weight:700;color:#1a1a1a;font-size:15px;letter-spacing:-0.2px;">' + esc(s.name) + '</div>' +
+            (s.price ? '<div style="font-weight:700;color:' + brand + ';font-size:14px;white-space:nowrap;">' + esc(s.price) + '</div>' : '') +
+          '</div>' +
+          '<div style="font-size:12px;color:#999;margin-top:4px;letter-spacing:0.2px;">' + esc(s.duration_minutes) + ' min appointment</div>' +
+          (s.description ? '<div style="font-size:13px;color:#666;margin-top:8px;line-height:1.5;">' + esc(s.description) + '</div>' : '') +
         '</button>';
       }).join('');
-      card.innerHTML = header('Pick a service', 'Step 1 of 3') +
-        '<p style="margin:0 0 12px 0;color:#555;font-size:13px;">' + esc(cfg.welcome_text || '') + '</p>' +
-        items;
+      card.innerHTML = brandBar() + brandHeader() + stepBar(1, totalSteps) +
+        sectionTitle('Pick a service', cfg.welcome_text || '') +
+        bodyOpen() + items + bodyClose();
       wireClose();
       card.querySelectorAll('[data-svc]').forEach(function (btn) {
         btn.addEventListener('click', function () {
@@ -162,14 +216,19 @@
     }
 
     function renderDateTime() {
-      var stepLabel = state.service && cfg.services && cfg.services.length > 1 ? 'Step 2 of 3' : 'Step 1 of 2';
-      card.innerHTML = header('Pick a date and time', stepLabel) +
-        '<p style="margin:0 0 8px 0;color:#666;font-size:13px;">' + esc(state.service ? state.service.name + ' · ' + state.service.duration_minutes + ' min' : '') + '</p>' +
-        '<div id="acg-cal" style="margin-bottom:12px;"></div>' +
-        '<div id="acg-slots" style="display:flex;flex-wrap:wrap;gap:6px;min-height:32px;"></div>' +
-        (state.service && cfg.services && cfg.services.length > 1
-          ? '<button type="button" data-back style="margin-top:16px;background:none;border:0;color:#888;cursor:pointer;font-size:13px;">← Back</button>'
-          : '');
+      var hasMultipleServices = cfg.services && cfg.services.length > 1;
+      var totalSteps = hasMultipleServices ? 3 : 2;
+      var currentStep = hasMultipleServices ? 2 : 1;
+      var subtitle = state.service ? state.service.name + ' · ' + state.service.duration_minutes + ' min' : '';
+      card.innerHTML = brandBar() + brandHeader() + stepBar(currentStep, totalSteps) +
+        sectionTitle('Pick a date and time', subtitle) +
+        bodyOpen() +
+          '<div id="acg-cal" style="margin-bottom:14px;"></div>' +
+          '<div id="acg-slots" style="display:flex;flex-wrap:wrap;gap:6px;min-height:32px;"></div>' +
+          (state.service && hasMultipleServices
+            ? '<button type="button" data-back style="margin-top:18px;background:none;border:0;color:#888;cursor:pointer;font-size:13px;font-weight:600;font-family:' + FONT + ';padding:0;">← Back</button>'
+            : '') +
+        bodyClose();
       wireClose();
       renderCalendar(card.querySelector('#acg-cal'));
       var backBtn = card.querySelector('[data-back]');
@@ -182,20 +241,25 @@
       var rows = monthGrid(cursor);
       var label = cursor.toLocaleString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
       host.innerHTML =
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
-          '<div style="font-weight:600;">' + esc(label) + '</div>' +
-          '<div><button type="button" data-prev style="background:none;border:0;padding:4px 8px;cursor:pointer;">‹</button>' +
-          '<button type="button" data-next style="background:none;border:0;padding:4px 8px;cursor:pointer;">›</button></div>' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
+          '<div style="font-weight:700;color:#1a1a1a;font-size:15px;letter-spacing:-0.2px;">' + esc(label) + '</div>' +
+          '<div style="display:flex;gap:4px;">' +
+            '<button type="button" data-prev aria-label="Previous month" style="background:#faf9f7;border:0;width:32px;height:32px;border-radius:8px;cursor:pointer;color:#555;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;">‹</button>' +
+            '<button type="button" data-next aria-label="Next month" style="background:#faf9f7;border:0;width:32px;height:32px;border-radius:8px;cursor:pointer;color:#555;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;">›</button>' +
+          '</div>' +
         '</div>' +
-        '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;font-size:12px;">' +
-          ['S','M','T','W','T','F','S'].map(function (d) { return '<div style="text-align:center;color:#888;padding:4px 0;">' + d + '</div>'; }).join('') +
+        '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;font-size:12px;">' +
+          ['S','M','T','W','T','F','S'].map(function (d) { return '<div style="text-align:center;color:#aaa;padding:4px 0;font-weight:600;letter-spacing:0.5px;">' + d + '</div>'; }).join('') +
           rows.map(function (day) {
             var iso = day.iso;
             var weekday = day.weekday;
             var availabilityForDay = (cfg.availability || {})[weekday] || [];
             var isPast = day.past || (availabilityForDay.length === 0);
             var isCurrent = day.iso === state.dateISO;
-            return '<button type="button" data-day="' + iso + '" ' + (isPast || !day.inMonth ? 'disabled' : '') + ' style="padding:8px 0;border:1px solid #eee;background:' + (isCurrent ? '#1a1a1a' : '#fff') + ';color:' + (isCurrent ? '#fff' : (isPast || !day.inMonth ? '#ccc' : '#111')) + ';border-radius:6px;cursor:' + (isPast || !day.inMonth ? 'default' : 'pointer') + ';font-size:12px;">' + day.dayNum + '</button>';
+            var bg = isCurrent ? brand : '#fff';
+            var color = isCurrent ? '#fff' : (isPast || !day.inMonth ? '#ccc' : '#1a1a1a');
+            var borderColor = isCurrent ? brand : '#eee';
+            return '<button type="button" data-day="' + iso + '" ' + (isPast || !day.inMonth ? 'disabled' : '') + ' style="padding:10px 0;border:1px solid ' + borderColor + ';background:' + bg + ';color:' + color + ';border-radius:8px;cursor:' + (isPast || !day.inMonth ? 'default' : 'pointer') + ';font-size:13px;font-weight:' + (isCurrent ? '700' : '500') + ';font-family:' + FONT + ';transition:all 0.1s;">' + day.dayNum + '</button>';
           }).join('') +
         '</div>';
 
@@ -220,13 +284,13 @@
         (state.service ? '&serviceId=' + encodeURIComponent(state.service.id) : '');
       fetch(url).then(function (r) { return r.json(); }).then(function (res) {
         if (!res.slots || res.slots.length === 0) {
-          slotsHost.innerHTML = '<div style="color:#888;font-size:13px;">No times available — try another day.</div>';
+          slotsHost.innerHTML = '<div style="color:#888;font-size:13px;padding:16px 12px;background:#faf9f7;border-radius:10px;text-align:center;width:100%;">No times available — try another day.</div>';
           return;
         }
         slotsHost.innerHTML = res.slots.map(function (iso) {
           var t = new Date(iso);
           var label = t.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'UTC' });
-          return '<button type="button" data-slot="' + iso + '" style="padding:8px 12px;border:1px solid #ccc;background:#fff;border-radius:6px;cursor:pointer;font-size:13px;">' + label + '</button>';
+          return '<button type="button" data-slot="' + iso + '" style="padding:10px 14px;border:1px solid #e2e2e2;background:#fff;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#1a1a1a;font-family:' + FONT + ';transition:all 0.15s;" onmouseover="this.style.borderColor=\'' + brand + '\';this.style.color=\'' + brand + '\';" onmouseout="this.style.borderColor=\'#e2e2e2\';this.style.color=\'#1a1a1a\';">' + label + '</button>';
         }).join('');
         slotsHost.querySelectorAll('[data-slot]').forEach(function (b) {
           b.addEventListener('click', function () {
@@ -238,38 +302,42 @@
     }
 
     function renderDetails() {
-      var stepLabel = cfg.services && cfg.services.length > 1 ? 'Step 3 of 3' : 'Step 2 of 2';
+      var hasMultipleServices = cfg.services && cfg.services.length > 1;
+      var totalSteps = hasMultipleServices ? 3 : 2;
       var whenLabel = new Date(state.slotISO).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'UTC' });
-      card.innerHTML = header('Your details', stepLabel) +
-        '<div style="color:#666;font-size:13px;margin-bottom:16px;">' + esc((state.service ? state.service.name + ' · ' : '') + whenLabel) + '</div>' +
-        '<form id="acg-booking-form" novalidate>' +
-          field('customer_name', 'Name', 'text', true) +
-          field('customer_email', 'Email', 'email', true) +
-          field('customer_phone', 'Phone', 'tel', true) +
-          row(
-            field('vehicle_make', 'Make', 'text', true),
-            field('vehicle_model', 'Model', 'text', true)
-          ) +
-          row(
-            field('vehicle_year', 'Year', 'number', true, 'min="1900" max="2100"'),
-            select('vehicle_size', 'Size', [
-              {value:'sedan', label:'Sedan'},
-              {value:'suv', label:'SUV'},
-              {value:'truck', label:'Truck'},
-              {value:'van', label:'Van'},
-              {value:'other', label:'Other'},
-            ])
-          ) +
-          field('service_address', 'Service address (if mobile)', 'text', false) +
-          fieldTextarea('notes', 'Notes', false) +
-          field('referral_source', 'How did you hear about us?', 'text', false) +
-          '<input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;" aria-hidden="true" />' +
-          '<div id="acg-form-error" style="color:#c00;font-size:13px;margin:8px 0;display:none;"></div>' +
-          '<div style="display:flex;gap:8px;margin-top:12px;">' +
-            '<button type="button" data-back style="padding:12px 14px;background:#fff;border:1px solid #ccc;border-radius:10px;font:600 14px Inter;cursor:pointer;">Back</button>' +
-            '<button type="submit" style="flex:1;padding:14px;background:' + brand + ';color:#fff;border:0;border-radius:10px;font:600 15px Inter;cursor:pointer;">Submit request</button>' +
-          '</div>' +
-        '</form>';
+      var subtitle = (state.service ? state.service.name + ' · ' : '') + whenLabel;
+      card.innerHTML = brandBar() + brandHeader() + stepBar(totalSteps, totalSteps) +
+        sectionTitle('Your details', subtitle) +
+        bodyOpen() +
+          '<form id="acg-booking-form" novalidate>' +
+            field('customer_name', 'Name', 'text', true) +
+            field('customer_email', 'Email', 'email', true) +
+            field('customer_phone', 'Phone', 'tel', true) +
+            row(
+              field('vehicle_make', 'Make', 'text', true),
+              field('vehicle_model', 'Model', 'text', true)
+            ) +
+            row(
+              field('vehicle_year', 'Year', 'number', true, 'min="1900" max="2100"'),
+              select('vehicle_size', 'Size', [
+                {value:'sedan', label:'Sedan'},
+                {value:'suv', label:'SUV'},
+                {value:'truck', label:'Truck'},
+                {value:'van', label:'Van'},
+                {value:'other', label:'Other'},
+              ])
+            ) +
+            field('service_address', 'Service address (if mobile)', 'text', false) +
+            fieldTextarea('notes', 'Notes', false) +
+            field('referral_source', 'How did you hear about us?', 'text', false) +
+            '<input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;" aria-hidden="true" />' +
+            '<div id="acg-form-error" style="color:' + brand + ';font-size:13px;margin:8px 0;display:none;font-weight:600;"></div>' +
+            '<div style="display:flex;gap:10px;margin-top:16px;">' +
+              '<button type="button" data-back style="padding:14px 18px;background:#fff;border:1px solid #ddd;border-radius:12px;font-family:' + FONT + ';font-weight:600;font-size:14px;cursor:pointer;color:#555;">Back</button>' +
+              '<button type="submit" style="flex:1;padding:15px;background:' + brand + ';color:#fff;border:0;border-radius:12px;font-family:' + FONT + ';font-weight:700;font-size:15px;cursor:pointer;letter-spacing:0.2px;">Submit request</button>' +
+            '</div>' +
+          '</form>' +
+        bodyClose();
       wireClose();
       card.querySelector('[data-back]').addEventListener('click', function () { state.slotISO = null; render(); });
       card.querySelector('#acg-booking-form').addEventListener('submit', function (e) { e.preventDefault(); submit(); });
@@ -277,11 +345,17 @@
 
     function renderSuccess() {
       var previewNote = state.details.isPreview
-        ? '<div style="margin-top:12px;padding:10px 12px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;color:#9a3412;font-size:12px;">Preview only — no booking was created and no email was sent.</div>'
+        ? '<div style="margin-top:16px;padding:12px 14px;background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;color:#9a3412;font-size:12px;font-weight:600;">Preview only — no booking was created and no email was sent.</div>'
         : '';
-      card.innerHTML = header('Thanks!', '') +
-        '<p style="color:#555;font-size:14px;">' + esc((cfg.businessName || 'We') + ' will email you to confirm shortly.') + '</p>' +
-        previewNote;
+      card.innerHTML = brandBar() + brandHeader() +
+        '<div style="padding:48px 28px 36px;text-align:center;">' +
+          '<div style="width:64px;height:64px;margin:0 auto 20px;background:' + brand + ';border-radius:50%;display:flex;align-items:center;justify-content:center;">' +
+            '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>' +
+          '</div>' +
+          '<h2 style="margin:0 0 10px;font-size:24px;font-weight:800;color:#1a1a1a;letter-spacing:-0.5px;">Request received</h2>' +
+          '<p style="margin:0;color:#666;font-size:14px;line-height:1.6;max-width:380px;margin:0 auto;">' + esc((cfg.businessName || 'We') + ' will email you shortly to confirm your appointment.') + '</p>' +
+          previewNote +
+        '</div>';
       wireClose();
     }
 
@@ -347,16 +421,22 @@
       });
     }
 
+    function inputStyle() {
+      return 'width:100%;margin-top:4px;padding:11px 13px;border:1px solid #e2e2e2;border-radius:10px;font-family:' + FONT + ';font-size:14px;color:#1a1a1a;background:#fff;box-sizing:border-box;outline:none;transition:border-color 0.15s;';
+    }
+    function labelStyle() {
+      return 'display:block;margin-bottom:12px;font-size:12px;font-weight:600;color:#555;letter-spacing:0.2px;';
+    }
     function field(name, label, type, required, extra) {
-      return '<label style="display:block;margin-bottom:10px;font-size:12px;color:#555;">' +
-        label + (required ? ' <span style="color:#c00">*</span>' : '') +
+      return '<label style="' + labelStyle() + '">' +
+        label + (required ? ' <span style="color:' + brand + '">*</span>' : '') +
         '<input type="' + type + '" name="' + name + '"' + (required ? ' required' : '') + ' ' + (extra || '') +
-          ' style="width:100%;margin-top:3px;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font:13px Inter;" />' +
+          ' style="' + inputStyle() + '" onfocus="this.style.borderColor=\'' + brand + '\';" onblur="this.style.borderColor=\'#e2e2e2\';" />' +
         '</label>';
     }
     function fieldTextarea(name, label) {
-      return '<label style="display:block;margin-bottom:10px;font-size:12px;color:#555;">' + label +
-        '<textarea name="' + name + '" rows="2" style="width:100%;margin-top:3px;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font:13px Inter;"></textarea>' +
+      return '<label style="' + labelStyle() + '">' + label +
+        '<textarea name="' + name + '" rows="3" style="' + inputStyle() + 'resize:vertical;min-height:72px;" onfocus="this.style.borderColor=\'' + brand + '\';" onblur="this.style.borderColor=\'#e2e2e2\';"></textarea>' +
         '</label>';
     }
     function select(name, label, options) {
@@ -365,11 +445,11 @@
         var display = typeof o === 'string' ? (o.charAt(0).toUpperCase() + o.slice(1)) : o.label;
         return '<option value="' + value + '">' + display + '</option>';
       }).join('');
-      return '<label style="display:block;margin-bottom:10px;font-size:12px;color:#555;">' + label + ' <span style="color:#c00">*</span>' +
-        '<select name="' + name + '" required style="width:100%;margin-top:3px;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font:13px Inter;background:#fff;">' + opts + '</select></label>';
+      return '<label style="' + labelStyle() + '">' + label + ' <span style="color:' + brand + '">*</span>' +
+        '<select name="' + name + '" required style="' + inputStyle() + 'appearance:none;-webkit-appearance:none;background-image:url(\'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 12 12%22><path d=%22M2 4l4 4 4-4%22 stroke=%22%23888%22 stroke-width=%221.5%22 fill=%22none%22 stroke-linecap=%22round%22/></svg>\');background-repeat:no-repeat;background-position:right 12px center;background-size:12px;padding-right:36px;" onfocus="this.style.borderColor=\'' + brand + '\';" onblur="this.style.borderColor=\'#e2e2e2\';">' + opts + '</select></label>';
     }
     function row(a, b) {
-      return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' + a + b + '</div>';
+      return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">' + a + b + '</div>';
     }
 
     render();
