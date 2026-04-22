@@ -198,7 +198,7 @@ export const TEMPLATES = {
   wheel_apex: {
     id: 'wheel_apex',
     businessType: 'wheel_shop',
-    label: 'Apex Forge',
+    label: 'Forge Studio',
     description: 'Alloy & bronze e-commerce — product cards, finish selector, editorial.',
     previewColors: ['#F0F1F3', '#A8813A', '#FFFFFF'],
     colors: { bg: '#F0F1F3', accent: '#A8813A', text: '#1C1E24', secondary: '#FFFFFF', muted: '#7A7D88' },

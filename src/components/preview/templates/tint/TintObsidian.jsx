@@ -6,8 +6,8 @@ import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 
-// Template: Tint Obsidian -- Ultra-dark void (#050507 bg, #7C3AED accent, #06B6D4 cyan)
-// Syne + Outfit fonts, VLT shade guide, film brands, process steps, testimonials
+// Template: Obsidian Studio -- Ultra-dark void (#050507 bg, #7C3AED accent, #06B6D4 cyan)
+// Syne + Outfit fonts, process steps, testimonials, gallery
 
 export default function TintObsidian({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
@@ -52,11 +52,6 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
   const testimonials = copy.testimonialPlaceholders || [];
   const packages     = biz.packages || [];
 
-  const _fb = copy?.filmBrandsList ?? biz.filmBrands;
-  const filmBrandsList = _fb
-    ? (Array.isArray(_fb) ? _fb.map(b => typeof b === 'object' ? (b.name || '') : b).filter(Boolean) : typeof _fb === 'string' ? _fb.split(/,|·/).map(b => b.trim()).filter(Boolean) : [])
-    : [];
-
   const specialtiesList = biz.specialties
     ? (Array.isArray(biz.specialties)
         ? biz.specialties
@@ -64,23 +59,14 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
     : [];
 
   const processSteps = [
-    { num: '// 01', icon: '📐', title: 'Consultation',     body: 'We assess your vehicle, discuss goals, confirm legal VLT for your state, and recommend the right film tier for your needs and budget.' },
-    { num: '// 02', icon: '🧽', title: 'Surface Prep',     body: 'Every glass surface is meticulously cleaned and decontaminated in our controlled bay. A dust-free environment ensures zero contamination under film.' },
-    { num: '// 03', icon: '✂️',  title: 'Precision Cut',    body: 'Computerized templates for thousands of vehicle models ensure perfect fitment. No razor blades on your glass, ever.' },
-    { num: '// 04', icon: '🔬', title: 'Install & Inspect', body: 'Wet installation, heat-gun forming, edge sealing, and final inspection under UV light. We do not release a vehicle until it is perfect.' },
+    { num: '// 01', icon: '📋', title: 'Consultation',     body: 'We start with a conversation to understand your goals, inspect your vehicle, and recommend the right solution for your needs and budget.' },
+    { num: '// 02', icon: '🧽', title: 'Surface Prep',     body: 'Your vehicle is meticulously prepared in our controlled bay. A clean, dust-free environment is the foundation for flawless work.' },
+    { num: '// 03', icon: '✂️',  title: 'Precision Work',   body: 'Computerized templates and expert hands ensure perfect fitment every time. No shortcuts, no compromise on quality.' },
+    { num: '// 04', icon: '🔬', title: 'Final Inspection', body: 'Every detail is checked under studio lighting before we hand the keys back. We do not release a vehicle until it is perfect.' },
   ];
-
-  const defaultShades = [
-    { vlt: 5,  name: 'Limo Black',  legal: 'Rear windows only' },
-    { vlt: 15, name: 'Midnight',    legal: 'Rear-legal in most states' },
-    { vlt: 25, name: 'Dark Smoke',  legal: 'Rear-legal in most states' },
-    { vlt: 35, name: 'Medium',      legal: 'Front-legal in most states' },
-    { vlt: 50, name: 'Light Smoke', legal: 'Universal' },
-  ];
-  const shades = copy?.shadeGuide?.length > 0 ? copy.shadeGuide : defaultShades;
 
   const hidden = (id) => copy?.hiddenSections?.includes(id);
-  const getOrder = buildSectionOrder(copy, ['hero','shadeGuide','services','brands','process','about','gallery','testimonials','cta']);
+  const getOrder = buildSectionOrder(copy, ['hero','services','process','about','gallery','testimonials','cta']);
 
   const panelBg = c.secondary || '#0d0d12';
 
@@ -130,7 +116,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
             )}
           </div>
           <div className="tp-nav-links" style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
-            {[['#services', 'Services'], ['#films', 'Film Tech'], ['#process', 'Process']].map(([href, label]) => (
+            {[['#services', 'Services'], ['#process', 'Process'], ['#about', 'About']].map(([href, label]) => (
               <a key={href} href={href} style={{ color: c.text, textDecoration: 'none', fontWeight: 500, fontSize: 13, opacity: 0.55 }}>{label}</a>
             ))}
             <a href={`tel:${biz.phone}`} style={{
@@ -182,7 +168,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
             fontFamily: font, fontSize: 'clamp(1.8rem, 7vw, 6rem)', fontWeight: 800,
             lineHeight: 1.0, letterSpacing: -2, margin: '0 0 24px', color: c.text,
           }}>
-            {copy.headline || 'Precision Film. Zero Compromise.'}
+            {copy.headline || fb.headline || 'Precision. Zero Compromise.'}
           </h1>
           <p style={{
             fontSize: 'clamp(15px, 2vw, 18px)', lineHeight: 1.75, maxWidth: 600, margin: '0 auto 44px',
@@ -241,77 +227,6 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
       )}
 
 
-      {/* ============================================================ VLT SHADE GUIDE ============================================================ */}
-      {!hidden('shadeGuide') && (
-      <section style={{ padding: '100px 5%', background: panelBg, borderTop: `1px solid ${c.accent}1a`, position: 'relative', overflow: 'hidden' , order: getOrder('shadeGuide') }}>
-        <div style={{
-          position: 'absolute', top: -200, right: -200, width: 600, height: 600, borderRadius: '50%',
-          background: `radial-gradient(circle, ${c.accent}07, transparent 70%)`, pointerEvents: 'none',
-        }} />
-        <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 64 }}>
-            <div style={{ ...labelTagStyle, justifyContent: 'center' }}>
-              <span style={{ width: 24, height: 1, background: c.accent, flexShrink: 0 }} />
-              {fb.navSubtitle}
-            </div>
-            <h2 style={{ ...sectionTitleStyle, marginBottom: 16 }}>
-              Choose your <span style={{ color: '#a855f7' }}>shade.</span>
-            </h2>
-            <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.75, maxWidth: 560, margin: '0 auto' }}>
-              Each option is precision-cut and professionally installed to your exact specifications.
-            </p>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
-            {shades.map((shade, idx) => {
-              const vlt = Number(shade.vlt) || 50;
-              const opacity = (1 - vlt / 100).toFixed(2);
-              const shadeImg = images?.[`shade${idx}`];
-              return (
-                <div key={idx} style={{
-                  background: 'rgba(255,255,255,0.02)', border: `1px solid ${c.accent}20`,
-                  borderRadius: 12, overflow: 'hidden', transition: 'border-color 0.2s',
-                }}>
-                  <div style={{
-                    aspectRatio: '1', position: 'relative',
-                    background: shadeImg ? 'transparent' : `linear-gradient(180deg, rgba(40,120,200,${(0.12 + (1 - Number(opacity)) * 0.15).toFixed(2)}), transparent 70%)`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    {shadeImg ? (
-                      <>
-                        <img src={shadeImg} alt={shade.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                        {/* Tint overlay on image */}
-                        <div style={{ position: 'absolute', inset: 0, background: `rgba(0,0,0,${(opacity * 0.4).toFixed(2)})` }} />
-                      </>
-                    ) : (
-                      <>
-                        {/* Tint overlay */}
-                        <div style={{ position: 'absolute', inset: 0, background: `rgba(0,0,0,${opacity})`, borderBottom: `1px solid ${c.accent}18` }} />
-                        {/* Car window silhouette */}
-                        <svg width="100" height="60" viewBox="0 0 100 60" fill="none" style={{ position: 'relative', zIndex: 1, opacity: 0.5 }}>
-                          <path d="M10 55 Q10 25 30 15 L70 15 Q90 25 90 55 Z" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" fill="none" />
-                          <path d="M20 50 Q20 30 35 22 L65 22 Q80 30 80 50 Z" fill={`rgba(255,255,255,${(0.05 + (vlt / 100) * 0.15).toFixed(2)})`} />
-                        </svg>
-                      </>
-                    )}
-                    <div style={{
-                      position: 'absolute', top: 10, right: 10,
-                      background: `${c.accent}22`, border: `1px solid ${c.accent}44`,
-                      borderRadius: 6, padding: '4px 10px',
-                      fontFamily: 'monospace', fontSize: 10, color: c.accent, letterSpacing: 1, zIndex: 2,
-                    }}>{vlt}% VLT</div>
-                  </div>
-                  <div style={{ padding: '16px 18px' }}>
-                    <div style={{ fontFamily: font, fontSize: 18, fontWeight: 700, color: c.text, marginBottom: 4 }}>{shade.name}</div>
-                    <div style={{ fontSize: 12, color: c.muted }}>{shade.legal}</div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-      )}
-
       {/* ============================================================ SERVICES ============================================================ */}
       {!hidden('services') && (
       <section id="services" style={{ padding: '100px 5%' , order: getOrder('services') }}>
@@ -319,10 +234,10 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
           <div style={{ marginBottom: 64 }}>
             <div style={labelTagStyle}>
               <span style={{ width: 24, height: 1, background: c.accent, flexShrink: 0 }} />
-              What We Install
+              What We Do
             </div>
             <h2 style={sectionTitleStyle}>
-              Every surface. <span style={{ color: '#a855f7' }}>Every vehicle.</span>
+              Our <span style={{ color: '#a855f7' }}>services.</span>
             </h2>
             {copy.servicesSection?.intro && (
               <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.75, maxWidth: 520, marginTop: 16 }}>{copy.servicesSection.intro}</p>
@@ -372,65 +287,6 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
           )}
         </div>
       </section>
-      )}
-
-      {/* ============================================================ FILM BRANDS ============================================================ */}
-      {!hidden('brands') && filmBrandsList.length > 0 && (
-        <section id="films" style={{ padding: '100px 5%', background: panelBg, borderTop: `1px solid ${c.accent}1a`, borderBottom: `1px solid ${c.accent}1a`, position: 'relative', overflow: 'hidden' , order: getOrder('brands') }}>
-          <div style={{
-            position: 'absolute', top: -150, right: -150, width: 500, height: 500, borderRadius: '50%',
-            background: `radial-gradient(circle, ${cCyan}08, transparent 70%)`, pointerEvents: 'none',
-          }} />
-          <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-            <div style={{ marginBottom: 60 }}>
-              <div style={{ ...labelTagStyle, color: cCyan }}>
-                <span style={{ width: 24, height: 1, background: cCyan, flexShrink: 0 }} />
-                Film Technology
-              </div>
-              <h2 style={sectionTitleStyle}>
-                Not all film is <span style={{ color: cCyan }}>equal.</span>
-              </h2>
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14 }}>
-              {filmBrandsList.map((brand, i) => (
-                <div key={i} style={{
-                  padding: '18px 28px', borderRadius: 8,
-                  background: `linear-gradient(135deg, ${c.accent}18, ${cCyan}0d)`,
-                  border: `1px solid ${c.accent}35`,
-                  fontFamily: font, fontSize: 15, fontWeight: 700, color: c.text, letterSpacing: 0.3,
-                  boxShadow: `0 2px 16px ${c.accent}15`,
-                  position: 'relative', overflow: 'hidden',
-                }}>
-                  <div style={{
-                    position: 'absolute', top: 0, left: 0, right: 0, height: 1,
-                    background: `linear-gradient(90deg, transparent, ${c.accent}80, transparent)`,
-                  }} />
-                  {brand}
-                </div>
-              ))}
-            </div>
-            <div style={{
-              display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-              border: `1px solid ${c.accent}18`, borderRadius: 10, marginTop: 48, overflow: 'hidden',
-              background: 'rgba(255,255,255,0.015)',
-            }}>
-              {[
-                { key: 'UV Rejection',   val: '99%' },
-                { key: 'IR Rejection',   val: 'Up to 80%' },
-                { key: 'Signal Safe',    val: 'Yes' },
-                { key: 'Fade Resistant', val: 'Lifetime' },
-              ].map((spec, i) => (
-                <div key={i} style={{
-                  padding: '22px 24px', textAlign: 'center',
-                  borderRight: i < 3 ? `1px solid ${c.accent}15` : 'none',
-                }}>
-                  <div style={{ fontSize: 9, letterSpacing: 2.5, color: cCyan, textTransform: 'uppercase', fontFamily: 'monospace', marginBottom: 8 }}>{spec.key}</div>
-                  <div style={{ fontFamily: font, fontSize: 22, fontWeight: 700, color: c.text }}>{spec.val}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
       )}
 
       {/* ============================================================ WARRANTY ============================================================ */}
@@ -698,7 +554,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
                 </div>
               )}
               <p style={{ color: '#2e2e3a', fontSize: 13, lineHeight: 1.7 }}>
-                {copy.footerTagline || biz.tagline || `Premium window film installation. Serving ${biz.city || 'your city'}.`}
+                {copy.footerTagline || biz.tagline || fb.footerDesc || `Professional service. Serving ${biz.city || 'your city'}.`}
               </p>
             </div>
             {/* Services */}
@@ -716,7 +572,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
             <div>
               <div style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 10, letterSpacing: 3, color: '#2e2e3a', textTransform: 'uppercase', marginBottom: 14 }}>// Studio</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {[['#shades', 'Shade Guide'], ['#films', 'Film Technology'], ['#process', 'Our Process'], ['#about', 'About Us']].map(([href, label]) => (
+                {[['#services', 'Services'], ['#process', 'Our Process'], ['#about', 'About Us'], ['#testimonials', 'Reviews']].map(([href, label]) => (
                   <a key={href} href={href} style={{ color: '#3a3a4e', fontSize: 13, textDecoration: 'none' }}>{label}</a>
                 ))}
               </div>
