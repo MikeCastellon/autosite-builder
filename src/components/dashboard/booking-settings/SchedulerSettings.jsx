@@ -10,7 +10,6 @@ import {
 import GeneralTab from './GeneralTab.jsx';
 import ServicesTab from './ServicesTab.jsx';
 import AvailabilityTab from './AvailabilityTab.jsx';
-import PreviewTab from './PreviewTab.jsx';
 
 export default function SchedulerSettings({ siteId, onExit }) {
   const [tab, setTab] = useState('general');
@@ -109,13 +108,11 @@ export default function SchedulerSettings({ siteId, onExit }) {
         <TabBtn on={tab === 'general'} onClick={() => setTab('general')}>General</TabBtn>
         <TabBtn on={tab === 'services'} onClick={() => setTab('services')}>Services</TabBtn>
         <TabBtn on={tab === 'availability'} onClick={() => setTab('availability')}>Availability</TabBtn>
-        <TabBtn on={tab === 'preview'} onClick={() => setTab('preview')} disabled={!site.scheduler_enabled}>Preview</TabBtn>
       </div>
 
       {tab === 'general' && <GeneralTab siteId={siteId} config={site.scheduler_config} onSaved={onSaved} />}
       {tab === 'services' && <ServicesTab siteId={siteId} config={site.scheduler_config} onSaved={onSaved} />}
       {tab === 'availability' && <AvailabilityTab siteId={siteId} config={site.scheduler_config} onSaved={onSaved} />}
-      {tab === 'preview' && site.scheduler_enabled && <PreviewTab siteId={siteId} />}
     </div>
   );
 }
