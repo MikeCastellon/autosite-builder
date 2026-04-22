@@ -8,11 +8,11 @@ const CORS = {
   'Cache-Control': 'public, max-age=60',
 };
 
-// Minimal fallback color map so scheduler.js can brand the button even before
-// we thread through full template lookup. Expand as templates are added.
-const TEMPLATE_FALLBACK_COLORS = {
-  default: '#1a1a1a',
-};
+const TEMPLATE_FALLBACK_COLORS = { default: '#1a1a1a' };
+
+function disabled() {
+  return { statusCode: 200, headers: CORS, body: JSON.stringify({ enabled: false }) };
+}
 
 export const handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: CORS };
@@ -32,13 +32,11 @@ export const handler = async (event) => {
 
   const { data: site } = await supabase
     .from('sites')
-    .select('id, user_id, business_info, generated_content, template_id')
+    .select('id, user_id, business_info, generated_content, template_id, scheduler_enabled, scheduler_config')
     .eq('id', siteId)
     .maybeSingle();
 
-  if (!site) {
-    return { statusCode: 200, headers: CORS, body: JSON.stringify({ enabled: false }) };
-  }
+  if (!site || !site.scheduler_enabled) return disabled();
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -46,10 +44,7 @@ export const handler = async (event) => {
     .eq('id', site.user_id)
     .maybeSingle();
 
-  const enabled = !!profile?.scheduler_enabled;
-  if (!enabled) {
-    return { statusCode: 200, headers: CORS, body: JSON.stringify({ enabled: false }) };
-  }
+  if (!profile?.scheduler_enabled) return disabled();
 
   const businessName = site.business_info?.businessName || 'Book Now';
   const customColors = site.generated_content?._customColors || {};
@@ -59,9 +54,28 @@ export const handler = async (event) => {
     TEMPLATE_FALLBACK_COLORS[site.template_id] ||
     TEMPLATE_FALLBACK_COLORS.default;
 
+  const cfg = site.scheduler_config || {};
+  const enabledServices = (cfg.services || []).filter((s) => s.enabled !== false);
+
   return {
     statusCode: 200,
     headers: CORS,
-    body: JSON.stringify({ enabled: true, businessName, brandColor }),
+    body: JSON.stringify({
+      enabled: true,
+      businessName,
+      brandColor,
+      welcome_text: cfg.welcome_text || "Tell us about your car and we'll be in touch.",
+      button_label: cfg.button_label || 'Book Now',
+      lead_time_hours: cfg.lead_time_hours ?? 24,
+      slot_granularity_minutes: cfg.slot_granularity_minutes ?? 30,
+      services: enabledServices.map((s) => ({
+        id: s.id,
+        name: s.name,
+        duration_minutes: s.duration_minutes,
+        price: s.price ?? '',
+        description: s.description ?? '',
+      })),
+      availability: cfg.availability || {},
+    }),
   };
 };
