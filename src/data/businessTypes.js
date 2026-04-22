@@ -4,7 +4,7 @@ export const BUSINESS_TYPES = [
     label: 'Car Detailing Shop',
     icon: '✨',
     description: 'Fixed-location detailing studio',
-    templates: ['detailing_premium', 'detailing_sporty', 'detailing_minimal', 'detailing_coastal', 'detailing_autosync_dark', 'detailing_autosync_white'],
+    templates: ['detailing_sporty'],
     premiumTemplates: [],
   },
   {
@@ -12,7 +12,7 @@ export const BUSINESS_TYPES = [
     label: 'Mobile Detailing',
     icon: '🚐',
     description: 'On-the-go mobile detailing service',
-    templates: ['mobile_bold', 'mobile_modern', 'mobile_chrome', 'mobile_sudsy'],
+    templates: ['mobile_chrome', 'mobile_sudsy'],
     premiumTemplates: [],
   },
   {
@@ -20,7 +20,7 @@ export const BUSINESS_TYPES = [
     label: 'Wheel Shop',
     icon: '🔧',
     description: 'Custom wheels, tires & fitment',
-    templates: ['wheel_edge', 'wheel_clean', 'wheel_apex'],
+    templates: ['wheel_apex'],
     premiumTemplates: [],
   },
   {
@@ -28,7 +28,7 @@ export const BUSINESS_TYPES = [
     label: 'Tint Shop',
     icon: '🌑',
     description: 'Window tint & paint protection film',
-    templates: ['tint_dark', 'tint_elite', 'tint_obsidian'],
+    templates: ['tint_elite', 'tint_obsidian'],
     premiumTemplates: [],
   },
   {
@@ -36,7 +36,7 @@ export const BUSINESS_TYPES = [
     label: 'Mechanic Shop',
     icon: '🔩',
     description: 'Auto repair & maintenance',
-    templates: ['mechanic_industrial', 'mechanic_friendly', 'mechanic_garage', 'mechanic_ironclad'],
+    templates: ['mechanic_industrial', 'mechanic_garage', 'mechanic_ironclad'],
     premiumTemplates: [],
   },
   {

@@ -35,9 +35,10 @@ export default function StepTemplatePicker({ businessType, selected, onSelect, o
   const typeInfo = BUSINESS_TYPES.find((t) => t.id === businessType);
   const recommendedIds = [...(typeInfo?.templates || []), ...(typeInfo?.premiumTemplates || [])];
 
-  // All templates grouped
-  const allTemplates = Object.values(TEMPLATES).filter(Boolean);
-  const recommended = recommendedIds.map((id) => TEMPLATES[id]).filter(Boolean);
+  // All templates grouped (hidden templates are kept in code for back-compat
+  // with saved sites, but not shown in the picker)
+  const allTemplates = Object.values(TEMPLATES).filter((t) => t && !t.hidden);
+  const recommended = recommendedIds.map((id) => TEMPLATES[id]).filter((t) => t && !t.hidden);
   const others = allTemplates.filter((t) => !recommendedIds.includes(t.id));
 
   const [showAll, setShowAll] = useState(false);
