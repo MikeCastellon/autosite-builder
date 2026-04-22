@@ -13,3 +13,44 @@ export function isEffectiveSchedulerActive(profile) {
   }
   return false;
 }
+
+// Paywall testing allowlist — emails in VITE_PAYWALL_ALLOWLIST_EMAILS see the
+// upgrade gate on Bookings even if they're admins or have scheduler_enabled.
+// Lets us QA the Subscribe flow on production without exposing the paywall
+// to anyone else. Leave env var empty to disable entirely.
+export function isPaywallTestUser(email) {
+  if (!email) return false;
+  const raw = import.meta.env?.VITE_PAYWALL_ALLOWLIST_EMAILS || '';
+  if (!raw) return false;
+  const list = raw.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+  return list.includes(String(email).toLowerCase());
+}
+
+// Whether the Bookings nav item should be visible to this user at all.
+// Test users must see it so they can reach the gate; others need real access.
+export function canSeeBookingsNav(profile) {
+  if (!profile) return false;
+  if (isPaywallTestUser(profile.email)) return true;
+  return isEffectiveSchedulerActive(profile);
+}
+
+// Dashboard-level gate check: should the upgrade card be shown INSTEAD of
+// the Schedule/Settings tabs?
+//   - Allowlisted test users: card unless they have an active subscription
+//     (or cancelled w/ grace). Bypasses admin + scheduler_enabled for this
+//     email only, so the paywall flow is testable on a live account.
+//   - Everyone else: card only when they don't effectively have access.
+//     In practice combined with `canSeeBookingsNav`, non-test non-qualifying
+//     users never reach this page.
+export function shouldShowUpgradeCard(profile) {
+  if (!profile) return false;
+  const hasSubAccess =
+    profile.subscription_status === 'active' ||
+    (profile.subscription_status === 'cancelled' &&
+     profile.subscription_ends_at &&
+     Date.parse(profile.subscription_ends_at) > Date.now());
+  if (isPaywallTestUser(profile.email)) {
+    return !hasSubAccess;
+  }
+  return !isEffectiveSchedulerActive(profile);
+}

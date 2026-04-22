@@ -1,15 +1,15 @@
 import { useState } from 'react';
 import { supabase } from '../../../lib/supabase.js';
-import { isEffectiveSchedulerActive } from '../../../lib/subscriptionGating.js';
+import { shouldShowUpgradeCard } from '../../../lib/subscriptionGating.js';
 
 export default function SubscribeGate({ profile, children, onExit }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
 
-  const active = isEffectiveSchedulerActive(profile);
+  const showCard = shouldShowUpgradeCard(profile);
   const pastDue = profile?.subscription_status === 'past_due';
 
-  if (active) return children;
+  if (!showCard) return children;
 
   async function subscribe() {
     setBusy(true); setErr(null);
