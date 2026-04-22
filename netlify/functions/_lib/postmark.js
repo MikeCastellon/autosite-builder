@@ -1,7 +1,7 @@
 import { ServerClient } from 'postmark';
 
-const client = process.env.POSTMARK_API_TOKEN
-  ? new ServerClient(process.env.POSTMARK_API_TOKEN)
+const client = process.env.POSTMARK_API_KEY
+  ? new ServerClient(process.env.POSTMARK_API_KEY)
   : null;
 
 const FROM = process.env.POSTMARK_FROM_EMAIL || 'bookings@example.com';
