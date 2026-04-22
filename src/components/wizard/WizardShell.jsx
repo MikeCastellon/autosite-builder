@@ -3,14 +3,16 @@ import ProgressBar from '../ui/ProgressBar.jsx';
 
 const STEP_LABELS = ['Business Type', 'Your Info', 'Template', 'Generating', 'Preview', 'Export'];
 
-export default function WizardShell({ step, onBack, children, userEmail, onMySites, onSignOut }) {
+export default function WizardShell({ step, onBack, children, userEmail, onMySites, onSignOut, profile, onOpenBookings, onOpenAdmin }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const schedulerEnabled = !!profile?.scheduler_enabled;
+  const isAdmin = !!profile?.is_super_admin;
 
   return (
     <div className="min-h-screen bg-white text-[#1a1a1a] flex flex-col overflow-x-hidden">
       {/* Header */}
       <header className="border-b border-black/[0.07] bg-white/85 backdrop-blur-xl px-4 sm:px-8 py-0 flex items-center justify-between h-16 sticky top-0 z-50">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-5">
           <a href="https://www.autocaregenius.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5">
             <img
               src="https://www.autocaregenius.com/cdn/shop/files/v11_1.svg?v=1760731533&width=160"
@@ -22,10 +24,26 @@ export default function WizardShell({ step, onBack, children, userEmail, onMySit
               Pro <span className="text-[#cc0000]">Hub</span>
             </span>
           </a>
+          <nav className="flex items-center gap-1 text-[13px] font-medium">
+            {onMySites && (
+              <button onClick={onMySites} className="px-3 py-1.5 rounded-lg text-[#555] hover:text-[#1a1a1a] hover:bg-black/[0.04] transition-colors">
+                My Sites
+              </button>
+            )}
+            {schedulerEnabled && onOpenBookings && (
+              <button onClick={onOpenBookings} className="px-3 py-1.5 rounded-lg text-[#555] hover:text-[#1a1a1a] hover:bg-black/[0.04] transition-colors">
+                Bookings
+              </button>
+            )}
+          </nav>
         </div>
         <div className="flex items-center gap-3">
+          {isAdmin && onOpenAdmin && (
+            <button onClick={onOpenAdmin} className="text-[12px] font-semibold bg-[#1a1a1a] text-white px-3 py-1.5 rounded-lg hover:bg-[#cc0000] transition-colors">
+              Admin
+            </button>
+          )}
           <span className="text-[11px] text-[#888] uppercase tracking-[1.5px] font-medium hidden sm:block">Website Builder</span>
-          <span className="text-[12px] font-semibold bg-[#1a1a1a] text-white px-3 py-1.5 rounded-lg">Free</span>
           {userEmail && (
             <div className="relative">
               <button

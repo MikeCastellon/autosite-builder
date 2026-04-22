@@ -30,7 +30,8 @@ export default function App() {
   const [error, setError] = useState(null);
   const [customColors, setCustomColors] = useState({});
   const [customFonts, setCustomFonts] = useState({});
-  const [view, setView] = useState('wizard'); // 'wizard' | 'dashboard'
+  const [view, setView] = useState('wizard'); // 'wizard' | 'dashboard' | 'admin'
+  const [dashboardInitialView, setDashboardInitialView] = useState('sites'); // 'sites' | 'bookings'
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [selectedWidgetIds, setSelectedWidgetIds] = useState([]);
   const [siteId, setSiteId] = useState(null);
@@ -242,6 +243,7 @@ export default function App() {
       onSignOut={handleSignOut}
       userEmail={session?.user?.email}
       profile={profile}
+      initialView={dashboardInitialView}
       onOpenAdmin={() => setView('admin')}
     />;
   }
@@ -328,7 +330,7 @@ export default function App() {
   }
 
   return (
-    <WizardShell step={step} onBack={goBack} userEmail={session?.user?.email} onMySites={() => setView('dashboard')} onSignOut={handleSignOut}>
+    <WizardShell step={step} onBack={goBack} userEmail={session?.user?.email} profile={profile} onMySites={() => setView('dashboard')} onOpenBookings={() => { setDashboardInitialView('bookings'); setView('dashboard'); }} onOpenAdmin={() => setView('admin')} onSignOut={handleSignOut}>
       {step === 1 && (
         <StepBusinessType onSelect={handleBusinessTypeSelect} />
       )}

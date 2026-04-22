@@ -6,11 +6,12 @@ import BookingsView from './bookings/BookingsView.jsx';
 
 const MAX_SITES = 1;
 
-export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEmail, profile, onOpenAdmin }) {
+export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEmail, profile, onOpenAdmin, initialView = 'sites' }) {
   const [sites, setSites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
-  const [view, setView] = useState('sites'); // 'sites' | 'bookings'
+  const [view, setView] = useState(initialView); // 'sites' | 'bookings'
+  useEffect(() => { setView(initialView); }, [initialView]);
   const schedulerEnabled = !!profile?.scheduler_enabled;
   const isAdmin = !!profile?.is_super_admin;
   const canCreateSite = isAdmin || sites.length < MAX_SITES;
