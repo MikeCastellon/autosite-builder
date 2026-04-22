@@ -47,10 +47,12 @@ export default function StepExport({ siteId: passedSiteId, businessInfo, generat
           </svg>
         </div>
         <h1 className="text-[clamp(24px,4vw,32px)] font-[900] text-[#1a1a1a] mb-2 tracking-[-1px] leading-[1.1]">
-          {published ? 'Your site is live!' : 'Publish Your Website'}
+          {published ? `Congratulations, ${businessInfo.businessName}!` : 'Publish Your Website'}
         </h1>
         <p className="text-[#555] text-[15px]">
-          {businessInfo.businessName} &mdash; {businessInfo.city}, {businessInfo.state}
+          {published
+            ? 'Your website is live and ready to share.'
+            : <>{businessInfo.businessName} &mdash; {businessInfo.city}, {businessInfo.state}</>}
         </p>
       </div>
 
@@ -155,6 +157,16 @@ export default function StepExport({ siteId: passedSiteId, businessInfo, generat
             </a>
           </div>
 
+          {/* Upgrade CTA */}
+          <a
+            href="https://www.autocaregenius.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-[#cc0000] to-[#aa0000] hover:from-[#aa0000] hover:to-[#880000] text-white text-center font-semibold text-[15px] transition-all shadow-sm hover:shadow-md mb-5"
+          >
+            ⭐ Upgrade to Pro
+          </a>
+
           {published.cnameInstructions && (
             <div className="border border-black/[0.07] rounded-xl p-5 mb-5 bg-[#faf9f7]">
               <p className="font-semibold text-[#1a1a1a] text-sm mb-3">DNS Setup for Custom Domain</p>
@@ -176,18 +188,12 @@ export default function StepExport({ siteId: passedSiteId, businessInfo, generat
       )}
 
       {/* Bottom actions */}
-      <div className="flex gap-2.5 mt-4">
+      <div className="mt-4">
         <button
           onClick={onBack}
-          className="flex-1 py-2.5 px-4 rounded-xl border border-black/[0.07] text-[#555] hover:border-[#cc0000]/30 hover:text-[#cc0000] font-medium transition-colors text-[13px]"
+          className="w-full py-2.5 px-4 rounded-xl border border-black/[0.07] text-[#555] hover:border-[#cc0000]/30 hover:text-[#cc0000] font-medium transition-colors text-[13px]"
         >
           ← Back to Editor
-        </button>
-        <button
-          onClick={onStartOver}
-          className="flex-1 py-2.5 px-4 rounded-xl bg-[#faf9f7] hover:bg-[#f2f0ec] text-[#555] font-medium transition-colors text-[13px]"
-        >
-          Build Another Site
         </button>
       </div>
     </div>

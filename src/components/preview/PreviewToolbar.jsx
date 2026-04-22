@@ -1,4 +1,4 @@
-export default function PreviewToolbar({ viewMode, onViewMode, onBack, onExport, onStartOver, onEdit, editorOpen, isDemoPreview }) {
+export default function PreviewToolbar({ viewMode, onViewMode, onBack, onExport, onEdit, editorOpen, isDemoPreview }) {
   return (
     <div className="fixed top-0 left-0 z-50 bg-white border-b border-gray-200 px-5 h-13 flex items-center justify-between gap-4" style={{ height: 52, right: editorOpen ? 320 : 0, transition: 'right 0.2s ease' }}>
       {/* Left: back */}
@@ -42,12 +42,6 @@ export default function PreviewToolbar({ viewMode, onViewMode, onBack, onExport,
             <path d="M9.5 1.5a1.414 1.414 0 012 2L4 11H1.5V8.5L9.5 1.5z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
           Edit
-        </button>
-        <button
-          onClick={onStartOver}
-          className="border border-gray-200 hover:border-gray-400 text-gray-600 hover:text-gray-900 text-[13px] font-medium px-4 py-2 rounded-lg transition-colors"
-        >
-          Create Another
         </button>
         {!isDemoPreview && onExport && (
           <button

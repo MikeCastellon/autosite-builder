@@ -43,14 +43,12 @@ export default function StepTemplatePicker({ businessType, selected, onSelect, o
   const [showAll, setShowAll] = useState(false);
   const selectedTpl = selected ? TEMPLATES[selected] : null;
 
-  const cols = (count) => count >= 4 ? 4 : count >= 3 ? 3 : count;
-
   const TemplateGrid = ({ templates, badge }) => (
-    <div className="grid gap-3 mb-2" style={{ gridTemplateColumns: `repeat(${cols(templates.length)}, minmax(0, 1fr))` }}>
+    <div className="grid gap-3 mb-2 grid-cols-2 sm:grid-cols-3 md:grid-cols-4">
       {templates.map((template) => (
-        <div key={template.id} className="flex flex-col gap-1.5 relative">
+        <div key={template.id} className="flex flex-col gap-1.5 relative min-w-0">
           {badge && (
-            <span className="absolute top-2 left-2 z-10 bg-[#cc0000] text-white text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md shadow-sm">
+            <span className="absolute top-2 left-2 z-10 bg-[#cc0000] text-white text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-md shadow-sm">
               {badge}
             </span>
           )}
