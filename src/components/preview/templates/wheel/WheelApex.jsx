@@ -72,22 +72,22 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
 
   return (
     <div style={{ fontFamily: body, background: D.bg, color: D.ink, minHeight: '100vh', overflowX: 'hidden', containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
-      <style>{`@container(max-width:600px){.tp-nav-links{display:none!important}.tp-2col{grid-template-columns:1fr!important}.tp-3col{grid-template-columns:1fr 1fr!important}.tp-trust-bar{flex-wrap:wrap}.tp-trust-bar>div{min-width:50%;border-bottom:1px solid ${D.border}}}`}</style>
+      <style>{`@container(max-width:600px){.tp-nav-links{display:none!important}.tp-2col{grid-template-columns:1fr!important}.tp-3col{grid-template-columns:1fr 1fr!important}.tp-trust-bar{flex-wrap:wrap}.tp-trust-bar>div{min-width:50%;border-bottom:1px solid ${D.border}}.tp-apex-nav{padding:0 16px!important;height:56px!important;gap:8px}.tp-apex-brand{font-size:16px!important;letter-spacing:1.5px!important;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tp-apex-phone{display:none!important}.tp-apex-cta{font-size:10px!important;padding:7px 12px!important;letter-spacing:1px!important;white-space:nowrap}}`}</style>
 
       {/* NAV */}
-      <nav style={{ order: -1,
+      <nav className="tp-apex-nav" style={{ order: -1,
         position: 'sticky', top: 0, zIndex: 100,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '0 48px', height: 64,
+        padding: '0 48px', height: 64, gap: 16,
         background: D.card, borderBottom: `1px solid ${D.border}`,
         boxShadow: scrolled ? '0 2px 20px rgba(0,0,0,0.06)' : 'none',
         transition: 'box-shadow 0.3s',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: '1 1 auto' }}>
           {images.logo ? (
             <img src={images.logo} alt={biz.businessName} style={{ height: 32, objectFit: 'contain' }} />
           ) : (
-            <a href="#" style={{ fontFamily: display, fontSize: 26, letterSpacing: 3, color: D.ink, textDecoration: 'none' }}>
+            <a href="#" className="tp-apex-brand" style={{ fontFamily: display, fontSize: 26, letterSpacing: 3, color: D.ink, textDecoration: 'none', whiteSpace: 'nowrap' }}>
               {(biz.businessName || fb.shopName).split(' ')[0].toUpperCase()}<span style={{ color: D.bronze }}>{(biz.businessName || fb.shopName).split(' ').slice(1).join(' ').toUpperCase() || fb.shopName.split(' ').slice(1).join(' ').toUpperCase()}</span>
             </a>
           )}
@@ -97,9 +97,9 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
             <a key={link} href={`#${link.toLowerCase()}`} style={{ fontSize: 12, fontWeight: 500, letterSpacing: 1.5, textTransform: 'uppercase', color: D.alloyDark, textDecoration: 'none' }}>{link}</a>
           ))}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {biz.phone && <a href={`tel:${biz.phone}`} style={{ fontSize: 12, fontWeight: 500, color: D.muted, textDecoration: 'none' }}>{biz.phone}</a>}
-          <a href={copy?.ctaPrimaryUrl || `tel:${biz.phone}`} style={{ background: D.ink, color: '#fff', fontSize: 11, fontWeight: 500, letterSpacing: 1.5, textTransform: 'uppercase', padding: '10px 22px', textDecoration: 'none' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+          {biz.phone && <a href={`tel:${biz.phone}`} className="tp-apex-phone" style={{ fontSize: 12, fontWeight: 500, color: D.muted, textDecoration: 'none', whiteSpace: 'nowrap' }}>{biz.phone}</a>}
+          <a href={copy?.ctaPrimaryUrl || `tel:${biz.phone}`} className="tp-apex-cta" style={{ background: D.ink, color: '#fff', fontSize: 11, fontWeight: 500, letterSpacing: 1.5, textTransform: 'uppercase', padding: '10px 22px', textDecoration: 'none', whiteSpace: 'nowrap' }}>
             {copy.ctaPrimary || 'Get a Quote'}
           </a>
         </div>
