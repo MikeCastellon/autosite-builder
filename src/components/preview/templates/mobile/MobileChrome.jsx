@@ -157,25 +157,25 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
 
   return (
     <div style={{ background: c.bg, color: c.text, fontFamily: bodyFont, containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
-      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}.tp-chrome-nav{padding:0 16px!important;height:60px!important}.tp-chrome-brand{font-size:0.8rem!important;letter-spacing:1px!important;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tp-chrome-orb{width:20px!important;height:20px!important}.tp-chrome-cta{font-size:11px!important;padding:7px 12px!important}}`}</style>
       {/* NAV */}
       <nav style={{ ...navStyle, order: -1 }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '72px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <div style={{ width: '28px', height: '28px', background: chromeGradient, borderRadius: '50%' }} />
+        <div className="tp-chrome-nav" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, height: '72px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: '1 1 auto' }}>
+            <div className="tp-chrome-orb" style={{ width: '28px', height: '28px', background: chromeGradient, borderRadius: '50%', flexShrink: 0 }} />
             {images.logo ? (
               <img src={images.logo} alt={businessInfo.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
             ) : (
-              <div style={{ fontFamily: font, fontWeight: 700, fontSize: '1.1rem', color: '#ffffff', letterSpacing: '3px', textTransform: 'uppercase' }}>
+              <div className="tp-chrome-brand" style={{ fontFamily: font, fontWeight: 700, fontSize: '1.1rem', color: '#ffffff', letterSpacing: '3px', textTransform: 'uppercase' }}>
                 {businessInfo.businessName}
               </div>
             )}
           </div>
-          <div className="tp-nav-links" style={{ display: 'flex', gap: '36px', alignItems: 'center' }}>
+          <div className="tp-nav-links" style={{ display: 'flex', gap: '36px', alignItems: 'center', flexShrink: 0 }}>
             {['Services', 'Packages', 'About', 'Contact'].map(link => (
               <a key={link} href={`#${link.toLowerCase()}`} style={{ color: c.muted, textDecoration: 'none', fontWeight: 400, fontSize: '0.82rem', letterSpacing: '2px', textTransform: 'uppercase', transition: 'color 0.2s' }}>{link}</a>
             ))}
-            <a href={`tel:${businessInfo.phone}`} style={accentBtnStyle}>{businessInfo.phone}</a>
+            <a href={`tel:${businessInfo.phone}`} className="tp-chrome-cta" style={accentBtnStyle}>{businessInfo.phone}</a>
           </div>
         </div>
       </nav>
