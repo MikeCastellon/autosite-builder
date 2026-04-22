@@ -23,7 +23,10 @@ export const handler = async (event) => {
   const domain = process.env.SHOPIFY_STORE_DOMAIN;
   const adminToken = process.env.SHOPIFY_ADMIN_API_TOKEN;
   const apiVersion = process.env.SHOPIFY_API_VERSION || '2026-04';
-  const callback = `${process.env.MAIN_APP_URL}/.netlify/functions/shopify-subscription-webhook`;
+  // Allow ?callback_url=... override so you can test on a Netlify deploy preview
+  // before merging. Falls back to MAIN_APP_URL for production.
+  const callbackBase = (event.queryStringParameters?.callback_url || process.env.MAIN_APP_URL || '').replace(/\/+$/, '');
+  const callback = `${callbackBase}/.netlify/functions/shopify-subscription-webhook`;
 
   if (!domain || !adminToken) {
     return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: 'Missing SHOPIFY_STORE_DOMAIN or SHOPIFY_ADMIN_API_TOKEN' }) };
@@ -48,8 +51,24 @@ export const handler = async (event) => {
 
   const existing = (await shopifyApi('/webhooks.json'))?.webhooks || [];
 
+  // Delete any existing webhooks for our topics that point somewhere other
+  // than the current callback URL (e.g., switching from preview -> prod).
+  for (const w of existing) {
+    if (TOPICS.includes(w.topic) && w.address !== callback) {
+      try {
+        await shopifyApi(`/webhooks/${w.id}.json`, { method: 'DELETE' });
+        results.push({ topic: w.topic, status: 'deleted_stale', id: w.id, was: w.address });
+      } catch (err) {
+        results.push({ topic: w.topic, status: 'delete_error', id: w.id, error: err?.message });
+      }
+    }
+  }
+
+  // Refresh after deletions
+  const refreshed = (await shopifyApi('/webhooks.json'))?.webhooks || [];
+
   for (const topic of TOPICS) {
-    const already = existing.find((w) => w.topic === topic && w.address === callback);
+    const already = refreshed.find((w) => w.topic === topic && w.address === callback);
     if (already) {
       results.push({ topic, status: 'exists', id: already.id });
       continue;
