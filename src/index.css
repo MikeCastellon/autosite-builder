@@ -32,6 +32,13 @@ body {
     max-width: 100% !important;
     box-sizing: border-box !important;
   }
+  /* Arrow buttons obscure the single card on mobile; dots pagination
+     is enough for swiping. Hide the prev/next arrows. */
+  [data-widget="google-reviews"] .sf-gr-arrow,
+  [data-widget="google-reviews"] .sf-gr-prev,
+  [data-widget="google-reviews"] .sf-gr-next {
+    display: none !important;
+  }
 }
 @container (max-width: 600px) {
   [data-widget="google-reviews"] .sf-gr-carousel {
@@ -44,5 +51,10 @@ body {
     min-width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
+  }
+  [data-widget="google-reviews"] .sf-gr-arrow,
+  [data-widget="google-reviews"] .sf-gr-prev,
+  [data-widget="google-reviews"] .sf-gr-next {
+    display: none !important;
   }
 }

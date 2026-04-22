@@ -108,6 +108,9 @@ function buildSeoHead(businessInfo, generatedCopy, siteId) {
         max-width: 100% !important;
         box-sizing: border-box !important;
       }
+      [data-widget="google-reviews"] .sf-gr-arrow,
+      [data-widget="google-reviews"] .sf-gr-prev,
+      [data-widget="google-reviews"] .sf-gr-next { display: none !important; }
     }
   </style>
 
