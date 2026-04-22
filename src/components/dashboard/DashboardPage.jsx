@@ -6,7 +6,7 @@ import BookingsView from './bookings/BookingsView.jsx';
 
 const MAX_SITES = 1;
 
-export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEmail, profile, onOpenAdmin, initialView = 'sites' }) {
+export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEmail, profile, onOpenAdmin, initialView = 'sites', onOpenBookingSettings }) {
   const [sites, setSites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
@@ -288,6 +288,14 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
                       className="px-3 py-1.5 text-xs font-medium border border-black/10 rounded-lg hover:border-[#cc0000]/30 hover:text-[#cc0000] transition-colors"
                     >
                       Republish
+                    </button>
+                  )}
+                  {schedulerEnabled && (
+                    <button
+                      onClick={() => onOpenBookingSettings && onOpenBookingSettings(site.id)}
+                      className="px-3 py-1.5 text-xs font-medium border border-black/10 rounded-lg hover:border-[#1a1a1a]/30 hover:text-[#1a1a1a] transition-colors"
+                    >
+                      Bookings
                     </button>
                   )}
                   <button

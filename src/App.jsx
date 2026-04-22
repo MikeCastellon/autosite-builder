@@ -13,6 +13,7 @@ import { useAuth } from './lib/AuthContext.jsx';
 import LoginPage from './components/auth/LoginPage.jsx';
 import ResetPasswordPage from './components/auth/ResetPasswordPage.jsx';
 import DashboardPage from './components/dashboard/DashboardPage.jsx';
+import BookingSettingsPage from './components/dashboard/booking-settings/BookingSettingsPage.jsx';
 import AdminPage from './components/admin/AdminPage.jsx';
 import { saveSite } from './lib/saveSite.js';
 import { supabase } from './lib/supabase.js';
@@ -32,6 +33,7 @@ export default function App() {
   const [customFonts, setCustomFonts] = useState({});
   const [view, setView] = useState('wizard'); // 'wizard' | 'dashboard' | 'admin'
   const [dashboardInitialView, setDashboardInitialView] = useState('sites'); // 'sites' | 'bookings'
+  const [settingsSiteId, setSettingsSiteId] = useState(null);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [selectedWidgetIds, setSelectedWidgetIds] = useState([]);
   const [siteId, setSiteId] = useState(null);
@@ -232,6 +234,10 @@ export default function App() {
     setView('wizard');
   };
 
+  if (view === 'booking-settings' && settingsSiteId) {
+    return <BookingSettingsPage siteId={settingsSiteId} onExit={() => { setSettingsSiteId(null); setView('dashboard'); }} />;
+  }
+
   if (view === 'admin') {
     return <AdminPage onExit={() => setView('dashboard')} />;
   }
@@ -245,6 +251,7 @@ export default function App() {
       profile={profile}
       initialView={dashboardInitialView}
       onOpenAdmin={() => setView('admin')}
+      onOpenBookingSettings={(siteId) => { setSettingsSiteId(siteId); setView('booking-settings'); }}
     />;
   }
 
