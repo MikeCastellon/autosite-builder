@@ -240,8 +240,12 @@
     }
 
     function renderSuccess() {
+      var previewNote = state.details.isPreview
+        ? '<div style="margin-top:12px;padding:10px 12px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;color:#9a3412;font-size:12px;">Preview only — no booking was created and no email was sent.</div>'
+        : '';
       card.innerHTML = header('Thanks!', '') +
-        '<p style="color:#555;font-size:14px;">' + esc((cfg.businessName || 'We') + ' will email you to confirm shortly.') + '</p>';
+        '<p style="color:#555;font-size:14px;">' + esc((cfg.businessName || 'We') + ' will email you to confirm shortly.') + '</p>' +
+        previewNote;
       wireClose();
     }
 
@@ -269,6 +273,13 @@
       var submitBtn = form.querySelector('button[type="submit"]');
       submitBtn.disabled = true;
       submitBtn.textContent = 'Submitting…';
+
+      // In preview mode, skip the real API call — no DB insert, no email.
+      if (previewMode || autoOpen) {
+        setTimeout(function () { state.details.submitted = true; state.details.isPreview = true; render(); }, 300);
+        return;
+      }
+
       fetch(API + '/.netlify/functions/create-booking', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
       }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
