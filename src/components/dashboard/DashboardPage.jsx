@@ -81,7 +81,8 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
       site.generated_content,
       { ...templateMeta, colors: templateMeta?.colors || {} },
       {},
-      site.widget_config_ids || []
+      site.widget_config_ids || [],
+      site.id
     );
   };
 

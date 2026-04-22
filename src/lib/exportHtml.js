@@ -4,7 +4,12 @@ import { normalizeBusinessInfo } from './normalizeBusinessInfo.js';
 import { TEMPLATE_COMPONENT_MAP } from '../data/templates.js';
 import { supabase } from './supabase.js';
 
-function buildSeoHead(businessInfo, generatedCopy) {
+const SCHEDULER_WIDGET_URL =
+  (typeof window !== 'undefined' && window.location && window.location.origin
+    ? window.location.origin
+    : 'https://app.autocaregenius.com') + '/scheduler.js';
+
+function buildSeoHead(businessInfo, generatedCopy, siteId) {
   const biz = businessInfo;
   const copy = generatedCopy;
   const keywords = [
@@ -54,6 +59,9 @@ function buildSeoHead(businessInfo, generatedCopy) {
   <!-- Tailwind CSS CDN (for utility classes in templates) -->
   <script src="https://cdn.tailwindcss.com"></script>
 
+  <!-- Scheduler widget (visible only if owner has scheduler enabled) -->
+  ${siteId ? `<script src="${SCHEDULER_WIDGET_URL}" data-site-id="${siteId}" defer></script>` : ''}
+
   <style>
     *, *::before, *::after { box-sizing: border-box; }
     body { margin: 0; font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; padding-bottom: 48px; }
@@ -99,7 +107,7 @@ function buildSeoHead(businessInfo, generatedCopy) {
   </script>`;
 }
 
-async function buildHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds = []) {
+async function buildHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds = [], siteId = null) {
   const mod = await TEMPLATE_COMPONENT_MAP[templateId]();
   const TemplateComponent = mod.default;
 
@@ -108,7 +116,7 @@ async function buildHtmlString(templateId, businessInfo, generatedCopy, template
     createElement(TemplateComponent, { businessInfo: normalizedInfo, generatedCopy, templateMeta, images: images || {} })
   );
 
-  const seoHead = buildSeoHead(businessInfo, generatedCopy);
+  const seoHead = buildSeoHead(businessInfo, generatedCopy, siteId);
 
   // Inject widget script (template already renders the widget divs, just need the JS)
   let widgetsHtml = '';
@@ -157,12 +165,12 @@ ${poweredByBar}
 </html>`;
 }
 
-export async function exportHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds = []) {
-  return buildHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds);
+export async function exportHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds = [], siteId = null) {
+  return buildHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds, siteId);
 }
 
-export async function exportHtml(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds = []) {
-  const fullHtml = await buildHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds);
+export async function exportHtml(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds = [], siteId = null) {
+  const fullHtml = await buildHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds, siteId);
 
   // Trigger download
   const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
