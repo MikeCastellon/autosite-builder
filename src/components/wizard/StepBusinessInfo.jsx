@@ -136,7 +136,10 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
 
   const inputBase = 'w-full bg-white border rounded-xl px-3.5 py-2.5 text-[#1a1a1a] placeholder-[#aaa] text-[14px] focus:outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000] transition';
 
-  const DEMO_ALLOWED_EMAILS = ['support@autocaregenius.com', 'dev@639hz.com'];
+  const DEMO_ALLOWED_EMAILS = [
+    'dev@639hz.com',
+    'mike.castellon5@gmail.com',
+  ];
   const canFillDemo = DEMO_ALLOWED_EMAILS.includes(session?.user?.email?.toLowerCase() ?? '');
 
   return (
