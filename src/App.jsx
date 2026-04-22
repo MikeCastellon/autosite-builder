@@ -17,6 +17,7 @@ import DashboardPage from './components/dashboard/DashboardPage.jsx';
 import BookingSettingsPage from './components/dashboard/booking-settings/BookingSettingsPage.jsx';
 import BookingsPage from './components/dashboard/bookings-page/BookingsPage.jsx';
 import AdminPage from './components/admin/AdminPage.jsx';
+import HelpChrome from './components/help/HelpChrome.jsx';
 import { saveSite } from './lib/saveSite.js';
 import { supabase } from './lib/supabase.js';
 
@@ -241,28 +242,40 @@ export default function App() {
   };
 
   if (view === 'bookings-page') {
-    return <BookingsPage userId={session?.user?.id} profile={profile} onExit={() => setView('dashboard')} />;
+    return <>
+      <BookingsPage userId={session?.user?.id} profile={profile} onExit={() => setView('dashboard')} />
+      <HelpChrome profile={profile} />
+    </>;
   }
 
   if (view === 'booking-settings' && settingsSiteId) {
-    return <BookingSettingsPage siteId={settingsSiteId} onExit={() => { setSettingsSiteId(null); setView('dashboard'); }} />;
+    return <>
+      <BookingSettingsPage siteId={settingsSiteId} onExit={() => { setSettingsSiteId(null); setView('dashboard'); }} />
+      <HelpChrome profile={profile} />
+    </>;
   }
 
   if (view === 'admin') {
-    return <AdminPage onExit={() => setView('dashboard')} />;
+    return <>
+      <AdminPage onExit={() => setView('dashboard')} />
+      <HelpChrome profile={profile} />
+    </>;
   }
 
   if (view === 'dashboard') {
-    return <DashboardPage
-      onNewSite={() => { handleStartOver(); setView('wizard'); }}
-      onEditSite={handleEditSite}
-      onSignOut={handleSignOut}
-      userEmail={session?.user?.email}
-      profile={profile}
-      onOpenAdmin={() => setView('admin')}
-      onOpenBookings={() => setView('bookings-page')}
-      onOpenBookingSettings={(siteId) => { setSettingsSiteId(siteId); setView('booking-settings'); }}
-    />;
+    return <>
+      <DashboardPage
+        onNewSite={() => { handleStartOver(); setView('wizard'); }}
+        onEditSite={handleEditSite}
+        onSignOut={handleSignOut}
+        userEmail={session?.user?.email}
+        profile={profile}
+        onOpenAdmin={() => setView('admin')}
+        onOpenBookings={() => setView('bookings-page')}
+        onOpenBookingSettings={(siteId) => { setSettingsSiteId(siteId); setView('booking-settings'); }}
+      />
+      <HelpChrome profile={profile} />
+    </>;
   }
 
   const handlePreviewDemo = (templateId) => {
@@ -285,99 +298,111 @@ export default function App() {
   // Step 5 is full-screen preview, no wizard shell
   if (step === 5 && generatedCopy) {
     return (
-      <WebsitePreview
-        businessInfo={isDemoPreview ? DEMO_BUSINESS_INFO : businessInfo}
-        generatedCopy={generatedCopy}
-        editedCopy={editedCopy}
-        onEditedCopyChange={(newCopy) => { setEditedCopy(newCopy); autoSave({ editedCopy: newCopy }); }}
-        images={images}
-        onImagesChange={(newImages) => { const resolved = typeof newImages === 'function' ? newImages(images) : newImages; setImages(resolved); autoSave({ images: resolved }); }}
-        templateId={selectedTemplate}
-        templateMeta={templateMeta}
-        customColors={customColors}
-        onCustomColors={(next) => {
-          const resolved = typeof next === 'function' ? next(customColors) : next;
-          setCustomColors(resolved);
-          autoSave({ customColors: resolved });
-        }}
-        customFonts={customFonts}
-        onCustomFonts={(next) => {
-          const resolved = typeof next === 'function' ? next(customFonts) : next;
-          setCustomFonts(resolved);
-          autoSave({ customFonts: resolved });
-        }}
-        onBack={isDemoPreview ? handleBackFromDemo : () => goTo(3)}
-        onExport={isDemoPreview ? null : () => goTo(6)}
-        onStartOver={() => { handleStartOver(); setView('dashboard'); }}
-        isDemoPreview={isDemoPreview}
-      />
+      <>
+        <WebsitePreview
+          businessInfo={isDemoPreview ? DEMO_BUSINESS_INFO : businessInfo}
+          generatedCopy={generatedCopy}
+          editedCopy={editedCopy}
+          onEditedCopyChange={(newCopy) => { setEditedCopy(newCopy); autoSave({ editedCopy: newCopy }); }}
+          images={images}
+          onImagesChange={(newImages) => { const resolved = typeof newImages === 'function' ? newImages(images) : newImages; setImages(resolved); autoSave({ images: resolved }); }}
+          templateId={selectedTemplate}
+          templateMeta={templateMeta}
+          customColors={customColors}
+          onCustomColors={(next) => {
+            const resolved = typeof next === 'function' ? next(customColors) : next;
+            setCustomColors(resolved);
+            autoSave({ customColors: resolved });
+          }}
+          customFonts={customFonts}
+          onCustomFonts={(next) => {
+            const resolved = typeof next === 'function' ? next(customFonts) : next;
+            setCustomFonts(resolved);
+            autoSave({ customFonts: resolved });
+          }}
+          onBack={isDemoPreview ? handleBackFromDemo : () => goTo(3)}
+          onExport={isDemoPreview ? null : () => goTo(6)}
+          onStartOver={() => { handleStartOver(); setView('dashboard'); }}
+          isDemoPreview={isDemoPreview}
+        />
+        <HelpChrome profile={profile} />
+      </>
     );
   }
 
   // Step 5.5 — Social Feeds (between preview and export)
   if (step === 5.5) {
     return (
-      <StepSocialFeeds
-        selectedWidgetIds={selectedWidgetIds}
-        onWidgetIdsChange={setSelectedWidgetIds}
-        onWidgetKeysChange={({ googleWidgetKey, instagramWidgetKey }) => {
-          setEditedCopy((prev) => ({ ...prev, googleWidgetKey, instagramWidgetKey }));
-        }}
-        onNext={() => goTo(6)}
-        onBack={() => goTo(5)}
-      />
+      <>
+        <StepSocialFeeds
+          selectedWidgetIds={selectedWidgetIds}
+          onWidgetIdsChange={setSelectedWidgetIds}
+          onWidgetKeysChange={({ googleWidgetKey, instagramWidgetKey }) => {
+            setEditedCopy((prev) => ({ ...prev, googleWidgetKey, instagramWidgetKey }));
+          }}
+          onNext={() => goTo(6)}
+          onBack={() => goTo(5)}
+        />
+        <HelpChrome profile={profile} />
+      </>
     );
   }
 
   // Step 6 is export
   if (step === 6 && generatedCopy) {
     return (
-      <StepExport
-        siteId={siteId}
-        businessInfo={businessInfo}
-        generatedCopy={editedCopy || generatedCopy}
-        templateId={selectedTemplate}
-        templateMeta={templateMeta}
-        images={images}
-        selectedWidgetIds={selectedWidgetIds}
-        onBack={() => goTo(5)}
-        onStartOver={() => { handleStartOver(); setView('dashboard'); }}
-      />
+      <>
+        <StepExport
+          siteId={siteId}
+          businessInfo={businessInfo}
+          generatedCopy={editedCopy || generatedCopy}
+          templateId={selectedTemplate}
+          templateMeta={templateMeta}
+          images={images}
+          selectedWidgetIds={selectedWidgetIds}
+          onBack={() => goTo(5)}
+          onStartOver={() => { handleStartOver(); setView('dashboard'); }}
+        />
+        <HelpChrome profile={profile} />
+      </>
     );
   }
 
   return (
-    <WizardShell step={step} onBack={goBack} userEmail={session?.user?.email} profile={profile} onMySites={() => setView('dashboard')} onOpenBookings={() => setView('bookings-page')} onOpenAdmin={() => setView('admin')} onSignOut={handleSignOut}>
-      {step === 1 && (
-        <StepBusinessType onSelect={handleBusinessTypeSelect} />
-      )}
-      {step === 2 && (
-        <StepBusinessInfo
-          businessType={businessType}
-          initialValues={businessInfo}
-          onSubmit={handleBusinessInfoSubmit}
-        />
-      )}
-      {step === 3 && (
-        <StepTemplatePicker
-          businessType={businessType}
-          selected={selectedTemplate}
-          onSelect={handleTemplateSelect}
-          onGenerate={handleGenerate}
-          onPreview={handlePreviewDemo}
-          error={error}
-          customColors={customColors}
-          onCustomColors={setCustomColors}
-        />
-      )}
-      {step === 4 && (
-        <StepGenerating
-          businessInfo={businessInfo}
-          templateMeta={templateMeta}
-          onSuccess={handleGenerateSuccess}
-          onError={handleGenerateError}
-        />
-      )}
-    </WizardShell>
+    <>
+      <WizardShell step={step} onBack={goBack} userEmail={session?.user?.email} profile={profile} onMySites={() => setView('dashboard')} onOpenBookings={() => setView('bookings-page')} onOpenAdmin={() => setView('admin')} onSignOut={handleSignOut}>
+        {step === 1 && (
+          <StepBusinessType onSelect={handleBusinessTypeSelect} />
+        )}
+        {step === 2 && (
+          <StepBusinessInfo
+            businessType={businessType}
+            initialValues={businessInfo}
+            onSubmit={handleBusinessInfoSubmit}
+          />
+        )}
+        {step === 3 && (
+          <StepTemplatePicker
+            businessType={businessType}
+            selected={selectedTemplate}
+            onSelect={handleTemplateSelect}
+            onGenerate={handleGenerate}
+            onPreview={handlePreviewDemo}
+            error={error}
+            customColors={customColors}
+            onCustomColors={setCustomColors}
+          />
+        )}
+        {step === 4 && (
+          <StepGenerating
+            businessInfo={businessInfo}
+            templateMeta={templateMeta}
+            onSuccess={handleGenerateSuccess}
+            onError={handleGenerateError}
+          />
+        )}
+      </WizardShell>
+      <HelpChrome profile={profile} />
+    </>
   );
 }
