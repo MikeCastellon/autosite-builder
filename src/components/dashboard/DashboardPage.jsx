@@ -230,17 +230,8 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
 
       <main className="max-w-4xl mx-auto px-6 py-10">
         <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="text-2xl font-black text-[#1a1a1a] tracking-tight">Your Sites</h2>
-          </div>
-          {canCreateSite ? (
-            <button
-              onClick={onNewSite}
-              className="px-5 py-2.5 bg-[#1a1a1a] hover:bg-[#cc0000] text-white rounded-xl font-semibold text-sm transition-colors"
-            >
-              + New Site
-            </button>
-          ) : (
+          <h2 className="text-2xl font-black text-[#1a1a1a] tracking-tight">Your Sites</h2>
+          {!canCreateSite && (
             <span className="text-xs text-[#888] bg-black/5 px-4 py-2 rounded-lg">Free plan: 1 site</span>
           )}
         </div>
