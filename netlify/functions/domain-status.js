@@ -24,7 +24,7 @@ export const handler = async (event) => {
 
   try {
     const { site } = await requireSiteOwner(event, siteId);
-    if (!site.custom_hostname_apex_id) {
+    if (!site.custom_hostname_www_id) {
       return { statusCode: 200, headers: CORS, body: JSON.stringify({ status: 'disconnected', domain: null }) };
     }
 
@@ -38,40 +38,35 @@ export const handler = async (event) => {
       }) };
     }
 
-    // Fresh check
-    const [apex, www] = await Promise.all([
-      getCustomHostname(site.custom_hostname_apex_id),
-      getCustomHostname(site.custom_hostname_www_id),
-    ]);
+    // Fresh check — www-only mode
+    const www = await getCustomHostname(site.custom_hostname_www_id);
 
-    const consolidated = consolidateStatus(apex, www);
+    const consolidated = consolidateStatus(www, www); // pass twice for back-compat with consolidator
     await supabaseAdmin().from('sites').update({
       custom_domain_status: consolidated.status,
       custom_domain_last_checked_at: new Date().toISOString(),
     }).eq('id', siteId);
 
-    // Build CNAME instructions so the UI can always show what records to add,
-    // not just on first connect.
+    // CNAME instructions so the UI always knows what records to show
     const FALLBACK = process.env.CUSTOM_DOMAIN_FALLBACK_ORIGIN;
     const cnameInstructions = [
-      { type: 'CNAME', host: '@',   value: FALLBACK },
       { type: 'CNAME', host: 'www', value: FALLBACK },
     ];
-    if (apex.ownership_verification) {
+    if (www.ownership_verification) {
       cnameInstructions.push({
-        type: apex.ownership_verification.type,
-        host: apex.ownership_verification.name,
-        value: apex.ownership_verification.value,
+        type: www.ownership_verification.type,
+        host: www.ownership_verification.name,
+        value: www.ownership_verification.value,
       });
     }
 
     return { statusCode: 200, headers: CORS, body: JSON.stringify({
       domain: site.custom_domain,
+      liveUrl: `https://www.${site.custom_domain}`,
       status: consolidated.status,
       message: consolidated.message,
       cnameInstructions,
-      apex: { cloudflareStatus: apex.status, sslStatus: apex.ssl?.status },
-      www:  { cloudflareStatus: www.status,  sslStatus: www.ssl?.status },
+      www: { cloudflareStatus: www.status, sslStatus: www.ssl?.status },
     }) };
   } catch (err) {
     const status = err.status || 500;

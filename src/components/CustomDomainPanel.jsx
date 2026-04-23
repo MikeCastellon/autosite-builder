@@ -120,8 +120,10 @@ export default function CustomDomainPanel({ siteId, initialDomain = null, initia
   if (!domain) {
     return (
       <div className="border border-black/[0.07] rounded-xl p-5">
-        <p className="text-[13px] font-semibold text-[#1a1a1a] mb-2">Use your own domain</p>
-        <p className="text-xs text-[#999] mb-3">Connect a domain you already own (like mybusiness.com).</p>
+        <p className="text-[14px] font-semibold text-[#1a1a1a] mb-1.5">Use your own domain</p>
+        <p className="text-[12px] text-[#888] mb-4">
+          Connect a domain you already own. Your site will be live at <span className="font-semibold text-[#1a1a1a]">www.yourdomain.com</span>.
+        </p>
         <div className="flex gap-2">
           <input
             type="text"
@@ -169,10 +171,10 @@ export default function CustomDomainPanel({ siteId, initialDomain = null, initia
           <div className="bg-[#faf9f7] border border-black/[0.07] rounded-lg p-4">
             <p className="text-[13px] font-bold text-[#1a1a1a] mb-2">What's happening</p>
             <ol className="text-[12px] text-[#555] space-y-1.5 list-decimal list-inside">
-              <li>You add the DNS records below at your domain registrar (GoDaddy, Namecheap, etc.).</li>
-              <li>Cloudflare verifies the records — usually 1-5 min, sometimes up to a few hours depending on your registrar.</li>
-              <li>Once verified, an SSL certificate is provisioned automatically (HTTPS).</li>
-              <li>You'll get an email when your domain is fully live.</li>
+              <li>Add the two DNS records below at your domain registrar — that's the only step on your end.</li>
+              <li>Cloudflare verifies them automatically (1-5 min, sometimes longer depending on the registrar).</li>
+              <li>HTTPS certificate provisions automatically once verified.</li>
+              <li>You'll get an email when your site is live at <span className="font-semibold">www.{domain}</span>.</li>
             </ol>
           </div>
 
@@ -247,7 +249,10 @@ export default function CustomDomainPanel({ siteId, initialDomain = null, initia
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
           <p className="text-[14px] font-bold text-green-800 mb-1">🎉 Your domain is live</p>
           <p className="text-[12px] text-green-700">
-            Visitors can now reach your site at <a href={`https://${domain}`} target="_blank" rel="noopener noreferrer" className="underline font-semibold">https://{domain}</a> with HTTPS enabled automatically.
+            Visitors can now reach your site at <a href={`https://www.${domain}`} target="_blank" rel="noopener noreferrer" className="underline font-semibold">https://www.{domain}</a> with HTTPS enabled automatically.
+          </p>
+          <p className="text-[11px] text-green-700/80 mt-2">
+            Want bare <code className="bg-white px-1 rounded">{domain}</code> to work too? Set up a domain forward at your registrar pointing to <code className="bg-white px-1 rounded">https://www.{domain}</code> (optional).
           </p>
         </div>
       )}

@@ -47,34 +47,37 @@ export const handler = async (event) => {
       return { statusCode: 409, headers: CORS, body: JSON.stringify({ error: 'Domain already connected to another site' }) };
     }
 
-    // 3. Create (or recover) Cloudflare hostnames for apex + www
-    const apexHn = await createOrRecover(apex);
+    // 3. Create (or recover) Cloudflare hostname for www only.
+    //    Apex CNAME is forbidden by the DNS spec on most registrars
+    //    (Squarespace, GoDaddy, Namecheap reject it) — supporting it forces
+    //    users into a domain-forwarding hop. Skipping it keeps setup to two
+    //    DNS records, period. If the user wants bare-domain access too they
+    //    can add a forward at their registrar themselves.
     const wwwHn = await createOrRecover(www);
 
     // 4. Domain Connect discovery (fire and forget result if fails)
     const provider = await discoverDomainConnect(apex).catch(() => null);
 
-    // 5. Persist to Supabase
+    // 5. Persist to Supabase. We store the apex as the user-facing domain
+    //    label but only the www hostname id in Cloudflare.
     await admin.from('sites').update({
       custom_domain: apex,
-      custom_hostname_apex_id: apexHn.id,
+      custom_hostname_apex_id: null,
       custom_hostname_www_id: wwwHn.id,
       custom_domain_status: 'pending_dns',
       custom_domain_connected_at: new Date().toISOString(),
       custom_domain_last_checked_at: new Date().toISOString(),
     }).eq('id', siteId);
 
-    // 6. Build CNAME instructions (always returned as fallback)
+    // 6. Build CNAME instructions — just www + verification, no apex.
     const cnameInstructions = [
-      { type: 'CNAME', host: '@',   value: FALLBACK },
       { type: 'CNAME', host: 'www', value: FALLBACK },
     ];
-    // Include ownership verification records from Cloudflare
-    if (apexHn.ownership_verification) {
+    if (wwwHn.ownership_verification) {
       cnameInstructions.push({
-        type: apexHn.ownership_verification.type,
-        host: apexHn.ownership_verification.name,
-        value: apexHn.ownership_verification.value,
+        type: wwwHn.ownership_verification.type,
+        host: wwwHn.ownership_verification.name,
+        value: wwwHn.ownership_verification.value,
       });
     }
 
@@ -101,7 +104,8 @@ export const handler = async (event) => {
         applyUrl,
         detectedProvider,
         cnameInstructions,
-        hostnameIds: { apex: apexHn.id, www: wwwHn.id },
+        hostnameIds: { www: wwwHn.id },
+        liveUrl: `https://${www}`,
         status: 'pending_dns',
       }),
     };
