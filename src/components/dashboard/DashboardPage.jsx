@@ -5,6 +5,7 @@ import { TEMPLATES } from '../../data/templates.js';
 import { canSeeBookingsNav } from '../../lib/subscriptionGating.js';
 import { useAlert } from '../ui/AlertProvider.jsx';
 import CustomDomainPanel from '../CustomDomainPanel.jsx';
+import UpgradeProButton from '../ui/UpgradeProButton.jsx';
 
 const MAX_SITES = 1;
 const CUSTOM_DOMAIN_ENABLED = import.meta.env.VITE_CUSTOM_DOMAIN_ENABLED === 'true';
@@ -393,6 +394,8 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
           </div>
         </div>
       )}
+
+      <UpgradeProButton />
     </div>
   );
 }
