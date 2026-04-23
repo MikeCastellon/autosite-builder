@@ -361,12 +361,6 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
                       Edit
                     </button>
                   )}
-                  <button
-                    onClick={() => setEditBizSite(site)}
-                    className="px-4 py-2 text-[13px] font-medium border border-black/10 rounded-lg hover:border-[#cc0000]/30 hover:text-[#cc0000] transition-colors"
-                  >
-                    Business Info
-                  </button>
                   {site.published_url && (
                     <button
                       onClick={() => handleRepublish(site)}
@@ -422,12 +416,16 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
             </div>
           </div>
         )}
-
-        {/* Long-form upgrade funnel — non-Pro users only */}
-        {!loading && !fetchError && sites.length > 0 && !isPro && (
-          <UpgradeFunnel onUpgrade={() => setProDialogOpen(true)} />
-        )}
       </main>
+
+      {/* Long-form upgrade funnel — almost-full-width, non-Pro users only */}
+      {!loading && !fetchError && sites.length > 0 && !isPro && (
+        <section className="bg-[#faf9f7] border-t border-black/[0.07] px-4 sm:px-8 py-12 sm:py-16">
+          <div className="max-w-7xl mx-auto">
+            <UpgradeFunnel onUpgrade={() => setProDialogOpen(true)} />
+          </div>
+        </section>
+      )}
 
       {domainPanelSiteId && (
         <div
