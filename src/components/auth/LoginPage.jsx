@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { supabase } from '../../lib/supabase.js';
 
-export default function LoginPage() {
+export default function LoginPage({ initialMode = 'signin' }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(initialMode === 'signup');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [message, setMessage] = useState(null);
@@ -55,6 +55,22 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#faf9f7] p-4">
       <div className="w-full max-w-sm">
+        <a
+          href="https://www.autocaregenius.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2.5 mb-8"
+        >
+          <img
+            src="https://www.autocaregenius.com/cdn/shop/files/v11_1.svg?v=1760731533&width=200"
+            alt="Auto Care Genius"
+            className="h-7"
+          />
+          <div className="w-px h-6 bg-black/[0.07]" />
+          <span className="font-bold text-[#1a1a1a] text-[17px] tracking-[-0.5px]">
+            Genius <span className="text-[#cc0000]">Websites</span>
+          </span>
+        </a>
         <div className="mb-6">
           <h1 className="text-2xl font-black text-[#1a1a1a] tracking-tight">
             {showForgot ? 'Reset Password' : isSignUp ? 'Create Account' : 'Welcome Back'}

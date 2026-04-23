@@ -32,7 +32,7 @@ export default function App() {
   const [images, setImages] = useState({});
   const [error, setError] = useState(null);
   const [customColors, setCustomColors] = useState({});
-  const [showLogin, setShowLogin] = useState(false);
+  const [showLogin, setShowLogin] = useState(null); // null | 'signin' | 'signup'
   const [customFonts, setCustomFonts] = useState({});
   const [view, setView] = useState('wizard'); // 'wizard' | 'dashboard' | 'admin' | 'bookings-page' | 'booking-settings'
   const [settingsSiteId, setSettingsSiteId] = useState(null);
@@ -207,8 +207,11 @@ export default function App() {
   );
   if (!session) {
     return showLogin
-      ? <LoginPage />
-      : <LandingPage onSignIn={() => setShowLogin(true)} />;
+      ? <LoginPage initialMode={showLogin} />
+      : <LandingPage
+          onSignIn={() => setShowLogin('signin')}
+          onSignUp={() => setShowLogin('signup')}
+        />;
   }
   if (isRecovery) return <ResetPasswordPage onComplete={() => { clearRecovery(); window.history.replaceState({}, '', window.location.pathname); }} />;
 

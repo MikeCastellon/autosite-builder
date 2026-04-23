@@ -2,8 +2,9 @@ import { TEMPLATES } from '../data/templates.js';
 
 const ACG_LOGO = 'https://www.autocaregenius.com/cdn/shop/files/v11_1.svg?v=1760731533&width=200';
 
-export default function LandingPage({ onSignIn }) {
+export default function LandingPage({ onSignIn, onSignUp }) {
   const visibleTemplates = Object.values(TEMPLATES).filter((t) => t && !t.hidden);
+  const onStart = onSignUp || onSignIn; // backwards compat
 
   return (
     <div className="min-h-screen bg-white text-[#1a1a1a] flex flex-col">
@@ -40,7 +41,7 @@ export default function LandingPage({ onSignIn }) {
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
-            onClick={onSignIn}
+            onClick={onStart}
             className="bg-[#cc0000] hover:bg-[#aa0000] text-white font-semibold py-4 px-8 rounded-xl text-[15px] transition-colors"
           >
             Start Building — Free
@@ -169,7 +170,7 @@ export default function LandingPage({ onSignIn }) {
         </h2>
         <p className="text-[#555] text-[16px] mb-8">Takes about 5 minutes. Totally free.</p>
         <button
-          onClick={onSignIn}
+          onClick={onStart}
           className="bg-[#cc0000] hover:bg-[#aa0000] text-white font-semibold py-4 px-10 rounded-xl text-[16px] transition-colors"
         >
           Start Building — Free
