@@ -5,7 +5,6 @@ import { TEMPLATES } from '../../data/templates.js';
 import { canSeeBookingsNav, isEffectiveSchedulerActive } from '../../lib/subscriptionGating.js';
 import { useAlert } from '../ui/AlertProvider.jsx';
 import CustomDomainPanel from '../CustomDomainPanel.jsx';
-import UpgradeProButton from '../ui/UpgradeProButton.jsx';
 import UpgradeProDialog from '../ui/UpgradeProDialog.jsx';
 import EditBusinessInfoModal from './EditBusinessInfoModal.jsx';
 
@@ -277,15 +276,16 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
             </button>
           </div>
         ) : (
-          <div className="grid gap-4">
+          <div className="bg-white border border-black/[0.07] rounded-2xl shadow-sm overflow-hidden">
+            <div className="grid gap-6 p-6 sm:p-8">
             {sites.map((site) => (
               <div
                 key={site.id}
-                className="bg-white border border-black/[0.07] rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row gap-4 sm:items-center"
+                className="flex flex-col sm:flex-row gap-6 sm:items-center"
               >
                 {/* Live preview thumbnail */}
                 <div
-                  className="relative w-full sm:w-[200px] h-[130px] shrink-0 overflow-hidden rounded-lg border border-black/[0.07] bg-[#faf9f7]"
+                  className="relative w-full sm:w-[280px] h-[180px] shrink-0 overflow-hidden rounded-xl border border-black/[0.07] bg-[#faf9f7]"
                   style={{ pointerEvents: 'none' }}
                 >
                   {site.published_url ? (
@@ -298,19 +298,19 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
                         width: '1280px',
                         height: '832px',
                         border: 0,
-                        transform: 'scale(0.156)',
+                        transform: 'scale(0.219)',
                         transformOrigin: '0 0',
                         pointerEvents: 'none',
                       }}
                     />
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center text-center px-3">
-                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" className="text-[#aaa] mb-1.5">
+                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" className="text-[#aaa] mb-2">
                         <path d="M3 5a2 2 0 012-2h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5z" stroke="currentColor" strokeWidth="1.5"/>
                         <path d="M3 9h18M8 14h8M8 17h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                       </svg>
-                      <p className="text-[10px] font-semibold text-[#888] uppercase tracking-wider">Not published</p>
-                      <p className="text-[10px] text-[#aaa] mt-0.5 leading-tight">Publish to see live preview</p>
+                      <p className="text-[11px] font-semibold text-[#888] uppercase tracking-wider">Not published</p>
+                      <p className="text-[11px] text-[#aaa] mt-0.5 leading-tight">Publish to see live preview</p>
                     </div>
                   )}
                 </div>
@@ -408,6 +408,63 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
                 </div>
               </div>
             ))}
+            </div>
+
+            {/* Upgrade section — only for non-Pro users */}
+            {!isPro && (
+              <div className="border-t border-black/[0.07] grid grid-cols-1 md:grid-cols-2">
+                {/* Left: visual */}
+                <div className="relative bg-gradient-to-br from-[#cc0000] to-[#6a0000] flex items-center justify-center p-8 sm:p-10 min-h-[260px] overflow-hidden">
+                  <div className="absolute -top-16 -right-16 w-64 h-64 bg-white/10 rounded-full blur-3xl" aria-hidden="true" />
+                  <div className="absolute -bottom-20 -left-10 w-48 h-48 bg-black/20 rounded-full blur-3xl" aria-hidden="true" />
+                  <div className="relative text-center text-white">
+                    <svg width="44" height="44" viewBox="0 0 24 24" fill="currentColor" className="mx-auto mb-4 opacity-95">
+                      <path d="M12 1.5l2.78 6.42 6.97.5-5.27 4.6 1.6 6.81L12 16.5l-6.08 3.33 1.6-6.81L2.25 8.42l6.97-.5L12 1.5z" />
+                    </svg>
+                    <p className="text-[10px] font-bold uppercase tracking-[3px] opacity-80 mb-2">Genius Websites Pro</p>
+                    <p className="text-[clamp(20px,2.6vw,28px)] font-[900] tracking-[-0.5px] leading-[1.1]">
+                      Everything you need to<br />get booked.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Right: text + features + CTA */}
+                <div className="p-6 sm:p-8 flex flex-col">
+                  <h3 className="text-[20px] sm:text-[22px] font-[900] text-[#1a1a1a] tracking-[-0.5px] mb-1">
+                    Upgrade Now
+                  </h3>
+                  <p className="text-[13px] text-[#666] mb-4">
+                    $9.99/month · Cancel anytime in your Shopify account.
+                  </p>
+                  <ul className="space-y-2 mb-5 flex-1">
+                    {[
+                      '24/7 Online Booking — customers self-book any time',
+                      'Live Google Reviews Widget',
+                      'Connect your custom domain (mybusiness.com)',
+                      'Priority Live Chat Support',
+                      'Remove "Powered by" branding',
+                    ].map((item) => (
+                      <li key={item} className="flex items-start gap-2 text-[13px] text-[#1a1a1a]">
+                        <span className="shrink-0 w-4 h-4 rounded-full bg-[#cc0000] text-white flex items-center justify-center mt-0.5">
+                          <svg width="9" height="9" viewBox="0 0 12 12" fill="none">
+                            <path d="M2.5 6l2.5 2.5L9.5 3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </span>
+                        <span className="leading-snug">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    type="button"
+                    onClick={() => setProDialogOpen(true)}
+                    className="w-full py-3 px-6 rounded-xl bg-[#cc0000] hover:bg-[#aa0000] text-white text-center font-semibold text-[14px] transition-colors shadow-sm inline-flex items-center justify-center gap-2"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5l2.78 6.42 6.97.5-5.27 4.6 1.6 6.81L12 16.5l-6.08 3.33 1.6-6.81L2.25 8.42l6.97-.5L12 1.5z" /></svg>
+                    Upgrade Now
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </main>
@@ -433,8 +490,6 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
           </div>
         </div>
       )}
-
-      <UpgradeProButton />
 
       <UpgradeProDialog
         open={proDialogOpen}
