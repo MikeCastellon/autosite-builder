@@ -2,10 +2,22 @@ import { useState } from 'react';
 import AdminAccountsTab from './AdminAccountsTab.jsx';
 import AdminAllBookingsTab from './AdminAllBookingsTab.jsx';
 import { useAuth } from '../../lib/AuthContext.jsx';
+import AppHeader from '../ui/AppHeader.jsx';
 
-export default function AdminPage({ onExit }) {
-  const { profile } = useAuth();
+export default function AdminPage({ onExit, onOpenBookings, onSignOut }) {
+  const { session, profile } = useAuth();
   const [tab, setTab] = useState('accounts');
+  const userEmail = session?.user?.email;
+
+  const headerProps = {
+    active: 'admin',
+    userEmail,
+    profile,
+    onMySites: onExit,
+    onOpenBookings,
+    onOpenAdmin: () => {},
+    onSignOut,
+  };
 
   if (!profile) return <div className="p-10 text-gray-500">Loading…</div>;
   if (!profile.is_super_admin) {
@@ -21,12 +33,10 @@ export default function AdminPage({ onExit }) {
 
   return (
     <div className="min-h-screen bg-[#faf9f7]">
-      <header className="border-b border-black/[0.07] bg-white px-6 py-4 flex items-center justify-between">
-        <h1 className="text-lg font-black text-[#1a1a1a]">Admin</h1>
-        <button onClick={onExit} className="text-sm text-gray-500 hover:text-[#1a1a1a]">← Back to dashboard</button>
-      </header>
+      <AppHeader {...headerProps} />
 
-      <main className="max-w-6xl mx-auto px-6 py-8">
+      <main className="max-w-6xl mx-auto px-6 py-10">
+        <h2 className="text-2xl font-black text-[#1a1a1a] tracking-tight mb-6">Admin</h2>
         <div className="flex gap-1 mb-6 border-b border-gray-200">
           <TabBtn on={tab === 'accounts'} onClick={() => setTab('accounts')}>Accounts</TabBtn>
           <TabBtn on={tab === 'bookings'} onClick={() => setTab('bookings')}>All bookings</TabBtn>

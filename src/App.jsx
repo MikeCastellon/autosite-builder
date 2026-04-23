@@ -333,11 +333,25 @@ export default function App() {
   }
 
   if (view === 'booking-settings' && settingsSiteId) {
-    return <BookingSettingsPage siteId={settingsSiteId} onExit={() => { setSettingsSiteId(null); setView('dashboard'); }} />;
+    return (
+      <BookingSettingsPage
+        siteId={settingsSiteId}
+        onExit={() => { setSettingsSiteId(null); setView('dashboard'); }}
+        onOpenBookings={() => { setSettingsSiteId(null); setView('bookings-page'); }}
+        onOpenAdmin={() => { setSettingsSiteId(null); setView('admin'); }}
+        onSignOut={handleSignOut}
+      />
+    );
   }
 
   if (view === 'admin') {
-    return <AdminPage onExit={() => setView('dashboard')} />;
+    return (
+      <AdminPage
+        onExit={() => setView('dashboard')}
+        onOpenBookings={() => setView('bookings-page')}
+        onSignOut={handleSignOut}
+      />
+    );
   }
 
   if (view === 'dashboard') {
