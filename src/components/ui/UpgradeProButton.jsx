@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-
-const UPGRADE_URL = 'https://www.autocaregenius.com/';
+import { startProUpgrade } from '../../lib/upgradeFlow.js';
+import { useAlert } from './AlertProvider.jsx';
 
 const FEATURES = [
   {
@@ -45,6 +45,21 @@ const FEATURES = [
 
 export default function UpgradeProButton() {
   const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const { toast } = useAlert();
+
+  const handleUpgrade = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await startProUpgrade();
+      setOpen(false);
+    } catch (e) {
+      toast(e.message || 'Could not start checkout', 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -173,20 +188,21 @@ export default function UpgradeProButton() {
 
             {/* CTA */}
             <div className="px-6 pb-6 pt-1 space-y-2">
-              <a
-                href={UPGRADE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="acg-pro-cta block w-full py-3.5 px-6 rounded-xl bg-[#cc0000] hover:bg-[#aa0000] text-white text-center font-semibold text-[15px] transition-colors shadow-md"
-                onClick={() => setOpen(false)}
+              <button
+                type="button"
+                onClick={handleUpgrade}
+                disabled={busy}
+                className="acg-pro-cta block w-full py-3.5 px-6 rounded-xl bg-[#cc0000] hover:bg-[#aa0000] disabled:opacity-60 disabled:cursor-not-allowed text-white text-center font-semibold text-[15px] transition-colors shadow-md"
               >
                 <span className="relative z-10 inline-flex items-center gap-2 justify-center">
-                  Upgrade to Pro
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
+                  {busy ? 'Loading...' : 'Upgrade to Pro'}
+                  {!busy && (
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                      <path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
                 </span>
-              </a>
+              </button>
               <button
                 type="button"
                 onClick={() => setOpen(false)}

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { publishSite } from '../../lib/publishSite.js';
 import { generateSlug } from '../../lib/publishUtils.js';
+import { startProUpgrade } from '../../lib/upgradeFlow.js';
+import { useAlert } from '../ui/AlertProvider.jsx';
 
 const PUBLISH_DOMAIN = import.meta.env.VITE_PUBLISH_DOMAIN || 'autocaregenius.com';
 
@@ -15,7 +17,17 @@ export default function StepExport({ siteId: passedSiteId, businessInfo, generat
   const [publishing, setPublishing] = useState(false);
   const [published, setPublished] = useState(null);
   const [publishError, setPublishError] = useState(null);
+  const [upgrading, setUpgrading] = useState(false);
+  const { toast } = useAlert();
   const siteId = passedSiteId || crypto.randomUUID();
+
+  const handleUpgrade = async () => {
+    if (upgrading) return;
+    setUpgrading(true);
+    try { await startProUpgrade(); }
+    catch (e) { toast(e.message || 'Could not start checkout', 'error'); }
+    finally { setUpgrading(false); }
+  };
 
   const slug = generateSlug(businessInfo.businessName);
   const subdomain = `${slug}.${PUBLISH_DOMAIN}`;
@@ -162,14 +174,14 @@ export default function StepExport({ siteId: passedSiteId, businessInfo, generat
                   ))}
                 </ul>
                 <div className="px-5 pb-5 bg-white">
-                  <a
-                    href="https://www.autocaregenius.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block w-full py-3 px-6 rounded-xl bg-[#cc0000] hover:bg-[#aa0000] text-white text-center font-semibold text-[14px] transition-colors shadow-sm"
+                  <button
+                    type="button"
+                    onClick={handleUpgrade}
+                    disabled={upgrading}
+                    className="block w-full py-3 px-6 rounded-xl bg-[#cc0000] hover:bg-[#aa0000] disabled:opacity-60 disabled:cursor-not-allowed text-white text-center font-semibold text-[14px] transition-colors shadow-sm"
                   >
-                    ⭐ Upgrade to Pro
-                  </a>
+                    {upgrading ? 'Loading...' : '⭐ Upgrade to Pro'}
+                  </button>
                 </div>
               </div>
             </>
