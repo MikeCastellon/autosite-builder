@@ -26,12 +26,11 @@ export function isPaywallTestUser(email) {
   return list.includes(String(email).toLowerCase());
 }
 
-// Whether the Bookings nav item should be visible to this user at all.
-// Test users must see it so they can reach the gate; others need real access.
+// Bookings nav link is visible to every signed-in user. The page itself is
+// paywalled by SubscribeGate, so non-Pro users still hit the upgrade flow when
+// they click through — they just see the link as a teaser.
 export function canSeeBookingsNav(profile) {
-  if (!profile) return false;
-  if (isPaywallTestUser(profile.email)) return true;
-  return isEffectiveSchedulerActive(profile);
+  return !!profile;
 }
 
 // Dashboard-level gate check: should the upgrade card be shown INSTEAD of
