@@ -199,8 +199,12 @@ function Toggle({ value, onChange, options }) {
   );
 }
 
-export default function ContentEditor({ isOpen, onClose, copy, images, onCopyChange, onImagesChange, templateMeta, templateId, customColors = {}, onCustomColors, customFonts = {}, onCustomFonts, businessType, onSwitchTemplate }) {
+export default function ContentEditor({ isOpen, onClose, copy, images, onCopyChange, onImagesChange, templateMeta, templateId, customColors = {}, onCustomColors, customFonts = {}, onCustomFonts, businessType, onSwitchTemplate, businessInfo, onBusinessInfoChange }) {
   const { confirm: confirmDialog } = useAlert();
+  const setBiz = (key, val) => {
+    if (!onBusinessInfoChange) return;
+    onBusinessInfoChange((prev) => ({ ...(prev || {}), [key]: val }));
+  };
   const [activeSection, setActiveSection] = useState('visibility');
 
   const setCopy = (path, value) => {
@@ -388,6 +392,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
     { id: 'contact', label: 'Contact' },
     { id: 'colors', label: 'Colors & Fonts' },
     { id: 'footer', label: 'Footer' },
+    ...(onBusinessInfoChange ? [{ id: 'business', label: 'Business Info' }] : []),
     ...(onSwitchTemplate ? [{ id: 'template', label: 'Template' }] : []),
   ];
 
@@ -1074,6 +1079,28 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
                   </label>
                 ))}
               </div>
+            </>
+          )}
+
+          {activeSection === 'business' && onBusinessInfoChange && (
+            <>
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-3">Business Details</p>
+              <p className="text-[11px] text-gray-400 mb-4 leading-snug">
+                Changes save automatically. Hit Republish on the dashboard once done so live visitors see them.
+              </p>
+              <Field label="Business Name" value={businessInfo?.businessName} onChange={(v) => setBiz('businessName', v)} />
+              <Field label="Phone" value={businessInfo?.phone} onChange={(v) => setBiz('phone', v)} />
+              <Field label="Email" value={businessInfo?.email} onChange={(v) => setBiz('email', v)} />
+              <Field label="Street Address" value={businessInfo?.address} onChange={(v) => setBiz('address', v)} />
+              <Field label="City" value={businessInfo?.city} onChange={(v) => setBiz('city', v)} />
+              <Field label="State" value={businessInfo?.state} onChange={(v) => setBiz('state', v)} />
+              <Field label="Tagline" value={businessInfo?.tagline} onChange={(v) => setBiz('tagline', v)} />
+              <Field label="Business Hours" value={typeof businessInfo?.hours === 'string' ? businessInfo.hours : Object.entries(businessInfo?.hours || {}).map(([d, t]) => `${d} ${t}`).filter(Boolean).join(' · ')} onChange={(v) => setBiz('hours', v)} />
+              <Field label="Years in Business" value={businessInfo?.yearsInBusiness} onChange={(v) => setBiz('yearsInBusiness', v)} />
+              <Field label="Awards" value={businessInfo?.awards} onChange={(v) => setBiz('awards', v)} />
+              <Field label="Instagram Handle" value={businessInfo?.instagram} onChange={(v) => setBiz('instagram', v)} />
+              <Field label="Facebook Page URL" value={businessInfo?.facebook} onChange={(v) => setBiz('facebook', v)} />
+              <Field label="TikTok Handle" value={businessInfo?.tiktok} onChange={(v) => setBiz('tiktok', v)} />
             </>
           )}
 

@@ -110,7 +110,7 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
 
   const initial = userEmail ? userEmail[0].toUpperCase() : '?';
   const navItems = [
-    { label: 'Sites', onClick: () => {}, active: true },
+    { label: 'Dashboard', onClick: () => {}, active: true },
     showBookingsNav && onOpenBookings && { label: 'Bookings', onClick: onOpenBookings, active: false },
     isAdmin && onOpenAdmin && { label: 'Admin', onClick: onOpenAdmin, active: false },
   ].filter(Boolean);

@@ -12,7 +12,7 @@ export default function WizardShell({ step, onBack, children, userEmail, onMySit
   const initial = userEmail ? userEmail[0].toUpperCase() : '?';
 
   const navItems = [
-    onMySites && { label: 'Home', onClick: onMySites },
+    onMySites && { label: 'Dashboard', onClick: onMySites },
     showBookingsNav && onOpenBookings && { label: 'Bookings', onClick: onOpenBookings },
     isAdmin && onOpenAdmin && { label: 'Admin', onClick: onOpenAdmin },
   ].filter(Boolean);

@@ -405,6 +405,11 @@ export default function App() {
     return (
       <WebsitePreview
         businessInfo={isDemoPreview ? DEMO_BUSINESS_INFO : { ...businessInfo, businessType: businessInfo?.businessType || businessType }}
+        onBusinessInfoChange={isDemoPreview ? undefined : (next) => {
+          const resolved = typeof next === 'function' ? next(businessInfo) : next;
+          setBusinessInfo(resolved);
+          autoSave({ businessInfo: resolved });
+        }}
         generatedCopy={generatedCopy}
         editedCopy={editedCopy}
         onEditedCopyChange={(newCopy) => { setEditedCopy(newCopy); autoSave({ editedCopy: newCopy }); }}

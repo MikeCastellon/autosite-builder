@@ -23,7 +23,7 @@ export default function AppHeader({
   const initial = userEmail ? userEmail[0].toUpperCase() : '?';
 
   const navItems = [
-    onMySites && { id: 'sites', label: 'Home', onClick: onMySites },
+    onMySites && { id: 'sites', label: 'Dashboard', onClick: onMySites },
     showBookingsNav && onOpenBookings && { id: 'bookings', label: 'Bookings', onClick: onOpenBookings },
     isAdmin && onOpenAdmin && { id: 'admin', label: 'Admin', onClick: onOpenAdmin },
   ].filter(Boolean);
