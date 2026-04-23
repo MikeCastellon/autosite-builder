@@ -4,7 +4,7 @@ import { normalizeBusinessInfo } from '../../lib/normalizeBusinessInfo.js';
 import PreviewToolbar from './PreviewToolbar.jsx';
 import ContentEditor from './ContentEditor.jsx';
 
-export default function WebsitePreview({ businessInfo, generatedCopy, editedCopy, onEditedCopyChange, images, onImagesChange, templateId, templateMeta, customColors, onCustomColors, customFonts, onCustomFonts, onBack, onExport, onStartOver, isDemoPreview }) {
+export default function WebsitePreview({ businessInfo, generatedCopy, editedCopy, onEditedCopyChange, images, onImagesChange, templateId, templateMeta, customColors, onCustomColors, customFonts, onCustomFonts, onBack, backLabel, onExport, onStartOver, onSwitchTemplate, isDemoPreview }) {
   const normalizedInfo = useMemo(() => normalizeBusinessInfo(businessInfo), [businessInfo]);
   const [viewMode, setViewMode] = useState('desktop');
   const [editorOpen, setEditorOpen] = useState(false);
@@ -35,6 +35,7 @@ export default function WebsitePreview({ businessInfo, generatedCopy, editedCopy
         viewMode={viewMode}
         onViewMode={setViewMode}
         onBack={onBack}
+        backLabel={backLabel}
         onExport={isDemoPreview ? null : onExport}
         onStartOver={onStartOver}
         onEdit={() => setEditorOpen((o) => !o)}
@@ -55,6 +56,8 @@ export default function WebsitePreview({ businessInfo, generatedCopy, editedCopy
         onCustomColors={onCustomColors}
         customFonts={customFonts}
         onCustomFonts={onCustomFonts}
+        businessType={businessInfo?.businessType}
+        onSwitchTemplate={onSwitchTemplate}
       />
 
       {/* Preview frame */}

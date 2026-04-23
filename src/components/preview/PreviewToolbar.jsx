@@ -1,4 +1,4 @@
-export default function PreviewToolbar({ viewMode, onViewMode, onBack, onExport, onEdit, editorOpen, isDemoPreview }) {
+export default function PreviewToolbar({ viewMode, onViewMode, onBack, backLabel = 'Back to Templates', onExport, onEdit, editorOpen, isDemoPreview }) {
   return (
     <div className="fixed top-0 left-0 z-50 bg-white border-b border-gray-200 px-3 sm:px-5 h-13 flex items-center justify-between gap-2 sm:gap-4" style={{ height: 52, right: editorOpen ? 320 : 0, transition: 'right 0.2s ease' }}>
       {/* Left: back */}
@@ -9,7 +9,7 @@ export default function PreviewToolbar({ viewMode, onViewMode, onBack, onExport,
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           <path d="M9 11L5 7l4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
-        <span className="hidden sm:inline">Back to Templates</span>
+        <span className="hidden sm:inline">{backLabel}</span>
         <span className="sm:hidden">Back</span>
       </button>
 

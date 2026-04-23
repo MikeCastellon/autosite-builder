@@ -44,6 +44,9 @@ export default function App() {
   const [siteId, setSiteId] = useState(null);
   const saveTimerRef = useRef(null);
   const [draftRestored, setDraftRestored] = useState(false);
+  // True when the preview was reached by clicking "Edit" on a dashboard site
+  // (vs. coming through the new-wizard flow). Drives the Back button label/target.
+  const [editingExistingSite, setEditingExistingSite] = useState(false);
 
   // Per-user localStorage key for the in-progress wizard draft.
   // Lets users recover their typed-in data if generation fails or they refresh.
@@ -152,6 +155,7 @@ export default function App() {
     setGeneratedCopy(null);
     setEditedCopy(null);
     setImages({});
+    setEditingExistingSite(false);
     goTo(2);
   };
 
@@ -225,6 +229,7 @@ export default function App() {
     setSelectedWidgetIds([]);
     setIsDemoPreview(false);
     setSiteId(null);
+    setEditingExistingSite(false);
     if (draftKey) {
       try { localStorage.removeItem(draftKey); } catch { /* ignore */ }
     }
@@ -309,6 +314,7 @@ export default function App() {
     setCustomColors(savedCustomColors);
     setCustomFonts(savedCustomFonts);
     setIsDemoPreview(false);
+    setEditingExistingSite(true);
     setStep(5);
     setView('wizard');
   };
@@ -359,7 +365,7 @@ export default function App() {
   if (step === 5 && generatedCopy) {
     return (
       <WebsitePreview
-        businessInfo={isDemoPreview ? DEMO_BUSINESS_INFO : businessInfo}
+        businessInfo={isDemoPreview ? DEMO_BUSINESS_INFO : { ...businessInfo, businessType: businessInfo?.businessType || businessType }}
         generatedCopy={generatedCopy}
         editedCopy={editedCopy}
         onEditedCopyChange={(newCopy) => { setEditedCopy(newCopy); autoSave({ editedCopy: newCopy }); }}
@@ -379,9 +385,22 @@ export default function App() {
           setCustomFonts(resolved);
           autoSave({ customFonts: resolved });
         }}
-        onBack={isDemoPreview ? handleBackFromDemo : () => goTo(3)}
+        onBack={
+          isDemoPreview
+            ? handleBackFromDemo
+            : editingExistingSite
+              ? () => setView('dashboard')
+              : () => goTo(3)
+        }
+        backLabel={editingExistingSite ? 'Back to Sites' : 'Back to Templates'}
         onExport={isDemoPreview ? null : () => goTo(6)}
         onStartOver={() => { handleStartOver(); setView('dashboard'); }}
+        onSwitchTemplate={(newTemplateId) => {
+          setSelectedTemplate(newTemplateId);
+          setCustomColors({});
+          setCustomFonts({});
+          autoSave({ templateId: newTemplateId, customColors: {}, customFonts: {} });
+        }}
         isDemoPreview={isDemoPreview}
       />
     );

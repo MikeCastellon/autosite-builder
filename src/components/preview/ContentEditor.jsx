@@ -1,5 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { FONT_SLOTS } from '../../data/fontOptions.js';
+import { TEMPLATES } from '../../data/templates.js';
+import { BUSINESS_TYPES } from '../../data/businessTypes.js';
+import { useAlert } from '../ui/AlertProvider.jsx';
 
 const EMOJI_GROUPS = {
   'Common': ['⭐', '✅', '🏆', '💎', '🔧', '🛞', '🚗', '🏎️', '💰', '💳', '🕐', '⏱️', '📞', '📍', '🎯', '✓', '★', '♦'],
@@ -196,7 +199,8 @@ function Toggle({ value, onChange, options }) {
   );
 }
 
-export default function ContentEditor({ isOpen, onClose, copy, images, onCopyChange, onImagesChange, templateMeta, templateId, customColors = {}, onCustomColors, customFonts = {}, onCustomFonts }) {
+export default function ContentEditor({ isOpen, onClose, copy, images, onCopyChange, onImagesChange, templateMeta, templateId, customColors = {}, onCustomColors, customFonts = {}, onCustomFonts, businessType, onSwitchTemplate }) {
+  const { confirm: confirmDialog } = useAlert();
   const [activeSection, setActiveSection] = useState('visibility');
 
   const setCopy = (path, value) => {
@@ -384,6 +388,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
     { id: 'contact', label: 'Contact' },
     { id: 'colors', label: 'Colors & Fonts' },
     { id: 'footer', label: 'Footer' },
+    ...(onSwitchTemplate ? [{ id: 'template', label: 'Template' }] : []),
   ];
 
   if (!isOpen) return null;
@@ -1071,6 +1076,87 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
               </div>
             </>
           )}
+
+          {activeSection === 'template' && onSwitchTemplate && (() => {
+            const typeInfo = BUSINESS_TYPES.find((t) => t.id === businessType);
+            const recommendedIds = new Set([
+              ...(typeInfo?.templates || []),
+              ...(typeInfo?.premiumTemplates || []),
+            ]);
+            const templates = Object.values(TEMPLATES)
+              .filter((t) => t && !t.hidden)
+              .sort((a, b) => {
+                const aRec = recommendedIds.has(a.id) ? 0 : 1;
+                const bRec = recommendedIds.has(b.id) ? 0 : 1;
+                return aRec - bRec;
+              });
+
+            const handlePick = async (newId) => {
+              if (newId === templateId) return;
+              const ok = await confirmDialog(
+                `Switch to "${TEMPLATES[newId]?.label || newId}"? Your text, images, and content stay the same — only the design changes. Custom colors and fonts will reset to the new template's defaults.`,
+                { title: 'Switch template?', confirmText: 'Switch' }
+              );
+              if (!ok) return;
+              onSwitchTemplate(newId);
+            };
+
+            return (
+              <>
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Switch Template</p>
+                <p className="text-[11px] text-gray-400 mb-4 leading-snug">
+                  Pick a different design — your content stays the same. Custom colors/fonts reset to the new template's defaults.
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {templates.map((t) => {
+                    const [c1, c2, c3] = t.previewColors || ['#111', '#cc0000', '#222'];
+                    const isCurrent = t.id === templateId;
+                    const isRecommended = recommendedIds.has(t.id);
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => handlePick(t.id)}
+                        disabled={isCurrent}
+                        className={`relative flex flex-col rounded-lg border overflow-hidden transition-all text-left ${
+                          isCurrent
+                            ? 'border-[#cc0000] ring-2 ring-[#cc0000]/30 cursor-default'
+                            : 'border-gray-200 hover:border-[#cc0000]/40 cursor-pointer'
+                        }`}
+                      >
+                        {isCurrent && (
+                          <span className="absolute top-1.5 right-1.5 z-10 bg-[#cc0000] text-white text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded">
+                            Current
+                          </span>
+                        )}
+                        {!isCurrent && isRecommended && (
+                          <span className="absolute top-1.5 right-1.5 z-10 bg-[#1a1a1a] text-white text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded">
+                            ★
+                          </span>
+                        )}
+                        <div className="h-16 flex flex-col" style={{ background: c1 }}>
+                          <div className="flex items-center px-2 py-1 gap-1.5">
+                            <div className="w-1 h-1 rounded-full" style={{ background: c2, opacity: 0.9 }} />
+                            <div className="h-0.5 rounded-full w-8" style={{ background: c2, opacity: 0.5 }} />
+                          </div>
+                          <div className="flex-1 flex flex-col justify-center px-2 gap-0.5">
+                            <div className="h-0.5 rounded-full w-3/4" style={{ background: c2, opacity: 0.8 }} />
+                            <div className="h-0.5 rounded-full w-1/2" style={{ background: c2, opacity: 0.4 }} />
+                          </div>
+                          <div className="flex gap-0.5 px-2 pb-1">
+                            {[0,1,2].map((i) => <div key={i} className="flex-1 h-2 rounded-sm" style={{ background: c3, opacity: 0.85 }} />)}
+                          </div>
+                        </div>
+                        <div className="p-2 border-t border-gray-100 bg-white">
+                          <p className="text-[11px] font-semibold text-gray-800 leading-tight truncate">{t.label}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            );
+          })()}
 
         </div>
       </div>
