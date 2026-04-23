@@ -7,6 +7,7 @@ import { useAlert } from '../ui/AlertProvider.jsx';
 import CustomDomainPanel from '../CustomDomainPanel.jsx';
 import UpgradeProDialog from '../ui/UpgradeProDialog.jsx';
 import EditBusinessInfoModal from './EditBusinessInfoModal.jsx';
+import UpgradeFunnel from './UpgradeFunnel.jsx';
 
 const MAX_SITES = 1;
 const CUSTOM_DOMAIN_ENABLED = import.meta.env.VITE_CUSTOM_DOMAIN_ENABLED === 'true';
@@ -409,58 +410,12 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
               </div>
             ))}
             </div>
-
-            {/* Upgrade section — only for non-Pro users */}
-            {!isPro && (
-              <div className="border-t border-black/[0.07] grid grid-cols-1 md:grid-cols-2">
-                {/* Left: image */}
-                <div className="relative min-h-[380px] bg-[#1a1a1a] overflow-hidden">
-                  <img
-                    src="/dashboard-upgrade-hero.png"
-                    alt="Genius Websites Pro — booking calendar in a detailing shop"
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
-                </div>
-
-                {/* Right: text + features + CTA */}
-                <div className="p-8 sm:p-10 flex flex-col">
-                  <p className="text-[11px] font-bold uppercase tracking-[2px] text-[#cc0000] mb-2">Genius Websites Pro</p>
-                  <h3 className="text-[clamp(28px,3.5vw,36px)] font-[900] text-[#1a1a1a] tracking-[-1px] leading-[1.05] mb-2">
-                    Upgrade Now
-                  </h3>
-                  <p className="text-[15px] text-[#666] mb-6">
-                    $9.99/month · Cancel anytime in your Shopify account.
-                  </p>
-                  <ul className="space-y-3 mb-7 flex-1">
-                    {[
-                      '24/7 Online Booking — customers self-book any time',
-                      'Live Google Reviews Widget',
-                      'Connect your custom domain (mybusiness.com)',
-                      'Priority Live Chat Support',
-                      'Remove "Powered by" branding',
-                    ].map((item) => (
-                      <li key={item} className="flex items-start gap-3 text-[14px] text-[#1a1a1a]">
-                        <span className="shrink-0 w-5 h-5 rounded-full bg-[#cc0000] text-white flex items-center justify-center mt-0.5">
-                          <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-                            <path d="M2.5 6l2.5 2.5L9.5 3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        </span>
-                        <span className="leading-snug">{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <button
-                    type="button"
-                    onClick={() => setProDialogOpen(true)}
-                    className="w-full py-4 px-6 rounded-xl bg-[#cc0000] hover:bg-[#aa0000] text-white text-center font-semibold text-[15px] transition-colors shadow-sm inline-flex items-center justify-center gap-2"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5l2.78 6.42 6.97.5-5.27 4.6 1.6 6.81L12 16.5l-6.08 3.33 1.6-6.81L2.25 8.42l6.97-.5L12 1.5z" /></svg>
-                    Upgrade Now
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
+        )}
+
+        {/* Long-form upgrade funnel — non-Pro users only */}
+        {!loading && !fetchError && sites.length > 0 && !isPro && (
+          <UpgradeFunnel onUpgrade={() => setProDialogOpen(true)} />
         )}
       </main>
 
