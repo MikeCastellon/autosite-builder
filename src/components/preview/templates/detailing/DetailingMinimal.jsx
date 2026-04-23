@@ -28,10 +28,10 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
       boxShadow: scrolled ? '0 1px 20px rgba(0,0,0,0.08)' : 'none',
       transition: 'box-shadow 0.3s ease',
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '0 clamp(1.25rem, 5vw, 3.5rem)', height: '66px',
+      padding: '0 clamp(1.25rem, 5cqi, 3.5rem)', height: '66px',
     },
     navLogo: {
-      fontFamily: font, fontSize: 'clamp(1rem, 1.8vw, 1.2rem)',
+      fontFamily: font, fontSize: 'clamp(1rem, 1.8cqi, 1.2rem)',
       color: c.bg, letterSpacing: '0.04em', fontWeight: 700,
     },
     navPhone: {
@@ -43,7 +43,7 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
       minHeight: '92vh', background: c.secondary || '#f5f5f5',
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center', textAlign: 'center',
-      padding: 'clamp(6rem, 12vw, 9rem) clamp(1.5rem, 7vw, 5rem) clamp(4rem, 7vw, 6rem)',
+      padding: 'clamp(6rem, 12cqi, 9rem) clamp(1.5rem, 7cqi, 5rem) clamp(4rem, 7cqi, 6rem)',
       position: 'relative', overflow: 'hidden',
     },
     heroPill: {
@@ -56,12 +56,12 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
       border: `1px solid ${c.accent}30`,
     },
     heroH1: {
-      fontFamily: font, fontSize: 'clamp(2.4rem, 5.5vw, 4.5rem)',
+      fontFamily: font, fontSize: 'clamp(2.4rem, 5.5cqi, 4.5rem)',
       color: c.bg, lineHeight: 1.1, marginBottom: '1.5rem', fontWeight: 700,
       maxWidth: '750px',
     },
     heroSub: {
-      fontFamily: bodyFont, fontSize: 'clamp(1rem, 1.8vw, 1.15rem)',
+      fontFamily: bodyFont, fontSize: 'clamp(1rem, 1.8cqi, 1.15rem)',
       color: c.text, marginBottom: '2.5rem', maxWidth: '520px', lineHeight: 1.75,
     },
     awardsChip: {
@@ -82,25 +82,25 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
       cursor: 'pointer', border: `1.5px solid ${c.bg}44`, borderRadius: '4px',
     },
     statsBar: {
-      background: '#fff', padding: 'clamp(2rem, 4vw, 2.5rem) clamp(1.5rem, 5vw, 4rem)',
+      background: '#fff', padding: 'clamp(2rem, 4cqi, 2.5rem) clamp(1.5rem, 5cqi, 4rem)',
       display: 'flex', flexWrap: 'wrap', justifyContent: 'space-around', gap: '1.5rem',
       boxShadow: '0 1px 0 #eee, 0 -1px 0 #eee',
     },
     statItem: { textAlign: 'center', minWidth: '100px' },
     statNum: {
-      fontFamily: font, fontSize: 'clamp(1.6rem, 3vw, 2.4rem)',
+      fontFamily: font, fontSize: 'clamp(1.6rem, 3cqi, 2.4rem)',
       color: c.accent, display: 'block', fontWeight: 700,
     },
     statLabel: { fontFamily: bodyFont, fontSize: '0.75rem', color: c.text, marginTop: '0.3rem' },
-    section: { padding: 'clamp(3rem, 7vw, 6rem) clamp(1.5rem, 7vw, 5rem)', background: '#fff' },
-    sectionGray: { padding: 'clamp(3rem, 7vw, 6rem) clamp(1.5rem, 7vw, 5rem)', background: '#f7f7f8' },
+    section: { padding: 'clamp(3rem, 7cqi, 6rem) clamp(1.5rem, 7cqi, 5rem)', background: '#fff' },
+    sectionGray: { padding: 'clamp(3rem, 7cqi, 6rem) clamp(1.5rem, 7cqi, 5rem)', background: '#f7f7f8' },
     sectionEyebrow: {
       fontFamily: bodyFont, fontSize: '0.72rem', fontWeight: 700,
       textTransform: 'uppercase', letterSpacing: '0.2em', color: c.accent,
       marginBottom: '0.6rem',
     },
     sectionTitle: {
-      fontFamily: font, fontSize: 'clamp(1.7rem, 3.2vw, 2.6rem)', fontWeight: 700,
+      fontFamily: font, fontSize: 'clamp(1.7rem, 3.2cqi, 2.6rem)', fontWeight: 700,
       color: c.bg, marginBottom: '0.75rem',
     },
     sectionSub: { fontFamily: bodyFont, color: c.text, fontSize: '1.05rem', lineHeight: 1.75, maxWidth: '560px', marginBottom: '3rem' },
@@ -143,15 +143,15 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
     testimonialText: { fontFamily: bodyFont, color: c.text, fontSize: '0.95rem', lineHeight: 1.7, marginBottom: '1.25rem' },
     testimonialName: { fontFamily: font, fontSize: '0.9rem', color: c.bg, fontWeight: 700 },
     ctaBand: {
-      background: c.accent, padding: 'clamp(3rem, 6vw, 5rem) clamp(1.5rem, 7vw, 5rem)',
+      background: c.accent, padding: 'clamp(3rem, 6cqi, 5rem) clamp(1.5rem, 7cqi, 5rem)',
       textAlign: 'center',
     },
     ctaBandTitle: {
-      fontFamily: font, fontSize: 'clamp(1.8rem, 3.5vw, 3rem)', color: '#fff',
+      fontFamily: font, fontSize: 'clamp(1.8rem, 3.5cqi, 3rem)', color: '#fff',
       fontWeight: 700, marginBottom: '0.75rem',
     },
     ctaBandSub: { fontFamily: bodyFont, fontSize: '1.05rem', color: 'rgba(255,255,255,0.85)', marginBottom: '2rem' },
-    ctaBandPhone: { fontFamily: font, fontSize: 'clamp(1.6rem, 3vw, 2.4rem)', color: '#fff', marginBottom: '1.5rem', display: 'block' },
+    ctaBandPhone: { fontFamily: font, fontSize: 'clamp(1.6rem, 3cqi, 2.4rem)', color: '#fff', marginBottom: '1.5rem', display: 'block' },
     ctaBandBtn: {
       background: '#fff', color: c.accent, padding: '13px 32px',
       fontFamily: bodyFont, fontSize: '0.9rem', fontWeight: 700,
@@ -164,7 +164,7 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
       fontFamily: bodyFont,
     },
     footer: {
-      background: '#fff', padding: 'clamp(2rem, 4vw, 3rem) clamp(1.5rem, 7vw, 5rem)',
+      background: '#fff', padding: 'clamp(2rem, 4cqi, 3rem) clamp(1.5rem, 7cqi, 5rem)',
       display: 'flex', flexWrap: 'wrap', gap: '2rem', justifyContent: 'space-between',
       borderTop: '1px solid #eee',
     },
@@ -299,7 +299,7 @@ export default function DetailingMinimal({ businessInfo, generatedCopy, template
       {!hidden('testimonials') && (
         generatedCopy?.googleWidgetKey ? (
           <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
-            {generatedCopy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.bg }}>{generatedCopy.googleReviewsTitle}</h2>}
+            {generatedCopy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.bg }}>{generatedCopy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={generatedCopy.googleWidgetKey} theme={generatedCopy?.googleReviewsTheme} />
           </div>
         ) : (generatedCopy.testimonialPlaceholders || []).length > 0 ? (

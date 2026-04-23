@@ -18,9 +18,6 @@ export default function StepBusinessType({ onSelect }) {
         ))}
       </div>
 
-      <p className="text-[12px] text-[#888] text-center mt-8 tracking-wide">
-        Free · No account required · Download in minutes
-      </p>
     </div>
   );
 }

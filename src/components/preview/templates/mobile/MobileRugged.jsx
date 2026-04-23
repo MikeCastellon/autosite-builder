@@ -42,7 +42,7 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
   )`;
 
   return (
-    <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'clip', margin: 0, padding: 0, containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
       <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
 
       {/* STICKY NAV */}
@@ -92,7 +92,7 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
 
         <div style={splitHero ? {
           flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
-          padding: 'clamp(3rem,6vw,6rem)', background: c.bg,
+          padding: 'clamp(3rem,6cqi,6rem)', background: c.bg,
         } : { position: 'relative', zIndex: 1, padding: '7rem 5% 4rem', maxWidth: 900 }}>
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 10,
@@ -105,14 +105,14 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
             </span>
           </div>
           <h1 style={{
-            fontSize: 'clamp(1.8rem, 7vw, 5.5rem)', fontWeight: 900, lineHeight: 1,
+            fontSize: 'clamp(1.8rem, 7cqi, 5.5rem)', fontWeight: 900, lineHeight: 1,
             textTransform: 'uppercase', letterSpacing: '-0.01em', margin: '0 0 16px',
           }}>
             {copy.headline || `BUILT TOUGH.\nWE ROLL TO YOU.`}
           </h1>
           {/* ANYWHERE · ANYTIME subtext */}
           <div style={{
-            fontSize: 'clamp(1rem, 2.5vw, 1.5rem)', fontWeight: 700, letterSpacing: '0.3em',
+            fontSize: 'clamp(1rem, 2.5cqi, 1.5rem)', fontWeight: 700, letterSpacing: '0.3em',
             color: c.accent, textTransform: 'uppercase', margin: '0 0 24px',
           }}>
             ANYWHERE · ANYTIME
@@ -186,7 +186,7 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
             <div style={{ width: 42, height: 3, background: c.accent, borderRadius: 2 }} />
             <span style={{ color: c.accent, fontSize: 11, letterSpacing: 3, textTransform: 'uppercase', fontWeight: 700 }}>What We Do</span>
           </div>
-          <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 16px', letterSpacing: '-0.01em' }}>OUR SERVICES</h2>
+          <h2 style={{ fontSize: 'clamp(2rem, 4cqi, 3rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 16px', letterSpacing: '-0.01em' }}>OUR SERVICES</h2>
           {copy.servicesSection?.intro && (
             <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.7, maxWidth: 520, marginBottom: 48 }}>{copy.servicesSection.intro}</p>
           )}
@@ -219,7 +219,7 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
               <div style={{ width: 42, height: 3, background: c.accent, borderRadius: 2 }} />
               <span style={{ color: c.accent, fontSize: 11, letterSpacing: 3, textTransform: 'uppercase', fontWeight: 700 }}>Our Story</span>
             </div>
-            <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.8rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 20px', letterSpacing: '-0.01em' }}>ABOUT US</h2>
+            <h2 style={{ fontSize: 'clamp(2rem, 3.5cqi, 2.8rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 20px', letterSpacing: '-0.01em' }}>ABOUT US</h2>
             {(generatedCopy?.aboutLayout || 'image') !== 'stats' ? (
               images.about
                 ? <img src={images.about} alt="About" style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: '4px', display: 'block', marginBottom: '20px' }} />
@@ -286,7 +286,7 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
       {!hidden('testimonials') && (
         copy?.googleWidgetKey ? (
           <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
-            {copy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.googleReviewsTitle}</h2>}
+            {copy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} theme={copy?.googleReviewsTheme} />
           </div>
         ) : testimonials.length > 0 ? (
@@ -294,7 +294,7 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 48 }}>
               <div style={{ width: 42, height: 3, background: c.accent, borderRadius: 2 }} />
-              <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.8rem)', fontWeight: 900, textTransform: 'uppercase', margin: 0 }}>WHAT THEY SAY</h2>
+              <h2 style={{ fontSize: 'clamp(2rem, 3.5cqi, 2.8rem)', fontWeight: 900, textTransform: 'uppercase', margin: 0 }}>WHAT THEY SAY</h2>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(270px, 1fr))', gap: 20 }}>
               {testimonials.map((t, i) => (
@@ -316,7 +316,7 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
       {/* CTA */}
       {!hidden('cta') && (
       <section style={{ background: c.accent, padding: '72px 5%', textAlign: 'center' , order: getOrder('cta') }}>
-        <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 900, color: '#1a2318', textTransform: 'uppercase', margin: '0 0 16px', letterSpacing: '-0.01em' }}>
+        <h2 style={{ fontSize: 'clamp(2rem, 4cqi, 3rem)', fontWeight: 900, color: '#1a2318', textTransform: 'uppercase', margin: '0 0 16px', letterSpacing: '-0.01em' }}>
           {copy.ctaHeadline || fb.ctaHeadline.toUpperCase()}
         </h2>
         <p style={{ color: 'rgba(26,35,24,0.65)', fontSize: 16, marginBottom: 36 }}>

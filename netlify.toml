@@ -20,6 +20,14 @@
   publish = "dist"
   autoLaunch = false
 
+# Widget assets embedded on published sites must always be fresh so owner
+# setting changes (theme, logo, services) appear without requiring a site
+# republish or a hard browser refresh.
+[[headers]]
+  for = "/scheduler.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
 # Serve /.well-known/* directly from public/ (no SPA rewrite)
 [[redirects]]
   from = "/.well-known/*"

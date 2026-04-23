@@ -4,7 +4,12 @@ import { normalizeBusinessInfo } from './normalizeBusinessInfo.js';
 import { TEMPLATE_COMPONENT_MAP } from '../data/templates.js';
 import { supabase } from './supabase.js';
 
-function buildSeoHead(businessInfo, generatedCopy) {
+const SCHEDULER_WIDGET_URL =
+  (typeof window !== 'undefined' && window.location && window.location.origin
+    ? window.location.origin
+    : 'https://app.autocaregenius.com') + '/scheduler.js';
+
+function buildSeoHead(businessInfo, generatedCopy, siteId) {
   const biz = businessInfo;
   const copy = generatedCopy;
   const keywords = [
@@ -54,10 +59,37 @@ function buildSeoHead(businessInfo, generatedCopy) {
   <!-- Tailwind CSS CDN (for utility classes in templates) -->
   <script src="https://cdn.tailwindcss.com"></script>
 
+  <!-- Scheduler widget (visible only if owner has scheduler enabled) -->
+  ${siteId ? `<script src="${SCHEDULER_WIDGET_URL}" data-site-id="${siteId}" defer></script>` : ''}
+
   <style>
     *, *::before, *::after { box-sizing: border-box; }
-    body { margin: 0; font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    body { margin: 0; font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; padding-bottom: 48px; }
     img { max-width: 100%; height: auto; }
+    #acg-powered-by {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 9999;
+      background: rgba(250, 249, 247, 0.96);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border-top: 1px solid rgba(0, 0, 0, 0.08);
+      box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.04);
+    }
+    #acg-powered-by .acg-label {
+      font-family: 'Outfit', system-ui, sans-serif;
+      font-size: 12px;
+      color: #999;
+      letter-spacing: 0.02em;
+    }
+    #acg-powered-by img { height: 18px; }
     @media (max-width: 768px) {
       div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
       div[style*="1fr 1fr"] { grid-template-columns: 1fr !important; }
@@ -67,6 +99,32 @@ function buildSeoHead(businessInfo, generatedCopy) {
       .tp-2col { grid-template-columns: 1fr !important; }
       .tp-4col { grid-template-columns: 1fr 1fr !important; }
     }
+    @media (max-width: 600px) {
+      [data-widget="google-reviews"] .sf-gr-carousel { overflow: visible !important; padding: 0 !important; }
+      [data-widget="google-reviews"] .sf-gr-carousel > * {
+        transform: none !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        gap: 12px !important;
+        align-items: center !important;
+        justify-content: center !important;
+      }
+      [data-widget="google-reviews"] .sf-gr-card {
+        flex: none !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 440px !important;
+        margin: 0 auto !important;
+        box-sizing: border-box !important;
+        display: block !important;
+      }
+      [data-widget="google-reviews"] .sf-gr-card:nth-child(n+4) { display: none !important; }
+      [data-widget="google-reviews"] .sf-gr-arrow,
+      [data-widget="google-reviews"] .sf-gr-prev,
+      [data-widget="google-reviews"] .sf-gr-next,
+      [data-widget="google-reviews"] .sf-gr-dot,
+      [data-widget="google-reviews"] [class*="dots"] { display: none !important; }
+    }
   </style>
 
   <!-- Local Business Schema -->
@@ -75,7 +133,7 @@ function buildSeoHead(businessInfo, generatedCopy) {
   </script>`;
 }
 
-async function buildHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds = []) {
+async function buildHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds = [], siteId = null) {
   const mod = await TEMPLATE_COMPONENT_MAP[templateId]();
   const TemplateComponent = mod.default;
 
@@ -84,7 +142,7 @@ async function buildHtmlString(templateId, businessInfo, generatedCopy, template
     createElement(TemplateComponent, { businessInfo: normalizedInfo, generatedCopy, templateMeta, images: images || {} })
   );
 
-  const seoHead = buildSeoHead(businessInfo, generatedCopy);
+  const seoHead = buildSeoHead(businessInfo, generatedCopy, siteId);
 
   // Inject widget script (template already renders the widget divs, just need the JS)
   let widgetsHtml = '';
@@ -113,10 +171,10 @@ async function buildHtmlString(templateId, businessInfo, generatedCopy, template
   }
 
   const poweredByBar = `
-<div style="background:#faf9f7;padding:14px 24px;display:flex;align-items:center;justify-content:center;gap:8px;border-top:1px solid #e5e5e5;">
-  <span style="font-family:'Outfit',system-ui,sans-serif;font-size:12px;color:#999;letter-spacing:0.02em;">Powered by</span>
+<div id="acg-powered-by">
+  <span class="acg-label">Powered by</span>
   <a href="https://prohub.autocaregenius.com/" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;">
-    <img src="https://www.autocaregenius.com/cdn/shop/files/v11_1.svg?v=1760731533&width=160" alt="Auto Care Genius" style="height:18px;" />
+    <img src="https://www.autocaregenius.com/cdn/shop/files/v11_1.svg?v=1760731533&width=160" alt="Auto Care Genius" />
   </a>
 </div>`;
 
@@ -133,12 +191,12 @@ ${poweredByBar}
 </html>`;
 }
 
-export async function exportHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds = []) {
-  return buildHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds);
+export async function exportHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds = [], siteId = null) {
+  return buildHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds, siteId);
 }
 
-export async function exportHtml(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds = []) {
-  const fullHtml = await buildHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds);
+export async function exportHtml(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds = [], siteId = null) {
+  const fullHtml = await buildHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds, siteId);
 
   // Trigger download
   const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });

@@ -2,19 +2,25 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase.js';
 import { publishSite } from '../../lib/publishSite.js';
 import { TEMPLATES } from '../../data/templates.js';
+import { canSeeBookingsNav } from '../../lib/subscriptionGating.js';
+import { useAlert } from '../ui/AlertProvider.jsx';
 import CustomDomainPanel from '../CustomDomainPanel.jsx';
 
-const ADMIN_EMAILS = ['dev@639hz.com'];
 const MAX_SITES = 1;
 const CUSTOM_DOMAIN_ENABLED = import.meta.env.VITE_CUSTOM_DOMAIN_ENABLED === 'true';
 
-export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEmail }) {
+export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEmail, profile, onOpenAdmin, onOpenBookings, onOpenBookingSettings }) {
+  const { toast, confirm: confirmDialog } = useAlert();
   const [sites, setSites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [domainPanelSiteId, setDomainPanelSiteId] = useState(null);
   const [domainPanelInitial, setDomainPanelInitial] = useState(null);
-  const isAdmin = ADMIN_EMAILS.includes(userEmail);
+  const schedulerEnabled = !!profile?.scheduler_enabled;
+  const showBookingsNav = canSeeBookingsNav(profile);
+  const isAdmin = !!profile?.is_super_admin;
   const canCreateSite = isAdmin || sites.length < MAX_SITES;
 
   useEffect(() => {
@@ -34,11 +40,16 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
   }, []);
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this site? This will also unpublish it and remove any custom domain.')) return;
+    const ok = await confirmDialog('This will also unpublish it and remove any custom domain. This cannot be undone.', {
+      title: 'Delete site?',
+      confirmText: 'Delete',
+      danger: true,
+    });
+    if (!ok) return;
     const site = sites.find(s => s.id === id);
     const { error } = await supabase.from('sites').delete().eq('id', id);
     if (error) {
-      alert('Failed to delete site. Please try again.');
+      toast('Failed to delete site. Please try again.', 'error');
       return;
     }
     if (site?.slug) {
@@ -49,10 +60,15 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
       }).catch(() => {});
     }
     setSites((prev) => prev.filter((s) => s.id !== id));
+    toast('Site deleted', 'success');
   };
 
   const handleRepublish = async (site) => {
-    if (!confirm(`Republish ${site.business_info?.businessName || 'this site'}?`)) return;
+    const ok = await confirmDialog(`Republish ${site.business_info?.businessName || 'this site'} with the latest template updates?`, {
+      title: 'Republish site?',
+      confirmText: 'Republish',
+    });
+    if (!ok) return;
     try {
       const { TEMPLATES } = await import('../../data/templates.js');
       const templateMeta = TEMPLATES[site.template_id];
@@ -65,9 +81,9 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
         images: {},
         selectedWidgetIds: site.widget_config_ids || [],
       });
-      alert(`${site.business_info?.businessName || 'Site'} republished successfully!`);
+      toast(`${site.business_info?.businessName || 'Site'} republished successfully`, 'success');
     } catch (err) {
-      alert(`Republish failed: ${err.message}`);
+      toast(`Republish failed: ${err.message}`, 'error');
     }
   };
 
@@ -82,23 +98,115 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
       site.generated_content,
       { ...templateMeta, colors: templateMeta?.colors || {} },
       {},
-      site.widget_config_ids || []
+      site.widget_config_ids || [],
+      site.id
     );
   };
 
+  const initial = userEmail ? userEmail[0].toUpperCase() : '?';
+  const navItems = [
+    { label: 'Sites', onClick: () => {}, active: true },
+    showBookingsNav && onOpenBookings && { label: 'Bookings', onClick: onOpenBookings, active: false },
+    isAdmin && onOpenAdmin && { label: 'Admin', onClick: onOpenAdmin, active: false },
+  ].filter(Boolean);
+
   return (
     <div className="min-h-screen bg-[#faf9f7]">
-      <header className="border-b border-black/[0.07] bg-white px-6 py-4 flex items-center justify-between">
-        <h1 className="text-lg font-black text-[#1a1a1a] tracking-tight">AutoSite Builder</h1>
-        <div className="flex items-center gap-4">
-          {userEmail && <span className="text-xs text-[#888]">{userEmail}</span>}
-          {onSignOut && (
-            <button onClick={onSignOut} className="text-xs text-[#888] hover:text-[#cc0000] transition-colors">
-              Sign Out
+      <header className="border-b border-black/[0.07] bg-white px-4 sm:px-8 flex items-center justify-between h-16 sticky top-0 z-50">
+        <h1 className="text-lg font-black text-[#1a1a1a] tracking-tight">Genius Websites</h1>
+
+        {/* Centered nav (desktop only) */}
+        <nav className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-1 text-[13px] font-medium">
+          {navItems.map((item) => (
+            <button
+              key={item.label}
+              onClick={item.onClick}
+              className={`px-3 py-1.5 rounded-lg transition-colors ${item.active ? 'bg-[#1a1a1a] text-white' : 'text-[#1a1a1a] hover:bg-black/[0.04]'}`}
+            >
+              {item.label}
             </button>
+          ))}
+        </nav>
+
+        {/* Right: desktop avatar dropdown */}
+        <div className="hidden md:flex items-center">
+          {userEmail && (
+            <div className="relative">
+              <button
+                onClick={() => setDropdownOpen((v) => !v)}
+                onBlur={() => setTimeout(() => setDropdownOpen(false), 200)}
+                className="flex items-center gap-2 text-[13px] text-[#555] hover:text-[#1a1a1a] transition-colors font-medium"
+                aria-label="Account menu"
+              >
+                <div className="w-8 h-8 rounded-full bg-[#1a1a1a] text-white flex items-center justify-center text-[12px] font-bold">
+                  {initial}
+                </div>
+              </button>
+              {dropdownOpen && (
+                <div className="absolute right-0 top-10 bg-white border border-black/[0.1] rounded-xl shadow-lg py-1.5 min-w-[200px] z-[100]">
+                  <div className="px-4 py-2 text-[11px] text-[#888] border-b border-black/[0.05] truncate">{userEmail}</div>
+                  {onSignOut && (
+                    <button
+                      onClick={() => { setDropdownOpen(false); onSignOut(); }}
+                      className="w-full text-left px-4 py-2.5 text-[13px] text-[#cc0000] hover:bg-[#faf9f7] transition-colors font-medium"
+                    >
+                      Sign Out
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           )}
         </div>
+
+        {/* Mobile hamburger */}
+        <button
+          onClick={() => setMobileOpen((v) => !v)}
+          aria-label="Open menu"
+          className="md:hidden flex items-center justify-center w-10 h-10 text-[#1a1a1a] hover:bg-black/[0.04] rounded-lg transition-colors"
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            {mobileOpen ? (
+              <><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></>
+            ) : (
+              <><line x1="4" y1="7" x2="20" y2="7" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="17" x2="20" y2="17" /></>
+            )}
+          </svg>
+        </button>
       </header>
+
+      {/* Mobile menu panel */}
+      {mobileOpen && (
+        <div className="md:hidden border-b border-black/[0.07] bg-white shadow-sm px-4 py-3 sticky top-16 z-40">
+          {userEmail && (
+            <div className="flex items-center gap-3 pb-3 mb-2 border-b border-black/[0.05]">
+              <div className="w-10 h-10 rounded-full bg-[#1a1a1a] text-white flex items-center justify-center text-sm font-bold">
+                {initial}
+              </div>
+              <div className="text-sm text-[#1a1a1a] font-medium truncate">{userEmail}</div>
+            </div>
+          )}
+          <nav className="flex flex-col gap-1">
+            {navItems.map((item) => (
+              <button
+                key={item.label}
+                onClick={() => { setMobileOpen(false); item.onClick(); }}
+                className={`w-full text-left px-3 py-2.5 rounded-lg text-[14px] font-medium transition-colors ${item.active ? 'bg-[#1a1a1a] text-white' : 'text-[#1a1a1a] hover:bg-black/[0.04]'}`}
+              >
+                {item.label}
+              </button>
+            ))}
+            {onSignOut && (
+              <button
+                onClick={() => { setMobileOpen(false); onSignOut(); }}
+                className="w-full text-left px-3 py-2.5 rounded-lg text-[14px] font-medium text-[#cc0000] hover:bg-black/[0.04] transition-colors border-t border-black/[0.05] mt-1 pt-3"
+              >
+                Sign Out
+              </button>
+            )}
+          </nav>
+        </div>
+      )}
 
       <main className="max-w-4xl mx-auto px-6 py-10">
         <div className="flex items-center justify-between mb-8">

@@ -157,25 +157,25 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
 
   return (
     <div style={{ background: c.bg, color: c.text, fontFamily: bodyFont, containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
-      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}.tp-3col{grid-template-columns:1fr!important}.tp-chrome-nav{padding:0 16px!important;height:60px!important}.tp-chrome-brand{font-size:0.8rem!important;letter-spacing:1px!important;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tp-chrome-orb{width:20px!important;height:20px!important}.tp-chrome-cta{font-size:11px!important;padding:7px 12px!important}}`}</style>
       {/* NAV */}
       <nav style={{ ...navStyle, order: -1 }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '72px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <div style={{ width: '28px', height: '28px', background: chromeGradient, borderRadius: '50%' }} />
+        <div className="tp-chrome-nav" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, height: '72px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: '1 1 auto' }}>
+            <div className="tp-chrome-orb" style={{ width: '28px', height: '28px', background: chromeGradient, borderRadius: '50%', flexShrink: 0 }} />
             {images.logo ? (
               <img src={images.logo} alt={businessInfo.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
             ) : (
-              <div style={{ fontFamily: font, fontWeight: 700, fontSize: '1.1rem', color: '#ffffff', letterSpacing: '3px', textTransform: 'uppercase' }}>
+              <div className="tp-chrome-brand" style={{ fontFamily: font, fontWeight: 700, fontSize: '1.1rem', color: '#ffffff', letterSpacing: '3px', textTransform: 'uppercase' }}>
                 {businessInfo.businessName}
               </div>
             )}
           </div>
-          <div className="tp-nav-links" style={{ display: 'flex', gap: '36px', alignItems: 'center' }}>
+          <div className="tp-nav-links" style={{ display: 'flex', gap: '36px', alignItems: 'center', flexShrink: 0 }}>
             {['Services', 'Packages', 'About', 'Contact'].map(link => (
               <a key={link} href={`#${link.toLowerCase()}`} style={{ color: c.muted, textDecoration: 'none', fontWeight: 400, fontSize: '0.82rem', letterSpacing: '2px', textTransform: 'uppercase', transition: 'color 0.2s' }}>{link}</a>
             ))}
-            <a href={`tel:${businessInfo.phone}`} style={accentBtnStyle}>{businessInfo.phone}</a>
+            <a href={`tel:${businessInfo.phone}`} className="tp-chrome-cta" style={accentBtnStyle}>{businessInfo.phone}</a>
           </div>
         </div>
       </nav>
@@ -185,15 +185,10 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
       <section style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh', order: getOrder('hero') } : { ...heroStyle, order: getOrder('hero') }}>
         {!splitHero && <HeroImage src={images.hero} />}
         {!splitHero && <div style={heroGlowStyle} />}
-        {!splitHero && [15, 25, 75, 85].map((top, i) => (
-          <div key={i} style={chromeLine(`${top}%`, i % 2 === 0 ? 0.1 : 0.06)} />
-        ))}
-        {!splitHero && <div style={{ position: 'absolute', left: '8%', top: 0, bottom: 0, width: '1px', background: 'linear-gradient(180deg, transparent 0%, rgba(148,163,184,0.08) 30%, rgba(148,163,184,0.08) 70%, transparent 100%)' }} />}
-        {!splitHero && <div style={{ position: 'absolute', right: '8%', top: 0, bottom: 0, width: '1px', background: 'linear-gradient(180deg, transparent 0%, rgba(148,163,184,0.08) 30%, rgba(148,163,184,0.08) 70%, transparent 100%)' }} />}
 
         <div style={splitHero ? {
           flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
-          padding: 'clamp(3rem,6vw,6rem)', background: c.bg,
+          padding: 'clamp(3rem,6cqi,6rem)', background: c.bg,
         } : { textAlign: 'center', maxWidth: '800px', padding: '140px 24px 100px', position: 'relative', zIndex: 1 }}>
           {/* Elite badge */}
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', border: '1px solid rgba(148,163,184,0.25)', borderRadius: '1px', padding: '10px 24px', marginBottom: '36px', alignSelf: splitHero ? 'flex-start' : undefined }}>
@@ -203,7 +198,7 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
             </span>
             <div style={{ width: '6px', height: '6px', background: chromeGradient, borderRadius: '50%' }} />
           </div>
-          <h1 style={{ fontFamily: font, fontSize: 'clamp(2.4rem, 5vw, 4rem)', fontWeight: 300, color: c.text, lineHeight: 1.15, marginBottom: '24px', letterSpacing: '-1px', textAlign: splitHero ? 'left' : 'center' }}>
+          <h1 style={{ fontFamily: font, fontSize: 'clamp(2.4rem, 5cqi, 4rem)', fontWeight: 300, color: c.text, lineHeight: 1.15, marginBottom: '24px', letterSpacing: '-1px', textAlign: splitHero ? 'left' : 'center' }}>
             {generatedCopy.headline}
           </h1>
           <div style={{ width: '80px', height: '1px', background: chromeGradient, margin: splitHero ? '0 0 28px' : '0 auto 28px' }} />
@@ -272,7 +267,7 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
               ))}
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: '20px' }}>
+            <div className="tp-3col" style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, minmax(0, 1fr))`, gap: '20px' }}>
               {generatedCopy.servicesSection.items.map((svc, i) => (
                 <div key={i} style={cardStyle}>
                   <div style={cardAccentTop} />
@@ -354,7 +349,7 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
       {!hidden('testimonials') && (
         generatedCopy?.googleWidgetKey ? (
           <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
-            {generatedCopy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{generatedCopy.googleReviewsTitle}</h2>}
+            {generatedCopy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{generatedCopy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={generatedCopy.googleWidgetKey} theme={generatedCopy?.googleReviewsTheme} />
           </div>
         ) : generatedCopy.testimonialPlaceholders?.length > 0 ? (

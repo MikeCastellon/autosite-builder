@@ -33,7 +33,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
   const getOrder = buildSectionOrder(copy, ['hero','statsBar','services','about','gallery','testimonials','cta']);
 
   return (
-    <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'clip', margin: 0, padding: 0, containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
       <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
 
       {/* STICKY NAV */}
@@ -81,7 +81,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
         {splitHero ? (
           <div style={{
             flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
-            padding: 'clamp(3rem,6vw,6rem)', background: c.secondary || '#eff6ff',
+            padding: 'clamp(3rem,6cqi,6rem)', background: c.secondary || '#eff6ff',
           }}>
             <span style={{
               display: 'inline-block', background: `${c.accent}18`, color: c.accent,
@@ -90,7 +90,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
             }}>
               {fb.heroBadge} · {biz.city}, {biz.state}
             </span>
-            <h1 style={{ fontSize: 'clamp(2.2rem, 4.5vw, 3.5rem)', fontWeight: 800, lineHeight: 1.15, color: c.text, marginBottom: 20 }}>
+            <h1 style={{ fontSize: 'clamp(2.2rem, 4.5cqi, 3.5rem)', fontWeight: 800, lineHeight: 1.15, color: c.text, marginBottom: 20 }}>
               {copy.headline || fb.headline}
             </h1>
             <p style={{ color: c.muted || '#475569', fontSize: 17, lineHeight: 1.75, maxWidth: 500, marginBottom: 40 }}>
@@ -123,7 +123,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
               }}>
                 {fb.heroBadge} · {biz.city}, {biz.state}
               </span>
-              <h1 style={{ fontSize: 'clamp(2.2rem, 4.5vw, 3.5rem)', fontWeight: 800, lineHeight: 1.15, color: c.text, marginBottom: 20 }}>
+              <h1 style={{ fontSize: 'clamp(2.2rem, 4.5cqi, 3.5rem)', fontWeight: 800, lineHeight: 1.15, color: c.text, marginBottom: 20 }}>
                 {copy.headline || fb.headline}
               </h1>
               <p style={{ color: c.muted || '#475569', fontSize: 17, lineHeight: 1.75, maxWidth: 500, marginBottom: 40 }}>
@@ -227,7 +227,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
         <div style={{ maxWidth: 1200, margin: '0 auto'  }}>
           <div style={{ marginBottom: 48 }}>
             <span style={{ display: 'inline-block', background: `${c.accent}12`, color: c.accent, fontSize: 12, fontWeight: 700, padding: '5px 14px', borderRadius: 20, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 12 }}>Services</span>
-            <h2 style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.8rem)', fontWeight: 800, color: c.text, margin: '0 0 14px' }}>Services We Bring to You</h2>
+            <h2 style={{ fontSize: 'clamp(1.8rem, 3.5cqi, 2.8rem)', fontWeight: 800, color: c.text, margin: '0 0 14px' }}>Services We Bring to You</h2>
             {copy.servicesSection?.intro && (
               <p style={{ color: c.muted, fontSize: 16, lineHeight: 1.7, maxWidth: 540 }}>{copy.servicesSection.intro}</p>
             )}
@@ -317,7 +317,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
           </div>
           <div>
             <span style={{ display: 'inline-block', background: `${c.accent}12`, color: c.accent, fontSize: 12, fontWeight: 700, padding: '5px 14px', borderRadius: 20, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 16 }}>About</span>
-            <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, color: c.text, marginBottom: 20 }}>About {biz.businessName}</h2>
+            <h2 style={{ fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, color: c.text, marginBottom: 20 }}>About {biz.businessName}</h2>
             <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.8, marginBottom: 20 }}>
               {copy.aboutText || `Based in ${biz.city || 'your area'}, we provide ${fb.aboutFallback}.`}
             </p>
@@ -356,7 +356,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
       {!hidden('testimonials') && (
         copy?.googleWidgetKey ? (
           <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
-            {copy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.googleReviewsTitle}</h2>}
+            {copy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} theme={copy?.googleReviewsTheme} />
           </div>
         ) : testimonials.length > 0 ? (
@@ -364,7 +364,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ textAlign: 'center', marginBottom: 48 }}>
               <span style={{ display: 'inline-block', background: `${c.accent}12`, color: c.accent, fontSize: 12, fontWeight: 700, padding: '5px 14px', borderRadius: 20, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 12 }}>Reviews</span>
-              <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, color: c.text, margin: 0 }}>What Customers Say</h2>
+              <h2 style={{ fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, color: c.text, margin: 0 }}>What Customers Say</h2>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
               {testimonials.map((t, i) => (
@@ -386,7 +386,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
       {/* CTA */}
       {!hidden('cta') && (
       <section id="contact" style={{ background: c.accent, padding: '80px 5%', textAlign: 'center' , order: getOrder('cta') }}>
-        <h2 style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.8rem)', fontWeight: 800, color: '#fff', marginBottom: 14 }}>{copy.ctaHeadline || fb.ctaHeadline}</h2>
+        <h2 style={{ fontSize: 'clamp(1.8rem, 3.5cqi, 2.8rem)', fontWeight: 800, color: '#fff', marginBottom: 14 }}>{copy.ctaHeadline || fb.ctaHeadline}</h2>
         <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 16, marginBottom: 36 }}>
           {copy.ctaSubtext || copy.ctaSecondary || `We come to you anywhere in ${biz.city || 'your area'}, ${biz.state || ''}`}
         </p>

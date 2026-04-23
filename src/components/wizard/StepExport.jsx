@@ -45,10 +45,12 @@ export default function StepExport({ siteId: passedSiteId, businessInfo, generat
           </svg>
         </div>
         <h1 className="text-[clamp(24px,4vw,32px)] font-[900] text-[#1a1a1a] mb-2 tracking-[-1px] leading-[1.1]">
-          {published ? 'Your site is live!' : 'Publish Your Website'}
+          {published ? `Congratulations, ${businessInfo.businessName}!` : 'Publish Your Website'}
         </h1>
         <p className="text-[#555] text-[15px]">
-          {businessInfo.businessName} &mdash; {businessInfo.city}, {businessInfo.state}
+          {published
+            ? 'Your website is live and ready to share.'
+            : <>{businessInfo.businessName} &mdash; {businessInfo.city}, {businessInfo.state}</>}
         </p>
       </div>
 
@@ -70,8 +72,6 @@ export default function StepExport({ siteId: passedSiteId, businessInfo, generat
           >
             {publishing ? 'Publishing...' : '🚀 Publish Website'}
           </button>
-
-          {publishError && <p className="text-sm text-[#cc0000] mb-4">{publishError}</p>}
         </>
       ) : (
         <>
@@ -86,12 +86,6 @@ export default function StepExport({ siteId: passedSiteId, businessInfo, generat
               {published.publishedUrl}
             </a>
           </div>
-
-          {CUSTOM_DOMAIN_ENABLED && (
-            <div className="mb-5">
-              <CustomDomainPanel siteId={siteId} />
-            </div>
-          )}
 
           <div className="flex gap-2 mb-5">
             <button
@@ -110,12 +104,39 @@ export default function StepExport({ siteId: passedSiteId, businessInfo, generat
             </a>
           </div>
 
-          <div className="flex gap-2">
-            <button onClick={onBack} className="flex-1 py-2.5 px-4 text-sm text-[#888]">Back</button>
-            <button onClick={onStartOver} className="flex-1 py-2.5 px-4 text-sm text-[#888]">Start over</button>
-          </div>
+          {CUSTOM_DOMAIN_ENABLED && (
+            <div className="mb-5">
+              <CustomDomainPanel siteId={siteId} />
+            </div>
+          )}
+
+          {/* Upgrade CTA */}
+          <a
+            href="https://www.autocaregenius.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-[#cc0000] to-[#aa0000] hover:from-[#aa0000] hover:to-[#880000] text-white text-center font-semibold text-[15px] transition-all shadow-sm hover:shadow-md mb-5"
+          >
+            ⭐ Upgrade to Pro
+          </a>
         </>
       )}
+
+      {publishError && (
+        <div className="border border-[#cc0000]/20 rounded-xl p-4 mt-3 text-sm text-[#cc0000] bg-[#cc0000]/5">
+          {publishError}
+        </div>
+      )}
+
+      {/* Bottom actions */}
+      <div className="mt-4">
+        <button
+          onClick={onBack}
+          className="w-full py-2.5 px-4 rounded-xl border border-black/[0.07] text-[#555] hover:border-[#cc0000]/30 hover:text-[#cc0000] font-medium transition-colors text-[13px]"
+        >
+          ← Back to Editor
+        </button>
+      </div>
     </div>
   );
 }

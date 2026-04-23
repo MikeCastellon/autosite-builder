@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { supabase } from './supabase.js';
 
 const AuthContext = createContext(null);
@@ -6,6 +6,7 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(undefined);
   const [isRecovery, setIsRecovery] = useState(false);
+  const [profile, setProfile] = useState(null);
 
   useEffect(() => {
     console.log('[Auth] Initializing... URL hash:', window.location.hash.substring(0, 80));
@@ -43,8 +44,20 @@ export function AuthProvider({ children }) {
   const loading = session === undefined;
   console.log('[Auth] Render — loading:', loading, 'session:', session ? 'yes' : 'no');
 
+  const refreshProfile = useCallback(async () => {
+    if (!session?.user?.id) { setProfile(null); return; }
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, email, is_super_admin, scheduler_enabled, subscription_status, subscription_ends_at, shopify_customer_id')
+      .eq('id', session.user.id)
+      .maybeSingle();
+    setProfile(data || null);
+  }, [session?.user?.id]);
+
+  useEffect(() => { refreshProfile(); }, [refreshProfile]);
+
   return (
-    <AuthContext.Provider value={{ session: loading ? null : session, loading, isRecovery, clearRecovery: () => setIsRecovery(false) }}>
+    <AuthContext.Provider value={{ session: loading ? null : session, loading, isRecovery, clearRecovery: () => setIsRecovery(false), profile, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

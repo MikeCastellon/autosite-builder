@@ -42,7 +42,7 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
   const tireBrandsList = parseBrands(copy?.tireBrandsList ?? biz.tireBrands);
 
   return (
-    <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'clip', margin: 0, padding: 0, containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
       <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}.tp-4col{grid-template-columns:1fr 1fr!important}}`}</style>
 
       {/* STICKY NAV */}
@@ -90,7 +90,7 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
         {splitHero ? (
           <div style={{
             flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
-            padding: 'clamp(3rem,6vw,6rem)', background: c.secondary,
+            padding: 'clamp(3rem,6cqi,6rem)', background: c.secondary,
           }}>
             <span style={{
               display: 'inline-block', background: `${c.accent}12`, color: c.accent,
@@ -99,7 +99,7 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
             }}>
               {biz.city}, {biz.state}
             </span>
-            <h1 style={{ fontSize: 'clamp(2.2rem, 4.5vw, 3.5rem)', fontWeight: 800, lineHeight: 1.15, color: c.text, marginBottom: 20 }}>
+            <h1 style={{ fontSize: 'clamp(2.2rem, 4.5cqi, 3.5rem)', fontWeight: 800, lineHeight: 1.15, color: c.text, marginBottom: 20 }}>
               {copy.headline || fb.headline}
             </h1>
             <p style={{ color: c.muted, fontSize: 17, lineHeight: 1.75, marginBottom: 36 }}>
@@ -129,7 +129,7 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
             }}>
               {biz.city}, {biz.state}
             </span>
-            <h1 style={{ fontSize: 'clamp(2.2rem, 4.5vw, 3.5rem)', fontWeight: 800, lineHeight: 1.15, color: c.text, marginBottom: 20 }}>
+            <h1 style={{ fontSize: 'clamp(2.2rem, 4.5cqi, 3.5rem)', fontWeight: 800, lineHeight: 1.15, color: c.text, marginBottom: 20 }}>
               {copy.headline || fb.headline}
             </h1>
             <p style={{ color: c.muted, fontSize: 17, lineHeight: 1.75, marginBottom: 36 }}>
@@ -210,7 +210,7 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
           <div>
             <div style={{ position: 'sticky', top: 88 }}>
               <span style={{ display: 'block', background: `${c.accent}12`, color: c.accent, fontSize: 11, fontWeight: 700, padding: '4px 12px', borderRadius: 16, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 16, width: 'fit-content' }}>Services</span>
-              <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.8rem)', fontWeight: 800, color: c.text, marginBottom: 16, lineHeight: 1.15 }}>What We Do</h2>
+              <h2 style={{ fontSize: 'clamp(2rem, 3.5cqi, 2.8rem)', fontWeight: 800, color: c.text, marginBottom: 16, lineHeight: 1.15 }}>What We Do</h2>
               {copy.servicesSection?.intro && (
                 <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.7 }}>{copy.servicesSection.intro}</p>
               )}
@@ -259,7 +259,7 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
         <section id="brands" style={{ order: getOrder('brands'), padding: '72px 5%', background: '#fff', borderTop: '1px solid #e5e7eb' }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <span style={{ display: 'inline-block', background: `${c.accent}12`, color: c.accent, fontSize: 11, fontWeight: 700, padding: '4px 12px', borderRadius: 16, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 16 }}>Brands</span>
-            <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.4rem)', fontWeight: 800, color: c.text, marginBottom: 32 }}>Brands We Carry</h2>
+            <h2 style={{ fontSize: 'clamp(1.8rem, 3cqi, 2.4rem)', fontWeight: 800, color: c.text, marginBottom: 32 }}>Brands We Carry</h2>
             {brandsList.length > 0 && (
               <div style={{ marginBottom: 28 }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: c.muted, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 16 }}>WHEEL BRANDS</div>
@@ -327,7 +327,7 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
           </div>
           <div>
             <span style={{ display: 'inline-block', background: `${c.accent}12`, color: c.accent, fontSize: 11, fontWeight: 700, padding: '4px 12px', borderRadius: 16, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 16 }}>About</span>
-            <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, color: c.text, marginBottom: 20 }}>About {biz.businessName}</h2>
+            <h2 style={{ fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, color: c.text, marginBottom: 20 }}>About {biz.businessName}</h2>
             <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.85, marginBottom: 20 }}>
               {copy.aboutText || `Serving ${biz.city || 'your area'} with ${fb.aboutFallback}.`}
             </p>
@@ -372,7 +372,7 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
       {!hidden('testimonials') && (
         copy?.googleWidgetKey ? (
           <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
-            {copy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.googleReviewsTitle}</h2>}
+            {copy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} theme={copy?.googleReviewsTheme} />
           </div>
         ) : testimonials.length > 0 ? (
@@ -380,7 +380,7 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ textAlign: 'center', marginBottom: 48 }}>
               <span style={{ display: 'inline-block', background: `${c.accent}12`, color: c.accent, fontSize: 11, fontWeight: 700, padding: '4px 12px', borderRadius: 16, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 12 }}>Reviews</span>
-              <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, color: c.text, margin: 0 }}>Happy Customers</h2>
+              <h2 style={{ fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, color: c.text, margin: 0 }}>Happy Customers</h2>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
               {testimonials.map((t, i) => (
@@ -399,7 +399,7 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
       {/* CTA — full-width banner */}
       {!hidden('cta') && (
       <section id="contact" style={{ order: getOrder('cta'), background: c.accent, padding: '72px 5%', textAlign: 'center' }}>
-        <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 800, color: '#fff', margin: '0 0 12px' }}>{copy.ctaHeadline || 'Ready to Upgrade?'}</h2>
+        <h2 style={{ fontSize: 'clamp(2rem, 4cqi, 3rem)', fontWeight: 800, color: '#fff', margin: '0 0 12px' }}>{copy.ctaHeadline || 'Ready to Upgrade?'}</h2>
         <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 16, marginBottom: 32, maxWidth: 500, marginLeft: 'auto', marginRight: 'auto' }}>
           {copy.ctaSubtext || `${biz.city || 'Your city'}, ${biz.state || ''} — Stop by or give us a call today`}
         </p>

@@ -29,11 +29,11 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
       background: scrolled ? c.bg : 'rgba(10,5,5,0.85)',
       borderBottom: `3px solid ${c.accent}`,
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '0 clamp(1rem, 5vw, 3rem)', height: '68px',
+      padding: '0 clamp(1rem, 5cqi, 3rem)', height: '68px',
       backdropFilter: 'blur(8px)',
     },
     navLogo: {
-      fontFamily: font, fontSize: 'clamp(1rem, 2vw, 1.25rem)',
+      fontFamily: font, fontSize: 'clamp(1rem, 2cqi, 1.25rem)',
       color: c.text, letterSpacing: '0.08em', fontWeight: 900,
       textTransform: 'uppercase',
     },
@@ -47,7 +47,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
     hero: {
       minHeight: '100vh', background: c.bg,
       display: 'flex', flexDirection: 'column', justifyContent: 'center',
-      padding: 'clamp(6rem, 12vw, 9rem) clamp(1.5rem, 7vw, 5rem) clamp(3rem, 6vw, 5rem)',
+      padding: 'clamp(6rem, 12cqi, 9rem) clamp(1.5rem, 7cqi, 5rem) clamp(3rem, 6cqi, 5rem)',
       position: 'relative', overflow: 'hidden',
     },
     heroSlash: {
@@ -71,14 +71,15 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
       padding: '5px 14px', marginBottom: '1.5rem',
     },
     heroH1: {
-      fontFamily: font, fontSize: 'clamp(1.8rem, 8vw, 6.5rem)',
+      fontFamily: font, fontSize: 'clamp(1.8rem, 8cqi, 5rem)',
+      wordBreak: 'break-word', overflowWrap: 'break-word',
       color: c.text, lineHeight: 0.95, marginBottom: '1.5rem',
       fontWeight: 900, textTransform: 'uppercase', letterSpacing: '-0.01em',
       maxWidth: '800px',
     },
     heroH1Accent: { color: c.accent },
     heroSub: {
-      fontFamily: bodyFont, fontSize: 'clamp(1rem, 1.8vw, 1.15rem)',
+      fontFamily: bodyFont, fontSize: 'clamp(1rem, 1.8cqi, 1.15rem)',
       color: c.muted, marginBottom: '2.5rem', maxWidth: '480px', lineHeight: 1.7,
     },
     ctaRow: { display: 'flex', gap: '1rem', flexWrap: 'wrap' },
@@ -105,19 +106,19 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
       flex: '1 1 150px', background: c.secondary, padding: '1.75rem 1.5rem',
       textAlign: 'center', margin: '2px', border: `1px solid ${c.accent}33`,
     },
-    statNum: { fontFamily: font, fontSize: 'clamp(1.8rem, 3.5vw, 2.6rem)', color: '#fff', fontWeight: 900, display: 'block' },
-    statNumAlt: { fontFamily: font, fontSize: 'clamp(1.8rem, 3.5vw, 2.6rem)', color: c.accent, fontWeight: 900, display: 'block' },
+    statNum: { fontFamily: font, fontSize: 'clamp(1.8rem, 3.5cqi, 2.6rem)', color: '#fff', fontWeight: 900, display: 'block' },
+    statNumAlt: { fontFamily: font, fontSize: 'clamp(1.8rem, 3.5cqi, 2.6rem)', color: c.accent, fontWeight: 900, display: 'block' },
     statLabel: { fontFamily: bodyFont, fontSize: '0.72rem', color: 'rgba(255,255,255,0.75)', letterSpacing: '0.15em', textTransform: 'uppercase', marginTop: '0.35rem' },
     statLabelAlt: { fontFamily: bodyFont, fontSize: '0.72rem', color: c.muted, letterSpacing: '0.15em', textTransform: 'uppercase', marginTop: '0.35rem' },
-    section: { padding: 'clamp(3rem, 7vw, 6rem) clamp(1.5rem, 7vw, 5rem)', background: c.bg },
-    sectionAlt: { padding: 'clamp(3rem, 7vw, 6rem) clamp(1.5rem, 7vw, 5rem)', background: c.secondary },
+    section: { padding: 'clamp(3rem, 7cqi, 6rem) clamp(1.5rem, 7cqi, 5rem)', background: c.bg },
+    sectionAlt: { padding: 'clamp(3rem, 7cqi, 6rem) clamp(1.5rem, 7cqi, 5rem)', background: c.secondary },
     sectionTag: {
       fontFamily: bodyFont, fontSize: '0.68rem', fontWeight: 700,
       textTransform: 'uppercase', letterSpacing: '0.25em', color: c.accent,
       marginBottom: '0.6rem',
     },
     sectionTitle: {
-      fontFamily: font, fontSize: 'clamp(1.8rem, 4vw, 3rem)', fontWeight: 900,
+      fontFamily: font, fontSize: 'clamp(1.8rem, 4cqi, 3rem)', fontWeight: 900,
       textTransform: 'uppercase', color: c.text, marginBottom: '1rem',
     },
     sectionSub: { fontFamily: bodyFont, color: c.muted, fontSize: '1rem', lineHeight: 1.75, maxWidth: '560px', marginBottom: '3rem' },
@@ -137,7 +138,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
     aboutSidebar: {
       background: c.accent, padding: '2.5rem 2rem',
     },
-    sidebarNum: { fontFamily: font, fontSize: 'clamp(3rem, 5vw, 4rem)', color: '#fff', fontWeight: 900, display: 'block', lineHeight: 1 },
+    sidebarNum: { fontFamily: font, fontSize: 'clamp(3rem, 5cqi, 4rem)', color: '#fff', fontWeight: 900, display: 'block', lineHeight: 1 },
     sidebarLabel: { fontFamily: bodyFont, fontSize: '0.8rem', color: 'rgba(255,255,255,0.8)', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '1.5rem', display: 'block' },
     sidebarDivider: { borderTop: '1px solid rgba(255,255,255,0.25)', margin: '1.5rem 0' },
     aboutText: { fontFamily: bodyFont, color: c.muted, fontSize: '1.05rem', lineHeight: 1.85 },
@@ -151,16 +152,16 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
     },
     ctaLeft: {
       flex: '1 1 300px', background: c.accent,
-      padding: 'clamp(3rem, 6vw, 5rem) clamp(1.5rem, 5vw, 4rem)',
+      padding: 'clamp(3rem, 6cqi, 5rem) clamp(1.5rem, 5cqi, 4rem)',
       display: 'flex', flexDirection: 'column', justifyContent: 'center',
     },
     ctaRight: {
       flex: '1 1 300px', background: c.secondary,
-      padding: 'clamp(3rem, 6vw, 5rem) clamp(1.5rem, 5vw, 4rem)',
+      padding: 'clamp(3rem, 6cqi, 5rem) clamp(1.5rem, 5cqi, 4rem)',
       display: 'flex', flexDirection: 'column', justifyContent: 'center',
     },
-    ctaHeading: { fontFamily: font, fontSize: 'clamp(1.6rem, 3.5vw, 2.4rem)', color: '#fff', fontWeight: 900, textTransform: 'uppercase', marginBottom: '1rem' },
-    ctaPhone: { fontFamily: font, fontSize: 'clamp(1.5rem, 3vw, 2.2rem)', color: '#fff', marginBottom: '1.5rem' },
+    ctaHeading: { fontFamily: font, fontSize: 'clamp(1.6rem, 3.5cqi, 2.4rem)', color: '#fff', fontWeight: 900, textTransform: 'uppercase', marginBottom: '1rem' },
+    ctaPhone: { fontFamily: font, fontSize: 'clamp(1.5rem, 3cqi, 2.2rem)', color: '#fff', marginBottom: '1.5rem' },
     ctaBtn: {
       background: '#fff', color: c.accent, padding: '14px 30px',
       fontFamily: bodyFont, fontSize: '0.9rem', fontWeight: 700,
@@ -170,7 +171,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
     ctaRightTitle: { fontFamily: font, fontSize: '1.2rem', color: c.text, fontWeight: 900, textTransform: 'uppercase', marginBottom: '1rem' },
     ctaRightText: { fontFamily: bodyFont, color: c.muted, fontSize: '0.95rem', lineHeight: 1.7, marginBottom: '1.5rem' },
     footer: {
-      background: '#0a0505', padding: 'clamp(2rem, 4vw, 3rem) clamp(1.5rem, 7vw, 5rem)',
+      background: '#0a0505', padding: 'clamp(2rem, 4cqi, 3rem) clamp(1.5rem, 7cqi, 5rem)',
       display: 'flex', flexWrap: 'wrap', gap: '2rem', justifyContent: 'space-between',
       borderTop: `3px solid ${c.accent}`,
     },
@@ -197,23 +198,23 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
 
   return (
     <div style={{ background: c.bg, color: c.text, fontFamily: bodyFont, containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
-      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}.tp-3col{grid-template-columns:1fr!important}.tp-sporty-logo{font-size:0.9rem!important;letter-spacing:0.04em!important;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block}.tp-sporty-phone{font-size:0.72rem!important;padding:7px 12px!important;letter-spacing:0.03em!important;white-space:nowrap}}`}</style>
       {/* NAV */}
-      <nav style={{ ...s.nav, order: -1 }}>
+      <nav style={{ ...s.nav, order: -1, gap: 12 }}>
         {images.logo ? (
           <img src={images.logo} alt={businessInfo.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
         ) : (
-          <span style={s.navLogo}>
+          <span className="tp-sporty-logo" style={{ ...s.navLogo, minWidth: 0, flex: '0 1 auto' }}>
             {businessInfo.businessName.split(' ').map((w, i) =>
               i === 0 ? <span key={i}>{w} </span> : <span key={i} style={s.navAccent}>{w} </span>
             )}
           </span>
         )}
-        <div className="tp-nav-links" style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
+        <div className="tp-nav-links" style={{ display: 'flex', gap: '2rem', alignItems: 'center', flexShrink: 0 }}>
           <a href="#services" style={{ color: c.text, textDecoration: 'none', fontFamily: bodyFont, fontSize: '0.85rem', letterSpacing: '0.05em', opacity: 0.8 }}>Services</a>
           <a href="#about" style={{ color: c.text, textDecoration: 'none', fontFamily: bodyFont, fontSize: '0.85rem', letterSpacing: '0.05em', opacity: 0.8 }}>About</a>
           <a href="#reviews" style={{ color: c.text, textDecoration: 'none', fontFamily: bodyFont, fontSize: '0.85rem', letterSpacing: '0.05em', opacity: 0.8 }}>Reviews</a>
-          <a href={'tel:' + (businessInfo.phone || '')} style={{ ...s.navPhone, textDecoration: 'none' }}>{businessInfo.phone}</a>
+          <a href={'tel:' + (businessInfo.phone || '')} className="tp-sporty-phone" style={{ ...s.navPhone, textDecoration: 'none' }}>{businessInfo.phone}</a>
         </div>
       </nav>
 
@@ -225,7 +226,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
         {!splitHero && <div style={s.heroSlash2} />}
         <div style={splitHero ? {
           flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
-          padding: 'clamp(3rem,6vw,6rem)', background: c.bg,
+          padding: 'clamp(3rem,6cqi,6rem)', background: c.bg,
         } : { position: 'relative', zIndex: 1 }}>
           {businessInfo.awards && <div style={s.awardsTag}>{businessInfo.awards}</div>}
           <h1 style={s.heroH1}>
@@ -279,7 +280,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
             ))}
           </div>
         ) : (
-          <div style={{ ...s.servicesGrid, gridTemplateColumns: `repeat(${svcCols}, 1fr)` }}>
+          <div className="tp-3col" style={{ ...s.servicesGrid, gridTemplateColumns: `repeat(${svcCols}, minmax(0, 1fr))` }}>
             {(generatedCopy.servicesSection?.items || []).map((svc, i) => (
               <div key={i} style={s.serviceCard}>
                 <div style={s.serviceName}>{svc.name}</div>
@@ -329,7 +330,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
       {!hidden('testimonials') && (
         generatedCopy?.googleWidgetKey ? (
           <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
-            {generatedCopy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{generatedCopy.googleReviewsTitle}</h2>}
+            {generatedCopy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{generatedCopy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={generatedCopy.googleWidgetKey} theme={generatedCopy?.googleReviewsTheme} />
           </div>
         ) : (generatedCopy.testimonialPlaceholders || []).length > 0 ? (

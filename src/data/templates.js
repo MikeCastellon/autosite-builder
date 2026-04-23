@@ -22,6 +22,7 @@ export const TEMPLATES = {
     font: "'Inter', sans-serif",
     bodyFont: "'Inter', sans-serif",
     mood: 'energetic, mobile, convenient, bold',
+    hidden: true,
   },
   mobile_modern: {
     id: 'mobile_modern',
@@ -33,6 +34,7 @@ export const TEMPLATES = {
     font: "'Inter', sans-serif",
     bodyFont: "'Inter', sans-serif",
     mood: 'professional, reliable, modern, clean',
+    hidden: true,
   },
   mobile_rugged: {
     id: 'mobile_rugged',
@@ -44,6 +46,7 @@ export const TEMPLATES = {
     font: "'Inter', sans-serif",
     bodyFont: "'Inter', sans-serif",
     mood: 'rugged, tough, versatile, dependable',
+    hidden: true,
   },
 
   // ─── Wheel Shop ────────────────────────────────────────────────
@@ -57,6 +60,7 @@ export const TEMPLATES = {
     font: "'Inter', sans-serif",
     bodyFont: "'Inter', sans-serif",
     mood: 'custom, aggressive, high-performance, chrome',
+    hidden: true,
   },
   wheel_clean: {
     id: 'wheel_clean',
@@ -68,6 +72,7 @@ export const TEMPLATES = {
     font: "'Inter', sans-serif",
     bodyFont: "'Inter', sans-serif",
     mood: 'professional, clean, trustworthy, approachable',
+    hidden: true,
   },
 
   // ─── Tint Shop ─────────────────────────────────────────────────
@@ -81,6 +86,7 @@ export const TEMPLATES = {
     font: "'Inter', sans-serif",
     bodyFont: "'Inter', sans-serif",
     mood: 'premium, sleek, dark, high-tech, sophisticated',
+    hidden: true,
   },
   tint_sleek: {
     id: 'tint_sleek',
@@ -92,6 +98,7 @@ export const TEMPLATES = {
     font: "'Inter', sans-serif",
     bodyFont: "'Inter', sans-serif",
     mood: 'modern, fresh, precise, professional',
+    hidden: true,
   },
 
   // ─── Detailing Shop (extra) ────────────────────────────────────
@@ -105,6 +112,7 @@ export const TEMPLATES = {
     font: "'Inter', sans-serif",
     bodyFont: "'Inter', sans-serif",
     mood: 'clean, coastal, fresh, bright, approachable',
+    hidden: true,
   },
 
   // ─── Mechanic Shop ─────────────────────────────────────────────
@@ -129,6 +137,7 @@ export const TEMPLATES = {
     font: "'Inter', sans-serif",
     bodyFont: "'Inter', sans-serif",
     mood: 'friendly, trustworthy, local, welcoming, honest',
+    hidden: true,
   },
   mechanic_garage: {
     id: 'mechanic_garage',
@@ -198,7 +207,7 @@ export const TEMPLATES = {
   wheel_apex: {
     id: 'wheel_apex',
     businessType: 'wheel_shop',
-    label: 'Apex Forge',
+    label: 'Forge Studio',
     description: 'Alloy & bronze e-commerce — product cards, finish selector, editorial.',
     previewColors: ['#F0F1F3', '#A8813A', '#FFFFFF'],
     colors: { bg: '#F0F1F3', accent: '#A8813A', text: '#1C1E24', secondary: '#FFFFFF', muted: '#7A7D88' },
@@ -220,6 +229,7 @@ export const TEMPLATES = {
     bodyFont: "'Barlow', sans-serif",
     mood: 'luxury, premium, sophisticated, dark, exclusive',
     tier: 'premium',
+    hidden: true,
   },
   detailing_autosync_white: {
     id: 'detailing_autosync_white',
@@ -232,6 +242,7 @@ export const TEMPLATES = {
     bodyFont: "'DM Sans', sans-serif",
     mood: 'minimal, clean, modern, precision, professional',
     tier: 'premium',
+    hidden: true,
   },
 
   // ─── Mechanic Shop (extra) ─────────────────────────────────────

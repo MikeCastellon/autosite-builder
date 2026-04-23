@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { FONT_SLOTS } from '../../data/fontOptions.js';
 
 const EMOJI_GROUPS = {
   'Common': ['⭐', '✅', '🏆', '💎', '🔧', '🛞', '🚗', '🏎️', '💰', '💳', '🕐', '⏱️', '📞', '📍', '🎯', '✓', '★', '♦'],
@@ -195,7 +196,7 @@ function Toggle({ value, onChange, options }) {
   );
 }
 
-export default function ContentEditor({ isOpen, onClose, copy, images, onCopyChange, onImagesChange, templateMeta, templateId, customColors = {}, onCustomColors }) {
+export default function ContentEditor({ isOpen, onClose, copy, images, onCopyChange, onImagesChange, templateMeta, templateId, customColors = {}, onCustomColors, customFonts = {}, onCustomFonts }) {
   const [activeSection, setActiveSection] = useState('visibility');
 
   const setCopy = (path, value) => {
@@ -381,7 +382,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
     { id: 'testimonials', label: 'Reviews' },
     // Instagram tab disabled pending Meta App Review
     { id: 'contact', label: 'Contact' },
-    { id: 'colors', label: 'Colors' },
+    { id: 'colors', label: 'Colors & Fonts' },
     { id: 'footer', label: 'Footer' },
   ];
 
@@ -938,25 +939,30 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
 
           {activeSection === 'colors' && templateMeta && (
             <>
-              <p className="text-[11px] text-gray-400 mb-4">Click a swatch to change the color. Changes apply live.</p>
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-3">Colors</p>
+              <p className="text-[11px] text-gray-400 mb-4">Click a swatch to change it. Changes apply live across the site.</p>
               {[
-                { key: 'bg', label: 'Background' },
-                { key: 'accent', label: 'Accent / Brand' },
-                { key: 'text', label: 'Text' },
-                { key: 'secondary', label: 'Surface' },
-                { key: 'muted', label: 'Muted Text' },
-              ].map(({ key, label }) => {
+                { key: 'bg', label: 'Page Background', helper: 'Main color behind everything on the page' },
+                { key: 'accent', label: 'Primary Brand Color', helper: 'Buttons, highlights, links, and featured icons' },
+                { key: 'text', label: 'Main Text Color', helper: 'Headings and body paragraph color' },
+                { key: 'secondary', label: 'Card & Section Background', helper: 'Panels, cards, and alternating section color' },
+                { key: 'muted', label: 'Muted / Subtle Text', helper: 'Captions, labels, and metadata' },
+              ].map(({ key, label, helper }) => {
                 const base = templateMeta.colors[key] || '#000000';
                 const val = customColors?.[key] ?? base;
+                const isOverridden = Boolean(customColors?.[key]);
                 return (
-                  <div key={key} className="flex items-center justify-between mb-3">
-                    <span className="text-[13px] text-gray-700">{label}</span>
-                    <div className="flex items-center gap-2">
-                      {customColors?.[key] && (
+                  <div key={key} className="flex items-start justify-between gap-3 mb-3 pb-3 border-b border-gray-100 last:border-b-0">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-semibold text-gray-800 leading-tight">{label}</p>
+                      <p className="text-[11px] text-gray-400 leading-snug mt-0.5">{helper}</p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0 pt-0.5">
+                      {isOverridden && (
                         <button onClick={() => onCustomColors(prev => { const n = { ...prev }; delete n[key]; return n; })}
                           className="text-[11px] text-gray-400 hover:text-red-500 transition">reset</button>
                       )}
-                      <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-gray-200 cursor-pointer shadow-sm">
+                      <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-gray-200 cursor-pointer shadow-sm" title={val}>
                         <div className="absolute inset-0" style={{ background: val }} />
                         <input type="color" value={val}
                           onChange={(e) => onCustomColors(prev => ({ ...prev, [key]: e.target.value }))}
@@ -971,6 +977,53 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
                   className="mt-2 text-[12px] text-gray-400 hover:text-red-500 border border-gray-200 rounded-lg px-3 py-1.5 w-full transition">
                   Reset all colors to default
                 </button>
+              )}
+
+              {onCustomFonts && (
+                <>
+                  <hr className="my-5 border-gray-100" />
+                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-3">Fonts</p>
+                  <p className="text-[11px] text-gray-400 mb-4">Pick a typeface for headings and body text. Changes apply live.</p>
+                  {FONT_SLOTS.filter((slot) => templateMeta[slot.key] !== undefined).map((slot) => {
+                    const base = templateMeta[slot.key];
+                    const val = customFonts?.[slot.key] ?? base;
+                    const isOverridden = Boolean(customFonts?.[slot.key]);
+                    return (
+                      <div key={slot.key} className="mb-4">
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-[13px] font-semibold text-gray-800">{slot.label}</label>
+                          {isOverridden && (
+                            <button onClick={() => onCustomFonts(prev => { const n = { ...prev }; delete n[slot.key]; return n; })}
+                              className="text-[11px] text-gray-400 hover:text-red-500 transition">reset</button>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-gray-400 mb-1.5 leading-snug">{slot.helper}</p>
+                        <select
+                          value={val}
+                          onChange={(e) => onCustomFonts(prev => ({ ...prev, [slot.key]: e.target.value }))}
+                          className="w-full text-[13px] text-gray-800 border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition"
+                          style={{ fontFamily: val }}
+                        >
+                          {!slot.options.some((o) => o.family === val) && (
+                            <option value={val}>Current ({val.replace(/'/g, '').split(',')[0]})</option>
+                          )}
+                          {slot.options.map((opt) => (
+                            <option key={opt.family} value={opt.family} style={{ fontFamily: opt.family }}>{opt.label}</option>
+                          ))}
+                        </select>
+                        <p className="text-[13px] mt-2 px-2 py-1.5 bg-gray-50 rounded border border-gray-100 truncate" style={{ fontFamily: val }}>
+                          The quick brown fox jumps over the lazy dog
+                        </p>
+                      </div>
+                    );
+                  })}
+                  {Object.keys(customFonts || {}).length > 0 && (
+                    <button onClick={() => onCustomFonts({})}
+                      className="mt-2 text-[12px] text-gray-400 hover:text-red-500 border border-gray-200 rounded-lg px-3 py-1.5 w-full transition">
+                      Reset all fonts to default
+                    </button>
+                  )}
+                </>
               )}
             </>
           )}

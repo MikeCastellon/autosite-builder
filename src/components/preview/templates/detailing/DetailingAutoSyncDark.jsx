@@ -74,10 +74,10 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
   const serviceIcons = ['✦', '◈', '⬡', '◉', '✧', '◆', '◇', '✣'];
 
   const s = {
-    wrapper: { background: c.bg, color: textColor, fontFamily: bodyFont, overflowX: 'hidden', containerType: 'inline-size', display: 'flex', flexDirection: 'column' },
+    wrapper: { background: c.bg, color: textColor, fontFamily: bodyFont, overflowX: 'clip', containerType: 'inline-size', display: 'flex', flexDirection: 'column' },
     nav: {
       position: 'sticky', top: 0, zIndex: 100,
-      padding: scrolled ? '14px clamp(1.5rem,5vw,3.75rem)' : '20px clamp(1.5rem,5vw,3.75rem)',
+      padding: scrolled ? '14px clamp(1.5rem,5cqi,3.75rem)' : '20px clamp(1.5rem,5cqi,3.75rem)',
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       transition: 'all 0.4s',
       background: scrolled ? 'rgba(8,10,13,0.97)' : 'linear-gradient(to bottom, rgba(8,10,13,0.95), transparent)',
@@ -90,7 +90,7 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
     logoText: { fontFamily: 'Barlow Condensed, sans-serif', letterSpacing: '3px', fontSize: '15px', color: c.text, fontWeight: 500, display: 'block' },
     logoSub: { fontSize: '9px', letterSpacing: '5px', color: c.accent, fontWeight: 300, display: 'block', marginTop: '-2px' },
     navCta: { background: 'transparent', border: '1px solid ' + c.accent, color: c.accent, padding: '10px 24px', fontFamily: bodyFont, fontSize: '11px', letterSpacing: '2.5px', textTransform: 'uppercase', cursor: 'pointer' },
-    hero: { minHeight: '100vh', display: 'flex', alignItems: 'center', position: 'relative', overflow: 'hidden', padding: 'clamp(5rem,10vw,8rem) clamp(1.5rem,5vw,3.75rem) clamp(4rem,8vw,6rem)' },
+    hero: { minHeight: '100vh', display: 'flex', alignItems: 'center', position: 'relative', overflow: 'hidden', padding: 'clamp(5rem,10cqi,8rem) clamp(1.5rem,5cqi,3.75rem) clamp(4rem,8cqi,6rem)' },
     heroBg: { position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 80% 60% at 70% 50%, rgba(201,168,76,0.06) 0%, transparent 70%), radial-gradient(ellipse 40% 40% at 20% 80%, rgba(201,168,76,0.04) 0%, transparent 60%), linear-gradient(135deg, #080A0D 0%, #0E1116 50%, #080A0D 100%)' },
     heroGrid: {
       position: 'absolute', inset: 0,
@@ -104,75 +104,75 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
     heroEyebrow: { display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '28px' },
     heroEyebrowLine: { width: '48px', height: '1px', background: c.accent, flexShrink: 0 },
     heroEyebrowText: { fontSize: '11px', letterSpacing: '4px', color: c.accent, textTransform: 'uppercase', fontWeight: 500, fontFamily: bodyFont },
-    heroH1: { fontFamily: font, fontSize: 'clamp(1.8rem,7vw,5.75rem)', fontWeight: 300, lineHeight: 1.0, color: c.text, marginBottom: '28px' },
+    heroH1: { fontFamily: font, fontSize: 'clamp(1.8rem,7cqi,5.75rem)', fontWeight: 300, lineHeight: 1.0, color: c.text, marginBottom: '28px' },
     heroH1Em: { fontStyle: 'italic', color: c.accent },
-    heroDesc: { fontSize: 'clamp(0.9rem,1.5vw,1rem)', lineHeight: 1.8, color: textDim, maxWidth: '480px', marginBottom: '48px', fontWeight: 300, fontFamily: bodyFont },
+    heroDesc: { fontSize: 'clamp(0.9rem,1.5cqi,1rem)', lineHeight: 1.8, color: textDim, maxWidth: '480px', marginBottom: '48px', fontWeight: 300, fontFamily: bodyFont },
     heroActions: { display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' },
     btnPrimary: { background: c.accent, color: c.bg, padding: '16px 40px', fontFamily: bodyFont, fontSize: '12px', letterSpacing: '2.5px', textTransform: 'uppercase', fontWeight: 600, cursor: 'pointer', border: 'none' },
     btnSecondary: { color: textColor, fontSize: '12px', letterSpacing: '2px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 500, fontFamily: bodyFont, background: 'transparent', border: 'none', cursor: 'pointer' },
     btnSecondaryCircle: { width: '36px', height: '36px', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0 },
-    statsBar: { background: dark3, borderTop: '1px solid ' + goldDim, borderBottom: '1px solid ' + goldDim, padding: 'clamp(1.5rem,3vw,2rem) clamp(1.5rem,5vw,3.75rem)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px,1fr))' },
+    statsBar: { background: dark3, borderTop: '1px solid ' + goldDim, borderBottom: '1px solid ' + goldDim, padding: 'clamp(1.5rem,3cqi,2rem) clamp(1.5rem,5cqi,3.75rem)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px,1fr))' },
     statItem: { textAlign: 'center', padding: '1rem', borderRight: '1px solid rgba(255,255,255,0.06)' },
     statItemLast: { textAlign: 'center', padding: '1rem' },
-    statNum: { fontFamily: font, fontSize: 'clamp(2rem,4vw,3rem)', fontWeight: 300, color: c.accent, lineHeight: 1, display: 'block' },
+    statNum: { fontFamily: font, fontSize: 'clamp(2rem,4cqi,3rem)', fontWeight: 300, color: c.accent, lineHeight: 1, display: 'block' },
     statLabel: { fontSize: '11px', letterSpacing: '2.5px', color: textDim, textTransform: 'uppercase', marginTop: '6px', fontFamily: bodyFont, display: 'block' },
     sectionLabel: { display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '20px' },
     sectionLabelLine: { width: '32px', height: '1px', background: c.accent, flexShrink: 0 },
     sectionLabelText: { fontSize: '10px', letterSpacing: '4px', color: c.accent, textTransform: 'uppercase', fontWeight: 600, fontFamily: bodyFont },
-    sectionTitle: { fontFamily: font, fontSize: 'clamp(2rem,4vw,3.625rem)', fontWeight: 300, lineHeight: 1.1, color: c.text },
+    sectionTitle: { fontFamily: font, fontSize: 'clamp(2rem,4cqi,3.625rem)', fontWeight: 300, lineHeight: 1.1, color: c.text },
     sectionTitleEm: { fontStyle: 'italic', color: c.accent },
-    servicesSection: { background: c.secondary, padding: 'clamp(4rem,8vw,7.5rem) clamp(1.5rem,5vw,3.75rem)' },
-    servicesHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 'clamp(3rem,6vw,4.5rem)', flexWrap: 'wrap', gap: '1.5rem' },
+    servicesSection: { background: c.secondary, padding: 'clamp(4rem,8cqi,7.5rem) clamp(1.5rem,5cqi,3.75rem)' },
+    servicesHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 'clamp(3rem,6cqi,4.5rem)', flexWrap: 'wrap', gap: '1.5rem' },
     servicesHeaderLeft: { maxWidth: '520px' },
     servicesHeaderP: { color: textDim, lineHeight: 1.8, marginTop: '20px', fontSize: '15px', fontFamily: bodyFont },
     servicesGrid: { display: 'grid', gap: '2px' },
-    serviceCard: { background: mid, padding: 'clamp(2rem,3vw,3rem) clamp(1.5rem,2.5vw,2.5rem)', position: 'relative', overflow: 'hidden', borderBottom: '3px solid ' + c.accent },
+    serviceCard: { background: mid, padding: 'clamp(2rem,3cqi,3rem) clamp(1.5rem,2.5cqi,2.5rem)', position: 'relative', overflow: 'hidden', borderBottom: '3px solid ' + c.accent },
     serviceNum: { fontFamily: font, fontSize: '64px', fontWeight: 300, color: 'rgba(201,168,76,0.12)', lineHeight: 1, marginBottom: '24px' },
     serviceIcon: { fontSize: '28px', marginBottom: '20px', color: c.accent },
     serviceCardH3: { fontFamily: 'Barlow Condensed, sans-serif', fontSize: '20px', letterSpacing: '1.5px', textTransform: 'uppercase', color: c.text, marginBottom: '14px', fontWeight: 500 },
     serviceCardP: { color: textDim, fontSize: '14px', lineHeight: 1.7, fontFamily: bodyFont },
-    brandsSection: { background: dark3, padding: 'clamp(2.5rem,5vw,4.5rem) clamp(1.5rem,5vw,3.75rem)', textAlign: 'center', borderTop: '1px solid rgba(201,168,76,0.1)', borderBottom: '1px solid rgba(201,168,76,0.1)' },
+    brandsSection: { background: dark3, padding: 'clamp(2.5rem,5cqi,4.5rem) clamp(1.5rem,5cqi,3.75rem)', textAlign: 'center', borderTop: '1px solid rgba(201,168,76,0.1)', borderBottom: '1px solid rgba(201,168,76,0.1)' },
     brandsLabel: { fontSize: '10px', letterSpacing: '4px', color: textDim, textTransform: 'uppercase', marginBottom: '40px', fontFamily: bodyFont },
-    brandsRow: { display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 'clamp(1.5rem,4vw,4rem)', flexWrap: 'wrap' },
+    brandsRow: { display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 'clamp(1.5rem,4cqi,4rem)', flexWrap: 'wrap' },
     brandItem: { fontFamily: 'Barlow Condensed, sans-serif', fontSize: '18px', letterSpacing: '3px', textTransform: 'uppercase', color: textDim, fontWeight: 500 },
     brandDot: { color: c.accent + '55', fontSize: '18px' },
-    specSection: { background: c.bg, padding: 'clamp(4rem,8vw,7.5rem) clamp(1.5rem,5vw,3.75rem)' },
-    specGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px,1fr))', gap: 'clamp(2rem,5vw,5rem)', alignItems: 'start', marginTop: 'clamp(2.5rem,5vw,4.5rem)' },
+    specSection: { background: c.bg, padding: 'clamp(4rem,8cqi,7.5rem) clamp(1.5rem,5cqi,3.75rem)' },
+    specGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px,1fr))', gap: 'clamp(2rem,5cqi,5rem)', alignItems: 'start', marginTop: 'clamp(2.5rem,5cqi,4.5rem)' },
     specCardMain: { background: mid, border: '1px solid rgba(201,168,76,0.2)', padding: '3rem', position: 'relative', overflow: 'hidden', minHeight: '360px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' },
     specCardMainBg: { position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at top right, rgba(201,168,76,0.08), transparent 60%)', pointerEvents: 'none' },
     specBgText: { position: 'absolute', top: '20px', right: '20px', fontFamily: font, fontSize: '100px', fontWeight: 300, color: 'rgba(201,168,76,0.05)', lineHeight: 1, pointerEvents: 'none', userSelect: 'none' },
-    specCardH2: { fontFamily: font, fontSize: 'clamp(1.8rem,3vw,2.625rem)', fontWeight: 300, color: c.text, lineHeight: 1.15, position: 'relative', zIndex: 1 },
+    specCardH2: { fontFamily: font, fontSize: 'clamp(1.8rem,3cqi,2.625rem)', fontWeight: 300, color: c.text, lineHeight: 1.15, position: 'relative', zIndex: 1 },
     specCardP: { color: textDim, fontSize: '14px', lineHeight: 1.8, marginTop: '16px', position: 'relative', zIndex: 1, fontFamily: bodyFont },
     specList: { listStyle: 'none', padding: 0, margin: 0 },
     specItem: { padding: '24px 0', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: '20px', alignItems: 'flex-start' },
     specDot: { width: '8px', height: '8px', borderRadius: '50%', background: c.accent, flexShrink: 0, marginTop: '7px' },
     specItemH4: { fontFamily: 'Barlow Condensed, sans-serif', fontSize: '16px', letterSpacing: '1px', textTransform: 'uppercase', color: c.text, marginBottom: '6px', fontWeight: 500 },
     specItemP: { color: textDim, fontSize: '13px', lineHeight: 1.6, fontFamily: bodyFont },
-    processSection: { background: c.secondary, padding: 'clamp(4rem,8vw,7.5rem) clamp(1.5rem,5vw,3.75rem)' },
-    processSteps: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px,1fr))', gap: '1px', background: 'rgba(255,255,255,0.05)', marginTop: 'clamp(2.5rem,5vw,4.5rem)' },
-    processStep: { background: c.secondary, padding: 'clamp(2rem,3vw,3rem) clamp(1.5rem,2.5vw,2.25rem)' },
+    processSection: { background: c.secondary, padding: 'clamp(4rem,8cqi,7.5rem) clamp(1.5rem,5cqi,3.75rem)' },
+    processSteps: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px,1fr))', gap: '1px', background: 'rgba(255,255,255,0.05)', marginTop: 'clamp(2.5rem,5cqi,4.5rem)' },
+    processStep: { background: c.secondary, padding: 'clamp(2rem,3cqi,3rem) clamp(1.5rem,2.5cqi,2.25rem)' },
     stepNum: { width: '44px', height: '44px', border: '1px solid ' + c.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Barlow Condensed, sans-serif', fontSize: '14px', letterSpacing: '1px', color: c.accent, marginBottom: '28px', flexShrink: 0 },
     processStepH3: { fontFamily: 'Barlow Condensed, sans-serif', fontSize: '18px', letterSpacing: '1.5px', textTransform: 'uppercase', color: c.text, marginBottom: '14px', fontWeight: 500 },
     processStepP: { color: textDim, fontSize: '13px', lineHeight: 1.7, fontFamily: bodyFont },
-    testimonialsSection: { background: c.bg, padding: 'clamp(4rem,8vw,7.5rem) clamp(1.5rem,5vw,3.75rem)' },
-    testiGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px,1fr))', gap: '24px', marginTop: 'clamp(2.5rem,5vw,4.5rem)' },
+    testimonialsSection: { background: c.bg, padding: 'clamp(4rem,8cqi,7.5rem) clamp(1.5rem,5cqi,3.75rem)' },
+    testiGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px,1fr))', gap: '24px', marginTop: 'clamp(2.5rem,5cqi,4.5rem)' },
     testiCard: { background: dark3, border: '1px solid rgba(255,255,255,0.05)', padding: '2.5rem' },
     testiQuote: { fontFamily: font, fontSize: '60px', color: c.accent, lineHeight: 0.5, marginBottom: '20px', opacity: 0.5 },
     testiStars: { color: c.accent, fontSize: '13px', marginBottom: '12px', letterSpacing: '2px' },
-    testiText: { color: textColor, fontSize: 'clamp(0.9rem,1.2vw,0.9375rem)', lineHeight: 1.8, fontStyle: 'italic', marginBottom: '28px', fontFamily: font, fontWeight: 300 },
+    testiText: { color: textColor, fontSize: 'clamp(0.9rem,1.2cqi,0.9375rem)', lineHeight: 1.8, fontStyle: 'italic', marginBottom: '28px', fontFamily: font, fontWeight: 300 },
     testiAuthor: { display: 'flex', alignItems: 'center', gap: '14px' },
     testiAvatar: { width: '44px', height: '44px', borderRadius: '50%', background: mid, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Barlow Condensed, sans-serif', fontSize: '16px', color: c.accent, fontWeight: 700, border: '1px solid rgba(201,168,76,0.3)', flexShrink: 0 },
     testiName: { fontSize: '13px', color: c.text, fontWeight: 600, fontFamily: bodyFont },
-    ctaSection: { background: dark3, borderTop: '1px solid ' + goldDim, padding: 'clamp(4rem,8vw,7.5rem) clamp(1.5rem,5vw,3.75rem)', textAlign: 'center' },
-    ctaH2: { fontFamily: font, fontSize: 'clamp(2rem,4vw,3.5rem)', fontWeight: 300, lineHeight: 1.1, color: c.text, marginBottom: '20px' },
+    ctaSection: { background: dark3, borderTop: '1px solid ' + goldDim, padding: 'clamp(4rem,8cqi,7.5rem) clamp(1.5rem,5cqi,3.75rem)', textAlign: 'center' },
+    ctaH2: { fontFamily: font, fontSize: 'clamp(2rem,4cqi,3.5rem)', fontWeight: 300, lineHeight: 1.1, color: c.text, marginBottom: '20px' },
     ctaDesc: { color: textDim, fontSize: '15px', lineHeight: 1.8, maxWidth: '520px', margin: '0 auto 2.5rem', fontFamily: bodyFont },
-    contactRow: { display: 'flex', justifyContent: 'center', gap: 'clamp(1.5rem,4vw,3rem)', flexWrap: 'wrap', marginBottom: '2.5rem' },
+    contactRow: { display: 'flex', justifyContent: 'center', gap: 'clamp(1.5rem,4cqi,3rem)', flexWrap: 'wrap', marginBottom: '2.5rem' },
     contactItem: { display: 'flex', alignItems: 'center', gap: '14px' },
     contactIcon: { width: '40px', height: '40px', border: '1px solid rgba(201,168,76,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.accent, fontSize: '18px', flexShrink: 0 },
     contactLabel: { fontSize: '11px', letterSpacing: '2px', color: textDim, textTransform: 'uppercase', fontFamily: bodyFont, display: 'block', textAlign: 'left' },
     contactVal: { color: c.text, fontSize: '15px', fontFamily: bodyFont, display: 'block', textAlign: 'left' },
-    footer: { background: '#060709', padding: 'clamp(2.5rem,5vw,4rem) clamp(1.5rem,5vw,3.75rem) clamp(1.5rem,3vw,2rem)', borderTop: '1px solid rgba(201,168,76,0.1)' },
-    footerTop: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px,1fr))', gap: 'clamp(2rem,4vw,3.75rem)', marginBottom: '3rem' },
+    footer: { background: '#060709', padding: 'clamp(2.5rem,5cqi,4rem) clamp(1.5rem,5cqi,3.75rem) clamp(1.5rem,3cqi,2rem)', borderTop: '1px solid rgba(201,168,76,0.1)' },
+    footerTop: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px,1fr))', gap: 'clamp(2rem,4cqi,3.75rem)', marginBottom: '3rem' },
     footerBrandP: { color: textDim, fontSize: '14px', lineHeight: 1.8, marginTop: '16px', maxWidth: '280px', fontFamily: bodyFont },
     footerColH4: { fontSize: '10px', letterSpacing: '3px', color: c.accent, textTransform: 'uppercase', marginBottom: '20px', fontWeight: 600, fontFamily: bodyFont },
     footerLink: { color: textDim, fontSize: '13px', textDecoration: 'none', fontFamily: bodyFont, display: 'block', marginBottom: '10px' },
@@ -217,7 +217,7 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
         {!splitHero && <HeroImage src={images.hero} />}
         <div style={splitHero ? {
           flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
-          padding: 'clamp(3rem,6vw,6rem)', background: dark3,
+          padding: 'clamp(3rem,6cqi,6rem)', background: dark3,
         } : s.heroContent}>
           <div style={s.heroEyebrow}>
             <div style={s.heroEyebrowLine} />
@@ -373,8 +373,8 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
 
       {/* ABOUT */}
       {!hidden('about') && generatedCopy.aboutText && (
-        <section id="about" style={{ order: getOrder('about'), background: c.bg, padding: 'clamp(4rem,8vw,7.5rem) clamp(1.5rem,5vw,3.75rem)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px,1fr))', gap: 'clamp(2rem,4vw,5rem)', alignItems: 'start' }}>
+        <section id="about" style={{ order: getOrder('about'), background: c.bg, padding: 'clamp(4rem,8cqi,7.5rem) clamp(1.5rem,5cqi,3.75rem)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px,1fr))', gap: 'clamp(2rem,4cqi,5rem)', alignItems: 'start' }}>
             <div>
               {(generatedCopy?.aboutLayout || 'image') !== 'stats' ? (
                 images.about
@@ -422,7 +422,7 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
       {!hidden('testimonials') && (
         generatedCopy?.googleWidgetKey ? (
           <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
-            {generatedCopy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: textColor }}>{generatedCopy.googleReviewsTitle}</h2>}
+            {generatedCopy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: textColor }}>{generatedCopy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={generatedCopy.googleWidgetKey} theme={generatedCopy?.googleReviewsTheme} />
           </div>
         ) : testimonials.length > 0 ? (

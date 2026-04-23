@@ -1,13 +1,24 @@
-import { Suspense, lazy, useMemo, useState } from 'react';
+import { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { TEMPLATE_COMPONENT_MAP } from '../../data/templates.js';
 import { normalizeBusinessInfo } from '../../lib/normalizeBusinessInfo.js';
 import PreviewToolbar from './PreviewToolbar.jsx';
 import ContentEditor from './ContentEditor.jsx';
 
-export default function WebsitePreview({ businessInfo, generatedCopy, editedCopy, onEditedCopyChange, images, onImagesChange, templateId, templateMeta, customColors, onCustomColors, onBack, onExport, onStartOver, isDemoPreview }) {
+export default function WebsitePreview({ businessInfo, generatedCopy, editedCopy, onEditedCopyChange, images, onImagesChange, templateId, templateMeta, customColors, onCustomColors, customFonts, onCustomFonts, onBack, onExport, onStartOver, isDemoPreview }) {
   const normalizedInfo = useMemo(() => normalizeBusinessInfo(businessInfo), [businessInfo]);
   const [viewMode, setViewMode] = useState('desktop');
   const [editorOpen, setEditorOpen] = useState(false);
+
+  // Pin the preview to the top whenever we land on a new template. Browser
+  // scroll-restoration + templates with 100vh heroes otherwise leave the page
+  // offset a few dozen pixels down on first render.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+    window.scrollTo(0, 0);
+  }, [templateId]);
 
   const TemplateComponent = useMemo(
     () => lazy(TEMPLATE_COMPONENT_MAP[templateId]),
@@ -42,6 +53,8 @@ export default function WebsitePreview({ businessInfo, generatedCopy, editedCopy
         templateId={templateId}
         customColors={customColors}
         onCustomColors={onCustomColors}
+        customFonts={customFonts}
+        onCustomFonts={onCustomFonts}
       />
 
       {/* Preview frame */}

@@ -120,8 +120,8 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
   const packageIcons = ['💧', '🫧', '✨', '🌟'];
 
   return (
-    <div style={{ fontFamily: bodyFont, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
-      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
+    <div style={{ fontFamily: bodyFont, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'clip', margin: 0, padding: 0, containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}.tp-3col{grid-template-columns:1fr!important}.tp-bubble-brand-name{font-size:15px!important;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}.tp-bubble-brand-sub{display:none!important}.tp-bubble-orb{width:30px!important;height:30px!important}.tp-bubble-cta{font-size:11px!important;padding:7px 14px!important}}`}</style>
 
       {/* Marquee keyframe */}
       <style>{'@keyframes soapScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }'}</style>
@@ -138,22 +138,22 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
       
         order: -1,
       }}>
-        <a href='#' style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+        <a href='#' style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', minWidth: 0, flex: '0 1 auto' }}>
           {images.logo ? (
             <img src={images.logo} alt={biz.businessName || 'Logo'} style={{ height: 38, objectFit: 'contain' }} />
           ) : (
             <>
-              <div style={{
+              <div className="tp-bubble-orb" style={{
                 width: 38, height: 38, borderRadius: '50%',
                 background: `radial-gradient(circle at 35% 30%, #fff, ${c.accent})`,
                 border: `2px solid ${c.accent}`, flexShrink: 0,
                 boxShadow: `0 0 0 3px ${accentLight}55`,
               }} />
-              <div>
-                <span style={{ fontFamily: font, fontSize: 17, color: c.text, display: 'block', lineHeight: 1.1 }}>
+              <div style={{ minWidth: 0 }}>
+                <span className="tp-bubble-brand-name" style={{ fontFamily: font, fontSize: 17, color: c.text, display: 'block', lineHeight: 1.1 }}>
                   {biz.businessName || fb.shopName}
                 </span>
-                <span style={{ fontSize: 10, color: c.muted || '#64748b', letterSpacing: 1.5, textTransform: 'uppercase', display: 'block' }}>
+                <span className="tp-bubble-brand-sub" style={{ fontSize: 10, color: c.muted || '#64748b', letterSpacing: 1.5, textTransform: 'uppercase', display: 'block' }}>
                   {fb.navSubtitle}{biz.city ? ` · ${biz.city}` : ''}
                 </span>
               </div>
@@ -164,11 +164,11 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
           {[['#packages', 'Packages'], ['#how', 'How It Works'], ['#reviews', 'Reviews']].map(([href, label]) => (
             <a key={href} href={href} style={{ color: c.text, textDecoration: 'none', fontWeight: 700, fontSize: 13, opacity: 0.8 }}>{label}</a>
           ))}
-          <a href={biz.phone ? `tel:${biz.phone}` : '#'} style={{
+          <a href={biz.phone ? `tel:${biz.phone}` : '#'} className="tp-bubble-cta" style={{
             background: `linear-gradient(135deg, ${c.accent}, #14b8a6)`,
             color: '#fff', padding: '9px 22px', borderRadius: 50,
             fontWeight: 800, fontSize: 13, textDecoration: 'none',
-            boxShadow: `0 4px 16px ${c.accent}44`,
+            boxShadow: `0 4px 16px ${c.accent}44`, whiteSpace: 'nowrap',
           }}>{fb.ctaHeadline} 🫧</a>
         </div>
       </nav>
@@ -194,7 +194,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
 
         <div style={splitHero ? {
           flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
-          padding: 'clamp(3rem,6vw,6rem)', background: c.bg,
+          padding: 'clamp(3rem,6cqi,6rem)', background: c.bg,
         } : { position: 'relative', zIndex: 1, padding: '6rem 5% 5rem', maxWidth: 800 }}>
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
@@ -206,7 +206,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
             {biz.city || 'Your City'}{biz.state ? `, ${biz.state}` : ''} — Open Now
           </div>
 
-          <h1 style={{ fontFamily: font, fontSize: 'clamp(1.8rem, 9vw, 6.5rem)', lineHeight: 0.95, letterSpacing: '-0.01em', margin: '0 0 1.2rem', color: c.text }}>
+          <h1 style={{ fontFamily: font, fontSize: 'clamp(1.8rem, 6cqi, 4.5rem)', lineHeight: 1, letterSpacing: '-0.01em', margin: '0 0 1.2rem', color: c.text }}>
             {copy.headline ? copy.headline : (
               <>
                 <span style={gradText}>{biz.businessName || fb.shopName}</span>
@@ -216,7 +216,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
             )}
           </h1>
 
-          <p style={{ fontSize: 'clamp(1rem, 2.2vw, 1.2rem)', color: c.muted || '#64748b', maxWidth: 520, marginBottom: 40, lineHeight: 1.7, fontWeight: 600 }}>
+          <p style={{ fontSize: 'clamp(1rem, 2.2cqi, 1.2rem)', color: c.muted || '#64748b', maxWidth: 520, marginBottom: 40, lineHeight: 1.7, fontWeight: 600 }}>
             {copy.subheadline || 'Thick foam. Sparkling rinse. A finish so clean you will want to park and just stare.'}
           </p>
 
@@ -287,7 +287,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
         <div style={{ maxWidth: 1100, margin: '0 auto', position: 'relative', zIndex: 1  }}>
           <div style={{ textAlign: 'center', marginBottom: 60 }}>
             <span style={{ display: 'inline-block', background: `${c.accent}18`, color: c.accent, borderRadius: 50, padding: '6px 18px', fontSize: 12, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 16 }}>🫧 Wash Packages</span>
-            <h2 style={{ fontFamily: font, fontSize: 'clamp(2rem, 5vw, 3rem)', color: c.text, margin: '0 0 16px', lineHeight: 1.1 }}>
+            <h2 style={{ fontFamily: font, fontSize: 'clamp(2rem, 5cqi, 3rem)', color: c.text, margin: '0 0 16px', lineHeight: 1.1 }}>
               Pick your{' '}<span style={gradText}>perfect wash.</span>
             </h2>
             <p style={{ color: c.muted || '#64748b', fontSize: 15, maxWidth: 560, margin: '0 auto', lineHeight: 1.7, fontWeight: 600 }}>
@@ -295,7 +295,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${biz.packages?.length > 0 ? Math.min(biz.packages.length, 3) : svcCols}, 1fr)`, gap: 20 }}>
+          <div className="tp-3col" style={{ display: 'grid', gridTemplateColumns: `repeat(${biz.packages?.length > 0 ? Math.min(biz.packages.length, 3) : svcCols}, minmax(0, 1fr))`, gap: 20 }}>
             {(biz.packages?.length > 0 ? biz.packages : services.length > 0 ? services : [
               { name: 'Express', description: 'Quick, fresh, done right. High-pressure pre-rinse, foam wash, spot-free exit.' },
               { name: 'Premium Package', description: 'The full foam experience — triple foam cannon, tire scrub, Rain-X protectant.' },
@@ -342,7 +342,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
         <div style={{ maxWidth: 1100, margin: '0 auto', position: 'relative', zIndex: 1  }}>
           <div style={{ textAlign: 'center', marginBottom: 64 }}>
             <span style={{ display: 'inline-block', background: `${c.accent}18`, color: c.accent, borderRadius: 50, padding: '6px 18px', fontSize: 12, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 16 }}>⚡ The Process</span>
-            <h2 style={{ fontFamily: font, fontSize: 'clamp(2rem, 5vw, 3rem)', color: c.text, margin: '0 0 16px', lineHeight: 1.1 }}>
+            <h2 style={{ fontFamily: font, fontSize: 'clamp(2rem, 5cqi, 3rem)', color: c.text, margin: '0 0 16px', lineHeight: 1.1 }}>
               Wash to{' '}<span style={gradText}>wow</span>{' '}in minutes.
             </h2>
             <p style={{ color: c.muted || '#64748b', fontSize: 15, maxWidth: 480, margin: '0 auto', lineHeight: 1.7, fontWeight: 600 }}>Pull in, ride through, drive out spotless. The whole thing takes under 5 minutes.</p>
@@ -368,7 +368,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
         <div style={{ maxWidth: 1100, margin: '0 auto'  }}>
           <div style={{ textAlign: 'center', marginBottom: 60 }}>
             <span style={{ display: 'inline-block', background: `${c.accent}18`, color: c.accent, borderRadius: 50, padding: '6px 18px', fontSize: 12, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 16 }}>💎 Why {biz.businessName || 'Us'}</span>
-            <h2 style={{ fontFamily: font, fontSize: 'clamp(2rem, 5vw, 3rem)', color: c.text, margin: '0 0 16px', lineHeight: 1.1 }}>
+            <h2 style={{ fontFamily: font, fontSize: 'clamp(2rem, 5cqi, 3rem)', color: c.text, margin: '0 0 16px', lineHeight: 1.1 }}>
               Not all shops are{' '}<span style={gradText}>equal.</span>
             </h2>
           </div>
@@ -405,7 +405,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
             {/* Right: text + awards */}
             <div>
               <span style={{ display: 'inline-block', background: `${c.accent}18`, color: c.accent, borderRadius: 50, padding: '4px 14px', fontSize: 11, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>About Us</span>
-              <h3 style={{ fontFamily: font, fontSize: 'clamp(1.5rem, 3vw, 2rem)', color: c.text, margin: '0 0 16px' }}>{biz.businessName || 'Who We Are'}</h3>
+              <h3 style={{ fontFamily: font, fontSize: 'clamp(1.5rem, 3cqi, 2rem)', color: c.text, margin: '0 0 16px' }}>{biz.businessName || 'Who We Are'}</h3>
               <p style={{ color: c.muted || '#64748b', fontSize: 15, lineHeight: 1.8, margin: '0 0 20px', fontWeight: 600 }}>
                 {copy.aboutText || `Based in ${biz.city || 'your city'}${biz.state ? `, ${biz.state}` : ''}, we deliver ${fb.aboutFallback} every time.${biz.yearsInBusiness ? ` Over ${biz.yearsInBusiness} years in business — we know quality.` : ''}`}
               </p>
@@ -452,7 +452,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
       {!hidden('testimonials') && (
         copy?.googleWidgetKey ? (
           <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
-            {copy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.googleReviewsTitle}</h2>}
+            {copy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} theme={copy?.googleReviewsTheme} />
           </div>
         ) : testimonials.length > 0 ? (
@@ -462,7 +462,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
           <div style={{ maxWidth: 1100, margin: '0 auto', position: 'relative', zIndex: 1  }}>
             <div style={{ textAlign: 'center', marginBottom: 60 }}>
               <span style={{ display: 'inline-block', background: `${c.accent}18`, color: c.accent, borderRadius: 50, padding: '6px 18px', fontSize: 12, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 16 }}>⭐ Customer Love</span>
-              <h2 style={{ fontFamily: font, fontSize: 'clamp(2rem, 5vw, 3rem)', color: c.text, margin: '0 0 16px', lineHeight: 1.1 }}>
+              <h2 style={{ fontFamily: font, fontSize: 'clamp(2rem, 5cqi, 3rem)', color: c.text, margin: '0 0 16px', lineHeight: 1.1 }}>
                 {biz.city ? `${biz.city}'s` : 'Our'}{' '}<span style={gradText}>cleanest fans.</span>
               </h2>
             </div>
@@ -499,7 +499,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
         <SmallBubble size='45px'  bottom='20%' left='18%' />
         <SmallBubble size='35px'  top='25%'  right='15%' />
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 640, margin: '0 auto' }}>
-          <h2 style={{ fontFamily: font, fontSize: 'clamp(2.2rem, 5vw, 3.8rem)', color: '#fff', lineHeight: 1.05, margin: '0 0 20px' }}>
+          <h2 style={{ fontFamily: font, fontSize: 'clamp(2.2rem, 5cqi, 3.8rem)', color: '#fff', lineHeight: 1.05, margin: '0 0 20px' }}>
             {copy.ctaHeadline || <>Your car is{' '}
             <span style={{ background: 'linear-gradient(135deg, #93c5fd, #6ee7b7, #c4b5fd)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>one rinse away</span>
             {' '}from perfect.</>}

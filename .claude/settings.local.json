@@ -3,7 +3,8 @@
     "allow": [
       "Bash(dir \"/c/Users/mikec/Website Creator/\")",
       "Bash(test -d \"/c/Users/mikec/Website Creator\")",
-      "Bash(npm create vite@latest . -- --template react --yes)"
+      "Bash(npm create vite@latest . -- --template react --yes)",
+      "Bash(npm run *)"
     ]
   }
 }

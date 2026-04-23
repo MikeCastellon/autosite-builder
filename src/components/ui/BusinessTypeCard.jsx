@@ -43,6 +43,21 @@ const ICONS = {
       <circle cx="4.5" cy="17.5" r="1" fill="currentColor"/>
     </svg>
   ),
+  car_wash: (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+      {/* Car body */}
+      <path d="M3 15l2-5h12l2 5" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+      <rect x="2" y="15" width="18" height="3" rx="1.2" stroke="currentColor" strokeWidth="1.5"/>
+      <circle cx="6.5" cy="18.5" r="1.2" stroke="currentColor" strokeWidth="1.5"/>
+      <circle cx="15.5" cy="18.5" r="1.2" stroke="currentColor" strokeWidth="1.5"/>
+      {/* Water droplets / bubbles above car */}
+      <circle cx="6" cy="5" r="1.5" stroke="currentColor" strokeWidth="1.3"/>
+      <circle cx="11" cy="3.5" r="1.8" stroke="currentColor" strokeWidth="1.3"/>
+      <circle cx="16" cy="5" r="1.3" stroke="currentColor" strokeWidth="1.3"/>
+      <circle cx="8.5" cy="7.5" r="0.7" fill="currentColor" opacity="0.6"/>
+      <circle cx="13.5" cy="7.5" r="0.7" fill="currentColor" opacity="0.6"/>
+    </svg>
+  ),
 };
 
 export default function BusinessTypeCard({ type, onClick }) {

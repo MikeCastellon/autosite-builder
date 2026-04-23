@@ -11,13 +11,17 @@ import { TEMPLATES } from './data/templates.js';
 import { DEMO_BUSINESS_INFO, DEMO_GENERATED_COPY } from './data/demoData.js';
 import { useAuth } from './lib/AuthContext.jsx';
 import LoginPage from './components/auth/LoginPage.jsx';
+import LandingPage from './components/LandingPage.jsx';
 import ResetPasswordPage from './components/auth/ResetPasswordPage.jsx';
 import DashboardPage from './components/dashboard/DashboardPage.jsx';
+import BookingSettingsPage from './components/dashboard/booking-settings/BookingSettingsPage.jsx';
+import BookingsPage from './components/dashboard/bookings-page/BookingsPage.jsx';
+import AdminPage from './components/admin/AdminPage.jsx';
 import { saveSite } from './lib/saveSite.js';
 import { supabase } from './lib/supabase.js';
 
 export default function App() {
-  const { session, loading, isRecovery, clearRecovery } = useAuth();
+  const { session, loading, isRecovery, clearRecovery, profile } = useAuth();
 
   const [step, setStep] = useState(1);
   const [businessType, setBusinessType] = useState(null);
@@ -28,7 +32,10 @@ export default function App() {
   const [images, setImages] = useState({});
   const [error, setError] = useState(null);
   const [customColors, setCustomColors] = useState({});
-  const [view, setView] = useState('wizard'); // 'wizard' | 'dashboard'
+  const [showLogin, setShowLogin] = useState(false);
+  const [customFonts, setCustomFonts] = useState({});
+  const [view, setView] = useState('wizard'); // 'wizard' | 'dashboard' | 'admin' | 'bookings-page' | 'booking-settings'
+  const [settingsSiteId, setSettingsSiteId] = useState(null);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [selectedWidgetIds, setSelectedWidgetIds] = useState([]);
   const [siteId, setSiteId] = useState(null);
@@ -72,12 +79,19 @@ export default function App() {
         templateId: overrides.templateId || selectedTemplate,
         images: overrides.images || images,
         widgetConfigIds: selectedWidgetIds,
+        customColors: overrides.customColors ?? customColors,
+        customFonts: overrides.customFonts ?? customFonts,
       }).catch(err => console.error('Auto-save failed:', err));
     }, 1500);
-  }, [session, siteId, businessInfo, editedCopy, selectedTemplate, images, selectedWidgetIds]);
+  }, [session, siteId, businessInfo, editedCopy, selectedTemplate, images, selectedWidgetIds, customColors, customFonts]);
 
   const templateMeta = selectedTemplate
-    ? { ...TEMPLATES[selectedTemplate], colors: { ...TEMPLATES[selectedTemplate].colors, ...customColors } }
+    ? {
+        ...TEMPLATES[selectedTemplate],
+        colors: { ...TEMPLATES[selectedTemplate].colors, ...customColors },
+        font: customFonts.font ?? TEMPLATES[selectedTemplate].font,
+        bodyFont: customFonts.bodyFont ?? TEMPLATES[selectedTemplate].bodyFont,
+      }
     : null;
 
   const goTo = (s) => setStep(s);
@@ -100,6 +114,7 @@ export default function App() {
   const handleTemplateSelect = (templateId) => {
     setSelectedTemplate(templateId);
     setCustomColors({});
+    setCustomFonts({});
   };
 
   const handleGenerate = () => {
@@ -157,6 +172,7 @@ export default function App() {
     setImages({});
     setError(null);
     setCustomColors({});
+    setCustomFonts({});
     setSelectedWidgetIds([]);
     setIsDemoPreview(false);
     setSiteId(null);
@@ -189,7 +205,11 @@ export default function App() {
       <div className="w-8 h-8 border-4 border-gray-300 border-t-[#cc0000] rounded-full animate-spin" />
     </div>
   );
-  if (!session) return <LoginPage />;
+  if (!session) {
+    return showLogin
+      ? <LoginPage />
+      : <LandingPage onSignIn={() => setShowLogin(true)} />;
+  }
   if (isRecovery) return <ResetPasswordPage onComplete={() => { clearRecovery(); window.history.replaceState({}, '', window.location.pathname); }} />;
 
   const handleSignOut = async () => {
@@ -203,7 +223,11 @@ export default function App() {
     setSelectedTemplate(site.template_id);
     const copy = site.generated_content || {};
     const siteImages = copy._images || {};
+    const savedCustomColors = copy._customColors || {};
+    const savedCustomFonts = copy._customFonts || {};
     delete copy._images;
+    delete copy._customColors;
+    delete copy._customFonts;
 
     // Fetch latest widget keys from Supabase if not already in copy
     if (session?.user?.id && (!copy.instagramWidgetKey || !copy.googleWidgetKey)) {
@@ -227,11 +251,24 @@ export default function App() {
     setEditedCopy(structuredClone(copy));
     setImages(siteImages);
     setSelectedWidgetIds(site.widget_config_ids || []);
-    setCustomColors({});
+    setCustomColors(savedCustomColors);
+    setCustomFonts(savedCustomFonts);
     setIsDemoPreview(false);
     setStep(5);
     setView('wizard');
   };
+
+  if (view === 'bookings-page') {
+    return <BookingsPage userId={session?.user?.id} profile={profile} onExit={() => setView('dashboard')} />;
+  }
+
+  if (view === 'booking-settings' && settingsSiteId) {
+    return <BookingSettingsPage siteId={settingsSiteId} onExit={() => { setSettingsSiteId(null); setView('dashboard'); }} />;
+  }
+
+  if (view === 'admin') {
+    return <AdminPage onExit={() => setView('dashboard')} />;
+  }
 
   if (view === 'dashboard') {
     return <DashboardPage
@@ -239,6 +276,10 @@ export default function App() {
       onEditSite={handleEditSite}
       onSignOut={handleSignOut}
       userEmail={session?.user?.email}
+      profile={profile}
+      onOpenAdmin={() => setView('admin')}
+      onOpenBookings={() => setView('bookings-page')}
+      onOpenBookingSettings={(siteId) => { setSettingsSiteId(siteId); setView('booking-settings'); }}
     />;
   }
 
@@ -272,7 +313,17 @@ export default function App() {
         templateId={selectedTemplate}
         templateMeta={templateMeta}
         customColors={customColors}
-        onCustomColors={setCustomColors}
+        onCustomColors={(next) => {
+          const resolved = typeof next === 'function' ? next(customColors) : next;
+          setCustomColors(resolved);
+          autoSave({ customColors: resolved });
+        }}
+        customFonts={customFonts}
+        onCustomFonts={(next) => {
+          const resolved = typeof next === 'function' ? next(customFonts) : next;
+          setCustomFonts(resolved);
+          autoSave({ customFonts: resolved });
+        }}
         onBack={isDemoPreview ? handleBackFromDemo : () => goTo(3)}
         onExport={isDemoPreview ? null : () => goTo(6)}
         onStartOver={() => { handleStartOver(); setView('dashboard'); }}
@@ -314,7 +365,7 @@ export default function App() {
   }
 
   return (
-    <WizardShell step={step} onBack={goBack} userEmail={session?.user?.email} onMySites={() => setView('dashboard')} onSignOut={handleSignOut}>
+    <WizardShell step={step} onBack={goBack} userEmail={session?.user?.email} profile={profile} onMySites={() => setView('dashboard')} onOpenBookings={() => setView('bookings-page')} onOpenAdmin={() => setView('admin')} onSignOut={handleSignOut}>
       {step === 1 && (
         <StepBusinessType onSelect={handleBusinessTypeSelect} />
       )}

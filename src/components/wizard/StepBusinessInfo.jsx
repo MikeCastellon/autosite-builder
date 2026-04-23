@@ -136,19 +136,27 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
 
   const inputBase = 'w-full bg-white border rounded-xl px-3.5 py-2.5 text-[#1a1a1a] placeholder-[#aaa] text-[14px] focus:outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000] transition';
 
+  const DEMO_ALLOWED_EMAILS = [
+    'dev@639hz.com',
+    'mike.castellon5@gmail.com',
+  ];
+  const canFillDemo = DEMO_ALLOWED_EMAILS.includes(session?.user?.email?.toLowerCase() ?? '');
+
   return (
     <div>
       <div className="mb-8">
         <p className="text-[12px] font-semibold text-[#cc0000] uppercase tracking-[1.5px] mb-3">{typeInfo?.label}</p>
         <div className="flex items-center justify-between gap-4">
           <h1 className="text-[clamp(24px,4vw,32px)] font-[900] text-[#1a1a1a] tracking-[-1px] leading-[1.1]">Tell us about your business</h1>
-          <button
-            type="button"
-            onClick={() => { setValues(DEMO_BUSINESS_INFO); setErrors({}); }}
-            className="shrink-0 text-[12px] font-semibold px-3 py-1.5 rounded-lg border border-[#cc0000]/30 text-[#cc0000] hover:bg-[#cc0000]/5 transition-colors"
-          >
-            Fill Demo
-          </button>
+          {canFillDemo && (
+            <button
+              type="button"
+              onClick={() => { setValues(DEMO_BUSINESS_INFO); setErrors({}); }}
+              className="shrink-0 text-[12px] font-semibold px-3 py-1.5 rounded-lg border border-[#cc0000]/30 text-[#cc0000] hover:bg-[#cc0000]/5 transition-colors"
+            >
+              Fill Demo
+            </button>
+          )}
         </div>
         <p className="text-[#555] text-[15px] mt-2">The more detail you provide, the better the AI-generated copy will be.</p>
       </div>

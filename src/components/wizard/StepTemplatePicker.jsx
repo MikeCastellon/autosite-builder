@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { TEMPLATES } from '../../data/templates.js';
 import { BUSINESS_TYPES } from '../../data/businessTypes.js';
 import TemplateCard from '../ui/TemplateCard.jsx';
@@ -35,39 +34,45 @@ export default function StepTemplatePicker({ businessType, selected, onSelect, o
   const typeInfo = BUSINESS_TYPES.find((t) => t.id === businessType);
   const recommendedIds = [...(typeInfo?.templates || []), ...(typeInfo?.premiumTemplates || [])];
 
-  // All templates grouped
-  const allTemplates = Object.values(TEMPLATES).filter(Boolean);
-  const recommended = recommendedIds.map((id) => TEMPLATES[id]).filter(Boolean);
-  const others = allTemplates.filter((t) => !recommendedIds.includes(t.id));
+  // Show every visible template at once — recommended ones get a badge,
+  // but nothing is hidden behind a "Show all" toggle anymore.
+  const recommendedSet = new Set(recommendedIds);
+  const visibleTemplates = Object.values(TEMPLATES)
+    .filter((t) => t && !t.hidden)
+    .sort((a, b) => {
+      const aRec = recommendedSet.has(a.id) ? 0 : 1;
+      const bRec = recommendedSet.has(b.id) ? 0 : 1;
+      return aRec - bRec;
+    });
 
-  const [showAll, setShowAll] = useState(false);
   const selectedTpl = selected ? TEMPLATES[selected] : null;
 
-  const cols = (count) => count >= 4 ? 4 : count >= 3 ? 3 : count;
-
-  const TemplateGrid = ({ templates, badge }) => (
-    <div className="grid gap-3 mb-2" style={{ gridTemplateColumns: `repeat(${cols(templates.length)}, minmax(0, 1fr))` }}>
-      {templates.map((template) => (
-        <div key={template.id} className="flex flex-col gap-1.5 relative">
-          {badge && (
-            <span className="absolute top-2 left-2 z-10 bg-[#cc0000] text-white text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md shadow-sm">
-              {badge}
-            </span>
-          )}
-          <TemplateCard
-            template={template}
-            selected={selected}
-            onClick={onSelect}
-          />
-          <button
-            type="button"
-            onClick={() => onPreview(template.id)}
-            className="w-full text-[12px] font-medium text-[#555] hover:text-[#cc0000] py-1.5 border border-black/[0.07] hover:border-[#cc0000]/30 rounded-lg transition-colors"
-          >
-            Preview Demo
-          </button>
-        </div>
-      ))}
+  const TemplateGrid = ({ templates }) => (
+    <div className="grid gap-3 mb-2 grid-cols-2 md:grid-cols-5">
+      {templates.map((template) => {
+        const isRecommended = recommendedSet.has(template.id);
+        return (
+          <div key={template.id} className="flex flex-col gap-1.5 relative min-w-0">
+            {isRecommended && (
+              <span className="absolute top-2 left-2 z-10 bg-[#cc0000] text-white text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-md shadow-sm">
+                Recommended
+              </span>
+            )}
+            <TemplateCard
+              template={template}
+              selected={selected}
+              onClick={onSelect}
+            />
+            <button
+              type="button"
+              onClick={() => onPreview(template.id)}
+              className="w-full text-[12px] font-medium text-[#555] hover:text-[#cc0000] py-1.5 border border-black/[0.07] hover:border-[#cc0000]/30 rounded-lg transition-colors"
+            >
+              Preview Demo
+            </button>
+          </div>
+        );
+      })}
     </div>
   );
 
@@ -81,31 +86,15 @@ export default function StepTemplatePicker({ businessType, selected, onSelect, o
         </p>
       </div>
 
-      {/* Recommended */}
-      {recommended.length > 0 && (
-        <div className="mb-6">
+      {/* All templates — recommended ones surface to the top and get a badge */}
+      <div className="mb-6">
+        {typeInfo?.label && (
           <p className="text-[11px] font-semibold text-[#cc0000] uppercase tracking-[1.5px] mb-3 flex items-center gap-2">
-            <span>⭐</span> Recommended for {typeInfo?.label || 'your business'}
+            <span>⭐</span> Recommended for {typeInfo.label} shown first
           </p>
-          <TemplateGrid templates={recommended} badge="Recommended" />
-        </div>
-      )}
-
-      {/* Show All toggle */}
-      <button
-        type="button"
-        onClick={() => setShowAll(!showAll)}
-        className="text-[13px] font-medium text-[#555] hover:text-[#1a1a1a] transition-colors mb-4 flex items-center gap-1.5"
-      >
-        {showAll ? '▾ Hide other templates' : '▸ Show all templates'} <span className="text-[11px] text-[#aaa]">({others.length} more)</span>
-      </button>
-
-      {showAll && others.length > 0 && (
-        <div className="mb-6">
-          <p className="text-[11px] font-semibold text-[#888] uppercase tracking-[1.5px] mb-3">All Templates</p>
-          <TemplateGrid templates={others} />
-        </div>
-      )}
+        )}
+        <TemplateGrid templates={visibleTemplates} />
+      </div>
 
       {error && (
         <div className="mb-4 p-4 bg-[#cc0000]/5 border border-[#cc0000]/20 rounded-xl text-[#cc0000] text-sm">

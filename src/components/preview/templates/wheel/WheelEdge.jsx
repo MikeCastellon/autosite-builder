@@ -41,7 +41,7 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
   const tireBrands = parseBrands(copy?.tireBrandsList ?? biz.tireBrands);
 
   return (
-    <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'clip', margin: 0, padding: 0, containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
       <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}.tp-4col{grid-template-columns:1fr 1fr!important}}`}</style>
 
       {/* STICKY NAV — no emoji */}
@@ -123,13 +123,13 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
 
         <div style={splitHero ? {
           flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
-          padding: 'clamp(3rem,6vw,6rem)', background: c.bg,
+          padding: 'clamp(3rem,6cqi,6rem)', background: c.bg,
         } : { position: 'relative', zIndex: 1, padding: '7rem 5% 4rem', maxWidth: 780 }}>
           <p style={{ color: c.accent, fontSize: 11, letterSpacing: 5, textTransform: 'uppercase', marginBottom: 20, fontWeight: 700 }}>
             {fb.heroBadge} · {biz.city}, {biz.state}
           </p>
           <h1 style={{
-            fontSize: 'clamp(2.5rem, 6vw, 5rem)', fontWeight: 900, lineHeight: 1.05,
+            fontSize: 'clamp(2.5rem, 6cqi, 5rem)', fontWeight: 900, lineHeight: 1.05,
             textTransform: 'uppercase', letterSpacing: '-0.02em', margin: '0 0 20px',
           }}>
             {copy.headline || 'UPGRADE YOUR RIDE'}
@@ -192,7 +192,7 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
               <div style={{ width: 40, height: 2, background: c.accent }} />
               <span style={{ color: c.accent, fontSize: 11, letterSpacing: 4, textTransform: 'uppercase', fontWeight: 700 }}>Catalog</span>
             </div>
-            <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 14px', letterSpacing: '-0.01em' }}>WHAT WE OFFER</h2>
+            <h2 style={{ fontSize: 'clamp(2rem, 4cqi, 3rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 14px', letterSpacing: '-0.01em' }}>WHAT WE OFFER</h2>
             {copy.servicesSection?.intro && (
               <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.7, maxWidth: 520 }}>{copy.servicesSection.intro}</p>
             )}
@@ -258,7 +258,7 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 48 }}>
               <div style={{ width: 40, height: 2, background: c.accent }} />
-              <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 900, textTransform: 'uppercase', margin: 0 }}>BRANDS WE CARRY</h2>
+              <h2 style={{ fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 900, textTransform: 'uppercase', margin: 0 }}>BRANDS WE CARRY</h2>
             </div>
             {brands.length > 0 && (
               <div style={{ marginBottom: 36 }}>
@@ -332,7 +332,7 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
               <div style={{ width: 40, height: 2, background: c.accent }} />
               <span style={{ color: c.accent, fontSize: 11, letterSpacing: 4, textTransform: 'uppercase', fontWeight: 700 }}>About</span>
             </div>
-            <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.8rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 20px', letterSpacing: '-0.01em' }}>ABOUT {biz.businessName || 'US'}</h2>
+            <h2 style={{ fontSize: 'clamp(2rem, 3.5cqi, 2.8rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 20px', letterSpacing: '-0.01em' }}>ABOUT {biz.businessName || 'US'}</h2>
             <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.85, marginBottom: 20 }}>
               {copy.aboutText || `Located in ${biz.city || 'your area'}, we specialize in ${fb.aboutFallback}.`}
             </p>
@@ -371,7 +371,7 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
       {!hidden('testimonials') && (
         copy?.googleWidgetKey ? (
           <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
-            {copy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.googleReviewsTitle}</h2>}
+            {copy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} theme={copy?.googleReviewsTheme} />
           </div>
         ) : testimonials.length > 0 ? (
@@ -379,7 +379,7 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 48 }}>
               <div style={{ width: 40, height: 2, background: c.accent }} />
-              <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.5rem)', fontWeight: 900, textTransform: 'uppercase', margin: 0 }}>CUSTOMER REVIEWS</h2>
+              <h2 style={{ fontSize: 'clamp(2rem, 3.5cqi, 2.5rem)', fontWeight: 900, textTransform: 'uppercase', margin: 0 }}>CUSTOMER REVIEWS</h2>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
               {testimonials.map((t, i) => (
@@ -401,7 +401,7 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
       {/* CTA */}
       {!hidden('cta') && (
       <section style={{ order: getOrder('cta'), background: c.secondary, padding: '80px 5%', textAlign: 'center', borderTop: `1px solid ${c.accent}33` }}>
-        <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 16px', letterSpacing: '-0.01em' }}>{copy.ctaHeadline || 'READY TO UPGRADE?'}</h2>
+        <h2 style={{ fontSize: 'clamp(2rem, 4cqi, 3rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 16px', letterSpacing: '-0.01em' }}>{copy.ctaHeadline || 'READY TO UPGRADE?'}</h2>
         <p style={{ color: c.muted, fontSize: 16, marginBottom: 36 }}>
           {copy.ctaSubtext || copy.ctaSecondary || `${biz.city || 'Your city'}, ${biz.state || ''} — Call or stop by today`}
         </p>

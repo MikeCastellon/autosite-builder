@@ -179,25 +179,25 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
 
   return (
     <div style={{ background: c.bg, color: c.text, fontFamily: bodyFont, containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
-      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}.tp-3col{grid-template-columns:1fr!important}.tp-elite-nav{padding:0 16px!important;height:60px!important}.tp-elite-brand{font-size:1rem!important;letter-spacing:0.5px!important;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tp-elite-cta{font-size:11px!important;padding:7px 12px!important}}`}</style>
       {/* NAV */}
       <nav style={{ ...navStyle, order: -1 }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '72px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <div style={{ width: '2px', height: '32px', background: goldGradient }} />
+        <div className="tp-elite-nav" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, height: '72px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', minWidth: 0, flex: '0 1 auto' }}>
+            <div style={{ width: '2px', height: '32px', background: goldGradient, flexShrink: 0 }} />
             {images.logo ? (
               <img src={images.logo} alt={businessInfo.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
             ) : (
-              <div style={{ fontFamily: font, fontWeight: 700, fontSize: '1.25rem', color: '#ffffff', letterSpacing: '1px' }}>
+              <div className="tp-elite-brand" style={{ fontFamily: font, fontWeight: 700, fontSize: '1.25rem', color: '#ffffff', letterSpacing: '1px' }}>
                 {businessInfo.businessName}
               </div>
             )}
           </div>
-          <div className="tp-nav-links" style={{ display: 'flex', gap: '36px', alignItems: 'center' }}>
+          <div className="tp-nav-links" style={{ display: 'flex', gap: '36px', alignItems: 'center', flexShrink: 0 }}>
             {['Services', 'Films', 'Packages', 'Contact'].map(link => (
               <a key={link} href={`#${link.toLowerCase()}`} style={{ color: c.muted, textDecoration: 'none', fontWeight: 400, fontSize: '0.82rem', letterSpacing: '2px', textTransform: 'uppercase' }}>{link}</a>
             ))}
-            <a href={`tel:${businessInfo.phone}`} style={accentBtnStyle}>{businessInfo.phone}</a>
+            <a href={`tel:${businessInfo.phone}`} className="tp-elite-cta" style={{ ...accentBtnStyle, whiteSpace: 'nowrap' }}>{businessInfo.phone}</a>
           </div>
         </div>
       </nav>
@@ -215,7 +215,7 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
 
         <div style={splitHero ? {
           flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
-          padding: 'clamp(3rem,6vw,6rem)', background: c.bg,
+          padding: 'clamp(3rem,6cqi,6rem)', background: c.bg,
         } : { textAlign: 'center', maxWidth: '820px', padding: '140px 24px 100px', position: 'relative', zIndex: 1 }}>
           {businessInfo.awards && businessInfo.awards.length > 0 && (
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', border: '1px solid rgba(202,138,4,0.3)', padding: '8px 20px', marginBottom: '28px', alignSelf: splitHero ? 'flex-start' : undefined }}>
@@ -224,7 +224,7 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
               </span>
             </div>
           )}
-          <h1 style={{ fontFamily: font, fontSize: 'clamp(2rem, 5.5vw, 4.5rem)', fontWeight: 700, color: c.text, lineHeight: 1.1, marginBottom: '8px', letterSpacing: '-0.5px', fontStyle: 'italic', textAlign: splitHero ? 'left' : 'center' }}>
+          <h1 style={{ fontFamily: font, fontSize: 'clamp(2rem, 5.5cqi, 4.5rem)', fontWeight: 700, color: c.text, lineHeight: 1.1, marginBottom: '8px', letterSpacing: '-0.5px', fontStyle: 'italic', textAlign: splitHero ? 'left' : 'center' }}>
             {generatedCopy.headline}
           </h1>
           <div style={{ width: '100px', height: '1px', background: goldGradient, margin: splitHero ? '24px 0' : '24px auto' }} />
@@ -317,7 +317,7 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
               ))}
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: '20px' }}>
+            <div className="tp-3col" style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, minmax(0, 1fr))`, gap: '20px' }}>
               {generatedCopy.servicesSection.items.map((svc, i) => (
                 <div key={i} style={cardStyle}>
                   <div style={cardTopAccent} />
@@ -424,7 +424,7 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
       {!hidden('testimonials') && (
         generatedCopy?.reviewMode === 'google' && generatedCopy?.googleWidgetKey ? (
           <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
-            {generatedCopy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{generatedCopy.googleReviewsTitle}</h2>}
+            {generatedCopy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{generatedCopy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={generatedCopy.googleWidgetKey} theme={generatedCopy?.googleReviewsTheme} />
           </div>
         ) : generatedCopy.testimonialPlaceholders?.length > 0 ? (

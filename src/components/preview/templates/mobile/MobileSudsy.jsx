@@ -82,7 +82,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
   });
 
   const titleStyle = {
-    fontFamily: font, fontSize: 'clamp(32px, 4vw, 52px)',
+    fontFamily: font, fontSize: 'clamp(32px, 4cqi, 52px)',
     color: c.text, lineHeight: 1.1, margin: 0,
   };
 
@@ -125,8 +125,8 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
   }));
 
   return (
-    <div style={{ fontFamily: bodyFont, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'hidden', margin: 0, padding: 0, position: 'relative', containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
-      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}}`}</style>
+    <div style={{ fontFamily: bodyFont, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'clip', margin: 0, padding: 0, position: 'relative', containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
+      <style>{`@container(max-width:600px){.tp-nav-links a[href^="#"]{display:none!important}.tp-nav-links{gap:12px!important}.tp-2col{grid-template-columns:1fr!important}.tp-3col{grid-template-columns:1fr!important}.tp-sudsy-brand{font-size:18px!important;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tp-sudsy-cta{font-size:13px!important;padding:6px 14px!important}}`}</style>
 
       {/* STATIC BACKGROUND BUBBLES */}
       <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
@@ -144,13 +144,13 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
       
         order: -1,
       }}>
-        <a href='#' style={{ fontFamily: font, fontSize: 24, color: c.text, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <a href='#' className="tp-sudsy-brand" style={{ fontFamily: font, fontSize: 24, color: c.text, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: '0 1 auto' }}>
           {images.logo ? (
             <img src={images.logo} alt={biz.businessName || 'Logo'} style={{ height: 36, objectFit: 'contain' }} />
           ) : (
             <>
-              <span style={{ fontSize: 22 }}>{String.fromCodePoint(0x1FAA7)}</span>
-              {biz.businessName || fb.navSubtitle}
+              <span style={{ fontSize: 22, flexShrink: 0 }}>{String.fromCodePoint(0x1FAA7)}</span>
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{biz.businessName || fb.navSubtitle}</span>
             </>
           )}
         </a>
@@ -158,7 +158,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
           {[{ label: 'Services', href: '#services' }, { label: 'How It Works', href: '#how' }, { label: 'Reviews', href: '#reviews' }].map(({ label, href }) => (
             <a key={label} href={href} style={{ fontFamily: bodyFont, fontWeight: 800, fontSize: 14, color: c.text, textDecoration: 'none', opacity: 0.8 }}>{label}</a>
           ))}
-          <a href={`tel:${biz.phone}`} style={{ fontFamily: font, fontSize: 17, background: c.text, color: c.accent, padding: '8px 22px', borderRadius: 980, textDecoration: 'none', border: `2px solid ${c.text}`, boxShadow: '3px 3px 0 rgba(0,0,0,0.25)', whiteSpace: 'nowrap' }}>
+          <a href={`tel:${biz.phone}`} className="tp-sudsy-cta" style={{ fontFamily: font, fontSize: 17, background: c.text, color: c.accent, padding: '8px 22px', borderRadius: 980, textDecoration: 'none', border: `2px solid ${c.text}`, boxShadow: '3px 3px 0 rgba(0,0,0,0.25)', whiteSpace: 'nowrap' }}>
             {String.fromCodePoint(0x1F4DE)} Call Us!
           </a>
         </div>
@@ -178,12 +178,12 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
         {splitHero ? (
           <div style={{
             flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
-            padding: 'clamp(3rem,6vw,6rem)', background: c.bg,
+            padding: 'clamp(3rem,6cqi,6rem)', background: c.bg,
           }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: c.text, color: c.accent, fontFamily: font, fontSize: 15, padding: '7px 18px', borderRadius: 980, marginBottom: 24, alignSelf: 'flex-start' }}>
               {String.fromCodePoint(0x1F4CD)} We Come To YOU{biz.city ? ` — ${biz.city}` : ''}
             </div>
-            <h1 style={{ fontFamily: font, fontSize: 'clamp(1.8rem, 7vw, 5.5rem)', lineHeight: 1.05, color: c.text, margin: '0 0 20px' }}>
+            <h1 style={{ fontFamily: font, fontSize: 'clamp(1.8rem, 5cqi, 4rem)', lineHeight: 1.05, color: c.text, margin: '0 0 20px' }}>
               {copy.headline || 'Your Car Deserves Better.'}
             </h1>
             <p style={{ fontSize: 17, fontWeight: 600, color: c.muted, lineHeight: 1.7, maxWidth: 480, marginBottom: 36 }}>
@@ -211,7 +211,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: c.text, color: c.accent, fontFamily: font, fontSize: 15, padding: '7px 18px', borderRadius: 980, marginBottom: 24 }}>
               {String.fromCodePoint(0x1F4CD)} We Come To YOU{biz.city ? ` — ${biz.city}` : ''}
             </div>
-            <h1 style={{ fontFamily: font, fontSize: 'clamp(1.8rem, 7vw, 5.5rem)', lineHeight: 1.05, color: c.text, margin: '0 0 20px' }}>
+            <h1 style={{ fontFamily: font, fontSize: 'clamp(1.8rem, 5cqi, 4rem)', lineHeight: 1.05, color: c.text, margin: '0 0 20px' }}>
               {copy.headline || 'Your Car Deserves Better.'}
             </h1>
             <p style={{ fontSize: 17, fontWeight: 600, color: c.muted, lineHeight: 1.7, maxWidth: 480, marginBottom: 36 }}>
@@ -317,7 +317,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
               })}
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 24 }}>
+            <div className="tp-3col" style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, minmax(0, 1fr))`, gap: 24 }}>
               {services.length > 0
                 ? services.map((s, i) => (
                     <div key={i} style={{ background: cardBgs[i % cardBgs.length], ...neoBorder, borderRadius: 24, padding: '36px 32px' }}>
@@ -373,7 +373,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
             <div style={{ ...sectionTagStyle(), background: '#fff' }}>{String.fromCodePoint(0x1F4AA)} Why Choose Us</div>
             <h2 style={{ ...titleStyle, color: '#fff' }}>We’re kinda <span style={{ color: c.accent }}>obsessed</span> with clean cars.</h2>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+          <div className="tp-3col" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 20 }}>
             {whyCards.map((card, i) => (
               <div key={i} style={{ background: 'rgba(255,255,255,0.12)', border: '3px solid rgba(255,255,255,0.4)', borderRadius: 24, padding: '32px 24px', backdropFilter: 'blur(10px)' }}>
                 <span style={{ fontSize: 42, marginBottom: 14, display: 'block' }}><IconOrEmoji value={card.icon} size={42} color="#fff" /></span>
@@ -454,7 +454,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
       {!hidden('testimonials') && (
         copy?.googleWidgetKey ? (
           <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
-            {copy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.googleReviewsTitle}</h2>}
+            {copy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} theme={copy?.googleReviewsTheme} />
           </div>
         ) : testimonials.length > 0 ? (
@@ -497,7 +497,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
       <section id="contact" style={{ background: "#ff6b9d", borderTop: `4px solid ${c.text}`, borderBottom: `4px solid ${c.text}`, padding: "80px 5%" , order: getOrder('cta') }}>
         <div className="tp-2col" style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "center" }}>
           <div>
-            <h2 style={{ fontFamily: font, fontSize: "clamp(36px, 4vw, 58px)", color: "#fff", lineHeight: 1.05, marginBottom: 20 }}>
+            <h2 style={{ fontFamily: font, fontSize: "clamp(36px, 4cqi, 58px)", color: "#fff", lineHeight: 1.05, marginBottom: 20 }}>
               {copy.ctaHeadline || 'Ready for the cleanest car of your life?'}
             </h2>
             <p style={{ fontSize: 16, color: "rgba(255,255,255,0.85)", fontWeight: 600, lineHeight: 1.65, marginBottom: 32 }}>

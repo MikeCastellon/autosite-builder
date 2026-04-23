@@ -148,12 +148,12 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
         {!splitHero && <HeroImage src={images.hero} />}
         <div style={splitHero ? {
           flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
-          padding: 'clamp(3rem,6vw,6rem)', background: c.secondary,
+          padding: 'clamp(3rem,6cqi,6rem)', background: c.secondary,
         } : { textAlign: 'center', maxWidth: '760px', padding: '120px 24px 100px', position: 'relative', zIndex: 1 }}>
           <div style={{ display: 'inline-block', background: 'rgba(8,145,178,0.1)', color: c.accent, borderRadius: '50px', padding: '8px 20px', fontSize: '0.85rem', fontWeight: 700, letterSpacing: '2px', marginBottom: '24px', textTransform: 'uppercase' }}>
             {businessInfo.city}, {businessInfo.state}
           </div>
-          <h1 style={{ fontFamily: font, fontSize: 'clamp(2.4rem, 5vw, 4rem)', fontWeight: 800, color: c.text, lineHeight: 1.15, marginBottom: '20px' }}>
+          <h1 style={{ fontFamily: font, fontSize: 'clamp(2.4rem, 5cqi, 4rem)', fontWeight: 800, color: c.text, lineHeight: 1.15, marginBottom: '20px' }}>
             {generatedCopy.headline}
           </h1>
           <p style={{ fontSize: '1.2rem', color: c.muted, marginBottom: '40px', lineHeight: 1.7 }}>
@@ -281,7 +281,7 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
       {!hidden('testimonials') && (
         generatedCopy?.googleWidgetKey ? (
           <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
-            {generatedCopy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{generatedCopy.googleReviewsTitle}</h2>}
+            {generatedCopy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{generatedCopy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={generatedCopy.googleWidgetKey} theme={generatedCopy?.googleReviewsTheme} />
           </div>
         ) : generatedCopy.testimonialPlaceholders?.length > 0 ? (

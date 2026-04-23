@@ -78,7 +78,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
   const tileIcons  = ['✦', '◈', '⬡', '◉', '✧', '◆', '◎', '⬟'];
 
   const s = {
-    wrapper: { background: white, color: text, fontFamily: dmSans, WebkitFontSmoothing: 'antialiased', overflowX: 'hidden', display: 'flex', flexDirection: 'column' },
+    wrapper: { background: white, color: text, fontFamily: dmSans, WebkitFontSmoothing: 'antialiased', overflowX: 'clip', display: 'flex', flexDirection: 'column' },
     nav: {
       position: 'sticky', top: 0, zIndex: 100, height: '52px',
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -98,7 +98,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
     heroContent: { position: 'relative', zIndex: 2, maxWidth: '760px', padding: isMobile ? '60px 24px 80px' : '0 24px' },
     heroChip: { display: 'inline-flex', alignItems: 'center', gap: '6px', background: off, border: '1px solid ' + border2, padding: '6px 14px', borderRadius: '980px', fontSize: '12px', color: text3, fontWeight: 500, marginBottom: '32px', letterSpacing: '0.1px' },
     heroChipDot: { width: '6px', height: '6px', borderRadius: '50%', background: blue, flexShrink: 0 },
-    heroH1: { fontFamily: dmSerif, fontSize: isMobile ? '40px' : 'clamp(48px, 7vw, 86px)', fontWeight: 400, lineHeight: 1.05, letterSpacing: isMobile ? '-0.5px' : '-1.5px', color: text, marginBottom: '24px' },
+    heroH1: { fontFamily: dmSerif, fontSize: isMobile ? '40px' : 'clamp(48px, 7cqi, 86px)', fontWeight: 400, lineHeight: 1.05, letterSpacing: isMobile ? '-0.5px' : '-1.5px', color: text, marginBottom: '24px' },
     heroAccent: { color: blue },
     heroSub: { fontSize: '19px', lineHeight: 1.6, color: text3, maxWidth: '520px', margin: '0 auto 40px', fontWeight: 300 },
     heroActions: { display: 'flex', gap: '12px', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' },
@@ -111,7 +111,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
     sectionWhite: { padding: isMobile ? '80px 24px' : '120px 80px', background: white },
     sectionOff:   { padding: isMobile ? '80px 24px' : '120px 80px', background: white },
     eyebrow: { fontSize: '12px', fontWeight: 500, color: blue, letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '16px', display: 'block' },
-    sectionTitle: { fontFamily: dmSerif, fontSize: isMobile ? '34px' : 'clamp(34px, 4vw, 54px)', fontWeight: 400, lineHeight: 1.1, letterSpacing: '-1px', color: text, marginBottom: '20px' },
+    sectionTitle: { fontFamily: dmSerif, fontSize: isMobile ? '34px' : 'clamp(34px, 4cqi, 54px)', fontWeight: 400, lineHeight: 1.1, letterSpacing: '-1px', color: text, marginBottom: '20px' },
     titleItalicBlue: { fontStyle: 'italic', color: blue },
     bodyText: { fontSize: '17px', color: text3, lineHeight: 1.7, fontWeight: 300, maxWidth: '560px' },
     servicesIntro: { maxWidth: '600px', margin: '0 auto 72px', textAlign: 'center' },
@@ -191,7 +191,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
         {!splitHero && <div style={s.heroGradient} />}
         <div style={splitHero ? {
           flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
-          padding: 'clamp(3rem,6vw,6rem)', background: white,
+          padding: 'clamp(3rem,6cqi,6rem)', background: white,
         } : s.heroContent}>
           <div style={s.heroChip}>
             <span style={s.heroChipDot} />
@@ -341,7 +341,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
       {!hidden('testimonials') && (
         generatedCopy?.googleWidgetKey ? (
           <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
-            {generatedCopy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{generatedCopy.googleReviewsTitle}</h2>}
+            {generatedCopy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{generatedCopy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={generatedCopy.googleWidgetKey} theme={generatedCopy?.googleReviewsTheme} />
           </div>
         ) : testimonials.length > 0 ? (
