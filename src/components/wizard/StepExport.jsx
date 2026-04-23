@@ -7,7 +7,7 @@ const PUBLISH_DOMAIN = import.meta.env.VITE_PUBLISH_DOMAIN || 'autocaregenius.co
 const PRO_FEATURES = [
   { title: '24/7 Online Booking', desc: 'Customers self-book any time straight from your site.' },
   { title: 'Live Google Reviews Widget', desc: 'Real reviews pulled from your Google Business profile.' },
-  { title: 'Your Own Custom Domain', desc: 'Connect mybusiness.com instead of the free subdomain.' },
+  { title: 'Connect Your Custom Domain' },
   { title: 'Priority Live Chat Support', desc: 'Direct line to our team — answers in minutes.' },
 ];
 
@@ -156,7 +156,7 @@ export default function StepExport({ siteId: passedSiteId, businessInfo, generat
                       </span>
                       <div className="min-w-0">
                         <p className="text-[13px] font-bold text-[#1a1a1a] leading-tight">{f.title}</p>
-                        <p className="text-[11px] text-[#666] leading-snug mt-0.5">{f.desc}</p>
+                        {f.desc && <p className="text-[11px] text-[#666] leading-snug mt-0.5">{f.desc}</p>}
                       </div>
                     </li>
                   ))}
