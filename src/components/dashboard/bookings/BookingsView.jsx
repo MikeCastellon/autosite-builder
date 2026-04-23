@@ -31,16 +31,14 @@ export default function BookingsView({ userId, isAdmin = false, onBack }) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
         <h2 className="text-2xl font-black text-[#1a1a1a] tracking-tight">Bookings</h2>
-        {onBack && (
-          <button onClick={onBack} className="text-sm text-[#888] hover:text-[#1a1a1a]">← Back</button>
-        )}
-      </div>
-
-      <div className="flex gap-1 mb-4 border-b border-gray-200">
-        <TabBtn on={tab === 'calendar'} onClick={() => setTab('calendar')}>Calendar</TabBtn>
-        <TabBtn on={tab === 'list'} onClick={() => setTab('list')}>List</TabBtn>
+        <div className="flex items-center gap-3">
+          <ViewToggle value={tab} onChange={setTab} />
+          {onBack && (
+            <button onClick={onBack} className="text-sm text-[#888] hover:text-[#1a1a1a]">← Back</button>
+          )}
+        </div>
       </div>
 
       {loading && <p className="text-sm text-gray-500">Loading…</p>}
@@ -63,13 +61,53 @@ export default function BookingsView({ userId, isAdmin = false, onBack }) {
   );
 }
 
-function TabBtn({ on, onClick, children }) {
+function ViewToggle({ value, onChange }) {
+  const opts = [
+    {
+      key: 'calendar',
+      label: 'Calendar',
+      icon: (
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="2" y="3" width="12" height="11" rx="1.5" />
+          <path d="M11 1.5v3M5 1.5v3M2 7h12" />
+        </svg>
+      ),
+    },
+    {
+      key: 'list',
+      label: 'List',
+      icon: (
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M5 4h9M5 8h9M5 12h9" />
+          <circle cx="2.5" cy="4" r="0.6" fill="currentColor" />
+          <circle cx="2.5" cy="8" r="0.6" fill="currentColor" />
+          <circle cx="2.5" cy="12" r="0.6" fill="currentColor" />
+        </svg>
+      ),
+    },
+  ];
+
   return (
-    <button
-      onClick={onClick}
-      className={`px-4 py-2 text-sm font-semibold border-b-2 -mb-px ${on ? 'border-[#1a1a1a] text-[#1a1a1a]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
-    >
-      {children}
-    </button>
+    <div className="inline-flex items-center bg-[#f2f0ec] border border-black/[0.06] rounded-lg p-0.5">
+      {opts.map((o) => {
+        const active = value === o.key;
+        return (
+          <button
+            key={o.key}
+            type="button"
+            onClick={() => onChange(o.key)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-semibold transition-all ${
+              active
+                ? 'bg-white text-[#1a1a1a] shadow-sm'
+                : 'text-[#888] hover:text-[#1a1a1a]'
+            }`}
+            aria-pressed={active}
+          >
+            {o.icon}
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
   );
 }
