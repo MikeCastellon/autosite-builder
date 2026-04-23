@@ -413,19 +413,13 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
             {/* Upgrade section — only for non-Pro users */}
             {!isPro && (
               <div className="border-t border-black/[0.07] grid grid-cols-1 md:grid-cols-2">
-                {/* Left: visual */}
-                <div className="relative bg-gradient-to-br from-[#cc0000] to-[#6a0000] flex items-center justify-center p-8 sm:p-10 min-h-[260px] overflow-hidden">
-                  <div className="absolute -top-16 -right-16 w-64 h-64 bg-white/10 rounded-full blur-3xl" aria-hidden="true" />
-                  <div className="absolute -bottom-20 -left-10 w-48 h-48 bg-black/20 rounded-full blur-3xl" aria-hidden="true" />
-                  <div className="relative text-center text-white">
-                    <svg width="44" height="44" viewBox="0 0 24 24" fill="currentColor" className="mx-auto mb-4 opacity-95">
-                      <path d="M12 1.5l2.78 6.42 6.97.5-5.27 4.6 1.6 6.81L12 16.5l-6.08 3.33 1.6-6.81L2.25 8.42l6.97-.5L12 1.5z" />
-                    </svg>
-                    <p className="text-[10px] font-bold uppercase tracking-[3px] opacity-80 mb-2">Genius Websites Pro</p>
-                    <p className="text-[clamp(20px,2.6vw,28px)] font-[900] tracking-[-0.5px] leading-[1.1]">
-                      Everything you need to<br />get booked.
-                    </p>
-                  </div>
+                {/* Left: image */}
+                <div className="relative min-h-[280px] bg-[#1a1a1a] overflow-hidden">
+                  <img
+                    src="/dashboard-upgrade-hero.jpg"
+                    alt="Genius Websites Pro — booking calendar in a detailing shop"
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
                 </div>
 
                 {/* Right: text + features + CTA */}
