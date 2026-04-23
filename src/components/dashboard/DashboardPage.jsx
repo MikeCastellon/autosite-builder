@@ -84,6 +84,7 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
         templateMeta: { ...templateMeta, colors: templateMeta?.colors || {} },
         images: {},
         selectedWidgetIds: site.widget_config_ids || [],
+        isPro,
       });
       toast(`${site.business_info?.businessName || 'Site'} republished successfully`, 'success');
     } catch (err) {

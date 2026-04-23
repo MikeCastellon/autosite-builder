@@ -2,10 +2,14 @@ import { useState } from 'react';
 import { publishSite } from '../../lib/publishSite.js';
 import { generateSlug } from '../../lib/publishUtils.js';
 import UpgradeProPanel from '../ui/UpgradeProPanel.jsx';
+import { useAuth } from '../../lib/AuthContext.jsx';
+import { isEffectiveSchedulerActive } from '../../lib/subscriptionGating.js';
 
 const PUBLISH_DOMAIN = import.meta.env.VITE_PUBLISH_DOMAIN || 'autocaregenius.com';
 
 export default function StepExport({ siteId: passedSiteId, businessInfo, generatedCopy, templateId, templateMeta, images, selectedWidgetIds, onBack, onStartOver }) {
+  const { profile } = useAuth();
+  const isPro = isEffectiveSchedulerActive(profile);
   const [publishing, setPublishing] = useState(false);
   const [published, setPublished] = useState(null);
   const [publishError, setPublishError] = useState(null);
@@ -26,6 +30,7 @@ export default function StepExport({ siteId: passedSiteId, businessInfo, generat
         templateMeta,
         images,
         selectedWidgetIds,
+        isPro,
       });
       setPublished(result);
     } catch (err) {

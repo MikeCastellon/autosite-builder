@@ -5,9 +5,9 @@ import { exportHtmlString } from './exportHtml.js';
  * Publish a site by uploading HTML to Cloudflare R2.
  * The Worker at *.autocaregeniushub.com serves it automatically.
  */
-export async function publishSite({ siteId, businessInfo, generatedCopy, templateId, templateMeta, images, selectedWidgetIds }) {
+export async function publishSite({ siteId, businessInfo, generatedCopy, templateId, templateMeta, images, selectedWidgetIds, isPro = false }) {
   const slug = generateSlug(businessInfo.businessName);
-  const htmlContent = await exportHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, selectedWidgetIds || [], siteId);
+  const htmlContent = await exportHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, selectedWidgetIds || [], siteId, isPro);
 
   const res = await fetch('/.netlify/functions/publish-site', {
     method: 'POST',

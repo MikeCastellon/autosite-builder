@@ -9,6 +9,11 @@ const SCHEDULER_WIDGET_URL =
     ? window.location.origin
     : 'https://app.autocaregenius.com') + '/scheduler.js';
 
+const MAIN_APP_URL =
+  (typeof window !== 'undefined' && window.location && window.location.origin)
+    ? window.location.origin
+    : 'https://sitebuilder.autocaregenius.com';
+
 function buildSeoHead(businessInfo, generatedCopy, siteId) {
   const biz = businessInfo;
   const copy = generatedCopy;
@@ -64,8 +69,21 @@ function buildSeoHead(businessInfo, generatedCopy, siteId) {
 
   <style>
     *, *::before, *::after { box-sizing: border-box; }
-    body { margin: 0; font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; padding-bottom: 48px; }
+    body { margin: 0; font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    body.acg-has-bar { padding-bottom: 48px; }
     img { max-width: 100%; height: auto; }
+    #acg-owner-link {
+      text-align: center;
+      padding: 14px 16px;
+      font-family: 'Inter', system-ui, sans-serif;
+    }
+    #acg-owner-link a {
+      font-size: 11px;
+      color: #aaa;
+      text-decoration: none;
+      letter-spacing: 0.02em;
+    }
+    #acg-owner-link a:hover { color: #cc0000; }
     #acg-powered-by {
       position: fixed;
       bottom: 0;
@@ -148,7 +166,7 @@ function buildSeoHead(businessInfo, generatedCopy, siteId) {
   </script>`;
 }
 
-async function buildHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds = [], siteId = null) {
+async function buildHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds = [], siteId = null, isPro = false) {
   const mod = await TEMPLATE_COMPONENT_MAP[templateId]();
   const TemplateComponent = mod.default;
 
@@ -185,7 +203,8 @@ async function buildHtmlString(templateId, businessInfo, generatedCopy, template
     }
   }
 
-  const poweredByBar = `
+  // Sticky "Powered by" bar — only shown on free-tier sites. Pro removes it.
+  const poweredByBar = isPro ? '' : `
 <div id="acg-powered-by">
   <span class="acg-label">Powered by</span>
   <a href="https://www.autocaregenius.com/" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:8px;">
@@ -195,25 +214,36 @@ async function buildHtmlString(templateId, businessInfo, generatedCopy, template
   </a>
 </div>`;
 
+  // Always-visible site-owner login link rendered at the very bottom of the page.
+  // Discreet — small grey text, scrolls with the page (not sticky), so customers
+  // ignore it but the owner can find their way back to manage the site.
+  const ownerLink = `
+<div id="acg-owner-link">
+  <a href="${MAIN_APP_URL}" target="_blank" rel="noopener noreferrer">Site owner login →</a>
+</div>`;
+
+  const bodyClass = isPro ? '' : ' class="acg-has-bar"';
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
 ${seoHead}
 </head>
-<body>
+<body${bodyClass}>
 ${bodyHtml}
 ${widgetsHtml}
+${ownerLink}
 ${poweredByBar}
 </body>
 </html>`;
 }
 
-export async function exportHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds = [], siteId = null) {
-  return buildHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds, siteId);
+export async function exportHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds = [], siteId = null, isPro = false) {
+  return buildHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds, siteId, isPro);
 }
 
-export async function exportHtml(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds = [], siteId = null) {
-  const fullHtml = await buildHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds, siteId);
+export async function exportHtml(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds = [], siteId = null, isPro = false) {
+  const fullHtml = await buildHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds, siteId, isPro);
 
   // Trigger download
   const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
