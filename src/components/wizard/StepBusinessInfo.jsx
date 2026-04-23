@@ -313,7 +313,7 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
                         type="button"
                         onClick={addCustom}
                         disabled={!inputVal.trim()}
-                        className="px-3 py-2 bg-[#eef4fb] hover:bg-[#f2f0ec] disabled:opacity-40 disabled:cursor-not-allowed text-[#555] text-[13px] font-medium rounded-xl transition-colors"
+                        className="px-3 py-2 bg-[#faf9f7] hover:bg-[#f2f0ec] disabled:opacity-40 disabled:cursor-not-allowed text-[#555] text-[13px] font-medium rounded-xl transition-colors"
                       >
                         Add
                       </button>
@@ -361,7 +361,7 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
                           Saved ({pkgs.length})
                         </p>
                         {pkgs.map((pkg, i) => (
-                          <div key={i} className="flex items-start justify-between gap-3 px-3.5 py-2.5 bg-[#eef4fb] border border-black/[0.07] rounded-xl">
+                          <div key={i} className="flex items-start justify-between gap-3 px-3.5 py-2.5 bg-[#faf9f7] border border-black/[0.07] rounded-xl">
                             <div className="min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span className="text-[13px] font-semibold text-[#1a1a1a]">{pkg.name}</span>
@@ -576,7 +576,7 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
                             setPlaceResults([]);
                             setPlaceQuery('');
                           }}
-                          className="w-full text-left px-4 py-3 hover:bg-[#eef4fb] border-b border-black/[0.06] last:border-0 transition">
+                          className="w-full text-left px-4 py-3 hover:bg-[#faf9f7] border-b border-black/[0.06] last:border-0 transition">
                           <div className="text-[13px] font-semibold text-[#1a1a1a]">{place.name}</div>
                           <div className="text-[11px] text-[#888]">
                             {place.address}

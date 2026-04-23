@@ -87,7 +87,7 @@ export default function LoginPage({ initialMode = 'signin' }) {
   const labelBase = 'block text-[13px] font-semibold text-[#1a1a1a] mb-1.5';
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#eef4fb]">
+    <div className="min-h-screen flex flex-col bg-[#faf9f7]">
       {/* Brand header at the top */}
       <header className="border-b border-black/[0.07] bg-white px-4 sm:px-8 h-16 flex items-center sticky top-0 z-50">
         <a

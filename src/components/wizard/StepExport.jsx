@@ -41,7 +41,7 @@ export default function StepExport({ siteId: passedSiteId, businessInfo, generat
   };
 
   return (
-    <div className="min-h-screen bg-[#eef4fb] flex flex-col">
+    <div className="min-h-screen bg-[#faf9f7] flex flex-col">
       {/* Brand header */}
       <header className="border-b border-black/[0.07] bg-white/85 backdrop-blur-xl px-4 sm:px-8 h-16 flex items-center sticky top-0 z-50">
         <a

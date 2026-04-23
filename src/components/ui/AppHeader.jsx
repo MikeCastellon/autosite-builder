@@ -79,7 +79,7 @@ export default function AppHeader({
                   {onOpenProfile && (
                     <button
                       onClick={() => { setDropdownOpen(false); onOpenProfile(); }}
-                      className={`w-full text-left px-4 py-2.5 text-[13px] hover:bg-[#eef4fb] transition-colors font-medium ${
+                      className={`w-full text-left px-4 py-2.5 text-[13px] hover:bg-[#faf9f7] transition-colors font-medium ${
                         active === 'profile' ? 'text-[#1a1a1a] font-semibold' : 'text-[#1a1a1a]'
                       }`}
                     >
@@ -89,7 +89,7 @@ export default function AppHeader({
                   {onSignOut && (
                     <button
                       onClick={() => { setDropdownOpen(false); onSignOut(); }}
-                      className="w-full text-left px-4 py-2.5 text-[13px] text-[#cc0000] hover:bg-[#eef4fb] transition-colors font-medium border-t border-black/[0.05] mt-1 pt-2.5"
+                      className="w-full text-left px-4 py-2.5 text-[13px] text-[#cc0000] hover:bg-[#faf9f7] transition-colors font-medium border-t border-black/[0.05] mt-1 pt-2.5"
                     >
                       Sign Out
                     </button>

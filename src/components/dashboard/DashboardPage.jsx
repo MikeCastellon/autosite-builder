@@ -118,7 +118,7 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
   ].filter(Boolean);
 
   return (
-    <div className="min-h-screen bg-[#eef4fb]">
+    <div className="min-h-screen bg-[#faf9f7]">
       <header className="border-b border-black/[0.07] bg-white px-4 sm:px-8 flex items-center justify-between h-16 sticky top-0 z-50">
         <a
           href="https://www.autocaregenius.com"
@@ -170,7 +170,7 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
                   {onOpenProfile && (
                     <button
                       onClick={() => { setDropdownOpen(false); onOpenProfile(); }}
-                      className="w-full text-left px-4 py-2.5 text-[13px] text-[#1a1a1a] hover:bg-[#eef4fb] transition-colors font-medium"
+                      className="w-full text-left px-4 py-2.5 text-[13px] text-[#1a1a1a] hover:bg-[#faf9f7] transition-colors font-medium"
                     >
                       Profile
                     </button>
@@ -178,7 +178,7 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
                   {onSignOut && (
                     <button
                       onClick={() => { setDropdownOpen(false); onSignOut(); }}
-                      className="w-full text-left px-4 py-2.5 text-[13px] text-[#cc0000] hover:bg-[#eef4fb] transition-colors font-medium border-t border-black/[0.05] mt-1 pt-2.5"
+                      className="w-full text-left px-4 py-2.5 text-[13px] text-[#cc0000] hover:bg-[#faf9f7] transition-colors font-medium border-t border-black/[0.05] mt-1 pt-2.5"
                     >
                       Sign Out
                     </button>
@@ -257,10 +257,6 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
             >
               <span className="w-1.5 h-1.5 rounded-full bg-[#cc0000]" />
               Free plan
-              <span className="text-[#888] font-normal hidden sm:inline">— upgrade</span>
-              <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-                <path d="M3 6h6M6 3l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
             </button>
           )}
         </div>
@@ -290,7 +286,7 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
               >
                 {/* Live preview thumbnail */}
                 <div
-                  className="relative w-full sm:w-[200px] h-[130px] shrink-0 overflow-hidden rounded-lg border border-black/[0.07] bg-[#eef4fb]"
+                  className="relative w-full sm:w-[200px] h-[130px] shrink-0 overflow-hidden rounded-lg border border-black/[0.07] bg-[#faf9f7]"
                   style={{ pointerEvents: 'none' }}
                 >
                   {site.published_url ? (

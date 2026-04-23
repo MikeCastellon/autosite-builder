@@ -183,7 +183,7 @@ export default function GeneralTab({ siteId, config, siteImages, onSaved }) {
       <div>
         <label className={labelBase}>Booking modal logo</label>
         <div className="flex items-start gap-4">
-          <div className="w-20 h-20 rounded-xl border-2 border-dashed border-black/10 bg-[#eef4fb] flex items-center justify-center overflow-hidden shrink-0">
+          <div className="w-20 h-20 rounded-xl border-2 border-dashed border-black/10 bg-[#faf9f7] flex items-center justify-center overflow-hidden shrink-0">
             {effectiveLogo ? (
               <img src={effectiveLogo} alt="Booking logo" className="max-w-full max-h-full object-contain" />
             ) : (
