@@ -126,6 +126,17 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
     const errs = validate();
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
+      // Scroll to + focus the first missing field so the user knows where to go.
+      setTimeout(() => {
+        const firstKey = Object.keys(errs)[0];
+        const el =
+          document.querySelector(`[data-field-key="${firstKey}"]`) ||
+          document.querySelector(`[name="${firstKey}"]`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          if (el.focus) el.focus({ preventScroll: true });
+        }
+      }, 0);
       return;
     }
     // Ensure reviewSource default is included
@@ -133,6 +144,10 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
     if (!finalValues.reviewSource) finalValues.reviewSource = 'google';
     onSubmit(finalValues);
   };
+
+  const missingFields = Object.keys(errors).filter((k) => errors[k]);
+  const missingLabels = missingFields
+    .map((k) => allFields.find((f) => f.key === k)?.label || k);
 
   const inputBase = 'w-full bg-white border rounded-xl px-3.5 py-2.5 text-[#1a1a1a] placeholder-[#aaa] text-[14px] focus:outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000] transition';
 
@@ -161,7 +176,36 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
         <p className="text-[#555] text-[15px] mt-2">The more detail you provide, the better the AI-generated copy will be.</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-7">
+      <form onSubmit={handleSubmit} className="space-y-7" noValidate>
+        {/* Error summary — shown when user submits with missing required fields */}
+        {missingLabels.length > 0 && (
+          <div
+            role="alert"
+            className="flex items-start gap-3 rounded-xl border-2 border-[#cc0000] bg-red-50 text-[#8a0000] px-4 py-3"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="shrink-0 mt-0.5" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" fill="#cc0000" />
+              <path d="M12 7v6" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" />
+              <circle cx="12" cy="16.5" r="1.2" fill="#fff" />
+            </svg>
+            <div className="flex-1 min-w-0">
+              <p className="text-[14px] font-semibold leading-snug">
+                {missingLabels.length === 1
+                  ? 'Please fill in the required field:'
+                  : `Please fill in ${missingLabels.length} required fields:`}
+              </p>
+              <ul className="mt-1 text-[13px] leading-snug">
+                {missingLabels.map((lbl, i) => (
+                  <li key={i} className="inline-block">
+                    <span className="font-semibold">{lbl}</span>
+                    {i < missingLabels.length - 1 && <span className="text-[#8a0000]/60 mx-1.5">·</span>}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
+
         {/* Common fields */}
         <div className="space-y-4">
           <p className="text-[11px] font-semibold text-[#cc0000] uppercase tracking-[1.5px]">Basic Information</p>
@@ -174,9 +218,11 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
                 </label>
                 <input
                   type={field.type}
+                  data-field-key={field.key}
                   value={values[field.key] || ''}
                   onChange={(e) => handleChange(field.key, e.target.value)}
                   placeholder={field.placeholder}
+                  aria-invalid={!!errors[field.key]}
                   className={`${inputBase} ${errors[field.key] ? 'border-[#cc0000] ring-1 ring-[#cc0000]/30' : 'border-black/[0.12]'}`}
                 />
                 {errors[field.key] && (
@@ -278,10 +324,12 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
 
               {field.type === 'textarea' && (
                 <textarea
+                  data-field-key={field.key}
                   value={values[field.key] || ''}
                   onChange={(e) => handleChange(field.key, e.target.value)}
                   placeholder={field.placeholder}
                   rows={3}
+                  aria-invalid={!!errors[field.key]}
                   className={`${inputBase} resize-none ${errors[field.key] ? 'border-[#cc0000]' : 'border-black/[0.12]'}`}
                 />
               )}
@@ -289,6 +337,8 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
               {field.type === 'packages' && (() => {
                 const pkgs = Array.isArray(values[field.key]) ? values[field.key] : [];
                 const draft = packageDrafts[field.key] || { name: '', price: '', description: '' };
+                const hasDraft = !!(draft.name.trim() || draft.price.trim() || draft.description.trim());
+                const canSave = !!draft.name.trim();
 
                 const updateDraft = (k, v) =>
                   setPackageDrafts((prev) => ({ ...prev, [field.key]: { ...draft, [k]: v } }));
@@ -303,26 +353,57 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
                   handleChange(field.key, pkgs.filter((_, idx) => idx !== i));
 
                 return (
-                  <div className="space-y-2">
-                    {pkgs.map((pkg, i) => (
-                      <div key={i} className="flex items-start justify-between gap-3 px-3.5 py-2.5 bg-[#faf9f7] border border-black/[0.07] rounded-xl">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-[13px] font-semibold text-[#1a1a1a]">{pkg.name}</span>
-                            {pkg.price && <span className="text-[13px] font-bold text-[#cc0000]">{pkg.price}</span>}
+                  <div className="space-y-3">
+                    {/* Saved packages list */}
+                    {pkgs.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-[11px] font-semibold text-[#888] uppercase tracking-[1px]">
+                          Saved ({pkgs.length})
+                        </p>
+                        {pkgs.map((pkg, i) => (
+                          <div key={i} className="flex items-start justify-between gap-3 px-3.5 py-2.5 bg-[#faf9f7] border border-black/[0.07] rounded-xl">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-[13px] font-semibold text-[#1a1a1a]">{pkg.name}</span>
+                                {pkg.price && <span className="text-[13px] font-bold text-[#cc0000]">{pkg.price}</span>}
+                              </div>
+                              {pkg.description && <p className="text-[12px] text-[#888] mt-0.5 leading-snug">{pkg.description}</p>}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removePackage(i)}
+                              className="shrink-0 text-[#bbb] hover:text-[#cc0000] text-[18px] leading-none transition-colors mt-0.5"
+                              title="Remove"
+                            >×</button>
                           </div>
-                          {pkg.description && <p className="text-[12px] text-[#888] mt-0.5 leading-snug">{pkg.description}</p>}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => removePackage(i)}
-                          className="shrink-0 text-[#bbb] hover:text-[#cc0000] text-[18px] leading-none transition-colors mt-0.5"
-                          title="Remove"
-                        >×</button>
+                        ))}
                       </div>
-                    ))}
+                    )}
 
-                    <div className="border border-black/[0.10] rounded-xl p-3.5 space-y-2.5 bg-white">
+                    {/* New package entry form */}
+                    <div
+                      className={`rounded-xl p-4 space-y-2.5 transition-colors ${
+                        hasDraft
+                          ? 'bg-[#fff8f8] border-2 border-[#cc0000]/40'
+                          : 'bg-white border border-black/[0.10]'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-[11px] font-bold text-[#cc0000] uppercase tracking-[1px]">
+                          {pkgs.length > 0 ? 'Add another package' : 'Add your first package'}
+                        </p>
+                        {hasDraft && !canSave && (
+                          <span className="text-[10px] font-medium text-[#8a0000] bg-[#cc0000]/10 px-2 py-0.5 rounded-full">
+                            Enter a name to save
+                          </span>
+                        )}
+                        {canSave && (
+                          <span className="text-[10px] font-medium text-[#8a0000] bg-[#cc0000]/10 px-2 py-0.5 rounded-full animate-pulse">
+                            Unsaved — click Save below
+                          </span>
+                        )}
+                      </div>
+
                       <div className="grid grid-cols-2 gap-2">
                         <input
                           type="text"
@@ -352,11 +433,23 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
                       <button
                         type="button"
                         onClick={addPackage}
-                        disabled={!draft.name.trim()}
-                        className="w-full py-2 text-[13px] font-semibold rounded-lg border border-dashed border-black/[0.15] text-[#555] hover:border-[#cc0000]/40 hover:text-[#cc0000] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        disabled={!canSave}
+                        className={`w-full py-2.5 text-[14px] font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${
+                          canSave
+                            ? 'bg-[#cc0000] hover:bg-[#aa0000] text-white shadow-sm'
+                            : 'bg-[#f2f0ec] text-[#aaa] cursor-not-allowed'
+                        }`}
                       >
-                        + Add Package
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                          <path d="M7 3v8M3 7h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                        </svg>
+                        {canSave ? 'Save Package' : 'Save Package'}
                       </button>
+                      {!hasDraft && pkgs.length === 0 && (
+                        <p className="text-[11px] text-[#888] text-center leading-snug">
+                          Tip: enter a name and price above, then click <span className="font-semibold text-[#cc0000]">Save Package</span> to add it to your list. Repeat to add more.
+                        </p>
+                      )}
                     </div>
                   </div>
                 );
@@ -365,10 +458,12 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
               {(field.type === 'text' || field.type === 'tel' || field.type === 'number') && (
                 <input
                   type={field.type}
+                  data-field-key={field.key}
                   value={values[field.key] || ''}
                   onChange={(e) => handleChange(field.key, e.target.value)}
                   placeholder={field.placeholder}
-                  className={`${inputBase} ${errors[field.key] ? 'border-[#cc0000]' : 'border-black/[0.12]'}`}
+                  aria-invalid={!!errors[field.key]}
+                  className={`${inputBase} ${errors[field.key] ? 'border-[#cc0000] ring-1 ring-[#cc0000]/30' : 'border-black/[0.12]'}`}
                 />
               )}
 
