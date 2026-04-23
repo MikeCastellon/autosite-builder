@@ -439,12 +439,15 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
           onClick={() => setDomainPanelSiteId(null)}
         >
           <div
-            className="bg-white rounded-2xl max-w-md w-full p-6"
+            className="bg-white rounded-2xl max-w-2xl w-full p-7 sm:p-8 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-4">
-              <p className="font-semibold text-[#1a1a1a]">Custom Domain</p>
-              <button onClick={() => setDomainPanelSiteId(null)} className="text-[#888] hover:text-[#cc0000]">✕</button>
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <p className="text-[18px] font-bold text-[#1a1a1a]">Custom Domain</p>
+                <p className="text-[12px] text-[#888] mt-0.5">Connect a domain you already own.</p>
+              </div>
+              <button onClick={() => setDomainPanelSiteId(null)} className="text-[#888] hover:text-[#cc0000] text-xl leading-none">✕</button>
             </div>
             <CustomDomainPanel
               siteId={domainPanelSiteId}

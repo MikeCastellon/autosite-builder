@@ -138,37 +138,87 @@ export default function CustomDomainPanel({ siteId, initialDomain = null, initia
   }
 
   return (
-    <div className="border border-black/[0.07] rounded-xl p-5">
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-[13px] font-semibold text-[#1a1a1a]">{domain}</p>
-        <button onClick={handleDisconnect} disabled={busy} className="text-xs text-[#888] hover:text-[#cc0000]">
+    <div className="border border-black/[0.07] rounded-xl p-6">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-[16px] font-bold text-[#1a1a1a]">{domain}</p>
+        <button onClick={handleDisconnect} disabled={busy} className="text-[12px] text-[#888] hover:text-[#cc0000] font-medium">
           Remove
         </button>
       </div>
-      <p className={`text-xs mb-3 ${display.tone === 'success' ? 'text-green-600' : display.tone === 'error' ? 'text-[#cc0000]' : 'text-[#888]'}`}>
+      <div className={`inline-flex items-center gap-2 text-[12px] font-semibold px-2.5 py-1 rounded-full mb-5 ${
+        display.tone === 'success' ? 'bg-green-50 text-green-700 border border-green-200'
+        : display.tone === 'error' ? 'bg-red-50 text-[#cc0000] border border-red-200'
+        : 'bg-amber-50 text-amber-700 border border-amber-200'
+      }`}>
+        <span className={`w-1.5 h-1.5 rounded-full ${
+          display.tone === 'success' ? 'bg-green-500'
+          : display.tone === 'error' ? 'bg-[#cc0000]'
+          : 'bg-amber-500 animate-pulse'
+        }`} />
         {display.label}
-      </p>
+      </div>
 
-      {provider && status !== 'active_ssl' && (
-        <p className="text-xs text-[#555] mb-3">
-          Detected registrar: <strong>{provider}</strong>. If the popup didn't open, <a href={applyUrl} className="text-[#cc0000] underline">click here to authorize</a>.
-        </p>
-      )}
+      {status !== 'active_ssl' && (
+        <div className="space-y-4">
+          <div className="bg-[#faf9f7] border border-black/[0.07] rounded-lg p-4">
+            <p className="text-[13px] font-bold text-[#1a1a1a] mb-2">What's happening</p>
+            <ol className="text-[12px] text-[#555] space-y-1.5 list-decimal list-inside">
+              <li>You add the DNS records below at your domain registrar (GoDaddy, Namecheap, etc.).</li>
+              <li>Cloudflare verifies the records — usually 1-5 min, sometimes up to a few hours depending on your registrar.</li>
+              <li>Once verified, an SSL certificate is provisioned automatically (HTTPS).</li>
+              <li>You'll get an email when your domain is fully live.</li>
+            </ol>
+          </div>
 
-      {!provider && status !== 'active_ssl' && cnameInstructions && (
-        <div className="bg-[#faf9f7] border border-black/[0.07] rounded-lg p-3 font-mono text-xs text-[#555] space-y-1">
-          <p className="font-semibold text-[#1a1a1a] mb-2">Add these DNS records at your registrar:</p>
-          {cnameInstructions.map((r, i) => (
-            <div key={i} className="flex gap-3">
-              <span className="w-16 shrink-0 text-[#888]">{r.type}</span>
-              <span className="w-24 shrink-0">{r.host}</span>
-              <span className="break-all">{r.value}</span>
+          {provider && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-[13px] font-bold text-blue-900 mb-1">Auto-setup available</p>
+              <p className="text-[12px] text-blue-800 mb-2.5">
+                Detected registrar: <strong>{provider}</strong>. If the popup didn't open, click below to authorize the DNS update automatically.
+              </p>
+              <a href={applyUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-md transition-colors">
+                Authorize {provider} →
+              </a>
             </div>
-          ))}
+          )}
+
+          {cnameInstructions && cnameInstructions.length > 0 && (
+            <div>
+              <p className="text-[13px] font-bold text-[#1a1a1a] mb-2">
+                {provider ? 'Or add these DNS records manually' : 'Add these DNS records at your registrar'}
+              </p>
+              <div className="bg-white border border-black/[0.10] rounded-lg overflow-hidden">
+                <div className="grid grid-cols-[80px_120px_1fr] gap-2 px-3 py-2 bg-[#faf9f7] border-b border-black/[0.07] text-[10px] font-bold uppercase tracking-wider text-[#888]">
+                  <div>Type</div>
+                  <div>Host / Name</div>
+                  <div>Value / Points to</div>
+                </div>
+                {cnameInstructions.map((r, i) => (
+                  <div key={i} className="grid grid-cols-[80px_120px_1fr] gap-2 px-3 py-2.5 border-b border-black/[0.05] last:border-b-0 font-mono text-[12px] text-[#1a1a1a]">
+                    <div className="font-semibold">{r.type}</div>
+                    <div>{r.host}</div>
+                    <div className="break-all">{r.value}</div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[11px] text-[#888] mt-2">
+                Status updates automatically every few seconds — no need to refresh.
+              </p>
+            </div>
+          )}
         </div>
       )}
 
-      {err && <p className="text-xs text-[#cc0000] mt-2">{err}</p>}
+      {status === 'active_ssl' && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <p className="text-[14px] font-bold text-green-800 mb-1">🎉 Your domain is live</p>
+          <p className="text-[12px] text-green-700">
+            Visitors can now reach your site at <a href={`https://${domain}`} target="_blank" rel="noopener noreferrer" className="underline font-semibold">https://{domain}</a> with HTTPS enabled automatically.
+          </p>
+        </div>
+      )}
+
+      {err && <p className="text-[12px] text-[#cc0000] mt-3">{err}</p>}
     </div>
   );
 }
