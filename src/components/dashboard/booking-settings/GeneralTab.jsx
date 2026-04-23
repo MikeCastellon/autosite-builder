@@ -15,7 +15,14 @@ export default function GeneralTab({ siteId, config, siteImages, onSaved }) {
   const fileInputRef = useRef(null);
 
   const MODAL_THEMES = [
+    // Light variants
     { id: 'light',  label: 'Light',  swatch: { bg: '#ffffff', accent: '#1a1a1a', border: '#e5e5e5' } },
+    { id: 'cream',  label: 'Cream',  swatch: { bg: '#fffbeb', accent: '#f59e0b', border: '#f0e6c7' } },
+    { id: 'alloy',  label: 'Alloy',  swatch: { bg: '#F0F1F3', accent: '#A8813A', border: '#d4d7dd' } },
+    { id: 'sky',    label: 'Sky',    swatch: { bg: '#f0f9ff', accent: '#06b6d4', border: '#bae6fd' } },
+    { id: 'sand',   label: 'Sand',   swatch: { bg: '#faf6f0', accent: '#78716c', border: '#e7dfd4' } },
+    { id: 'mint',   label: 'Mint',   swatch: { bg: '#f0fdfa', accent: '#14b8a6', border: '#99f6e4' } },
+    // Dark variants
     { id: 'dark',   label: 'Dark',   swatch: { bg: '#1a1a1a', accent: '#ffffff', border: '#333333' } },
     { id: 'gold',   label: 'Gold',   swatch: { bg: '#0a0a0a', accent: 'linear-gradient(135deg,#ca8a04,#eab308,#fde047,#eab308,#ca8a04)', border: '#322300' } },
     { id: 'silver', label: 'Silver', swatch: { bg: '#0f0f11', accent: 'linear-gradient(135deg,#94a3b8,#cbd5e1,#64748b)', border: '#2a2d35' } },
