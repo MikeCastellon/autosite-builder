@@ -249,6 +249,20 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
       <main className="max-w-4xl mx-auto px-6 py-10">
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-2xl font-black text-[#1a1a1a] tracking-tight">Your Sites</h2>
+          {!isPro && (
+            <button
+              type="button"
+              onClick={() => setProDialogOpen(true)}
+              className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#1a1a1a] bg-black/5 hover:bg-[#cc0000]/10 hover:text-[#cc0000] px-3.5 py-2 rounded-full transition-colors"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-[#cc0000]" />
+              Free plan
+              <span className="text-[#888] font-normal hidden sm:inline">— upgrade</span>
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                <path d="M3 6h6M6 3l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          )}
         </div>
 
         {loading ? (
