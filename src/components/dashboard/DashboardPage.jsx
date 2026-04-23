@@ -7,6 +7,7 @@ import { useAlert } from '../ui/AlertProvider.jsx';
 import CustomDomainPanel from '../CustomDomainPanel.jsx';
 import UpgradeProButton from '../ui/UpgradeProButton.jsx';
 import UpgradeProDialog from '../ui/UpgradeProDialog.jsx';
+import EditBusinessInfoModal from './EditBusinessInfoModal.jsx';
 
 const MAX_SITES = 1;
 const CUSTOM_DOMAIN_ENABLED = import.meta.env.VITE_CUSTOM_DOMAIN_ENABLED === 'true';
@@ -21,6 +22,7 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
   const [domainPanelSiteId, setDomainPanelSiteId] = useState(null);
   const [domainPanelInitial, setDomainPanelInitial] = useState(null);
   const [proDialogOpen, setProDialogOpen] = useState(false);
+  const [editBizSite, setEditBizSite] = useState(null);
   const schedulerEnabled = !!profile?.scheduler_enabled;
   const showBookingsNav = canSeeBookingsNav(profile);
   const isAdmin = !!profile?.is_super_admin;
@@ -352,6 +354,12 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
                       Edit
                     </button>
                   )}
+                  <button
+                    onClick={() => setEditBizSite(site)}
+                    className="px-3 py-1.5 text-xs font-medium border border-black/10 rounded-lg hover:border-[#cc0000]/30 hover:text-[#cc0000] transition-colors"
+                  >
+                    Business Info
+                  </button>
                   {site.published_url && (
                     <button
                       onClick={() => handleRepublish(site)}
@@ -428,6 +436,16 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
         heading="Custom domains are a Pro feature"
         subheading="Connect your own domain (mybusiness.com) instead of the free subdomain — plus everything else included with Pro."
       />
+
+      {editBizSite && (
+        <EditBusinessInfoModal
+          site={editBizSite}
+          onClose={() => setEditBizSite(null)}
+          onSaved={(updated) => {
+            setSites((prev) => prev.map((s) => s.id === updated.id ? updated : s));
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { supabase } from '../../lib/supabase.js';
 
 const SOCIALFEEDS_URL = import.meta.env.VITE_SOCIALFEEDS_URL || 'https://social-feeds-app.netlify.app';
 
-export default function StepBusinessInfo({ businessType, initialValues, onSubmit }) {
+export default function StepBusinessInfo({ businessType, initialValues, onSubmit, submitLabel = 'Choose a Template' }) {
   const { session } = useAuth();
   const typeInfo = BUSINESS_TYPES.find((t) => t.id === businessType);
   const specificFields = TYPE_SPECIFIC_FIELDS[businessType] || [];
@@ -609,7 +609,7 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
           type="submit"
           className="w-full bg-[#1a1a1a] hover:bg-[#cc0000] text-white font-semibold py-3.5 px-6 rounded-xl transition-all text-[15px]"
         >
-          Choose a Template
+          {submitLabel}
         </button>
       </form>
     </div>
