@@ -87,7 +87,7 @@ export default function CustomDomainPanel({ siteId, initialDomain = null, initia
       clearInterval(pollingRef.current);
       return;
     }
-    pollingRef.current = setInterval(async () => {
+    const fetchStatus = async () => {
       try {
         const res = await fetch(`/.netlify/functions/domain-status?siteId=${siteId}`, {
           headers: { ...(await authHeader()) },
@@ -95,8 +95,13 @@ export default function CustomDomainPanel({ siteId, initialDomain = null, initia
         if (!res.ok) return;
         const data = await res.json();
         setStatus(data.status);
+        if (data.cnameInstructions?.length) setCnameInstructions(data.cnameInstructions);
       } catch {}
-    }, POLL_INTERVAL_MS);
+    };
+    // Fetch immediately so users opening the panel see the records right away,
+    // not after a 3s delay.
+    fetchStatus();
+    pollingRef.current = setInterval(fetchStatus, POLL_INTERVAL_MS);
     return () => clearInterval(pollingRef.current);
   }, [status, siteId]);
 
