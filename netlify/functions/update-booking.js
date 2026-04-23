@@ -74,9 +74,11 @@ export const handler = async (event) => {
   // Customer email on confirm/decline/cancel
   if (['confirm', 'decline', 'cancel'].includes(action)) {
     const { data: site } = await authClient
-      .from('sites').select('id, business_info').eq('id', updated.site_id).maybeSingle();
+      .from('sites').select('id, business_info, slug, published_url, generated_content').eq('id', updated.site_id).maybeSingle();
     const emailStatus = { confirm: 'confirmed', decline: 'declined', cancel: 'cancelled' }[action];
-    statusUpdateToCustomer({ booking: updated, site, status: emailStatus, reason })
+    // Await the send so Netlify doesn't terminate the function before
+    // Postmark completes the request.
+    await statusUpdateToCustomer({ booking: updated, site, status: emailStatus, reason })
       .catch((err) => console.error('customer email failed:', err));
   }
 

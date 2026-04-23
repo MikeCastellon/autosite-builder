@@ -157,10 +157,15 @@ export const handler = async (event) => {
     return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: 'Failed to create booking' }) };
   }
 
-  newBookingToOwner({ booking: inserted, site, ownerEmail: owner.email })
-    .catch((err) => console.error('owner email failed:', err));
-  bookingReceivedToCustomer({ booking: inserted, site, isSimple })
-    .catch((err) => console.error('customer email failed:', err));
+  // Await both sends so Netlify doesn't terminate the function before the
+  // Postmark requests complete. Trades ~300ms of response time for actually
+  // delivering emails reliably. Errors don't fail the booking.
+  await Promise.allSettled([
+    newBookingToOwner({ booking: inserted, site, ownerEmail: owner.email })
+      .catch((err) => console.error('owner email failed:', err)),
+    bookingReceivedToCustomer({ booking: inserted, site, isSimple })
+      .catch((err) => console.error('customer email failed:', err)),
+  ]);
 
   return { statusCode: 200, headers: CORS, body: JSON.stringify({ ok: true, bookingId: inserted.id }) };
 };
