@@ -50,15 +50,15 @@ function businessInfoHtmlBlock(site) {
   const publishedUrl = site?.published_url || (site?.slug ? `https://${site.slug}.autocaregeniushub.com` : null);
 
   const rows = [];
-  if (biz.businessName) rows.push(`<p style="margin:0 0 6px;font-weight:700;font-size:15px;color:#1a1a1a;">${esc(biz.businessName)}</p>`);
-  if (fullAddress) rows.push(`<p style="margin:0 0 4px;font-size:13px;color:#555;"><strong style="color:#999;font-weight:600;">Address:</strong> ${esc(fullAddress)}</p>`);
-  if (biz.phone) rows.push(`<p style="margin:0 0 4px;font-size:13px;color:#555;"><strong style="color:#999;font-weight:600;">Phone:</strong> <a href="tel:${esc(biz.phone)}" style="color:#cc0000;text-decoration:none;font-weight:600;">${esc(biz.phone)}</a></p>`);
-  if (biz.email) rows.push(`<p style="margin:0 0 4px;font-size:13px;color:#555;"><strong style="color:#999;font-weight:600;">Email:</strong> <a href="mailto:${esc(biz.email)}" style="color:#cc0000;text-decoration:none;">${esc(biz.email)}</a></p>`);
-  if (hoursText) rows.push(`<p style="margin:0 0 4px;font-size:13px;color:#555;"><strong style="color:#999;font-weight:600;">Hours:</strong> ${esc(hoursText)}</p>`);
+  if (biz.businessName) rows.push(`<p style="margin:0 0 6px;font-weight:700;font-size:15px;color:#18181b;">${esc(biz.businessName)}</p>`);
+  if (fullAddress) rows.push(`<p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Address:</strong> ${esc(fullAddress)}</p>`);
+  if (biz.phone) rows.push(`<p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Phone:</strong> <a href="tel:${esc(biz.phone)}" style="color:#cc0000;text-decoration:none;font-weight:600;">${esc(biz.phone)}</a></p>`);
+  if (biz.email) rows.push(`<p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Email:</strong> <a href="mailto:${esc(biz.email)}" style="color:#cc0000;text-decoration:none;">${esc(biz.email)}</a></p>`);
+  if (hoursText) rows.push(`<p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Hours:</strong> ${esc(hoursText)}</p>`);
   if (publishedUrl) rows.push(`<p style="margin:6px 0 0;font-size:12px;"><a href="${esc(publishedUrl)}" style="color:#cc0000;text-decoration:none;font-weight:600;">Visit our site →</a></p>`);
 
   if (rows.length === 0) return '';
-  return `<div style="margin-top:24px;padding:16px 18px;background:#faf9f7;border:1px solid #eee;border-radius:10px;">${rows.join('')}</div>`;
+  return `<div style="margin-top:24px;padding:16px 18px;background:#fafafa;border:1px solid #f4f4f5;border-radius:12px;">${rows.join('')}</div>`;
 }
 
 // Render the same branded shell used by the Supabase auth emails

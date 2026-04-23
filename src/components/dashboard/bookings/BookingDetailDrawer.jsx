@@ -20,7 +20,7 @@ const ACTIONS_FOR = {
 const ACTION_LABELS = {
   confirm:  { label: 'Confirm',        className: 'bg-[#cc0000] hover:bg-[#aa0000] text-white' },
   decline:  { label: 'Decline',        className: 'bg-white border border-gray-300 hover:bg-gray-50 text-gray-700' },
-  complete: { label: 'Mark completed', className: 'bg-blue-600 hover:bg-blue-700 text-white' },
+  complete: { label: 'Mark completed', className: 'bg-[#cc0000] hover:bg-[#aa0000] text-white' },
   cancel:   { label: 'Cancel',         className: 'bg-white border border-gray-300 hover:bg-gray-50 text-gray-700' },
 };
 
