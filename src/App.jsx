@@ -34,12 +34,61 @@ export default function App() {
   const [customColors, setCustomColors] = useState({});
   const [showLogin, setShowLogin] = useState(null); // null | 'signin' | 'signup'
   const [customFonts, setCustomFonts] = useState({});
-  const [view, setView] = useState('wizard'); // 'wizard' | 'dashboard' | 'admin' | 'bookings-page' | 'booking-settings'
+  // Default landing view for an authenticated user is the dashboard so returning
+  // users see their existing site (and free-plan limit) instead of being dropped
+  // back into the wizard. New users with zero sites see the "Build My Site" CTA there.
+  const [view, setView] = useState('dashboard'); // 'wizard' | 'dashboard' | 'admin' | 'bookings-page' | 'booking-settings'
   const [settingsSiteId, setSettingsSiteId] = useState(null);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [selectedWidgetIds, setSelectedWidgetIds] = useState([]);
   const [siteId, setSiteId] = useState(null);
   const saveTimerRef = useRef(null);
+  const [draftRestored, setDraftRestored] = useState(false);
+
+  // Per-user localStorage key for the in-progress wizard draft.
+  // Lets users recover their typed-in data if generation fails or they refresh.
+  const draftKey = session?.user?.email ? `genius-wizard-draft:${session.user.email}` : null;
+
+  // Restore draft once auth session is available
+  useEffect(() => {
+    if (!draftKey || draftRestored) return;
+    if (siteId) { setDraftRestored(true); return; }
+    if (Object.keys(businessInfo).length > 0 || businessType) { setDraftRestored(true); return; }
+    try {
+      const raw = localStorage.getItem(draftKey);
+      if (raw) {
+        const draft = JSON.parse(raw);
+        if (draft?.businessType) setBusinessType(draft.businessType);
+        if (draft?.businessInfo) setBusinessInfo(draft.businessInfo);
+        if (draft?.selectedTemplate) setSelectedTemplate(draft.selectedTemplate);
+        if (draft?.step && draft.step >= 1 && draft.step <= 4) setStep(draft.step);
+      }
+    } catch { /* ignore */ }
+    setDraftRestored(true);
+  }, [draftKey, draftRestored, businessInfo, businessType, siteId]);
+
+  // Persist draft to localStorage as the user fills out the wizard.
+  // Once a siteId exists, the data is auto-saved to Supabase so we no longer need the local draft.
+  useEffect(() => {
+    if (!draftKey || !draftRestored) return;
+    if (siteId || step >= 5) {
+      localStorage.removeItem(draftKey);
+      return;
+    }
+    if (!businessType && Object.keys(businessInfo).length === 0) {
+      localStorage.removeItem(draftKey);
+      return;
+    }
+    try {
+      localStorage.setItem(draftKey, JSON.stringify({
+        businessType,
+        businessInfo,
+        selectedTemplate,
+        step,
+        savedAt: Date.now(),
+      }));
+    } catch { /* quota exceeded — ignore */ }
+  }, [draftKey, draftRestored, businessType, businessInfo, selectedTemplate, step, siteId]);
 
   // Ensure Google Reviews widget key is in editedCopy when user is signed in
   useEffect(() => {
@@ -176,6 +225,9 @@ export default function App() {
     setSelectedWidgetIds([]);
     setIsDemoPreview(false);
     setSiteId(null);
+    if (draftKey) {
+      try { localStorage.removeItem(draftKey); } catch { /* ignore */ }
+    }
   };
 
   // Demo preview — shows a template with placeholder data, no AI call needed

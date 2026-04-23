@@ -90,6 +90,21 @@ function buildSeoHead(businessInfo, generatedCopy, siteId) {
       letter-spacing: 0.02em;
     }
     #acg-powered-by img { height: 18px; }
+    #acg-powered-by .acg-divider {
+      width: 1px;
+      height: 16px;
+      background: rgba(0, 0, 0, 0.1);
+      margin: 0 2px;
+    }
+    #acg-powered-by .acg-wordmark {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      color: #1a1a1a;
+      letter-spacing: -0.3px;
+      text-decoration: none;
+    }
+    #acg-powered-by .acg-wordmark .acg-accent { color: #cc0000; }
     @media (max-width: 768px) {
       div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
       div[style*="1fr 1fr"] { grid-template-columns: 1fr !important; }
@@ -173,8 +188,10 @@ async function buildHtmlString(templateId, businessInfo, generatedCopy, template
   const poweredByBar = `
 <div id="acg-powered-by">
   <span class="acg-label">Powered by</span>
-  <a href="https://prohub.autocaregenius.com/" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;">
+  <a href="https://www.autocaregenius.com/" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:8px;">
     <img src="https://www.autocaregenius.com/cdn/shop/files/v11_1.svg?v=1760731533&width=160" alt="Auto Care Genius" />
+    <span class="acg-divider"></span>
+    <span class="acg-wordmark">Genius <span class="acg-accent">Websites</span></span>
   </a>
 </div>`;
 

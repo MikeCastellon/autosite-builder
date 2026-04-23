@@ -113,7 +113,22 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
   return (
     <div className="min-h-screen bg-[#faf9f7]">
       <header className="border-b border-black/[0.07] bg-white px-4 sm:px-8 flex items-center justify-between h-16 sticky top-0 z-50">
-        <h1 className="text-lg font-black text-[#1a1a1a] tracking-tight">Genius Websites</h1>
+        <a
+          href="https://www.autocaregenius.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2.5"
+        >
+          <img
+            src="https://www.autocaregenius.com/cdn/shop/files/v11_1.svg?v=1760731533&width=200"
+            alt="Auto Care Genius"
+            className="h-7"
+          />
+          <div className="w-px h-6 bg-black/[0.07]" />
+          <span className="font-bold text-[#1a1a1a] text-[17px] tracking-[-0.5px]">
+            Genius <span className="text-[#cc0000]">Websites</span>
+          </span>
+        </a>
 
         {/* Centered nav (desktop only) */}
         <nav className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-1 text-[13px] font-medium">
@@ -246,11 +261,44 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
             {sites.map((site) => (
               <div
                 key={site.id}
-                className="bg-white border border-black/[0.07] rounded-xl p-5 flex items-center justify-between"
+                className="bg-white border border-black/[0.07] rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row gap-4 sm:items-center"
               >
-                <div>
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <p className="font-semibold text-[#1a1a1a]">
+                {/* Live preview thumbnail */}
+                <div
+                  className="relative w-full sm:w-[200px] h-[130px] shrink-0 overflow-hidden rounded-lg border border-black/[0.07] bg-[#faf9f7]"
+                  style={{ pointerEvents: 'none' }}
+                >
+                  {site.published_url ? (
+                    <iframe
+                      src={site.published_url}
+                      title={`${site.business_info?.businessName || 'Site'} preview`}
+                      loading="lazy"
+                      sandbox="allow-same-origin allow-scripts"
+                      style={{
+                        width: '1280px',
+                        height: '832px',
+                        border: 0,
+                        transform: 'scale(0.156)',
+                        transformOrigin: '0 0',
+                        pointerEvents: 'none',
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center text-center px-3">
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" className="text-[#aaa] mb-1.5">
+                        <path d="M3 5a2 2 0 012-2h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5z" stroke="currentColor" strokeWidth="1.5"/>
+                        <path d="M3 9h18M8 14h8M8 17h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      </svg>
+                      <p className="text-[10px] font-semibold text-[#888] uppercase tracking-wider">Not published</p>
+                      <p className="text-[10px] text-[#aaa] mt-0.5 leading-tight">Publish to see live preview</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                    <p className="font-semibold text-[#1a1a1a] truncate">
                       {site.business_info?.businessName || 'Untitled'}
                     </p>
                     {site.published_url ? (
@@ -281,7 +329,9 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
                     </a>
                   )}
                 </div>
-                <div className="flex gap-2">
+
+                {/* Actions */}
+                <div className="flex flex-wrap gap-2 sm:flex-col sm:items-stretch sm:w-auto">
                   {onEditSite && (
                     <button
                       onClick={() => onEditSite(site)}
