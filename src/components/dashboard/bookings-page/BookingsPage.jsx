@@ -3,8 +3,18 @@ import { supabase } from '../../../lib/supabase.js';
 import BookingsView from '../bookings/BookingsView.jsx';
 import SchedulerSettings from '../booking-settings/SchedulerSettings.jsx';
 import SubscribeGate from './SubscribeGate.jsx';
+import AppHeader from '../../ui/AppHeader.jsx';
 
-export default function BookingsPage({ userId, profile, onExit }) {
+export default function BookingsPage({ userId, profile, userEmail, onExit, onOpenAdmin, onSignOut }) {
+  const headerProps = {
+    active: 'bookings',
+    userEmail,
+    profile,
+    onMySites: onExit,
+    onOpenBookings: () => {},
+    onOpenAdmin,
+    onSignOut,
+  };
   const [tab, setTab] = useState('schedule');
   const [sites, setSites] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,11 +42,9 @@ export default function BookingsPage({ userId, profile, onExit }) {
   if (sites.length === 0) {
     return (
       <div className="min-h-screen bg-[#faf9f7]">
-        <header className="border-b border-black/[0.07] bg-white px-6 py-4 flex items-center justify-between">
-          <h1 className="text-lg font-black text-[#1a1a1a]">Bookings</h1>
-          {onExit && <button onClick={onExit} className="text-sm text-gray-500 hover:text-[#1a1a1a]">← Back</button>}
-        </header>
-        <main className="max-w-3xl mx-auto px-6 py-10 text-center">
+        <AppHeader {...headerProps} />
+        <main className="max-w-3xl mx-auto px-6 py-10">
+          <h2 className="text-2xl font-black text-[#1a1a1a] tracking-tight mb-4">Bookings</h2>
           <p className="text-gray-600">Create a site first — bookings attach to a published site.</p>
         </main>
       </div>
@@ -46,12 +54,10 @@ export default function BookingsPage({ userId, profile, onExit }) {
   return (
     <SubscribeGate profile={profile} onExit={onExit}>
       <div className="min-h-screen bg-[#faf9f7]">
-        <header className="border-b border-black/[0.07] bg-white px-6 py-4 flex items-center justify-between">
-          <h1 className="text-lg font-black text-[#1a1a1a]">Bookings</h1>
-          {onExit && <button onClick={onExit} className="text-sm text-gray-500 hover:text-[#1a1a1a]">← Back</button>}
-        </header>
+        <AppHeader {...headerProps} />
 
-        <main className="max-w-5xl mx-auto px-6 py-6">
+        <main className="max-w-5xl mx-auto px-6 py-10">
+          <h2 className="text-2xl font-black text-[#1a1a1a] tracking-tight mb-6">Bookings</h2>
           <div className="flex gap-1 mb-6 border-b border-gray-200">
             <TabBtn on={tab === 'schedule'} onClick={() => setTab('schedule')}>Schedule</TabBtn>
             <TabBtn on={tab === 'settings'} onClick={() => setTab('settings')}>Settings</TabBtn>

@@ -320,7 +320,16 @@ export default function App() {
   };
 
   if (view === 'bookings-page') {
-    return <BookingsPage userId={session?.user?.id} profile={profile} onExit={() => setView('dashboard')} />;
+    return (
+      <BookingsPage
+        userId={session?.user?.id}
+        profile={profile}
+        userEmail={session?.user?.email}
+        onExit={() => setView('dashboard')}
+        onOpenAdmin={() => setView('admin')}
+        onSignOut={handleSignOut}
+      />
+    );
   }
 
   if (view === 'booking-settings' && settingsSiteId) {
