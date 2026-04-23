@@ -62,10 +62,18 @@ export default function BookingDetailDrawer({ booking, onClose, onUpdated }) {
   return (
     <div className="fixed inset-0 z-40 flex" onClick={onClose}>
       <div className="flex-1 bg-black/40" />
-      <aside className="w-full max-w-md bg-white h-full overflow-y-auto shadow-2xl p-6" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-4">
+      <aside className="relative w-full max-w-md bg-white h-full overflow-y-auto shadow-2xl p-6" onClick={(e) => e.stopPropagation()}>
+        <button
+          onClick={onClose}
+          aria-label="Close"
+          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/[0.04] hover:bg-[#cc0000]/10 hover:text-[#cc0000] text-[#555] flex items-center justify-center transition-colors"
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+            <path d="M3 3l8 8M11 3L3 11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+        </button>
+        <div className="mb-4 pr-10">
           <StatusPill status={b.status} />
-          <button onClick={onClose} aria-label="Close" className="text-gray-400 hover:text-gray-600 text-2xl leading-none">×</button>
         </div>
 
         <h2 className="text-xl font-black text-[#1a1a1a]">{b.customer_name}</h2>
