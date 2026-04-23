@@ -249,9 +249,6 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
       <main className="max-w-4xl mx-auto px-6 py-10">
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-2xl font-black text-[#1a1a1a] tracking-tight">Your Sites</h2>
-          {!canCreateSite && (
-            <span className="text-xs text-[#888] bg-black/5 px-4 py-2 rounded-lg">Free plan: 1 site</span>
-          )}
         </div>
 
         {loading ? (
