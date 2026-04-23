@@ -71,10 +71,9 @@ export default function BookingsPage({ userId, profile, userEmail, onExit, onOpe
   }
 
   return (
-    <SubscribeGate profile={profile} onExit={onExit}>
-      <div className="min-h-screen bg-[#faf9f7]">
-        <AppHeader {...headerProps} />
-
+    <div className="min-h-screen bg-[#faf9f7]">
+      <AppHeader {...headerProps} />
+      <SubscribeGate profile={profile}>
         <main className="max-w-5xl mx-auto px-6 py-10">
           <div className="flex gap-1 mb-6 border-b border-gray-200">
             <TabBtn on={tab === 'schedule'} onClick={() => setTab('schedule')}>Schedule</TabBtn>
@@ -99,8 +98,8 @@ export default function BookingsPage({ userId, profile, userEmail, onExit, onOpe
           {tab === 'schedule' && <BookingsView userId={userId} />}
           {tab === 'settings' && activeSiteId && <SchedulerSettings siteId={activeSiteId} />}
         </main>
-      </div>
-    </SubscribeGate>
+      </SubscribeGate>
+    </div>
   );
 }
 

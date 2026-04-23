@@ -1,33 +1,15 @@
 import { useState } from 'react';
 import { publishSite } from '../../lib/publishSite.js';
 import { generateSlug } from '../../lib/publishUtils.js';
-import { startProUpgrade } from '../../lib/upgradeFlow.js';
-import { useAlert } from '../ui/AlertProvider.jsx';
+import UpgradeProPanel from '../ui/UpgradeProPanel.jsx';
 
 const PUBLISH_DOMAIN = import.meta.env.VITE_PUBLISH_DOMAIN || 'autocaregenius.com';
-
-const PRO_FEATURES = [
-  { title: '24/7 Online Booking', desc: 'Customers self-book any time straight from your site.' },
-  { title: 'Live Google Reviews Widget', desc: 'Real reviews pulled from your Google Business profile.' },
-  { title: 'Connect Your Custom Domain' },
-  { title: 'Priority Live Chat Support', desc: 'Direct line to our team — answers in minutes.' },
-];
 
 export default function StepExport({ siteId: passedSiteId, businessInfo, generatedCopy, templateId, templateMeta, images, selectedWidgetIds, onBack, onStartOver }) {
   const [publishing, setPublishing] = useState(false);
   const [published, setPublished] = useState(null);
   const [publishError, setPublishError] = useState(null);
-  const [upgrading, setUpgrading] = useState(false);
-  const { toast } = useAlert();
   const siteId = passedSiteId || crypto.randomUUID();
-
-  const handleUpgrade = async () => {
-    if (upgrading) return;
-    setUpgrading(true);
-    try { await startProUpgrade(); }
-    catch (e) { toast(e.message || 'Could not start checkout', 'error'); }
-    finally { setUpgrading(false); }
-  };
 
   const slug = generateSlug(businessInfo.businessName);
   const subdomain = `${slug}.${PUBLISH_DOMAIN}`;
@@ -145,44 +127,8 @@ export default function StepExport({ siteId: passedSiteId, businessInfo, generat
 
               {/* Upgrade to Pro panel — features list + CTA. Custom domain
                   lives behind this and only unlocks once the user upgrades. */}
-              <div className="mb-5 rounded-2xl overflow-hidden border border-[#cc0000]/20 shadow-sm">
-                <div className="px-5 pt-5 pb-4 bg-gradient-to-br from-[#cc0000] to-[#8a0000] text-white relative overflow-hidden">
-                  <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-2xl" aria-hidden="true" />
-                  <div className="relative">
-                    <p className="text-[10px] font-bold uppercase tracking-[2px] opacity-80 mb-1.5">Genius Websites Pro</p>
-                    <h3 className="text-[18px] font-[900] tracking-[-0.3px] leading-tight">
-                      Unlock the full toolkit
-                    </h3>
-                    <p className="text-[12px] opacity-90 leading-snug mt-1">
-                      Everything you need to turn visitors into booked customers.
-                    </p>
-                  </div>
-                </div>
-                <ul className="px-5 py-4 bg-white space-y-2.5">
-                  {PRO_FEATURES.map((f) => (
-                    <li key={f.title} className="flex items-start gap-2.5">
-                      <span className="shrink-0 w-5 h-5 rounded-full bg-[#cc0000] text-white flex items-center justify-center mt-0.5">
-                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-                          <path d="M2.5 6l2.5 2.5L9.5 3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </span>
-                      <div className="min-w-0">
-                        <p className="text-[13px] font-bold text-[#1a1a1a] leading-tight">{f.title}</p>
-                        {f.desc && <p className="text-[11px] text-[#666] leading-snug mt-0.5">{f.desc}</p>}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-                <div className="px-5 pb-5 bg-white">
-                  <button
-                    type="button"
-                    onClick={handleUpgrade}
-                    disabled={upgrading}
-                    className="block w-full py-3 px-6 rounded-xl bg-[#cc0000] hover:bg-[#aa0000] disabled:opacity-60 disabled:cursor-not-allowed text-white text-center font-semibold text-[14px] transition-colors shadow-sm"
-                  >
-                    {upgrading ? 'Loading...' : '⭐ Upgrade to Pro'}
-                  </button>
-                </div>
+              <div className="mb-5">
+                <UpgradeProPanel />
               </div>
             </>
           )}
