@@ -90,9 +90,93 @@
     el.addEventListener('click', function (e) { e.preventDefault(); openModal(cfg, { inline: false }); });
   }
 
+  // Modal theme presets. Owner picks in Booking Settings; default 'light'.
+  var THEMES = {
+    light: {
+      cardBg: '#fff', cardBorder: 'rgba(0,0,0,0.07)',
+      text: '#1a1a1a', muted: '#666', softMuted: '#999',
+      divider: '#f0f0f0', subtle: '#faf9f7',
+      inputBg: '#fff', inputBorder: '#e2e2e2', inputText: '#1a1a1a',
+      chipBg: '#fff', chipBorder: '#e8e8e8', chipHoverBg: '#fafafa',
+      calDayBg: '#fff', calDayBorder: '#eee', calHeadText: '#aaa',
+      closeBtnBg: '#faf9f7', closeBtnText: '#666',
+      backdrop: 'rgba(10,10,10,0.55)',
+      brandAccent: null, // falls back to cfg.brandColor
+      label: 'Light',
+    },
+    dark: {
+      cardBg: '#1a1a1a', cardBorder: 'rgba(255,255,255,0.08)',
+      text: '#ffffff', muted: '#aaaaaa', softMuted: '#888',
+      divider: 'rgba(255,255,255,0.08)', subtle: '#232323',
+      inputBg: '#232323', inputBorder: 'rgba(255,255,255,0.12)', inputText: '#ffffff',
+      chipBg: '#232323', chipBorder: 'rgba(255,255,255,0.1)', chipHoverBg: '#2a2a2a',
+      calDayBg: '#232323', calDayBorder: 'rgba(255,255,255,0.08)', calHeadText: '#888',
+      closeBtnBg: 'rgba(255,255,255,0.08)', closeBtnText: '#ccc',
+      backdrop: 'rgba(0,0,0,0.75)',
+      brandAccent: null,
+      label: 'Dark',
+    },
+    gold: {
+      cardBg: '#0a0a0a', cardBorder: 'rgba(202,138,4,0.25)',
+      text: '#ffffff', muted: '#aaaaaa', softMuted: '#8a8a8a',
+      divider: 'rgba(202,138,4,0.15)', subtle: '#141414',
+      inputBg: '#141414', inputBorder: 'rgba(202,138,4,0.25)', inputText: '#ffffff',
+      chipBg: '#141414', chipBorder: 'rgba(202,138,4,0.2)', chipHoverBg: '#1a1a1a',
+      calDayBg: '#141414', calDayBorder: 'rgba(202,138,4,0.15)', calHeadText: '#8a8a8a',
+      closeBtnBg: 'rgba(202,138,4,0.12)', closeBtnText: '#eab308',
+      backdrop: 'rgba(0,0,0,0.8)',
+      brandAccent: 'linear-gradient(135deg,#ca8a04 0%,#eab308 35%,#fde047 55%,#eab308 75%,#ca8a04 100%)',
+      brandSolid: '#ca8a04',
+      label: 'Gold',
+    },
+    silver: {
+      cardBg: '#0f0f11', cardBorder: 'rgba(148,163,184,0.2)',
+      text: '#ffffff', muted: '#cbd5e1', softMuted: '#94a3b8',
+      divider: 'rgba(148,163,184,0.12)', subtle: '#141518',
+      inputBg: '#141518', inputBorder: 'rgba(148,163,184,0.2)', inputText: '#ffffff',
+      chipBg: '#141518', chipBorder: 'rgba(148,163,184,0.18)', chipHoverBg: '#1a1b20',
+      calDayBg: '#141518', calDayBorder: 'rgba(148,163,184,0.1)', calHeadText: '#94a3b8',
+      closeBtnBg: 'rgba(148,163,184,0.12)', closeBtnText: '#cbd5e1',
+      backdrop: 'rgba(0,0,0,0.75)',
+      brandAccent: 'linear-gradient(135deg,#94a3b8 0%,#cbd5e1 30%,#94a3b8 50%,#64748b 70%,#94a3b8 100%)',
+      brandSolid: '#94a3b8',
+      label: 'Silver',
+    },
+    neon: {
+      cardBg: '#0d0d12', cardBorder: 'rgba(124,58,237,0.25)',
+      text: '#ffffff', muted: '#cbd5e1', softMuted: '#888',
+      divider: 'rgba(124,58,237,0.15)', subtle: '#12121a',
+      inputBg: '#12121a', inputBorder: 'rgba(124,58,237,0.25)', inputText: '#ffffff',
+      chipBg: '#12121a', chipBorder: 'rgba(124,58,237,0.2)', chipHoverBg: '#18182a',
+      calDayBg: '#12121a', calDayBorder: 'rgba(124,58,237,0.15)', calHeadText: '#888',
+      closeBtnBg: 'rgba(124,58,237,0.2)', closeBtnText: '#a78bfa',
+      backdrop: 'rgba(5,5,7,0.82)',
+      brandAccent: 'linear-gradient(135deg,#7C3AED 0%,#a855f7 50%,#06B6D4 100%)',
+      brandSolid: '#7C3AED',
+      label: 'Neon',
+    },
+    rust: {
+      cardBg: '#171717', cardBorder: 'rgba(192,57,43,0.25)',
+      text: '#ffffff', muted: '#bbb', softMuted: '#8a8a8a',
+      divider: 'rgba(192,57,43,0.15)', subtle: '#1e1e1e',
+      inputBg: '#1e1e1e', inputBorder: 'rgba(192,57,43,0.2)', inputText: '#ffffff',
+      chipBg: '#1e1e1e', chipBorder: 'rgba(192,57,43,0.2)', chipHoverBg: '#252525',
+      calDayBg: '#1e1e1e', calDayBorder: 'rgba(192,57,43,0.15)', calHeadText: '#999',
+      closeBtnBg: 'rgba(192,57,43,0.15)', closeBtnText: '#ef4444',
+      backdrop: 'rgba(0,0,0,0.75)',
+      brandAccent: null,
+      brandSolid: '#C0392B',
+      label: 'Rust',
+    },
+  };
+
   function openModal(cfg, opts) {
     if (document.getElementById('acg-scheduler-modal')) return;
-    var brand = cfg.brandColor || '#1a1a1a';
+    var themeKey = cfg.modal_theme && THEMES[cfg.modal_theme] ? cfg.modal_theme : 'light';
+    var T = THEMES[themeKey];
+    // Brand color: theme override (gold/silver/neon/rust) or the site's brandColor.
+    var brand = T.brandSolid || cfg.brandColor || '#1a1a1a';
+    var brandAccentFill = T.brandAccent || brand; // used for top stripe + gradients
     var FONT = "Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif";
 
     var container, card;
@@ -101,7 +185,7 @@
       container.id = 'acg-scheduler-modal';
       container.style.cssText = 'font-family:' + FONT + ';';
       card = document.createElement('div');
-      card.style.cssText = 'background:#fff;border:1px solid rgba(0,0,0,0.07);border-radius:16px;max-width:760px;overflow:hidden;box-shadow:0 6px 24px rgba(0,0,0,0.04);';
+      card.style.cssText = 'background:' + T.cardBg + ';border:1px solid ' + T.cardBorder + ';border-radius:16px;max-width:760px;overflow:hidden;box-shadow:0 6px 24px rgba(0,0,0,0.04);color:' + T.text + ';';
       container.appendChild(card);
       var host = document.getElementById('acg-scheduler-preview-host') || document.body;
       host.innerHTML = '';
@@ -112,15 +196,15 @@
       container.setAttribute('role', 'dialog');
       container.setAttribute('aria-modal', 'true');
       container.style.cssText =
-        'position:fixed;inset:0;background:rgba(10,10,10,0.55);z-index:9999;' +
+        'position:fixed;inset:0;background:' + T.backdrop + ';z-index:9999;' +
         'display:flex;align-items:center;justify-content:center;padding:16px;' +
         'backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);' +
         'font-family:' + FONT + ';';
       card = document.createElement('div');
       card.style.cssText =
-        'background:#fff;border-radius:16px;max-width:760px;width:100%;' +
+        'background:' + T.cardBg + ';border-radius:16px;max-width:760px;width:100%;' +
         'max-height:92vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,0.35);' +
-        'overflow-x:hidden;';
+        'overflow-x:hidden;color:' + T.text + ';';
       container.appendChild(card);
       document.body.appendChild(container);
       container.addEventListener('click', function (e) { if (e.target === container) close(); });
@@ -140,23 +224,25 @@
     function close() { container.remove(); }
 
     function brandBar() {
-      // Top red-accent stripe (Pro Hub signature)
-      return '<div style="height:4px;background:' + brand + ';"></div>';
+      // Top accent stripe (Pro Hub signature). Uses gradient on luxury themes.
+      var bg = typeof brandAccentFill === 'string' && brandAccentFill.indexOf('gradient') !== -1 ? brandAccentFill : brand;
+      return '<div style="height:4px;background:' + bg + ';"></div>';
     }
 
     function brandHeader() {
       var hasLogo = !!cfg.logo_url;
-      return '<div style="padding:22px 28px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #f0f0f0;">' +
+      var avatarBg = typeof brandAccentFill === 'string' && brandAccentFill.indexOf('gradient') !== -1 ? brandAccentFill : brand;
+      return '<div style="padding:22px 28px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid ' + T.divider + ';">' +
         '<div style="display:flex;align-items:center;gap:12px;min-width:0;">' +
           (hasLogo
             ? '<img src="' + esc(cfg.logo_url) + '" alt="" style="height:40px;width:auto;max-width:160px;object-fit:contain;display:block;" />'
-            : '<div style="width:40px;height:40px;border-radius:10px;background:' + brand + ';color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;font-family:' + FONT + ';">' + esc((cfg.businessName || 'B').charAt(0).toUpperCase()) + '</div>') +
+            : '<div style="width:40px;height:40px;border-radius:10px;background:' + avatarBg + ';color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;font-family:' + FONT + ';">' + esc((cfg.businessName || 'B').charAt(0).toUpperCase()) + '</div>') +
           '<div style="min-width:0;overflow:hidden;">' +
-            '<div style="font-size:14px;font-weight:700;color:#1a1a1a;letter-spacing:-0.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(cfg.businessName || '') + '</div>' +
+            '<div style="font-size:14px;font-weight:700;color:' + T.text + ';letter-spacing:-0.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(cfg.businessName || '') + '</div>' +
             '<div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:' + brand + ';font-weight:700;margin-top:2px;">Book an Appointment</div>' +
           '</div>' +
         '</div>' +
-        (opts.inline ? '' : '<button type="button" data-close aria-label="Close" style="flex-shrink:0;background:#faf9f7;border:0;width:32px;height:32px;border-radius:50%;cursor:pointer;color:#666;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;">×</button>') +
+        (opts.inline ? '' : '<button type="button" data-close aria-label="Close" style="flex-shrink:0;background:' + T.closeBtnBg + ';border:0;width:32px;height:32px;border-radius:50%;cursor:pointer;color:' + T.closeBtnText + ';font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;">×</button>') +
       '</div>';
     }
 
@@ -165,15 +251,16 @@
       var dots = '';
       for (var i = 1; i <= totalSteps; i++) {
         var active = i <= currentStep;
-        dots += '<div style="flex:1;height:3px;border-radius:2px;background:' + (active ? brand : '#eee') + ';"></div>';
+        var activeBg = typeof brandAccentFill === 'string' && brandAccentFill.indexOf('gradient') !== -1 ? brandAccentFill : brand;
+        dots += '<div style="flex:1;height:3px;border-radius:2px;background:' + (active ? activeBg : T.divider) + ';"></div>';
       }
       return '<div style="display:flex;gap:4px;padding:0 28px 14px;">' + dots + '</div>';
     }
 
     function sectionTitle(title, subtitle) {
       return '<div style="padding:16px 28px 4px;">' +
-        '<h2 style="margin:0;font-size:22px;font-weight:800;color:#1a1a1a;letter-spacing:-0.5px;line-height:1.2;">' + esc(title) + '</h2>' +
-        (subtitle ? '<p style="margin:6px 0 0;color:#666;font-size:13px;line-height:1.5;">' + esc(subtitle) + '</p>' : '') +
+        '<h2 style="margin:0;font-size:22px;font-weight:800;color:' + T.text + ';letter-spacing:-0.5px;line-height:1.2;">' + esc(title) + '</h2>' +
+        (subtitle ? '<p style="margin:6px 0 0;color:' + T.muted + ';font-size:13px;line-height:1.5;">' + esc(subtitle) + '</p>' : '') +
       '</div>';
     }
 
@@ -324,13 +411,13 @@
     function renderServices(services) {
       var totalSteps = 3;
       var items = services.map(function (s) {
-        return '<button type="button" data-svc="' + esc(s.id) + '" style="display:block;width:100%;text-align:left;padding:16px 18px;margin-bottom:10px;border:1px solid #e8e8e8;border-radius:12px;background:#fff;cursor:pointer;transition:all 0.15s ease;font-family:' + FONT + ';" onmouseover="this.style.borderColor=\'' + brand + '\';this.style.background=\'#fafafa\';" onmouseout="this.style.borderColor=\'#e8e8e8\';this.style.background=\'#fff\';">' +
+        return '<button type="button" data-svc="' + esc(s.id) + '" style="display:block;width:100%;text-align:left;padding:16px 18px;margin-bottom:10px;border:1px solid ' + T.chipBorder + ';border-radius:12px;background:' + T.chipBg + ';color:' + T.text + ';cursor:pointer;transition:all 0.15s ease;font-family:' + FONT + ';" onmouseover="this.style.borderColor=\'' + brand + '\';this.style.background=\'' + T.chipHoverBg + '\';" onmouseout="this.style.borderColor=\'' + T.chipBorder + '\';this.style.background=\'' + T.chipBg + '\';">' +
           '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;">' +
-            '<div style="font-weight:700;color:#1a1a1a;font-size:15px;letter-spacing:-0.2px;">' + esc(s.name) + '</div>' +
+            '<div style="font-weight:700;color:' + T.text + ';font-size:15px;letter-spacing:-0.2px;">' + esc(s.name) + '</div>' +
             (s.price ? '<div style="font-weight:700;color:' + brand + ';font-size:14px;white-space:nowrap;">' + esc(s.price) + '</div>' : '') +
           '</div>' +
-          '<div style="font-size:12px;color:#999;margin-top:4px;letter-spacing:0.2px;">' + esc(s.duration_minutes) + ' min appointment</div>' +
-          (s.description ? '<div style="font-size:13px;color:#666;margin-top:8px;line-height:1.5;">' + esc(s.description) + '</div>' : '') +
+          '<div style="font-size:12px;color:' + T.softMuted + ';margin-top:4px;letter-spacing:0.2px;">' + esc(s.duration_minutes) + ' min appointment</div>' +
+          (s.description ? '<div style="font-size:13px;color:' + T.muted + ';margin-top:8px;line-height:1.5;">' + esc(s.description) + '</div>' : '') +
         '</button>';
       }).join('');
       card.innerHTML = brandBar() + brandHeader() + stepBar(1, totalSteps) +
@@ -356,7 +443,7 @@
           '<div id="acg-cal" style="margin-bottom:14px;"></div>' +
           '<div id="acg-slots" style="display:flex;flex-wrap:wrap;gap:6px;min-height:32px;"></div>' +
           (state.service && hasMultipleServices
-            ? '<button type="button" data-back style="margin-top:18px;background:none;border:0;color:#888;cursor:pointer;font-size:13px;font-weight:600;font-family:' + FONT + ';padding:0;">← Back</button>'
+            ? '<button type="button" data-back style="margin-top:18px;background:none;border:0;color:' + T.softMuted + ';cursor:pointer;font-size:13px;font-weight:600;font-family:' + FONT + ';padding:0;">← Back</button>'
             : '') +
         bodyClose();
       wireClose();
@@ -372,24 +459,25 @@
       var label = cursor.toLocaleString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
       host.innerHTML =
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
-          '<div style="font-weight:700;color:#1a1a1a;font-size:15px;letter-spacing:-0.2px;">' + esc(label) + '</div>' +
+          '<div style="font-weight:700;color:' + T.text + ';font-size:15px;letter-spacing:-0.2px;">' + esc(label) + '</div>' +
           '<div style="display:flex;gap:4px;">' +
-            '<button type="button" data-prev aria-label="Previous month" style="background:#faf9f7;border:0;width:32px;height:32px;border-radius:8px;cursor:pointer;color:#555;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;">‹</button>' +
-            '<button type="button" data-next aria-label="Next month" style="background:#faf9f7;border:0;width:32px;height:32px;border-radius:8px;cursor:pointer;color:#555;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;">›</button>' +
+            '<button type="button" data-prev aria-label="Previous month" style="background:' + T.subtle + ';border:0;width:32px;height:32px;border-radius:8px;cursor:pointer;color:' + T.muted + ';font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;">‹</button>' +
+            '<button type="button" data-next aria-label="Next month" style="background:' + T.subtle + ';border:0;width:32px;height:32px;border-radius:8px;cursor:pointer;color:' + T.muted + ';font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;">›</button>' +
           '</div>' +
         '</div>' +
         '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;font-size:12px;">' +
-          ['S','M','T','W','T','F','S'].map(function (d) { return '<div style="text-align:center;color:#aaa;padding:4px 0;font-weight:600;letter-spacing:0.5px;">' + d + '</div>'; }).join('') +
+          ['S','M','T','W','T','F','S'].map(function (d) { return '<div style="text-align:center;color:' + T.calHeadText + ';padding:4px 0;font-weight:600;letter-spacing:0.5px;">' + d + '</div>'; }).join('') +
           rows.map(function (day) {
             var iso = day.iso;
             var weekday = day.weekday;
             var availabilityForDay = (cfg.availability || {})[weekday] || [];
             var isPast = day.past || (availabilityForDay.length === 0);
             var isCurrent = day.iso === state.dateISO;
-            var bg = isCurrent ? brand : '#fff';
-            var color = isCurrent ? '#fff' : (isPast || !day.inMonth ? '#ccc' : '#1a1a1a');
-            var borderColor = isCurrent ? brand : '#eee';
-            return '<button type="button" data-day="' + iso + '" ' + (isPast || !day.inMonth ? 'disabled' : '') + ' style="padding:10px 0;border:1px solid ' + borderColor + ';background:' + bg + ';color:' + color + ';border-radius:8px;cursor:' + (isPast || !day.inMonth ? 'default' : 'pointer') + ';font-size:13px;font-weight:' + (isCurrent ? '700' : '500') + ';font-family:' + FONT + ';transition:all 0.1s;">' + day.dayNum + '</button>';
+            var bg = isCurrent ? brand : T.calDayBg;
+            var color = isCurrent ? '#fff' : (isPast || !day.inMonth ? T.softMuted : T.text);
+            var borderColor = isCurrent ? brand : T.calDayBorder;
+            var opacity = (isPast || !day.inMonth) ? '0.4' : '1';
+            return '<button type="button" data-day="' + iso + '" ' + (isPast || !day.inMonth ? 'disabled' : '') + ' style="padding:10px 0;border:1px solid ' + borderColor + ';background:' + bg + ';color:' + color + ';opacity:' + opacity + ';border-radius:8px;cursor:' + (isPast || !day.inMonth ? 'default' : 'pointer') + ';font-size:13px;font-weight:' + (isCurrent ? '700' : '500') + ';font-family:' + FONT + ';transition:all 0.1s;">' + day.dayNum + '</button>';
           }).join('') +
         '</div>';
 
@@ -414,13 +502,13 @@
         (state.service ? '&serviceId=' + encodeURIComponent(state.service.id) : '');
       fetch(url).then(function (r) { return r.json(); }).then(function (res) {
         if (!res.slots || res.slots.length === 0) {
-          slotsHost.innerHTML = '<div style="color:#888;font-size:13px;padding:16px 12px;background:#faf9f7;border-radius:10px;text-align:center;width:100%;">No times available — try another day.</div>';
+          slotsHost.innerHTML = '<div style="color:' + T.softMuted + ';font-size:13px;padding:16px 12px;background:' + T.subtle + ';border-radius:10px;text-align:center;width:100%;">No times available — try another day.</div>';
           return;
         }
         slotsHost.innerHTML = res.slots.map(function (iso) {
           var t = new Date(iso);
           var label = t.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'UTC' });
-          return '<button type="button" data-slot="' + iso + '" style="padding:10px 14px;border:1px solid #e2e2e2;background:#fff;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#1a1a1a;font-family:' + FONT + ';transition:all 0.15s;" onmouseover="this.style.borderColor=\'' + brand + '\';this.style.color=\'' + brand + '\';" onmouseout="this.style.borderColor=\'#e2e2e2\';this.style.color=\'#1a1a1a\';">' + label + '</button>';
+          return '<button type="button" data-slot="' + iso + '" style="padding:10px 14px;border:1px solid ' + T.chipBorder + ';background:' + T.chipBg + ';border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:' + T.text + ';font-family:' + FONT + ';transition:all 0.15s;" onmouseover="this.style.borderColor=\'' + brand + '\';this.style.color=\'' + brand + '\';" onmouseout="this.style.borderColor=\'' + T.chipBorder + '\';this.style.color=\'' + T.text + '\';">' + label + '</button>';
         }).join('');
         slotsHost.querySelectorAll('[data-slot]').forEach(function (b) {
           b.addEventListener('click', function () {
@@ -471,7 +559,7 @@
             '<input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;" aria-hidden="true" />' +
             '<div id="acg-form-error" style="color:' + brand + ';font-size:13px;margin:8px 0;display:none;font-weight:600;"></div>' +
             '<div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;">' +
-              '<button type="button" data-back style="padding:14px 22px;background:#fff;border:1px solid #ddd;border-radius:12px;font-family:' + FONT + ';font-weight:600;font-size:14px;cursor:pointer;color:#555;">Back</button>' +
+              '<button type="button" data-back style="padding:14px 22px;background:' + T.inputBg + ';border:1px solid ' + T.inputBorder + ';border-radius:12px;font-family:' + FONT + ';font-weight:600;font-size:14px;cursor:pointer;color:' + T.muted + ';">Back</button>' +
               '<button type="submit" style="padding:14px 32px;background:' + brand + ';color:#fff;border:0;border-radius:12px;font-family:' + FONT + ';font-weight:700;font-size:15px;cursor:pointer;letter-spacing:0.2px;">Submit request</button>' +
             '</div>' +
           '</form>' +
@@ -483,15 +571,16 @@
 
     function renderSuccess() {
       var previewNote = state.details.isPreview
-        ? '<div style="margin-top:16px;padding:12px 14px;background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;color:#9a3412;font-size:12px;font-weight:600;">Preview only — no booking was created and no email was sent.</div>'
+        ? '<div style="margin-top:16px;padding:12px 14px;background:' + T.subtle + ';border:1px solid ' + T.divider + ';border-radius:10px;color:' + T.muted + ';font-size:12px;font-weight:600;">Preview only — no booking was created and no email was sent.</div>'
         : '';
+      var checkBg = typeof brandAccentFill === 'string' && brandAccentFill.indexOf('gradient') !== -1 ? brandAccentFill : brand;
       card.innerHTML = brandBar() + brandHeader() +
         '<div style="padding:48px 28px 36px;text-align:center;">' +
-          '<div style="width:64px;height:64px;margin:0 auto 20px;background:' + brand + ';border-radius:50%;display:flex;align-items:center;justify-content:center;">' +
+          '<div style="width:64px;height:64px;margin:0 auto 20px;background:' + checkBg + ';border-radius:50%;display:flex;align-items:center;justify-content:center;">' +
             '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>' +
           '</div>' +
-          '<h2 style="margin:0 0 10px;font-size:24px;font-weight:800;color:#1a1a1a;letter-spacing:-0.5px;">Request received</h2>' +
-          '<p style="margin:0;color:#666;font-size:14px;line-height:1.6;max-width:380px;margin:0 auto;">' + esc((cfg.businessName || 'We') + ' will email you shortly to confirm your appointment.') + '</p>' +
+          '<h2 style="margin:0 0 10px;font-size:24px;font-weight:800;color:' + T.text + ';letter-spacing:-0.5px;">Request received</h2>' +
+          '<p style="margin:0;color:' + T.muted + ';font-size:14px;line-height:1.6;max-width:380px;margin:0 auto;">' + esc((cfg.businessName || 'We') + ' will email you shortly to confirm your appointment.') + '</p>' +
           previewNote +
         '</div>';
       wireClose();
@@ -560,21 +649,21 @@
     }
 
     function inputStyle() {
-      return 'width:100%;margin-top:4px;padding:11px 13px;border:1px solid #e2e2e2;border-radius:10px;font-family:' + FONT + ';font-size:14px;color:#1a1a1a;background:#fff;box-sizing:border-box;outline:none;transition:border-color 0.15s;';
+      return 'width:100%;margin-top:4px;padding:11px 13px;border:1px solid ' + T.inputBorder + ';border-radius:10px;font-family:' + FONT + ';font-size:14px;color:' + T.inputText + ';background:' + T.inputBg + ';box-sizing:border-box;outline:none;transition:border-color 0.15s;';
     }
     function labelStyle() {
-      return 'display:block;margin-bottom:12px;font-size:12px;font-weight:600;color:#555;letter-spacing:0.2px;';
+      return 'display:block;margin-bottom:12px;font-size:12px;font-weight:600;color:' + T.muted + ';letter-spacing:0.2px;';
     }
     function field(name, label, type, required, extra) {
       return '<label style="' + labelStyle() + '">' +
         label + (required ? ' <span style="color:' + brand + '">*</span>' : '') +
         '<input type="' + type + '" name="' + name + '"' + (required ? ' required' : '') + ' ' + (extra || '') +
-          ' style="' + inputStyle() + '" onfocus="this.style.borderColor=\'' + brand + '\';" onblur="this.style.borderColor=\'#e2e2e2\';" />' +
+          ' style="' + inputStyle() + '" onfocus="this.style.borderColor=\'' + brand + '\';" onblur="this.style.borderColor=\'' + T.inputBorder + '\';" />' +
         '</label>';
     }
     function fieldTextarea(name, label) {
       return '<label style="' + labelStyle() + '">' + label +
-        '<textarea name="' + name + '" rows="3" style="' + inputStyle() + 'resize:vertical;min-height:72px;" onfocus="this.style.borderColor=\'' + brand + '\';" onblur="this.style.borderColor=\'#e2e2e2\';"></textarea>' +
+        '<textarea name="' + name + '" rows="3" style="' + inputStyle() + 'resize:vertical;min-height:72px;" onfocus="this.style.borderColor=\'' + brand + '\';" onblur="this.style.borderColor=\'' + T.inputBorder + '\';"></textarea>' +
         '</label>';
     }
     function select(name, label, options) {
@@ -583,8 +672,9 @@
         var display = typeof o === 'string' ? (o.charAt(0).toUpperCase() + o.slice(1)) : o.label;
         return '<option value="' + value + '">' + display + '</option>';
       }).join('');
+      var chevronColor = themeKey === 'light' ? '%23888' : '%23ccc';
       return '<label style="' + labelStyle() + '">' + label + ' <span style="color:' + brand + '">*</span>' +
-        '<select name="' + name + '" required style="' + inputStyle() + 'appearance:none;-webkit-appearance:none;background-image:url(\'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 12 12%22><path d=%22M2 4l4 4 4-4%22 stroke=%22%23888%22 stroke-width=%221.5%22 fill=%22none%22 stroke-linecap=%22round%22/></svg>\');background-repeat:no-repeat;background-position:right 12px center;background-size:12px;padding-right:36px;" onfocus="this.style.borderColor=\'' + brand + '\';" onblur="this.style.borderColor=\'#e2e2e2\';">' + opts + '</select></label>';
+        '<select name="' + name + '" required style="' + inputStyle() + 'appearance:none;-webkit-appearance:none;background-image:url(\'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 12 12%22><path d=%22M2 4l4 4 4-4%22 stroke=%22' + chevronColor + '%22 stroke-width=%221.5%22 fill=%22none%22 stroke-linecap=%22round%22/></svg>\');background-repeat:no-repeat;background-position:right 12px center;background-size:12px;padding-right:36px;" onfocus="this.style.borderColor=\'' + brand + '\';" onblur="this.style.borderColor=\'' + T.inputBorder + '\';">' + opts + '</select></label>';
     }
     function row(a, b) {
       return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' + a + b + '</div>';

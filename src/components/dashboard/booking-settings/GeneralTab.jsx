@@ -8,10 +8,20 @@ export default function GeneralTab({ siteId, config, siteImages, onSaved }) {
   const [ctaSelector, setCtaSelector] = useState(config?.cta_selector || '');
   const [logoUrl, setLogoUrl] = useState(config?.logo_url || '');
   const [bookingMode, setBookingMode] = useState(config?.booking_mode === 'simple' ? 'simple' : 'full');
+  const [modalTheme, setModalTheme] = useState(config?.modal_theme || 'light');
   const [busy, setBusy] = useState(false);
   const [logoBusy, setLogoBusy] = useState(false);
   const [err, setErr] = useState(null);
   const fileInputRef = useRef(null);
+
+  const MODAL_THEMES = [
+    { id: 'light',  label: 'Light',  swatch: { bg: '#ffffff', accent: '#1a1a1a', border: '#e5e5e5' } },
+    { id: 'dark',   label: 'Dark',   swatch: { bg: '#1a1a1a', accent: '#ffffff', border: '#333333' } },
+    { id: 'gold',   label: 'Gold',   swatch: { bg: '#0a0a0a', accent: 'linear-gradient(135deg,#ca8a04,#eab308,#fde047,#eab308,#ca8a04)', border: '#322300' } },
+    { id: 'silver', label: 'Silver', swatch: { bg: '#0f0f11', accent: 'linear-gradient(135deg,#94a3b8,#cbd5e1,#64748b)', border: '#2a2d35' } },
+    { id: 'neon',   label: 'Neon',   swatch: { bg: '#0d0d12', accent: 'linear-gradient(135deg,#7C3AED,#a855f7,#06B6D4)', border: '#2a1f4a' } },
+    { id: 'rust',   label: 'Rust',   swatch: { bg: '#171717', accent: '#C0392B', border: '#3a1a15' } },
+  ];
 
   const siteLogo = siteImages?.logo || null;
   const effectiveLogo = logoUrl || siteLogo;
@@ -23,7 +33,16 @@ export default function GeneralTab({ siteId, config, siteImages, onSaved }) {
     setCtaSelector(config?.cta_selector || '');
     setLogoUrl(config?.logo_url || '');
     setBookingMode(config?.booking_mode === 'simple' ? 'simple' : 'full');
+    setModalTheme(config?.modal_theme || 'light');
   }, [config]);
+
+  async function setTheme(next) {
+    setModalTheme(next);
+    try {
+      const updated = await saveSchedulerConfig(siteId, { modal_theme: next });
+      onSaved && onSaved(updated);
+    } catch (e) { setErr(e.message); }
+  }
 
   async function persistLogo(url) {
     setLogoBusy(true); setErr(null);
@@ -119,6 +138,38 @@ export default function GeneralTab({ siteId, config, siteImages, onSaved }) {
             </p>
           </button>
         </div>
+      </div>
+
+      {/* Modal theme */}
+      <div>
+        <label className={labelBase}>Modal theme</label>
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+          {MODAL_THEMES.map((t) => {
+            const isActive = modalTheme === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setTheme(t.id)}
+                className={`flex flex-col items-center gap-2 p-2 rounded-xl border-2 transition-all ${isActive ? 'border-[#cc0000]' : 'border-black/10 hover:border-black/30'}`}
+              >
+                <div
+                  className="w-full aspect-square rounded-lg overflow-hidden border"
+                  style={{ background: t.swatch.bg, borderColor: t.swatch.border }}
+                >
+                  <div style={{ height: '6px', background: t.swatch.accent }} />
+                  <div className="p-1.5 flex flex-col gap-0.5">
+                    <div className="h-1 rounded-full" style={{ background: t.swatch.accent, width: '70%', opacity: 0.9 }} />
+                    <div className="h-0.5 rounded-full" style={{ background: t.swatch.accent, width: '50%', opacity: 0.6 }} />
+                    <div className="h-0.5 rounded-full" style={{ background: t.swatch.accent, width: '40%', opacity: 0.4 }} />
+                  </div>
+                </div>
+                <span className={`text-[11px] font-semibold ${isActive ? 'text-[#cc0000]' : 'text-[#1a1a1a]'}`}>{t.label}</span>
+              </button>
+            );
+          })}
+        </div>
+        <p className={helpBase}>Color scheme of the customer-facing booking modal.</p>
       </div>
 
       {/* Logo */}

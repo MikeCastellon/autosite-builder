@@ -74,6 +74,7 @@ export const handler = async (event) => {
       logo_url: logoUrl,
       city: site.business_info?.city || '',
       booking_mode: cfg.booking_mode === 'simple' ? 'simple' : 'full',
+      modal_theme: cfg.modal_theme || 'light',
       welcome_text: cfg.welcome_text || "Tell us about your car and we'll be in touch.",
       button_label: cfg.button_label || 'Book Now',
       lead_time_hours: cfg.lead_time_hours ?? 24,
