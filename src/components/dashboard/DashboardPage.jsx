@@ -253,9 +253,8 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
             <button
               type="button"
               onClick={() => setProDialogOpen(true)}
-              className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#1a1a1a] bg-black/5 hover:bg-[#cc0000]/10 hover:text-[#cc0000] px-3.5 py-2 rounded-full transition-colors"
+              className="text-xs text-[#888] bg-black/5 hover:bg-black/10 px-4 py-2 rounded-lg transition-colors"
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-[#cc0000]" />
               Free plan
             </button>
           )}
