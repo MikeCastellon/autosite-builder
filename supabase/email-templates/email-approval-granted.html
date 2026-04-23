@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Account Approved — Auto Care Genius</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #f4f4f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 32px 16px; }
+    .wrapper { max-width: 520px; margin: 0 auto; }
+    .card { background: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+
+    /* Header band */
+    .header { background: linear-gradient(135deg, #e11d48 0%, #f43f5e 100%); padding: 36px 40px 32px; text-align: center; }
+    .logo-wrap { width: 64px; height: 64px; background: rgba(255,255,255,0.15); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+    .logo-text { font-size: 22px; font-weight: 900; color: #ffffff; letter-spacing: -1px; }
+    .header-title { font-size: 22px; font-weight: 700; color: #ffffff; letter-spacing: -0.5px; }
+    .header-sub { font-size: 12px; color: rgba(255,255,255,0.75); margin-top: 4px; letter-spacing: 1px; text-transform: uppercase; }
+
+    /* Body */
+    .body { padding: 36px 40px; }
+    .greeting { font-size: 16px; font-weight: 600; color: #18181b; margin-bottom: 12px; }
+    .message { font-size: 14px; color: #52525b; line-height: 1.7; margin-bottom: 28px; }
+
+    /* Status badge */
+    .status-box { background: linear-gradient(135deg, #fff1f2, #fff7ed); border: 1px solid #fecdd3; border-radius: 14px; padding: 16px 20px; display: flex; align-items: center; gap: 14px; margin-bottom: 28px; }
+    .status-icon { width: 40px; height: 40px; background: linear-gradient(135deg, #e11d48, #f43f5e); border-radius: 10px; display: flex; align-items: center; justify-content: center; shrink: 0; font-size: 20px; }
+    .status-label { font-size: 11px; font-weight: 700; color: #e11d48; text-transform: uppercase; letter-spacing: 0.8px; }
+    .status-text { font-size: 13px; color: #3f3f46; font-weight: 500; margin-top: 2px; }
+
+    /* CTA button */
+    .cta-wrap { text-align: center; margin-bottom: 28px; }
+    .cta-btn { display: inline-block; background: linear-gradient(135deg, #e11d48, #f43f5e); color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 700; padding: 14px 36px; border-radius: 14px; letter-spacing: 0.2px; box-shadow: 0 4px 16px rgba(225,29,72,0.3); }
+
+    /* What's next */
+    .next-section { margin-bottom: 28px; }
+    .next-title { font-size: 12px; font-weight: 700; color: #a1a1aa; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; }
+    .next-item { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+    .next-dot { width: 6px; height: 6px; background: #e11d48; border-radius: 50%; margin-top: 6px; shrink: 0; }
+    .next-text { font-size: 13px; color: #52525b; line-height: 1.5; }
+
+    /* Footer */
+    .footer { background: #fafafa; border-top: 1px solid #f0f0f0; padding: 20px 40px; text-align: center; }
+    .footer-brand { font-size: 13px; font-weight: 700; color: #e11d48; margin-bottom: 4px; }
+    .footer-text { font-size: 11px; color: #a1a1aa; line-height: 1.6; }
+    .footer-link { color: #e11d48; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="card">
+
+      <!-- Header -->
+      <div class="header">
+        <div class="logo-wrap">
+          <span class="logo-text">ACG</span>
+        </div>
+        <div class="header-title">You're Approved!</div>
+        <div class="header-sub">Auto Care Genius · PR Sales Hub</div>
+      </div>
+
+      <!-- Body -->
+      <div class="body">
+        <p class="greeting">Hi {{ .Name }},</p>
+        <p class="message">
+          Great news — your account has been approved by an administrator. You now have full access to the ACG PR Sales Dashboard to create sales, view history, and manage your pipeline.
+        </p>
+
+        <!-- Status -->
+        <div class="status-box">
+          <div class="status-icon">✓</div>
+          <div>
+            <div class="status-label">Account Status</div>
+            <div class="status-text">Active &amp; Approved</div>
+          </div>
+        </div>
+
+        <!-- CTA -->
+        <div class="cta-wrap">
+          <a href="https://sales.autocaregenius.com" class="cta-btn">Open Sales Dashboard →</a>
+        </div>
+
+        <!-- What's next -->
+        <div class="next-section">
+          <div class="next-title">What you can do now</div>
+          <div class="next-item">
+            <div class="next-dot"></div>
+            <div class="next-text">Create and track new product sales</div>
+          </div>
+          <div class="next-item">
+            <div class="next-dot"></div>
+            <div class="next-text">View your personal sales history and performance</div>
+          </div>
+          <div class="next-item">
+            <div class="next-dot"></div>
+            <div class="next-text">Browse the full product catalog with B2B pricing</div>
+          </div>
+          <div class="next-item">
+            <div class="next-dot"></div>
+            <div class="next-text">Download the printable pricing sheet for client meetings</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Footer -->
+      <div class="footer">
+        <div class="footer-brand">Auto Care Genius</div>
+        <div class="footer-text">
+          PR Sales Team · <a href="https://sales.autocaregenius.com" class="footer-link">sales.autocaregenius.com</a><br/>
+          This email was sent because an administrator approved your account.
+        </div>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>

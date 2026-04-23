@@ -61,6 +61,39 @@ function businessInfoHtmlBlock(site) {
   return `<div style="margin-top:24px;padding:16px 18px;background:#faf9f7;border:1px solid #eee;border-radius:10px;">${rows.join('')}</div>`;
 }
 
+// Render the same branded shell used by the Supabase auth emails
+// (confirm-signup, reset-password) so every Postmark email looks like
+// it came out of the same system. Accepts a block of inner HTML for the
+// content area — keep it simple paragraphs + optional cards.
+function renderEmailShell({ icon = '✉', eyebrow = 'Genius Websites', title, intro, cta, body }) {
+  const ctaHtml = cta
+    ? `<table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding-bottom:28px;">
+         <a href="${esc(cta.href)}" style="display:inline-block;background:linear-gradient(135deg,#cc0000,#8a0000);color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:14px 36px;border-radius:12px;letter-spacing:0.01em;">${esc(cta.label)}</a>
+       </td></tr></table>`
+    : '';
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /></head>
+<body style="margin:0;padding:0;background:#fafafa;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#fafafa;padding:40px 16px;"><tr><td align="center">
+<table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
+  <tr><td align="center" style="padding-bottom:32px;">
+    <img src="https://www.autocaregenius.com/cdn/shop/files/v11_1.svg?v=1760731533&width=200" alt="Auto Care Genius" width="160" style="display:block;margin:0 auto 12px;height:auto;" />
+    <p style="margin:0;font-size:11px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:#a1a1aa;">${esc(eyebrow)}</p>
+  </td></tr>
+  <tr><td style="background:#ffffff;border-radius:20px;border:1px solid #e4e4e7;padding:40px 36px;box-shadow:0 1px 3px rgba(0,0,0,0.04),0 8px 32px rgba(0,0,0,0.04);">
+    <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding-bottom:24px;">
+      <div style="width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#cc0000,#8a0000);display:inline-block;margin:0 auto;text-align:center;line-height:52px;font-size:24px;color:#ffffff;">${icon}</div>
+    </td></tr></table>
+    <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#18181b;text-align:center;letter-spacing:-0.02em;">${title}</h1>
+    ${intro ? `<p style="margin:0 0 24px;font-size:14px;color:#71717a;text-align:center;line-height:1.6;">${intro}</p>` : ''}
+    ${ctaHtml}
+    ${body || ''}
+  </td></tr>
+  <tr><td align="center" style="padding-top:24px;">
+    <p style="margin:0;font-size:12px;color:#d4d4d8;">&copy; 2026 Auto Care Genius &middot; All rights reserved</p>
+  </td></tr>
+</table></td></tr></table></body></html>`;
+}
+
 // Plain-text equivalent for the business-info block.
 function businessInfoTextBlock(site) {
   const biz = site?.business_info || {};
@@ -85,23 +118,23 @@ export async function newBookingToOwner({ booking, site, ownerEmail }) {
   const dashLink = `${APP_URL}/?bookings=${encodeURIComponent(b.id)}`;
 
   const vehicleLine = [b.vehicle_year, b.vehicle_make, b.vehicle_model].filter(Boolean).join(' ');
-  const html = `
-    <div style="font-family:Inter,-apple-system,Segoe UI,sans-serif;max-width:560px;margin:0 auto;padding:24px;">
-      <p style="margin:0 0 4px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#cc0000;font-weight:700;">New booking request</p>
-      <h2 style="margin:0 0 12px;font-size:22px;color:#1a1a1a;font-weight:800;">${esc(b.customer_name)} wants to book</h2>
-      <p style="margin:0 0 18px;font-size:14px;color:#555;line-height:1.6;">Preferred time: <strong>${esc(formatWhen(b.preferred_at))}</strong>.</p>
-      <div style="padding:16px 18px;border:1px solid #eee;border-radius:10px;">
-        <p style="margin:0 0 4px;font-size:13px;color:#555;"><strong style="color:#999;font-weight:600;">Customer:</strong> ${esc(b.customer_name)}</p>
-        <p style="margin:0 0 4px;font-size:13px;color:#555;"><strong style="color:#999;font-weight:600;">Email:</strong> <a href="mailto:${esc(b.customer_email)}" style="color:#cc0000;text-decoration:none;">${esc(b.customer_email)}</a></p>
-        <p style="margin:0 0 4px;font-size:13px;color:#555;"><strong style="color:#999;font-weight:600;">Phone:</strong> <a href="tel:${esc(b.customer_phone)}" style="color:#cc0000;text-decoration:none;">${esc(b.customer_phone)}</a></p>
-        ${vehicleLine ? `<p style="margin:0 0 4px;font-size:13px;color:#555;"><strong style="color:#999;font-weight:600;">Vehicle:</strong> ${esc(vehicleLine)}${b.vehicle_size ? ' (' + esc(b.vehicle_size) + ')' : ''}</p>` : ''}
-        ${b.service_address ? `<p style="margin:0 0 4px;font-size:13px;color:#555;"><strong style="color:#999;font-weight:600;">Service address:</strong> ${esc(b.service_address)}</p>` : ''}
-        ${b.notes ? `<p style="margin:0 0 4px;font-size:13px;color:#555;"><strong style="color:#999;font-weight:600;">Notes:</strong> ${esc(b.notes)}</p>` : ''}
-        ${b.referral_source ? `<p style="margin:0 0 4px;font-size:13px;color:#555;"><strong style="color:#999;font-weight:600;">Heard via:</strong> ${esc(b.referral_source)}</p>` : ''}
-      </div>
-      <p style="margin:22px 0 0;"><a href="${dashLink}" style="display:inline-block;background:#cc0000;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:12px 22px;border-radius:10px;">Open in your dashboard →</a></p>
-    </div>
-  `;
+  const detailCard = `
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fafafa;border:1px solid #f4f4f5;border-radius:12px;padding:16px 18px;margin-bottom:8px;"><tr><td>
+      <p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Customer:</strong> ${esc(b.customer_name)}</p>
+      <p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Email:</strong> <a href="mailto:${esc(b.customer_email)}" style="color:#cc0000;text-decoration:none;">${esc(b.customer_email)}</a></p>
+      <p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Phone:</strong> <a href="tel:${esc(b.customer_phone)}" style="color:#cc0000;text-decoration:none;">${esc(b.customer_phone)}</a></p>
+      ${vehicleLine ? `<p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Vehicle:</strong> ${esc(vehicleLine)}${b.vehicle_size ? ' (' + esc(b.vehicle_size) + ')' : ''}</p>` : ''}
+      ${b.service_address ? `<p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Service address:</strong> ${esc(b.service_address)}</p>` : ''}
+      ${b.notes ? `<p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Notes:</strong> ${esc(b.notes)}</p>` : ''}
+      ${b.referral_source ? `<p style="margin:0;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Heard via:</strong> ${esc(b.referral_source)}</p>` : ''}
+    </td></tr></table>`;
+  const html = renderEmailShell({
+    icon: '📅',
+    title: `${esc(b.customer_name)} wants to book`,
+    intro: `Preferred time: <strong style="color:#18181b;">${esc(formatWhen(b.preferred_at))}</strong>`,
+    cta: { label: 'Open in your dashboard', href: dashLink },
+    body: detailCard,
+  });
   const text = `New booking request for ${name}\n\n${b.customer_name} (${b.customer_email}, ${b.customer_phone}) wants to book for ${formatWhen(b.preferred_at)}.\nVehicle: ${b.vehicle_year} ${b.vehicle_make} ${b.vehicle_model} (${b.vehicle_size})\n${b.service_address ? 'Service address: ' + b.service_address + '\n' : ''}${b.notes ? 'Notes: ' + b.notes + '\n' : ''}Open: ${dashLink}`;
 
   try {
@@ -136,21 +169,21 @@ export async function bookingReceivedToCustomer({ booking, site, isSimple }) {
     ? 'We\'ll reach out shortly to confirm a time that works for you.'
     : `You requested <strong>${esc(formatWhen(b.preferred_at))}</strong>. We'll confirm availability shortly.`;
 
-  const html = `
-    <div style="font-family:Inter,-apple-system,Segoe UI,sans-serif;max-width:560px;margin:0 auto;padding:24px;">
-      <p style="margin:0 0 4px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#cc0000;font-weight:700;">Request received</p>
-      <h2 style="margin:0 0 12px;font-size:22px;color:#1a1a1a;font-weight:800;">Thanks for your request, ${esc(b.customer_name)}!</h2>
-      <p style="margin:0 0 18px;font-size:14px;color:#555;line-height:1.6;">${timeLine}</p>
-      <div style="padding:16px 18px;border:1px solid #eee;border-radius:10px;">
-        ${b.service_name ? `<p style="margin:0 0 4px;font-size:13px;color:#555;"><strong style="color:#999;font-weight:600;">Service:</strong> ${esc(b.service_name)}</p>` : ''}
-        ${vehicleLine ? `<p style="margin:0 0 4px;font-size:13px;color:#555;"><strong style="color:#999;font-weight:600;">Vehicle:</strong> ${esc(vehicleLine)}${b.vehicle_size ? ' (' + esc(b.vehicle_size) + ')' : ''}</p>` : ''}
-        ${b.service_address ? `<p style="margin:0 0 4px;font-size:13px;color:#555;"><strong style="color:#999;font-weight:600;">Service address:</strong> ${esc(b.service_address)}</p>` : ''}
-        ${b.notes ? `<p style="margin:0 0 4px;font-size:13px;color:#555;"><strong style="color:#999;font-weight:600;">Notes:</strong> ${esc(b.notes).replace(/\n/g, '<br/>')}</p>` : ''}
-      </div>
-      ${bizBlockHtml}
-      <p style="margin:20px 0 0;font-size:12px;color:#999;">If you need to change anything, just reply to this email.</p>
-    </div>
-  `;
+  const detailCard = `
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fafafa;border:1px solid #f4f4f5;border-radius:12px;padding:16px 18px;margin-bottom:8px;"><tr><td>
+      ${b.service_name ? `<p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Service:</strong> ${esc(b.service_name)}</p>` : ''}
+      ${vehicleLine ? `<p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Vehicle:</strong> ${esc(vehicleLine)}${b.vehicle_size ? ' (' + esc(b.vehicle_size) + ')' : ''}</p>` : ''}
+      ${b.service_address ? `<p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Service address:</strong> ${esc(b.service_address)}</p>` : ''}
+      ${b.notes ? `<p style="margin:0;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Notes:</strong> ${esc(b.notes).replace(/\n/g, '<br/>')}</p>` : ''}
+    </td></tr></table>
+    ${bizBlockHtml}
+    <p style="margin:20px 0 0;font-size:12px;color:#a1a1aa;text-align:center;">If you need to change anything, just reply to this email.</p>`;
+  const html = renderEmailShell({
+    icon: '✓',
+    title: `Thanks for your request, ${esc(b.customer_name)}!`,
+    intro: timeLine,
+    body: detailCard,
+  });
   const text =
     `Request received — ${name}\n\n` +
     `Thanks for your request, ${b.customer_name}!\n\n` +
@@ -208,13 +241,13 @@ export async function statusUpdateToCustomer({ booking, site, status, reason }) 
   const m = map[status];
   if (!m) return;
 
-  const html = `
-    <div style="font-family:Inter,-apple-system,Segoe UI,sans-serif;max-width:560px;margin:0 auto;padding:24px;">
-      <h2 style="margin:0 0 12px;font-size:22px;color:#1a1a1a;font-weight:800;">${m.heading}</h2>
-      <p style="margin:0 0 12px;font-size:14px;color:#555;line-height:1.6;">${m.body}</p>
-      ${bizBlockHtml}
-    </div>
-  `;
+  const icon = status === 'confirmed' ? '✓' : status === 'declined' ? '✕' : '⊘';
+  const html = renderEmailShell({
+    icon,
+    title: m.heading,
+    intro: m.body,
+    body: bizBlockHtml,
+  });
   const text = `${m.heading}\n\n${m.body.replace(/<[^>]+>/g,'')}${bizBlockText}`;
 
   try {
