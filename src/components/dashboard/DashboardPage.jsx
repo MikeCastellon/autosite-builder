@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase.js';
 import { publishSite } from '../../lib/publishSite.js';
 import { TEMPLATES } from '../../data/templates.js';
-import { canSeeBookingsNav } from '../../lib/subscriptionGating.js';
+import { canSeeBookingsNav, isEffectiveSchedulerActive } from '../../lib/subscriptionGating.js';
 import { useAlert } from '../ui/AlertProvider.jsx';
 import CustomDomainPanel from '../CustomDomainPanel.jsx';
 import UpgradeProButton from '../ui/UpgradeProButton.jsx';
+import UpgradeProDialog from '../ui/UpgradeProDialog.jsx';
 
 const MAX_SITES = 1;
 const CUSTOM_DOMAIN_ENABLED = import.meta.env.VITE_CUSTOM_DOMAIN_ENABLED === 'true';
@@ -19,9 +20,11 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
   const [mobileOpen, setMobileOpen] = useState(false);
   const [domainPanelSiteId, setDomainPanelSiteId] = useState(null);
   const [domainPanelInitial, setDomainPanelInitial] = useState(null);
+  const [proDialogOpen, setProDialogOpen] = useState(false);
   const schedulerEnabled = !!profile?.scheduler_enabled;
   const showBookingsNav = canSeeBookingsNav(profile);
   const isAdmin = !!profile?.is_super_admin;
+  const isPro = isEffectiveSchedulerActive(profile);
   const canCreateSite = isAdmin || sites.length < MAX_SITES;
 
   useEffect(() => {
@@ -350,15 +353,29 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
                     </button>
                   )}
                   {CUSTOM_DOMAIN_ENABLED && site.published_url && (
-                    <button
-                      onClick={() => {
-                        setDomainPanelSiteId(site.id);
-                        setDomainPanelInitial({ domain: site.custom_domain, status: site.custom_domain_status });
-                      }}
-                      className="px-3 py-1.5 text-xs font-medium border border-black/10 rounded-lg hover:border-[#cc0000]/30 hover:text-[#cc0000] transition-colors"
-                    >
-                      {site.custom_domain ? 'Manage Domain' : 'Add Domain'}
-                    </button>
+                    isPro ? (
+                      <button
+                        onClick={() => {
+                          setDomainPanelSiteId(site.id);
+                          setDomainPanelInitial({ domain: site.custom_domain, status: site.custom_domain_status });
+                        }}
+                        className="px-3 py-1.5 text-xs font-medium border border-black/10 rounded-lg hover:border-[#cc0000]/30 hover:text-[#cc0000] transition-colors"
+                      >
+                        {site.custom_domain ? 'Manage Domain' : 'Add Domain'}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setProDialogOpen(true)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-black/10 rounded-lg hover:border-[#cc0000]/30 hover:text-[#cc0000] transition-colors"
+                        title="Custom domains are a Pro feature"
+                      >
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <rect x="2" y="5.5" width="8" height="5" rx="1" />
+                          <path d="M4 5.5V3.5a2 2 0 014 0V5.5" />
+                        </svg>
+                        Add Domain
+                      </button>
+                    )
                   )}
                   <button
                     onClick={() => handleDelete(site.id)}
@@ -396,6 +413,13 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
       )}
 
       <UpgradeProButton />
+
+      <UpgradeProDialog
+        open={proDialogOpen}
+        onClose={() => setProDialogOpen(false)}
+        heading="Custom domains are a Pro feature"
+        subheading="Connect your own domain (mybusiness.com) instead of the free subdomain — plus everything else included with Pro."
+      />
     </div>
   );
 }
