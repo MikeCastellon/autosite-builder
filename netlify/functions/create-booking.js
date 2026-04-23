@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { validateBookingPayload } from './_lib/booking-validation.js';
 import { newBookingToOwner, bookingReceivedToCustomer } from './_lib/postmark.js';
 import { computeSlots } from './_lib/slot-math.js';
+import { isEffectiveSchedulerActive } from './_lib/subscription-gating.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -58,8 +59,11 @@ export const handler = async (event) => {
   }
 
   const { data: owner } = await supabase
-    .from('profiles').select('email, scheduler_enabled').eq('id', site.user_id).maybeSingle();
-  if (!owner?.scheduler_enabled) {
+    .from('profiles')
+    .select('email, is_super_admin, scheduler_enabled, subscription_status, subscription_ends_at')
+    .eq('id', site.user_id)
+    .maybeSingle();
+  if (!isEffectiveSchedulerActive(owner)) {
     return { statusCode: 403, headers: CORS, body: JSON.stringify({ error: 'Bookings not available for this site' }) };
   }
 

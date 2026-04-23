@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { computeSlots } from './_lib/slot-math.js';
+import { isEffectiveSchedulerActive } from './_lib/subscription-gating.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -41,8 +42,11 @@ export const handler = async (event) => {
   }
 
   const { data: owner } = await supabase
-    .from('profiles').select('scheduler_enabled').eq('id', site.user_id).maybeSingle();
-  if (!owner?.scheduler_enabled) {
+    .from('profiles')
+    .select('is_super_admin, scheduler_enabled, subscription_status, subscription_ends_at')
+    .eq('id', site.user_id)
+    .maybeSingle();
+  if (!isEffectiveSchedulerActive(owner)) {
     return { statusCode: 200, headers: CORS, body: JSON.stringify({ slots: [] }) };
   }
 
