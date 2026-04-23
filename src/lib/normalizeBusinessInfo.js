@@ -1,3 +1,5 @@
+import { formatPrice } from './formatPrice.js';
+
 /**
  * Normalizes businessInfo fields that templates expect as arrays.
  * The wizard collects some fields as comma/separator-delimited strings,
@@ -57,6 +59,19 @@ export function normalizeBusinessInfo(info) {
   ) {
     if (!normalized.packages || normalized.packages.length === 0) {
       normalized.packages = normalized.services;
+    }
+  }
+
+  // Format prices on package/service objects so templates always render with $
+  // when the user entered a numeric value without a currency symbol.
+  for (const field of ['packages', 'services']) {
+    if (Array.isArray(normalized[field])) {
+      normalized[field] = normalized[field].map((item) => {
+        if (item && typeof item === 'object' && item.price !== undefined) {
+          return { ...item, price: formatPrice(item.price) };
+        }
+        return item;
+      });
     }
   }
 
