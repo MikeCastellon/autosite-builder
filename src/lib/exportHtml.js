@@ -72,18 +72,14 @@ function buildSeoHead(businessInfo, generatedCopy, siteId) {
     body { margin: 0; font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
     body.acg-has-bar { padding-bottom: 48px; }
     img { max-width: 100%; height: auto; }
-    #acg-owner-link {
-      text-align: center;
-      padding: 14px 16px;
-      font-family: 'Inter', system-ui, sans-serif;
+    .acg-owner-link {
+      color: inherit;
+      opacity: 0.6;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      transition: opacity 0.15s ease;
     }
-    #acg-owner-link a {
-      font-size: 11px;
-      color: #aaa;
-      text-decoration: none;
-      letter-spacing: 0.02em;
-    }
-    #acg-owner-link a:hover { color: #cc0000; }
+    .acg-owner-link:hover { opacity: 1; }
     #acg-powered-by {
       position: fixed;
       bottom: 0;
@@ -214,13 +210,37 @@ async function buildHtmlString(templateId, businessInfo, generatedCopy, template
   </a>
 </div>`;
 
-  // Always-visible site-owner login link rendered at the very bottom of the page.
-  // Discreet — small grey text, scrolls with the page (not sticky), so customers
-  // ignore it but the owner can find their way back to manage the site.
-  const ownerLink = `
-<div id="acg-owner-link">
-  <a href="${MAIN_APP_URL}" target="_blank" rel="noopener noreferrer">Site owner login →</a>
-</div>`;
+  // Inject a tiny "Site owner" link into the template's own footer once the
+  // page mounts. Inherits surrounding font color/size so it blends in with
+  // whatever the template renders next to copyright. Uses .acg-owner-link
+  // styling above for hover behaviour.
+  const ownerLinkScript = `
+<script>
+(function(){
+  function inject(){
+    var footers = document.querySelectorAll('footer');
+    if (!footers.length) return;
+    var f = footers[footers.length - 1];
+    if (f.querySelector('.acg-owner-link')) return;
+    var paras = f.querySelectorAll('p');
+    var target = paras.length ? paras[paras.length - 1] : f;
+    var sep = document.createTextNode(' · ');
+    var a = document.createElement('a');
+    a.className = 'acg-owner-link';
+    a.href = '${MAIN_APP_URL}';
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.textContent = 'Site owner';
+    target.appendChild(sep);
+    target.appendChild(a);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', inject);
+  } else {
+    inject();
+  }
+})();
+</script>`;
 
   const bodyClass = isPro ? '' : ' class="acg-has-bar"';
 
@@ -232,8 +252,8 @@ ${seoHead}
 <body${bodyClass}>
 ${bodyHtml}
 ${widgetsHtml}
-${ownerLink}
 ${poweredByBar}
+${ownerLinkScript}
 </body>
 </html>`;
 }
