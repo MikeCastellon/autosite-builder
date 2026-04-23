@@ -375,17 +375,27 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
                       Republish
                     </button>
                   )}
-                  {CUSTOM_DOMAIN_ENABLED && site.published_url && (
+                  {CUSTOM_DOMAIN_ENABLED && (
                     isPro ? (
-                      <button
-                        onClick={() => {
-                          setDomainPanelSiteId(site.id);
-                          setDomainPanelInitial({ domain: site.custom_domain, status: site.custom_domain_status });
-                        }}
-                        className="px-4 py-2 text-[13px] font-medium border border-black/10 rounded-lg hover:border-[#cc0000]/30 hover:text-[#cc0000] transition-colors"
-                      >
-                        {site.custom_domain ? 'Manage Domain' : 'Add Domain'}
-                      </button>
+                      site.published_url ? (
+                        <button
+                          onClick={() => {
+                            setDomainPanelSiteId(site.id);
+                            setDomainPanelInitial({ domain: site.custom_domain, status: site.custom_domain_status });
+                          }}
+                          className="px-4 py-2 text-[13px] font-medium border border-black/10 rounded-lg hover:border-[#cc0000]/30 hover:text-[#cc0000] transition-colors"
+                        >
+                          {site.custom_domain ? 'Manage Domain' : 'Add Domain'}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => toast('Publish your site first, then you can connect a custom domain.', 'info')}
+                          className="px-4 py-2 text-[13px] font-medium border border-black/10 rounded-lg text-[#888] hover:border-black/20 transition-colors"
+                          title="Publish your site first"
+                        >
+                          Add Domain
+                        </button>
+                      )
                     ) : (
                       <button
                         onClick={() => setProDialogOpen(true)}
