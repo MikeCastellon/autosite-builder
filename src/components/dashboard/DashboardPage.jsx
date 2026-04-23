@@ -4,8 +4,10 @@ import { publishSite } from '../../lib/publishSite.js';
 import { TEMPLATES } from '../../data/templates.js';
 import { canSeeBookingsNav } from '../../lib/subscriptionGating.js';
 import { useAlert } from '../ui/AlertProvider.jsx';
+import CustomDomainPanel from '../CustomDomainPanel.jsx';
 
 const MAX_SITES = 1;
+const CUSTOM_DOMAIN_ENABLED = import.meta.env.VITE_CUSTOM_DOMAIN_ENABLED === 'true';
 
 export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEmail, profile, onOpenAdmin, onOpenBookings, onOpenBookingSettings }) {
   const { toast, confirm: confirmDialog } = useAlert();
@@ -14,6 +16,8 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
   const [fetchError, setFetchError] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [domainPanelSiteId, setDomainPanelSiteId] = useState(null);
+  const [domainPanelInitial, setDomainPanelInitial] = useState(null);
   const schedulerEnabled = !!profile?.scheduler_enabled;
   const showBookingsNav = canSeeBookingsNav(profile);
   const isAdmin = !!profile?.is_super_admin;
@@ -36,26 +40,24 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
   }, []);
 
   const handleDelete = async (id) => {
-    const ok = await confirmDialog('This will also unpublish it if currently live. This cannot be undone.', {
+    const ok = await confirmDialog('This will also unpublish it and remove any custom domain. This cannot be undone.', {
       title: 'Delete site?',
       confirmText: 'Delete',
       danger: true,
     });
     if (!ok) return;
-    // Find the site to get slug for R2 cleanup
     const site = sites.find(s => s.id === id);
     const { error } = await supabase.from('sites').delete().eq('id', id);
     if (error) {
       toast('Failed to delete site. Please try again.', 'error');
       return;
     }
-    // Delete from R2 if published
     if (site?.slug) {
       fetch('/.netlify/functions/unpublish-site', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug: site.slug }),
-      }).catch(() => {}); // Best-effort cleanup
+        body: JSON.stringify({ slug: site.slug, siteId: site.id }),
+      }).catch(() => {});
     }
     setSites((prev) => prev.filter((s) => s.id !== id));
     toast('Site deleted', 'success');
@@ -78,7 +80,6 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
         templateMeta: { ...templateMeta, colors: templateMeta?.colors || {} },
         images: {},
         selectedWidgetIds: site.widget_config_ids || [],
-        customDomain: site.custom_domain || null,
       });
       toast(`${site.business_info?.businessName || 'Site'} republished successfully`, 'success');
     } catch (err) {
@@ -297,6 +298,17 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
                       Republish
                     </button>
                   )}
+                  {CUSTOM_DOMAIN_ENABLED && site.published_url && (
+                    <button
+                      onClick={() => {
+                        setDomainPanelSiteId(site.id);
+                        setDomainPanelInitial({ domain: site.custom_domain, status: site.custom_domain_status });
+                      }}
+                      className="px-3 py-1.5 text-xs font-medium border border-black/10 rounded-lg hover:border-[#cc0000]/30 hover:text-[#cc0000] transition-colors"
+                    >
+                      {site.custom_domain ? 'Manage Domain' : 'Add Domain'}
+                    </button>
+                  )}
                   <button
                     onClick={() => handleDelete(site.id)}
                     className="px-3 py-1.5 text-xs font-medium text-[#888] hover:text-[#cc0000] transition-colors"
@@ -309,6 +321,28 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
           </div>
         )}
       </main>
+
+      {domainPanelSiteId && (
+        <div
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
+          onClick={() => setDomainPanelSiteId(null)}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-md w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <p className="font-semibold text-[#1a1a1a]">Custom Domain</p>
+              <button onClick={() => setDomainPanelSiteId(null)} className="text-[#888] hover:text-[#cc0000]">✕</button>
+            </div>
+            <CustomDomainPanel
+              siteId={domainPanelSiteId}
+              initialDomain={domainPanelInitial?.domain}
+              initialStatus={domainPanelInitial?.status || 'disconnected'}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

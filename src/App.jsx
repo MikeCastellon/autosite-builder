@@ -181,6 +181,24 @@ export default function App() {
   // Demo preview — shows a template with placeholder data, no AI call needed
   const [isDemoPreview, setIsDemoPreview] = useState(false);
 
+  // Domain Connect callback: close popup, notify opener
+  if (typeof window !== 'undefined' && window.location.pathname === '/domain-connected') {
+    try {
+      if (window.opener) {
+        window.opener.postMessage({ type: 'domain-connected' }, window.location.origin);
+        window.close();
+      }
+    } catch {}
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#faf9f7]">
+        <div className="text-center">
+          <p className="text-lg font-semibold text-[#1a1a1a] mb-2">Domain connected!</p>
+          <p className="text-sm text-[#888]">You can close this window and return to the app.</p>
+        </div>
+      </div>
+    );
+  }
+
   // Auth gate
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-[#faf9f7]">

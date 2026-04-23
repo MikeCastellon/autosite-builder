@@ -9,6 +9,9 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
+[functions."domain-sweep"]
+  schedule = "*/2 * * * *"
+
 [dev]
   command = "node ./node_modules/vite/bin/vite.js --port 5190"
   targetPort = 5190
@@ -25,6 +28,13 @@
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
 
+# Serve /.well-known/* directly from public/ (no SPA rewrite)
+[[redirects]]
+  from = "/.well-known/*"
+  to = "/.well-known/:splat"
+  status = 200
+
+# SPA fallback for everything else
 [[redirects]]
   from = "/*"
   to = "/index.html"

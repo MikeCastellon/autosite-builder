@@ -1,0 +1,16 @@
+{
+  "providerId": "autocaregeniushub.com",
+  "providerName": "AutoCareGenius",
+  "providerDisplayName": "AutoCare Genius Website Builder",
+  "serviceId": "customdomain",
+  "serviceName": "Custom Domain",
+  "serviceDisplayName": "Connect your domain to AutoCareGenius",
+  "description": "Point this domain at your AutoCareGenius website.",
+  "variableDescription": "Your AutoCareGenius site",
+  "syncBlock": false,
+  "sharedProviderName": true,
+  "records": [
+    { "type": "CNAME", "host": "@",   "pointsTo": "fallback.autocaregeniushub.com", "ttl": 3600 },
+    { "type": "CNAME", "host": "www", "pointsTo": "fallback.autocaregeniushub.com", "ttl": 3600 }
+  ]
+}
