@@ -2,14 +2,18 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase.js';
 import { publishSite } from '../../lib/publishSite.js';
 import { TEMPLATES } from '../../data/templates.js';
+import CustomDomainPanel from '../CustomDomainPanel.jsx';
 
 const ADMIN_EMAILS = ['dev@639hz.com'];
 const MAX_SITES = 1;
+const CUSTOM_DOMAIN_ENABLED = import.meta.env.VITE_CUSTOM_DOMAIN_ENABLED === 'true';
 
 export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEmail }) {
   const [sites, setSites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
+  const [domainPanelSiteId, setDomainPanelSiteId] = useState(null);
+  const [domainPanelInitial, setDomainPanelInitial] = useState(null);
   const isAdmin = ADMIN_EMAILS.includes(userEmail);
   const canCreateSite = isAdmin || sites.length < MAX_SITES;
 
@@ -60,7 +64,6 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
         templateMeta: { ...templateMeta, colors: templateMeta?.colors || {} },
         images: {},
         selectedWidgetIds: site.widget_config_ids || [],
-        customDomain: site.custom_domain || null,
       });
       alert(`${site.business_info?.businessName || 'Site'} republished successfully!`);
     } catch (err) {
@@ -187,6 +190,17 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
                       Republish
                     </button>
                   )}
+                  {CUSTOM_DOMAIN_ENABLED && site.published_url && (
+                    <button
+                      onClick={() => {
+                        setDomainPanelSiteId(site.id);
+                        setDomainPanelInitial({ domain: site.custom_domain, status: site.custom_domain_status });
+                      }}
+                      className="px-3 py-1.5 text-xs font-medium border border-black/10 rounded-lg hover:border-[#cc0000]/30 hover:text-[#cc0000] transition-colors"
+                    >
+                      {site.custom_domain ? 'Manage Domain' : 'Add Domain'}
+                    </button>
+                  )}
                   <button
                     onClick={() => handleDelete(site.id)}
                     className="px-3 py-1.5 text-xs font-medium text-[#888] hover:text-[#cc0000] transition-colors"
@@ -199,6 +213,28 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
           </div>
         )}
       </main>
+
+      {domainPanelSiteId && (
+        <div
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
+          onClick={() => setDomainPanelSiteId(null)}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-md w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <p className="font-semibold text-[#1a1a1a]">Custom Domain</p>
+              <button onClick={() => setDomainPanelSiteId(null)} className="text-[#888] hover:text-[#cc0000]">✕</button>
+            </div>
+            <CustomDomainPanel
+              siteId={domainPanelSiteId}
+              initialDomain={domainPanelInitial?.domain}
+              initialStatus={domainPanelInitial?.status || 'disconnected'}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
