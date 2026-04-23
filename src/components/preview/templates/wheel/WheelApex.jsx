@@ -98,7 +98,6 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
           ))}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-          {biz.phone && <a href={`tel:${biz.phone}`} className="tp-apex-phone" style={{ fontSize: 12, fontWeight: 500, color: D.muted, textDecoration: 'none', whiteSpace: 'nowrap' }}>{biz.phone}</a>}
           <a href={copy?.ctaPrimaryUrl || `tel:${biz.phone}`} className="tp-apex-cta" style={{ background: D.ink, color: '#fff', fontSize: 11, fontWeight: 500, letterSpacing: 1.5, textTransform: 'uppercase', padding: '10px 22px', textDecoration: 'none', whiteSpace: 'nowrap' }}>
             {copy.ctaPrimary || 'Get a Quote'}
           </a>
