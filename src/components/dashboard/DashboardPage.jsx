@@ -361,6 +361,12 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
                       Edit
                     </button>
                   )}
+                  <button
+                    onClick={() => setEditBizSite(site)}
+                    className="px-4 py-2 text-[13px] font-medium border border-black/10 rounded-lg hover:border-[#cc0000]/30 hover:text-[#cc0000] transition-colors"
+                  >
+                    Business Info
+                  </button>
                   {site.published_url && (
                     <button
                       onClick={() => handleRepublish(site)}
