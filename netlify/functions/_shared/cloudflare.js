@@ -19,11 +19,18 @@ async function cfFetch(path, options = {}) {
     },
   });
   const body = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    const msg = body.errors?.map((e) => e.message).join('; ') || `CF ${res.status}`;
-    const err = new Error(msg);
-    err.status = res.status;
+  if (!res.ok || body.success === false) {
+    const codes = body.errors?.map((e) => e.code) || [];
+    const msgs = body.errors?.map((e) => e.message).join('; ') || `CF ${res.status}`;
+    let friendly = msgs;
+    if (codes.includes(10000) || msgs.toLowerCase() === 'authentication error') {
+      friendly = 'Cloudflare API token is missing the "SSL and Certificates → Edit" permission. Update it in Cloudflare → My Profile → API Tokens.';
+    }
+    console.error('[cloudflare] API error:', { status: res.status, codes, msgs, path });
+    const err = new Error(friendly);
+    err.status = res.status || 500;
     err.cfBody = body;
+    err.cfCodes = codes;
     throw err;
   }
   return body.result;
