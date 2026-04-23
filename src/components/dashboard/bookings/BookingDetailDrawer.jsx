@@ -60,7 +60,7 @@ export default function BookingDetailDrawer({ booking, onClose, onUpdated }) {
   const actions = ACTIONS_FOR[b.status] || [];
 
   return (
-    <div className="fixed inset-0 z-40 flex" onClick={onClose}>
+    <div className="fixed inset-0 z-[60] flex" onClick={onClose}>
       <div className="flex-1 bg-black/40" />
       <aside className="relative w-full max-w-md bg-white h-full overflow-y-auto shadow-2xl p-6" onClick={(e) => e.stopPropagation()}>
         <button
