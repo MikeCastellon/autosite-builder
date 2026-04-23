@@ -245,9 +245,9 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
         </div>
       )}
 
-      <main className="max-w-4xl mx-auto px-6 py-10">
+      <main className="max-w-5xl mx-auto px-6 py-12">
         <div className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl font-black text-[#1a1a1a] tracking-tight">Your Sites</h2>
+          <h2 className="text-3xl sm:text-4xl font-black text-[#1a1a1a] tracking-tight">Your Site</h2>
           {!isPro && (
             <button
               type="button"
@@ -277,15 +277,15 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
           </div>
         ) : (
           <div className="bg-white border border-black/[0.07] rounded-2xl shadow-sm overflow-hidden">
-            <div className="grid gap-6 p-6 sm:p-8">
+            <div className="grid gap-8 p-8 sm:p-10">
             {sites.map((site) => (
               <div
                 key={site.id}
-                className="flex flex-col sm:flex-row gap-6 sm:items-center"
+                className="flex flex-col sm:flex-row gap-8 sm:items-center"
               >
                 {/* Live preview thumbnail */}
                 <div
-                  className="relative w-full sm:w-[280px] h-[180px] shrink-0 overflow-hidden rounded-xl border border-black/[0.07] bg-[#faf9f7]"
+                  className="relative w-full sm:w-[360px] h-[225px] shrink-0 overflow-hidden rounded-xl border border-black/[0.07] bg-[#faf9f7]"
                   style={{ pointerEvents: 'none' }}
                 >
                   {site.published_url ? (
@@ -296,29 +296,29 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
                       sandbox="allow-same-origin allow-scripts"
                       style={{
                         width: '1280px',
-                        height: '832px',
+                        height: '800px',
                         border: 0,
-                        transform: 'scale(0.219)',
+                        transform: 'scale(0.281)',
                         transformOrigin: '0 0',
                         pointerEvents: 'none',
                       }}
                     />
                   ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-center px-3">
-                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" className="text-[#aaa] mb-2">
+                    <div className="w-full h-full flex flex-col items-center justify-center text-center px-4">
+                      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" className="text-[#aaa] mb-3">
                         <path d="M3 5a2 2 0 012-2h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5z" stroke="currentColor" strokeWidth="1.5"/>
                         <path d="M3 9h18M8 14h8M8 17h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                       </svg>
-                      <p className="text-[11px] font-semibold text-[#888] uppercase tracking-wider">Not published</p>
-                      <p className="text-[11px] text-[#aaa] mt-0.5 leading-tight">Publish to see live preview</p>
+                      <p className="text-[12px] font-semibold text-[#888] uppercase tracking-wider">Not published</p>
+                      <p className="text-[12px] text-[#aaa] mt-1 leading-tight">Publish to see live preview</p>
                     </div>
                   )}
                 </div>
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                    <p className="font-semibold text-[#1a1a1a] truncate">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <p className="text-[18px] font-bold text-[#1a1a1a] truncate">
                       {site.business_info?.businessName || 'Untitled'}
                     </p>
                     {site.published_url ? (
@@ -332,7 +332,7 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-[#888]">
+                  <p className="text-[13px] text-[#888]">
                     {site.template_id && <span className="text-[#555] font-medium">{TEMPLATES[site.template_id]?.name || site.template_id}</span>}
                     {site.template_id && ' · '}
                     {site.business_info?.city}, {site.business_info?.state} · {new Date(site.created_at).toLocaleDateString()}
@@ -342,10 +342,10 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
                       href={site.published_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-xs text-green-600 hover:text-green-800 mt-1 inline-flex items-center gap-1 transition-colors"
+                      className="text-[13px] text-green-600 hover:text-green-800 mt-1.5 inline-flex items-center gap-1 transition-colors"
                     >
                       <span className="truncate max-w-[260px]">{site.published_url.replace('https://', '')}</span>
-                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3 1h6v6M9 1L1 9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      <svg width="11" height="11" viewBox="0 0 10 10" fill="none"><path d="M3 1h6v6M9 1L1 9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     </a>
                   )}
                 </div>
@@ -355,21 +355,21 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
                   {onEditSite && (
                     <button
                       onClick={() => onEditSite(site)}
-                      className="px-3 py-1.5 text-xs font-semibold bg-[#1a1a1a] text-white rounded-lg hover:bg-[#cc0000] transition-colors"
+                      className="px-4 py-2 text-[13px] font-semibold bg-[#1a1a1a] text-white rounded-lg hover:bg-[#cc0000] transition-colors"
                     >
                       Edit
                     </button>
                   )}
                   <button
                     onClick={() => setEditBizSite(site)}
-                    className="px-3 py-1.5 text-xs font-medium border border-black/10 rounded-lg hover:border-[#cc0000]/30 hover:text-[#cc0000] transition-colors"
+                    className="px-4 py-2 text-[13px] font-medium border border-black/10 rounded-lg hover:border-[#cc0000]/30 hover:text-[#cc0000] transition-colors"
                   >
                     Business Info
                   </button>
                   {site.published_url && (
                     <button
                       onClick={() => handleRepublish(site)}
-                      className="px-3 py-1.5 text-xs font-medium border border-black/10 rounded-lg hover:border-[#cc0000]/30 hover:text-[#cc0000] transition-colors"
+                      className="px-4 py-2 text-[13px] font-medium border border-black/10 rounded-lg hover:border-[#cc0000]/30 hover:text-[#cc0000] transition-colors"
                     >
                       Republish
                     </button>
@@ -381,14 +381,14 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
                           setDomainPanelSiteId(site.id);
                           setDomainPanelInitial({ domain: site.custom_domain, status: site.custom_domain_status });
                         }}
-                        className="px-3 py-1.5 text-xs font-medium border border-black/10 rounded-lg hover:border-[#cc0000]/30 hover:text-[#cc0000] transition-colors"
+                        className="px-4 py-2 text-[13px] font-medium border border-black/10 rounded-lg hover:border-[#cc0000]/30 hover:text-[#cc0000] transition-colors"
                       >
                         {site.custom_domain ? 'Manage Domain' : 'Add Domain'}
                       </button>
                     ) : (
                       <button
                         onClick={() => setProDialogOpen(true)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-black/10 rounded-lg hover:border-[#cc0000]/30 hover:text-[#cc0000] transition-colors"
+                        className="inline-flex items-center gap-1.5 px-4 py-2 text-[13px] font-medium border border-black/10 rounded-lg hover:border-[#cc0000]/30 hover:text-[#cc0000] transition-colors"
                         title="Custom domains are a Pro feature"
                       >
                         <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -401,7 +401,7 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
                   )}
                   <button
                     onClick={() => handleDelete(site.id)}
-                    className="px-3 py-1.5 text-xs font-medium text-[#888] hover:text-[#cc0000] transition-colors"
+                    className="px-4 py-2 text-[13px] font-medium text-[#888] hover:text-[#cc0000] transition-colors"
                   >
                     Delete
                   </button>
@@ -414,23 +414,24 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
             {!isPro && (
               <div className="border-t border-black/[0.07] grid grid-cols-1 md:grid-cols-2">
                 {/* Left: image */}
-                <div className="relative min-h-[280px] bg-[#1a1a1a] overflow-hidden">
+                <div className="relative min-h-[380px] bg-[#1a1a1a] overflow-hidden">
                   <img
-                    src="/dashboard-upgrade-hero.jpg"
+                    src="/dashboard-upgrade-hero.png"
                     alt="Genius Websites Pro — booking calendar in a detailing shop"
                     className="absolute inset-0 w-full h-full object-cover"
                   />
                 </div>
 
                 {/* Right: text + features + CTA */}
-                <div className="p-6 sm:p-8 flex flex-col">
-                  <h3 className="text-[20px] sm:text-[22px] font-[900] text-[#1a1a1a] tracking-[-0.5px] mb-1">
+                <div className="p-8 sm:p-10 flex flex-col">
+                  <p className="text-[11px] font-bold uppercase tracking-[2px] text-[#cc0000] mb-2">Genius Websites Pro</p>
+                  <h3 className="text-[clamp(28px,3.5vw,36px)] font-[900] text-[#1a1a1a] tracking-[-1px] leading-[1.05] mb-2">
                     Upgrade Now
                   </h3>
-                  <p className="text-[13px] text-[#666] mb-4">
+                  <p className="text-[15px] text-[#666] mb-6">
                     $9.99/month · Cancel anytime in your Shopify account.
                   </p>
-                  <ul className="space-y-2 mb-5 flex-1">
+                  <ul className="space-y-3 mb-7 flex-1">
                     {[
                       '24/7 Online Booking — customers self-book any time',
                       'Live Google Reviews Widget',
@@ -438,9 +439,9 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
                       'Priority Live Chat Support',
                       'Remove "Powered by" branding',
                     ].map((item) => (
-                      <li key={item} className="flex items-start gap-2 text-[13px] text-[#1a1a1a]">
-                        <span className="shrink-0 w-4 h-4 rounded-full bg-[#cc0000] text-white flex items-center justify-center mt-0.5">
-                          <svg width="9" height="9" viewBox="0 0 12 12" fill="none">
+                      <li key={item} className="flex items-start gap-3 text-[14px] text-[#1a1a1a]">
+                        <span className="shrink-0 w-5 h-5 rounded-full bg-[#cc0000] text-white flex items-center justify-center mt-0.5">
+                          <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
                             <path d="M2.5 6l2.5 2.5L9.5 3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                         </span>
@@ -451,9 +452,9 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
                   <button
                     type="button"
                     onClick={() => setProDialogOpen(true)}
-                    className="w-full py-3 px-6 rounded-xl bg-[#cc0000] hover:bg-[#aa0000] text-white text-center font-semibold text-[14px] transition-colors shadow-sm inline-flex items-center justify-center gap-2"
+                    className="w-full py-4 px-6 rounded-xl bg-[#cc0000] hover:bg-[#aa0000] text-white text-center font-semibold text-[15px] transition-colors shadow-sm inline-flex items-center justify-center gap-2"
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5l2.78 6.42 6.97.5-5.27 4.6 1.6 6.81L12 16.5l-6.08 3.33 1.6-6.81L2.25 8.42l6.97-.5L12 1.5z" /></svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5l2.78 6.42 6.97.5-5.27 4.6 1.6 6.81L12 16.5l-6.08 3.33 1.6-6.81L2.25 8.42l6.97-.5L12 1.5z" /></svg>
                     Upgrade Now
                   </button>
                 </div>
