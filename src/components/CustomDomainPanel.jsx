@@ -10,8 +10,6 @@ export default function CustomDomainPanel({ siteId, initialDomain = null, initia
   const [domain, setDomain] = useState(initialDomain);
   const [status, setStatus] = useState(initialStatus);
   const [cnameInstructions, setCnameInstructions] = useState(null);
-  const [applyUrl, setApplyUrl] = useState(null);
-  const [provider, setProvider] = useState(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
   const [showHelp, setShowHelp] = useState(false);
@@ -43,16 +41,7 @@ export default function CustomDomainPanel({ siteId, initialDomain = null, initia
 
       setDomain(apex);
       setCnameInstructions(data.cnameInstructions);
-      setApplyUrl(data.applyUrl);
-      setProvider(data.detectedProvider);
       setStatus(data.status);
-
-      if (data.applyUrl) {
-        const popup = window.open(data.applyUrl, 'domainconnect', 'width=600,height=700');
-        if (!popup) {
-          window.location.href = data.applyUrl;
-        }
-      }
     } catch (e) {
       setErr(e.message);
     } finally {
@@ -75,7 +64,6 @@ export default function CustomDomainPanel({ siteId, initialDomain = null, initia
       setInput('');
       setStatus('disconnected');
       setCnameInstructions(null);
-      setApplyUrl(null);
     } catch (e) {
       setErr(e.message);
     } finally {
@@ -178,26 +166,11 @@ export default function CustomDomainPanel({ siteId, initialDomain = null, initia
             </ol>
           </div>
 
-          {provider && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-[13px] font-bold text-blue-900 mb-1">Auto-setup available</p>
-              <p className="text-[12px] text-blue-800 mb-2.5">
-                Detected registrar: <strong>{provider}</strong>. If the popup didn't open, click below to authorize the DNS update automatically.
-              </p>
-              <a href={applyUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-md transition-colors">
-                Authorize {provider} →
-              </a>
-              <p className="text-[11px] text-blue-900/70 mt-2.5">
-                Auto-setup didn't apply the records? Some registrars (Squarespace, Google Domains) acknowledge without writing the records. Just add them manually below — takes 30 seconds.
-              </p>
-            </div>
-          )}
-
           {cnameInstructions && cnameInstructions.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
                 <p className="text-[13px] font-bold text-[#1a1a1a]">
-                  {provider ? 'Or add these DNS records manually' : 'Add these DNS records at your registrar'}
+                  Add these DNS records at your registrar
                 </p>
                 <button
                   type="button"

@@ -1,8 +1,12 @@
 import { normalizeDomain, isValidDomain } from './_shared/domainUtils.js';
 import { createCustomHostname, listCustomHostnames, deleteCustomHostname } from './_shared/cloudflare.js';
-import { discoverDomainConnect, buildApplyUrl } from './_shared/domainConnect.js';
-import { signState } from './_shared/stateSig.js';
 import { requireSiteOwner, supabaseAdmin } from './_shared/auth.js';
+
+// Domain Connect is intentionally NOT used. Cloudflare for SaaS requires a
+// per-hostname dynamic UUID in the verification TXT record, which static
+// Domain Connect templates cannot inject. Squarespace + others reported
+// "Domain connected!" while the actual verification never landed — more
+// confusing than the 2-record manual paste, so we just do manual.
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -12,7 +16,6 @@ const CORS = {
 };
 
 const FALLBACK = process.env.CUSTOM_DOMAIN_FALLBACK_ORIGIN;
-const APP_URL = process.env.APP_URL;
 
 export const handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: CORS };
@@ -55,9 +58,6 @@ export const handler = async (event) => {
     //    can add a forward at their registrar themselves.
     const wwwHn = await createOrRecover(www);
 
-    // 4. Domain Connect discovery (fire and forget result if fails)
-    const provider = await discoverDomainConnect(apex).catch(() => null);
-
     // 5. Persist to Supabase. We store the apex as the user-facing domain
     //    label but only the www hostname id in Cloudflare.
     await admin.from('sites').update({
@@ -81,28 +81,10 @@ export const handler = async (event) => {
       });
     }
 
-    // 7. Construct Domain Connect apply URL if supported
-    let applyUrl = null;
-    let detectedProvider = null;
-    if (provider) {
-      const state = await signState({ siteId }, 600);
-      applyUrl = buildApplyUrl({
-        urlSyncUX: provider.urlSyncUX,
-        providerId: 'autocaregeniushub.com',
-        serviceId: 'customdomain',
-        domain: apex,
-        redirectUri: `${APP_URL}/domain-connected`,
-        state,
-      });
-      detectedProvider = provider.providerName;
-    }
-
     return {
       statusCode: 200,
       headers: CORS,
       body: JSON.stringify({
-        applyUrl,
-        detectedProvider,
         cnameInstructions,
         hostnameIds: { www: wwwHn.id },
         liveUrl: `https://${www}`,
