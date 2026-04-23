@@ -291,7 +291,9 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
                 >
                   {site.published_url ? (
                     <iframe
-                      src={site.published_url}
+                      src={site.custom_domain && site.custom_domain_status === 'active_ssl'
+                        ? `https://www.${site.custom_domain}`
+                        : site.published_url}
                       title={`${site.business_info?.businessName || 'Site'} preview`}
                       loading="lazy"
                       sandbox="allow-same-origin allow-scripts"
@@ -338,17 +340,27 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
                     {site.template_id && ' · '}
                     {site.business_info?.city}, {site.business_info?.state} · {new Date(site.created_at).toLocaleDateString()}
                   </p>
-                  {site.published_url && (
-                    <a
-                      href={site.published_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[13px] text-green-600 hover:text-green-800 mt-1.5 inline-flex items-center gap-1 transition-colors"
-                    >
-                      <span className="truncate max-w-[260px]">{site.published_url.replace('https://', '')}</span>
-                      <svg width="11" height="11" viewBox="0 0 10 10" fill="none"><path d="M3 1h6v6M9 1L1 9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    </a>
-                  )}
+                  {site.published_url && (() => {
+                    // Prefer the custom domain once the site is live on it,
+                    // otherwise fall back to the free subdomain.
+                    const isCustomLive =
+                      site.custom_domain && site.custom_domain_status === 'active_ssl';
+                    const liveUrl = isCustomLive
+                      ? `https://www.${site.custom_domain}`
+                      : site.published_url;
+                    const displayUrl = liveUrl.replace(/^https:\/\//, '');
+                    return (
+                      <a
+                        href={liveUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[13px] text-green-600 hover:text-green-800 mt-1.5 inline-flex items-center gap-1 transition-colors"
+                      >
+                        <span className="truncate max-w-[260px]">{displayUrl}</span>
+                        <svg width="11" height="11" viewBox="0 0 10 10" fill="none"><path d="M3 1h6v6M9 1L1 9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      </a>
+                    );
+                  })()}
                 </div>
 
                 {/* Actions */}
