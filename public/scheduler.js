@@ -13,13 +13,11 @@
 
   var API = script.src.replace(/\/scheduler\.js.*$/, '');
 
-  var cfgUrl = API + '/.netlify/functions/scheduler-config?siteId=' + encodeURIComponent(siteId);
-  // In preview/auto-open mode (owner previewing their own settings), bypass
-  // the browser cache so owners see their settings changes immediately.
-  var fetchOpts = (previewMode || autoOpen) ? { cache: 'no-store' } : undefined;
-  if (previewMode || autoOpen) cfgUrl += '&t=' + Date.now();
+  // Always bypass browser cache — owners expect theme/logo/services
+  // changes to appear instantly for their customers.
+  var cfgUrl = API + '/.netlify/functions/scheduler-config?siteId=' + encodeURIComponent(siteId) + '&t=' + Date.now();
 
-  fetch(cfgUrl, fetchOpts)
+  fetch(cfgUrl, { cache: 'no-store' })
     .then(function (r) { return r.ok ? r.json() : { enabled: false }; })
     .catch(function () { return { enabled: false }; })
     .then(function (cfg) {

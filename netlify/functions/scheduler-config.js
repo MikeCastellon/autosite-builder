@@ -6,9 +6,11 @@ const CORS = {
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
   'Content-Type': 'application/json',
-  // Short cache so settings changes land on the customer-facing widget
-  // within ~10s instead of a minute.
-  'Cache-Control': 'public, max-age=10',
+  // Owner settings (theme, logo, services, availability) should reach
+  // the customer-facing modal the moment they save — no republish, no
+  // wait. Using no-cache + must-revalidate so every modal open hits the
+  // DB directly. The endpoint is a single indexed lookup, cost is fine.
+  'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
 };
 
 const TEMPLATE_FALLBACK_COLORS = { default: '#1a1a1a' };
