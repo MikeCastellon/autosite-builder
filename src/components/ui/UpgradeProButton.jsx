@@ -56,25 +56,9 @@ export default function UpgradeProButton() {
   return (
     <>
       <style>{`
-        @keyframes acg-halo {
-          0%, 100% { transform: scale(1); opacity: 0.6; }
-          50% { transform: scale(1.35); opacity: 0; }
-        }
         @keyframes acg-spin-slow {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
-        }
-        @keyframes acg-sparkle-orbit {
-          0%   { top: -8px; left: -8px; opacity: 0; transform: scale(0.5); }
-          10%  { opacity: 1; transform: scale(1); }
-          25%  { top: -8px; left: calc(100% - 8px); opacity: 1; transform: scale(1); }
-          26%  { opacity: 0; }
-          35%  { top: -8px; left: -8px; opacity: 0; transform: scale(0.5); }
-          50%  { top: calc(100% - 8px); left: calc(100% - 8px); opacity: 1; transform: scale(1); }
-          51%  { opacity: 0; }
-          75%  { top: calc(100% - 8px); left: -8px; opacity: 1; transform: scale(1); }
-          76%  { opacity: 0; }
-          100% { top: -8px; left: -8px; opacity: 0; transform: scale(0.5); }
         }
         @keyframes acg-shimmer {
           0%, 100% { transform: translateX(-100%); }
@@ -87,17 +71,8 @@ export default function UpgradeProButton() {
           transform: scale(1.05);
           box-shadow: 0 12px 32px rgba(204, 0, 0, 0.45);
         }
-        .acg-pro-btn:hover .acg-pro-halo {
-          animation-duration: 1s;
-        }
-        .acg-pro-halo {
-          animation: acg-halo 2s ease-out infinite;
-        }
         .acg-pro-icon {
           animation: acg-spin-slow 8s linear infinite;
-        }
-        .acg-pro-sparkle {
-          animation: acg-sparkle-orbit 6s ease-in-out infinite;
         }
         .acg-pro-modal {
           animation: acg-modal-in 0.25s ease-out;
@@ -125,20 +100,8 @@ export default function UpgradeProButton() {
           type="button"
           onClick={() => setOpen(true)}
           aria-label="Upgrade to Pro"
-          className="acg-pro-btn relative inline-flex items-center gap-2.5 px-5 py-3.5 rounded-full bg-[#cc0000] text-white shadow-[0_8px_24px_rgba(204,0,0,0.35)] font-semibold text-[14px] tracking-tight"
+          className="acg-pro-btn inline-flex items-center gap-2.5 px-5 py-3.5 rounded-full bg-[#cc0000] text-white shadow-[0_8px_24px_rgba(204,0,0,0.35)] font-semibold text-[14px] tracking-tight"
         >
-          {/* Pulsing halo */}
-          <span
-            className="acg-pro-halo absolute inset-0 rounded-full bg-[#cc0000] -z-10"
-            aria-hidden="true"
-          />
-          {/* Sparkle that orbits around */}
-          <span
-            className="acg-pro-sparkle absolute text-[14px] pointer-events-none"
-            aria-hidden="true"
-          >
-            ✨
-          </span>
           {/* Slowly spinning star icon */}
           <svg
             className="acg-pro-icon shrink-0"
