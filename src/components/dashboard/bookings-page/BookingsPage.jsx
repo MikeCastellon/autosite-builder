@@ -36,15 +36,34 @@ export default function BookingsPage({ userId, profile, userEmail, onExit, onOpe
     if (userId) fetchSites();
   }, [userId]);
 
-  if (loading) return <div className="p-10 text-gray-500">Loading…</div>;
-  if (err) return <div className="p-10 text-red-600">{err}</div>;
+  // Loading + error + empty all keep the AppHeader rendered so the nav doesn't
+  // flash blank between page transitions — same shell pattern as the dashboard.
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#faf9f7]">
+        <AppHeader {...headerProps} />
+        <main className="max-w-5xl mx-auto px-6 py-10">
+          <p className="text-[#888] text-sm">Loading...</p>
+        </main>
+      </div>
+    );
+  }
+  if (err) {
+    return (
+      <div className="min-h-screen bg-[#faf9f7]">
+        <AppHeader {...headerProps} />
+        <main className="max-w-5xl mx-auto px-6 py-10">
+          <div className="border border-[#cc0000]/20 rounded-xl p-4 text-sm text-[#cc0000] bg-[#cc0000]/5">{err}</div>
+        </main>
+      </div>
+    );
+  }
 
   if (sites.length === 0) {
     return (
       <div className="min-h-screen bg-[#faf9f7]">
         <AppHeader {...headerProps} />
         <main className="max-w-3xl mx-auto px-6 py-10">
-          <h2 className="text-2xl font-black text-[#1a1a1a] tracking-tight mb-4">Bookings</h2>
           <p className="text-gray-600">Create a site first — bookings attach to a published site.</p>
         </main>
       </div>
@@ -57,7 +76,6 @@ export default function BookingsPage({ userId, profile, userEmail, onExit, onOpe
         <AppHeader {...headerProps} />
 
         <main className="max-w-5xl mx-auto px-6 py-10">
-          <h2 className="text-2xl font-black text-[#1a1a1a] tracking-tight mb-6">Bookings</h2>
           <div className="flex gap-1 mb-6 border-b border-gray-200">
             <TabBtn on={tab === 'schedule'} onClick={() => setTab('schedule')}>Schedule</TabBtn>
             <TabBtn on={tab === 'settings'} onClick={() => setTab('settings')}>Settings</TabBtn>
