@@ -1,16 +1,16 @@
 import { useState } from 'react';
 import { publishSite } from '../../lib/publishSite.js';
 import { generateSlug } from '../../lib/publishUtils.js';
+import CustomDomainPanel from '../CustomDomainPanel.jsx';
 
 const PUBLISH_DOMAIN = import.meta.env.VITE_PUBLISH_DOMAIN || 'autocaregenius.com';
+const CUSTOM_DOMAIN_ENABLED = import.meta.env.VITE_CUSTOM_DOMAIN_ENABLED === 'true';
 
 export default function StepExport({ siteId: passedSiteId, businessInfo, generatedCopy, templateId, templateMeta, images, selectedWidgetIds, onBack, onStartOver }) {
   const [publishing, setPublishing] = useState(false);
   const [published, setPublished] = useState(null);
   const [publishError, setPublishError] = useState(null);
-  const [customDomain, setCustomDomain] = useState('');
   const siteId = passedSiteId || crypto.randomUUID();
-  const [useCustomDomain, setUseCustomDomain] = useState(false);
 
   const slug = generateSlug(businessInfo.businessName);
   const subdomain = `${slug}.${PUBLISH_DOMAIN}`;
@@ -27,7 +27,6 @@ export default function StepExport({ siteId: passedSiteId, businessInfo, generat
         templateMeta,
         images,
         selectedWidgetIds,
-        customDomain: useCustomDomain && customDomain ? customDomain : null,
       });
       setPublished(result);
     } catch (err) {
@@ -39,7 +38,6 @@ export default function StepExport({ siteId: passedSiteId, businessInfo, generat
 
   return (
     <div className="max-w-lg mx-auto">
-      {/* Header */}
       <div className="text-center mb-8">
         <div className="w-14 h-14 bg-[#cc0000]/10 rounded-full flex items-center justify-center mx-auto mb-5">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -56,7 +54,6 @@ export default function StepExport({ siteId: passedSiteId, businessInfo, generat
 
       {!published ? (
         <>
-          {/* Subdomain preview */}
           <div className="border border-black/[0.07] rounded-xl p-5 mb-5 bg-[#faf9f7]">
             <p className="text-[11px] font-semibold text-[#cc0000] uppercase tracking-[1.5px] mb-3">Your site will be live at</p>
             <div className="flex items-center gap-2 bg-white border border-black/[0.10] rounded-lg px-4 py-3">
@@ -65,35 +62,6 @@ export default function StepExport({ siteId: passedSiteId, businessInfo, generat
             </div>
           </div>
 
-          {/* Custom domain option */}
-          <div className="border border-black/[0.07] rounded-xl p-5 mb-5">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-[13px] font-semibold text-[#1a1a1a]">Use your own domain</p>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={useCustomDomain}
-                onClick={() => setUseCustomDomain(!useCustomDomain)}
-                className={`relative w-9 h-5 rounded-full transition-colors ${useCustomDomain ? 'bg-[#cc0000]' : 'bg-gray-300'}`}
-              >
-                <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${useCustomDomain ? 'translate-x-4' : 'translate-x-0'}`} />
-              </button>
-            </div>
-            {useCustomDomain && (
-              <>
-                <input
-                  type="text"
-                  placeholder="www.mybusiness.com"
-                  value={customDomain}
-                  onChange={(e) => setCustomDomain(e.target.value)}
-                  className="w-full border border-black/[0.10] rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000] mb-2"
-                />
-                <p className="text-xs text-[#999]">You'll get DNS setup instructions after publishing.</p>
-              </>
-            )}
-          </div>
-
-          {/* Publish button */}
           <button
             onClick={handlePublish}
             disabled={publishing}
@@ -103,28 +71,10 @@ export default function StepExport({ siteId: passedSiteId, businessInfo, generat
             {publishing ? 'Publishing...' : '🚀 Publish Website'}
           </button>
 
-          {/* What's included */}
-          <div className="border border-black/[0.07] rounded-xl p-5 bg-[#faf9f7]">
-            <p className="text-[11px] font-semibold text-[#888] uppercase tracking-[1.5px] mb-3">Included</p>
-            <ul className="space-y-2">
-              {[
-                'Free SSL certificate (HTTPS)',
-                'Local SEO optimized (title, meta, schema)',
-                'Mobile responsive on all devices',
-                'Lightning-fast CDN hosting',
-                'Custom subdomain on autocaregenius.com',
-              ].map((item) => (
-                <li key={item} className="flex items-center gap-2 text-[13px] text-[#555]">
-                  <span className="text-green-500 text-xs">✓</span>
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
+          {publishError && <p className="text-sm text-[#cc0000] mb-4">{publishError}</p>}
         </>
       ) : (
         <>
-          {/* Published success */}
           <div className="border border-green-200 bg-green-50 rounded-xl p-5 mb-5">
             <p className="font-semibold text-green-800 mb-2">🎉 Your site is live!</p>
             <a
@@ -135,8 +85,13 @@ export default function StepExport({ siteId: passedSiteId, businessInfo, generat
             >
               {published.publishedUrl}
             </a>
-            <p className="text-xs text-green-600 mt-2">DNS may take 1–5 minutes to propagate globally.</p>
           </div>
+
+          {CUSTOM_DOMAIN_ENABLED && (
+            <div className="mb-5">
+              <CustomDomainPanel siteId={siteId} />
+            </div>
+          )}
 
           <div className="flex gap-2 mb-5">
             <button
@@ -155,41 +110,12 @@ export default function StepExport({ siteId: passedSiteId, businessInfo, generat
             </a>
           </div>
 
-          {published.cnameInstructions && (
-            <div className="border border-black/[0.07] rounded-xl p-5 mb-5 bg-[#faf9f7]">
-              <p className="font-semibold text-[#1a1a1a] text-sm mb-3">DNS Setup for Custom Domain</p>
-              <div className="font-mono text-xs space-y-2 text-[#555] bg-white border border-black/[0.07] rounded-lg p-3">
-                <p><span className="font-semibold text-[#1a1a1a]">Type:</span> CNAME</p>
-                <p><span className="font-semibold text-[#1a1a1a]">Name:</span> {published.cnameInstructions.name}</p>
-                <p><span className="font-semibold text-[#1a1a1a]">Value:</span> {published.cnameInstructions.value}</p>
-              </div>
-              <p className="text-xs text-[#999] mt-2">Add this record at your domain registrar. SSL will activate automatically.</p>
-            </div>
-          )}
+          <div className="flex gap-2">
+            <button onClick={onBack} className="flex-1 py-2.5 px-4 text-sm text-[#888]">Back</button>
+            <button onClick={onStartOver} className="flex-1 py-2.5 px-4 text-sm text-[#888]">Start over</button>
+          </div>
         </>
       )}
-
-      {publishError && (
-        <div className="border border-[#cc0000]/20 rounded-xl p-4 mt-3 text-sm text-[#cc0000] bg-[#cc0000]/5">
-          {publishError}
-        </div>
-      )}
-
-      {/* Bottom actions */}
-      <div className="flex gap-2.5 mt-4">
-        <button
-          onClick={onBack}
-          className="flex-1 py-2.5 px-4 rounded-xl border border-black/[0.07] text-[#555] hover:border-[#cc0000]/30 hover:text-[#cc0000] font-medium transition-colors text-[13px]"
-        >
-          ← Back to Editor
-        </button>
-        <button
-          onClick={onStartOver}
-          className="flex-1 py-2.5 px-4 rounded-xl bg-[#faf9f7] hover:bg-[#f2f0ec] text-[#555] font-medium transition-colors text-[13px]"
-        >
-          Build Another Site
-        </button>
-      </div>
     </div>
   );
 }
