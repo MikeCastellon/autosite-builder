@@ -14,6 +14,7 @@ export default function CustomDomainPanel({ siteId, initialDomain = null, initia
   const [provider, setProvider] = useState(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
+  const [showHelp, setShowHelp] = useState(false);
   const pollingRef = useRef(null);
 
   const display = getStatusDisplay(status);
@@ -184,14 +185,42 @@ export default function CustomDomainPanel({ siteId, initialDomain = null, initia
               <a href={applyUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-md transition-colors">
                 Authorize {provider} →
               </a>
+              <p className="text-[11px] text-blue-900/70 mt-2.5">
+                Auto-setup didn't apply the records? Some registrars (Squarespace, Google Domains) acknowledge without writing the records. Just add them manually below — takes 30 seconds.
+              </p>
             </div>
           )}
 
           {cnameInstructions && cnameInstructions.length > 0 && (
             <div>
-              <p className="text-[13px] font-bold text-[#1a1a1a] mb-2">
-                {provider ? 'Or add these DNS records manually' : 'Add these DNS records at your registrar'}
-              </p>
+              <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                <p className="text-[13px] font-bold text-[#1a1a1a]">
+                  {provider ? 'Or add these DNS records manually' : 'Add these DNS records at your registrar'}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowHelp((v) => !v)}
+                  className="text-[11px] text-[#cc0000] hover:text-[#aa0000] font-semibold transition-colors"
+                >
+                  {showHelp ? 'Hide help ↑' : 'How do I add these? ↓'}
+                </button>
+              </div>
+
+              {showHelp && (
+                <div className="bg-blue-50/50 border border-blue-100 rounded-lg p-3 mb-3 text-[12px] text-[#444] space-y-2">
+                  <p className="font-semibold text-[#1a1a1a]">Where to paste these in your registrar:</p>
+                  <ul className="space-y-1.5 list-disc pl-4">
+                    <li><strong>Squarespace</strong> — Domains → your domain → DNS Settings → Custom Records → Add (set Type, Host, points-to-data exactly as shown).</li>
+                    <li><strong>GoDaddy</strong> — Domains → your domain → DNS → Add → CNAME.</li>
+                    <li><strong>Namecheap</strong> — Domain List → your domain → Manage → Advanced DNS → Add New Record.</li>
+                    <li><strong>Google Domains</strong> — DNS → Manage custom records → Create new record.</li>
+                  </ul>
+                  <p className="text-[11px] text-[#666] pt-1">
+                    Your registrar might call them "host", "name", or "alias" — they all mean the same thing. If <code className="text-[11px] bg-white px-1 rounded">@</code> isn't accepted, leave the host field blank.
+                  </p>
+                </div>
+              )}
+
               <div className="bg-white border border-black/[0.10] rounded-lg overflow-hidden">
                 <div className="grid grid-cols-[80px_120px_1fr] gap-2 px-3 py-2 bg-[#faf9f7] border-b border-black/[0.07] text-[10px] font-bold uppercase tracking-wider text-[#888]">
                   <div>Type</div>
