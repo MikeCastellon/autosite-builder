@@ -53,13 +53,14 @@ export default function LoginPage({ initialMode = 'signin' }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#faf9f7] p-4">
-      <div className="w-full max-w-sm">
+    <div className="min-h-screen flex flex-col bg-[#faf9f7]">
+      {/* Brand header at the top */}
+      <header className="border-b border-black/[0.07] bg-white px-4 sm:px-8 h-16 flex items-center sticky top-0 z-50">
         <a
           href="https://www.autocaregenius.com"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-2.5 mb-8"
+          className="flex items-center gap-2.5"
         >
           <img
             src="https://www.autocaregenius.com/cdn/shop/files/v11_1.svg?v=1760731533&width=200"
@@ -71,111 +72,130 @@ export default function LoginPage({ initialMode = 'signin' }) {
             Genius <span className="text-[#cc0000]">Websites</span>
           </span>
         </a>
-        <div className="mb-6">
-          <h1 className="text-2xl font-black text-[#1a1a1a] tracking-tight">
-            {showForgot ? 'Reset Password' : isSignUp ? 'Create Account' : 'Welcome Back'}
-          </h1>
-          <p className="text-[#888] text-sm mt-1">
-            {showForgot ? "Enter your email and we'll send a reset link" : isSignUp ? 'Sign up to start building' : 'Sign in to your account'}
-          </p>
-        </div>
+      </header>
 
-        {showForgot ? (
-          <form onSubmit={handleForgotPassword} className="space-y-3">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email address"
-              className="w-full border border-black/10 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#cc0000]/30"
-              required
-            />
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 rounded-xl bg-[#1a1a1a] hover:bg-[#cc0000] text-white font-semibold text-sm transition-colors disabled:opacity-50"
-            >
-              {loading ? 'Sending...' : 'Send Reset Link'}
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={handleEmailAuth} className="space-y-3">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email address"
-              className="w-full border border-black/10 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#cc0000]/30"
-              required
-            />
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
-              minLength={6}
-              className="w-full border border-black/10 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#cc0000]/30"
-              required
-            />
-            {!isSignUp && (
-              <button
-                type="button"
-                onClick={() => { setShowForgot(true); setError(null); setMessage(null); }}
-                className="text-xs text-[#cc0000] hover:text-[#aa0000] transition-colors"
-              >
-                Forgot password?
-              </button>
-            )}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 rounded-xl bg-[#1a1a1a] hover:bg-[#cc0000] text-white font-semibold text-sm transition-colors disabled:opacity-50"
-            >
-              {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}
-            </button>
-          </form>
-        )}
+      {/* Auth card */}
+      <main className="flex-1 flex items-center justify-center px-4 py-12 sm:py-16">
+        <div className="w-full max-w-md bg-white border border-black/[0.07] rounded-2xl shadow-sm p-8 sm:p-10">
+          <div className="mb-8 text-center">
+            <h1 className="text-[clamp(28px,4vw,36px)] font-[900] text-[#1a1a1a] tracking-[-1px] leading-[1.1]">
+              {showForgot ? 'Reset Password' : isSignUp ? 'Create Account' : 'Welcome Back'}
+            </h1>
+            <p className="text-[#666] text-[15px] mt-2.5">
+              {showForgot ? "Enter your email and we'll send a reset link" : isSignUp ? 'Sign up to start building your website' : 'Sign in to your account'}
+            </p>
+          </div>
 
-        <button
-          type="button"
-          onClick={() => { setIsSignUp(!isSignUp); setShowForgot(false); setError(null); setMessage(null); }}
-          className="w-full mt-4 text-[15px] font-medium text-[#555] hover:text-[#1a1a1a] transition-colors text-center"
-        >
           {showForgot ? (
-            <>← Back to sign in</>
-          ) : isSignUp ? (
-            <>Already have an account? <span className="text-[#cc0000] font-semibold">Sign in</span></>
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <div>
+                <label className="block text-[13px] font-semibold text-[#1a1a1a] mb-1.5">Email address</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  className="w-full border border-black/10 rounded-xl px-4 py-3.5 text-[15px] outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000] transition"
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3.5 rounded-xl bg-[#1a1a1a] hover:bg-[#cc0000] text-white font-semibold text-[15px] transition-colors disabled:opacity-50"
+              >
+                {loading ? 'Sending...' : 'Send Reset Link'}
+              </button>
+            </form>
           ) : (
-            <>Don't have an account? <span className="text-[#cc0000] font-semibold">Sign up</span></>
+            <form onSubmit={handleEmailAuth} className="space-y-4">
+              <div>
+                <label className="block text-[13px] font-semibold text-[#1a1a1a] mb-1.5">Email address</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  className="w-full border border-black/10 rounded-xl px-4 py-3.5 text-[15px] outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000] transition"
+                  required
+                />
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-[13px] font-semibold text-[#1a1a1a]">Password</label>
+                  {!isSignUp && (
+                    <button
+                      type="button"
+                      onClick={() => { setShowForgot(true); setError(null); setMessage(null); }}
+                      className="text-[12px] text-[#cc0000] hover:text-[#aa0000] font-medium transition-colors"
+                    >
+                      Forgot password?
+                    </button>
+                  )}
+                </div>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="At least 6 characters"
+                  minLength={6}
+                  className="w-full border border-black/10 rounded-xl px-4 py-3.5 text-[15px] outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000] transition"
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3.5 rounded-xl bg-[#1a1a1a] hover:bg-[#cc0000] text-white font-semibold text-[15px] transition-colors disabled:opacity-50"
+              >
+                {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}
+              </button>
+            </form>
           )}
-        </button>
 
-        {error && (
-          <div
-            role="alert"
-            className="mt-4 flex items-start gap-3 rounded-xl border-2 border-[#cc0000] bg-red-50 text-[#8a0000] px-4 py-3 shadow-sm"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="shrink-0 mt-0.5" aria-hidden="true">
-              <circle cx="12" cy="12" r="10" fill="#cc0000"/>
-              <path d="M12 7v6" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"/>
-              <circle cx="12" cy="16.5" r="1.2" fill="#fff"/>
-            </svg>
-            <p className="text-[14px] font-semibold leading-snug">{error}</p>
+          <div className="mt-6 pt-6 border-t border-black/[0.06]">
+            <button
+              type="button"
+              onClick={() => { setIsSignUp(!isSignUp); setShowForgot(false); setError(null); setMessage(null); }}
+              className="w-full text-[15px] font-medium text-[#555] hover:text-[#1a1a1a] transition-colors text-center"
+            >
+              {showForgot ? (
+                <>← Back to sign in</>
+              ) : isSignUp ? (
+                <>Already have an account? <span className="text-[#cc0000] font-semibold">Sign in</span></>
+              ) : (
+                <>Don't have an account? <span className="text-[#cc0000] font-semibold">Sign up</span></>
+              )}
+            </button>
           </div>
-        )}
-        {message && (
-          <div
-            role="status"
-            className="mt-4 flex items-start gap-3 rounded-xl border-2 border-green-700 bg-green-50 text-green-900 px-4 py-3 shadow-sm"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="shrink-0 mt-0.5" aria-hidden="true">
-              <circle cx="12" cy="12" r="10" fill="#16a34a"/>
-              <path d="M8 12.5l2.5 2.5L16 9.5" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            <p className="text-[14px] font-semibold leading-snug">{message}</p>
-          </div>
-        )}
-      </div>
+
+          {error && (
+            <div
+              role="alert"
+              className="mt-5 flex items-start gap-3 rounded-xl border-2 border-[#cc0000] bg-red-50 text-[#8a0000] px-4 py-3 shadow-sm"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="shrink-0 mt-0.5" aria-hidden="true">
+                <circle cx="12" cy="12" r="10" fill="#cc0000"/>
+                <path d="M12 7v6" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"/>
+                <circle cx="12" cy="16.5" r="1.2" fill="#fff"/>
+              </svg>
+              <p className="text-[14px] font-semibold leading-snug">{error}</p>
+            </div>
+          )}
+          {message && (
+            <div
+              role="status"
+              className="mt-5 flex items-start gap-3 rounded-xl border-2 border-green-700 bg-green-50 text-green-900 px-4 py-3 shadow-sm"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="shrink-0 mt-0.5" aria-hidden="true">
+                <circle cx="12" cy="12" r="10" fill="#16a34a"/>
+                <path d="M8 12.5l2.5 2.5L16 9.5" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <p className="text-[14px] font-semibold leading-snug">{message}</p>
+            </div>
+          )}
+        </div>
+      </main>
     </div>
   );
 }
