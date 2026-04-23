@@ -84,14 +84,23 @@ export async function newBookingToOwner({ booking, site, ownerEmail }) {
   const name = site?.business_info?.businessName || 'your site';
   const dashLink = `${APP_URL}/?bookings=${encodeURIComponent(b.id)}`;
 
+  const vehicleLine = [b.vehicle_year, b.vehicle_make, b.vehicle_model].filter(Boolean).join(' ');
   const html = `
-    <h2>New booking request for ${esc(name)}</h2>
-    <p><strong>${esc(b.customer_name)}</strong> (${esc(b.customer_email)}, ${esc(b.customer_phone)}) wants to book for <strong>${esc(formatWhen(b.preferred_at))}</strong>.</p>
-    <p><strong>Vehicle:</strong> ${esc(b.vehicle_year)} ${esc(b.vehicle_make)} ${esc(b.vehicle_model)} (${esc(b.vehicle_size)})</p>
-    ${b.service_address ? `<p><strong>Service address:</strong> ${esc(b.service_address)}</p>` : ''}
-    ${b.notes ? `<p><strong>Notes:</strong> ${esc(b.notes)}</p>` : ''}
-    ${b.referral_source ? `<p><strong>Heard about us via:</strong> ${esc(b.referral_source)}</p>` : ''}
-    <p><a href="${dashLink}">Open in your dashboard →</a></p>
+    <div style="font-family:Inter,-apple-system,Segoe UI,sans-serif;max-width:560px;margin:0 auto;padding:24px;">
+      <p style="margin:0 0 4px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#cc0000;font-weight:700;">New booking request</p>
+      <h2 style="margin:0 0 12px;font-size:22px;color:#1a1a1a;font-weight:800;">${esc(b.customer_name)} wants to book</h2>
+      <p style="margin:0 0 18px;font-size:14px;color:#555;line-height:1.6;">Preferred time: <strong>${esc(formatWhen(b.preferred_at))}</strong>.</p>
+      <div style="padding:16px 18px;border:1px solid #eee;border-radius:10px;">
+        <p style="margin:0 0 4px;font-size:13px;color:#555;"><strong style="color:#999;font-weight:600;">Customer:</strong> ${esc(b.customer_name)}</p>
+        <p style="margin:0 0 4px;font-size:13px;color:#555;"><strong style="color:#999;font-weight:600;">Email:</strong> <a href="mailto:${esc(b.customer_email)}" style="color:#cc0000;text-decoration:none;">${esc(b.customer_email)}</a></p>
+        <p style="margin:0 0 4px;font-size:13px;color:#555;"><strong style="color:#999;font-weight:600;">Phone:</strong> <a href="tel:${esc(b.customer_phone)}" style="color:#cc0000;text-decoration:none;">${esc(b.customer_phone)}</a></p>
+        ${vehicleLine ? `<p style="margin:0 0 4px;font-size:13px;color:#555;"><strong style="color:#999;font-weight:600;">Vehicle:</strong> ${esc(vehicleLine)}${b.vehicle_size ? ' (' + esc(b.vehicle_size) + ')' : ''}</p>` : ''}
+        ${b.service_address ? `<p style="margin:0 0 4px;font-size:13px;color:#555;"><strong style="color:#999;font-weight:600;">Service address:</strong> ${esc(b.service_address)}</p>` : ''}
+        ${b.notes ? `<p style="margin:0 0 4px;font-size:13px;color:#555;"><strong style="color:#999;font-weight:600;">Notes:</strong> ${esc(b.notes)}</p>` : ''}
+        ${b.referral_source ? `<p style="margin:0 0 4px;font-size:13px;color:#555;"><strong style="color:#999;font-weight:600;">Heard via:</strong> ${esc(b.referral_source)}</p>` : ''}
+      </div>
+      <p style="margin:22px 0 0;"><a href="${dashLink}" style="display:inline-block;background:#cc0000;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:12px 22px;border-radius:10px;">Open in your dashboard →</a></p>
+    </div>
   `;
   const text = `New booking request for ${name}\n\n${b.customer_name} (${b.customer_email}, ${b.customer_phone}) wants to book for ${formatWhen(b.preferred_at)}.\nVehicle: ${b.vehicle_year} ${b.vehicle_make} ${b.vehicle_model} (${b.vehicle_size})\n${b.service_address ? 'Service address: ' + b.service_address + '\n' : ''}${b.notes ? 'Notes: ' + b.notes + '\n' : ''}Open: ${dashLink}`;
 
