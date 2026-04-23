@@ -1,4 +1,3 @@
-import { deleteCustomHostname } from './_shared/cloudflare.js';
 import { requireSiteOwner, supabaseAdmin } from './_shared/auth.js';
 
 const CORS = {
@@ -7,6 +6,10 @@ const CORS = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Content-Type': 'application/json',
 };
+
+const NETLIFY_API = 'https://api.netlify.com/api/v1';
+const NETLIFY_SITE_ID = process.env.NETLIFY_SITE_ID || 'b5123609-d632-43df-9ff1-db707714162b';
+const NETLIFY_TOKEN = process.env.NETLIFY_ACCESS_TOKEN;
 
 export const handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: CORS };
@@ -26,10 +29,29 @@ export const handler = async (event) => {
   try {
     const { site } = await requireSiteOwner(event, siteId);
 
-    const deletions = [];
-    if (site.custom_hostname_apex_id) deletions.push(deleteCustomHostname(site.custom_hostname_apex_id).catch((e) => console.error(e)));
-    if (site.custom_hostname_www_id)  deletions.push(deleteCustomHostname(site.custom_hostname_www_id).catch((e) => console.error(e)));
-    await Promise.all(deletions);
+    // Remove the alias from the Netlify site if it still has a domain.
+    if (site.custom_domain && NETLIFY_TOKEN) {
+      const apex = site.custom_domain;
+      const wwwHost = `www.${apex}`;
+      try {
+        const siteRes = await fetch(`${NETLIFY_API}/sites/${NETLIFY_SITE_ID}`, {
+          headers: { Authorization: `Bearer ${NETLIFY_TOKEN}` },
+        });
+        if (siteRes.ok) {
+          const netlifySite = await siteRes.json();
+          const remaining = (netlifySite.domain_aliases || []).filter(
+            (d) => d !== apex && d !== wwwHost
+          );
+          await fetch(`${NETLIFY_API}/sites/${NETLIFY_SITE_ID}`, {
+            method: 'PATCH',
+            headers: { Authorization: `Bearer ${NETLIFY_TOKEN}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ domain_aliases: remaining }),
+          });
+        }
+      } catch (e) {
+        console.error('disconnect: Netlify alias removal failed', e);
+      }
+    }
 
     await supabaseAdmin().from('sites').update({
       custom_domain: null,

@@ -1,9 +1,12 @@
-import { deleteCustomHostname } from './_shared/cloudflare.js';
 import { supabaseAdmin } from './_shared/auth.js';
 
 const CF_TOKEN = process.env.CLOUDFLARE_API_TOKEN;
 const CF_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID;
 const R2_BUCKET = 'autosite-published';
+
+const NETLIFY_API = 'https://api.netlify.com/api/v1';
+const NETLIFY_SITE_ID = process.env.NETLIFY_SITE_ID || 'b5123609-d632-43df-9ff1-db707714162b';
+const NETLIFY_TOKEN = process.env.NETLIFY_ACCESS_TOKEN;
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -31,15 +34,30 @@ export const handler = async (event) => {
       headers: { 'Authorization': `Bearer ${CF_TOKEN}` },
     });
 
-    // Tear down custom hostnames if present
+    // Remove this site's Netlify domain aliases so traffic for the
+    // customer's custom domain stops returning our content.
     if (siteId) {
       const admin = supabaseAdmin();
-      const { data: site } = await admin.from('sites').select('custom_hostname_apex_id, custom_hostname_www_id').eq('id', siteId).maybeSingle();
-      if (site) {
-        const deletions = [];
-        if (site.custom_hostname_apex_id) deletions.push(deleteCustomHostname(site.custom_hostname_apex_id).catch((e) => console.error(e)));
-        if (site.custom_hostname_www_id)  deletions.push(deleteCustomHostname(site.custom_hostname_www_id).catch((e) => console.error(e)));
-        await Promise.all(deletions);
+      const { data: site } = await admin.from('sites').select('custom_domain').eq('id', siteId).maybeSingle();
+      if (site?.custom_domain && NETLIFY_TOKEN) {
+        try {
+          const apex = site.custom_domain;
+          const wwwHost = `www.${apex}`;
+          const siteRes = await fetch(`${NETLIFY_API}/sites/${NETLIFY_SITE_ID}`, {
+            headers: { Authorization: `Bearer ${NETLIFY_TOKEN}` },
+          });
+          if (siteRes.ok) {
+            const netlifySite = await siteRes.json();
+            const remaining = (netlifySite.domain_aliases || []).filter(
+              (d) => d !== apex && d !== wwwHost
+            );
+            await fetch(`${NETLIFY_API}/sites/${NETLIFY_SITE_ID}`, {
+              method: 'PATCH',
+              headers: { Authorization: `Bearer ${NETLIFY_TOKEN}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ domain_aliases: remaining }),
+            });
+          }
+        } catch (e) { console.error('unpublish: Netlify alias removal failed', e); }
       }
     }
 

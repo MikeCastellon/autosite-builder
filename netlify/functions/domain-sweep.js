@@ -1,29 +1,34 @@
-import { getCustomHostname } from './_shared/cloudflare.js';
-import { consolidateStatus } from './_shared/statusMachine.js';
 import { supabaseAdmin } from './_shared/auth.js';
 import { sendPostmarkEmail } from './_shared/postmark.js';
 
+// Probes pending custom domains every few minutes, flips them to active_ssl
+// once they respond over HTTPS, and emails the owner when that happens.
 export const handler = async () => {
   const admin = supabaseAdmin();
 
-  // Only care about sites that have a hostname and are not yet live.
   const { data: sites } = await admin
     .from('sites')
-    .select('id, custom_domain, custom_hostname_apex_id, custom_hostname_www_id, custom_domain_status, user_id')
-    .not('custom_hostname_apex_id', 'is', null)
-    .in('custom_domain_status', ['pending_dns', 'active_dns']);
+    .select('id, custom_domain, custom_domain_status, user_id')
+    .not('custom_domain', 'is', null)
+    .in('custom_domain_status', ['pending_dns', 'verifying']);
 
   if (!sites?.length) return { statusCode: 200, body: 'no sites to sweep' };
 
   for (const site of sites) {
     try {
-      const [apex, www] = await Promise.all([
-        getCustomHostname(site.custom_hostname_apex_id),
-        getCustomHostname(site.custom_hostname_www_id),
-      ]);
-      const { status } = consolidateStatus(apex, www);
-      const prev = site.custom_domain_status;
+      let status = 'pending_dns';
+      try {
+        const probe = await fetch(`https://www.${site.custom_domain}`, {
+          method: 'HEAD',
+          redirect: 'manual',
+          signal: AbortSignal.timeout(8000),
+        });
+        status = probe.status < 500 ? 'active_ssl' : 'verifying';
+      } catch {
+        status = 'verifying';
+      }
 
+      const prev = site.custom_domain_status;
       await admin.from('sites').update({
         custom_domain_status: status,
         custom_domain_last_checked_at: new Date().toISOString(),
@@ -35,9 +40,9 @@ export const handler = async () => {
         if (email) {
           await sendPostmarkEmail({
             to: email,
-            subject: `Your domain ${site.custom_domain} is live!`,
-            htmlBody: `<p>Great news — your custom domain <strong>${site.custom_domain}</strong> is now serving your website over HTTPS.</p><p><a href="https://${site.custom_domain}">Visit your site</a></p>`,
-            textBody: `Your custom domain ${site.custom_domain} is now live: https://${site.custom_domain}`,
+            subject: `Your domain www.${site.custom_domain} is live!`,
+            htmlBody: `<p>Great news — your custom domain <strong>www.${site.custom_domain}</strong> is now serving your website over HTTPS.</p><p><a href="https://www.${site.custom_domain}">Visit your site</a></p>`,
+            textBody: `Your custom domain www.${site.custom_domain} is now live: https://www.${site.custom_domain}`,
           }).catch((e) => console.error('email send failed', e));
         }
       }

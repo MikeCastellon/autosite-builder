@@ -12,6 +12,12 @@
 [functions."domain-sweep"]
   schedule = "*/2 * * * *"
 
+# Edge function that resolves Host-based requests for customer custom
+# domains and proxies them to the R2-backed site behind .autocaregeniushub.com.
+[[edge_functions]]
+  function = "serve-custom-domain"
+  path = "/*"
+
 [dev]
   command = "node ./node_modules/vite/bin/vite.js --port 5190"
   targetPort = 5190

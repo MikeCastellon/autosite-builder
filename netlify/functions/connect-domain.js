@@ -1,12 +1,11 @@
 import { normalizeDomain, isValidDomain } from './_shared/domainUtils.js';
-import { createCustomHostname, listCustomHostnames, deleteCustomHostname } from './_shared/cloudflare.js';
 import { requireSiteOwner, supabaseAdmin } from './_shared/auth.js';
 
-// Domain Connect is intentionally NOT used. Cloudflare for SaaS requires a
-// per-hostname dynamic UUID in the verification TXT record, which static
-// Domain Connect templates cannot inject. Squarespace + others reported
-// "Domain connected!" while the actual verification never landed — more
-// confusing than the 2-record manual paste, so we just do manual.
+// Netlify-backed custom domains. Instead of Cloudflare for SaaS (which
+// 522s when proxying to same-zone origins), we attach the customer's
+// www.<domain> to the existing Netlify site as a domain alias. Netlify
+// auto-provisions SSL and routes traffic to our edge function, which
+// resolves the Host to the right slug and proxies to R2.
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -15,12 +14,26 @@ const CORS = {
   'Content-Type': 'application/json',
 };
 
-const FALLBACK = process.env.CUSTOM_DOMAIN_FALLBACK_ORIGIN;
+const NETLIFY_API = 'https://api.netlify.com/api/v1';
+const NETLIFY_SITE_ID = process.env.NETLIFY_SITE_ID || 'b5123609-d632-43df-9ff1-db707714162b';
+const NETLIFY_TOKEN = process.env.NETLIFY_ACCESS_TOKEN;
+
+// Netlify's published DNS targets. Apex uses Netlify load balancer IP
+// (works on every registrar including Squarespace — solves the apex-CNAME
+// problem). www uses a CNAME to Netlify's apex load balancer.
+const DNS_RECORDS = [
+  { type: 'A',     host: '@',   value: '75.2.60.5' },
+  { type: 'CNAME', host: 'www', value: 'apex-loadbalancer.netlify.com' },
+];
 
 export const handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: CORS };
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, headers: CORS, body: JSON.stringify({ error: 'Method not allowed' }) };
+  }
+
+  if (!NETLIFY_TOKEN) {
+    return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: 'NETLIFY_ACCESS_TOKEN missing' }) };
   }
 
   let body;
@@ -36,13 +49,11 @@ export const handler = async (event) => {
   if (!isValidDomain(apex)) {
     return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Invalid domain' }) };
   }
-  const www = `www.${apex}`;
+  const wwwHost = `www.${apex}`;
 
   try {
-    // 1. Auth + site ownership
     await requireSiteOwner(event, siteId);
 
-    // 2. Check for conflict: another site already owns this domain
     const admin = supabaseAdmin();
     const { data: conflict } = await admin
       .from('sites').select('id').eq('custom_domain', apex).neq('id', siteId).maybeSingle();
@@ -50,44 +61,48 @@ export const handler = async (event) => {
       return { statusCode: 409, headers: CORS, body: JSON.stringify({ error: 'Domain already connected to another site' }) };
     }
 
-    // 3. Create (or recover) Cloudflare hostname for www only.
-    //    Apex CNAME is forbidden by the DNS spec on most registrars
-    //    (Squarespace, GoDaddy, Namecheap reject it) — supporting it forces
-    //    users into a domain-forwarding hop. Skipping it keeps setup to two
-    //    DNS records, period. If the user wants bare-domain access too they
-    //    can add a forward at their registrar themselves.
-    const wwwHn = await createOrRecover(www);
+    // Fetch current Netlify site config to append alias atomically
+    const siteRes = await fetch(`${NETLIFY_API}/sites/${NETLIFY_SITE_ID}`, {
+      headers: { Authorization: `Bearer ${NETLIFY_TOKEN}` },
+    });
+    if (!siteRes.ok) {
+      const err = await siteRes.text();
+      throw new Error(`Netlify site fetch failed: ${err}`);
+    }
+    const site = await siteRes.json();
+    const aliases = new Set(site.domain_aliases || []);
+    aliases.add(apex);
+    aliases.add(wwwHost);
 
-    // 5. Persist to Supabase. We store the apex as the user-facing domain
-    //    label but only the www hostname id in Cloudflare.
+    const patchRes = await fetch(`${NETLIFY_API}/sites/${NETLIFY_SITE_ID}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${NETLIFY_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ domain_aliases: [...aliases] }),
+    });
+    if (!patchRes.ok) {
+      const err = await patchRes.text();
+      throw new Error(`Netlify alias add failed: ${err}`);
+    }
+
     await admin.from('sites').update({
       custom_domain: apex,
-      custom_hostname_apex_id: null,
-      custom_hostname_www_id: wwwHn.id,
       custom_domain_status: 'pending_dns',
       custom_domain_connected_at: new Date().toISOString(),
       custom_domain_last_checked_at: new Date().toISOString(),
+      // Legacy Cloudflare columns cleared — we don't use them anymore.
+      custom_hostname_apex_id: null,
+      custom_hostname_www_id: null,
     }).eq('id', siteId);
-
-    // 6. Build CNAME instructions — just www + verification, no apex.
-    const cnameInstructions = [
-      { type: 'CNAME', host: 'www', value: FALLBACK },
-    ];
-    if (wwwHn.ownership_verification) {
-      cnameInstructions.push({
-        type: wwwHn.ownership_verification.type,
-        host: wwwHn.ownership_verification.name,
-        value: wwwHn.ownership_verification.value,
-      });
-    }
 
     return {
       statusCode: 200,
       headers: CORS,
       body: JSON.stringify({
-        cnameInstructions,
-        hostnameIds: { www: wwwHn.id },
-        liveUrl: `https://${www}`,
+        cnameInstructions: DNS_RECORDS,
+        liveUrl: `https://www.${apex}`,
         status: 'pending_dns',
       }),
     };
@@ -97,19 +112,3 @@ export const handler = async (event) => {
     return { statusCode: status, headers: CORS, body: JSON.stringify({ error: err.message }) };
   }
 };
-
-async function createOrRecover(hostname) {
-  try {
-    return await createCustomHostname(hostname);
-  } catch (err) {
-    // Handle orphan from prior failed delete: find existing, delete, retry once
-    if (err.status === 409) {
-      const existing = await listCustomHostnames({ hostname });
-      if (existing?.length > 0) {
-        await deleteCustomHostname(existing[0].id);
-        return await createCustomHostname(hostname);
-      }
-    }
-    throw err;
-  }
-}
