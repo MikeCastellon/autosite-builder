@@ -27,7 +27,7 @@ export default function ResetPasswordPage({ onComplete }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#faf9f7] p-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#eef4fb] p-4">
       <div className="w-full max-w-sm">
         <div className="mb-6">
           <h1 className="text-2xl font-black text-[#1a1a1a] tracking-tight">Set New Password</h1>

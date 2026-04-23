@@ -67,7 +67,7 @@ export default function BusinessTypeCard({ type, onClick }) {
       className="group relative flex items-center gap-4 p-5 rounded-xl border border-black/[0.07] bg-white hover:border-[#cc0000] hover:shadow-sm transition-all duration-200 text-left cursor-pointer w-full"
     >
       {/* Icon box */}
-      <div className="w-11 h-11 rounded-lg bg-[#faf9f7] group-hover:bg-[#cc0000] group-hover:text-white text-[#555] flex items-center justify-center transition-all duration-200 shrink-0">
+      <div className="w-11 h-11 rounded-lg bg-[#eef4fb] group-hover:bg-[#cc0000] group-hover:text-white text-[#555] flex items-center justify-center transition-all duration-200 shrink-0">
         {ICONS[type.id]}
       </div>
 

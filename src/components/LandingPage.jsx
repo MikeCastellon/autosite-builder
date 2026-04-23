@@ -60,7 +60,7 @@ export default function LandingPage({ onSignIn, onSignUp }) {
       </section>
 
       {/* ──────────────────────── How It Works ──────────────────────── */}
-      <section id="how" className="px-4 sm:px-8 py-20 bg-[#faf9f7] border-y border-black/[0.07]">
+      <section id="how" className="px-4 sm:px-8 py-20 bg-[#eef4fb] border-y border-black/[0.07]">
         <div className="max-w-5xl mx-auto w-full">
           <p className="text-[12px] font-semibold text-[#cc0000] uppercase tracking-[2px] mb-3 text-center">How it works</p>
           <h2 className="text-[clamp(28px,4vw,40px)] font-[900] text-[#1a1a1a] tracking-[-1px] leading-[1.1] mb-14 text-center">
@@ -135,7 +135,7 @@ export default function LandingPage({ onSignIn, onSignUp }) {
       </section>
 
       {/* ──────────────────────── What's Included ──────────────────────── */}
-      <section className="px-4 sm:px-8 py-20 bg-[#faf9f7] border-y border-black/[0.07]">
+      <section className="px-4 sm:px-8 py-20 bg-[#eef4fb] border-y border-black/[0.07]">
         <div className="max-w-4xl mx-auto w-full">
           <p className="text-[12px] font-semibold text-[#cc0000] uppercase tracking-[2px] mb-3 text-center">Included, free</p>
           <h2 className="text-[clamp(28px,4vw,40px)] font-[900] text-[#1a1a1a] tracking-[-1px] leading-[1.1] mb-12 text-center">

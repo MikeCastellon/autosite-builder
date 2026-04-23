@@ -66,7 +66,7 @@ export default function WizardShell({ step, onBack, children, userEmail, onMySit
                   {onSignOut && (
                     <button
                       onClick={() => { setDropdownOpen(false); onSignOut(); }}
-                      className="w-full text-left px-4 py-2.5 text-[13px] text-[#cc0000] hover:bg-[#faf9f7] transition-colors font-medium"
+                      className="w-full text-left px-4 py-2.5 text-[13px] text-[#cc0000] hover:bg-[#eef4fb] transition-colors font-medium"
                     >
                       Sign Out
                     </button>
@@ -127,7 +127,7 @@ export default function WizardShell({ step, onBack, children, userEmail, onMySit
       )}
 
       {/* Progress */}
-      <div className="border-b border-black/[0.07] bg-[#faf9f7] px-4 sm:px-8 py-4">
+      <div className="border-b border-black/[0.07] bg-[#eef4fb] px-4 sm:px-8 py-4">
         <div className="max-w-2xl mx-auto w-full">
           <ProgressBar step={step} labels={STEP_LABELS} />
         </div>

@@ -83,7 +83,7 @@ export default function ProfilePage({ onExit, onOpenBookings, onOpenAdmin, onSig
   const labelBase = 'block text-[13px] font-semibold text-[#1a1a1a] mb-1.5';
 
   return (
-    <div className="min-h-screen bg-[#faf9f7]">
+    <div className="min-h-screen bg-[#eef4fb]">
       <AppHeader {...headerProps} />
 
       <main className="max-w-2xl mx-auto px-4 sm:px-6 py-10">
@@ -147,7 +147,7 @@ export default function ProfilePage({ onExit, onOpenBookings, onOpenAdmin, onSig
               value={userEmail || ''}
               readOnly
               disabled
-              className={`${inputBase} bg-[#faf9f7] text-[#888] cursor-not-allowed`}
+              className={`${inputBase} bg-[#eef4fb] text-[#888] cursor-not-allowed`}
             />
             <p className="text-[11px] text-[#888] mt-1">Email is your sign-in identifier and can't be changed here.</p>
           </div>

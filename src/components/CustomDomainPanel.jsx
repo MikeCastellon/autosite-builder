@@ -156,7 +156,7 @@ export default function CustomDomainPanel({ siteId, initialDomain = null, initia
       )}
 
       {!provider && status !== 'active_ssl' && cnameInstructions && (
-        <div className="bg-[#faf9f7] border border-black/[0.07] rounded-lg p-3 font-mono text-xs text-[#555] space-y-1">
+        <div className="bg-[#eef4fb] border border-black/[0.07] rounded-lg p-3 font-mono text-xs text-[#555] space-y-1">
           <p className="font-semibold text-[#1a1a1a] mb-2">Add these DNS records at your registrar:</p>
           {cnameInstructions.map((r, i) => (
             <div key={i} className="flex gap-3">

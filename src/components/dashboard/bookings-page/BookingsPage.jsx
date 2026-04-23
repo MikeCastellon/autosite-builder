@@ -40,7 +40,7 @@ export default function BookingsPage({ userId, profile, userEmail, onExit, onOpe
   // flash blank between page transitions — same shell pattern as the dashboard.
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#faf9f7]">
+      <div className="min-h-screen bg-[#eef4fb]">
         <AppHeader {...headerProps} />
         <main className="max-w-5xl mx-auto px-6 py-10">
           <p className="text-[#888] text-sm">Loading...</p>
@@ -50,7 +50,7 @@ export default function BookingsPage({ userId, profile, userEmail, onExit, onOpe
   }
   if (err) {
     return (
-      <div className="min-h-screen bg-[#faf9f7]">
+      <div className="min-h-screen bg-[#eef4fb]">
         <AppHeader {...headerProps} />
         <main className="max-w-5xl mx-auto px-6 py-10">
           <div className="border border-[#cc0000]/20 rounded-xl p-4 text-sm text-[#cc0000] bg-[#cc0000]/5">{err}</div>
@@ -61,7 +61,7 @@ export default function BookingsPage({ userId, profile, userEmail, onExit, onOpe
 
   if (sites.length === 0) {
     return (
-      <div className="min-h-screen bg-[#faf9f7]">
+      <div className="min-h-screen bg-[#eef4fb]">
         <AppHeader {...headerProps} />
         <main className="max-w-3xl mx-auto px-6 py-10">
           <p className="text-gray-600">Create a site first — bookings attach to a published site.</p>
@@ -71,7 +71,7 @@ export default function BookingsPage({ userId, profile, userEmail, onExit, onOpe
   }
 
   return (
-    <div className="min-h-screen bg-[#faf9f7]">
+    <div className="min-h-screen bg-[#eef4fb]">
       <AppHeader {...headerProps} />
       <SubscribeGate profile={profile}>
         <main className="max-w-5xl mx-auto px-6 py-10">
