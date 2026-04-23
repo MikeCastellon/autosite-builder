@@ -17,6 +17,7 @@ import DashboardPage from './components/dashboard/DashboardPage.jsx';
 import BookingSettingsPage from './components/dashboard/booking-settings/BookingSettingsPage.jsx';
 import BookingsPage from './components/dashboard/bookings-page/BookingsPage.jsx';
 import AdminPage from './components/admin/AdminPage.jsx';
+import ProfilePage from './components/profile/ProfilePage.jsx';
 import { saveSite } from './lib/saveSite.js';
 import { supabase } from './lib/supabase.js';
 
@@ -37,7 +38,7 @@ export default function App() {
   // Default landing view for an authenticated user is the dashboard so returning
   // users see their existing site (and free-plan limit) instead of being dropped
   // back into the wizard. New users with zero sites see the "Build My Site" CTA there.
-  const [view, setView] = useState('dashboard'); // 'wizard' | 'dashboard' | 'admin' | 'bookings-page' | 'booking-settings'
+  const [view, setView] = useState('dashboard'); // 'wizard' | 'dashboard' | 'admin' | 'bookings-page' | 'booking-settings' | 'profile'
   const [settingsSiteId, setSettingsSiteId] = useState(null);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [selectedWidgetIds, setSelectedWidgetIds] = useState([]);
@@ -327,6 +328,7 @@ export default function App() {
         userEmail={session?.user?.email}
         onExit={() => setView('dashboard')}
         onOpenAdmin={() => setView('admin')}
+        onOpenProfile={() => setView('profile')}
         onSignOut={handleSignOut}
       />
     );
@@ -339,6 +341,7 @@ export default function App() {
         onExit={() => { setSettingsSiteId(null); setView('dashboard'); }}
         onOpenBookings={() => { setSettingsSiteId(null); setView('bookings-page'); }}
         onOpenAdmin={() => { setSettingsSiteId(null); setView('admin'); }}
+        onOpenProfile={() => { setSettingsSiteId(null); setView('profile'); }}
         onSignOut={handleSignOut}
       />
     );
@@ -349,6 +352,18 @@ export default function App() {
       <AdminPage
         onExit={() => setView('dashboard')}
         onOpenBookings={() => setView('bookings-page')}
+        onOpenProfile={() => setView('profile')}
+        onSignOut={handleSignOut}
+      />
+    );
+  }
+
+  if (view === 'profile') {
+    return (
+      <ProfilePage
+        onExit={() => setView('dashboard')}
+        onOpenBookings={() => setView('bookings-page')}
+        onOpenAdmin={() => setView('admin')}
         onSignOut={handleSignOut}
       />
     );
@@ -363,6 +378,7 @@ export default function App() {
       profile={profile}
       onOpenAdmin={() => setView('admin')}
       onOpenBookings={() => setView('bookings-page')}
+      onOpenProfile={() => setView('profile')}
       onOpenBookingSettings={(siteId) => { setSettingsSiteId(siteId); setView('booking-settings'); }}
     />;
   }

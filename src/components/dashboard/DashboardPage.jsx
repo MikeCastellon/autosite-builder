@@ -11,7 +11,7 @@ import UpgradeProDialog from '../ui/UpgradeProDialog.jsx';
 const MAX_SITES = 1;
 const CUSTOM_DOMAIN_ENABLED = import.meta.env.VITE_CUSTOM_DOMAIN_ENABLED === 'true';
 
-export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEmail, profile, onOpenAdmin, onOpenBookings, onOpenBookingSettings }) {
+export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEmail, profile, onOpenAdmin, onOpenBookings, onOpenProfile, onOpenBookingSettings }) {
   const { toast, confirm: confirmDialog } = useAlert();
   const [sites, setSites] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -165,10 +165,18 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
               {dropdownOpen && (
                 <div className="absolute right-0 top-10 bg-white border border-black/[0.1] rounded-xl shadow-lg py-1.5 min-w-[200px] z-[100]">
                   <div className="px-4 py-2 text-[11px] text-[#888] border-b border-black/[0.05] truncate">{userEmail}</div>
+                  {onOpenProfile && (
+                    <button
+                      onClick={() => { setDropdownOpen(false); onOpenProfile(); }}
+                      className="w-full text-left px-4 py-2.5 text-[13px] text-[#1a1a1a] hover:bg-[#faf9f7] transition-colors font-medium"
+                    >
+                      Profile
+                    </button>
+                  )}
                   {onSignOut && (
                     <button
                       onClick={() => { setDropdownOpen(false); onSignOut(); }}
-                      className="w-full text-left px-4 py-2.5 text-[13px] text-[#cc0000] hover:bg-[#faf9f7] transition-colors font-medium"
+                      className="w-full text-left px-4 py-2.5 text-[13px] text-[#cc0000] hover:bg-[#faf9f7] transition-colors font-medium border-t border-black/[0.05] mt-1 pt-2.5"
                     >
                       Sign Out
                     </button>
@@ -216,6 +224,14 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
                 {item.label}
               </button>
             ))}
+            {onOpenProfile && (
+              <button
+                onClick={() => { setMobileOpen(false); onOpenProfile(); }}
+                className="w-full text-left px-3 py-2.5 rounded-lg text-[14px] font-medium text-[#1a1a1a] hover:bg-black/[0.04] transition-colors"
+              >
+                Profile
+              </button>
+            )}
             {onSignOut && (
               <button
                 onClick={() => { setMobileOpen(false); onSignOut(); }}

@@ -4,6 +4,10 @@ import { supabase } from '../../lib/supabase.js';
 export default function LoginPage({ initialMode = 'signin' }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [businessName, setBusinessName] = useState('');
+  const [phone, setPhone] = useState('');
   const [isSignUp, setIsSignUp] = useState(initialMode === 'signup');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -34,13 +38,40 @@ export default function LoginPage({ initialMode = 'signin' }) {
     setLoading(true);
 
     if (isSignUp) {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: { emailRedirectTo: window.location.origin },
+        options: {
+          emailRedirectTo: window.location.origin,
+          data: {
+            first_name: firstName.trim(),
+            last_name: lastName.trim(),
+            business_name: businessName.trim(),
+            phone: phone.trim(),
+          },
+        },
       });
       if (error) {
         setError(error.message);
+        setLoading(false);
+        return;
+      }
+      // Persist profile fields. Tries to update an existing profile row created
+      // by Supabase trigger — falls back to upsert if the row isn't there yet.
+      const userId = data?.user?.id;
+      if (userId) {
+        await supabase.from('profiles').upsert({
+          id: userId,
+          email: email.trim().toLowerCase(),
+          first_name: firstName.trim() || null,
+          last_name: lastName.trim() || null,
+          business_name: businessName.trim() || null,
+          phone: phone.trim() || null,
+        }, { onConflict: 'id' });
+      }
+      if (data?.session) {
+        // Logged in immediately (Supabase email confirmation off) — AuthContext picks this up.
+        setMessage('Welcome — your account is ready.');
       } else {
         setMessage('Check your email for a confirmation link!');
       }
@@ -51,6 +82,9 @@ export default function LoginPage({ initialMode = 'signin' }) {
 
     setLoading(false);
   };
+
+  const inputBase = 'w-full border border-black/10 rounded-xl px-4 py-3 text-[15px] outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000] transition';
+  const labelBase = 'block text-[13px] font-semibold text-[#1a1a1a] mb-1.5';
 
   return (
     <div className="min-h-screen flex flex-col bg-[#faf9f7]">
@@ -74,7 +108,6 @@ export default function LoginPage({ initialMode = 'signin' }) {
         </a>
       </header>
 
-      {/* Auth card */}
       <main className="flex-1 flex items-center justify-center px-4 py-12 sm:py-16">
         <div className="w-full max-w-md bg-white border border-black/[0.07] rounded-2xl shadow-sm p-8 sm:p-10">
           <div className="mb-8 text-center">
@@ -89,13 +122,13 @@ export default function LoginPage({ initialMode = 'signin' }) {
           {showForgot ? (
             <form onSubmit={handleForgotPassword} className="space-y-4">
               <div>
-                <label className="block text-[13px] font-semibold text-[#1a1a1a] mb-1.5">Email address</label>
+                <label className={labelBase}>Email address</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="w-full border border-black/10 rounded-xl px-4 py-3.5 text-[15px] outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000] transition"
+                  className={inputBase}
                   required
                 />
               </div>
@@ -109,14 +142,65 @@ export default function LoginPage({ initialMode = 'signin' }) {
             </form>
           ) : (
             <form onSubmit={handleEmailAuth} className="space-y-4">
+              {isSignUp && (
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className={labelBase}>First name</label>
+                      <input
+                        type="text"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        placeholder="Jane"
+                        className={inputBase}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className={labelBase}>Last name</label>
+                      <input
+                        type="text"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        placeholder="Smith"
+                        className={inputBase}
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className={labelBase}>
+                      Company name <span className="text-[#888] font-normal">(optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={businessName}
+                      onChange={(e) => setBusinessName(e.target.value)}
+                      placeholder="Smith Auto Detailing"
+                      className={inputBase}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelBase}>Phone number</label>
+                    <input
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="(555) 123-4567"
+                      className={inputBase}
+                      required
+                    />
+                  </div>
+                </>
+              )}
               <div>
-                <label className="block text-[13px] font-semibold text-[#1a1a1a] mb-1.5">Email address</label>
+                <label className={labelBase}>Email address</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="w-full border border-black/10 rounded-xl px-4 py-3.5 text-[15px] outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000] transition"
+                  className={inputBase}
                   required
                 />
               </div>
@@ -137,9 +221,9 @@ export default function LoginPage({ initialMode = 'signin' }) {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="At least 6 characters"
+                  placeholder={isSignUp ? 'At least 6 characters' : 'Your password'}
                   minLength={6}
-                  className="w-full border border-black/10 rounded-xl px-4 py-3.5 text-[15px] outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000] transition"
+                  className={inputBase}
                   required
                 />
               </div>
@@ -148,7 +232,7 @@ export default function LoginPage({ initialMode = 'signin' }) {
                 disabled={loading}
                 className="w-full py-3.5 rounded-xl bg-[#1a1a1a] hover:bg-[#cc0000] text-white font-semibold text-[15px] transition-colors disabled:opacity-50"
               >
-                {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}
+                {loading ? 'Loading...' : isSignUp ? 'Create Account' : 'Sign In'}
               </button>
             </form>
           )}

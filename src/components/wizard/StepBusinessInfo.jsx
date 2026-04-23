@@ -445,11 +445,9 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
                         </svg>
                         {canSave ? 'Save Package' : 'Save Package'}
                       </button>
-                      {!hasDraft && pkgs.length === 0 && (
-                        <p className="text-[11px] text-[#888] text-center leading-snug">
-                          Tip: enter a name and price above, then click <span className="font-semibold text-[#cc0000]">Save Package</span> to add it to your list. Repeat to add more.
-                        </p>
-                      )}
+                      <p className="text-[11px] text-[#888] text-center leading-snug">
+                        Tip: enter a name and price above, then click <span className="font-semibold text-[#cc0000]">Save Package</span> to add it to your list. Repeat to add more.
+                      </p>
                     </div>
                   </div>
                 );

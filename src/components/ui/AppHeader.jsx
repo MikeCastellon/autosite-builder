@@ -7,12 +7,13 @@ const ACG_LOGO = 'https://www.autocaregenius.com/cdn/shop/files/v11_1.svg?v=1760
 // Booking Settings, Admin). Renders the brand lockup, centered nav with the
 // active page highlighted, and an account avatar/dropdown.
 export default function AppHeader({
-  active,                  // 'sites' | 'bookings' | 'admin'
+  active,                  // 'sites' | 'bookings' | 'admin' | 'profile'
   userEmail,
   profile,
   onMySites,
   onOpenBookings,
   onOpenAdmin,
+  onOpenProfile,
   onSignOut,
 }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -75,10 +76,20 @@ export default function AppHeader({
               {dropdownOpen && (
                 <div className="absolute right-0 top-10 bg-white border border-black/[0.1] rounded-xl shadow-lg py-1.5 min-w-[200px] z-[100]">
                   <div className="px-4 py-2 text-[11px] text-[#888] border-b border-black/[0.05] truncate">{userEmail}</div>
+                  {onOpenProfile && (
+                    <button
+                      onClick={() => { setDropdownOpen(false); onOpenProfile(); }}
+                      className={`w-full text-left px-4 py-2.5 text-[13px] hover:bg-[#faf9f7] transition-colors font-medium ${
+                        active === 'profile' ? 'text-[#1a1a1a] font-semibold' : 'text-[#1a1a1a]'
+                      }`}
+                    >
+                      Profile
+                    </button>
+                  )}
                   {onSignOut && (
                     <button
                       onClick={() => { setDropdownOpen(false); onSignOut(); }}
-                      className="w-full text-left px-4 py-2.5 text-[13px] text-[#cc0000] hover:bg-[#faf9f7] transition-colors font-medium"
+                      className="w-full text-left px-4 py-2.5 text-[13px] text-[#cc0000] hover:bg-[#faf9f7] transition-colors font-medium border-t border-black/[0.05] mt-1 pt-2.5"
                     >
                       Sign Out
                     </button>
@@ -126,6 +137,16 @@ export default function AppHeader({
                 {item.label}
               </button>
             ))}
+            {onOpenProfile && (
+              <button
+                onClick={() => { setMobileOpen(false); onOpenProfile(); }}
+                className={`w-full text-left px-3 py-2.5 rounded-lg text-[14px] font-medium transition-colors ${
+                  active === 'profile' ? 'bg-[#1a1a1a] text-white' : 'text-[#1a1a1a] hover:bg-black/[0.04]'
+                }`}
+              >
+                Profile
+              </button>
+            )}
             {onSignOut && (
               <button
                 onClick={() => { setMobileOpen(false); onSignOut(); }}
