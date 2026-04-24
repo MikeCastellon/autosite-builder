@@ -14,7 +14,46 @@ const MAIN_APP_URL =
     ? window.location.origin
     : 'https://sitebuilder.autocaregenius.com';
 
-function buildSeoHead(businessInfo, generatedCopy, siteId) {
+// Generate a square SVG data-URL favicon.
+// Uses the uploaded logo if one exists and appears square-ish; otherwise
+// draws a colored circle with the business's first initial. Always 32x32
+// so it renders cleanly in browser tabs.
+function buildFaviconDataUrl(businessInfo, images, templateMeta) {
+  const accent =
+    templateMeta?.colors?.primary ||
+    templateMeta?.colors?.accent ||
+    '#cc0000';
+  const letter = (businessInfo?.businessName || '?')
+    .trim()
+    .charAt(0)
+    .toUpperCase();
+
+  const logoUrl = images?.logo;
+  // If a logo exists, wrap it in a square SVG with object-fit:contain semantics.
+  // xMidYMid meet centers and scales the image to fit without distortion.
+  // Browsers that fetch external images from data-URL SVGs are rare in favicons,
+  // so we fall back to the initial if anything about the logo is unclear.
+  const hasLogo = typeof logoUrl === 'string' && logoUrl.length > 0;
+
+  const svg = hasLogo
+    ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="4" fill="#ffffff"/><image href="${escapeAttr(logoUrl)}" x="2" y="2" width="28" height="28" preserveAspectRatio="xMidYMid meet"/></svg>`
+    : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="${escapeAttr(accent)}"/><text x="16" y="22" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="700" font-size="18" fill="#ffffff">${escapeText(letter)}</text></svg>`;
+
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
+function escapeAttr(str) {
+  return String(str).replace(/"/g, '&quot;').replace(/&/g, '&amp;');
+}
+
+function escapeText(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function buildSeoHead(businessInfo, generatedCopy, siteId, images, templateMeta) {
   const biz = businessInfo;
   const copy = generatedCopy;
   const keywords = [
@@ -42,6 +81,8 @@ function buildSeoHead(businessInfo, generatedCopy, siteId) {
     priceRange: biz.priceRange || '$$',
   };
 
+  const faviconUrl = buildFaviconDataUrl(biz, images, templateMeta);
+
   return `
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -49,6 +90,9 @@ function buildSeoHead(businessInfo, generatedCopy, siteId) {
   <meta name="description" content="${copy.metaDescription || ''}" />
   <meta name="keywords" content="${keywords}" />
   <meta name="robots" content="index, follow" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="${faviconUrl}" />
 
   <!-- Open Graph -->
   <meta property="og:title" content="${biz.businessName}" />
@@ -171,7 +215,7 @@ async function buildHtmlString(templateId, businessInfo, generatedCopy, template
     createElement(TemplateComponent, { businessInfo: normalizedInfo, generatedCopy, templateMeta, images: images || {} })
   );
 
-  const seoHead = buildSeoHead(businessInfo, generatedCopy, siteId);
+  const seoHead = buildSeoHead(businessInfo, generatedCopy, siteId, images, templateMeta);
 
   // Inject widget script (template already renders the widget divs, just need the JS)
   let widgetsHtml = '';
