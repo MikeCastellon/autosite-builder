@@ -7,11 +7,12 @@ const ACG_LOGO = 'https://www.autocaregenius.com/cdn/shop/files/v11_1.svg?v=1760
 // Booking Settings, Admin). Renders the brand lockup, centered nav with the
 // active page highlighted, and an account avatar/dropdown.
 export default function AppHeader({
-  active,                  // 'sites' | 'bookings' | 'admin' | 'profile'
+  active,                  // 'sites' | 'bookings' | 'customers' | 'admin' | 'profile'
   userEmail,
   profile,
   onMySites,
   onOpenBookings,
+  onOpenCustomers,
   onOpenAdmin,
   onOpenProfile,
   onSignOut,
@@ -25,6 +26,7 @@ export default function AppHeader({
   const navItems = [
     onMySites && { id: 'sites', label: 'Dashboard', onClick: onMySites },
     showBookingsNav && onOpenBookings && { id: 'bookings', label: 'Bookings', onClick: onOpenBookings },
+    showBookingsNav && onOpenCustomers && { id: 'customers', label: 'Customers', onClick: onOpenCustomers },
     isAdmin && onOpenAdmin && { id: 'admin', label: 'Admin', onClick: onOpenAdmin },
   ].filter(Boolean);
 
