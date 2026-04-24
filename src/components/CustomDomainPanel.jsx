@@ -192,8 +192,8 @@ export default function CustomDomainPanel({ siteId, initialDomain = null, initia
           </div>
 
           {cnameInstructions && cnameInstructions.length > 0 && (
-            <div>
-              <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+            <div className="bg-white border border-black/[0.10] rounded-lg overflow-hidden">
+              <div className="flex items-center justify-between px-3 py-2.5 border-b border-black/[0.07] flex-wrap gap-2">
                 <p className="text-[13px] font-bold text-[#1a1a1a]">
                   Add these DNS records at your registrar
                 </p>
@@ -207,7 +207,7 @@ export default function CustomDomainPanel({ siteId, initialDomain = null, initia
               </div>
 
               {showHelp && (
-                <div className="bg-blue-50/50 border border-blue-100 rounded-lg p-3 mb-3 text-[12px] text-[#444] space-y-2">
+                <div className="bg-blue-50/50 border-b border-blue-100 p-3 text-[12px] text-[#444] space-y-2">
                   <p className="font-semibold text-[#1a1a1a]">Where to paste these in your registrar:</p>
                   <ul className="space-y-1.5 list-disc pl-4">
                     <li><strong>Squarespace</strong> — Domains → your domain → DNS Settings → Custom Records → Add (set Type, Host, points-to-data exactly as shown).</li>
@@ -221,7 +221,7 @@ export default function CustomDomainPanel({ siteId, initialDomain = null, initia
                 </div>
               )}
 
-              <div className="bg-white border border-black/[0.10] rounded-lg overflow-hidden">
+              <div>
                 <div className="grid grid-cols-[70px_110px_1fr] gap-2 px-3 py-2 bg-[#faf9f7] border-b border-black/[0.07] text-[10px] font-bold uppercase tracking-wider text-[#888]">
                   <div>Type</div>
                   <div>Host / Name</div>
