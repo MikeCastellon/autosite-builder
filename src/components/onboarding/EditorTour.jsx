@@ -88,7 +88,9 @@ const STEPS = [
   },
 ];
 
-const FLAG_KEY = 'editor_tour_done';
+// Bumped from `editor_tour_done` to `_v2` so users who dismissed the old
+// broken react-joyride tour get a fresh run of the new one.
+const FLAG_KEY = 'editor_tour_done_v2';
 const TOOLTIP_WIDTH = 300;
 const POLL_INTERVAL_MS = 150;
 const WATCHDOG_MS = 3000;

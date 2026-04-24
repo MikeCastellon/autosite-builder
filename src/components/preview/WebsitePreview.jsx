@@ -18,7 +18,7 @@ export default function WebsitePreview({ businessInfo, onBusinessInfoChange, gen
 
   useEffect(() => {
     if (editingExistingSite) {
-      try { localStorage.setItem('editor_tour_done', '1'); } catch { /* ignore */ }
+      try { localStorage.setItem('editor_tour_done_v2', '1'); } catch { /* ignore */ }
     }
   }, [editingExistingSite]);
 
