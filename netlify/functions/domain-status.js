@@ -66,28 +66,41 @@ export const handler = async (event) => {
           if (!attached) {
             status = 'pending_dns'; // alias was removed somehow; re-add on reconnect
           } else {
-            // Probe the domain and require evidence the response came from
-            // Netlify — otherwise a registrar parking page (or any other
-            // server that happens to respond) flips us to active_ssl
-            // prematurely. x-nf-request-id is set on every Netlify-served
-            // response and is the reliable marker.
+            // Two-stage probe:
+            //   1. HTTPS — if it works and comes from Netlify, SSL is live.
+            //   2. If HTTPS fails (cert mismatch = SSL not yet provisioned),
+            //      try HTTP. If HTTP reaches Netlify, DNS is correct and we're
+            //      just waiting on the Let's Encrypt handshake.
+            // x-nf-request-id is the Netlify-served marker we trust.
+            const isNetlifyResponse = (res) => {
+              const nfReqId = res.headers.get('x-nf-request-id');
+              const serverHdr = res.headers.get('server') || '';
+              return !!nfReqId || /netlify/i.test(serverHdr);
+            };
+
+            let httpsOk = false;
+            let httpsFromNetlify = false;
             try {
-              const probe = await fetch(`https://www.${apex}`, { method: 'HEAD', redirect: 'manual' });
-              const nfReqId = probe.headers.get('x-nf-request-id');
-              const serverHdr = probe.headers.get('server') || '';
-              const fromNetlify = !!nfReqId || /netlify/i.test(serverHdr);
-              if (fromNetlify && probe.status < 400) {
-                status = 'active_ssl';
-              } else if (fromNetlify) {
-                status = 'verifying';
-              } else {
-                // Domain resolves but points elsewhere — user hasn't updated
-                // DNS yet (or registrar parking page is in the way).
-                status = 'pending_dns';
+              const httpsRes = await fetch(`https://www.${apex}`, { method: 'HEAD', redirect: 'manual' });
+              httpsFromNetlify = isNetlifyResponse(httpsRes);
+              httpsOk = httpsFromNetlify && httpsRes.status < 400;
+            } catch { /* SSL not ready or connection failed */ }
+
+            if (httpsOk) {
+              status = 'active_ssl';
+            } else {
+              // HTTPS didn't work — check HTTP to distinguish "DNS done, SSL
+              // still provisioning" from "DNS not configured yet."
+              try {
+                const httpRes = await fetch(`http://www.${apex}`, { method: 'HEAD', redirect: 'manual' });
+                if (isNetlifyResponse(httpRes)) {
+                  status = 'active_dns'; // DNS is correct; waiting on SSL cert
+                } else {
+                  status = 'pending_dns'; // something else is answering
+                }
+              } catch {
+                status = 'pending_dns'; // domain doesn't resolve / unreachable
               }
-            } catch {
-              // DNS doesn't resolve yet, or connection refused — DNS not set.
-              status = 'pending_dns';
             }
           }
         }
