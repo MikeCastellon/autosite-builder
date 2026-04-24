@@ -8,7 +8,6 @@ import CustomDomainPanel from '../CustomDomainPanel.jsx';
 import UpgradeProDialog from '../ui/UpgradeProDialog.jsx';
 import EditBusinessInfoModal from './EditBusinessInfoModal.jsx';
 import UpgradeFunnel from './UpgradeFunnel.jsx';
-import OnboardingChecklist from '../onboarding/OnboardingChecklist.jsx';
 
 const MAX_SITES = 1;
 const CUSTOM_DOMAIN_ENABLED = import.meta.env.VITE_CUSTOM_DOMAIN_ENABLED === 'true';
@@ -261,25 +260,6 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
             </button>
           )}
         </div>
-
-        {!loading && !fetchError && (
-          <OnboardingChecklist
-            profile={profile}
-            sites={sites}
-            onAction={(action) => {
-              if (action === 'build') onNewSite?.();
-              else if (action === 'edit-first' && sites[0]) onEditSite?.(sites[0]);
-              else if (action === 'domain-first') {
-                const firstPublished = sites.find(s => s?.published_url);
-                if (firstPublished) {
-                  setDomainPanelSiteId(firstPublished.id);
-                  setDomainPanelInitial(firstPublished);
-                }
-              }
-              else if (action === 'upgrade') setProDialogOpen(true);
-            }}
-          />
-        )}
 
         {loading ? (
           <p className="text-[#888] text-sm">Loading...</p>
