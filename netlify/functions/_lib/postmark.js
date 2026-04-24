@@ -266,3 +266,42 @@ export async function statusUpdateToCustomer({ booking, site, status, reason }) 
     throw err;
   }
 }
+
+// Free-form owner → customer message, sent from the Customer detail page.
+// Rendered in the same branded shell as the automated emails so replies land
+// back to the owner (replyTo) and customer sees a familiar layout. Body is
+// plain text (from a textarea) and gets newline → <br/> conversion for HTML.
+export async function ownerToCustomerMessage({ toEmail, subject, body, site, replyTo }) {
+  if (!client) { console.warn('Postmark not configured; skipping email'); return; }
+  const name = site?.business_info?.businessName || 'your business';
+  const bizBlockHtml = businessInfoHtmlBlock(site);
+  const bizBlockText = businessInfoTextBlock(site);
+
+  const bodyHtml = `
+    <div style="font-size:14px;color:#3f3f46;line-height:1.65;white-space:pre-wrap;">${esc(body).replace(/\n/g, '<br/>')}</div>
+    ${bizBlockHtml}`;
+  const html = renderEmailShell({
+    icon: '✉',
+    eyebrow: name,
+    title: esc(subject),
+    body: bodyHtml,
+  });
+  const text = `${subject}\n\n${body}${bizBlockText}`;
+
+  try {
+    const res = await client.sendEmail({
+      From: FROM,
+      To: toEmail,
+      ReplyTo: replyTo || FROM,
+      Subject: subject,
+      HtmlBody: html,
+      TextBody: text,
+      MessageStream: 'outbound',
+    });
+    console.log(`[postmark:ownerToCustomerMessage] to=${toEmail} replyTo=${replyTo} messageId=${res?.MessageID}`);
+    return res;
+  } catch (err) {
+    logPostmarkFailure('ownerToCustomerMessage', err);
+    throw err;
+  }
+}

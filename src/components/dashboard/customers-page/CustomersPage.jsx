@@ -1,35 +1,49 @@
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../../lib/supabase.js';
 import { listBookingsForOwner } from '../../../lib/bookings.js';
+import { listCustomerMetadata } from '../../../lib/customers.js';
+import { groupBookingsIntoCustomers } from '../../../lib/customerIdentity.js';
 import AppHeader from '../../ui/AppHeader.jsx';
 import SubscribeGate from '../bookings-page/SubscribeGate.jsx';
-
-// Normalize a contact string (email or phone) into a stable identity key so
-// "John@x.com" and "john@x.com  " collapse to the same customer, and phone
-// numbers survive " (555) 123-4567 " vs "5551234567" punctuation drift.
-function identityKey(b) {
-  const email = (b.customer_email || '').trim().toLowerCase();
-  if (email) return `email:${email}`;
-  const phone = (b.customer_phone || '').replace(/\D+/g, '');
-  if (phone) return `phone:${phone}`;
-  // Last resort — use the name so nameless/contactless entries still show up
-  // as separate rows rather than all piling into one bucket.
-  return `name:${(b.customer_name || '').trim().toLowerCase() || b.id}`;
-}
 
 function formatDate(iso) {
   if (!iso) return '—';
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function formatDateTime(iso) {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleString('en-US', {
-    month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit',
-  });
+// Escape one CSV field per RFC 4180 — wrap in quotes if it contains a quote,
+// comma, or newline; double up any embedded quotes.
+function csvField(v) {
+  const s = v == null ? '' : String(v);
+  if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
 }
 
-export default function CustomersPage({ userId, profile, userEmail, onExit, onOpenBookings, onOpenAdmin, onOpenProfile, onSignOut }) {
+function downloadCSV(filename, rows) {
+  const csv = rows.map((r) => r.map(csvField).join(',')).join('\r\n');
+  // BOM so Excel opens UTF-8 correctly without mangling accented characters.
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+export default function CustomersPage({
+  userId,
+  profile,
+  userEmail,
+  onExit,
+  onOpenBookings,
+  onOpenAdmin,
+  onOpenProfile,
+  onOpenCustomerDetail,
+  onSignOut,
+}) {
   const headerProps = {
     active: 'customers',
     userEmail,
@@ -44,23 +58,25 @@ export default function CustomersPage({ userId, profile, userEmail, onExit, onOp
 
   const [bookings, setBookings] = useState([]);
   const [sites, setSites] = useState([]);
+  const [metadataByKey, setMetadataByKey] = useState(new Map());
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
   const [search, setSearch] = useState('');
-  const [expandedKey, setExpandedKey] = useState(null);
 
   useEffect(() => {
     if (!userId) return;
     let cancelled = false;
     (async () => {
       try {
-        const [bookingsData, sitesRes] = await Promise.all([
+        const [bookingsData, sitesRes, metaMap] = await Promise.all([
           listBookingsForOwner({ userId }),
           supabase.from('sites').select('id, business_info').eq('user_id', userId),
+          listCustomerMetadata({ ownerUserId: userId }),
         ]);
         if (cancelled) return;
         setBookings(bookingsData || []);
         setSites(sitesRes.data || []);
+        setMetadataByKey(metaMap || new Map());
       } catch (e) {
         if (!cancelled) setErr(e.message || 'Failed to load customers');
       } finally {
@@ -70,64 +86,7 @@ export default function CustomersPage({ userId, profile, userEmail, onExit, onOp
     return () => { cancelled = true; };
   }, [userId]);
 
-  // Build a map of siteId → display name so we can label which site a booking
-  // came from when the owner has more than one.
-  const siteNameById = useMemo(() => {
-    const m = {};
-    for (const s of sites) {
-      m[s.id] = s.business_info?.businessName || 'Untitled site';
-    }
-    return m;
-  }, [sites]);
-
-  // Group bookings by identity → one row per unique customer. Each group tracks
-  // the full booking history, distinct services ordered, most recent visit,
-  // total count, and which sites they've booked at. Cancelled bookings still
-  // count as a "visit" for history purposes but are flagged visually later.
-  const customers = useMemo(() => {
-    const groups = new Map();
-    for (const b of bookings) {
-      const key = identityKey(b);
-      if (!groups.has(key)) {
-        groups.set(key, {
-          key,
-          name: b.customer_name || '(No name)',
-          email: b.customer_email || '',
-          phone: b.customer_phone || '',
-          bookings: [],
-          services: new Map(),        // serviceName → count
-          siteIds: new Set(),
-          firstBookedAt: b.created_at,
-          lastBookedAt: b.created_at,
-          nextUpcomingAt: null,       // earliest future preferred_at with non-cancelled status
-        });
-      }
-      const g = groups.get(key);
-      g.bookings.push(b);
-      if (b.service_name) {
-        g.services.set(b.service_name, (g.services.get(b.service_name) || 0) + 1);
-      }
-      if (b.site_id) g.siteIds.add(b.site_id);
-      // Track earliest + latest by created_at — keep name fresh on whichever
-      // record has the latest customer_name (people's names change, phone
-      // numbers change, emails stay — trust the most recent snapshot).
-      if (new Date(b.created_at) < new Date(g.firstBookedAt)) g.firstBookedAt = b.created_at;
-      if (new Date(b.created_at) >= new Date(g.lastBookedAt)) {
-        g.lastBookedAt = b.created_at;
-        g.name = b.customer_name || g.name;
-        g.email = b.customer_email || g.email;
-        g.phone = b.customer_phone || g.phone;
-      }
-      // Upcoming = future-dated preferred_at with status still pending/confirmed
-      const pref = b.preferred_at ? new Date(b.preferred_at) : null;
-      const isUpcoming = pref && pref >= new Date() && (b.status === 'pending' || b.status === 'confirmed');
-      if (isUpcoming && (!g.nextUpcomingAt || pref < new Date(g.nextUpcomingAt))) {
-        g.nextUpcomingAt = b.preferred_at;
-      }
-    }
-    // Newest-first by last booking so returning customers bubble up.
-    return [...groups.values()].sort((a, b) => new Date(b.lastBookedAt) - new Date(a.lastBookedAt));
-  }, [bookings]);
+  const customers = useMemo(() => groupBookingsIntoCustomers(bookings), [bookings]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -135,11 +94,34 @@ export default function CustomersPage({ userId, profile, userEmail, onExit, onOp
     return customers.filter((c) =>
       c.name.toLowerCase().includes(q)
       || c.email.toLowerCase().includes(q)
-      || c.phone.toLowerCase().includes(q),
+      || c.phone.toLowerCase().includes(q)
+      || (metadataByKey.get(c.key)?.tags || []).some((t) => t.toLowerCase().includes(q)),
     );
-  }, [customers, search]);
+  }, [customers, search, metadataByKey]);
 
-  const hasMultipleSites = sites.length > 1;
+  function handleExportCSV() {
+    const header = ['Name', 'Email', 'Phone', 'Visits', 'First booked', 'Last booked', 'Upcoming', 'Top services', 'Tags'];
+    const rows = filtered.map((c) => {
+      const topServices = [...c.services.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .map(([name]) => name)
+        .join('; ');
+      const tags = (metadataByKey.get(c.key)?.tags || []).join('; ');
+      return [
+        c.name,
+        c.email,
+        c.phone,
+        c.bookings.length,
+        formatDate(c.firstBookedAt),
+        formatDate(c.lastBookedAt),
+        c.nextUpcomingAt ? formatDate(c.nextUpcomingAt) : '',
+        topServices,
+        tags,
+      ];
+    });
+    const stamp = new Date().toISOString().slice(0, 10);
+    downloadCSV(`customers-${stamp}.csv`, [header, ...rows]);
+  }
 
   if (loading) {
     return (
@@ -178,14 +160,27 @@ export default function CustomersPage({ userId, profile, userEmail, onExit, onOp
           </header>
 
           {customers.length > 0 && (
-            <div className="mb-4">
+            <div className="mb-4 flex flex-wrap items-center gap-2">
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by name, email, or phone"
-                className="w-full sm:max-w-sm border border-black/[0.10] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000]"
+                placeholder="Search by name, email, phone, or tag"
+                className="flex-1 min-w-[200px] sm:max-w-sm border border-black/[0.10] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000]"
               />
+              <button
+                onClick={handleExportCSV}
+                disabled={filtered.length === 0}
+                title={filtered.length === 0 ? 'Nothing to export' : `Export ${filtered.length} customers as CSV`}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-black/10 hover:border-black/30 text-[13px] font-semibold text-[#1a1a1a] hover:text-[#cc0000] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                Export CSV
+              </button>
             </div>
           )}
 
@@ -217,119 +212,76 @@ export default function CustomersPage({ userId, profile, userEmail, onExit, onOp
                     <th className="px-4 py-3">Contact</th>
                     <th className="px-4 py-3">Visits</th>
                     <th className="px-4 py-3">Last booked</th>
-                    <th className="px-4 py-3">Services</th>
+                    <th className="px-4 py-3">Services / tags</th>
+                    <th className="px-4 py-3 w-6"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.map((c) => {
-                    const isExpanded = expandedKey === c.key;
                     const topServices = [...c.services.entries()]
                       .sort((a, b) => b[1] - a[1])
                       .slice(0, 3)
                       .map(([name]) => name);
                     const extraServiceCount = c.services.size - topServices.length;
+                    const tags = metadataByKey.get(c.key)?.tags || [];
                     return (
-                      <Fragment key={c.key}>
-                        <tr
-                          onClick={() => setExpandedKey(isExpanded ? null : c.key)}
-                          className={`border-t border-gray-100 hover:bg-gray-50 cursor-pointer ${isExpanded ? 'bg-gray-50' : ''}`}
-                        >
-                          <td className="px-4 py-3">
-                            <div className="font-semibold text-[#1a1a1a]">{c.name}</div>
-                            {c.nextUpcomingAt && (
-                              <div className="text-[11px] text-green-700 font-medium mt-0.5">
-                                Upcoming · {formatDate(c.nextUpcomingAt)}
-                              </div>
-                            )}
-                          </td>
-                          <td className="px-4 py-3 text-[13px] text-gray-700">
-                            {c.email && <div className="truncate max-w-[220px]">{c.email}</div>}
-                            {c.phone && <div className="text-xs text-gray-500">{c.phone}</div>}
-                            {!c.email && !c.phone && <span className="text-xs text-gray-400">—</span>}
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className="inline-flex items-center justify-center min-w-[28px] px-2 py-0.5 rounded-full bg-[#1a1a1a] text-white text-[11px] font-bold">
-                              {c.bookings.length}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-gray-700 text-[13px]">{formatDate(c.lastBookedAt)}</td>
-                          <td className="px-4 py-3 text-[13px] text-gray-700">
-                            {topServices.length === 0 ? (
+                      <tr
+                        key={c.key}
+                        onClick={() => onOpenCustomerDetail && onOpenCustomerDetail(c.key)}
+                        className="border-t border-gray-100 hover:bg-gray-50 cursor-pointer"
+                      >
+                        <td className="px-4 py-3">
+                          <div className="font-semibold text-[#1a1a1a]">{c.name}</div>
+                          {c.nextUpcomingAt && (
+                            <div className="text-[11px] text-green-700 font-medium mt-0.5">
+                              Upcoming · {formatDate(c.nextUpcomingAt)}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-[13px] text-gray-700">
+                          {c.email && <div className="truncate max-w-[220px]">{c.email}</div>}
+                          {c.phone && <div className="text-xs text-gray-500">{c.phone}</div>}
+                          {!c.email && !c.phone && <span className="text-xs text-gray-400">—</span>}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="inline-flex items-center justify-center min-w-[28px] px-2 py-0.5 rounded-full bg-[#1a1a1a] text-white text-[11px] font-bold">
+                            {c.bookings.length}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-gray-700 text-[13px]">{formatDate(c.lastBookedAt)}</td>
+                        <td className="px-4 py-3 text-[13px] text-gray-700">
+                          <div className="flex flex-wrap gap-1">
+                            {topServices.length === 0 && tags.length === 0 && (
                               <span className="text-gray-400 text-xs">—</span>
-                            ) : (
-                              <div className="flex flex-wrap gap-1">
-                                {topServices.map((s) => (
-                                  <span key={s} className="inline-block bg-[#faf9f7] border border-black/[0.06] rounded px-2 py-0.5 text-[11px] text-[#555] font-medium">
-                                    {s}
-                                  </span>
-                                ))}
-                                {extraServiceCount > 0 && (
-                                  <span className="inline-block text-[11px] text-[#888] self-center">
-                                    +{extraServiceCount}
-                                  </span>
-                                )}
-                              </div>
                             )}
-                          </td>
-                        </tr>
-
-                        {isExpanded && (
-                          <tr className="border-t border-gray-100 bg-[#faf9f7]">
-                            <td colSpan={5} className="px-4 py-4">
-                              <div className="flex flex-wrap items-start justify-between gap-4 mb-3">
-                                <div>
-                                  <p className="text-[11px] uppercase tracking-wider font-bold text-[#888] mb-1">Booking history</p>
-                                  <p className="text-[12px] text-[#555]">
-                                    First booked {formatDate(c.firstBookedAt)} · {c.bookings.length} total {c.bookings.length === 1 ? 'visit' : 'visits'}
-                                  </p>
-                                </div>
-                                {onOpenBookings && (
-                                  <button
-                                    onClick={(e) => { e.stopPropagation(); onOpenBookings(); }}
-                                    className="text-[12px] font-semibold text-[#1a1a1a] hover:text-[#cc0000] transition-colors"
-                                  >
-                                    Open in Bookings →
-                                  </button>
-                                )}
-                              </div>
-                              <div className="bg-white border border-black/[0.07] rounded-lg overflow-hidden">
-                                <table className="w-full text-sm">
-                                  <thead className="bg-gray-50 text-left text-[10px] text-gray-500 uppercase tracking-wider">
-                                    <tr>
-                                      <th className="px-3 py-2">When</th>
-                                      <th className="px-3 py-2">Service</th>
-                                      <th className="px-3 py-2">Vehicle</th>
-                                      <th className="px-3 py-2">Status</th>
-                                      {hasMultipleSites && <th className="px-3 py-2">Site</th>}
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {[...c.bookings]
-                                      .sort((a, b) => new Date(b.preferred_at || b.created_at) - new Date(a.preferred_at || a.created_at))
-                                      .map((b) => (
-                                        <tr key={b.id} className="border-t border-gray-100">
-                                          <td className="px-3 py-2 text-[13px] text-gray-800">{formatDateTime(b.preferred_at)}</td>
-                                          <td className="px-3 py-2 text-[13px] text-gray-700">{b.service_name || '—'}</td>
-                                          <td className="px-3 py-2 text-[12px] text-gray-600">
-                                            {[b.vehicle_year, b.vehicle_make, b.vehicle_model].filter(Boolean).join(' ') || '—'}
-                                          </td>
-                                          <td className="px-3 py-2">
-                                            <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide ${statusClass(b.status)}`}>
-                                              {b.status}
-                                            </span>
-                                          </td>
-                                          {hasMultipleSites && (
-                                            <td className="px-3 py-2 text-[12px] text-gray-600">{siteNameById[b.site_id] || '—'}</td>
-                                          )}
-                                        </tr>
-                                      ))}
-                                  </tbody>
-                                </table>
-                              </div>
-                            </td>
-                          </tr>
-                        )}
-                      </Fragment>
+                            {topServices.map((s) => (
+                              <span key={`s-${s}`} className="inline-block bg-[#faf9f7] border border-black/[0.06] rounded px-2 py-0.5 text-[11px] text-[#555] font-medium">
+                                {s}
+                              </span>
+                            ))}
+                            {extraServiceCount > 0 && (
+                              <span className="inline-block text-[11px] text-[#888] self-center">
+                                +{extraServiceCount}
+                              </span>
+                            )}
+                            {tags.slice(0, 2).map((t) => (
+                              <span key={`t-${t}`} className="inline-block bg-[#cc0000]/[0.06] border border-[#cc0000]/20 rounded-full px-2 py-0.5 text-[11px] text-[#cc0000] font-semibold">
+                                {t}
+                              </span>
+                            ))}
+                            {tags.length > 2 && (
+                              <span className="inline-block text-[11px] text-[#888] self-center">
+                                +{tags.length - 2}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <polyline points="9 18 15 12 9 6" />
+                          </svg>
+                        </td>
+                      </tr>
                     );
                   })}
                 </tbody>
@@ -340,15 +292,4 @@ export default function CustomersPage({ userId, profile, userEmail, onExit, onOp
       </SubscribeGate>
     </div>
   );
-}
-
-function statusClass(status) {
-  switch (status) {
-    case 'confirmed': return 'bg-green-100 text-green-800';
-    case 'pending':   return 'bg-amber-100 text-amber-800';
-    case 'completed': return 'bg-blue-100 text-blue-800';
-    case 'declined':
-    case 'cancelled': return 'bg-red-100 text-red-700';
-    default:          return 'bg-gray-100 text-gray-700';
-  }
 }

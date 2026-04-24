@@ -17,6 +17,7 @@ import DashboardPage from './components/dashboard/DashboardPage.jsx';
 import BookingSettingsPage from './components/dashboard/booking-settings/BookingSettingsPage.jsx';
 import BookingsPage from './components/dashboard/bookings-page/BookingsPage.jsx';
 import CustomersPage from './components/dashboard/customers-page/CustomersPage.jsx';
+import CustomerDetailPage from './components/dashboard/customers-page/CustomerDetailPage.jsx';
 import AdminPage from './components/admin/AdminPage.jsx';
 import ProfilePage from './components/profile/ProfilePage.jsx';
 import { saveSite } from './lib/saveSite.js';
@@ -39,8 +40,9 @@ export default function App() {
   // Default landing view for an authenticated user is the dashboard so returning
   // users see their existing site (and free-plan limit) instead of being dropped
   // back into the wizard. New users with zero sites see the "Build My Site" CTA there.
-  const [view, setView] = useState('dashboard'); // 'wizard' | 'dashboard' | 'admin' | 'bookings-page' | 'customers' | 'booking-settings' | 'profile'
+  const [view, setView] = useState('dashboard'); // 'wizard' | 'dashboard' | 'admin' | 'bookings-page' | 'customers' | 'customer-detail' | 'booking-settings' | 'profile'
   const [settingsSiteId, setSettingsSiteId] = useState(null);
+  const [selectedCustomerKey, setSelectedCustomerKey] = useState(null);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [selectedWidgetIds, setSelectedWidgetIds] = useState([]);
   const [siteId, setSiteId] = useState(null);
@@ -346,6 +348,24 @@ export default function App() {
         onOpenBookings={() => setView('bookings-page')}
         onOpenAdmin={() => setView('admin')}
         onOpenProfile={() => setView('profile')}
+        onOpenCustomerDetail={(key) => { setSelectedCustomerKey(key); setView('customer-detail'); }}
+        onSignOut={handleSignOut}
+      />
+    );
+  }
+
+  if (view === 'customer-detail' && selectedCustomerKey) {
+    return (
+      <CustomerDetailPage
+        userId={session?.user?.id}
+        userEmail={session?.user?.email}
+        profile={profile}
+        identityKey={selectedCustomerKey}
+        onExit={() => { setSelectedCustomerKey(null); setView('dashboard'); }}
+        onBackToCustomers={() => { setSelectedCustomerKey(null); setView('customers'); }}
+        onOpenBookings={() => { setSelectedCustomerKey(null); setView('bookings-page'); }}
+        onOpenAdmin={() => { setSelectedCustomerKey(null); setView('admin'); }}
+        onOpenProfile={() => { setSelectedCustomerKey(null); setView('profile'); }}
         onSignOut={handleSignOut}
       />
     );
