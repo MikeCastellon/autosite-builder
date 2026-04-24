@@ -47,16 +47,41 @@ describe('isEffectiveSchedulerActive', () => {
     })).toBe(false);
   });
 
-  it('returns false for past_due (no grace)', () => {
+  it('returns true for past_due when no stripe failure timestamp (Shopify / webhook lag)', () => {
     expect(isEffectiveSchedulerActive({
       is_super_admin: false, scheduler_enabled: false,
       subscription_status: 'past_due', subscription_ends_at: FUTURE,
-    })).toBe(false);
+    })).toBe(true);
   });
 
   it('handles null/undefined profile defensively', () => {
     expect(isEffectiveSchedulerActive(null)).toBe(false);
     expect(isEffectiveSchedulerActive(undefined)).toBe(false);
     expect(isEffectiveSchedulerActive({})).toBe(false);
+  });
+});
+
+const GRACE_MS = 7 * 24 * 60 * 60 * 1000;
+
+describe('isEffectiveSchedulerActive — past_due grace period', () => {
+  it('past_due within 7 days of first failure → true', () => {
+    const profile = {
+      subscription_status: 'past_due',
+      stripe_first_failed_payment_at: new Date(Date.now() - (GRACE_MS - 3600_000)).toISOString(),
+    };
+    expect(isEffectiveSchedulerActive(profile)).toBe(true);
+  });
+
+  it('past_due past 7 days → false', () => {
+    const profile = {
+      subscription_status: 'past_due',
+      stripe_first_failed_payment_at: new Date(Date.now() - (GRACE_MS + 3600_000)).toISOString(),
+    };
+    expect(isEffectiveSchedulerActive(profile)).toBe(false);
+  });
+
+  it('past_due with no failure timestamp → true (webhook not yet caught up)', () => {
+    const profile = { subscription_status: 'past_due', stripe_first_failed_payment_at: null };
+    expect(isEffectiveSchedulerActive(profile)).toBe(true);
   });
 });
