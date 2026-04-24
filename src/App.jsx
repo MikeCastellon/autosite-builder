@@ -244,6 +244,10 @@ export default function App() {
   // Demo preview — shows a template with placeholder data, no AI call needed
   const [isDemoPreview, setIsDemoPreview] = useState(false);
 
+  // Nav callback for the Payments tab. Must stay above any early-return
+  // guards below so hook count is stable across renders (React #310 bait).
+  const goPaymentsConnect = useCallback(() => { setView('payments-connect'); }, []);
+
   // Domain Connect callback: close popup, notify opener
   if (typeof window !== 'undefined' && window.location.pathname === '/domain-connected') {
     try {
@@ -281,8 +285,6 @@ export default function App() {
   const handleSignOut = async () => {
     await supabase.auth.signOut();
   };
-
-  const goPaymentsConnect = useCallback(() => { setView('payments-connect'); }, []);
 
   const handleEditSite = async (site) => {
     setSiteId(site.id);
