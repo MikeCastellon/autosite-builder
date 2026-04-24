@@ -598,6 +598,22 @@
       var totalSteps = hasMultipleServices ? 3 : 2;
       var whenLabel = new Date(state.slotISO).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'UTC' });
       var subtitle = (state.service ? state.service.name + ' · ' : '') + whenLabel;
+      // Cancellation policy link + collapsible body. Only rendered when the
+      // business owner has set a policy in Booking Settings. Agreement is
+      // implicit by submitting — link is offered so customers can review
+      // before they submit.
+      var policyText = (cfg.cancellation_policy || '').trim();
+      var policyBlock = '';
+      if (policyText) {
+        policyBlock =
+          '<div style="font-size:12px;color:' + T.muted + ';line-height:1.55;margin:8px 0 0;">' +
+            'By submitting, you agree to our ' +
+            '<a href="#" data-toggle-policy aria-expanded="false" style="color:' + brand + ';text-decoration:underline;font-weight:600;cursor:pointer;">cancellation policy</a>.' +
+          '</div>' +
+          '<div data-policy-body style="display:none;margin-top:10px;padding:12px 14px;background:' + T.subtle + ';border:1px solid ' + T.divider + ';border-radius:10px;font-size:13px;line-height:1.6;color:' + T.text + ';white-space:pre-wrap;">' +
+            esc(policyText) +
+          '</div>';
+      }
       card.innerHTML = brandBar() + brandHeader() + stepBar(totalSteps, totalSteps) +
         sectionTitle('Your details', subtitle) +
         bodyOpen() +
@@ -632,6 +648,7 @@
             fieldTextarea('notes', 'Notes', false) +
             '<input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;" aria-hidden="true" />' +
             '<div id="acg-form-error" style="color:' + brand + ';font-size:13px;margin:8px 0;display:none;font-weight:600;"></div>' +
+            policyBlock +
             '<div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;">' +
               '<button type="button" data-back style="padding:14px 22px;background:' + T.inputBg + ';border:1px solid ' + T.inputBorder + ';border-radius:12px;font-family:' + FONT + ';font-weight:600;font-size:14px;cursor:pointer;color:' + T.muted + ';">Back</button>' +
               '<button type="submit" style="padding:14px 32px;background:' + brand + ';color:#fff;border:0;border-radius:12px;font-family:' + FONT + ';font-weight:700;font-size:15px;cursor:pointer;letter-spacing:0.2px;">Submit request</button>' +
@@ -641,6 +658,18 @@
       wireClose();
       card.querySelector('[data-back]').addEventListener('click', function () { state.slotISO = null; render(); });
       card.querySelector('#acg-booking-form').addEventListener('submit', function (e) { e.preventDefault(); submit(); });
+      // Wire the cancellation-policy toggle (only present if policy is set).
+      var policyToggle = card.querySelector('[data-toggle-policy]');
+      if (policyToggle) {
+        policyToggle.addEventListener('click', function (e) {
+          e.preventDefault();
+          var body = card.querySelector('[data-policy-body]');
+          if (!body) return;
+          var open = body.style.display !== 'none';
+          body.style.display = open ? 'none' : 'block';
+          policyToggle.setAttribute('aria-expanded', open ? 'false' : 'true');
+        });
+      }
     }
 
     function renderSuccess() {

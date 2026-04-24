@@ -6,6 +6,7 @@ export default function GeneralTab({ siteId, config, siteImages, onSaved }) {
   const [label, setLabel] = useState(config?.button_label || 'Book Now');
   const [lead, setLead] = useState(String(config?.lead_time_hours ?? 24));
   const [ctaSelector, setCtaSelector] = useState(config?.cta_selector || '');
+  const [cancellationPolicy, setCancellationPolicy] = useState(config?.cancellation_policy || '');
   const [logoUrl, setLogoUrl] = useState(config?.logo_url || '');
   const [bookingMode, setBookingMode] = useState(config?.booking_mode === 'simple' ? 'simple' : 'full');
   const [modalTheme, setModalTheme] = useState(config?.modal_theme || 'light');
@@ -38,6 +39,7 @@ export default function GeneralTab({ siteId, config, siteImages, onSaved }) {
     setLabel(config?.button_label || 'Book Now');
     setLead(String(config?.lead_time_hours ?? 24));
     setCtaSelector(config?.cta_selector || '');
+    setCancellationPolicy(config?.cancellation_policy || '');
     setLogoUrl(config?.logo_url || '');
     setBookingMode(config?.booking_mode === 'simple' ? 'simple' : 'full');
     setModalTheme(config?.modal_theme || 'light');
@@ -97,6 +99,7 @@ export default function GeneralTab({ siteId, config, siteImages, onSaved }) {
         button_label: label || 'Book Now',
         lead_time_hours: Math.max(0, Number(lead) || 0),
         cta_selector: ctaSelector.trim(),
+        cancellation_policy: cancellationPolicy.trim(),
       });
       onSaved && onSaved(updated);
     } catch (e) { setErr(e.message); }
@@ -260,6 +263,22 @@ export default function GeneralTab({ siteId, config, siteImages, onSaved }) {
           className={`${inputBase} w-32`}
         />
         <p className={helpBase}>Customers can't book slots less than this far into the future.</p>
+      </div>
+
+      <div>
+        <label className={labelBase}>
+          Cancellation policy <span className="font-normal text-[#aaa] normal-case tracking-normal">(optional)</span>
+        </label>
+        <textarea
+          rows={4}
+          value={cancellationPolicy}
+          onChange={(e) => setCancellationPolicy(e.target.value)}
+          placeholder="e.g. Please give us at least 24 hours notice. Late cancellations may be subject to a $25 fee."
+          className={`${inputBase} resize-y`}
+        />
+        <p className={helpBase}>
+          Shown as a link on the final step of the booking form. Customers can click "cancellation policy" to read it before submitting.
+        </p>
       </div>
 
       <div>

@@ -9,6 +9,7 @@ export function defaultSchedulerConfig() {
     lead_time_hours: 24,
     slot_granularity_minutes: 30,
     cta_selector: '',
+    cancellation_policy: '',
     services: [],
     availability: {
       mon: [...DEFAULT_HOURS], tue: [...DEFAULT_HOURS], wed: [...DEFAULT_HOURS],
