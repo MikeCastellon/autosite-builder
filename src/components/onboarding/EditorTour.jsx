@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 // Pro Hub brand tokens (prohub.autocaregenius.com)
 const BRAND_INK = '#1A1A1A';           // near-black body/headings/primary button
@@ -93,7 +93,7 @@ const STEPS = [
 const FLAG_KEY = 'editor_tour_done_v2';
 const TOOLTIP_WIDTH = 300;
 const POLL_INTERVAL_MS = 150;
-const WATCHDOG_MS = 3000;
+const WATCHDOG_MS = 5000;
 
 export default function EditorTour() {
   const [phase, setPhase] = useState('welcome'); // 'welcome' | 'tour'
@@ -103,6 +103,9 @@ export default function EditorTour() {
   const [dismissed, setDismissed] = useState(() => {
     try { return localStorage.getItem(FLAG_KEY) === '1'; } catch { return true; }
   });
+  // Refs for welcome-modal focus trap
+  const welcomeSkipRef = useRef(null);
+  const welcomeStartRef = useRef(null);
 
   // Declared BEFORE any hook that references it in a dep array, so it exists
   // on every render (hooks run before conditional returns).
@@ -110,10 +113,25 @@ export default function EditorTour() {
 
   const markDone = () => {
     try { localStorage.setItem(FLAG_KEY, '1'); } catch { /* ignore */ }
+    // Drop focus before unmount so a pending Enter/click doesn't land on a
+    // button underneath the overlay (e.g. the Finalize button right after
+    // completing the tour).
+    if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
     setDismissed(true);
   };
 
   const startTour = () => setPhase('tour');
+
+  // Set initial focus on the welcome modal's primary button so keyboard /
+  // screen reader users land somewhere sensible when the dialog opens.
+  useEffect(() => {
+    if (dismissed || phase !== 'welcome') return;
+    // Delay by a frame so the node is mounted before we focus.
+    const t = setTimeout(() => { welcomeStartRef.current?.focus(); }, 0);
+    return () => clearTimeout(t);
+  }, [dismissed, phase]);
 
   const advance = () => {
     setStepIdx((i) => {
@@ -179,12 +197,16 @@ export default function EditorTour() {
     window.addEventListener('resize', update);
     window.addEventListener('scroll', update, { capture: true, passive: true });
 
+    // Scope the MutationObserver narrowly to avoid DoS on the editor panel's
+    // busy internals (color swatch drags, live preview). childList on body
+    // (no subtree) catches major layout transitions — editor opening/closing,
+    // tab content mounting — which is enough to trigger a re-measure.
     let mutTimer = null;
     const mo = new MutationObserver(() => {
       clearTimeout(mutTimer);
       mutTimer = setTimeout(update, 50);
     });
-    mo.observe(document.body, { childList: true, subtree: true });
+    mo.observe(document.body, { childList: true });
 
     return () => {
       window.removeEventListener('resize', update);
@@ -251,6 +273,22 @@ export default function EditorTour() {
 
   // Welcome modal — Pro Hub styling
   if (phase === 'welcome') {
+    // Focus trap: cycle Tab between the two buttons so keyboard users can't
+    // escape the modal.
+    const onModalKeyDown = (e) => {
+      if (e.key !== 'Tab') return;
+      const first = welcomeSkipRef.current;
+      const last = welcomeStartRef.current;
+      if (!first || !last) return;
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
     return (
       <div
         className="fixed inset-0 flex items-center justify-center"
@@ -258,6 +296,7 @@ export default function EditorTour() {
         role="dialog"
         aria-modal="true"
         aria-labelledby="editor-tour-welcome-title"
+        onKeyDown={onModalKeyDown}
       >
         <div
           className="bg-white mx-4"
@@ -307,6 +346,7 @@ export default function EditorTour() {
 
           <div className="flex items-center justify-between gap-3">
             <button
+              ref={welcomeSkipRef}
               type="button"
               onClick={markDone}
               style={{
@@ -322,6 +362,7 @@ export default function EditorTour() {
               Skip for now
             </button>
             <button
+              ref={welcomeStartRef}
               type="button"
               onClick={startTour}
               style={{
