@@ -13,7 +13,29 @@ export default function CustomDomainPanel({ siteId, initialDomain = null, initia
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
   const [showHelp, setShowHelp] = useState(false);
+  const [copiedKey, setCopiedKey] = useState(null);
   const pollingRef = useRef(null);
+  const copyTimerRef = useRef(null);
+
+  const copyToClipboard = async (value, key) => {
+    try {
+      await navigator.clipboard.writeText(value);
+    } catch {
+      // Fallback for older browsers / insecure contexts
+      const ta = document.createElement('textarea');
+      ta.value = value;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try { document.execCommand('copy'); } catch {}
+      document.body.removeChild(ta);
+    }
+    setCopiedKey(key);
+    clearTimeout(copyTimerRef.current);
+    copyTimerRef.current = setTimeout(() => setCopiedKey(null), 1600);
+  };
 
   const display = getStatusDisplay(status);
 
@@ -105,6 +127,9 @@ export default function CustomDomainPanel({ siteId, initialDomain = null, initia
     return () => window.removeEventListener('message', onMessage);
   }, [siteId]);
 
+  // Clean up the copy-confirmation timer on unmount.
+  useEffect(() => () => clearTimeout(copyTimerRef.current), []);
+
   if (!domain) {
     return (
       <div className="border border-black/[0.07] rounded-xl p-5">
@@ -160,8 +185,8 @@ export default function CustomDomainPanel({ siteId, initialDomain = null, initia
             <p className="text-[13px] font-bold text-[#1a1a1a] mb-2">What's happening</p>
             <ol className="text-[12px] text-[#555] space-y-1.5 list-decimal list-inside">
               <li>Add the two DNS records below at your domain registrar — that's the only step on your end.</li>
-              <li>Cloudflare verifies them automatically (1-5 min, sometimes longer depending on the registrar).</li>
-              <li>HTTPS certificate provisions automatically once verified.</li>
+              <li>We verify them automatically (usually 1–5 min, up to ~30 min depending on your registrar).</li>
+              <li>HTTPS certificate provisions automatically once verified — no action needed.</li>
               <li>You'll get an email when your site is live at <span className="font-semibold">www.{domain}</span>.</li>
             </ol>
           </div>
@@ -197,21 +222,42 @@ export default function CustomDomainPanel({ siteId, initialDomain = null, initia
               )}
 
               <div className="bg-white border border-black/[0.10] rounded-lg overflow-hidden">
-                <div className="grid grid-cols-[80px_120px_1fr] gap-2 px-3 py-2 bg-[#faf9f7] border-b border-black/[0.07] text-[10px] font-bold uppercase tracking-wider text-[#888]">
+                <div className="grid grid-cols-[70px_110px_1fr] gap-2 px-3 py-2 bg-[#faf9f7] border-b border-black/[0.07] text-[10px] font-bold uppercase tracking-wider text-[#888]">
                   <div>Type</div>
                   <div>Host / Name</div>
                   <div>Value / Points to</div>
                 </div>
-                {cnameInstructions.map((r, i) => (
-                  <div key={i} className="grid grid-cols-[80px_120px_1fr] gap-2 px-3 py-2.5 border-b border-black/[0.05] last:border-b-0 font-mono text-[12px] text-[#1a1a1a]">
-                    <div className="font-semibold">{r.type}</div>
-                    <div>{r.host}</div>
-                    <div className="break-all">{r.value}</div>
-                  </div>
-                ))}
+                {cnameInstructions.map((r, i) => {
+                  const renderCopyCell = (text, key, extraClass = '') => {
+                    const isCopied = copiedKey === key;
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard(text, key)}
+                        title={isCopied ? 'Copied!' : 'Click to copy'}
+                        className={`group relative flex items-center gap-1.5 text-left font-mono text-[12px] text-[#1a1a1a] rounded px-1.5 py-0.5 -mx-1.5 -my-0.5 transition-colors ${isCopied ? 'bg-green-100 text-green-800' : 'hover:bg-[#faf9f7]'} ${extraClass}`}
+                      >
+                        <span className="break-all flex-1">{text}</span>
+                        <span className={`shrink-0 text-[10px] font-sans font-semibold transition-opacity ${isCopied ? 'opacity-100 text-green-700' : 'opacity-0 group-hover:opacity-100 text-[#888]'}`}>
+                          {isCopied ? '✓ Copied' : 'Copy'}
+                        </span>
+                      </button>
+                    );
+                  };
+                  return (
+                    <div
+                      key={i}
+                      className="grid grid-cols-[70px_110px_1fr] gap-2 px-3 py-2 border-b border-black/[0.05] last:border-b-0 items-center"
+                    >
+                      {renderCopyCell(r.type, `${i}-type`, 'font-semibold')}
+                      {renderCopyCell(r.host, `${i}-host`)}
+                      {renderCopyCell(r.value, `${i}-value`)}
+                    </div>
+                  );
+                })}
               </div>
               <p className="text-[11px] text-[#888] mt-2">
-                Status updates automatically every few seconds — no need to refresh.
+                Click any value to copy it. Status updates automatically every few seconds — no need to refresh.
               </p>
             </div>
           )}
