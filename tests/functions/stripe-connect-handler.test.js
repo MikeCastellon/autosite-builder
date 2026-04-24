@@ -2,8 +2,11 @@
 import { describe, it, expect } from 'vitest';
 import { handleAccountUpdated } from '../../netlify/functions/_lib/stripe-connect-handler.js';
 
-// Fake Supabase: records every .update(...).eq(...) call.
-function fakeDb() {
+// Fake Supabase: records every .update(...).eq(...) call. The fallback
+// lookup (.select().eq().maybeSingle()) returns a configurable match —
+// pass `{ matchAccountId: 'acct_found' }` to make it match only that id,
+// or omit for the default "always finds user-uuid-1".
+function fakeDb({ matchAccountId = null } = {}) {
   const calls = [];
   return {
     _calls: calls,
@@ -13,8 +16,11 @@ function fakeDb() {
         eq: (col, val) => { calls.push({ table, op: 'update', data, col, val }); return Promise.resolve({ error: null }); },
       }),
       select: () => ({
-        eq: () => ({
-          maybeSingle: () => Promise.resolve({ data: { id: 'user-uuid-1' }, error: null }),
+        eq: (_col, val) => ({
+          maybeSingle: () => Promise.resolve({
+            data: matchAccountId == null || val === matchAccountId ? { id: 'user-uuid-1' } : null,
+            error: null,
+          }),
         }),
       }),
     }),
@@ -67,12 +73,13 @@ describe('handleAccountUpdated', () => {
     expect(db._calls[0].data.stripe_connect_details_submitted).toBe(false);
   });
 
-  it('ignores events missing supabase_user_id metadata', async () => {
+  it('ignores events missing metadata when no local row matches the account id', async () => {
     const event = {
       type: 'account.updated',
       data: { object: { id: 'acct_orphan', charges_enabled: true, metadata: {} } },
     };
-    const db = fakeDb();
+    // Only acct_found matches; acct_orphan returns null from the lookup.
+    const db = fakeDb({ matchAccountId: 'acct_found' });
     await handleAccountUpdated(event, { db });
     expect(db._calls).toHaveLength(0);
   });
@@ -88,9 +95,7 @@ describe('handleAccountUpdated', () => {
         metadata: {}, // no supabase_user_id
       }},
     };
-    // fakeDb's .select().eq().maybeSingle() always returns user-uuid-1 — that
-    // simulates a row with this stripe_connect_account_id being present.
-    const db = fakeDb();
+    const db = fakeDb({ matchAccountId: 'acct_found' });
     await handleAccountUpdated(event, { db });
 
     expect(db._calls).toHaveLength(1);
