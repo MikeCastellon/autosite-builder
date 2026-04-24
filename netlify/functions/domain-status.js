@@ -66,13 +66,28 @@ export const handler = async (event) => {
           if (!attached) {
             status = 'pending_dns'; // alias was removed somehow; re-add on reconnect
           } else {
-            // SSL state is reported via ssl_url + ssl on the site, but a more
-            // reliable per-domain check is to probe the alias directly.
+            // Probe the domain and require evidence the response came from
+            // Netlify — otherwise a registrar parking page (or any other
+            // server that happens to respond) flips us to active_ssl
+            // prematurely. x-nf-request-id is set on every Netlify-served
+            // response and is the reliable marker.
             try {
               const probe = await fetch(`https://www.${apex}`, { method: 'HEAD', redirect: 'manual' });
-              status = probe.status < 500 ? 'active_ssl' : 'verifying';
+              const nfReqId = probe.headers.get('x-nf-request-id');
+              const serverHdr = probe.headers.get('server') || '';
+              const fromNetlify = !!nfReqId || /netlify/i.test(serverHdr);
+              if (fromNetlify && probe.status < 400) {
+                status = 'active_ssl';
+              } else if (fromNetlify) {
+                status = 'verifying';
+              } else {
+                // Domain resolves but points elsewhere — user hasn't updated
+                // DNS yet (or registrar parking page is in the way).
+                status = 'pending_dns';
+              }
             } catch {
-              status = 'verifying';
+              // DNS doesn't resolve yet, or connection refused — DNS not set.
+              status = 'pending_dns';
             }
           }
         }
