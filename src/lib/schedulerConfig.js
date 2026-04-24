@@ -47,7 +47,10 @@ export function mergeServicesFromBusinessInfo(existing, bizServices) {
 
 export async function loadSchedulerConfig(siteId) {
   const { data, error } = await supabase
-    .from('sites').select('scheduler_enabled, scheduler_config, business_info').eq('id', siteId).maybeSingle();
+    .from('sites')
+    .select('scheduler_enabled, scheduler_config, business_info, published_url, custom_domain, custom_domain_status')
+    .eq('id', siteId)
+    .maybeSingle();
   if (error) throw error;
   return data;
 }

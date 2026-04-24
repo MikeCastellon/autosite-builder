@@ -9,6 +9,12 @@
   var siteId = script && script.getAttribute('data-site-id');
   var previewMode = script && script.getAttribute('data-preview-mode') === 'true';
   var autoOpen = script && script.getAttribute('data-auto-open') === 'true';
+  // Hash-based auto-open: a shop owner can share `yoursite.com#book` as a
+  // standalone scheduler link. Lands on the site with the booking modal
+  // already open — no click required.
+  if (!autoOpen && typeof window !== 'undefined' && window.location && window.location.hash === '#book') {
+    autoOpen = true;
+  }
   if (!siteId) return;
 
   var API = script.src.replace(/\/scheduler\.js.*$/, '');

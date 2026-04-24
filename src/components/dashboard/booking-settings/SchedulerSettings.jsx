@@ -15,6 +15,7 @@ export default function SchedulerSettings({ siteId, onExit }) {
   const [tab, setTab] = useState('general');
   const [site, setSite] = useState(null);
   const [err, setErr] = useState(null);
+  const [copied, setCopied] = useState(false);
 
   // Auto-sync: if the site's business_info.services has items the scheduler
   // config doesn't yet know about, merge them in and persist silently.
@@ -79,6 +80,26 @@ export default function SchedulerSettings({ siteId, onExit }) {
 
   const isEnabled = !!site.scheduler_enabled;
 
+  // Build the standalone booking link. Prefer the custom domain once it has
+  // a valid SSL certificate; otherwise fall back to the published subdomain.
+  // The `#book` hash is handled by public/scheduler.js — it auto-opens the
+  // booking modal on page load so customers land directly on the scheduler.
+  const siteOrigin = site.custom_domain && site.custom_domain_status === 'active_ssl'
+    ? `https://www.${site.custom_domain}`
+    : site.published_url;
+  const bookingLink = siteOrigin ? `${siteOrigin.replace(/\/$/, '')}/#book` : null;
+
+  async function copyBookingLink() {
+    if (!bookingLink) return;
+    try {
+      await navigator.clipboard.writeText(bookingLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // Older browsers — select the input and let the user copy manually
+    }
+  }
+
   return (
     <div>
       {/* Status card: toggle + preview */}
@@ -118,6 +139,57 @@ export default function SchedulerSettings({ siteId, onExit }) {
           </button>
         )}
       </div>
+
+      {/* Standalone booking link — share with customers so they can book
+          directly without visiting the full site first. */}
+      {isEnabled && bookingLink && (
+        <div className="bg-white rounded-2xl border border-black/[0.07] shadow-sm p-5 sm:p-6 mb-6">
+          <div className="flex items-start gap-3 mb-3">
+            <div
+              className="shrink-0 flex items-center justify-center w-9 h-9 rounded-lg bg-[#cc0000]/6"
+              style={{ background: 'rgba(204,0,0,0.06)' }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#cc0000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+              </svg>
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[15px] font-bold text-[#1a1a1a] tracking-[-0.2px]">
+                Standalone booking link
+              </p>
+              <p className="text-[12px] text-[#888] mt-0.5">
+                Share this link with customers via text, email, or social. It opens the booking modal instantly — no clicks required.
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input
+              type="text"
+              readOnly
+              value={bookingLink}
+              onFocus={(e) => e.target.select()}
+              className="flex-1 min-w-0 px-3 py-2 text-[13px] font-mono text-[#1a1a1a] bg-[#faf9f7] border border-black/10 rounded-lg focus:outline-none focus:border-[#cc0000]"
+            />
+            <button
+              type="button"
+              onClick={copyBookingLink}
+              className="shrink-0 text-[13px] font-semibold px-4 py-2 rounded-lg bg-[#1a1a1a] hover:bg-[#cc0000] text-white transition-colors"
+            >
+              {copied ? 'Copied ✓' : 'Copy link'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Prompt to publish the site if bookings are enabled but there's no URL yet */}
+      {isEnabled && !bookingLink && (
+        <div className="bg-white rounded-2xl border border-black/[0.07] shadow-sm p-5 sm:p-6 mb-6">
+          <p className="text-[13px] text-[#555]">
+            Publish your site to get a shareable booking link.
+          </p>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="bg-white rounded-2xl border border-black/[0.07] shadow-sm overflow-hidden">
