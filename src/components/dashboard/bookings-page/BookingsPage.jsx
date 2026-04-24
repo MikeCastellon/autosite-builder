@@ -5,7 +5,7 @@ import SchedulerSettings from '../booking-settings/SchedulerSettings.jsx';
 import SubscribeGate from './SubscribeGate.jsx';
 import AppHeader from '../../ui/AppHeader.jsx';
 
-export default function BookingsPage({ userId, profile, userEmail, onExit, onOpenCustomers, onOpenAdmin, onOpenProfile, onSignOut }) {
+export default function BookingsPage({ userId, profile, userEmail, onExit, onOpenCustomers, onOpenAdmin, onOpenProfile, onOpenPaymentsConnect, onSignOut }) {
   const headerProps = {
     active: 'bookings',
     userEmail,
@@ -15,6 +15,7 @@ export default function BookingsPage({ userId, profile, userEmail, onExit, onOpe
     onOpenCustomers,
     onOpenAdmin,
     onOpenProfile,
+    onOpenPaymentsConnect,
     onSignOut,
   };
   const [tab, setTab] = useState('schedule');

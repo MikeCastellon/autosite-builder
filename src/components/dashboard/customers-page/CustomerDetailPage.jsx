@@ -39,6 +39,7 @@ export default function CustomerDetailPage({
   onOpenBookings,
   onOpenAdmin,
   onOpenProfile,
+  onOpenPaymentsConnect,
   onSignOut,
 }) {
   const headerProps = {
@@ -50,6 +51,7 @@ export default function CustomerDetailPage({
     onOpenCustomers: onBackToCustomers,
     onOpenAdmin,
     onOpenProfile,
+    onOpenPaymentsConnect,
     onSignOut,
   };
   const { toast } = useAlert();

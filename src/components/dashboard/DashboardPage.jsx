@@ -12,7 +12,7 @@ import UpgradeFunnel from './UpgradeFunnel.jsx';
 const MAX_SITES = 1;
 const CUSTOM_DOMAIN_ENABLED = import.meta.env.VITE_CUSTOM_DOMAIN_ENABLED === 'true';
 
-export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEmail, profile, onOpenAdmin, onOpenBookings, onOpenCustomers, onOpenProfile, onOpenBookingSettings }) {
+export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEmail, profile, onOpenAdmin, onOpenBookings, onOpenCustomers, onOpenProfile, onOpenPaymentsConnect, onOpenBookingSettings }) {
   const { toast, confirm: confirmDialog } = useAlert();
   const [sites, setSites] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -115,6 +115,7 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
     { label: 'Dashboard', onClick: () => {}, active: true },
     showBookingsNav && onOpenBookings && { label: 'Bookings', onClick: onOpenBookings, active: false },
     showBookingsNav && onOpenCustomers && { label: 'Customers', onClick: onOpenCustomers, active: false },
+    onOpenPaymentsConnect && { label: 'Payments', onClick: onOpenPaymentsConnect, active: false },
     isAdmin && onOpenAdmin && { label: 'Admin', onClick: onOpenAdmin, active: false },
   ].filter(Boolean);
 

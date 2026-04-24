@@ -4,7 +4,7 @@ import { useAuth } from '../../lib/AuthContext.jsx';
 import { useAlert } from '../ui/AlertProvider.jsx';
 import AppHeader from '../ui/AppHeader.jsx';
 
-export default function ProfilePage({ onExit, onOpenBookings, onOpenCustomers, onOpenAdmin, onSignOut }) {
+export default function ProfilePage({ onExit, onOpenBookings, onOpenCustomers, onOpenAdmin, onOpenPaymentsConnect, onSignOut }) {
   const { session, profile, refreshProfile } = useAuth();
   const userEmail = session?.user?.email;
   const { toast } = useAlert();
@@ -35,6 +35,7 @@ export default function ProfilePage({ onExit, onOpenBookings, onOpenCustomers, o
     onOpenBookings,
     onOpenCustomers,
     onOpenAdmin,
+    onOpenPaymentsConnect,
     onOpenProfile: () => {},
     onSignOut,
   };

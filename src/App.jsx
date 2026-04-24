@@ -20,6 +20,7 @@ import CustomersPage from './components/dashboard/customers-page/CustomersPage.j
 import CustomerDetailPage from './components/dashboard/customers-page/CustomerDetailPage.jsx';
 import AdminPage from './components/admin/AdminPage.jsx';
 import ProfilePage from './components/profile/ProfilePage.jsx';
+import PaymentsConnectPage from './components/dashboard/payments-connect/PaymentsConnectPage.jsx';
 import HelpChrome from './components/help/HelpChrome.jsx';
 import { saveSite } from './lib/saveSite.js';
 import { supabase } from './lib/supabase.js';
@@ -41,7 +42,7 @@ export default function App() {
   // Default landing view for an authenticated user is the dashboard so returning
   // users see their existing site (and free-plan limit) instead of being dropped
   // back into the wizard. New users with zero sites see the "Build My Site" CTA there.
-  const [view, setView] = useState('dashboard'); // 'wizard' | 'dashboard' | 'admin' | 'bookings-page' | 'customers' | 'customer-detail' | 'booking-settings' | 'profile'
+  const [view, setView] = useState('dashboard'); // 'wizard' | 'dashboard' | 'admin' | 'bookings-page' | 'customers' | 'customer-detail' | 'booking-settings' | 'profile' | 'payments-connect'
   const [settingsSiteId, setSettingsSiteId] = useState(null);
   const [selectedCustomerKey, setSelectedCustomerKey] = useState(null);
   const [showResetPassword, setShowResetPassword] = useState(false);
@@ -281,6 +282,8 @@ export default function App() {
     await supabase.auth.signOut();
   };
 
+  const goPaymentsConnect = useCallback(() => { setView('payments-connect'); }, []);
+
   const handleEditSite = async (site) => {
     setSiteId(site.id);
     setBusinessType(site.business_info?.businessType || null);
@@ -335,6 +338,7 @@ export default function App() {
           onOpenCustomers={() => setView('customers')}
           onOpenAdmin={() => setView('admin')}
           onOpenProfile={() => setView('profile')}
+          onOpenPaymentsConnect={goPaymentsConnect}
           onSignOut={handleSignOut}
         />
         <HelpChrome profile={profile} />
@@ -353,6 +357,7 @@ export default function App() {
           onOpenBookings={() => setView('bookings-page')}
           onOpenAdmin={() => setView('admin')}
           onOpenProfile={() => setView('profile')}
+          onOpenPaymentsConnect={goPaymentsConnect}
           onOpenCustomerDetail={(key) => { setSelectedCustomerKey(key); setView('customer-detail'); }}
           onSignOut={handleSignOut}
         />
@@ -374,6 +379,7 @@ export default function App() {
           onOpenBookings={() => { setSelectedCustomerKey(null); setView('bookings-page'); }}
           onOpenAdmin={() => { setSelectedCustomerKey(null); setView('admin'); }}
           onOpenProfile={() => { setSelectedCustomerKey(null); setView('profile'); }}
+          onOpenPaymentsConnect={() => { setSelectedCustomerKey(null); setView('payments-connect'); }}
           onSignOut={handleSignOut}
         />
         <HelpChrome profile={profile} />
@@ -391,6 +397,7 @@ export default function App() {
           onOpenCustomers={() => { setSettingsSiteId(null); setView('customers'); }}
           onOpenAdmin={() => { setSettingsSiteId(null); setView('admin'); }}
           onOpenProfile={() => { setSettingsSiteId(null); setView('profile'); }}
+          onOpenPaymentsConnect={() => { setSettingsSiteId(null); setView('payments-connect'); }}
           onSignOut={handleSignOut}
         />
         <HelpChrome profile={profile} />
@@ -406,6 +413,7 @@ export default function App() {
           onOpenBookings={() => setView('bookings-page')}
           onOpenCustomers={() => setView('customers')}
           onOpenProfile={() => setView('profile')}
+          onOpenPaymentsConnect={goPaymentsConnect}
           onSignOut={handleSignOut}
         />
         <HelpChrome profile={profile} />
@@ -421,6 +429,27 @@ export default function App() {
           onOpenBookings={() => setView('bookings-page')}
           onOpenCustomers={() => setView('customers')}
           onOpenAdmin={() => setView('admin')}
+          onOpenPaymentsConnect={goPaymentsConnect}
+          onSignOut={handleSignOut}
+        />
+        <HelpChrome profile={profile} />
+      </>
+    );
+  }
+
+  if (view === 'payments-connect') {
+    return (
+      <>
+        <PaymentsConnectPage
+          userId={session?.user?.id}
+          profile={profile}
+          userEmail={session?.user?.email}
+          onExit={() => setView('dashboard')}
+          onOpenBookings={() => setView('bookings-page')}
+          onOpenCustomers={() => setView('customers')}
+          onOpenAdmin={() => setView('admin')}
+          onOpenProfile={() => setView('profile')}
+          onOpenPaymentsConnect={goPaymentsConnect}
           onSignOut={handleSignOut}
         />
         <HelpChrome profile={profile} />
@@ -441,6 +470,7 @@ export default function App() {
           onOpenBookings={() => setView('bookings-page')}
           onOpenCustomers={() => setView('customers')}
           onOpenProfile={() => setView('profile')}
+          onOpenPaymentsConnect={goPaymentsConnect}
           onOpenBookingSettings={(siteId) => { setSettingsSiteId(siteId); setView('booking-settings'); }}
         />
         <HelpChrome profile={profile} />

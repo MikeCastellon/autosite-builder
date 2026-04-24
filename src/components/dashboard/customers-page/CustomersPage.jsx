@@ -41,6 +41,7 @@ export default function CustomersPage({
   onOpenBookings,
   onOpenAdmin,
   onOpenProfile,
+  onOpenPaymentsConnect,
   onOpenCustomerDetail,
   onSignOut,
 }) {
@@ -53,6 +54,7 @@ export default function CustomersPage({
     onOpenCustomers: () => {},
     onOpenAdmin,
     onOpenProfile,
+    onOpenPaymentsConnect,
     onSignOut,
   };
 
