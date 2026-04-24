@@ -3,12 +3,13 @@ import { TEMPLATE_COMPONENT_MAP } from '../../data/templates.js';
 import { normalizeBusinessInfo } from '../../lib/normalizeBusinessInfo.js';
 import PreviewToolbar from './PreviewToolbar.jsx';
 import ContentEditor from './ContentEditor.jsx';
+import EditorTour from '../onboarding/EditorTour.jsx';
 import { useAuth } from '../../lib/AuthContext.jsx';
 import { isEffectiveSchedulerActive } from '../../lib/subscriptionGating.js';
 
 const ACG_LOGO = 'https://www.autocaregenius.com/cdn/shop/files/v11_1.svg?v=1760731533&width=160';
 
-export default function WebsitePreview({ businessInfo, onBusinessInfoChange, generatedCopy, editedCopy, onEditedCopyChange, images, onImagesChange, templateId, templateMeta, customColors, onCustomColors, customFonts, onCustomFonts, onBack, backLabel, onExport, onStartOver, onSwitchTemplate, isDemoPreview }) {
+export default function WebsitePreview({ businessInfo, onBusinessInfoChange, generatedCopy, editedCopy, onEditedCopyChange, images, onImagesChange, templateId, templateMeta, customColors, onCustomColors, customFonts, onCustomFonts, onBack, backLabel, onExport, onStartOver, onSwitchTemplate, isDemoPreview, editingExistingSite }) {
   const { profile } = useAuth();
   const isPro = isEffectiveSchedulerActive(profile);
   const normalizedInfo = useMemo(() => normalizeBusinessInfo(businessInfo), [businessInfo]);
@@ -37,6 +38,7 @@ export default function WebsitePreview({ businessInfo, onBusinessInfoChange, gen
 
   return (
     <div className="min-h-screen bg-gray-900">
+      {!isDemoPreview && <EditorTour editorOpen={editorOpen} editingExistingSite={editingExistingSite} />}
       <PreviewToolbar
         viewMode={viewMode}
         onViewMode={setViewMode}

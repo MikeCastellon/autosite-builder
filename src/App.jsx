@@ -512,6 +512,7 @@ export default function App() {
           autoSave({ templateId: newTemplateId, customColors: {}, customFonts: {} });
         }}
         isDemoPreview={isDemoPreview}
+        editingExistingSite={editingExistingSite}
       />
       <HelpChrome profile={profile} />
       </>

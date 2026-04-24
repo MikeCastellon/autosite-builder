@@ -33,6 +33,7 @@ export default function PreviewToolbar({ viewMode, onViewMode, onBack, backLabel
       <div className="flex items-center gap-2 shrink-0">
         <button
           onClick={onEdit}
+          data-tour="edit-btn"
           className={`flex items-center gap-1.5 text-[13px] font-medium px-4 py-2 rounded-lg border transition-all ${
             editorOpen
               ? 'bg-gray-900 text-white border-gray-900'
@@ -47,6 +48,7 @@ export default function PreviewToolbar({ viewMode, onViewMode, onBack, backLabel
         {!isDemoPreview && onExport && (
           <button
             onClick={onExport}
+            data-tour="finalize-btn"
             className="bg-gray-900 hover:bg-gray-800 text-white text-[13px] font-semibold px-3 sm:px-4 py-2 rounded-lg transition-colors"
           >
             <span className="hidden sm:inline">Finalize Website</span>

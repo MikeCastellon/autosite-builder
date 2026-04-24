@@ -250,15 +250,26 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
       <main className="max-w-5xl mx-auto px-6 py-12">
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-3xl sm:text-4xl font-black text-[#1a1a1a] tracking-tight">Your Site</h2>
-          {!isPro && (
-            <button
-              type="button"
-              onClick={() => setProDialogOpen(true)}
-              className="text-xs text-[#888] bg-black/5 hover:bg-black/10 px-4 py-2 rounded-lg transition-colors"
-            >
-              Free plan
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {canCreateSite && sites.length > 0 && (
+              <button
+                type="button"
+                onClick={onNewSite}
+                className="text-xs font-semibold text-white bg-[#cc0000] hover:bg-[#aa0000] px-4 py-2 rounded-lg transition-colors"
+              >
+                + New Site
+              </button>
+            )}
+            {!isPro && (
+              <button
+                type="button"
+                onClick={() => setProDialogOpen(true)}
+                className="text-xs text-[#888] bg-black/5 hover:bg-black/10 px-4 py-2 rounded-lg transition-colors"
+              >
+                Free plan
+              </button>
+            )}
+          </div>
         </div>
 
         {loading ? (

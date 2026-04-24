@@ -424,6 +424,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
             <button
               key={s.id}
               type="button"
+              data-tour={`tab-${s.id}`}
               onClick={(e) => { e.stopPropagation(); setActiveSection(s.id); }}
               className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
                 activeSection === s.id
