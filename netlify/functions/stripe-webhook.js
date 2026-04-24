@@ -34,11 +34,29 @@ export const handler = async (event) => {
 
   const stripe = getStripe();
 
+  // We have two webhook endpoints in Stripe pointing at the same URL:
+  //   - the platform endpoint (subscriptions, invoices, etc.) using STRIPE_WEBHOOK_SECRET
+  //   - the Connect endpoint (account.updated for connected accounts) using STRIPE_CONNECT_WEBHOOK_SECRET
+  // Each delivery is signed with its endpoint's own secret, so we try both
+  // and accept whichever validates. This is Stripe's documented pattern when
+  // a single function handles platform + Connect events.
+  const secrets = [
+    process.env.STRIPE_WEBHOOK_SECRET,
+    process.env.STRIPE_CONNECT_WEBHOOK_SECRET,
+  ].filter(Boolean);
+
   let stripeEvent;
-  try {
-    stripeEvent = stripe.webhooks.constructEvent(rawBody, signature, process.env.STRIPE_WEBHOOK_SECRET);
-  } catch (err) {
-    console.warn('[stripe-webhook] signature verification failed:', err.message);
+  let lastErr;
+  for (const secret of secrets) {
+    try {
+      stripeEvent = stripe.webhooks.constructEvent(rawBody, signature, secret);
+      break;
+    } catch (err) {
+      lastErr = err;
+    }
+  }
+  if (!stripeEvent) {
+    console.warn('[stripe-webhook] signature verification failed against all secrets:', lastErr?.message);
     return fail(400, { error: 'Invalid signature' });
   }
 
