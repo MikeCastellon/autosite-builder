@@ -12,6 +12,8 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@stripe/connect-js": "^3.3.35",
+    "@stripe/react-connect-js": "^3.3.34",
     "@supabase/supabase-js": "^2.99.3",
     "date-fns": "^3.6.0",
     "jose": "^5.10.0",
