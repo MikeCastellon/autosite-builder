@@ -4,32 +4,37 @@ const STEPS = [
   {
     selector: 'edit-btn',
     placement: 'below-right',
-    copy: 'Click Edit to start customizing your site.',
+    copy: 'Click Edit to open the customization panel. You can also hit Next to keep going.',
   },
   {
     selector: 'tab-visibility',
     placement: 'left',
-    copy: 'Toggle which sections appear on your site, and drag to reorder them.',
+    autoClick: true,
+    copy: "Sections lets you toggle which parts of your site are visible, and drag to reorder. Anything hidden won't appear when you publish.",
   },
   {
     selector: 'tab-hero',
     placement: 'left',
-    copy: 'Change your headline, main photo, and upload your business logo here.',
+    autoClick: true,
+    copy: 'The Hero is the banner at the top of your site. Edit your headline, subheadline, hero photo, business logo, and your primary and secondary CTA buttons here.',
   },
   {
     selector: 'tab-services',
     placement: 'left',
-    copy: 'List what your business does. This is where most of your content lives.',
+    autoClick: true,
+    copy: 'List what your business does. Each service has an icon, title, and description. Add or remove services to match what you actually offer.',
   },
   {
     selector: 'tab-gallery',
     placement: 'left',
-    copy: 'Add photos here. The Gallery section stays hidden on your site until you upload at least one.',
+    autoClick: true,
+    copy: "Upload photos of your work. The Gallery section stays hidden on your live site until you add at least one photo.",
   },
   {
     selector: 'tab-colors',
     placement: 'left',
-    copy: 'Change your brand colors. Updates preview live.',
+    autoClick: true,
+    copy: 'Pick your brand colors — background, accent, text, surface, and muted text. Click a swatch to change, and changes apply live on the preview.',
   },
   {
     selector: 'finalize-btn',
@@ -44,6 +49,8 @@ const POLL_INTERVAL_MS = 150;
 const WATCHDOG_MS = 3000;
 
 export default function EditorTour() {
+  // `welcome` shows the intro modal; `tour` runs the step machine.
+  const [phase, setPhase] = useState('welcome');
   const [stepIdx, setStepIdx] = useState(0);
   const [rect, setRect] = useState(null);
   const [error, setError] = useState(false);
@@ -51,12 +58,12 @@ export default function EditorTour() {
     try {
       return localStorage.getItem(FLAG_KEY) === '1';
     } catch {
-      return true; // localStorage unavailable → skip tour
+      return true;
     }
   });
 
-  // Must be declared BEFORE any hook that references `step` in its dep array,
-  // so it exists on every render (hooks run before conditional returns).
+  // Declared BEFORE any hook that references it in a dep array, so it exists
+  // on every render (hooks run before conditional returns).
   const step = STEPS[stepIdx];
 
   const markDone = () => {
@@ -64,9 +71,11 @@ export default function EditorTour() {
     setDismissed(true);
   };
 
-  // Step 3: Target polling with watchdog
+  const startTour = () => setPhase('tour');
+
+  // Target polling with watchdog, plus auto-click when the step asks for it.
   useEffect(() => {
-    if (dismissed) return;
+    if (dismissed || phase !== 'tour') return;
 
     setRect(null);
     setError(false);
@@ -80,6 +89,10 @@ export default function EditorTour() {
         clearInterval(poll);
         clearTimeout(watchdog);
         setRect(el.getBoundingClientRect());
+        // Auto-open the tab so its content is visible while the tooltip
+        // describes it. Synthetic clicks have isTrusted=false, which the
+        // click-on-target listener uses to skip advancing.
+        if (step.autoClick) el.click();
       }
     }, POLL_INTERVAL_MS);
 
@@ -94,11 +107,11 @@ export default function EditorTour() {
       clearInterval(poll);
       clearTimeout(watchdog);
     };
-  }, [stepIdx, dismissed, step.selector]);
+  }, [phase, stepIdx, dismissed, step.selector, step.autoClick]);
 
-  // Step 4: Position-recalc listeners
+  // Position-recalc listeners
   useEffect(() => {
-    if (dismissed) return;
+    if (dismissed || phase !== 'tour') return;
 
     const update = () => {
       const el = document.querySelector(`[data-tour="${step.selector}"]`);
@@ -121,9 +134,8 @@ export default function EditorTour() {
       mo.disconnect();
       clearTimeout(mutTimer);
     };
-  }, [dismissed, step.selector]);
+  }, [phase, dismissed, step.selector]);
 
-  // Step 5: Advance + dismiss handlers
   const advance = () => {
     setStepIdx((i) => {
       if (i >= STEPS.length - 1) {
@@ -134,38 +146,37 @@ export default function EditorTour() {
     });
   };
 
-  // Click-on-target detection — use capture so our listener sees the click
-  // before React's synthetic handler (we don't swallow the click, just advance)
+  // Click-on-target advance. Capture phase + isTrusted filter keeps our own
+  // synthetic auto-clicks from falsely advancing the tour.
   useEffect(() => {
-    if (dismissed || !rect) return;
+    if (dismissed || phase !== 'tour' || !rect) return;
 
     const onDocClick = (e) => {
+      if (!e.isTrusted) return;
       const el = document.querySelector(`[data-tour="${step.selector}"]`);
-      if (el && el.contains(e.target)) {
-        advance();
-      }
+      if (el && el.contains(e.target)) advance();
     };
     document.addEventListener('click', onDocClick, true);
     return () => document.removeEventListener('click', onDocClick, true);
-  }, [dismissed, rect, step.selector, stepIdx]);
+  }, [phase, dismissed, rect, step.selector, stepIdx]);
 
-  // Keyboard: Enter = advance, Esc = dismiss
+  // Keyboard. During welcome: Enter starts, Esc skips. During tour: Enter
+  // advances, Esc dismisses.
   useEffect(() => {
     if (dismissed) return;
-
     const onKey = (e) => {
       if (e.key === 'Escape') {
         markDone();
       } else if (e.key === 'Enter') {
         e.preventDefault();
-        advance();
+        if (phase === 'welcome') startTour();
+        else advance();
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [dismissed, stepIdx]);
+  }, [phase, dismissed, stepIdx]);
 
-  // Step 6: Compute tooltip position from rect + placement
   const tooltipPos = (() => {
     if (!rect) return null;
     const gap = 12;
@@ -175,16 +186,13 @@ export default function EditorTour() {
 
     let top, left;
     if (step.placement === 'below-right') {
-      // tooltip below the target, right edge aligned
       top = rect.bottom + gap;
       left = rect.right - TOOLTIP_WIDTH;
     } else {
-      // 'left' placement: tooltip to the left of target, top aligned
       top = rect.top;
       left = rect.left - TOOLTIP_WIDTH - gap;
     }
 
-    // Clamp to viewport bounds (assume tooltip height ≤ 200 for top clamp)
     left = Math.max(margin, Math.min(left, vw - TOOLTIP_WIDTH - margin));
     top = Math.max(margin, Math.min(top, vh - 200 - margin));
 
@@ -193,16 +201,52 @@ export default function EditorTour() {
 
   if (dismissed) return null;
 
-  // Step 7: Render overlay + tooltip
+  // Welcome modal
+  if (phase === 'welcome') {
+    return (
+      <div
+        className="fixed inset-0 flex items-center justify-center"
+        style={{ zIndex: 10000, background: 'rgba(0, 0, 0, 0.5)' }}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="editor-tour-welcome-title"
+      >
+        <div className="bg-white rounded-xl shadow-2xl p-6 mx-4" style={{ width: 380, maxWidth: 'calc(100vw - 32px)' }}>
+          <h2 id="editor-tour-welcome-title" className="text-[18px] font-bold text-gray-900 mb-2">
+            Welcome to the editor
+          </h2>
+          <p className="text-[13px] text-gray-600 mb-5 leading-relaxed">
+            This quick tutorial walks you through how to customize your site —
+            your hero, services, gallery, colors, and more. Follow along with
+            the highlighted steps, or skip and explore on your own.
+          </p>
+          <div className="flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={markDone}
+              className="text-[12px] text-gray-400 hover:text-gray-700 transition-colors"
+            >
+              Skip for now
+            </button>
+            <button
+              type="button"
+              onClick={startTour}
+              className="bg-gray-900 hover:bg-gray-800 text-white text-[13px] font-semibold px-4 py-2 rounded-md transition-colors"
+            >
+              Start tutorial
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className="fixed inset-0 pointer-events-none"
       style={{ zIndex: 10000 }}
       aria-live="polite"
     >
-      {/* Full-screen translucent backdrop with a rectangular cutout around the target.
-          box-shadow trick: the inner rect has no background, the outer 9999px shadow
-          paints the surrounding darkness. */}
       {rect && !error && (
         <div
           className="absolute transition-all duration-150"
@@ -218,7 +262,6 @@ export default function EditorTour() {
         />
       )}
 
-      {/* Solid backdrop for the error state (no cutout, just dim everything) */}
       {error && (
         <div
           className="absolute inset-0"
@@ -226,7 +269,6 @@ export default function EditorTour() {
         />
       )}
 
-      {/* Tooltip */}
       {(tooltipPos || error) && (
         <div
           className="absolute bg-white rounded-lg shadow-2xl border border-gray-200 p-4 pointer-events-auto"
@@ -240,7 +282,7 @@ export default function EditorTour() {
           <div className="text-[11px] text-gray-400 mb-1">
             {error ? 'Something went wrong' : `${stepIdx + 1} of ${STEPS.length}`}
           </div>
-          <div className="text-[13px] text-gray-700 mb-3">
+          <div className="text-[13px] text-gray-700 mb-3 leading-relaxed">
             {error
               ? "Couldn't find the next step. You can skip the tour and explore on your own."
               : step.copy}
