@@ -206,7 +206,11 @@ export default function CustomerDetailPage({
   return (
     <div className="min-h-screen bg-[#faf9f7]">
       <AppHeader {...headerProps} />
-      <SubscribeGate profile={profile}>
+      <SubscribeGate
+        profile={profile}
+        heading="Customers is a Pro feature"
+        subheading="Customer management relies on the Pro scheduler — upgrade to unlock it along with bookings and everything else in Pro."
+      >
         <main className="max-w-5xl mx-auto px-6 py-10">
           <button
             onClick={onBackToCustomers}

@@ -5,7 +5,16 @@ import UpgradeProPanel from '../../ui/UpgradeProPanel.jsx';
 // Children stay rendered underneath so customers see what they're missing —
 // the upgrade panel floats centered on top with a soft backdrop. Pro users
 // get an unobstructed page.
-export default function SubscribeGate({ profile, children }) {
+//
+// Props `heading` and `subheading` customize the upgrade panel's copy so the
+// same gate can wrap different Pro-only pages (Bookings, Customers, etc.)
+// with page-specific messaging.
+export default function SubscribeGate({
+  profile,
+  children,
+  heading = 'Bookings is a Pro feature',
+  subheading = 'Unlock the calendar behind this overlay — plus everything else included with Pro.',
+}) {
   const showCard = shouldShowUpgradeCard(profile);
   const pastDue = profile?.subscription_status === 'past_due';
 
@@ -37,8 +46,8 @@ export default function SubscribeGate({ profile, children }) {
             </div>
           )}
           <UpgradeProPanel
-            heading="Bookings is a Pro feature"
-            subheading="Unlock the calendar behind this overlay — plus everything else included with Pro."
+            heading={heading}
+            subheading={subheading}
           />
         </div>
       </div>

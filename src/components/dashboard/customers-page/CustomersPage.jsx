@@ -148,7 +148,11 @@ export default function CustomersPage({
   return (
     <div className="min-h-screen bg-[#faf9f7]">
       <AppHeader {...headerProps} />
-      <SubscribeGate profile={profile}>
+      <SubscribeGate
+        profile={profile}
+        heading="Customers is a Pro feature"
+        subheading="Customer management relies on the Pro scheduler — upgrade to unlock it along with bookings and everything else in Pro."
+      >
         <main className="max-w-5xl mx-auto px-6 py-10">
           <header className="mb-6">
             <h1 className="text-3xl sm:text-4xl font-black text-[#1a1a1a] tracking-[-0.5px]">Customers</h1>
