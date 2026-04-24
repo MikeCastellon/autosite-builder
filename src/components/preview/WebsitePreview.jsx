@@ -9,8 +9,13 @@ import { isEffectiveSchedulerActive } from '../../lib/subscriptionGating.js';
 
 const ACG_LOGO = 'https://www.autocaregenius.com/cdn/shop/files/v11_1.svg?v=1760731533&width=160';
 
+// Gate the editor tour to specific accounts while we dog-food the new custom
+// implementation. Remove the email check once we're confident to roll out widely.
+const EDITOR_TOUR_ALLOWED_EMAILS = ['dev@639hz.com'];
+
 export default function WebsitePreview({ businessInfo, onBusinessInfoChange, generatedCopy, editedCopy, onEditedCopyChange, images, onImagesChange, templateId, templateMeta, customColors, onCustomColors, customFonts, onCustomFonts, onBack, backLabel, onExport, onStartOver, onSwitchTemplate, isDemoPreview, editingExistingSite }) {
-  const { profile } = useAuth();
+  const { session, profile } = useAuth();
+  const tourAllowed = EDITOR_TOUR_ALLOWED_EMAILS.includes(session?.user?.email);
   const isPro = isEffectiveSchedulerActive(profile);
   const normalizedInfo = useMemo(() => normalizeBusinessInfo(businessInfo), [businessInfo]);
   const [viewMode, setViewMode] = useState('desktop');
@@ -44,7 +49,7 @@ export default function WebsitePreview({ businessInfo, onBusinessInfoChange, gen
 
   return (
     <div className="min-h-screen bg-gray-900">
-      {!editingExistingSite && !isDemoPreview && <EditorTour />}
+      {tourAllowed && !editingExistingSite && !isDemoPreview && <EditorTour />}
       <PreviewToolbar
         viewMode={viewMode}
         onViewMode={setViewMode}
