@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase.js';
 import { useAuth } from '../../lib/AuthContext.jsx';
+import { isEffectiveSchedulerActive } from '../../lib/subscriptionGating.js';
+import UpgradeProPanel from '../ui/UpgradeProPanel.jsx';
 
 const SOCIALFEEDS_URL = import.meta.env.VITE_SOCIALFEEDS_URL || 'https://social-feeds-app.netlify.app';
 const PLACES_SEARCH_URL = '/.netlify/functions/places-search';
 
 export default function StepSocialFeeds({ selectedWidgetIds, onWidgetIdsChange, onNext, onBack, onWidgetKeysChange }) {
-  const { session } = useAuth();
+  const { session, profile } = useAuth();
+  const isPro = isEffectiveSchedulerActive(profile);
   const [widgets, setWidgets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -159,56 +162,66 @@ export default function StepSocialFeeds({ selectedWidgetIds, onWidgetIdsChange, 
             </button>
           </div>
 
-          {/* Google Reviews section */}
-          <div className="border border-black/[0.07] rounded-xl p-4 mb-6 bg-white">
-            <p className="text-xs font-semibold text-[#1a1a1a] uppercase tracking-wider mb-3">Google Reviews</p>
-            {googleWidgets.length > 0 && (
-              <div className="space-y-2 mb-3">
-                {googleWidgets.map((w) => (
-                  <label key={w.id} className="flex items-center gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={selectedWidgetIds.includes(w.id)}
-                      onChange={() => toggleWidget(w.id)}
-                      className="accent-[#cc0000]"
-                    />
-                    <span className="text-sm text-[#1a1a1a]">{w.label || w.place_id}</span>
-                  </label>
-                ))}
-              </div>
-            )}
-            <form onSubmit={handleSearchGoogle} className="flex gap-2">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search your business name"
-                className="flex-1 border border-black/10 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#cc0000]/30"
+          {/* Google Reviews section — gated to Pro */}
+          {isPro ? (
+            <div className="border border-black/[0.07] rounded-xl p-4 mb-6 bg-white">
+              <p className="text-xs font-semibold text-[#1a1a1a] uppercase tracking-wider mb-3">Google Reviews</p>
+              {googleWidgets.length > 0 && (
+                <div className="space-y-2 mb-3">
+                  {googleWidgets.map((w) => (
+                    <label key={w.id} className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedWidgetIds.includes(w.id)}
+                        onChange={() => toggleWidget(w.id)}
+                        className="accent-[#cc0000]"
+                      />
+                      <span className="text-sm text-[#1a1a1a]">{w.label || w.place_id}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+              <form onSubmit={handleSearchGoogle} className="flex gap-2">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search your business name"
+                  className="flex-1 border border-black/10 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#cc0000]/30"
+                />
+                <button
+                  type="submit"
+                  disabled={searching}
+                  className="px-4 py-2 bg-[#1a1a1a] hover:bg-[#cc0000] text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                >
+                  {searching ? '...' : 'Search'}
+                </button>
+              </form>
+              {searchResults.length > 0 && (
+                <div className="mt-2 border border-black/[0.07] rounded-lg divide-y divide-black/[0.05]">
+                  {searchResults.map((r) => (
+                    <button
+                      key={r.place_id}
+                      onClick={() => handleSelectGoogleBusiness(r)}
+                      disabled={savingGoogle}
+                      className="w-full text-left px-3 py-2.5 hover:bg-[#faf9f7] transition-colors"
+                    >
+                      <p className="text-sm font-medium text-[#1a1a1a]">{r.name}</p>
+                      <p className="text-xs text-[#888]">{r.address}</p>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="mb-6">
+              <p className="text-xs font-semibold text-[#1a1a1a] uppercase tracking-wider mb-3">Google Reviews</p>
+              <UpgradeProPanel
+                heading="Google Reviews is a Pro feature"
+                subheading="Show your real Google reviews on your site — plus everything else in Pro."
               />
-              <button
-                type="submit"
-                disabled={searching}
-                className="px-4 py-2 bg-[#1a1a1a] hover:bg-[#cc0000] text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-              >
-                {searching ? '...' : 'Search'}
-              </button>
-            </form>
-            {searchResults.length > 0 && (
-              <div className="mt-2 border border-black/[0.07] rounded-lg divide-y divide-black/[0.05]">
-                {searchResults.map((r) => (
-                  <button
-                    key={r.place_id}
-                    onClick={() => handleSelectGoogleBusiness(r)}
-                    disabled={savingGoogle}
-                    className="w-full text-left px-3 py-2.5 hover:bg-[#faf9f7] transition-colors"
-                  >
-                    <p className="text-sm font-medium text-[#1a1a1a]">{r.name}</p>
-                    <p className="text-xs text-[#888]">{r.address}</p>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+            </div>
+          )}
         </>
       )}
 
