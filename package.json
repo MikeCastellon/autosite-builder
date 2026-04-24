@@ -16,8 +16,7 @@
     "date-fns": "^3.6.0",
     "jose": "^5.10.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-joyride": "^3.0.2"
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",

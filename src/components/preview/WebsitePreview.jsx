@@ -16,6 +16,12 @@ export default function WebsitePreview({ businessInfo, onBusinessInfoChange, gen
   const [viewMode, setViewMode] = useState('desktop');
   const [editorOpen, setEditorOpen] = useState(false);
 
+  useEffect(() => {
+    if (editingExistingSite) {
+      try { localStorage.setItem('editor_tour_done', '1'); } catch { /* ignore */ }
+    }
+  }, [editingExistingSite]);
+
   // Pin the preview to the top whenever we land on a new template. Browser
   // scroll-restoration + templates with 100vh heroes otherwise leave the page
   // offset a few dozen pixels down on first render.
@@ -38,7 +44,7 @@ export default function WebsitePreview({ businessInfo, onBusinessInfoChange, gen
 
   return (
     <div className="min-h-screen bg-gray-900">
-      {!isDemoPreview && <EditorTour editorOpen={editorOpen} editingExistingSite={editingExistingSite} />}
+      {!editingExistingSite && !isDemoPreview && <EditorTour />}
       <PreviewToolbar
         viewMode={viewMode}
         onViewMode={setViewMode}
