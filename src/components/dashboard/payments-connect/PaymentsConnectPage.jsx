@@ -95,14 +95,12 @@ export default function PaymentsConnectPage({
         subheading="Connect your Stripe account to take deposits, charge customers, and get paid out."
       >
         <main className="max-w-3xl mx-auto px-6 py-10">
-          <div className="flex items-start justify-between gap-4 mb-6">
-            <div>
+          <div className="mb-6">
+            <div className="flex items-center justify-between gap-4">
               <h1 className="text-2xl font-bold text-ink-primary leading-tight">Payments</h1>
-              <p className="text-sm text-ink-secondary mt-1">Connect your Stripe account to accept deposits and charge customers directly from your phone.</p>
-            </div>
-            <div className="shrink-0 pt-2">
               <ConnectStatusBadge profile={profile} />
             </div>
+            <p className="text-sm text-ink-secondary mt-1">Connect your Stripe account to accept deposits and charge customers directly from your phone.</p>
           </div>
 
           {fullyConnected ? (
