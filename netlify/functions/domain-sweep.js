@@ -2,7 +2,8 @@ import { supabaseAdmin } from './_shared/auth.js';
 import { sendPostmarkEmail } from './_shared/postmark.js';
 
 // Probes pending custom domains every few minutes, flips them to active_ssl
-// once they respond over HTTPS, and emails the owner when that happens.
+// once they respond over HTTPS from Netlify, and emails the owner on the
+// pending_dns/active_dns → active_ssl transition.
 export const handler = async () => {
   const admin = supabaseAdmin();
 
@@ -10,22 +11,47 @@ export const handler = async () => {
     .from('sites')
     .select('id, custom_domain, custom_domain_status, user_id')
     .not('custom_domain', 'is', null)
-    .in('custom_domain_status', ['pending_dns', 'verifying']);
+    .in('custom_domain_status', ['pending_dns', 'active_dns']);
 
   if (!sites?.length) return { statusCode: 200, body: 'no sites to sweep' };
 
+  const isNetlifyResponse = (res) => {
+    const nfReqId = res.headers.get('x-nf-request-id');
+    const serverHdr = res.headers.get('server') || '';
+    return !!nfReqId || /netlify/i.test(serverHdr);
+  };
+
   for (const site of sites) {
     try {
+      // Two-stage probe: HTTPS first (real active_ssl), then HTTP fallback
+      // to distinguish "DNS done, SSL still provisioning" from "DNS not set."
+      // Requires a Netlify response marker — prevents parking pages from
+      // being marked live.
       let status = 'pending_dns';
+      let httpsFromNetlify = false;
       try {
-        const probe = await fetch(`https://www.${site.custom_domain}`, {
+        const httpsRes = await fetch(`https://www.${site.custom_domain}`, {
           method: 'HEAD',
           redirect: 'manual',
           signal: AbortSignal.timeout(8000),
         });
-        status = probe.status < 500 ? 'active_ssl' : 'verifying';
-      } catch {
-        status = 'verifying';
+        httpsFromNetlify = isNetlifyResponse(httpsRes);
+        if (httpsFromNetlify && httpsRes.status < 400) {
+          status = 'active_ssl';
+        }
+      } catch { /* SSL handshake failed or connection refused */ }
+
+      if (status !== 'active_ssl') {
+        try {
+          const httpRes = await fetch(`http://www.${site.custom_domain}`, {
+            method: 'HEAD',
+            redirect: 'manual',
+            signal: AbortSignal.timeout(8000),
+          });
+          if (isNetlifyResponse(httpRes)) {
+            status = 'active_dns';
+          }
+        } catch { /* unreachable — leave as pending_dns */ }
       }
 
       const prev = site.custom_domain_status;
