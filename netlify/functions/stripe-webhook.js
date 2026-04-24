@@ -7,6 +7,7 @@ import {
   handleInvoicePaymentFailed,
   handleInvoicePaymentSucceeded,
 } from './_lib/stripe-event-handlers.js';
+import { handleAccountUpdated } from './_lib/stripe-connect-handler.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -58,6 +59,9 @@ export const handler = async (event) => {
         break;
       case 'invoice.payment_succeeded':
         await handleInvoicePaymentSucceeded(stripeEvent, { db });
+        break;
+      case 'account.updated':
+        await handleAccountUpdated(stripeEvent, { db });
         break;
       default:
         // No-op for events we don't subscribe to — return 200 to stop retries.
