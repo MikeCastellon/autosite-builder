@@ -1,65 +1,105 @@
 import { useEffect, useState } from 'react';
 
+// Pro Hub brand tokens (prohub.autocaregenius.com)
+const BRAND_INK = '#1A1A1A';           // near-black body/headings/primary button
+const BRAND_RED = '#CC0000';           // accent
+const BRAND_RED_SOFT = 'rgba(204, 0, 0, 0.06)'; // red pill fill
+const BRAND_RADIUS = 8;                // button radius
+const BRAND_PILL_RADIUS = 100;         // pill / badge radius
+
 const STEPS = [
   {
     selector: 'edit-btn',
     placement: 'below-right',
-    copy: 'Click Edit to open the customization panel. You can also hit Next to keep going.',
+    copy: 'Click Edit to open the customization panel. You can also hit Next to keep moving.',
   },
   {
     selector: 'tab-visibility',
     placement: 'left',
     autoClick: true,
-    copy: "Sections lets you toggle which parts of your site are visible, and drag to reorder. Anything hidden won't appear when you publish.",
+    copy: "Toggle which sections appear on your site and drag to reorder. Hidden sections don't show up when you publish.",
   },
   {
     selector: 'tab-hero',
     placement: 'left',
     autoClick: true,
-    copy: 'The Hero is the banner at the top of your site. Edit your headline, subheadline, hero photo, business logo, and your primary and secondary CTA buttons here.',
+    copy: 'The Hero is the banner at the top of your site. Edit your headline, subheadline, hero photo, business logo, and your primary and secondary CTA buttons.',
   },
   {
     selector: 'tab-services',
     placement: 'left',
     autoClick: true,
-    copy: 'List what your business does. Each service has an icon, title, and description. Add or remove services to match what you actually offer.',
+    copy: 'List what your business offers. Each service has an icon, title, and description. Add or remove services to match what you actually do.',
+  },
+  {
+    selector: 'tab-about',
+    placement: 'left',
+    autoClick: true,
+    copy: 'Your story. Add an About headline and a paragraph describing your shop, experience, and values.',
   },
   {
     selector: 'tab-gallery',
     placement: 'left',
     autoClick: true,
-    copy: "Upload photos of your work. The Gallery section stays hidden on your live site until you add at least one photo.",
+    copy: 'Upload photos of your work. The Gallery section stays hidden on your live site until you add at least one photo.',
+  },
+  {
+    selector: 'tab-testimonials',
+    placement: 'left',
+    autoClick: true,
+    copy: 'Showcase reviews. Add quotes, names, and star ratings, or connect Google Reviews to pull live reviews automatically.',
+  },
+  {
+    selector: 'tab-contact',
+    placement: 'left',
+    autoClick: true,
+    copy: 'Configure your contact CTA — headline, subtext, primary button, and phone / secondary button link.',
   },
   {
     selector: 'tab-colors',
     placement: 'left',
     autoClick: true,
-    copy: 'Pick your brand colors — background, accent, text, surface, and muted text. Click a swatch to change, and changes apply live on the preview.',
+    copy: 'Pick your brand colors — background, accent, text, surface, and muted text. Click a swatch to change. Changes apply live.',
+  },
+  {
+    selector: 'tab-footer',
+    placement: 'left',
+    autoClick: true,
+    copy: 'Edit your footer tagline and choose which social icons (Instagram, Facebook, TikTok) appear.',
+  },
+  {
+    selector: 'tab-business',
+    placement: 'left',
+    autoClick: true,
+    optional: true,
+    copy: 'Update your business details — name, address, phone, hours, service areas, and specialties — without regenerating the site.',
+  },
+  {
+    selector: 'tab-template',
+    placement: 'left',
+    autoClick: true,
+    optional: true,
+    copy: 'Switch to a different template design anytime. Your content carries over automatically.',
   },
   {
     selector: 'finalize-btn',
     placement: 'below-right',
-    copy: "When you're happy with your site, click Finalize to publish it.",
+    copy: "When you're happy with your site, click Finalize Website to publish it.",
   },
 ];
 
 const FLAG_KEY = 'editor_tour_done';
-const TOOLTIP_WIDTH = 280;
+const TOOLTIP_WIDTH = 300;
 const POLL_INTERVAL_MS = 150;
 const WATCHDOG_MS = 3000;
 
 export default function EditorTour() {
-  // `welcome` shows the intro modal; `tour` runs the step machine.
-  const [phase, setPhase] = useState('welcome');
+  const [phase, setPhase] = useState('welcome'); // 'welcome' | 'tour'
   const [stepIdx, setStepIdx] = useState(0);
   const [rect, setRect] = useState(null);
   const [error, setError] = useState(false);
   const [dismissed, setDismissed] = useState(() => {
-    try {
-      return localStorage.getItem(FLAG_KEY) === '1';
-    } catch {
-      return true;
-    }
+    try { return localStorage.getItem(FLAG_KEY) === '1'; } catch { return true; }
   });
 
   // Declared BEFORE any hook that references it in a dep array, so it exists
@@ -73,7 +113,18 @@ export default function EditorTour() {
 
   const startTour = () => setPhase('tour');
 
-  // Target polling with watchdog, plus auto-click when the step asks for it.
+  const advance = () => {
+    setStepIdx((i) => {
+      if (i >= STEPS.length - 1) {
+        markDone();
+        return i;
+      }
+      return i + 1;
+    });
+  };
+
+  // Target polling with watchdog + auto-click. Optional steps silently advance
+  // instead of showing the error state if their target never appears.
   useEffect(() => {
     if (dismissed || phase !== 'tour') return;
 
@@ -99,7 +150,12 @@ export default function EditorTour() {
     const watchdog = setTimeout(() => {
       if (!found) {
         clearInterval(poll);
-        setError(true);
+        if (step.optional) {
+          // silently skip to next step
+          setStepIdx((i) => (i >= STEPS.length - 1 ? i : i + 1));
+        } else {
+          setError(true);
+        }
       }
     }, WATCHDOG_MS);
 
@@ -107,9 +163,9 @@ export default function EditorTour() {
       clearInterval(poll);
       clearTimeout(watchdog);
     };
-  }, [phase, stepIdx, dismissed, step.selector, step.autoClick]);
+  }, [phase, stepIdx, dismissed, step.selector, step.autoClick, step.optional]);
 
-  // Position-recalc listeners
+  // Position recalc
   useEffect(() => {
     if (dismissed || phase !== 'tour') return;
 
@@ -136,18 +192,8 @@ export default function EditorTour() {
     };
   }, [phase, dismissed, step.selector]);
 
-  const advance = () => {
-    setStepIdx((i) => {
-      if (i >= STEPS.length - 1) {
-        markDone();
-        return i;
-      }
-      return i + 1;
-    });
-  };
-
-  // Click-on-target advance. Capture phase + isTrusted filter keeps our own
-  // synthetic auto-clicks from falsely advancing the tour.
+  // Click-on-target advance. isTrusted filter keeps synthetic auto-clicks
+  // from falsely advancing.
   useEffect(() => {
     if (dismissed || phase !== 'tour' || !rect) return;
 
@@ -160,7 +206,7 @@ export default function EditorTour() {
     return () => document.removeEventListener('click', onDocClick, true);
   }, [phase, dismissed, rect, step.selector, stepIdx]);
 
-  // Keyboard. During welcome: Enter starts, Esc skips. During tour: Enter
+  // Keyboard: welcome phase — Enter starts, Esc skips. Tour phase — Enter
   // advances, Esc dismisses.
   useEffect(() => {
     if (dismissed) return;
@@ -194,46 +240,100 @@ export default function EditorTour() {
     }
 
     left = Math.max(margin, Math.min(left, vw - TOOLTIP_WIDTH - margin));
-    top = Math.max(margin, Math.min(top, vh - 200 - margin));
+    top = Math.max(margin, Math.min(top, vh - 220 - margin));
 
     return { top, left };
   })();
 
   if (dismissed) return null;
 
-  // Welcome modal
+  // Welcome modal — Pro Hub styling
   if (phase === 'welcome') {
     return (
       <div
         className="fixed inset-0 flex items-center justify-center"
-        style={{ zIndex: 10000, background: 'rgba(0, 0, 0, 0.5)' }}
+        style={{ zIndex: 10000, background: 'rgba(0, 0, 0, 0.55)' }}
         role="dialog"
         aria-modal="true"
         aria-labelledby="editor-tour-welcome-title"
       >
-        <div className="bg-white rounded-xl shadow-2xl p-6 mx-4" style={{ width: 380, maxWidth: 'calc(100vw - 32px)' }}>
-          <h2 id="editor-tour-welcome-title" className="text-[18px] font-bold text-gray-900 mb-2">
-            Welcome to the editor
+        <div
+          className="bg-white mx-4"
+          style={{
+            width: 420,
+            maxWidth: 'calc(100vw - 32px)',
+            borderRadius: 16,
+            padding: '28px 28px 24px',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.04)',
+          }}
+        >
+          {/* Red pill — mirrors the "AI-POWERED PLATFORM" badge on Pro Hub */}
+          <div
+            className="inline-block mb-5"
+            style={{
+              background: BRAND_RED_SOFT,
+              color: BRAND_RED,
+              borderRadius: BRAND_PILL_RADIUS,
+              padding: '6px 14px',
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: 0.8,
+              textTransform: 'uppercase',
+            }}
+          >
+            Tutorial
+          </div>
+
+          <h2
+            id="editor-tour-welcome-title"
+            style={{
+              color: BRAND_INK,
+              fontSize: 26,
+              fontWeight: 900,
+              lineHeight: 1.15,
+              marginBottom: 10,
+              letterSpacing: '-0.01em',
+            }}
+          >
+            Welcome to the editor.
           </h2>
-          <p className="text-[13px] text-gray-600 mb-5 leading-relaxed">
-            This quick tutorial walks you through how to customize your site —
-            your hero, services, gallery, colors, and more. Follow along with
-            the highlighted steps, or skip and explore on your own.
+          <p style={{ color: '#555', fontSize: 14, lineHeight: 1.55, marginBottom: 22 }}>
+            This quick tour walks you through every part of the editor — hero,
+            services, gallery, colors, and more. Follow the highlighted steps,
+            hit Next to move along, or skip and explore on your own.
           </p>
+
           <div className="flex items-center justify-between gap-3">
             <button
               type="button"
               onClick={markDone}
-              className="text-[12px] text-gray-400 hover:text-gray-700 transition-colors"
+              style={{
+                color: '#888',
+                fontSize: 13,
+                fontWeight: 500,
+                background: 'transparent',
+                border: 'none',
+                padding: '6px 2px',
+                cursor: 'pointer',
+              }}
             >
               Skip for now
             </button>
             <button
               type="button"
               onClick={startTour}
-              className="bg-gray-900 hover:bg-gray-800 text-white text-[13px] font-semibold px-4 py-2 rounded-md transition-colors"
+              style={{
+                background: BRAND_INK,
+                color: '#fff',
+                fontSize: 14,
+                fontWeight: 600,
+                padding: '10px 22px',
+                borderRadius: BRAND_RADIUS,
+                border: 'none',
+                cursor: 'pointer',
+              }}
             >
-              Start tutorial
+              Start tutorial →
             </button>
           </div>
         </div>
@@ -255,7 +355,7 @@ export default function EditorTour() {
             left: rect.left - 4,
             width: rect.width + 8,
             height: rect.height + 8,
-            boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
+            boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.55)',
             borderRadius: 8,
             pointerEvents: 'none',
           }}
@@ -265,33 +365,66 @@ export default function EditorTour() {
       {error && (
         <div
           className="absolute inset-0"
-          style={{ background: 'rgba(0, 0, 0, 0.5)', pointerEvents: 'auto' }}
+          style={{ background: 'rgba(0, 0, 0, 0.55)', pointerEvents: 'auto' }}
         />
       )}
 
       {(tooltipPos || error) && (
         <div
-          className="absolute bg-white rounded-lg shadow-2xl border border-gray-200 p-4 pointer-events-auto"
+          className="absolute bg-white pointer-events-auto"
           style={{
             width: TOOLTIP_WIDTH,
             top: error ? '50%' : tooltipPos.top,
             left: error ? '50%' : tooltipPos.left,
             transform: error ? 'translate(-50%, -50%)' : 'none',
+            borderRadius: 14,
+            padding: 18,
+            boxShadow: '0 20px 60px rgba(0,0,0,0.22), 0 0 0 1px rgba(0,0,0,0.04)',
           }}
         >
-          <div className="text-[11px] text-gray-400 mb-1">
-            {error ? 'Something went wrong' : `${stepIdx + 1} of ${STEPS.length}`}
+          {/* Red pill step counter */}
+          <div
+            className="inline-block mb-3"
+            style={{
+              background: BRAND_RED_SOFT,
+              color: BRAND_RED,
+              borderRadius: BRAND_PILL_RADIUS,
+              padding: '4px 10px',
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: 0.7,
+              textTransform: 'uppercase',
+            }}
+          >
+            {error ? 'Heads up' : `Step ${stepIdx + 1} of ${STEPS.length}`}
           </div>
-          <div className="text-[13px] text-gray-700 mb-3 leading-relaxed">
+
+          <div
+            style={{
+              color: BRAND_INK,
+              fontSize: 13.5,
+              lineHeight: 1.55,
+              marginBottom: 14,
+            }}
+          >
             {error
               ? "Couldn't find the next step. You can skip the tour and explore on your own."
               : step.copy}
           </div>
+
           <div className="flex items-center justify-between">
             <button
               type="button"
               onClick={markDone}
-              className="text-[12px] text-gray-400 hover:text-gray-700 transition-colors"
+              style={{
+                color: '#888',
+                fontSize: 12.5,
+                fontWeight: 500,
+                background: 'transparent',
+                border: 'none',
+                padding: '4px 2px',
+                cursor: 'pointer',
+              }}
             >
               Skip tour
             </button>
@@ -299,9 +432,18 @@ export default function EditorTour() {
               <button
                 type="button"
                 onClick={advance}
-                className="bg-gray-900 hover:bg-gray-800 text-white text-[12px] font-semibold px-3 py-1.5 rounded-md transition-colors"
+                style={{
+                  background: BRAND_INK,
+                  color: '#fff',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  padding: '8px 18px',
+                  borderRadius: BRAND_RADIUS,
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
               >
-                {stepIdx === STEPS.length - 1 ? 'Finish' : 'Next'}
+                {stepIdx === STEPS.length - 1 ? 'Finish →' : 'Next →'}
               </button>
             )}
           </div>
