@@ -96,11 +96,11 @@ export default function PaymentsConnectPage({
       >
         <main className="max-w-3xl mx-auto px-6 py-10">
           <div className="mb-6">
-            <div className="flex items-center justify-between gap-4">
-              <h1 className="text-2xl font-bold text-ink-primary leading-tight">Payments</h1>
+            <div className="flex items-center flex-wrap gap-x-3 gap-y-2">
+              <h1 className="text-2xl font-bold text-ink-primary leading-none">Payments</h1>
               <ConnectStatusBadge profile={profile} />
             </div>
-            <p className="text-sm text-ink-secondary mt-1">Connect your Stripe account to accept deposits and charge customers directly from your phone.</p>
+            <p className="text-sm text-ink-secondary mt-2">Connect your Stripe account to accept deposits and charge customers directly from your phone.</p>
           </div>
 
           {fullyConnected ? (
