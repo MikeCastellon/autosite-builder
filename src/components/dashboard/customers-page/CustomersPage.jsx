@@ -185,7 +185,7 @@ export default function CustomersPage({
             <button
               type="button"
               onClick={() => setShowAddModal(true)}
-              className="shrink-0 px-4 py-2 rounded-md text-sm font-semibold bg-[#cc0000] text-white hover:bg-[#b30000]"
+              className="shrink-0 text-xs font-semibold text-white bg-[#cc0000] hover:bg-[#aa0000] px-4 py-2 rounded-lg transition-colors"
             >
               + Add customer
             </button>
