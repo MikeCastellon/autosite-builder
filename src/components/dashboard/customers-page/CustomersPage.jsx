@@ -181,22 +181,22 @@ export default function CustomersPage({
         subheading="Customer management relies on the Pro scheduler — upgrade to unlock it along with bookings and everything else in Pro."
       >
         <main className="max-w-5xl mx-auto px-6 py-10">
-          <header className="mb-6 flex items-start justify-between gap-4">
-            <div>
+          <header className="mb-6">
+            <div className="flex items-center justify-between gap-4">
               <h1 className="text-3xl sm:text-4xl font-black text-[#1a1a1a] tracking-[-0.5px]">Customers</h1>
-              <p className="text-[13px] text-[#888] mt-1.5">
-                {customers.length === 0
-                  ? 'Everyone who books through your scheduler will show up here.'
-                  : `${customers.length} ${customers.length === 1 ? 'customer' : 'customers'} · ${bookings.length} total ${bookings.length === 1 ? 'booking' : 'bookings'}`}
-              </p>
+              <button
+                type="button"
+                onClick={() => setShowAddModal(true)}
+                className="shrink-0 text-xs font-semibold text-white bg-[#cc0000] hover:bg-[#aa0000] px-4 py-2 rounded-lg transition-colors"
+              >
+                + Add customer
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => setShowAddModal(true)}
-              className="shrink-0 text-xs font-semibold text-white bg-[#cc0000] hover:bg-[#aa0000] px-4 py-2 rounded-lg transition-colors"
-            >
-              + Add customer
-            </button>
+            <p className="text-[13px] text-[#888] mt-1.5">
+              {customers.length === 0
+                ? 'Everyone who books through your scheduler will show up here.'
+                : `${customers.length} ${customers.length === 1 ? 'customer' : 'customers'} · ${bookings.length} total ${bookings.length === 1 ? 'booking' : 'bookings'}`}
+            </p>
           </header>
 
           {customers.length > 0 && (
