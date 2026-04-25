@@ -154,6 +154,7 @@ export default function LandingPage({ onSignIn, onSignUp }) {
               'Lightning-fast CDN hosting',
               'Custom subdomain or your own domain',
               'Edit colors, fonts, content in one click',
+              'And more…',
             ].map((item) => (
               <li key={item} className="flex items-start gap-3 text-[15px] text-[#1a1a1a]">
                 <span className="shrink-0 w-5 h-5 rounded-full bg-[#cc0000] text-white flex items-center justify-center mt-0.5">
