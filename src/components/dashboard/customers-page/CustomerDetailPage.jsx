@@ -235,7 +235,7 @@ export default function CustomerDetailPage({
     return (
       <div className="min-h-screen bg-[#faf9f7]">
         <AppHeader {...headerProps} />
-        <main className="max-w-5xl mx-auto px-4 py-5">
+        <main className="max-w-5xl mx-auto px-2 py-5">
           <p className="text-[#888] text-sm">Loading…</p>
         </main>
       </div>
@@ -246,7 +246,7 @@ export default function CustomerDetailPage({
     return (
       <div className="min-h-screen bg-[#faf9f7]">
         <AppHeader {...headerProps} />
-        <main className="max-w-5xl mx-auto px-4 py-5">
+        <main className="max-w-5xl mx-auto px-2 py-5">
           <div className="border border-[#cc0000]/20 rounded-xl p-4 text-sm text-[#cc0000] bg-[#cc0000]/5">{err}</div>
         </main>
       </div>
@@ -257,7 +257,7 @@ export default function CustomerDetailPage({
     return (
       <div className="min-h-screen bg-[#faf9f7]">
         <AppHeader {...headerProps} />
-        <main className="max-w-5xl mx-auto px-4 py-5">
+        <main className="max-w-5xl mx-auto px-2 py-5">
           <button
             onClick={onBackToCustomers}
             className="text-[12px] font-semibold text-[#1a1a1a] hover:text-[#cc0000] transition-colors mb-4"
@@ -285,7 +285,7 @@ export default function CustomerDetailPage({
         heading="Customers is a Pro feature"
         subheading="Customer management relies on the Pro scheduler — upgrade to unlock it along with bookings and everything else in Pro."
       >
-        <main className="max-w-5xl mx-auto px-4 py-5">
+        <main className="max-w-5xl mx-auto px-2 py-5">
           <button
             onClick={onBackToCustomers}
             className="text-[12px] font-semibold text-[#555] hover:text-[#cc0000] transition-colors mb-4 inline-flex items-center gap-1"

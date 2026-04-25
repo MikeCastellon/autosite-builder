@@ -38,7 +38,7 @@ export default function AdminPage({ onExit, onOpenBookings, onOpenCustomers, onO
     <div className="min-h-screen bg-[#faf9f7]">
       <AppHeader {...headerProps} />
 
-      <main className="max-w-5xl mx-auto px-4 py-5">
+      <main className="max-w-5xl mx-auto px-2 py-5">
         <h1 className="text-3xl sm:text-4xl font-black text-[#1a1a1a] tracking-tight mb-6">Admin</h1>
         <div className="flex gap-1 mb-6 border-b border-gray-200">
           <TabBtn on={tab === 'accounts'} onClick={() => setTab('accounts')}>Accounts</TabBtn>
