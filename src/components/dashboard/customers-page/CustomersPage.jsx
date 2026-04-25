@@ -96,6 +96,14 @@ export default function CustomersPage({
 
   const customers = useMemo(() => {
     const fromBookings = groupBookingsIntoCustomers(bookings);
+    const profileByKey = new Map(manualCustomers.map((p) => [p.identity_key, p]));
+    // Attach photoUrl from the matching customer_profiles row (if any) to
+    // every booked customer so avatars show up on the list for ALL customers
+    // regardless of whether they were manually added.
+    for (const c of fromBookings) {
+      const p = profileByKey.get(c.key);
+      if (p?.photo_url) c.photoUrl = p.photo_url;
+    }
     const bookedKeys = new Set(fromBookings.map((c) => c.key));
     const manualOnly = manualCustomers
       .filter((p) => !bookedKeys.has(p.identity_key))
@@ -263,19 +271,32 @@ export default function CustomersPage({
                         className="border-t border-gray-100 hover:bg-gray-50 cursor-pointer"
                       >
                         <td className="px-4 py-3">
-                          <div className="font-semibold text-[#1a1a1a]">
-                            {c.name}
-                            {c.isManual && (
-                              <span className="ml-2 inline-flex items-center rounded-md bg-[#f4f3f0] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#888]">
-                                Manual
-                              </span>
-                            )}
-                          </div>
-                          {c.nextUpcomingAt && (
-                            <div className="text-[11px] text-green-700 font-medium mt-0.5">
-                              Upcoming · {formatDate(c.nextUpcomingAt)}
+                          <div className="flex items-center gap-3">
+                            <div className="h-9 w-9 rounded-full bg-[#f4f3f0] border border-black/[0.07] overflow-hidden flex items-center justify-center shrink-0">
+                              {c.photoUrl ? (
+                                <img src={c.photoUrl} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                <span className="text-[11px] font-bold text-[#888]">
+                                  {(c.name || '?').charAt(0).toUpperCase()}
+                                </span>
+                              )}
                             </div>
-                          )}
+                            <div className="min-w-0">
+                              <div className="font-semibold text-[#1a1a1a] truncate">
+                                {c.name}
+                                {c.isManual && (
+                                  <span className="ml-2 inline-flex items-center rounded-md bg-[#f4f3f0] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#888]">
+                                    Manual
+                                  </span>
+                                )}
+                              </div>
+                              {c.nextUpcomingAt && (
+                                <div className="text-[11px] text-green-700 font-medium mt-0.5">
+                                  Upcoming · {formatDate(c.nextUpcomingAt)}
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </td>
                         <td className="px-4 py-3 text-[13px] text-gray-700">
                           {c.email && <div className="truncate max-w-[220px]">{c.email}</div>}

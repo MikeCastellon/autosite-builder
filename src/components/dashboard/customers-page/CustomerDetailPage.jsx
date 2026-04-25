@@ -3,7 +3,7 @@ import { supabase } from '../../../lib/supabase.js';
 import { listBookingsForOwner } from '../../../lib/bookings.js';
 import { getCustomerMetadata, saveCustomerMetadata } from '../../../lib/customers.js';
 import { groupBookingsIntoCustomers, pickPrimarySiteId, makeCustomerLikeFromProfile } from '../../../lib/customerIdentity.js';
-import { getCustomerProfileByIdentityKey } from '../../../lib/customerProfiles.js';
+import { getCustomerProfileByIdentityKey, upsertCustomerPhoto } from '../../../lib/customerProfiles.js';
 import AppHeader from '../../ui/AppHeader.jsx';
 import SubscribeGate from '../bookings-page/SubscribeGate.jsx';
 import { useAlert } from '../../ui/AlertProvider.jsx';
@@ -75,6 +75,8 @@ export default function CustomerDetailPage({
 
   const [emailOpen, setEmailOpen] = useState(false);
   const [showBookModal, setShowBookModal] = useState(false);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const [photoErr, setPhotoErr] = useState(null);
 
   useEffect(() => {
     if (!userId || !identityKey) return;
@@ -121,6 +123,7 @@ export default function CustomerDetailPage({
     const base = all.find((c) => c.key === identityKey) || null;
     if (base) {
       if (manualProfile) {
+        base.photoUrl = manualProfile.photo_url || '';
         base.manualContact = {
           vehicleMake: manualProfile.vehicle_make || '',
           vehicleModel: manualProfile.vehicle_model || '',
@@ -175,6 +178,55 @@ export default function CustomerDetailPage({
     const nextTags = tags.filter((x) => x !== t);
     setTags(nextTags);
     await persist({ nextNotes: notes, nextTags });
+  }
+
+  // Upload or replace the customer photo. Stored as base64 data URL on the
+  // customer_profiles row. Creates a minimal profile row on first upload
+  // for booking-derived customers (who don't have a row yet).
+  const PHOTO_MAX_BYTES = 500 * 1024;
+  async function handlePhotoSelected(e) {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // allow re-picking the same file later
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { setPhotoErr('Photo must be an image file.'); return; }
+    if (file.size > PHOTO_MAX_BYTES)      { setPhotoErr('Photo must be under 500 KB.');  return; }
+    setPhotoBusy(true); setPhotoErr(null);
+    try {
+      const dataUrl = await new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result);
+        r.onerror = () => reject(new Error('Failed to read file.'));
+        r.readAsDataURL(file);
+      });
+      const updated = await upsertCustomerPhoto({
+        ownerUserId: userId,
+        identityKey,
+        photoUrl: dataUrl,
+        fallbackContact: { name: customer?.name, email: customer?.email, phone: customer?.phone },
+      });
+      setManualProfile(updated);
+    } catch (e) {
+      setPhotoErr(e.message || 'Upload failed.');
+    } finally {
+      setPhotoBusy(false);
+    }
+  }
+  async function handlePhotoRemove() {
+    if (!manualProfile) return;
+    setPhotoBusy(true); setPhotoErr(null);
+    try {
+      const updated = await upsertCustomerPhoto({
+        ownerUserId: userId,
+        identityKey,
+        photoUrl: null,
+        fallbackContact: {},
+      });
+      setManualProfile(updated);
+    } catch (e) {
+      setPhotoErr(e.message || 'Remove failed.');
+    } finally {
+      setPhotoBusy(false);
+    }
   }
 
   // ─── Render states ──────────────────────────────────────────────
@@ -244,15 +296,40 @@ export default function CustomerDetailPage({
           {/* Identity card */}
           <div className="bg-white border border-black/[0.07] rounded-2xl p-6 mb-6">
             <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
-              <div>
-                <h1 className="text-3xl sm:text-4xl font-black text-[#1a1a1a] tracking-[-0.5px]">
-                  {customer.name}
-                </h1>
-                {customer.nextUpcomingAt && (
-                  <div className="mt-2 inline-flex items-center text-[11px] font-semibold text-green-700 bg-green-50 border border-green-200 rounded-full px-2.5 py-0.5">
-                    Upcoming · {formatDate(customer.nextUpcomingAt)}
+              <div className="flex items-start gap-4">
+                <div className="relative shrink-0">
+                  <div className="h-20 w-20 rounded-full bg-[#f4f3f0] border border-black/[0.07] overflow-hidden flex items-center justify-center">
+                    {customer.photoUrl ? (
+                      <img src={customer.photoUrl} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>
+                    )}
                   </div>
-                )}
+                  <label className="absolute -bottom-1 -right-1 cursor-pointer bg-[#1a1a1a] text-white hover:bg-[#333] rounded-full w-7 h-7 flex items-center justify-center shadow-md transition-colors" title={customer.photoUrl ? 'Replace photo' : 'Upload photo'}>
+                    {photoBusy ? (
+                      <span className="text-[10px]">…</span>
+                    ) : (
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                    )}
+                    <input type="file" accept="image/*" className="hidden" onChange={handlePhotoSelected} disabled={photoBusy} />
+                  </label>
+                </div>
+                <div>
+                  <h1 className="text-3xl sm:text-4xl font-black text-[#1a1a1a] tracking-[-0.5px]">
+                    {customer.name}
+                  </h1>
+                  {customer.nextUpcomingAt && (
+                    <div className="mt-2 inline-flex items-center text-[11px] font-semibold text-green-700 bg-green-50 border border-green-200 rounded-full px-2.5 py-0.5">
+                      Upcoming · {formatDate(customer.nextUpcomingAt)}
+                    </div>
+                  )}
+                  {customer.photoUrl && (
+                    <button type="button" onClick={handlePhotoRemove} disabled={photoBusy} className="mt-2 ml-0 text-[11px] text-[#888] hover:text-[#cc0000] block">
+                      Remove photo
+                    </button>
+                  )}
+                  {photoErr && <p className="mt-1 text-[11px] text-[#cc0000]">{photoErr}</p>}
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <button

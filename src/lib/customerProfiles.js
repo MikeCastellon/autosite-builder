@@ -3,7 +3,7 @@ import { identityKey } from './customerIdentity.js';
 
 // Columns we ever return/accept. Kept in one place so Supabase queries,
 // the edit form, and the merged-list code can't drift apart.
-const COLS = 'id, owner_user_id, identity_key, name, email, phone, vehicle_make, vehicle_model, vehicle_year, vehicle_size, notes, tags, created_at, updated_at';
+const COLS = 'id, owner_user_id, identity_key, name, email, phone, photo_url, vehicle_make, vehicle_model, vehicle_year, vehicle_size, notes, tags, created_at, updated_at';
 
 export async function listManualCustomers({ ownerUserId }) {
   if (!ownerUserId) return [];
@@ -36,6 +36,7 @@ export async function createManualCustomer({
   name,
   email,
   phone,
+  photoUrl,
   vehicleMake,
   vehicleModel,
   vehicleYear,
@@ -61,6 +62,7 @@ export async function createManualCustomer({
     name: cleanedName || null,
     email: cleanedEmail || null,
     phone: cleanedPhone || null,
+    photo_url: photoUrl || null,
     vehicle_make: (vehicleMake || '').trim() || null,
     vehicle_model: (vehicleModel || '').trim() || null,
     vehicle_year: vehicleYear ? Number(vehicleYear) : null,
@@ -92,6 +94,40 @@ export async function updateManualCustomer({ id, patch }) {
     .from('customer_profiles')
     .update({ ...patch, updated_at: new Date().toISOString() })
     .eq('id', id)
+    .select(COLS)
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+// Upsert the customer_profile photo_url by (owner_user_id, identity_key).
+// Works whether the customer is manually-added or booking-derived — creates
+// a bare profile row on first photo upload for booked customers.
+export async function upsertCustomerPhoto({ ownerUserId, identityKey: key, photoUrl, fallbackContact = {} }) {
+  if (!ownerUserId || !key) throw new Error('Missing owner or identity key');
+  const existing = await getCustomerProfileByIdentityKey({ ownerUserId, key });
+  if (existing) {
+    const { data, error } = await supabase
+      .from('customer_profiles')
+      .update({ photo_url: photoUrl || null, updated_at: new Date().toISOString() })
+      .eq('id', existing.id)
+      .select(COLS)
+      .single();
+    if (error) throw error;
+    return data;
+  }
+  // New row — populate identity + whatever contact we have from the booking.
+  const { data, error } = await supabase
+    .from('customer_profiles')
+    .insert({
+      owner_user_id: ownerUserId,
+      identity_key: key,
+      name: fallbackContact.name || null,
+      email: fallbackContact.email ? String(fallbackContact.email).toLowerCase() : null,
+      phone: fallbackContact.phone || null,
+      photo_url: photoUrl || null,
+      tags: [],
+    })
     .select(COLS)
     .single();
   if (error) throw error;

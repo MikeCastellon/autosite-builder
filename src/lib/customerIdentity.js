@@ -90,6 +90,7 @@ export function makeCustomerLikeFromProfile(p) {
     name: p.name || '(No name)',
     email: p.email || '',
     phone: p.phone || '',
+    photoUrl: p.photo_url || '',
     bookings: [],
     services: new Map(),
     siteIds: new Set(),
