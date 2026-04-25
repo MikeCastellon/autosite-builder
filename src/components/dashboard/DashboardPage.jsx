@@ -23,11 +23,20 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
   const [domainPanelInitial, setDomainPanelInitial] = useState(null);
   const [proDialogOpen, setProDialogOpen] = useState(false);
   const [editBizSite, setEditBizSite] = useState(null);
+  const [showWelcome, setShowWelcome] = useState(false);
   const schedulerEnabled = !!profile?.scheduler_enabled;
   const showBookingsNav = canSeeBookingsNav(profile);
   const isAdmin = !!profile?.is_super_admin;
   const isPro = isEffectiveSchedulerActive(profile);
   const canCreateSite = isAdmin || sites.length < MAX_SITES;
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('stripe_success') === '1') {
+      setShowWelcome(true);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
 
   useEffect(() => {
     async function fetchSites() {
@@ -249,6 +258,40 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
       )}
 
       <main className="max-w-5xl mx-auto px-6 py-12">
+        {showWelcome && (
+          <div className="relative mb-10 rounded-2xl border border-black/[0.07] bg-white shadow-sm overflow-hidden">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#cc0000]" />
+            <div className="px-8 py-7">
+              <button
+                onClick={() => setShowWelcome(false)}
+                className="absolute top-4 right-5 text-[#aaa] hover:text-[#1a1a1a] text-xl leading-none transition-colors"
+                aria-label="Dismiss"
+              >
+                ×
+              </button>
+              <p className="text-[11px] font-semibold text-[#cc0000] uppercase tracking-[2px] mb-2">Welcome to Pro</p>
+              <h3 className="text-2xl font-[900] text-[#1a1a1a] tracking-tight mb-1">You're all set. Let's build.</h3>
+              <p className="text-sm text-[#666] mb-5">Your Pro subscription is active. Here's everything you just unlocked:</p>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {[
+                  ['Bookings Calendar', 'Accept appointments online, 24/7'],
+                  ['Customer CRM', 'Track every lead and returning client'],
+                  ['Stripe Payments', 'Get paid directly from your website'],
+                  ['Booking Deposits', 'Require deposits to lock in appointments'],
+                ].map(([title, desc]) => (
+                  <li key={title} className="flex items-start gap-3 bg-[#faf9f7] rounded-xl px-4 py-3">
+                    <span className="mt-0.5 text-[#cc0000] font-black text-base leading-none">✓</span>
+                    <span>
+                      <span className="block text-sm font-[800] text-[#1a1a1a]">{title}</span>
+                      <span className="block text-xs text-[#888]">{desc}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
+
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-3xl sm:text-4xl font-black text-[#1a1a1a] tracking-tight">Your Site</h2>
           <div className="flex items-center gap-2">
