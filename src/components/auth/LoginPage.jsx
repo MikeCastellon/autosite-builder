@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '../../lib/supabase.js';
 
-export default function LoginPage() {
+export default function LoginPage({ onBack }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
@@ -64,6 +64,15 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#faf9f7] p-4">
       <div className="w-full max-w-sm">
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            className="mb-4 text-xs text-[#888] hover:text-[#1a1a1a] transition-colors"
+          >
+            ← Back
+          </button>
+        )}
         <div className="mb-6">
           <h1 className="text-2xl font-black text-[#1a1a1a] tracking-tight">
             {showForgot ? 'Reset Password' : isSignUp ? 'Create Account' : 'Welcome Back'}

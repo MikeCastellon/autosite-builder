@@ -13,6 +13,7 @@ import { useAuth } from './lib/AuthContext.jsx';
 import LoginPage from './components/auth/LoginPage.jsx';
 import ResetPasswordPage from './components/auth/ResetPasswordPage.jsx';
 import DashboardPage from './components/dashboard/DashboardPage.jsx';
+import LandingPage from './components/landing/LandingPage.jsx';
 import { saveSite } from './lib/saveSite.js';
 import { supabase } from './lib/supabase.js';
 
@@ -29,6 +30,7 @@ export default function App() {
   const [error, setError] = useState(null);
   const [customColors, setCustomColors] = useState({});
   const [view, setView] = useState('wizard'); // 'wizard' | 'dashboard'
+  const [authView, setAuthView] = useState('landing'); // 'landing' | 'login'
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [selectedWidgetIds, setSelectedWidgetIds] = useState([]);
   const [siteId, setSiteId] = useState(null);
@@ -171,7 +173,12 @@ export default function App() {
       <div className="w-8 h-8 border-4 border-gray-300 border-t-[#cc0000] rounded-full animate-spin" />
     </div>
   );
-  if (!session) return <LoginPage />;
+  if (!session) {
+    if (authView === 'login') {
+      return <LoginPage onBack={() => setAuthView('landing')} />;
+    }
+    return <LandingPage onGetStarted={() => setAuthView('login')} />;
+  }
   if (isRecovery) return <ResetPasswordPage onComplete={() => { clearRecovery(); window.history.replaceState({}, '', window.location.pathname); }} />;
 
   const handleSignOut = async () => {
