@@ -31,7 +31,7 @@ export default function BookingsView({ userId, isAdmin = false, onBack, bookingU
 
   return (
     <div>
-      <div className="flex items-center justify-end gap-3 mb-5">
+      <div className="flex items-center justify-center sm:justify-end gap-3 mb-5">
         {bookingUrl && (
           <a
             href={bookingUrl}
