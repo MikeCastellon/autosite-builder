@@ -335,7 +335,7 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
           </div>
         ) : (
           <div className="bg-white border border-black/[0.07] rounded-2xl shadow-sm overflow-hidden">
-            <div className="grid gap-4 p-4 sm:p-5">
+            <div className="grid gap-4 p-6 sm:p-8">
             {sites.map((site) => (
               <div
                 key={site.id}
