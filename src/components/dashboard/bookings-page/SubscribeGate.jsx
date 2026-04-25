@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { supabase } from '../../../lib/supabase.js';
 import { shouldShowUpgradeCard } from '../../../lib/subscriptionGating.js';
 import UpgradeProPanel from '../../ui/UpgradeProPanel.jsx';
 
@@ -15,8 +17,26 @@ export default function SubscribeGate({
   heading = 'Bookings is a Pro feature',
   subheading = 'Unlock the calendar behind this overlay — plus everything else included with Pro.',
 }) {
+  const [portalBusy, setPortalBusy] = useState(false);
   const showCard = shouldShowUpgradeCard(profile);
   const pastDue = profile?.subscription_status === 'past_due';
+
+  const handlePortal = async (e) => {
+    e.preventDefault();
+    if (portalBusy) return;
+    setPortalBusy(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      const res = await fetch('/.netlify/functions/stripe-portal-url', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const body = await res.json().catch(() => ({}));
+      if (body.url) window.open(body.url, '_blank', 'noopener');
+    } finally {
+      setPortalBusy(false);
+    }
+  };
 
   if (!showCard) return children;
 
@@ -40,9 +60,9 @@ export default function SubscribeGate({
           {pastDue && (
             <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 shadow-sm">
               Your subscription has a payment issue.{' '}
-              <a className="font-semibold underline hover:no-underline" href="https://account.shopify.com" target="_blank" rel="noreferrer">
-                Update your payment method →
-              </a>
+              <button onClick={handlePortal} disabled={portalBusy} className="font-semibold underline hover:no-underline disabled:opacity-50">
+                {portalBusy ? 'Opening...' : 'Update your payment method →'}
+              </button>
             </div>
           )}
           <UpgradeProPanel
