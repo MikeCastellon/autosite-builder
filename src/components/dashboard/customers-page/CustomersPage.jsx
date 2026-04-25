@@ -6,6 +6,7 @@ import { groupBookingsIntoCustomers, makeCustomerLikeFromProfile } from '../../.
 import { listManualCustomers } from '../../../lib/customerProfiles.js';
 import AppHeader from '../../ui/AppHeader.jsx';
 import SubscribeGate from '../bookings-page/SubscribeGate.jsx';
+import AddCustomerModal from './AddCustomerModal.jsx';
 
 function formatDate(iso) {
   if (!iso) return '—';
@@ -66,6 +67,7 @@ export default function CustomersPage({
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
   const [search, setSearch] = useState('');
+  const [showAddModal, setShowAddModal] = useState(false);
 
   useEffect(() => {
     if (!userId) return;
@@ -171,13 +173,22 @@ export default function CustomersPage({
         subheading="Customer management relies on the Pro scheduler — upgrade to unlock it along with bookings and everything else in Pro."
       >
         <main className="max-w-5xl mx-auto px-6 py-10">
-          <header className="mb-6">
-            <h1 className="text-3xl sm:text-4xl font-black text-[#1a1a1a] tracking-[-0.5px]">Customers</h1>
-            <p className="text-[13px] text-[#888] mt-1.5">
-              {customers.length === 0
-                ? 'Everyone who books through your scheduler will show up here.'
-                : `${customers.length} ${customers.length === 1 ? 'customer' : 'customers'} · ${bookings.length} total ${bookings.length === 1 ? 'booking' : 'bookings'}`}
-            </p>
+          <header className="mb-6 flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-black text-[#1a1a1a] tracking-[-0.5px]">Customers</h1>
+              <p className="text-[13px] text-[#888] mt-1.5">
+                {customers.length === 0
+                  ? 'Everyone who books through your scheduler will show up here.'
+                  : `${customers.length} ${customers.length === 1 ? 'customer' : 'customers'} · ${bookings.length} total ${bookings.length === 1 ? 'booking' : 'bookings'}`}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowAddModal(true)}
+              className="shrink-0 px-4 py-2 rounded-md text-sm font-semibold bg-[#cc0000] text-white hover:bg-[#b30000]"
+            >
+              + Add customer
+            </button>
           </header>
 
           {customers.length > 0 && (
@@ -315,6 +326,16 @@ export default function CustomersPage({
                 </tbody>
               </table>
             </div>
+          )}
+          {showAddModal && (
+            <AddCustomerModal
+              ownerUserId={userId}
+              onClose={() => setShowAddModal(false)}
+              onCreated={(created) => {
+                setManualCustomers((prev) => [created, ...prev]);
+                setShowAddModal(false);
+              }}
+            />
           )}
         </main>
       </SubscribeGate>
