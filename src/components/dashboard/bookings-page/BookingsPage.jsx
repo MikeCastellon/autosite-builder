@@ -79,7 +79,7 @@ export default function BookingsPage({ userId, profile, userEmail, onExit, onOpe
       <AppHeader {...headerProps} />
       <SubscribeGate profile={profile}>
         <main className="max-w-7xl mx-auto px-3 py-10">
-          <h1 className="text-3xl sm:text-4xl font-black text-[#1a1a1a] tracking-tight mb-3">Bookings</h1>
+          <h1 className="text-3xl sm:text-4xl font-black text-[#1a1a1a] tracking-tight mb-3 mt-8">Bookings</h1>
 
           {/* Booking link bar */}
           {(() => {

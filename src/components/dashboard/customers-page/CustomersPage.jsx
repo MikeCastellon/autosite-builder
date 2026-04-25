@@ -183,7 +183,7 @@ export default function CustomersPage({
         <main className="max-w-7xl mx-auto px-3 py-10">
           <header className="mb-6">
             <div className="flex items-center justify-between gap-4">
-              <h1 className="text-3xl sm:text-4xl font-black text-[#1a1a1a] tracking-[-0.5px]">Customers</h1>
+              <h1 className="text-3xl sm:text-4xl font-black text-[#1a1a1a] tracking-[-0.5px] mt-8">Customers</h1>
               <button
                 type="button"
                 onClick={() => setShowAddModal(true)}

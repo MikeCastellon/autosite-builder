@@ -97,7 +97,7 @@ export default function PaymentsConnectPage({
         <main className="max-w-7xl mx-auto px-3 py-10">
           <div className="mb-6">
             <div className="flex items-center flex-wrap gap-x-3 gap-y-2">
-              <h1 className="text-3xl sm:text-4xl font-black text-[#1a1a1a] tracking-tight">Payments</h1>
+              <h1 className="text-3xl sm:text-4xl font-black text-[#1a1a1a] tracking-tight mt-8">Payments</h1>
               <ConnectStatusBadge profile={profile} />
             </div>
             <p className="text-sm text-[#888] mt-2">Connect your Stripe account to accept deposits and charge customers directly from your phone.</p>
