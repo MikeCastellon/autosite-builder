@@ -8,7 +8,7 @@ export async function startProUpgrade() {
   const token = sessionData?.session?.access_token;
   if (!token) throw new Error('Sign in required to upgrade.');
 
-  const res = await fetch('/.netlify/functions/subscription-checkout-url', {
+  const res = await fetch('/.netlify/functions/stripe-checkout-url', {
     headers: { Authorization: `Bearer ${token}` },
   });
   const body = await res.json().catch(() => ({}));
