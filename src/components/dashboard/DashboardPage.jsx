@@ -293,7 +293,7 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
           </div>
         )}
 
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-3 mt-8">
           <h2 className="text-3xl sm:text-4xl font-black text-[#1a1a1a] tracking-tight">Your Site</h2>
           <div className="flex items-center gap-2">
             {canCreateSite && sites.length > 0 && (
