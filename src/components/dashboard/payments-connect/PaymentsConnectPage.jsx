@@ -94,7 +94,7 @@ export default function PaymentsConnectPage({
         heading="Payments is a Pro feature"
         subheading="Connect your Stripe account to take deposits, charge customers, and get paid out."
       >
-        <main className="max-w-7xl mx-auto px-3 py-4">
+        <main className="max-w-7xl mx-auto px-3 py-10">
           <div className="mb-6">
             <div className="flex items-center flex-wrap gap-x-3 gap-y-2">
               <h1 className="text-3xl sm:text-4xl font-black text-[#1a1a1a] tracking-tight">Payments</h1>
