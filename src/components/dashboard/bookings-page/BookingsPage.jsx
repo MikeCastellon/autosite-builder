@@ -45,7 +45,7 @@ export default function BookingsPage({ userId, profile, userEmail, onExit, onOpe
     return (
       <div className="min-h-screen bg-[#faf9f7]">
         <AppHeader {...headerProps} />
-        <main className="max-w-5xl mx-auto px-6 py-10">
+        <main className="max-w-5xl mx-auto px-4 py-5">
           <p className="text-[#888] text-sm">Loading...</p>
         </main>
       </div>
@@ -55,7 +55,7 @@ export default function BookingsPage({ userId, profile, userEmail, onExit, onOpe
     return (
       <div className="min-h-screen bg-[#faf9f7]">
         <AppHeader {...headerProps} />
-        <main className="max-w-5xl mx-auto px-6 py-10">
+        <main className="max-w-5xl mx-auto px-4 py-5">
           <div className="border border-[#cc0000]/20 rounded-xl p-4 text-sm text-[#cc0000] bg-[#cc0000]/5">{err}</div>
         </main>
       </div>
@@ -66,7 +66,7 @@ export default function BookingsPage({ userId, profile, userEmail, onExit, onOpe
     return (
       <div className="min-h-screen bg-[#faf9f7]">
         <AppHeader {...headerProps} />
-        <main className="max-w-3xl mx-auto px-6 py-10">
+        <main className="max-w-3xl mx-auto px-4 py-5">
           <p className="text-gray-600">Create a site first — bookings attach to a published site.</p>
         </main>
       </div>
@@ -77,7 +77,7 @@ export default function BookingsPage({ userId, profile, userEmail, onExit, onOpe
     <div className="min-h-screen bg-[#faf9f7]">
       <AppHeader {...headerProps} />
       <SubscribeGate profile={profile}>
-        <main className="max-w-5xl mx-auto px-6 py-10">
+        <main className="max-w-5xl mx-auto px-4 py-5">
           <h1 className="text-3xl sm:text-4xl font-black text-[#1a1a1a] tracking-tight mb-6">Bookings</h1>
           <div className="flex gap-1 mb-6 border-b border-gray-200">
             <TabBtn on={tab === 'schedule'} onClick={() => setTab('schedule')}>Schedule</TabBtn>

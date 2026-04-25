@@ -258,9 +258,9 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
         </div>
       )}
 
-      <main className="max-w-5xl mx-auto px-6 py-12">
+      <main className="max-w-5xl mx-auto px-4 py-5">
         {showWelcome && (
-          <div className="relative mb-10 rounded-2xl border border-black/[0.07] bg-white shadow-sm overflow-hidden">
+          <div className="relative mb-6 rounded-2xl border border-black/[0.07] bg-white shadow-sm overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#cc0000]" />
             <div className="px-8 py-7">
               <button
@@ -293,7 +293,7 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
           </div>
         )}
 
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-4">
           <h2 className="text-3xl sm:text-4xl font-black text-[#1a1a1a] tracking-tight">Your Site</h2>
           <div className="flex items-center gap-2">
             {canCreateSite && sites.length > 0 && (

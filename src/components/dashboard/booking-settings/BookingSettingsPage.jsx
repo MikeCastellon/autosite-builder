@@ -23,7 +23,7 @@ export default function BookingSettingsPage({ siteId, onExit, onOpenBookings, on
     <div className="min-h-screen bg-[#faf9f7]">
       <AppHeader {...headerProps} />
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-8 py-8 sm:py-10">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
         <div className="mb-8">
           <p className="text-[12px] font-semibold text-[#cc0000] uppercase tracking-[1.5px] mb-2">Bookings</p>
           <h2 className="text-[clamp(24px,3.5vw,32px)] font-[900] text-[#1a1a1a] tracking-[-1px] leading-[1.1] mb-2">
