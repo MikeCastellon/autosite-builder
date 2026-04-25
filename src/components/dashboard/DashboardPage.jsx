@@ -293,7 +293,7 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
           </div>
         )}
 
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-3">
           <h2 className="text-3xl sm:text-4xl font-black text-[#1a1a1a] tracking-tight">Your Site</h2>
           <div className="flex items-center gap-2">
             {canCreateSite && sites.length > 0 && (
@@ -335,15 +335,15 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
           </div>
         ) : (
           <div className="bg-white border border-black/[0.07] rounded-2xl shadow-sm overflow-hidden">
-            <div className="grid gap-8 p-8 sm:p-10">
+            <div className="grid gap-4 p-4 sm:p-5">
             {sites.map((site) => (
               <div
                 key={site.id}
-                className="flex flex-col sm:flex-row gap-8 sm:items-center"
+                className="flex flex-col sm:flex-row gap-4 sm:items-center"
               >
                 {/* Live preview thumbnail */}
                 <div
-                  className="relative w-full sm:w-[360px] h-[225px] shrink-0 overflow-hidden rounded-xl border border-black/[0.07] bg-[#faf9f7]"
+                  className="relative w-full sm:w-[280px] h-[175px] shrink-0 overflow-hidden rounded-xl border border-black/[0.07] bg-[#faf9f7]"
                   style={{ pointerEvents: 'none' }}
                 >
                   {site.published_url ? (
@@ -358,7 +358,7 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
                         width: '1280px',
                         height: '800px',
                         border: 0,
-                        transform: 'scale(0.281)',
+                        transform: 'scale(0.219)',
                         transformOrigin: '0 0',
                         pointerEvents: 'none',
                       }}
