@@ -193,7 +193,7 @@ export const ARTICLES = [
       },
       {
         heading: 'How to upgrade',
-        body: "Click the **Free plan** pill on the Dashboard, or the **Upgrade to Pro** button. You'll see exactly what Pro includes and a **Subscribe** button that takes you to Shopify checkout. It's $9.99/month, billed through Shopify.",
+        body: "Click the **Free plan** pill on the Dashboard, or the **Upgrade to Pro** button. You'll see exactly what Pro includes and a **Subscribe** button that takes you to Shopify checkout. It's $19.99/month, billed through Shopify.",
       },
       {
         heading: 'After you subscribe',

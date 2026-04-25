@@ -1,5 +1,4 @@
 import { shouldShowUpgradeCard } from '../../../lib/subscriptionGating.js';
-import { startBillingPortal } from '../../../lib/upgradeFlow.js';
 import UpgradeProPanel from '../../ui/UpgradeProPanel.jsx';
 
 // Overlays the children (e.g. the bookings calendar) for non-Pro users.
@@ -41,13 +40,9 @@ export default function SubscribeGate({
           {pastDue && (
             <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 shadow-sm">
               Your subscription has a payment issue.{' '}
-              <button
-                type="button"
-                className="font-semibold underline hover:no-underline"
-                onClick={() => startBillingPortal().catch((e) => alert(e.message))}
-              >
+              <a className="font-semibold underline hover:no-underline" href="https://account.shopify.com" target="_blank" rel="noreferrer">
                 Update your payment method →
-              </button>
+              </a>
             </div>
           )}
           <UpgradeProPanel

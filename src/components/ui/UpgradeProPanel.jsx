@@ -112,7 +112,7 @@ export default function UpgradeProPanel({ heading = 'Unlock the full toolkit', s
           {busy ? 'Loading...' : '⭐ Upgrade to Pro'}
         </button>
         <p className="text-[11px] text-[#888] text-center mt-2.5">
-          $9.99/month · Cancel anytime in your Shopify account.
+          $19.99/month · Cancel anytime in your Shopify account.
         </p>
       </div>
     </div>

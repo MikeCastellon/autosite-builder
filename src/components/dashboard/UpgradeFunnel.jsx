@@ -280,7 +280,7 @@ export default function UpgradeFunnel({ onUpgrade }) {
           Every feature, with a real preview.
         </h2>
         <p className="text-[15px] text-[#666] mt-3 max-w-xl mx-auto">
-          Scroll through the toolkit. Upgrade when you're ready — $9.99/month, cancel anytime.
+          Scroll through the toolkit. Upgrade when you're ready — $19.99/month, cancel anytime.
         </p>
       </div>
 
@@ -307,7 +307,7 @@ export default function UpgradeFunnel({ onUpgrade }) {
           Ready to get booked?
         </h2>
         <p className="text-[16px] opacity-90 mb-6 max-w-md mx-auto">
-          Unlock all five features for $9.99/month. Cancel anytime in your Shopify account.
+          Unlock all five features for $19.99/month. Cancel anytime in your Shopify account.
         </p>
         <button
           type="button"
