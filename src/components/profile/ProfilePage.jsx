@@ -130,7 +130,7 @@ export default function ProfilePage({ onExit, onOpenBookings, onOpenCustomers, o
     <div className="min-h-screen bg-[#faf9f7]">
       <AppHeader {...headerProps} />
 
-      <main className="max-w-2xl mx-auto px-4 sm:px-0 py-4">
+      <main className="max-w-2xl mx-auto px-4 sm:px-3 py-4">
         <h1 className="text-3xl sm:text-4xl font-black text-[#1a1a1a] tracking-tight mb-1">Your Profile</h1>
         <p className="text-[#666] text-[15px] mb-8">Manage your account details and password.</p>
 

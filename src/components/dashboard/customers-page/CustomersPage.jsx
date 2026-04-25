@@ -154,7 +154,7 @@ export default function CustomersPage({
     return (
       <div className="min-h-screen bg-[#faf9f7]">
         <AppHeader {...headerProps} />
-        <main className="max-w-5xl mx-auto px-0 py-4">
+        <main className="max-w-5xl mx-auto px-3 py-4">
           <p className="text-[#888] text-sm">Loading…</p>
         </main>
       </div>
@@ -165,7 +165,7 @@ export default function CustomersPage({
     return (
       <div className="min-h-screen bg-[#faf9f7]">
         <AppHeader {...headerProps} />
-        <main className="max-w-5xl mx-auto px-0 py-4">
+        <main className="max-w-5xl mx-auto px-3 py-4">
           <div className="border border-[#cc0000]/20 rounded-xl p-4 text-sm text-[#cc0000] bg-[#cc0000]/5">{err}</div>
         </main>
       </div>
@@ -180,7 +180,7 @@ export default function CustomersPage({
         heading="Customers is a Pro feature"
         subheading="Customer management relies on the Pro scheduler — upgrade to unlock it along with bookings and everything else in Pro."
       >
-        <main className="max-w-5xl mx-auto px-0 py-4">
+        <main className="max-w-5xl mx-auto px-3 py-4">
           <header className="mb-6">
             <div className="flex items-center justify-between gap-4">
               <h1 className="text-3xl sm:text-4xl font-black text-[#1a1a1a] tracking-[-0.5px]">Customers</h1>
