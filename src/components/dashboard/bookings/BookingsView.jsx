@@ -32,7 +32,7 @@ export default function BookingsView({ userId, isAdmin = false, onBack }) {
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-        <h2 className="text-2xl font-black text-[#1a1a1a] tracking-tight">Bookings</h2>
+        <h1 className="text-3xl sm:text-4xl font-black text-[#1a1a1a] tracking-tight">Bookings</h1>
         <div className="flex items-center gap-3">
           <ViewToggle value={tab} onChange={setTab} />
           {onBack && (

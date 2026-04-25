@@ -246,7 +246,11 @@ export default function App() {
 
   // Nav callback for the Payments tab. Must stay above any early-return
   // guards below so hook count is stable across renders (React #310 bait).
+  // The tab itself is hidden on production until VITE_STRIPE_PUBLISHABLE_KEY
+  // is set — branch deploys ship it; production stays Shopify-only for now.
+  const PAYMENTS_TAB_ENABLED = !!import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
   const goPaymentsConnect = useCallback(() => { setView('payments-connect'); }, []);
+  const onOpenPaymentsConnectProp = PAYMENTS_TAB_ENABLED ? goPaymentsConnect : undefined;
 
   // Domain Connect callback: close popup, notify opener
   if (typeof window !== 'undefined' && window.location.pathname === '/domain-connected') {
@@ -340,7 +344,7 @@ export default function App() {
           onOpenCustomers={() => setView('customers')}
           onOpenAdmin={() => setView('admin')}
           onOpenProfile={() => setView('profile')}
-          onOpenPaymentsConnect={goPaymentsConnect}
+          onOpenPaymentsConnect={onOpenPaymentsConnectProp}
           onSignOut={handleSignOut}
         />
         <HelpChrome profile={profile} />
@@ -359,7 +363,7 @@ export default function App() {
           onOpenBookings={() => setView('bookings-page')}
           onOpenAdmin={() => setView('admin')}
           onOpenProfile={() => setView('profile')}
-          onOpenPaymentsConnect={goPaymentsConnect}
+          onOpenPaymentsConnect={onOpenPaymentsConnectProp}
           onOpenCustomerDetail={(key) => { setSelectedCustomerKey(key); setView('customer-detail'); }}
           onSignOut={handleSignOut}
         />
@@ -381,7 +385,7 @@ export default function App() {
           onOpenBookings={() => { setSelectedCustomerKey(null); setView('bookings-page'); }}
           onOpenAdmin={() => { setSelectedCustomerKey(null); setView('admin'); }}
           onOpenProfile={() => { setSelectedCustomerKey(null); setView('profile'); }}
-          onOpenPaymentsConnect={() => { setSelectedCustomerKey(null); setView('payments-connect'); }}
+          onOpenPaymentsConnect={PAYMENTS_TAB_ENABLED ? () => { setSelectedCustomerKey(null); setView('payments-connect'); } : undefined}
           onSignOut={handleSignOut}
         />
         <HelpChrome profile={profile} />
@@ -399,7 +403,7 @@ export default function App() {
           onOpenCustomers={() => { setSettingsSiteId(null); setView('customers'); }}
           onOpenAdmin={() => { setSettingsSiteId(null); setView('admin'); }}
           onOpenProfile={() => { setSettingsSiteId(null); setView('profile'); }}
-          onOpenPaymentsConnect={() => { setSettingsSiteId(null); setView('payments-connect'); }}
+          onOpenPaymentsConnect={PAYMENTS_TAB_ENABLED ? () => { setSettingsSiteId(null); setView('payments-connect'); } : undefined}
           onSignOut={handleSignOut}
         />
         <HelpChrome profile={profile} />
@@ -415,7 +419,7 @@ export default function App() {
           onOpenBookings={() => setView('bookings-page')}
           onOpenCustomers={() => setView('customers')}
           onOpenProfile={() => setView('profile')}
-          onOpenPaymentsConnect={goPaymentsConnect}
+          onOpenPaymentsConnect={onOpenPaymentsConnectProp}
           onSignOut={handleSignOut}
         />
         <HelpChrome profile={profile} />
@@ -431,7 +435,7 @@ export default function App() {
           onOpenBookings={() => setView('bookings-page')}
           onOpenCustomers={() => setView('customers')}
           onOpenAdmin={() => setView('admin')}
-          onOpenPaymentsConnect={goPaymentsConnect}
+          onOpenPaymentsConnect={onOpenPaymentsConnectProp}
           onSignOut={handleSignOut}
         />
         <HelpChrome profile={profile} />
@@ -451,7 +455,7 @@ export default function App() {
           onOpenCustomers={() => setView('customers')}
           onOpenAdmin={() => setView('admin')}
           onOpenProfile={() => setView('profile')}
-          onOpenPaymentsConnect={goPaymentsConnect}
+          onOpenPaymentsConnect={onOpenPaymentsConnectProp}
           onSignOut={handleSignOut}
         />
         <HelpChrome profile={profile} />
@@ -472,7 +476,7 @@ export default function App() {
           onOpenBookings={() => setView('bookings-page')}
           onOpenCustomers={() => setView('customers')}
           onOpenProfile={() => setView('profile')}
-          onOpenPaymentsConnect={goPaymentsConnect}
+          onOpenPaymentsConnect={onOpenPaymentsConnectProp}
           onOpenBookingSettings={(siteId) => { setSettingsSiteId(siteId); setView('booking-settings'); }}
         />
         <HelpChrome profile={profile} />
