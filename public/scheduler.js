@@ -466,7 +466,13 @@
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
       }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
         .then(function (res) {
-          if (res.ok) { state.details.submitted = true; render(); }
+          if (res.ok) {
+            if (res.j && res.j.checkout_url) {
+              window.location.href = res.j.checkout_url;
+              return;
+            }
+            state.details.submitted = true; render();
+          }
           else {
             errBox.textContent = (res.j && res.j.error) || 'Something went wrong. Please try again.';
             errBox.style.display = 'block';
@@ -724,7 +730,13 @@
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
       }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
         .then(function (res) {
-          if (res.ok) { state.details.submitted = true; render(); }
+          if (res.ok) {
+            if (res.j && res.j.checkout_url) {
+              window.location.href = res.j.checkout_url;
+              return;
+            }
+            state.details.submitted = true; render();
+          }
           else {
             errBox.textContent = (res.j && res.j.error) || 'Something went wrong. Please try again.';
             errBox.style.display = 'block';
