@@ -81,3 +81,33 @@ export function pickPrimarySiteId(customer) {
   )[0];
   return latest?.site_id || null;
 }
+
+// Shape a customer_profiles row into the same object the list/detail pages
+// expect from groupBookingsIntoCustomers. Keeps rendering logic shared.
+export function makeCustomerLikeFromProfile(p) {
+  return {
+    key: p.identity_key,
+    name: p.name || '(No name)',
+    email: p.email || '',
+    phone: p.phone || '',
+    bookings: [],
+    services: new Map(),
+    siteIds: new Set(),
+    firstBookedAt: null,
+    lastBookedAt: null,
+    nextUpcomingAt: null,
+    // Marker the list uses to show a "Manual" badge and skip booking-only stats.
+    isManual: true,
+    profileId: p.id,
+    createdAt: p.created_at,
+    // Carry vehicle + notes through so the detail page can show them for
+    // customers with no bookings yet.
+    manualContact: {
+      vehicleMake: p.vehicle_make || '',
+      vehicleModel: p.vehicle_model || '',
+      vehicleYear: p.vehicle_year || null,
+      vehicleSize: p.vehicle_size || null,
+      notes: p.notes || '',
+    },
+  };
+}
