@@ -8,6 +8,7 @@ import AppHeader from '../../ui/AppHeader.jsx';
 import SubscribeGate from '../bookings-page/SubscribeGate.jsx';
 import { useAlert } from '../../ui/AlertProvider.jsx';
 import EmailComposerModal from './EmailComposerModal.jsx';
+import BookCustomerModal from './BookCustomerModal.jsx';
 
 function formatDate(iso) {
   if (!iso) return '—';
@@ -73,6 +74,7 @@ export default function CustomerDetailPage({
   const lastSavedRef = useRef({ notes: '', tags: [] });
 
   const [emailOpen, setEmailOpen] = useState(false);
+  const [showBookModal, setShowBookModal] = useState(false);
 
   useEffect(() => {
     if (!userId || !identityKey) return;
@@ -253,6 +255,13 @@ export default function CustomerDetailPage({
                 )}
               </div>
               <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowBookModal(true)}
+                  className="px-4 py-2 rounded-lg text-[13px] font-semibold bg-[#cc0000] text-white hover:bg-[#b30000] transition-colors"
+                >
+                  + Book this customer
+                </button>
                 {customer.email && (
                   <button
                     onClick={() => setEmailOpen(true)}
@@ -428,6 +437,18 @@ export default function CustomerDetailPage({
         siteId={primarySiteId}
         ownerEmail={userEmail}
       />
+
+      {showBookModal && customer && (
+        <BookCustomerModal
+          customer={customer}
+          userId={userId}
+          onClose={() => setShowBookModal(false)}
+          onBooked={(booking) => {
+            setBookings((prev) => [booking, ...prev]);
+            setShowBookModal(false);
+          }}
+        />
+      )}
     </div>
   );
 }
