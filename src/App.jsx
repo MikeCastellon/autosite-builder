@@ -270,6 +270,64 @@ export default function App() {
     );
   }
 
+  // Booking deposit confirmation pages — public, no auth required.
+  if (typeof window !== 'undefined' && window.location.pathname === '/booking-confirmed') {
+    return (
+      <div className="min-h-screen bg-[#faf9f7] flex items-center justify-center p-6">
+        <div className="w-full max-w-md bg-white rounded-2xl border border-black/[0.07] shadow-sm overflow-hidden">
+          <div className="h-1.5 bg-[#cc0000]" />
+          <div className="px-8 py-10 text-center">
+            <div className="w-16 h-16 rounded-full bg-[#cc0000]/10 flex items-center justify-center mx-auto mb-5">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#cc0000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
+            <p className="text-[11px] font-semibold text-[#cc0000] uppercase tracking-[2px] mb-2">Deposit Received</p>
+            <h1 className="text-2xl font-[900] text-[#1a1a1a] tracking-tight mb-2">You're all booked!</h1>
+            <p className="text-sm text-[#666] leading-relaxed mb-6">
+              Your deposit was processed and your appointment is confirmed. Check your email for the details — we'll be in touch soon.
+            </p>
+            <a
+              href="/"
+              className="inline-block px-6 py-2.5 rounded-xl bg-[#1a1a1a] hover:bg-[#cc0000] text-white text-sm font-semibold transition-colors"
+            >
+              Back to home
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (typeof window !== 'undefined' && window.location.pathname === '/booking-cancelled') {
+    return (
+      <div className="min-h-screen bg-[#faf9f7] flex items-center justify-center p-6">
+        <div className="w-full max-w-md bg-white rounded-2xl border border-black/[0.07] shadow-sm overflow-hidden">
+          <div className="h-1.5 bg-[#888]" />
+          <div className="px-8 py-10 text-center">
+            <div className="w-16 h-16 rounded-full bg-black/5 flex items-center justify-center mx-auto mb-5">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </div>
+            <p className="text-[11px] font-semibold text-[#888] uppercase tracking-[2px] mb-2">Payment Cancelled</p>
+            <h1 className="text-2xl font-[900] text-[#1a1a1a] tracking-tight mb-2">No worries.</h1>
+            <p className="text-sm text-[#666] leading-relaxed mb-6">
+              Your deposit wasn't charged. Your booking request is still on file — the shop may follow up with you directly to confirm your appointment.
+            </p>
+            <a
+              href="/"
+              className="inline-block px-6 py-2.5 rounded-xl bg-[#1a1a1a] hover:bg-[#cc0000] text-white text-sm font-semibold transition-colors"
+            >
+              Back to home
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Auth gate
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-[#faf9f7]">
