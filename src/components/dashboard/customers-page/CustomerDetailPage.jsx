@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../../../lib/supabase.js';
 import { listBookingsForOwner } from '../../../lib/bookings.js';
 import { getCustomerMetadata, saveCustomerMetadata } from '../../../lib/customers.js';
-import { groupBookingsIntoCustomers, pickPrimarySiteId } from '../../../lib/customerIdentity.js';
+import { groupBookingsIntoCustomers, pickPrimarySiteId, makeCustomerLikeFromProfile } from '../../../lib/customerIdentity.js';
+import { getCustomerProfileByIdentityKey } from '../../../lib/customerProfiles.js';
 import AppHeader from '../../ui/AppHeader.jsx';
 import SubscribeGate from '../bookings-page/SubscribeGate.jsx';
 import { useAlert } from '../../ui/AlertProvider.jsx';
@@ -59,6 +60,7 @@ export default function CustomerDetailPage({
   const [bookings, setBookings] = useState([]);
   const [sites, setSites] = useState([]);
   const [meta, setMeta] = useState(null);    // customer_metadata row (or null if none yet)
+  const [manualProfile, setManualProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
 
@@ -78,15 +80,17 @@ export default function CustomerDetailPage({
     (async () => {
       try {
         setLoading(true);
-        const [bookingsData, sitesRes, metaRow] = await Promise.all([
+        const [bookingsData, sitesRes, metaRow, profileRow] = await Promise.all([
           listBookingsForOwner({ userId }),
           supabase.from('sites').select('id, business_info').eq('user_id', userId),
           getCustomerMetadata({ ownerUserId: userId, identityKey }),
+          getCustomerProfileByIdentityKey({ ownerUserId: userId, key: identityKey }),
         ]);
         if (cancelled) return;
         setBookings(bookingsData || []);
         setSites(sitesRes.data || []);
         setMeta(metaRow || null);
+        setManualProfile(profileRow || null);
         const initialNotes = metaRow?.notes || '';
         const initialTags = metaRow?.tags || [];
         setNotes(initialNotes);
@@ -112,8 +116,22 @@ export default function CustomerDetailPage({
   // link / hard refresh on the detail page still works.
   const customer = useMemo(() => {
     const all = groupBookingsIntoCustomers(bookings);
-    return all.find((c) => c.key === identityKey) || null;
-  }, [bookings, identityKey]);
+    const base = all.find((c) => c.key === identityKey) || null;
+    if (base) {
+      if (manualProfile) {
+        base.manualContact = {
+          vehicleMake: manualProfile.vehicle_make || '',
+          vehicleModel: manualProfile.vehicle_model || '',
+          vehicleYear: manualProfile.vehicle_year || null,
+          vehicleSize: manualProfile.vehicle_size || null,
+          notes: manualProfile.notes || '',
+        };
+      }
+      return base;
+    }
+    if (manualProfile) return makeCustomerLikeFromProfile(manualProfile);
+    return null;
+  }, [bookings, identityKey, manualProfile]);
 
   const hasMultipleSites = sites.length > 1;
   const primarySiteId = customer ? pickPrimarySiteId(customer) : null;
@@ -362,6 +380,12 @@ export default function CustomerDetailPage({
                 </button>
               )}
             </div>
+            {sortedBookings.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-black/10 p-6 text-center m-6">
+                <p className="text-sm text-[#888]">No bookings yet for this customer.</p>
+                <p className="text-xs text-[#bbb] mt-1">Click "Book this customer" above to schedule their first visit.</p>
+              </div>
+            ) : (
             <table className="w-full text-sm">
               <thead className="bg-gray-50 text-left text-[10px] text-gray-500 uppercase tracking-wider">
                 <tr>
@@ -392,6 +416,7 @@ export default function CustomerDetailPage({
                 ))}
               </tbody>
             </table>
+            )}
           </div>
         </main>
       </SubscribeGate>
