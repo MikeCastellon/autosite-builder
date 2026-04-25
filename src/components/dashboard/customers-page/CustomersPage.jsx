@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../../lib/supabase.js';
 import { listBookingsForOwner } from '../../../lib/bookings.js';
 import { listCustomerMetadata } from '../../../lib/customers.js';
-import { groupBookingsIntoCustomers } from '../../../lib/customerIdentity.js';
+import { groupBookingsIntoCustomers, makeCustomerLikeFromProfile } from '../../../lib/customerIdentity.js';
+import { listManualCustomers } from '../../../lib/customerProfiles.js';
 import AppHeader from '../../ui/AppHeader.jsx';
 import SubscribeGate from '../bookings-page/SubscribeGate.jsx';
 
@@ -61,6 +62,7 @@ export default function CustomersPage({
   const [bookings, setBookings] = useState([]);
   const [sites, setSites] = useState([]);
   const [metadataByKey, setMetadataByKey] = useState(new Map());
+  const [manualCustomers, setManualCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
   const [search, setSearch] = useState('');
@@ -70,15 +72,17 @@ export default function CustomersPage({
     let cancelled = false;
     (async () => {
       try {
-        const [bookingsData, sitesRes, metaMap] = await Promise.all([
+        const [bookingsData, sitesRes, metaMap, manualProfiles] = await Promise.all([
           listBookingsForOwner({ userId }),
           supabase.from('sites').select('id, business_info').eq('user_id', userId),
           listCustomerMetadata({ ownerUserId: userId }),
+          listManualCustomers({ ownerUserId: userId }),
         ]);
         if (cancelled) return;
         setBookings(bookingsData || []);
         setSites(sitesRes.data || []);
         setMetadataByKey(metaMap || new Map());
+        setManualCustomers(manualProfiles || []);
       } catch (e) {
         if (!cancelled) setErr(e.message || 'Failed to load customers');
       } finally {
@@ -88,7 +92,18 @@ export default function CustomersPage({
     return () => { cancelled = true; };
   }, [userId]);
 
-  const customers = useMemo(() => groupBookingsIntoCustomers(bookings), [bookings]);
+  const customers = useMemo(() => {
+    const fromBookings = groupBookingsIntoCustomers(bookings);
+    const bookedKeys = new Set(fromBookings.map((c) => c.key));
+    const manualOnly = manualCustomers
+      .filter((p) => !bookedKeys.has(p.identity_key))
+      .map(makeCustomerLikeFromProfile);
+    // Sort: booked customers first (by lastBookedAt desc), manual customers
+    // after (by createdAt desc). Keeps the active pipeline visible.
+    fromBookings.sort((a, b) => new Date(b.lastBookedAt) - new Date(a.lastBookedAt));
+    manualOnly.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    return [...fromBookings, ...manualOnly];
+  }, [bookings, manualCustomers]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -237,7 +252,14 @@ export default function CustomersPage({
                         className="border-t border-gray-100 hover:bg-gray-50 cursor-pointer"
                       >
                         <td className="px-4 py-3">
-                          <div className="font-semibold text-[#1a1a1a]">{c.name}</div>
+                          <div className="font-semibold text-[#1a1a1a]">
+                            {c.name}
+                            {c.isManual && (
+                              <span className="ml-2 inline-flex items-center rounded-md bg-[#f4f3f0] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#888]">
+                                Manual
+                              </span>
+                            )}
+                          </div>
                           {c.nextUpcomingAt && (
                             <div className="text-[11px] text-green-700 font-medium mt-0.5">
                               Upcoming · {formatDate(c.nextUpcomingAt)}
