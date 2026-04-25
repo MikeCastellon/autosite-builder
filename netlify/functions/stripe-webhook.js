@@ -8,6 +8,7 @@ import {
   handleInvoicePaymentSucceeded,
 } from './_lib/stripe-event-handlers.js';
 import { handleAccountUpdated } from './_lib/stripe-connect-handler.js';
+import { handleBookingCheckoutCompleted } from './_lib/booking-deposit-handler.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -64,9 +65,17 @@ export const handler = async (event) => {
 
   try {
     switch (stripeEvent.type) {
-      case 'checkout.session.completed':
-        await handleCheckoutCompleted(stripeEvent, { stripe, db });
+      case 'checkout.session.completed': {
+        const mode = stripeEvent.data.object?.mode;
+        if (mode === 'subscription') {
+          await handleCheckoutCompleted(stripeEvent, { stripe, db });
+        } else if (mode === 'payment') {
+          await handleBookingCheckoutCompleted(stripeEvent, { db });
+        } else {
+          console.warn('[stripe-webhook] checkout.session.completed with unknown mode:', mode);
+        }
         break;
+      }
       case 'customer.subscription.created':
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted':
