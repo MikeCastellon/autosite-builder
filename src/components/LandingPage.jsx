@@ -37,7 +37,7 @@ export default function LandingPage({ onSignIn, onSignUp }) {
           <span className="text-[#cc0000]">Built in minutes</span>
         </h1>
         <p className="text-[#555] text-[clamp(15px,2vw,18px)] leading-[1.6] max-w-2xl mx-auto mb-10">
-          Answer a few questions about your auto shop. Our AI writes every line of copy and ships a fast, mobile‑ready site on your own subdomain — no designers, no developers, no monthly fee.
+          Answer a few questions about your auto shop. Our AI writes every line of copy and ships a fast, mobile‑ready site on your own subdomain — plus payments, booking deposits, and a full customer CRM.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
@@ -146,7 +146,10 @@ export default function LandingPage({ onSignIn, onSignUp }) {
               'AI-written copy tailored to your services',
               'Mobile-responsive on every device',
               'Local SEO: schema, meta tags, keywords',
-              'Google Reviews + Instagram widgets',
+              'Google Reviews widget',
+              'Customer CRM — history, tags, CSV export',
+              'Accept payments via Stripe (Tap to Pay)',
+              'Booking deposits to stop no-shows',
               'Free SSL certificate (HTTPS)',
               'Lightning-fast CDN hosting',
               'Custom subdomain or your own domain',
@@ -163,12 +166,133 @@ export default function LandingPage({ onSignIn, onSignUp }) {
         </div>
       </section>
 
+      {/* ──────────────────────── Customer CRM ──────────────────────── */}
+      <section className="px-4 sm:px-8 py-20">
+        <div className="max-w-5xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+          <div>
+            <p className="text-[12px] font-semibold text-[#cc0000] uppercase tracking-[2px] mb-3">Customer CRM</p>
+            <h2 className="text-[clamp(28px,4vw,40px)] font-[900] text-[#1a1a1a] tracking-[-1px] leading-[1.1] mb-4">
+              Your customers, all in one place.
+            </h2>
+            <p className="text-[#555] text-[16px] leading-[1.6] mb-6">
+              Every booking automatically becomes a customer record. Add notes, tag your VIPs, and pull a full export whenever you need it.
+            </p>
+            <ul className="space-y-3">
+              {['Booking history per customer', 'Tags and notes, searchable across the list', 'CSV export of your full customer list', 'Send email to any customer from inside the app'].map((b) => (
+                <li key={b} className="flex items-start gap-3 text-[15px] text-[#1a1a1a]">
+                  <span className="shrink-0 w-5 h-5 rounded-full bg-[#cc0000] text-white flex items-center justify-center mt-0.5">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5L9.5 3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  </span>
+                  {b}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="rounded-2xl border border-black/[0.07] bg-white p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <span className="font-[900] text-[#1a1a1a]">Customers</span>
+              <span className="text-[12px] text-[#888]">248 total</span>
+            </div>
+            <div className="divide-y divide-black/[0.06]">
+              {[{name:'Marcus Reyes',note:'VIP · Monthly detail',tag:'VIP'},{name:'Jordan Smith',note:'Booked 3 times',tag:'Repeat'},{name:'Sam Okafor',note:'Last: tint removal',tag:'New'},{name:'Lia Chen',note:'Needs follow-up',tag:'Flag'}].map((r) => (
+                <div key={r.name} className="py-3 flex items-center justify-between">
+                  <div>
+                    <div className="font-semibold text-[14px]">{r.name}</div>
+                    <div className="text-[12px] text-[#888]">{r.note}</div>
+                  </div>
+                  <span className="text-[11px] px-2 py-1 rounded-full bg-red-50 text-[#cc0000] font-semibold">{r.tag}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ──────────────────────── Stripe Payments ──────────────────────── */}
+      <section className="px-4 sm:px-8 py-20 bg-[#faf9f7] border-y border-black/[0.07]">
+        <div className="max-w-5xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+          <div className="rounded-2xl border border-black/[0.07] bg-white p-6 shadow-sm order-last md:order-first">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-[11px] text-[#888] font-semibold uppercase tracking-wider">Tap to Pay</span>
+              <span className="text-[12px] font-bold" style={{color:'#635bff'}}>Stripe</span>
+            </div>
+            <div className="rounded-xl bg-[#1a1a1a] text-white p-5">
+              <div className="text-[12px] text-white/60">Deposit</div>
+              <div className="text-[32px] font-[900] mt-1 tracking-[-1px]">$75.00</div>
+              <div className="text-[12px] text-white/40 mt-3">Full Detail · Marcus R.</div>
+            </div>
+            <button className="mt-4 w-full py-3 rounded-xl bg-[#cc0000] text-white text-[14px] font-semibold">Tap card to charge</button>
+            <p className="text-[11px] text-[#888] mt-3 text-center">Funds land in your bank — not an app wallet</p>
+          </div>
+          <div>
+            <p className="text-[12px] font-semibold text-[#cc0000] uppercase tracking-[2px] mb-3">Payments</p>
+            <h2 className="text-[clamp(28px,4vw,40px)] font-[900] text-[#1a1a1a] tracking-[-1px] leading-[1.1] mb-4">
+              Get paid. Actually paid.
+            </h2>
+            <p className="text-[#555] text-[16px] leading-[1.6] mb-6">
+              Onboard as a merchant in minutes with our partner Stripe. Take cards in person, online, or at booking.
+            </p>
+            <ul className="space-y-3">
+              {['Tap to Pay — accept cards with just your phone', 'Card-not-present for invoices and deposits', 'Payouts land in your bank, not an app wallet', 'No monthly fees — pay only per transaction'].map((b) => (
+                <li key={b} className="flex items-start gap-3 text-[15px] text-[#1a1a1a]">
+                  <span className="shrink-0 w-5 h-5 rounded-full bg-[#cc0000] text-white flex items-center justify-center mt-0.5">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5L9.5 3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  </span>
+                  {b}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* ──────────────────────── Booking Deposits ──────────────────────── */}
+      <section className="px-4 sm:px-8 py-20">
+        <div className="max-w-5xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+          <div>
+            <p className="text-[12px] font-semibold text-[#cc0000] uppercase tracking-[2px] mb-3">Booking deposits</p>
+            <h2 className="text-[clamp(28px,4vw,40px)] font-[900] text-[#1a1a1a] tracking-[-1px] leading-[1.1] mb-4">
+              Stop the no-shows.
+            </h2>
+            <p className="text-[#555] text-[16px] leading-[1.6] mb-6">
+              Require a deposit when a customer books. They show up — or you keep the deposit.
+            </p>
+            <ul className="space-y-3">
+              {['Set a deposit amount per service', 'Link to your cancellation policy on every booking', 'Shareable booking link for Instagram, email, or SMS', 'Deposits apply to the final bill automatically'].map((b) => (
+                <li key={b} className="flex items-start gap-3 text-[15px] text-[#1a1a1a]">
+                  <span className="shrink-0 w-5 h-5 rounded-full bg-[#cc0000] text-white flex items-center justify-center mt-0.5">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5L9.5 3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  </span>
+                  {b}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="rounded-2xl border border-black/[0.07] bg-white p-6 shadow-sm">
+            <div className="text-[11px] text-[#888] font-semibold uppercase tracking-wider mb-3">New Booking</div>
+            <div className="font-[900] text-[18px] tracking-[-0.5px]">Ceramic Coating — Full</div>
+            <div className="text-[14px] text-[#555] mt-1">Sat, May 2 · 10:00 AM</div>
+            <div className="mt-4 divide-y divide-black/[0.06] border-y border-black/[0.06]">
+              <div className="py-3 flex justify-between text-[14px]">
+                <span className="text-[#555]">Service total</span>
+                <span className="font-semibold">$600.00</span>
+              </div>
+              <div className="py-3 flex justify-between text-[14px] bg-red-50 -mx-6 px-6">
+                <span className="font-semibold text-[#cc0000]">Deposit today</span>
+                <span className="font-[900] text-[#cc0000]">$100.00</span>
+              </div>
+            </div>
+            <p className="text-[11px] text-[#888] mt-3">Cancellation policy · Deposit applies to final bill</p>
+          </div>
+        </div>
+      </section>
+
       {/* ──────────────────────── Final CTA ──────────────────────── */}
       <section className="px-4 sm:px-8 py-20 text-center">
         <h2 className="text-[clamp(28px,4vw,44px)] font-[900] text-[#1a1a1a] tracking-[-1px] leading-[1.1] mb-4 max-w-2xl mx-auto">
-          Ready to launch your shop's website?
+          Ready to get paid on time and booked up?
         </h2>
-        <p className="text-[#555] text-[16px] mb-8">Takes about 5 minutes. Totally free.</p>
+        <p className="text-[#555] text-[16px] mb-8">Free website, payments, booking deposits, and a CRM — takes about 5 minutes.</p>
         <button
           onClick={onStart}
           className="bg-[#cc0000] hover:bg-[#aa0000] text-white font-semibold py-4 px-10 rounded-xl text-[16px] transition-colors"
