@@ -35,6 +35,7 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
     if (params.get('stripe_success') === '1') {
       setShowWelcome(true);
       window.history.replaceState({}, '', window.location.pathname);
+      setTimeout(() => setShowWelcome(false), 60_000);
     }
   }, []);
 
