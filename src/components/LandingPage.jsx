@@ -301,6 +301,73 @@ export default function LandingPage({ onSignIn, onSignUp }) {
         </button>
       </section>
 
+      {/* ──────────────────────── Pricing Card ──────────────────────── */}
+      <section id="pricing" className="px-4 sm:px-8 py-20 bg-[#faf9f7]">
+        <div className="max-w-lg mx-auto">
+          <p className="text-[12px] font-semibold text-[#cc0000] uppercase tracking-[2px] text-center mb-3">Simple Pricing</p>
+          <h2 className="text-[clamp(28px,4vw,40px)] font-[900] text-[#1a1a1a] tracking-[-1px] leading-[1.1] text-center mb-10">
+            One plan. Everything included.
+          </h2>
+
+          <div className="rounded-2xl border border-black/[0.07] bg-white shadow-sm overflow-hidden">
+            {/* Card header */}
+            <div className="bg-gradient-to-br from-[#cc0000] to-[#8a0000] px-8 py-8 text-white relative overflow-hidden">
+              <div className="absolute -top-10 -right-10 w-48 h-48 bg-white/10 rounded-full blur-2xl" aria-hidden="true" />
+              <div className="relative">
+                <p className="text-[11px] font-bold uppercase tracking-[2px] opacity-80 mb-3">Genius Websites Pro</p>
+                <div className="flex items-end gap-2 mb-1">
+                  <span className="text-[48px] font-[900] tracking-[-2px] leading-none">$19.99</span>
+                  <span className="text-[16px] opacity-70 mb-2">/month</span>
+                </div>
+                <div className="inline-flex items-center gap-1.5 bg-white/20 rounded-full px-3 py-1 mt-2">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5l2.78 6.42 6.97.5-5.27 4.6 1.6 6.81L12 16.5l-6.08 3.33 1.6-6.81L2.25 8.42l6.97-.5L12 1.5z"/></svg>
+                  <span className="text-[12px] font-bold">30 days free — no charge today</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Feature list */}
+            <ul className="px-8 py-6 space-y-3">
+              {[
+                ['AI-generated website', 'Live in minutes, mobile-ready'],
+                ['24/7 Online Booking Calendar', 'Customers self-book any time'],
+                ['Booking Deposits via Stripe', 'Lock in appointments with a deposit'],
+                ['Customer CRM', 'Track every lead and returning client'],
+                ['Stripe Merchant Payments', 'Get paid directly from your website'],
+                ['Live Google Reviews Widget', 'Auto-pulls your latest 5-star reviews'],
+                ['Custom Domain', 'Connect your own .com'],
+                ['Remove "Powered by" Branding', '100% your brand'],
+                ['Priority Live Chat Support', 'Replies in minutes'],
+              ].map(([title, desc]) => (
+                <li key={title} className="flex items-start gap-3">
+                  <span className="mt-0.5 w-5 h-5 rounded-full bg-[#cc0000]/10 text-[#cc0000] flex items-center justify-center shrink-0">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  </span>
+                  <span>
+                    <span className="text-[14px] font-[700] text-[#1a1a1a]">{title}</span>
+                    <span className="text-[12px] text-[#888] ml-1.5">{desc}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+
+            {/* CTA */}
+            <div className="px-8 pb-8">
+              <button
+                type="button"
+                onClick={onStart}
+                className="block w-full py-4 rounded-xl bg-[#cc0000] hover:bg-[#aa0000] text-white text-center font-bold text-[15px] transition-colors shadow-sm"
+              >
+                ⭐ Start 30-Day Free Trial
+              </button>
+              <p className="text-[11px] text-[#888] text-center mt-3">
+                Create your free account · then activate Pro inside the dashboard · cancel anytime.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ──────────────────────── Footer ──────────────────────── */}
       <footer className="border-t border-black/[0.07] px-4 sm:px-8 py-6 bg-white">
         <div className="max-w-6xl mx-auto w-full flex flex-col sm:flex-row items-center justify-between gap-3">
