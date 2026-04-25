@@ -137,10 +137,16 @@ export default function LandingPage({ onSignIn, onSignUp }) {
       {/* ──────────────────────── What's Included ──────────────────────── */}
       <section className="px-4 sm:px-8 py-20 bg-[#faf9f7] border-y border-black/[0.07]">
         <div className="max-w-4xl mx-auto w-full">
-          <p className="text-[12px] font-semibold text-[#cc0000] uppercase tracking-[2px] mb-3 text-center">Included, free</p>
-          <h2 className="text-[clamp(28px,4vw,40px)] font-[900] text-[#1a1a1a] tracking-[-1px] leading-[1.1] mb-12 text-center">
+          <div className="flex justify-center mb-5">
+            <div className="inline-flex items-center gap-2 bg-[#1a1a1a] text-white rounded-full px-5 py-2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <span className="text-[13px] font-bold tracking-tight">100% Free to start — no credit card required</span>
+            </div>
+          </div>
+          <h2 className="text-[clamp(28px,4vw,40px)] font-[900] text-[#1a1a1a] tracking-[-1px] leading-[1.1] mb-3 text-center">
             Everything you need to get found & booked.
           </h2>
+          <p className="text-center text-[15px] text-[#888] mb-12">All of this ships the moment you publish. <span className="font-semibold text-[#1a1a1a]">You don't pay a cent until you're ready to upgrade.</span></p>
           <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-4">
             {[
               'AI-written copy tailored to your services',
