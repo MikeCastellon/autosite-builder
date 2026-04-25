@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../../../lib/supabase.js';
 import BookingsView from '../bookings/BookingsView.jsx';
 import SchedulerSettings from '../booking-settings/SchedulerSettings.jsx';
@@ -19,6 +19,7 @@ export default function BookingsPage({ userId, profile, userEmail, onExit, onOpe
     onSignOut,
   };
   const [tab, setTab] = useState('schedule');
+  const [copied, setCopied] = useState(false);
   const [sites, setSites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
@@ -78,7 +79,29 @@ export default function BookingsPage({ userId, profile, userEmail, onExit, onOpe
       <AppHeader {...headerProps} />
       <SubscribeGate profile={profile}>
         <main className="max-w-7xl mx-auto px-3 py-4">
-          <h1 className="text-3xl sm:text-4xl font-black text-[#1a1a1a] tracking-tight mb-6">Bookings</h1>
+          <h1 className="text-3xl sm:text-4xl font-black text-[#1a1a1a] tracking-tight mb-3">Bookings</h1>
+
+          {/* Booking link bar */}
+          {(() => {
+            const site = sites.find(s => s.id === activeSiteId) || sites[0];
+            if (!site?.published_url) return null;
+            const isCustomLive = site.custom_domain && site.custom_domain_status === 'active_ssl';
+            const bookingUrl = isCustomLive ? `https://www.${site.custom_domain}` : site.published_url;
+            return (
+              <div className="flex items-center gap-2 mb-4 bg-white border border-black/[0.07] rounded-xl px-3 py-2 shadow-sm">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#cc0000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+                <span className="text-[12px] font-semibold text-[#888] shrink-0">Booking link:</span>
+                <a href={bookingUrl} target="_blank" rel="noopener noreferrer" className="text-[12px] text-[#1a1a1a] hover:text-[#cc0000] truncate transition-colors flex-1">{bookingUrl.replace(/^https?:\/\//, '')}</a>
+                <button
+                  onClick={() => { navigator.clipboard.writeText(bookingUrl); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+                  className="shrink-0 text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-[#1a1a1a] hover:bg-[#cc0000] text-white transition-colors"
+                >
+                  {copied ? '✓ Copied' : 'Copy'}
+                </button>
+              </div>
+            );
+          })()}
+
           <div className="flex gap-1 mb-6 border-b border-gray-200">
             <TabBtn on={tab === 'schedule'} onClick={() => setTab('schedule')}>Schedule</TabBtn>
             <TabBtn on={tab === 'settings'} onClick={() => setTab('settings')}>Settings</TabBtn>

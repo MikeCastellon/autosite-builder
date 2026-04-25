@@ -359,7 +359,8 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
                         height: '800px',
                         border: 0,
                         transform: 'scale(0.219)',
-                        transformOrigin: '0 0',
+                        transformOrigin: 'top center',
+                        marginLeft: 'calc(50% - 640px)',
                         pointerEvents: 'none',
                       }}
                     />
