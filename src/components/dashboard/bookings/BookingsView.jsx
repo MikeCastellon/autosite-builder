@@ -4,7 +4,7 @@ import BookingsCalendar from './BookingsCalendar.jsx';
 import BookingDetailDrawer from './BookingDetailDrawer.jsx';
 import { listBookingsForOwner, listAllBookings } from '../../../lib/bookings.js';
 
-export default function BookingsView({ userId, isAdmin = false, onBack }) {
+export default function BookingsView({ userId, isAdmin = false, onBack, bookingUrl }) {
   const [tab, setTab] = useState('calendar');
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,6 +32,21 @@ export default function BookingsView({ userId, isAdmin = false, onBack }) {
   return (
     <div>
       <div className="flex items-center justify-end gap-3 mb-5">
+        {bookingUrl && (
+          <a
+            href={bookingUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={bookingUrl}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-black/[0.1] bg-white hover:bg-[#cc0000] hover:border-[#cc0000] hover:text-white text-[#1a1a1a] text-[12px] font-semibold transition-colors group"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/>
+              <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>
+            </svg>
+            Booking Link
+          </a>
+        )}
         <ViewToggle value={tab} onChange={setTab} />
         {onBack && (
           <button onClick={onBack} className="text-sm text-[#888] hover:text-[#1a1a1a]">← Back</button>
