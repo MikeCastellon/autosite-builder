@@ -134,7 +134,8 @@ Return ONLY this JSON structure (no markdown, no explanation):
       body: JSON.stringify({ success: true, copy: parsed }),
     };
   } catch (error) {
-    console.error('generate-website error:', error);
+    const bizName = event?.body ? (() => { try { return JSON.parse(event.body)?.businessInfo?.businessName; } catch { return 'unknown'; } })() : 'unknown';
+    console.error(`[generate-website] FAILED for "${bizName}":`, error?.message || error);
     return {
       statusCode: 500,
       headers: { 'Content-Type': 'application/json' },

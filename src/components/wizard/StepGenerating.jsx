@@ -11,8 +11,12 @@ const STATUS_MESSAGES = [
   'Almost ready...',
 ];
 
+const MAX_ATTEMPTS = 3;
+
 export default function StepGenerating({ businessInfo, templateMeta, onSuccess, onError }) {
   const [statusIndex, setStatusIndex] = useState(0);
+  const [attempt, setAttempt] = useState(1);
+  const [retrying, setRetrying] = useState(false);
   const called = useRef(false);
 
   useEffect(() => {
@@ -25,9 +29,35 @@ export default function StepGenerating({ businessInfo, templateMeta, onSuccess, 
   useEffect(() => {
     if (called.current) return;
     called.current = true;
-    generateWebsite(businessInfo, templateMeta)
-      .then((copy) => onSuccess(copy))
-      .catch((err) => onError(err.message || 'Something went wrong'));
+
+    async function run() {
+      for (let i = 1; i <= MAX_ATTEMPTS; i++) {
+        try {
+          if (i > 1) {
+            setRetrying(true);
+            setAttempt(i);
+            // Short delay before retry so the UI updates
+            await new Promise((res) => setTimeout(res, 1500));
+          }
+          const copy = await generateWebsite(businessInfo, templateMeta);
+          setRetrying(false);
+          onSuccess(copy);
+          return;
+        } catch (err) {
+          const msg = err?.message || 'Unknown error';
+          console.error(
+            `[generate-website] attempt ${i}/${MAX_ATTEMPTS} failed for "${businessInfo?.businessName}"`,
+            { attempt: i, error: msg, businessInfo }
+          );
+          if (i === MAX_ATTEMPTS) {
+            setRetrying(false);
+            onError(msg || 'Something went wrong generating your site. Please try again.');
+          }
+        }
+      }
+    }
+
+    run();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
@@ -37,9 +67,11 @@ export default function StepGenerating({ businessInfo, templateMeta, onSuccess, 
         <div className="w-16 h-16 rounded-full border-[3px] border-[#f2f0ec] border-t-[#cc0000] animate-spin" />
       </div>
 
-      <h2 className="text-xl font-[800] text-[#1a1a1a] mb-3 tracking-[-0.5px]">Building your website...</h2>
+      <h2 className="text-xl font-[800] text-[#1a1a1a] mb-3 tracking-[-0.5px]">
+        {retrying ? `Retrying… (attempt ${attempt} of ${MAX_ATTEMPTS})` : 'Building your website...'}
+      </h2>
       <p className="text-[#555] font-medium min-h-[1.5rem] text-[15px]">
-        {STATUS_MESSAGES[statusIndex]}
+        {retrying ? 'Hang tight, starting over...' : STATUS_MESSAGES[statusIndex]}
       </p>
       <p className="text-[#888] text-sm mt-3">Writing custom copy for {businessInfo.businessName}</p>
     </div>
