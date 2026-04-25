@@ -78,6 +78,7 @@ export default function BookingsPage({ userId, profile, userEmail, onExit, onOpe
       <AppHeader {...headerProps} />
       <SubscribeGate profile={profile}>
         <main className="max-w-5xl mx-auto px-6 py-10">
+          <h1 className="text-3xl sm:text-4xl font-black text-[#1a1a1a] tracking-tight mb-6">Bookings</h1>
           <div className="flex gap-1 mb-6 border-b border-gray-200">
             <TabBtn on={tab === 'schedule'} onClick={() => setTab('schedule')}>Schedule</TabBtn>
             <TabBtn on={tab === 'settings'} onClick={() => setTab('settings')}>Settings</TabBtn>

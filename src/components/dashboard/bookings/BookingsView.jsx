@@ -31,14 +31,11 @@ export default function BookingsView({ userId, isAdmin = false, onBack }) {
 
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-        <h1 className="text-3xl sm:text-4xl font-black text-[#1a1a1a] tracking-tight">Bookings</h1>
-        <div className="flex items-center gap-3">
-          <ViewToggle value={tab} onChange={setTab} />
-          {onBack && (
-            <button onClick={onBack} className="text-sm text-[#888] hover:text-[#1a1a1a]">← Back</button>
-          )}
-        </div>
+      <div className="flex items-center justify-end gap-3 mb-5">
+        <ViewToggle value={tab} onChange={setTab} />
+        {onBack && (
+          <button onClick={onBack} className="text-sm text-[#888] hover:text-[#1a1a1a]">← Back</button>
+        )}
       </div>
 
       {loading && <p className="text-sm text-gray-500">Loading…</p>}
