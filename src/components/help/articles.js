@@ -189,7 +189,7 @@ export const ARTICLES = [
     steps: [
       {
         heading: "What Pro gives you",
-        body: "Pro unlocks the features that turn your site from a brochure into a business tool:\n\n**Bookings** — accept appointments directly on your site. Customers pick a service and time; you get an email, they get a confirmation.\n\n**Customers** — every booking automatically creates a customer record. See history, add notes and tags, export to CSV, send email from inside the app.\n\n**Custom domain** — use your own `www.yourbusiness.com` instead of an `autocaregeniushub.com` subdomain.\n\n**No Powered by bar** — your published site shows your brand, not ours.",
+        body: "Pro unlocks the features that turn your site from a brochure into a business tool:\n\n**Bookings** — accept appointments directly on your site. Customers pick a service and time; you get an email, they get a confirmation.\n\n**Booking deposits** — optionally collect a percentage deposit when customers book, right through Stripe. Reduces no-shows and secures your calendar.\n\n**Accept card payments (Stripe)** — connect your Stripe account in one click and take payments from anywhere. Use Tap to Pay on your phone to charge customers in person, or send payment links for remote charges.\n\n**Customers CRM** — every booking creates a customer record. Add manual customers too. See full history, add notes and tags, upload photos, export to CSV, send email and book appointments right from the dashboard.\n\n**Custom domain** — use your own `www.yourbusiness.com` instead of an `autocaregeniushub.com` subdomain.\n\n**No Powered by bar** — your published site shows your brand, not ours.",
       },
       {
         heading: 'How to upgrade',
@@ -278,6 +278,93 @@ export const ARTICLES = [
         heading: 'Manage incoming bookings',
         body: "Click **Bookings** in the top nav to see every upcoming (and past) appointment. Click a booking for full details, customer info, and status controls — confirm, reschedule, cancel, or mark complete. Email notifications go out automatically on every status change.",
       },
+      {
+        heading: 'Collect a deposit',
+        body: "Want customers to pay a percentage upfront when they book? Connect your Stripe account (see **Accepting Payments**) and set a **Deposit %** in Booking Settings → General. Read the **Booking Deposits** article for the full walkthrough.",
+      },
+    ],
+  },
+
+  // -----------------------------------------------------------------------
+  {
+    slug: 'payments',
+    title: 'Accepting Payments',
+    description: 'Take card payments anywhere via Stripe + Tap to Pay.',
+    icon: '💳',
+    readTime: '4 min read',
+    isPro: true,
+    steps: [
+      {
+        heading: "What this unlocks",
+        body: "We've partnered with **Stripe** as the payment processor for your business. Once you connect a Stripe account, you can:\n\n- Collect **deposits on bookings** automatically when customers book through your site (see the **Booking Deposits** article)\n- Accept card payments in person using **Tap to Pay** on your own phone — no card reader needed\n- Send **payment links** by text or email for remote charges\n\nYou keep 100% of the money (minus Stripe's standard processing fees and our $2 per-transaction platform fee). Funds land in your bank account on Stripe's normal payout schedule.",
+      },
+      {
+        heading: "Connect your Stripe account",
+        body: "Click **Payments** in the top nav (Pro users only), then click **Start Stripe setup**. The Stripe onboarding form opens right inside our dashboard — walk through it with your business info, tax ID, and bank account. The whole thing takes about 5 minutes.",
+        callout: { type: 'heads-up', text: "Stripe requires a real ID document (driver's license or passport) to verify your identity. This is standard for any payment processor and keeps your account compliant." },
+      },
+      {
+        heading: "Check your status",
+        body: "Back on the **Payments** page, your status badge should flip from **Not connected** to **Connected** (green) once Stripe finishes verification — usually instant, sometimes up to a few minutes. If you see **Setup incomplete**, click **Start Stripe setup** again and finish whatever step is missing.",
+      },
+      {
+        heading: "Tap to Pay on your phone",
+        body: "Once your account is connected, install Stripe's free **Stripe Dashboard** mobile app from the App Store or Google Play. Sign in with the email you onboarded with. Inside the app, tap **Collect Payment** → enter the amount → tap the customer's card against the back of your phone. That's it.\n\nTap to Pay works on most modern iPhones (iPhone XS or newer) and Android phones (NFC-enabled, Android 11+). No card reader, no extra hardware.",
+        callout: { type: 'tip', text: "Apple Pay, Google Pay, and contactless cards all work. If your phone supports tapping to pay, your phone supports accepting a tap to pay." },
+      },
+      {
+        heading: "Remote charges (coming soon)",
+        body: "For customers you can't see in person, a **Charge customer** button is coming that generates a secure Stripe payment link. Text or email it to them; they pay in their browser. The charge lands in your Stripe account the same way.",
+      },
+      {
+        heading: "Payouts + fees",
+        body: "Stripe handles payouts automatically — typically 2 business days after a charge. You can change the payout schedule (daily, weekly, monthly) from Stripe's Dashboard app.\n\n**Fees:** Stripe's standard processing is 2.9% + 30¢ per charge for online payments, 2.7% + 5¢ for Tap to Pay in-person. On top of that, we take a **$2 flat platform fee** per transaction to keep the lights on here.",
+      },
+      {
+        heading: "Manage your Stripe account",
+        body: "Use the **Stripe Dashboard** mobile app or `dashboard.stripe.com` in a browser for everything payment-related: payout history, refunds, disputes, updating your bank account, downloading tax documents. Our **Payments** page just gets you connected and shows the high-level status.",
+      },
+    ],
+  },
+
+  // -----------------------------------------------------------------------
+  {
+    slug: 'booking-deposits',
+    title: 'Booking Deposits',
+    description: 'Collect a deposit when customers book. Secure your calendar.',
+    icon: '💰',
+    readTime: '3 min read',
+    isPro: true,
+    steps: [
+      {
+        heading: "Why deposits",
+        body: "A deposit is a percentage of the service price that the customer pays at booking. It's a small commitment that dramatically reduces no-shows — people who've already paid $20 tend to actually show up. And if you charge a non-refundable deposit, a last-minute cancel still covers part of the slot.",
+      },
+      {
+        heading: "Connect Stripe first",
+        body: "Deposits run through Stripe, so you need your Stripe account connected. See the **Accepting Payments** article. Without a connected Stripe account, deposits are silently skipped and bookings flow normally.",
+      },
+      {
+        heading: "Set your deposit percentage",
+        body: "Click **Bookings** → **Settings** tab → **General**. Find the **Deposit %** field. Enter a number between 0 and 100 — common values are 20, 25, or 50. Set to **0** to turn deposits off entirely. Click **Save**.\n\nThe same percentage applies to every service (for simplicity). Per-service overrides may come later.",
+      },
+      {
+        heading: "Make sure your services have prices",
+        body: "Deposits are calculated as a percentage of each service's price. If a service has a price like `$99`, `199`, or `1,299.00`, the deposit will be computed automatically. Services with non-numeric prices like `Call for quote` silently skip the deposit — the booking still works, just with no payment collected.",
+        callout: { type: 'tip', text: "The minimum deposit Stripe will accept is 50¢. If your percentage × price comes out under that, the deposit is skipped for that booking." },
+      },
+      {
+        heading: "What customers see",
+        body: "When a customer fills out the booking form on your site and clicks Submit, they're redirected to a Stripe Checkout page showing the deposit amount. They pay with any card, Apple Pay, Google Pay. On success, they're redirected back to your site with a confirmation.\n\nIf they abandon Checkout without paying, the booking is still saved with status **pending** and deposit status **pending** — you can follow up with them or just let it expire.",
+      },
+      {
+        heading: "Tracking deposits in your dashboard",
+        body: "On the **Bookings** page, each row shows a deposit pill next to the status — **Deposit paid** (green), **Deposit pending** (amber), or nothing if no deposit was required. Click into any booking for the full deposit details: amount required, amount paid, paid timestamp.",
+      },
+      {
+        heading: "Refunds",
+        body: "Refund a deposit by opening the charge in your **Stripe Dashboard** (mobile app or web) and clicking Refund. We'll surface a Refund button inside the app in a future update, but for now Stripe is the source of truth for all payment actions.",
+      },
     ],
   },
 
@@ -295,8 +382,20 @@ export const ARTICLES = [
         body: 'Click **Customers** in the top nav (visible when you\'re Pro). You\'ll see everyone who has ever booked with you, automatically.',
       },
       {
+        heading: 'Add a customer manually',
+        body: "Click **+ Add customer** in the top-right. Fill in their name, email, phone, vehicle info, notes, and tags. Manually-added customers get a **Manual** badge so you can tell them apart from booking-derived ones. They'll merge automatically if they later book through the scheduler with the same email or phone.",
+      },
+      {
         heading: 'Customer detail',
         body: "Click any customer to open their detail page. You see their full booking history, contact info, and totals — how many appointments, total spent, first and last visit.",
+      },
+      {
+        heading: 'Upload a photo',
+        body: "On the customer detail page, click the pencil icon on the avatar to upload a photo (JPG or PNG, up to 500 KB). The photo shows on the customer list and the detail page. Helpful for quickly recognizing regulars.",
+      },
+      {
+        heading: 'Book a customer from the dashboard',
+        body: "On any customer's detail page, click **+ Book this customer**. Pick a service, date, and time — vehicle info is pre-filled from their profile. The booking is created as **confirmed** (no availability or lead-time checks — you're the owner, you override). The customer gets a confirmation email unless you uncheck the box.",
       },
       {
         heading: 'Notes',
@@ -327,7 +426,11 @@ export const ARTICLES = [
     steps: [
       {
         heading: 'Open your profile',
-        body: "Click your initial avatar in the top-right corner, then **Profile**. You can edit your first name, last name, business name, and phone.",
+        body: "Click your avatar in the top-right corner, then **Profile**. You can edit your first name, last name, business name, and phone.",
+      },
+      {
+        heading: 'Upload a profile photo',
+        body: "At the top of the Account details card, click **Upload photo** to add a picture of yourself or your logo (JPG or PNG, up to 500 KB). Your photo appears in the top-right nav avatar anywhere you go in the app. Click **Replace** to swap it or **Remove** to go back to the default initial letter.",
       },
       {
         heading: 'Change password',
