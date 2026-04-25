@@ -93,6 +93,39 @@ export default function BookingDetailDrawer({ booking, onClose, onUpdated }) {
           <Row term="Created" def={fmt(b.created_at)} />
         </dl>
 
+        {b?.deposit_status && b.deposit_status !== 'not_required' && (
+          <div className="border-t border-black/[0.07] pt-4 mt-4 mb-6">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-[#888] mb-2">Deposit</h3>
+            <dl className="text-sm space-y-1">
+              <div className="flex justify-between">
+                <dt className="text-[#888]">Status</dt>
+                <dd className="font-semibold text-[#1a1a1a]">
+                  {b.deposit_status === 'paid' && 'Paid'}
+                  {b.deposit_status === 'pending' && 'Pending'}
+                  {b.deposit_status === 'refunded' && 'Refunded'}
+                  {b.deposit_status === 'failed' && 'Failed'}
+                </dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-[#888]">Required</dt>
+                <dd className="font-mono">{b.deposit_required_cents != null ? `$${(b.deposit_required_cents / 100).toFixed(2)}` : '—'}</dd>
+              </div>
+              {b.deposit_paid_cents != null && (
+                <div className="flex justify-between">
+                  <dt className="text-[#888]">Paid</dt>
+                  <dd className="font-mono">${(b.deposit_paid_cents / 100).toFixed(2)}</dd>
+                </div>
+              )}
+              {b.deposit_paid_at && (
+                <div className="flex justify-between">
+                  <dt className="text-[#888]">Paid at</dt>
+                  <dd>{new Date(b.deposit_paid_at).toLocaleString()}</dd>
+                </div>
+              )}
+            </dl>
+          </div>
+        )}
+
         <label className="block text-xs font-semibold text-gray-600 mb-1">Owner notes (private)</label>
         <textarea
           value={notes}
