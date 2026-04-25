@@ -5,6 +5,7 @@ export default function GeneralTab({ siteId, config, siteImages, onSaved }) {
   const [welcome, setWelcome] = useState(config?.welcome_text || '');
   const [label, setLabel] = useState(config?.button_label || 'Book Now');
   const [lead, setLead] = useState(String(config?.lead_time_hours ?? 24));
+  const [depositPct, setDepositPct] = useState(String(config?.deposit_percentage ?? 0));
   const [ctaSelector, setCtaSelector] = useState(config?.cta_selector || '');
   const [cancellationPolicy, setCancellationPolicy] = useState(config?.cancellation_policy || '');
   const [logoUrl, setLogoUrl] = useState(config?.logo_url || '');
@@ -38,6 +39,7 @@ export default function GeneralTab({ siteId, config, siteImages, onSaved }) {
     setWelcome(config?.welcome_text || '');
     setLabel(config?.button_label || 'Book Now');
     setLead(String(config?.lead_time_hours ?? 24));
+    setDepositPct(String(config?.deposit_percentage ?? 0));
     setCtaSelector(config?.cta_selector || '');
     setCancellationPolicy(config?.cancellation_policy || '');
     setLogoUrl(config?.logo_url || '');
@@ -94,10 +96,12 @@ export default function GeneralTab({ siteId, config, siteImages, onSaved }) {
   async function save() {
     setBusy(true); setErr(null);
     try {
+      const clampedDepositPct = Math.max(0, Math.min(100, Number(depositPct) || 0));
       const updated = await saveSchedulerConfig(siteId, {
         welcome_text: welcome,
         button_label: label || 'Book Now',
         lead_time_hours: Math.max(0, Number(lead) || 0),
+        deposit_percentage: clampedDepositPct,
         cta_selector: ctaSelector.trim(),
         cancellation_policy: cancellationPolicy.trim(),
       });
@@ -263,6 +267,22 @@ export default function GeneralTab({ siteId, config, siteImages, onSaved }) {
           className={`${inputBase} w-32`}
         />
         <p className={helpBase}>Customers can't book slots less than this far into the future.</p>
+      </div>
+
+      <div>
+        <label className={labelBase}>Deposit %</label>
+        <input
+          type="number"
+          min="0"
+          max="100"
+          step="1"
+          value={depositPct}
+          onChange={(e) => setDepositPct(e.target.value)}
+          className={`${inputBase} w-32`}
+        />
+        <p className={helpBase}>
+          Charge a deposit when customers book. Set to 0 to disable. Requires a connected Stripe account; deposits are skipped on services without a numeric price.
+        </p>
       </div>
 
       <div>
