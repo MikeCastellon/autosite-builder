@@ -3,6 +3,8 @@ import { validateBookingPayload } from './_lib/booking-validation.js';
 import { newBookingToOwner, bookingReceivedToCustomer } from './_lib/postmark.js';
 import { computeSlots } from './_lib/slot-math.js';
 import { isEffectiveSchedulerActive } from './_lib/subscription-gating.js';
+import { getStripe } from './_lib/stripe.js';
+import { parsePriceToCents, computeDepositCents } from './_lib/deposit-math.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -60,7 +62,7 @@ export const handler = async (event) => {
 
   const { data: owner } = await supabase
     .from('profiles')
-    .select('email, is_super_admin, scheduler_enabled, subscription_status, subscription_ends_at')
+    .select('email, is_super_admin, scheduler_enabled, subscription_status, subscription_ends_at, stripe_first_failed_payment_at, stripe_connect_account_id, stripe_connect_charges_enabled')
     .eq('id', site.user_id)
     .maybeSingle();
   if (!isEffectiveSchedulerActive(owner)) {
@@ -157,9 +159,63 @@ export const handler = async (event) => {
     return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: 'Failed to create booking' }) };
   }
 
-  // Await both sends so Netlify doesn't terminate the function before the
-  // Postmark requests complete. Trades ~300ms of response time for actually
-  // delivering emails reliably. Errors don't fail the booking.
+  // Compute deposit if configured. Failures here are non-fatal — the booking
+  // still exists; we just don't take a deposit.
+  let checkoutUrl = null;
+  let depositRequiredCents = null;
+  try {
+    const pct = Number(cfg.deposit_percentage) || 0;
+    const priceCents = chosenService ? parsePriceToCents(chosenService.price) : null;
+    depositRequiredCents = computeDepositCents(priceCents, pct);
+
+    const connectReady = owner.stripe_connect_account_id && owner.stripe_connect_charges_enabled === true;
+
+    if (depositRequiredCents && connectReady) {
+      const stripe = getStripe();
+      const successBase = `${process.env.APP_URL || ''}/booking-confirmed`;
+      const cancelBase  = `${process.env.APP_URL || ''}/booking-cancelled`;
+
+      const checkoutSession = await stripe.checkout.sessions.create({
+        mode: 'payment',
+        client_reference_id: inserted.id,
+        line_items: [{
+          price_data: {
+            currency: 'usd',
+            unit_amount: depositRequiredCents,
+            product_data: {
+              name: `Deposit — ${chosenService.name}`,
+              description: `Deposit toward your booking with ${site.business_info?.businessName || 'us'}.`,
+            },
+          },
+          quantity: 1,
+        }],
+        payment_intent_data: {
+          application_fee_amount: 200,            // $2 platform fee, in cents
+          metadata: { booking_id: inserted.id },
+        },
+        success_url: `${successBase}?booking=${inserted.id}`,
+        cancel_url:  `${cancelBase}?booking=${inserted.id}`,
+        customer_email: payload.customer_email,
+        metadata: { booking_id: inserted.id, site_id: site.id },
+      }, {
+        stripeAccount: owner.stripe_connect_account_id,
+      });
+
+      await supabase.from('bookings').update({
+        deposit_required_cents: depositRequiredCents,
+        deposit_status: 'pending',
+        deposit_checkout_session_id: checkoutSession.id,
+        deposit_application_fee_cents: 200,
+      }).eq('id', inserted.id);
+
+      checkoutUrl = checkoutSession.url;
+    }
+  } catch (err) {
+    console.error('create-booking: deposit checkout creation failed:', err);
+    // Booking proceeds without a deposit; do not return an error to the customer.
+  }
+
+  // Existing emails block — unchanged.
   await Promise.allSettled([
     newBookingToOwner({ booking: inserted, site, ownerEmail: owner.email })
       .catch((err) => console.error('owner email failed:', err)),
@@ -167,5 +223,9 @@ export const handler = async (event) => {
       .catch((err) => console.error('customer email failed:', err)),
   ]);
 
-  return { statusCode: 200, headers: CORS, body: JSON.stringify({ ok: true, bookingId: inserted.id }) };
+  return {
+    statusCode: 200,
+    headers: CORS,
+    body: JSON.stringify({ ok: true, bookingId: inserted.id, checkout_url: checkoutUrl }),
+  };
 };
