@@ -23,6 +23,7 @@ export default function AppHeader({
   const showBookingsNav = canSeeBookingsNav(profile);
   const isAdmin = !!profile?.is_super_admin;
   const initial = userEmail ? userEmail[0].toUpperCase() : '?';
+  const photoUrl = profile?.photo_url || '';
 
   const navItems = [
     onMySites && { id: 'sites', label: 'Dashboard', onClick: onMySites },
@@ -73,8 +74,10 @@ export default function AppHeader({
                 className="flex items-center gap-2 text-[13px] text-[#555] hover:text-[#1a1a1a] transition-colors font-medium"
                 aria-label="Account menu"
               >
-                <div className="w-8 h-8 rounded-full bg-[#1a1a1a] text-white flex items-center justify-center text-[12px] font-bold">
-                  {initial}
+                <div className="w-8 h-8 rounded-full bg-[#1a1a1a] text-white flex items-center justify-center text-[12px] font-bold overflow-hidden">
+                  {photoUrl ? (
+                    <img src={photoUrl} alt="" className="w-full h-full object-cover" />
+                  ) : initial}
                 </div>
               </button>
               {dropdownOpen && (
@@ -123,8 +126,10 @@ export default function AppHeader({
         <div className="md:hidden border-b border-black/[0.07] bg-white shadow-sm px-4 py-3 sticky top-16 z-40">
           {userEmail && (
             <div className="flex items-center gap-3 pb-3 mb-2 border-b border-black/[0.05]">
-              <div className="w-10 h-10 rounded-full bg-[#1a1a1a] text-white flex items-center justify-center text-sm font-bold">
-                {initial}
+              <div className="w-10 h-10 rounded-full bg-[#1a1a1a] text-white flex items-center justify-center text-sm font-bold overflow-hidden">
+                {photoUrl ? (
+                  <img src={photoUrl} alt="" className="w-full h-full object-cover" />
+                ) : initial}
               </div>
               <div className="text-sm text-[#1a1a1a] font-medium truncate">{userEmail}</div>
             </div>

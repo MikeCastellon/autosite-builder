@@ -13,6 +13,8 @@ export default function ProfilePage({ onExit, onOpenBookings, onOpenCustomers, o
   const [lastName, setLastName] = useState('');
   const [businessName, setBusinessName] = useState('');
   const [phone, setPhone] = useState('');
+  const [photoUrl, setPhotoUrl] = useState('');
+  const [photoBusy, setPhotoBusy] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
 
   const [newPassword, setNewPassword] = useState('');
@@ -25,7 +27,47 @@ export default function ProfilePage({ onExit, onOpenBookings, onOpenCustomers, o
     setLastName(profile.last_name || '');
     setBusinessName(profile.business_name || '');
     setPhone(profile.phone || '');
+    setPhotoUrl(profile.photo_url || '');
   }, [profile]);
+
+  const PHOTO_MAX_BYTES = 500 * 1024;
+  async function persistPhoto(nextUrl) {
+    if (!session?.user?.id) return;
+    setPhotoBusy(true);
+    const { error } = await supabase.from('profiles').update({
+      photo_url: nextUrl || null,
+    }).eq('id', session.user.id);
+    setPhotoBusy(false);
+    if (error) {
+      toast(`Couldn't save photo: ${error.message}`, 'error');
+      return;
+    }
+    if (refreshProfile) await refreshProfile();
+    toast(nextUrl ? 'Photo updated' : 'Photo removed', 'success');
+  }
+  async function handlePhotoSelected(e) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { toast('Photo must be an image file.', 'error'); return; }
+    if (file.size > PHOTO_MAX_BYTES) { toast('Photo must be under 500 KB.', 'error'); return; }
+    try {
+      const dataUrl = await new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result);
+        r.onerror = () => reject(new Error('Failed to read file.'));
+        r.readAsDataURL(file);
+      });
+      setPhotoUrl(dataUrl);
+      await persistPhoto(dataUrl);
+    } catch (err) {
+      toast(err.message || 'Upload failed.', 'error');
+    }
+  }
+  async function handlePhotoRemove() {
+    setPhotoUrl('');
+    await persistPhoto(null);
+  }
 
   const headerProps = {
     active: 'profile',
@@ -98,6 +140,29 @@ export default function ProfilePage({ onExit, onOpenBookings, onOpenCustomers, o
           className="bg-white border border-black/[0.07] rounded-2xl p-6 sm:p-7 mb-6 space-y-4"
         >
           <h3 className="text-[15px] font-bold text-[#1a1a1a]">Account details</h3>
+
+          {/* Profile photo */}
+          <div className="flex items-center gap-4 pb-2">
+            <div className="h-20 w-20 rounded-full bg-[#f4f3f0] border border-black/[0.07] overflow-hidden flex items-center justify-center shrink-0">
+              {photoUrl ? (
+                <img src={photoUrl} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>
+              )}
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <label className="cursor-pointer px-3 py-1.5 rounded-md text-xs font-semibold bg-[#1a1a1a] text-white hover:bg-[#333] disabled:opacity-50">
+                  {photoBusy ? 'Saving…' : photoUrl ? 'Replace photo' : 'Upload photo'}
+                  <input type="file" accept="image/*" className="hidden" onChange={handlePhotoSelected} disabled={photoBusy} />
+                </label>
+                {photoUrl && !photoBusy && (
+                  <button type="button" onClick={handlePhotoRemove} className="text-xs text-[#888] hover:text-[#cc0000]">Remove</button>
+                )}
+              </div>
+              <p className="text-[11px] text-[#888] mt-1.5">JPG or PNG, up to 500 KB.</p>
+            </div>
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
