@@ -258,7 +258,7 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
         </div>
       )}
 
-      <main className="max-w-5xl mx-auto px-3 py-4">
+      <main className="max-w-7xl mx-auto px-3 py-4">
         {showWelcome && (
           <div className="relative mb-6 rounded-2xl border border-black/[0.07] bg-white shadow-sm overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#cc0000]" />
