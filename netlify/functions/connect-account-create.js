@@ -38,22 +38,28 @@ export const handler = async (event) => {
     return ok({ account_id: profile.stripe_connect_account_id, existing: true });
   }
 
-  const stripe = getStripe();
-  const account = await stripe.accounts.create({
-    controller: {
-      fees: { payer: 'application' },
-      losses: { payments: 'application' },
-      stripe_dashboard: { type: 'express' },
-      requirement_collection: 'stripe',
-    },
-    capabilities: {
-      card_payments: { requested: true },
-      transfers: { requested: true },
-    },
-    country: 'US',
-    email: profile.email || user.email,
-    metadata: { supabase_user_id: user.id },
-  });
+  let account;
+  try {
+    const stripe = getStripe();
+    account = await stripe.accounts.create({
+      controller: {
+        fees: { payer: 'application' },
+        losses: { payments: 'application' },
+        stripe_dashboard: { type: 'express' },
+        requirement_collection: 'stripe',
+      },
+      capabilities: {
+        card_payments: { requested: true },
+        transfers: { requested: true },
+      },
+      country: 'US',
+      email: profile.email || user.email,
+      metadata: { supabase_user_id: user.id },
+    });
+  } catch (stripeErr) {
+    console.error('[connect-account-create] Stripe error:', stripeErr?.message || stripeErr);
+    return fail(502, { error: stripeErr?.message || 'Failed to create Stripe account. Please try again.' });
+  }
 
   await db.from('profiles').update({
     stripe_connect_account_id: account.id,
