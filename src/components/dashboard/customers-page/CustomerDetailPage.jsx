@@ -669,17 +669,22 @@ export default function CustomerDetailPage({
             // Refresh charges list
             if (customer?.phone) {
               const normalized = customer.phone.replace(/\D/g, '');
+              let active = true;
               supabase
                 .from('charges')
                 .select('*')
                 .eq('owner_user_id', userId)
                 .order('created_at', { ascending: false })
                 .then(({ data }) => {
+                  if (!active) return;
                   const matched = (data || []).filter((c) => {
                     const n = (c.customer_phone || '').replace(/\D/g, '');
                     return n && n === normalized;
                   });
                   setCharges(matched);
+                })
+                .catch((err) => {
+                  if (active) toast(err.message || 'Could not refresh charges', 'error');
                 });
             }
           }}
