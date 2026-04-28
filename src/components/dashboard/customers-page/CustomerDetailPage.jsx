@@ -9,6 +9,7 @@ import SubscribeGate from '../bookings-page/SubscribeGate.jsx';
 import { useAlert } from '../../ui/AlertProvider.jsx';
 import EmailComposerModal from './EmailComposerModal.jsx';
 import BookCustomerModal from './BookCustomerModal.jsx';
+import ChargeModal from '../charges/ChargeModal.jsx';
 
 function formatDate(iso) {
   if (!iso) return '—';
@@ -42,6 +43,7 @@ export default function CustomerDetailPage({
   onOpenAdmin,
   onOpenProfile,
   onOpenPaymentsConnect,
+  onOpenCharges,
   onSignOut,
 }) {
   const headerProps = {
@@ -54,6 +56,7 @@ export default function CustomerDetailPage({
     onOpenAdmin,
     onOpenProfile,
     onOpenPaymentsConnect,
+    onOpenCharges,
     onSignOut,
   };
   const { toast } = useAlert();
@@ -75,6 +78,10 @@ export default function CustomerDetailPage({
 
   const [emailOpen, setEmailOpen] = useState(false);
   const [showBookModal, setShowBookModal] = useState(false);
+  const [showChargeModal, setShowChargeModal] = useState(false);
+  const [charges, setCharges] = useState([]);
+  const [chargesLoading, setChargesLoading] = useState(false);
+  const [services, setServices] = useState([]);
   const [photoBusy, setPhotoBusy] = useState(false);
   const [photoErr, setPhotoErr] = useState(null);
 
@@ -108,6 +115,55 @@ export default function CustomerDetailPage({
     })();
     return () => { cancelled = true; };
   }, [userId, identityKey]);
+
+  useEffect(() => {
+    if (!userId || !customer?.phone) return;
+    const normalized = customer.phone.replace(/\D/g, '');
+    if (!normalized) return;
+
+    let cancelled = false;
+    (async () => {
+      setChargesLoading(true);
+      try {
+        // Load charges matching this phone
+        const { data: chargeRows } = await supabase
+          .from('charges')
+          .select('*')
+          .eq('owner_user_id', userId)
+          .order('created_at', { ascending: false });
+        if (!cancelled) {
+          const matched = (chargeRows || []).filter((c) => {
+            const n = (c.customer_phone || '').replace(/\D/g, '');
+            return n && n === normalized;
+          });
+          setCharges(matched);
+        }
+
+        // Load services from published sites
+        const { data: sitesData } = await supabase
+          .from('sites')
+          .select('id, scheduler_config')
+          .eq('user_id', userId)
+          .eq('published', true);
+        if (!cancelled && sitesData) {
+          const seen = new Set();
+          const svcs = [];
+          for (const s of sitesData) {
+            for (const svc of (s.scheduler_config?.services || [])) {
+              if (svc.enabled !== false && svc.name && !seen.has(svc.name)) {
+                seen.add(svc.name);
+                svcs.push({ name: svc.name, price: svc.price });
+              }
+            }
+          }
+          setServices(svcs);
+        }
+      } finally {
+        if (!cancelled) setChargesLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [userId, customer?.phone]);
 
   const siteNameById = useMemo(() => {
     const m = {};
@@ -332,6 +388,15 @@ export default function CustomerDetailPage({
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                {!!profile?.stripe_connect_charges_enabled && (
+                  <button
+                    type="button"
+                    onClick={() => setShowChargeModal(true)}
+                    className="px-4 py-2 rounded-lg text-[13px] font-semibold bg-[#cc0000] text-white hover:bg-[#a80000] transition-colors"
+                  >
+                    Charge $
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => setShowBookModal(true)}
@@ -504,6 +569,71 @@ export default function CustomerDetailPage({
             </table>
             )}
           </div>
+
+          {/* Charges history */}
+          {!!profile?.stripe_connect_charges_enabled && (
+            <div className="bg-white border border-black/[0.07] rounded-2xl overflow-hidden mt-6">
+              <div className="px-6 py-4 border-b border-black/[0.05] flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-[15px] font-bold text-[#1a1a1a]">Charges</h2>
+                  <p className="text-[12px] text-[#888]">Payment requests sent to this customer</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowChargeModal(true)}
+                  className="text-[12px] font-semibold text-[#cc0000] hover:text-[#a80000] transition-colors"
+                >
+                  Charge this customer →
+                </button>
+              </div>
+              {chargesLoading ? (
+                <p className="text-sm text-[#888] p-6">Loading…</p>
+              ) : charges.length === 0 ? (
+                <div className="p-6 text-center">
+                  <p className="text-sm text-[#888]">No charges yet for this customer.</p>
+                  <button
+                    type="button"
+                    onClick={() => setShowChargeModal(true)}
+                    className="mt-3 text-[13px] font-semibold text-[#cc0000] hover:text-[#a80000] transition-colors"
+                  >
+                    Charge this customer →
+                  </button>
+                </div>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50 text-left text-[10px] text-gray-500 uppercase tracking-wider">
+                    <tr>
+                      <th className="px-6 py-2.5">Service / Amount</th>
+                      <th className="px-3 py-2.5">Status</th>
+                      <th className="px-3 py-2.5 pr-6">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {charges.map((c) => (
+                      <tr key={c.id} className="border-t border-gray-100">
+                        <td className="px-6 py-3 text-[13px] text-gray-800">
+                          {c.service_name || `$${((c.amount_cents || 0) / 100).toFixed(2)}`}
+                          <span className="ml-2 text-[12px] text-gray-500">
+                            ${((c.amount_cents || 0) / 100).toFixed(2)}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3">
+                          <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide ${
+                            c.status === 'paid' ? 'bg-green-100 text-green-800' :
+                            c.status === 'expired' ? 'bg-gray-100 text-gray-600' :
+                            'bg-amber-100 text-amber-800'
+                          }`}>
+                            {c.status === 'paid' ? 'Paid' : c.status === 'expired' ? 'Expired' : 'Awaiting'}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3 pr-6 text-[12px] text-gray-600">{formatDate(c.created_at)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
         </main>
       </SubscribeGate>
 
@@ -523,6 +653,35 @@ export default function CustomerDetailPage({
           onBooked={(booking) => {
             setBookings((prev) => [booking, ...prev]);
             setShowBookModal(false);
+          }}
+        />
+      )}
+
+      {showChargeModal && (
+        <ChargeModal
+          profile={profile}
+          services={services}
+          prefillName={customer?.name || ''}
+          prefillPhone={customer?.phone || ''}
+          siteId={primarySiteId}
+          onClose={() => {
+            setShowChargeModal(false);
+            // Refresh charges list
+            if (customer?.phone) {
+              const normalized = customer.phone.replace(/\D/g, '');
+              supabase
+                .from('charges')
+                .select('*')
+                .eq('owner_user_id', userId)
+                .order('created_at', { ascending: false })
+                .then(({ data }) => {
+                  const matched = (data || []).filter((c) => {
+                    const n = (c.customer_phone || '').replace(/\D/g, '');
+                    return n && n === normalized;
+                  });
+                  setCharges(matched);
+                });
+            }
           }}
         />
       )}
