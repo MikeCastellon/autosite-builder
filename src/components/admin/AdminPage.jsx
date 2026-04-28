@@ -4,7 +4,7 @@ import AdminAllBookingsTab from './AdminAllBookingsTab.jsx';
 import { useAuth } from '../../lib/AuthContext.jsx';
 import AppHeader from '../ui/AppHeader.jsx';
 
-export default function AdminPage({ onExit, onOpenBookings, onOpenCustomers, onOpenProfile, onOpenPaymentsConnect, onSignOut }) {
+export default function AdminPage({ onExit, onOpenBookings, onOpenCustomers, onOpenProfile, onOpenPaymentsConnect, onOpenCharges, onSignOut }) {
   const { session, profile } = useAuth();
   const [tab, setTab] = useState('accounts');
   const userEmail = session?.user?.email;
@@ -19,6 +19,7 @@ export default function AdminPage({ onExit, onOpenBookings, onOpenCustomers, onO
     onOpenAdmin: () => {},
     onOpenProfile,
     onOpenPaymentsConnect,
+    onOpenCharges,
     onSignOut,
   };
 
