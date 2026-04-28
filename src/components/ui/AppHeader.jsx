@@ -68,16 +68,16 @@ export default function AppHeader({
           ))}
         </nav>
 
-        {isConnected && onOpenCharges && (
-          <button
-            onClick={onOpenCharges}
-            className="hidden md:flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#cc0000] hover:bg-[#a80000] text-white text-[13px] font-semibold transition-colors mr-3"
-          >
-            Charge $
-          </button>
-        )}
-
-        <div className="hidden md:flex items-center">
+        <div className="hidden md:flex items-center gap-3">
+          {isConnected && onOpenCharges && (
+            <button
+              onClick={onOpenCharges}
+              aria-label="Charge a customer"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#cc0000] hover:bg-[#a80000] text-white text-[13px] font-semibold transition-colors"
+            >
+              Charge $
+            </button>
+          )}
           {userEmail && (
             <div className="relative">
               <button
