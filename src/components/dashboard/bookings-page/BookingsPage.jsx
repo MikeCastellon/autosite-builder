@@ -36,7 +36,15 @@ export default function BookingsPage({ userId, profile, userEmail, onExit, onOpe
         .order('created_at', { ascending: true });
       if (error) { setErr(error.message); setLoading(false); return; }
       setSites(data || []);
-      if ((data || []).length > 0) setActiveSiteId(data[0].id);
+      if ((data || []).length > 0) {
+        // Prefer the first site that is both scheduler-enabled and published;
+        // fall back to first published, then first in list.
+        const best =
+          data.find((s) => s.scheduler_enabled && s.published_url) ||
+          data.find((s) => s.published_url) ||
+          data[0];
+        setActiveSiteId(best.id);
+      }
       setLoading(false);
     }
     if (userId) fetchSites();
