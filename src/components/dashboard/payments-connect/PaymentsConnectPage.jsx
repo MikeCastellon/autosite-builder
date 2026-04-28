@@ -16,6 +16,7 @@ export default function PaymentsConnectPage({
   onOpenAdmin,
   onOpenProfile,
   onOpenPaymentsConnect,
+  onOpenCharges,
   onSignOut,
 }) {
   const headerProps = {
@@ -28,6 +29,7 @@ export default function PaymentsConnectPage({
     onOpenAdmin,
     onOpenProfile,
     onOpenPaymentsConnect: () => {},
+    onOpenCharges,
     onSignOut,
   };
 
@@ -134,6 +136,32 @@ export default function PaymentsConnectPage({
                   <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
                 </svg>
               </a>
+            </div>
+
+            {/* Charge CTA */}
+            <div className="rounded-xl border border-black/[0.07] bg-white p-6 shadow-sm mt-4">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-full bg-[#fff0f0] flex items-center justify-center shrink-0">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#cc0000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-[#1a1a1a] text-[15px]">Charge a customer</p>
+                  <p className="text-sm text-[#555] mt-1 mb-4">
+                    Send a Stripe Checkout link via QR code or SMS. The customer pays on their phone — you see it land instantly.
+                  </p>
+                  {onOpenCharges && (
+                    <button
+                      type="button"
+                      onClick={onOpenCharges}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#cc0000] hover:bg-[#a80000] text-white text-[13px] font-semibold transition-colors"
+                    >
+                      Charge $
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
 
           ) : setupStarted ? (
