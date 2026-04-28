@@ -110,6 +110,7 @@ export default function PaymentsConnectPage({
 
           {fullyConnected ? (
             /* ── Fully connected ── */
+            <>
             <div className="rounded-xl border border-black/[0.07] bg-white p-6 shadow-sm">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-full bg-[#e8f5ec] flex items-center justify-center">
@@ -163,6 +164,7 @@ export default function PaymentsConnectPage({
                 </div>
               </div>
             </div>
+            </>
 
           ) : setupStarted ? (
             /* ── Account created but onboarding not finished ── */
