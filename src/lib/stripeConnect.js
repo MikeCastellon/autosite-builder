@@ -28,3 +28,9 @@ export async function createConnectAccount() {
 export async function fetchAccountSession() {
   return authedFetch('/.netlify/functions/connect-account-session');
 }
+
+// Returns a short-lived Stripe-hosted onboarding URL.
+// Redirect the user to this URL; Stripe handles identity + bank collection.
+export async function fetchAccountLink() {
+  return authedFetch('/.netlify/functions/connect-account-link');
+}
