@@ -7,12 +7,13 @@ const ACG_LOGO = 'https://www.autocaregenius.com/cdn/shop/files/v11_1.svg?v=1760
 // Booking Settings, Admin). Renders the brand lockup, centered nav with the
 // active page highlighted, and an account avatar/dropdown.
 export default function AppHeader({
-  active,                  // 'sites' | 'bookings' | 'customers' | 'payments-connect' | 'admin' | 'profile'
+  active,                  // 'sites' | 'bookings' | 'customers' | 'charges' | 'payments-connect' | 'admin' | 'profile'
   userEmail,
   profile,
   onMySites,
   onOpenBookings,
   onOpenCustomers,
+  onOpenCharges,
   onOpenPaymentsConnect,
   onOpenAdmin,
   onOpenProfile,
@@ -22,6 +23,7 @@ export default function AppHeader({
   const [mobileOpen, setMobileOpen] = useState(false);
   const showBookingsNav = canSeeBookingsNav(profile);
   const isAdmin = !!profile?.is_super_admin;
+  const isConnected = !!profile?.stripe_connect_charges_enabled;
   const initial = userEmail ? userEmail[0].toUpperCase() : '?';
   const photoUrl = profile?.photo_url || '';
 
@@ -29,6 +31,7 @@ export default function AppHeader({
     onMySites && { id: 'sites', label: 'Dashboard', onClick: onMySites },
     showBookingsNav && onOpenBookings && { id: 'bookings', label: 'Bookings', onClick: onOpenBookings },
     showBookingsNav && onOpenCustomers && { id: 'customers', label: 'Customers', onClick: onOpenCustomers },
+    showBookingsNav && onOpenCharges && { id: 'charges', label: 'Charges', onClick: onOpenCharges },
     onOpenPaymentsConnect && { id: 'payments-connect', label: 'Payments', onClick: onOpenPaymentsConnect },
     isAdmin && onOpenAdmin && { id: 'admin', label: 'Admin', onClick: onOpenAdmin },
   ].filter(Boolean);
@@ -64,6 +67,15 @@ export default function AppHeader({
             </button>
           ))}
         </nav>
+
+        {isConnected && onOpenCharges && (
+          <button
+            onClick={onOpenCharges}
+            className="hidden md:flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#cc0000] hover:bg-[#a80000] text-white text-[13px] font-semibold transition-colors mr-3"
+          >
+            Charge $
+          </button>
+        )}
 
         <div className="hidden md:flex items-center">
           {userEmail && (
@@ -135,6 +147,14 @@ export default function AppHeader({
             </div>
           )}
           <nav className="flex flex-col gap-1">
+            {isConnected && onOpenCharges && (
+              <button
+                onClick={() => { setMobileOpen(false); onOpenCharges(); }}
+                className="w-full text-left px-3 py-2.5 rounded-lg text-[14px] font-semibold text-white bg-[#cc0000] hover:bg-[#a80000] transition-colors"
+              >
+                Charge $
+              </button>
+            )}
             {navItems.map((item) => (
               <button
                 key={item.id}
