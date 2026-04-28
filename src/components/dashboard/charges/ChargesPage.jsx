@@ -193,6 +193,7 @@ export default function ChargesPage({
 
       {showModal && (
         <ChargeModal
+          userId={userId}
           profile={profile}
           services={services}
           siteId={sites[0]?.id || null}

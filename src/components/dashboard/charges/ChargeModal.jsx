@@ -1,8 +1,11 @@
 // src/components/dashboard/charges/ChargeModal.jsx
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { supabase } from '../../../lib/supabase.js';
 import { createCharge } from '../../../lib/createCharge.js';
+import { listBookingsForOwner } from '../../../lib/bookings.js';
+import { listManualCustomers } from '../../../lib/customerProfiles.js';
+import { groupBookingsIntoCustomers } from '../../../lib/customerIdentity.js';
 
 // parsePriceToCents: strips $, commas, whitespace and converts to integer cents.
 function parsePriceToCents(input) {
@@ -21,6 +24,7 @@ function formatCents(cents) {
 }
 
 export default function ChargeModal({
+  userId,
   profile,
   services,
   prefillName,
@@ -42,6 +46,67 @@ export default function ChargeModal({
   const [chargeId, setChargeId] = useState(null);
   const [copied, setCopied] = useState(false);
   const pollRef = useRef(null);
+
+  // Typeahead from existing customers (booking-derived + manually added).
+  // Loaded once on mount; filtered client-side as the user types. If the
+  // person they're charging isn't in the list, free-text still works — the
+  // suggestions just close and they keep typing.
+  const [allCustomers, setAllCustomers] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const [bookings, manuals] = await Promise.all([
+          listBookingsForOwner({ userId }),
+          listManualCustomers({ ownerUserId: userId }),
+        ]);
+        if (cancelled) return;
+        const fromBookings = groupBookingsIntoCustomers(bookings || []);
+        const bookedKeys = new Set(fromBookings.map((c) => c.key));
+        const merged = [
+          ...fromBookings.map((c) => ({
+            key: c.key,
+            name: c.name || '',
+            phone: c.phone || '',
+            email: c.email || '',
+          })),
+          ...(manuals || [])
+            .filter((p) => !bookedKeys.has(p.identity_key))
+            .map((p) => ({
+              key: p.identity_key,
+              name: p.name || '',
+              phone: p.phone || '',
+              email: p.email || '',
+            })),
+        ].filter((c) => c.name || c.phone);
+        setAllCustomers(merged);
+      } catch { /* fail silently — typeahead is optional polish */ }
+    })();
+    return () => { cancelled = true; };
+  }, [userId]);
+
+  // Match by name OR phone (digits only). Limit to 6 to keep dropdown tidy.
+  const suggestions = useMemo(() => {
+    const q = customerName.trim().toLowerCase();
+    if (!q) return [];
+    const digits = q.replace(/\D/g, '');
+    return allCustomers
+      .filter((c) => {
+        if (c.name && c.name.toLowerCase().includes(q)) return true;
+        if (digits && c.phone && c.phone.replace(/\D/g, '').includes(digits)) return true;
+        return false;
+      })
+      .slice(0, 6);
+  }, [customerName, allCustomers]);
+
+  function handlePickSuggestion(c) {
+    setCustomerName(c.name || '');
+    setCustomerPhone(c.phone || '');
+    setShowSuggestions(false);
+  }
 
   const enabledServices = (services || []).filter((s) => s.enabled !== false);
 
@@ -198,17 +263,39 @@ export default function ChargeModal({
                 </div>
               )}
 
-              <div>
+              <div className="relative">
                 <label className="block text-xs font-semibold text-[#555] uppercase tracking-wide mb-1.5">
                   Customer name <span className="text-[#aaa] normal-case font-normal">(optional)</span>
                 </label>
                 <input
                   type="text"
                   value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  placeholder="John Smith"
+                  onChange={(e) => { setCustomerName(e.target.value); setShowSuggestions(true); }}
+                  onFocus={() => setShowSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                  placeholder="Start typing — pick from customers or add new"
+                  autoComplete="off"
                   className="w-full px-4 py-2.5 rounded-xl border border-black/[0.12] text-[#1a1a1a] text-sm focus:outline-none focus:border-[#cc0000] transition-colors"
                 />
+                {showSuggestions && suggestions.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-black/[0.12] rounded-xl shadow-lg z-20 max-h-64 overflow-y-auto">
+                    {suggestions.map((c) => (
+                      <button
+                        key={c.key}
+                        type="button"
+                        onMouseDown={(e) => { e.preventDefault(); handlePickSuggestion(c); }}
+                        className="w-full text-left px-4 py-2.5 hover:bg-[#faf9f7] border-b border-black/[0.05] last:border-b-0 transition-colors"
+                      >
+                        <div className="font-semibold text-[#1a1a1a] text-sm truncate">
+                          {c.name || <span className="text-[#aaa] font-normal">(no name)</span>}
+                        </div>
+                        <div className="text-xs text-[#888] truncate">
+                          {c.phone || c.email || '—'}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div>

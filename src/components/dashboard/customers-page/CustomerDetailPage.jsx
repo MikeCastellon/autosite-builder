@@ -660,6 +660,7 @@ export default function CustomerDetailPage({
 
       {showChargeModal && (
         <ChargeModal
+          userId={userId}
           profile={profile}
           services={services}
           prefillName={customer?.name || ''}
