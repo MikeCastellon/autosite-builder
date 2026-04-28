@@ -41,6 +41,7 @@ export default function ChargesPage({
   userId,
   profile,
   userEmail,
+  autoOpen = false,
   onExit,
   onOpenBookings,
   onOpenCustomers,
@@ -48,6 +49,7 @@ export default function ChargesPage({
   onOpenProfile,
   onOpenPaymentsConnect,
   onOpenCharges,
+  onCharge,
   onSignOut,
 }) {
   const headerProps = {
@@ -61,6 +63,7 @@ export default function ChargesPage({
     onOpenProfile,
     onOpenPaymentsConnect,
     onOpenCharges: () => {},
+    onCharge,
     onSignOut,
   };
 
@@ -68,6 +71,10 @@ export default function ChargesPage({
   const [sites, setSites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+
+  useEffect(() => {
+    if (autoOpen) setShowModal(true);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fullyConnected = profile?.stripe_connect_account_id && profile?.stripe_connect_charges_enabled;
 

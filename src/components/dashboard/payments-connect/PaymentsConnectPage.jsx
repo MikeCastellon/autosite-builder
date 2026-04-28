@@ -17,6 +17,7 @@ export default function PaymentsConnectPage({
   onOpenProfile,
   onOpenPaymentsConnect,
   onOpenCharges,
+  onCharge,
   onSignOut,
 }) {
   const headerProps = {
@@ -30,6 +31,7 @@ export default function PaymentsConnectPage({
     onOpenProfile,
     onOpenPaymentsConnect: () => {},
     onOpenCharges,
+    onCharge,
     onSignOut,
   };
 

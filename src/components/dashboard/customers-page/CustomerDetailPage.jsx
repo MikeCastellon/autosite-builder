@@ -44,6 +44,7 @@ export default function CustomerDetailPage({
   onOpenProfile,
   onOpenPaymentsConnect,
   onOpenCharges,
+  onCharge,
   onSignOut,
 }) {
   const headerProps = {
@@ -57,6 +58,7 @@ export default function CustomerDetailPage({
     onOpenProfile,
     onOpenPaymentsConnect,
     onOpenCharges,
+    onCharge,
     onSignOut,
   };
   const { toast } = useAlert();
@@ -116,55 +118,6 @@ export default function CustomerDetailPage({
     return () => { cancelled = true; };
   }, [userId, identityKey]);
 
-  useEffect(() => {
-    if (!userId || !customer?.phone) return;
-    const normalized = customer.phone.replace(/\D/g, '');
-    if (!normalized) return;
-
-    let cancelled = false;
-    (async () => {
-      setChargesLoading(true);
-      try {
-        // Load charges matching this phone
-        const { data: chargeRows } = await supabase
-          .from('charges')
-          .select('*')
-          .eq('owner_user_id', userId)
-          .order('created_at', { ascending: false });
-        if (!cancelled) {
-          const matched = (chargeRows || []).filter((c) => {
-            const n = (c.customer_phone || '').replace(/\D/g, '');
-            return n && n === normalized;
-          });
-          setCharges(matched);
-        }
-
-        // Load services from published sites
-        const { data: sitesData } = await supabase
-          .from('sites')
-          .select('id, scheduler_config')
-          .eq('user_id', userId)
-          .eq('published', true);
-        if (!cancelled && sitesData) {
-          const seen = new Set();
-          const svcs = [];
-          for (const s of sitesData) {
-            for (const svc of (s.scheduler_config?.services || [])) {
-              if (svc.enabled !== false && svc.name && !seen.has(svc.name)) {
-                seen.add(svc.name);
-                svcs.push({ name: svc.name, price: svc.price });
-              }
-            }
-          }
-          setServices(svcs);
-        }
-      } finally {
-        if (!cancelled) setChargesLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [userId, customer?.phone]);
-
   const siteNameById = useMemo(() => {
     const m = {};
     for (const s of sites) m[s.id] = s.business_info?.businessName || 'Untitled site';
@@ -196,6 +149,54 @@ export default function CustomerDetailPage({
 
   const hasMultipleSites = sites.length > 1;
   const primarySiteId = customer ? pickPrimarySiteId(customer) : null;
+
+  // Load charges + services — depends on `customer` so must come AFTER the useMemo above
+  useEffect(() => {
+    if (!userId || !customer?.phone) return;
+    const normalized = customer.phone.replace(/\D/g, '');
+    if (!normalized) return;
+
+    let cancelled = false;
+    (async () => {
+      setChargesLoading(true);
+      try {
+        const { data: chargeRows } = await supabase
+          .from('charges')
+          .select('*')
+          .eq('owner_user_id', userId)
+          .order('created_at', { ascending: false });
+        if (!cancelled) {
+          const matched = (chargeRows || []).filter((c) => {
+            const n = (c.customer_phone || '').replace(/\D/g, '');
+            return n && n === normalized;
+          });
+          setCharges(matched);
+        }
+
+        const { data: sitesData } = await supabase
+          .from('sites')
+          .select('id, scheduler_config')
+          .eq('user_id', userId)
+          .eq('published', true);
+        if (!cancelled && sitesData) {
+          const seen = new Set();
+          const svcs = [];
+          for (const s of sitesData) {
+            for (const svc of (s.scheduler_config?.services || [])) {
+              if (svc.enabled !== false && svc.name && !seen.has(svc.name)) {
+                seen.add(svc.name);
+                svcs.push({ name: svc.name, price: svc.price });
+              }
+            }
+          }
+          setServices(svcs);
+        }
+      } finally {
+        if (!cancelled) setChargesLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [userId, customer?.phone]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function persist({ nextNotes, nextTags }) {
     try {

@@ -46,6 +46,7 @@ export default function CustomersPage({
   onOpenPaymentsConnect,
   onOpenCustomerDetail,
   onOpenCharges,
+  onCharge,
   onSignOut,
 }) {
   const headerProps = {
@@ -59,6 +60,7 @@ export default function CustomersPage({
     onOpenProfile,
     onOpenPaymentsConnect,
     onOpenCharges,
+    onCharge,
     onSignOut,
   };
 
