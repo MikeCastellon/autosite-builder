@@ -42,18 +42,13 @@ export const handler = async (event) => {
   try {
     const stripe = getStripe();
     account = await stripe.accounts.create({
-      controller: {
-        fees: { payer: 'application' },
-        losses: { payments: 'application' },
-        stripe_dashboard: { type: 'express' },
-        requirement_collection: 'stripe',
-      },
+      type: 'express',
+      country: 'US',
+      email: profile.email || user.email,
       capabilities: {
         card_payments: { requested: true },
         transfers: { requested: true },
       },
-      country: 'US',
-      email: profile.email || user.email,
       metadata: { supabase_user_id: user.id },
     });
   } catch (stripeErr) {
