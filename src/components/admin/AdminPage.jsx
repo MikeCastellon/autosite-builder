@@ -46,7 +46,7 @@ export default function AdminPage({ onExit, onOpenBookings, onOpenCustomers, onO
           <TabBtn on={tab === 'accounts'} onClick={() => setTab('accounts')}>Accounts</TabBtn>
           <TabBtn on={tab === 'bookings'} onClick={() => setTab('bookings')}>All bookings</TabBtn>
         </div>
-        {tab === 'accounts' ? <AdminAccountsTab onViewOwnerBookings={() => setTab('bookings')} /> : <AdminAllBookingsTab />}
+        {tab === 'accounts' ? <AdminAccountsTab /> : <AdminAllBookingsTab />}
       </main>
     </div>
   );
