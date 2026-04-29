@@ -128,48 +128,37 @@ export default function AdminUserDrawer({ user, allTags, onClose, onRefresh }) {
   const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ').trim() || user.email;
   const initial = (fullName || '?').charAt(0).toUpperCase();
 
-  // Impersonation modal state — opens when admin clicks "View as user". Shows
-  // the magic link with an "Open in incognito" instruction so the admin's
-  // own session in this browser stays intact.
+  // Impersonation: one-click new tab opens with a tab-isolated session via
+  // sessionStorage (see lib/supabase.js). No magic link or incognito needed
+  // — the new tab's session lives only in that tab, so the admin's main
+  // session in this browser stays intact.
   const [impersonating, setImpersonating] = useState(false);
-  const [impersonationLink, setImpersonationLink] = useState('');
-  const [impersonationCopied, setImpersonationCopied] = useState(false);
-  const [impersonationErr, setImpersonationErr] = useState(null);
 
   async function handleViewAsUser() {
     if (impersonating) return;
     setImpersonating(true);
-    setImpersonationErr(null);
-    setImpersonationLink('');
     try {
       const { data: sessData } = await supabase.auth.getSession();
       const token = sessData?.session?.access_token;
       if (!token) throw new Error('Not signed in');
-      const res = await fetch('/.netlify/functions/admin-impersonate', {
+      const res = await fetch('/.netlify/functions/admin-impersonate-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ target_user_id: user.id }),
       });
       const body = await res.json();
-      if (!res.ok) throw new Error(body.error || 'Could not generate link');
-      setImpersonationLink(body.action_link);
-    } catch (e) {
-      setImpersonationErr(e.message || 'Could not generate link');
-      toast(e.message || 'Could not generate link', 'error');
-    }
-  }
+      if (!res.ok) throw new Error(body.error || 'Could not start impersonation');
 
-  function copyImpersonationLink() {
-    if (!impersonationLink) return;
-    navigator.clipboard.writeText(impersonationLink).then(() => {
-      setImpersonationCopied(true);
-      setTimeout(() => setImpersonationCopied(false), 2000);
-    });
-  }
-  function closeImpersonation() {
-    setImpersonating(false);
-    setImpersonationLink('');
-    setImpersonationErr(null);
+      // Open a brand new tab to /?impersonate=<handoff_id>. The
+      // ImpersonationBanner mounted at the top of that tab will claim the
+      // handoff, set the session, and strip the param from the URL.
+      const url = `${window.location.origin}/?impersonate=${encodeURIComponent(body.handoff_id)}`;
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } catch (e) {
+      toast(e.message || 'Could not start impersonation', 'error');
+    } finally {
+      setImpersonating(false);
+    }
   }
 
   function formatNextBill(iso) {
@@ -379,13 +368,13 @@ export default function AdminUserDrawer({ user, allTags, onClose, onRefresh }) {
               <button
                 type="button"
                 onClick={handleViewAsUser}
-                disabled={impersonating && !impersonationLink}
+                disabled={impersonating}
                 className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#cc0000] hover:bg-[#a80000] disabled:opacity-60 text-white text-[12px] font-bold transition-colors"
               >
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
                 </svg>
-                {impersonating && !impersonationLink ? 'Generating…' : 'View as user'}
+                {impersonating ? 'Opening…' : 'View as user'}
               </button>
               <a
                 href={`mailto:${user.email}`}
@@ -424,76 +413,6 @@ export default function AdminUserDrawer({ user, allTags, onClose, onRefresh }) {
           </Section>
         </div>
       </aside>
-
-      {impersonating && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 px-4">
-          <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
-            <div className="px-6 pt-5 pb-3 border-b border-black/[0.07]">
-              <p className="text-[11px] font-bold text-[#cc0000] uppercase tracking-[2px]">Impersonate</p>
-              <h3 className="text-lg font-black text-[#1a1a1a] tracking-tight mt-0.5">View as {fullName}</h3>
-            </div>
-            <div className="px-6 py-5 space-y-4">
-              {!impersonationLink && !impersonationErr && (
-                <div className="flex items-center gap-3 py-4">
-                  <div className="w-5 h-5 border-4 border-gray-300 border-t-[#cc0000] rounded-full animate-spin" />
-                  <p className="text-sm text-[#555]">Generating one-time login link…</p>
-                </div>
-              )}
-
-              {impersonationErr && (
-                <p className="text-sm text-[#cc0000]">{impersonationErr}</p>
-              )}
-
-              {impersonationLink && (
-                <>
-                  <div className="rounded-xl bg-amber-50 border border-amber-200 p-3">
-                    <p className="text-[12px] font-bold text-amber-800 mb-1">⚠️ Open this in an incognito / private window</p>
-                    <p className="text-[12px] text-amber-700 leading-snug">
-                      Opening it in a normal tab will sign your admin session out and replace it with this user's. Incognito keeps both sessions isolated.
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#888] mb-1.5">Login link (single-use)</p>
-                    <div className="flex gap-2">
-                      <input
-                        readOnly
-                        value={impersonationLink}
-                        onFocus={(e) => e.target.select()}
-                        className="flex-1 min-w-0 px-3 py-2 rounded-lg border border-black/[0.10] bg-[#faf9f7] text-[11px] font-mono text-[#1a1a1a] focus:outline-none"
-                      />
-                      <button
-                        type="button"
-                        onClick={copyImpersonationLink}
-                        className="px-3 py-2 rounded-lg bg-[#1a1a1a] hover:bg-[#cc0000] text-white text-[12px] font-bold transition-colors whitespace-nowrap"
-                      >
-                        {impersonationCopied ? 'Copied!' : 'Copy'}
-                      </button>
-                    </div>
-                  </div>
-
-                  <p className="text-[11px] text-[#888] leading-relaxed">
-                    Steps: <strong className="text-[#1a1a1a]">copy</strong> the link →
-                    open a new <strong className="text-[#1a1a1a]">incognito</strong> window
-                    (Cmd/Ctrl + Shift + N) → paste the link → you'll be logged in as <strong className="text-[#1a1a1a]">{user.email}</strong>.
-                    Close the incognito window when you're done.
-                  </p>
-                </>
-              )}
-
-              <div className="flex justify-end pt-2">
-                <button
-                  type="button"
-                  onClick={closeImpersonation}
-                  className="px-4 py-2 rounded-lg border border-black/[0.10] text-[#555] text-[12px] font-semibold hover:border-[#cc0000]/40 transition-colors"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }
