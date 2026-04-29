@@ -186,6 +186,59 @@ function ImageSlot({ label, value, onChange }) {
   );
 }
 
+// Gallery slot list with "Add another photo" — unlimited up to MAX_GALLERY.
+// Always shows at least 3 slots so the editor matches the original UX.
+// When >3 photos are uploaded, the published gallery auto-switches to a
+// swipeable carousel (see GallerySection in templates/ImageLayers.jsx).
+const MAX_GALLERY = 12;
+function GallerySlots({ images, setImage }) {
+  // Lowest slot count we always show, expanded by either an existing high
+  // slot in `images` or the user clicking "Add another photo".
+  const usedKeys = Object.keys(images || {}).filter((k) => /^gallery\d+$/.test(k) && images[k]);
+  const maxUsedIndex = usedKeys.reduce(
+    (m, k) => Math.max(m, parseInt(k.replace('gallery', ''), 10)),
+    -1,
+  );
+  const minSlots = Math.max(3, maxUsedIndex + 1);
+  const [extraSlots, setExtraSlots] = useState(0);
+  const slotCount = Math.min(MAX_GALLERY, minSlots + extraSlots);
+  const filledCount = usedKeys.length;
+  const willCarousel = filledCount > 3;
+
+  return (
+    <>
+      <p className="text-[11px] text-gray-400 mb-1">
+        Upload photos for your gallery section.
+      </p>
+      <p className="text-[11px] text-gray-400 mb-4">
+        {willCarousel
+          ? `${filledCount} photos · gallery is in carousel mode (swipeable on the live site).`
+          : 'Add up to 3 photos for a grid. A 4th photo turns the gallery into a swipeable carousel.'}
+      </p>
+      {Array.from({ length: slotCount }, (_, i) => (
+        <ImageSlot
+          key={`gallery${i}`}
+          label={`Gallery Photo ${i + 1}`}
+          value={images?.[`gallery${i}`]}
+          onChange={(v) => setImage(`gallery${i}`, v)}
+        />
+      ))}
+      {slotCount < MAX_GALLERY && (
+        <button
+          type="button"
+          onClick={() => setExtraSlots((n) => n + 1)}
+          className="w-full mt-1 mb-2 py-2 rounded-lg border border-dashed border-gray-300 text-[12px] font-medium text-gray-500 hover:border-gray-500 hover:text-gray-700 transition-colors"
+        >
+          + Add another photo
+        </button>
+      )}
+      {slotCount >= MAX_GALLERY && (
+        <p className="text-[11px] text-gray-400 mt-1">Maximum {MAX_GALLERY} gallery photos.</p>
+      )}
+    </>
+  );
+}
+
 function Toggle({ value, onChange, options }) {
   return (
     <div className="flex gap-1 mb-4">
@@ -940,12 +993,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
           )}
 
           {activeSection === 'gallery' && (
-            <>
-              <p className="text-[11px] text-gray-400 mb-4">Upload photos for your gallery section.</p>
-              <ImageSlot label="Gallery Photo 1" value={images?.gallery0} onChange={(v) => setImage('gallery0', v)} />
-              <ImageSlot label="Gallery Photo 2" value={images?.gallery1} onChange={(v) => setImage('gallery1', v)} />
-              <ImageSlot label="Gallery Photo 3" value={images?.gallery2} onChange={(v) => setImage('gallery2', v)} />
-            </>
+            <GallerySlots images={images} setImage={setImage} />
           )}
 
           {activeSection === 'colors' && templateMeta && (

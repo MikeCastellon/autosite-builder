@@ -29,12 +29,21 @@ export function AboutImage({ src }) {
   );
 }
 
-/* ── Gallery section (renders 3 slots) ───────────────────────────── */
+/* ── Gallery section ─────────────────────────────────────────────── */
+// Reads any number of `gallery0`, `gallery1`, … `galleryN` slots from `images`.
+// 1–3 photos → static grid (existing layout). 4+ photos → swipeable
+// scroll-snap carousel that works without JS, so it survives the static
+// HTML export (renderToStaticMarkup) and behaves natively on touch +
+// trackpad + mouse-wheel.
 export function GallerySection({ images = {}, colors = {}, font, bodyFont }) {
-  const slots = ['gallery0', 'gallery1', 'gallery2'];
-  const hasAny = slots.some(k => images[k]);
+  const galleryImages = Object.keys(images || {})
+    .filter((k) => /^gallery\d+$/.test(k) && images[k])
+    .sort((a, b) => Number(a.replace('gallery', '')) - Number(b.replace('gallery', '')))
+    .map((k) => images[k]);
 
-  if (!hasAny) return null;
+  if (galleryImages.length === 0) return null;
+
+  const isCarousel = galleryImages.length > 3;
 
   return (
     <section style={{
@@ -53,17 +62,74 @@ export function GallerySection({ images = {}, colors = {}, font, bodyFont }) {
       }}>
         Gallery
       </h2>
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
-        gap: '1rem',
-      }}>
-        {slots.map(key => images[key] ? (
-          <div key={key} style={{ borderRadius: '8px', overflow: 'hidden' }}>
-            <img src={images[key]} alt="" style={{ width: '100%', height: '280px', objectFit: 'cover', display: 'block' }} />
+
+      {isCarousel ? (
+        <>
+          {/* Hide scrollbars cross-browser. Inline <style> survives SSR. */}
+          <style>{`
+            .acg-gallery-track::-webkit-scrollbar { display: none; }
+            .acg-gallery-track { scrollbar-width: none; -ms-overflow-style: none; }
+          `}</style>
+          <div
+            className="acg-gallery-track"
+            style={{
+              display: 'flex',
+              gap: '1rem',
+              overflowX: 'auto',
+              scrollSnapType: 'x mandatory',
+              WebkitOverflowScrolling: 'touch',
+              paddingBottom: '0.5rem',
+              // Negative margin pulls the track out to the section's edge
+              // padding so cards bleed into the viewport gutter, signalling
+              // there's more to scroll. Positive padding keeps the first
+              // card snap-aligned with the heading.
+              marginLeft: 'calc(-1 * clamp(1.5rem, 7cqi, 5rem))',
+              marginRight: 'calc(-1 * clamp(1.5rem, 7cqi, 5rem))',
+              paddingLeft: 'clamp(1.5rem, 7cqi, 5rem)',
+              paddingRight: 'clamp(1.5rem, 7cqi, 5rem)',
+            }}
+          >
+            {galleryImages.map((src, i) => (
+              <div key={i} style={{
+                flex: '0 0 auto',
+                width: 'min(78%, 360px)',
+                scrollSnapAlign: 'start',
+                borderRadius: '8px',
+                overflow: 'hidden',
+              }}>
+                <img src={src} alt="" style={{
+                  width: '100%',
+                  height: '320px',
+                  objectFit: 'cover',
+                  display: 'block',
+                }} />
+              </div>
+            ))}
           </div>
-        ) : null)}
-      </div>
+          <div style={{
+            fontFamily: bodyFont,
+            fontSize: '0.75rem',
+            color: colors.muted || '#888',
+            marginTop: '1rem',
+            textAlign: 'center',
+            letterSpacing: '0.05em',
+          }}>
+            ← Swipe to see more →
+          </div>
+        </>
+      ) : (
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${galleryImages.length}, 1fr)`,
+          gap: '1rem',
+        }}>
+          {galleryImages.map((src, i) => (
+            <div key={i} style={{ borderRadius: '8px', overflow: 'hidden' }}>
+              <img src={src} alt="" style={{ width: '100%', height: '280px', objectFit: 'cover', display: 'block' }} />
+            </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
