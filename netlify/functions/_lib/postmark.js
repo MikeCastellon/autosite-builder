@@ -305,3 +305,154 @@ export async function ownerToCustomerMessage({ toEmail, subject, body, site, rep
     throw err;
   }
 }
+
+// ──────────────────────────────────────────────────────────────────────
+// Support-Zoom booking emails
+// ──────────────────────────────────────────────────────────────────────
+
+const SUPPORT_HOST_NAME = process.env.SUPPORT_HOST_NAME || 'Genius Websites Support';
+
+// Build a minimal RFC 5545 .ics calendar invite as a base64-encoded string
+// suitable for Postmark's Attachments[].Content. Both the customer and the
+// host get this attached so the meeting drops straight into their calendar
+// app (Google Calendar, Apple Calendar, Outlook).
+function buildIcsAttachment({ uid, startISO, endISO, summary, description, joinUrl, organizerEmail }) {
+  function fmt(iso) {
+    // ICS wants UTC stamps in YYYYMMDDTHHMMSSZ form. Date#toISOString returns
+    // "2026-05-04T15:00:00.000Z" — strip dashes/colons and the .000.
+    return new Date(iso).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+  }
+  function escIcs(s) {
+    return String(s ?? '').replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;');
+  }
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Genius Websites//Support Booking//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:REQUEST',
+    'BEGIN:VEVENT',
+    `UID:${uid}`,
+    `DTSTAMP:${fmt(new Date().toISOString())}`,
+    `DTSTART:${fmt(startISO)}`,
+    `DTEND:${fmt(endISO)}`,
+    `SUMMARY:${escIcs(summary)}`,
+    `DESCRIPTION:${escIcs(description)}`,
+    `LOCATION:${escIcs(joinUrl)}`,
+    `ORGANIZER;CN=${escIcs(SUPPORT_HOST_NAME)}:mailto:${organizerEmail}`,
+    'STATUS:CONFIRMED',
+    'SEQUENCE:0',
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ].join('\r\n');
+  return {
+    Name: 'invite.ics',
+    ContentType: 'text/calendar; method=REQUEST; charset=UTF-8',
+    Content: Buffer.from(lines, 'utf-8').toString('base64'),
+  };
+}
+
+// Confirms the support-Zoom booking with the customer. Includes the join URL
+// inline and a .ics calendar invite as an attachment.
+export async function supportBookingToCustomer({ booking }) {
+  if (!client) { console.warn('Postmark not configured; skipping email'); return; }
+  const b = booking;
+  const ics = buildIcsAttachment({
+    uid: `support-${b.id}@geniuswebsites`,
+    startISO: b.scheduled_at,
+    endISO: b.ends_at,
+    summary: 'Genius Websites — Support call',
+    description: `Join here: ${b.zoom_join_url}\n\nTopic: ${b.topic || 'General support'}`,
+    joinUrl: b.zoom_join_url,
+    organizerEmail: FROM,
+  });
+
+  const detailCard = `
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fafafa;border:1px solid #f4f4f5;border-radius:12px;padding:16px 18px;margin-bottom:16px;"><tr><td>
+      <p style="margin:0 0 6px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">When:</strong> ${esc(formatWhen(b.scheduled_at))} ET</p>
+      <p style="margin:0 0 6px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Duration:</strong> 30 minutes</p>
+      ${b.topic ? `<p style="margin:0;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Topic:</strong> ${esc(b.topic)}</p>` : ''}
+    </td></tr></table>
+    ${b.zoom_password ? `<p style="margin:0 0 16px;font-size:13px;color:#71717a;text-align:center;">Passcode (only if asked): <strong style="color:#18181b;">${esc(b.zoom_password)}</strong></p>` : ''}
+    <p style="margin:0;font-size:12px;color:#a1a1aa;text-align:center;line-height:1.6;">A calendar invite is attached. Need to reschedule? Just reply to this email.</p>`;
+
+  const html = renderEmailShell({
+    icon: '🎥',
+    eyebrow: SUPPORT_HOST_NAME,
+    title: 'Your support call is confirmed',
+    intro: `We'll see you on Zoom at <strong style="color:#18181b;">${esc(formatWhen(b.scheduled_at))} ET</strong>.`,
+    cta: { label: 'Join Zoom call', href: b.zoom_join_url },
+    body: detailCard,
+  });
+  const text = `Your support call is confirmed.\n\nWhen: ${formatWhen(b.scheduled_at)} ET (30 min)\nJoin: ${b.zoom_join_url}\n${b.zoom_password ? `Passcode (if asked): ${b.zoom_password}\n` : ''}${b.topic ? `Topic: ${b.topic}\n` : ''}\nA calendar invite is attached. Reply to this email to reschedule.`;
+
+  try {
+    const res = await client.sendEmail({
+      From: FROM,
+      To: b.customer_email,
+      Subject: `Zoom call with ${SUPPORT_HOST_NAME} — ${formatWhen(b.scheduled_at)}`,
+      HtmlBody: html,
+      TextBody: text,
+      Attachments: [ics],
+      MessageStream: 'outbound',
+    });
+    console.log(`[postmark:supportBookingToCustomer] to=${b.customer_email} messageId=${res?.MessageID}`);
+    return res;
+  } catch (err) {
+    logPostmarkFailure('supportBookingToCustomer', err);
+    throw err;
+  }
+}
+
+// Notifies the support host (you) of a new support-Zoom booking. Includes
+// the start_url (host link, never share with customers) and the same .ics
+// invite so it lands in your calendar too.
+export async function supportBookingToHost({ booking, hostEmail }) {
+  if (!client) { console.warn('Postmark not configured; skipping email'); return; }
+  const b = booking;
+  const ics = buildIcsAttachment({
+    uid: `support-${b.id}@geniuswebsites`,
+    startISO: b.scheduled_at,
+    endISO: b.ends_at,
+    summary: `Support call — ${b.customer_name}`,
+    description: `Customer: ${b.customer_name} (${b.customer_email}${b.customer_phone ? ', ' + b.customer_phone : ''})\nTopic: ${b.topic || 'General support'}\n\nHost link: ${b.zoom_start_url}\nJoin link: ${b.zoom_join_url}`,
+    joinUrl: b.zoom_start_url || b.zoom_join_url,
+    organizerEmail: FROM,
+  });
+
+  const detailCard = `
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fafafa;border:1px solid #f4f4f5;border-radius:12px;padding:16px 18px;margin-bottom:8px;"><tr><td>
+      <p style="margin:0 0 6px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">When:</strong> ${esc(formatWhen(b.scheduled_at))} ET (30 min)</p>
+      <p style="margin:0 0 6px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Customer:</strong> ${esc(b.customer_name)}</p>
+      <p style="margin:0 0 6px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Email:</strong> <a href="mailto:${esc(b.customer_email)}" style="color:#cc0000;text-decoration:none;">${esc(b.customer_email)}</a></p>
+      ${b.customer_phone ? `<p style="margin:0 0 6px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Phone:</strong> <a href="tel:${esc(b.customer_phone)}" style="color:#cc0000;text-decoration:none;">${esc(b.customer_phone)}</a></p>` : ''}
+      ${b.topic ? `<p style="margin:0;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Topic:</strong> ${esc(b.topic)}</p>` : ''}
+    </td></tr></table>`;
+
+  const html = renderEmailShell({
+    icon: '📞',
+    eyebrow: 'Support booking',
+    title: `${esc(b.customer_name)} booked a Zoom`,
+    intro: `<strong style="color:#18181b;">${esc(formatWhen(b.scheduled_at))} ET</strong> — calendar invite attached.`,
+    cta: { label: 'Start meeting (host link)', href: b.zoom_start_url || b.zoom_join_url },
+    body: detailCard,
+  });
+  const text = `New support call booked.\n\nWhen: ${formatWhen(b.scheduled_at)} ET (30 min)\nCustomer: ${b.customer_name} (${b.customer_email}${b.customer_phone ? ', ' + b.customer_phone : ''})\n${b.topic ? `Topic: ${b.topic}\n` : ''}\nHost link: ${b.zoom_start_url}\nJoin link: ${b.zoom_join_url}`;
+
+  try {
+    const res = await client.sendEmail({
+      From: FROM,
+      To: hostEmail,
+      Subject: `Support call — ${b.customer_name} — ${formatWhen(b.scheduled_at)}`,
+      HtmlBody: html,
+      TextBody: text,
+      Attachments: [ics],
+      MessageStream: 'outbound',
+    });
+    console.log(`[postmark:supportBookingToHost] to=${hostEmail} messageId=${res?.MessageID}`);
+    return res;
+  } catch (err) {
+    logPostmarkFailure('supportBookingToHost', err);
+    throw err;
+  }
+}
