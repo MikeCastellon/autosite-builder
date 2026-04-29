@@ -4,8 +4,9 @@
 //
 // Output shape matches the `profiles` columns exactly:
 //   subscription_status: 'inactive' | 'active' | 'past_due' | 'cancelled'
-//   subscription_ends_at: Date | null           — when access lapses
-//   stripe_trial_ends_at: Date | null           — display only
+//   subscription_ends_at: Date | null              — when access lapses
+//   subscription_current_period_end: Date | null   — next-billing-date for the admin CRM
+//   stripe_trial_ends_at: Date | null              — display only
 export function mapStripeStatus(subscription) {
   const { status, current_period_end, trial_end, cancel_at_period_end } = subscription;
 
@@ -17,6 +18,7 @@ export function mapStripeStatus(subscription) {
     return {
       subscription_status: 'active',
       subscription_ends_at: null,
+      subscription_current_period_end: periodEnd,
       stripe_trial_ends_at: trialEnd,
     };
   }
@@ -28,12 +30,14 @@ export function mapStripeStatus(subscription) {
       return {
         subscription_status: 'cancelled',
         subscription_ends_at: periodEnd,
+        subscription_current_period_end: periodEnd,
         stripe_trial_ends_at: null,
       };
     }
     return {
       subscription_status: 'active',
       subscription_ends_at: null,
+      subscription_current_period_end: periodEnd,
       stripe_trial_ends_at: null,
     };
   }
@@ -42,6 +46,7 @@ export function mapStripeStatus(subscription) {
     return {
       subscription_status: 'past_due',
       subscription_ends_at: null,
+      subscription_current_period_end: periodEnd,
       stripe_trial_ends_at: null,
     };
   }
@@ -50,6 +55,7 @@ export function mapStripeStatus(subscription) {
     return {
       subscription_status: 'cancelled',
       subscription_ends_at: periodEnd,
+      subscription_current_period_end: periodEnd,
       stripe_trial_ends_at: null,
     };
   }
@@ -58,6 +64,7 @@ export function mapStripeStatus(subscription) {
   return {
     subscription_status: 'inactive',
     subscription_ends_at: null,
+    subscription_current_period_end: null,
     stripe_trial_ends_at: null,
   };
 }

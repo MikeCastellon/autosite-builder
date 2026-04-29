@@ -70,7 +70,7 @@ export function AuthProvider({ children }) {
     if (!session?.user?.id) { setProfile(null); writeCachedProfile(null); return; }
     const { data } = await supabase
       .from('profiles')
-      .select('id, email, first_name, last_name, business_name, phone, is_super_admin, scheduler_enabled, subscription_status, subscription_ends_at, shopify_customer_id, stripe_connect_account_id, stripe_connect_charges_enabled, stripe_connect_payouts_enabled, stripe_connect_details_submitted')
+      .select('id, email, first_name, last_name, business_name, phone, is_super_admin, scheduler_enabled, subscription_status, subscription_ends_at, subscription_current_period_end, shopify_customer_id, stripe_connect_account_id, stripe_connect_charges_enabled, stripe_connect_payouts_enabled, stripe_connect_details_submitted')
       .eq('id', session.user.id)
       .maybeSingle();
     setProfile(data || null);

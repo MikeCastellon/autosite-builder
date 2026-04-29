@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { getUserActivityCounts, saveAdminUserMetadata, subStatusBucket } from '../../lib/adminUsers.js';
 import { useAuth } from '../../lib/AuthContext.jsx';
 import { useAlert } from '../ui/AlertProvider.jsx';
+import { supabase } from '../../lib/supabase.js';
 
 function SubBadge({ bucket }) {
   const map = {
@@ -127,6 +128,62 @@ export default function AdminUserDrawer({ user, allTags, onClose, onRefresh }) {
   const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ').trim() || user.email;
   const initial = (fullName || '?').charAt(0).toUpperCase();
 
+  // Impersonation modal state — opens when admin clicks "View as user". Shows
+  // the magic link with an "Open in incognito" instruction so the admin's
+  // own session in this browser stays intact.
+  const [impersonating, setImpersonating] = useState(false);
+  const [impersonationLink, setImpersonationLink] = useState('');
+  const [impersonationCopied, setImpersonationCopied] = useState(false);
+  const [impersonationErr, setImpersonationErr] = useState(null);
+
+  async function handleViewAsUser() {
+    if (impersonating) return;
+    setImpersonating(true);
+    setImpersonationErr(null);
+    setImpersonationLink('');
+    try {
+      const { data: sessData } = await supabase.auth.getSession();
+      const token = sessData?.session?.access_token;
+      if (!token) throw new Error('Not signed in');
+      const res = await fetch('/.netlify/functions/admin-impersonate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ target_user_id: user.id }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || 'Could not generate link');
+      setImpersonationLink(body.action_link);
+    } catch (e) {
+      setImpersonationErr(e.message || 'Could not generate link');
+      toast(e.message || 'Could not generate link', 'error');
+    }
+  }
+
+  function copyImpersonationLink() {
+    if (!impersonationLink) return;
+    navigator.clipboard.writeText(impersonationLink).then(() => {
+      setImpersonationCopied(true);
+      setTimeout(() => setImpersonationCopied(false), 2000);
+    });
+  }
+  function closeImpersonation() {
+    setImpersonating(false);
+    setImpersonationLink('');
+    setImpersonationErr(null);
+  }
+
+  function formatNextBill(iso) {
+    if (!iso) return null;
+    const d = new Date(iso);
+    const now = new Date();
+    const days = Math.round((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    if (days < 0) return `${dateStr} (${-days}d ago)`;
+    if (days === 0) return `${dateStr} (today)`;
+    if (days === 1) return `${dateStr} (tomorrow)`;
+    return `${dateStr} (in ${days}d)`;
+  }
+
   return (
     <>
       <div onClick={onClose} className="fixed inset-0 bg-black/40 z-[80]" aria-hidden="true" />
@@ -184,7 +241,13 @@ export default function AdminUserDrawer({ user, allTags, onClose, onRefresh }) {
 
           <Section title="Subscription">
             <Field label="Status" value={user.subscription_status || (user.scheduler_enabled ? 'comp' : 'none')} />
+            {user.subscription_status === 'active' && user.subscription_current_period_end && (
+              <Field label="Next bill" value={formatNextBill(user.subscription_current_period_end)} />
+            )}
             {user.subscription_ends_at && <Field label="Ends" value={formatDate(user.subscription_ends_at)} />}
+            {user.stripe_trial_ends_at && new Date(user.stripe_trial_ends_at) > new Date() && (
+              <Field label="Trial ends" value={formatDate(user.stripe_trial_ends_at)} />
+            )}
             <Field label="Scheduler" value={user.scheduler_enabled ? 'Enabled' : 'Disabled'} />
           </Section>
 
@@ -313,6 +376,17 @@ export default function AdminUserDrawer({ user, allTags, onClose, onRefresh }) {
 
           <Section title="Quick actions">
             <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={handleViewAsUser}
+                disabled={impersonating && !impersonationLink}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#cc0000] hover:bg-[#a80000] disabled:opacity-60 text-white text-[12px] font-bold transition-colors"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                </svg>
+                {impersonating && !impersonationLink ? 'Generating…' : 'View as user'}
+              </button>
               <a
                 href={`mailto:${user.email}`}
                 className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-black/[0.10] text-[12px] font-semibold text-[#1a1a1a] hover:border-[#cc0000]/40 transition-colors"
@@ -350,6 +424,76 @@ export default function AdminUserDrawer({ user, allTags, onClose, onRefresh }) {
           </Section>
         </div>
       </aside>
+
+      {impersonating && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
+            <div className="px-6 pt-5 pb-3 border-b border-black/[0.07]">
+              <p className="text-[11px] font-bold text-[#cc0000] uppercase tracking-[2px]">Impersonate</p>
+              <h3 className="text-lg font-black text-[#1a1a1a] tracking-tight mt-0.5">View as {fullName}</h3>
+            </div>
+            <div className="px-6 py-5 space-y-4">
+              {!impersonationLink && !impersonationErr && (
+                <div className="flex items-center gap-3 py-4">
+                  <div className="w-5 h-5 border-4 border-gray-300 border-t-[#cc0000] rounded-full animate-spin" />
+                  <p className="text-sm text-[#555]">Generating one-time login link…</p>
+                </div>
+              )}
+
+              {impersonationErr && (
+                <p className="text-sm text-[#cc0000]">{impersonationErr}</p>
+              )}
+
+              {impersonationLink && (
+                <>
+                  <div className="rounded-xl bg-amber-50 border border-amber-200 p-3">
+                    <p className="text-[12px] font-bold text-amber-800 mb-1">⚠️ Open this in an incognito / private window</p>
+                    <p className="text-[12px] text-amber-700 leading-snug">
+                      Opening it in a normal tab will sign your admin session out and replace it with this user's. Incognito keeps both sessions isolated.
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#888] mb-1.5">Login link (single-use)</p>
+                    <div className="flex gap-2">
+                      <input
+                        readOnly
+                        value={impersonationLink}
+                        onFocus={(e) => e.target.select()}
+                        className="flex-1 min-w-0 px-3 py-2 rounded-lg border border-black/[0.10] bg-[#faf9f7] text-[11px] font-mono text-[#1a1a1a] focus:outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={copyImpersonationLink}
+                        className="px-3 py-2 rounded-lg bg-[#1a1a1a] hover:bg-[#cc0000] text-white text-[12px] font-bold transition-colors whitespace-nowrap"
+                      >
+                        {impersonationCopied ? 'Copied!' : 'Copy'}
+                      </button>
+                    </div>
+                  </div>
+
+                  <p className="text-[11px] text-[#888] leading-relaxed">
+                    Steps: <strong className="text-[#1a1a1a]">copy</strong> the link →
+                    open a new <strong className="text-[#1a1a1a]">incognito</strong> window
+                    (Cmd/Ctrl + Shift + N) → paste the link → you'll be logged in as <strong className="text-[#1a1a1a]">{user.email}</strong>.
+                    Close the incognito window when you're done.
+                  </p>
+                </>
+              )}
+
+              <div className="flex justify-end pt-2">
+                <button
+                  type="button"
+                  onClick={closeImpersonation}
+                  className="px-4 py-2 rounded-lg border border-black/[0.10] text-[#555] text-[12px] font-semibold hover:border-[#cc0000]/40 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

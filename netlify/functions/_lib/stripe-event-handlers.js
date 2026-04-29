@@ -13,6 +13,7 @@ function subscriptionToProfilePatch(subscription) {
     stripe_price_id: priceId,
     subscription_status: mapped.subscription_status,
     subscription_ends_at: mapped.subscription_ends_at,
+    subscription_current_period_end: mapped.subscription_current_period_end,
     stripe_trial_ends_at: mapped.stripe_trial_ends_at,
     // New subscription → clear any stale failed-payment timestamp.
     stripe_first_failed_payment_at: null,
