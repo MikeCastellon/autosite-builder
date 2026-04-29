@@ -1,6 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { isEffectiveSchedulerActive } from './_lib/subscription-gating.js';
 
+// Public widget endpoint — called from scheduler.js injected on every
+// customer's published site. Wide-open CORS by design.
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, OPTIONS',

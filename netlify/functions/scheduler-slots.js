@@ -2,6 +2,9 @@ import { createClient } from '@supabase/supabase-js';
 import { computeSlots } from './_lib/slot-math.js';
 import { isEffectiveSchedulerActive } from './_lib/subscription-gating.js';
 
+// Public widget endpoint — called from scheduler.js injected on every
+// customer's published site (each on a different domain). Wide-open
+// CORS by design; data exposed is just "is X minute slot free for site Y".
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, OPTIONS',

@@ -1,39 +1,53 @@
-import { createClient } from '@supabase/supabase-js';
+import { requireSiteOwner, supabaseAdmin } from './_shared/auth.js';
+import { isValidSlug } from './_shared/slug.js';
+import { corsHeaders, jsonHeaders } from './_shared/cors.js';
 
 const CF_TOKEN = process.env.CLOUDFLARE_API_TOKEN;
 const CF_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID;
 const R2_BUCKET = 'autosite-published';
 const PUBLISH_DOMAIN = process.env.PUBLISH_DOMAIN || 'autocaregeniushub.com';
 
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-};
-const CORS = { ...CORS_HEADERS, 'Content-Type': 'application/json' };
-
 export const handler = async (event) => {
-  if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: CORS_HEADERS };
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, headers: CORS, body: JSON.stringify({ error: 'Method not allowed' }) };
-  }
+  const cors = corsHeaders(event.headers);
+  const json = jsonHeaders(event.headers);
 
-  const supabase = createClient(
-    process.env.VITE_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  );
+  if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors };
+  if (event.httpMethod !== 'POST') {
+    return { statusCode: 405, headers: json, body: JSON.stringify({ error: 'Method not allowed' }) };
+  }
 
   let body;
   try { body = JSON.parse(event.body || '{}'); }
-  catch { return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Invalid JSON' }) }; }
+  catch { return { statusCode: 400, headers: json, body: JSON.stringify({ error: 'Invalid JSON' }) }; }
 
   const { siteId, htmlContent, slug } = body;
   if (!siteId || !htmlContent || !slug) {
-    return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Missing required fields (siteId, htmlContent, slug)' }) };
+    return { statusCode: 400, headers: json, body: JSON.stringify({ error: 'Missing required fields (siteId, htmlContent, slug)' }) };
   }
 
+  // Slug shape — used as a hostname label and as part of the R2 object
+  // key. Reject anything that could break out of either context.
+  if (!isValidSlug(slug)) {
+    return { statusCode: 400, headers: json, body: JSON.stringify({ error: 'Invalid slug' }) };
+  }
+
+  let site;
   try {
-    // --- Step 1: Upload HTML to Cloudflare R2 ---
+    ({ site } = await requireSiteOwner(event, siteId));
+  } catch (err) {
+    return { statusCode: err.status || 500, headers: json, body: JSON.stringify({ error: err.message }) };
+  }
+
+  // Defense in depth: the slug going into R2 must match the site's
+  // existing slug (or be allowed as a first publish). Refuse to publish
+  // an arbitrary slug overriding another site's content.
+  if (site.slug && site.slug !== slug) {
+    return { statusCode: 409, headers: json, body: JSON.stringify({ error: 'This site is already published under a different slug. Use the existing slug.' }) };
+  }
+
+  const supabase = supabaseAdmin();
+
+  try {
     const r2Key = `${slug}/index.html`;
     const r2Url = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/r2/buckets/${R2_BUCKET}/objects/${encodeURIComponent(r2Key)}`;
 
@@ -53,20 +67,14 @@ export const handler = async (event) => {
 
     const publishedUrl = `https://${slug}.${PUBLISH_DOMAIN}`;
 
-    // --- Step 2: Update Supabase ---
-    const { data: siteRow } = await supabase
-      .from('sites').select('id').eq('id', siteId).maybeSingle();
-
-    if (siteRow) {
-      await supabase.from('sites').update({
-        slug,
-        published_url: publishedUrl,
-      }).eq('id', siteId);
-    }
+    await supabase.from('sites').update({
+      slug,
+      published_url: publishedUrl,
+    }).eq('id', siteId);
 
     return {
       statusCode: 200,
-      headers: CORS,
+      headers: json,
       body: JSON.stringify({ publishedUrl }),
     };
 
@@ -74,7 +82,7 @@ export const handler = async (event) => {
     console.error('publish-site error:', err);
     return {
       statusCode: 500,
-      headers: CORS,
+      headers: json,
       body: JSON.stringify({ error: err.message || 'Publish failed' }),
     };
   }

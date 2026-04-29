@@ -9,18 +9,15 @@
 import { createClient } from '@supabase/supabase-js';
 import { bookingReceivedToCustomer } from './_lib/postmark.js';
 import { isEffectiveSchedulerActive } from './_lib/subscription-gating.js';
-
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Content-Type': 'application/json',
-};
-const ok = (body) => ({ statusCode: 200, headers: CORS, body: JSON.stringify(body) });
-const fail = (status, body) => ({ statusCode: status, headers: CORS, body: JSON.stringify(body) });
+import { corsHeaders, jsonHeaders } from './_shared/cors.js';
 
 export const handler = async (event) => {
-  if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: CORS };
+  const cors = corsHeaders(event.headers);
+  const CORS = jsonHeaders(event.headers);
+  const ok = (body) => ({ statusCode: 200, headers: CORS, body: JSON.stringify(body) });
+  const fail = (status, body) => ({ statusCode: status, headers: CORS, body: JSON.stringify(body) });
+
+  if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors };
   if (event.httpMethod !== 'POST') return fail(405, { error: 'Method not allowed' });
 
   const auth = event.headers.authorization || event.headers.Authorization;

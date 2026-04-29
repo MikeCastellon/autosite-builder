@@ -56,7 +56,10 @@ export default function StepSocialFeeds({ selectedWidgetIds, onWidgetIdsChange, 
     setSearching(true);
     setError(null);
     try {
-      const res = await fetch(`${PLACES_SEARCH_URL}?q=${encodeURIComponent(searchQuery)}`);
+      const token = session?.access_token;
+      const res = await fetch(`${PLACES_SEARCH_URL}?q=${encodeURIComponent(searchQuery)}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       const json = await res.json();
       setSearchResults(json.results || []);
     } catch {

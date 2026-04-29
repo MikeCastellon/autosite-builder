@@ -49,6 +49,14 @@ export const handler = async (event) => {
     return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'target_user_id required' }) };
   }
 
+  // Reason is captured in the admin_impersonations audit table — required for
+  // SOC2 / pre-acquisition due diligence. Reject blank or trivially short
+  // values so the audit trail is meaningful. (Security Audit H1)
+  const reason = String(payload.reason || '').trim();
+  if (reason.length < 4) {
+    return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Reason required (min 4 chars)' }) };
+  }
+
   // Two clients on purpose:
   //   - supabaseAdmin: stays "logged in as nobody" (service role) the entire
   //     request. Used for all DB writes + admin API calls.
@@ -141,7 +149,30 @@ export const handler = async (event) => {
     return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: `Could not save handoff: ${insertErr?.message || 'unknown'}` }) };
   }
 
-  // Audit
+  // Audit log — INSERT into admin_impersonations with the captured reason +
+  // request metadata. console.log alone is not a real audit trail because
+  // Netlify function logs roll off and are not queryable for compliance.
+  // (Security Audit H1)
+  const ip = event.headers['x-forwarded-for']?.split(',')[0]?.trim() || null;
+  const userAgent = event.headers['user-agent'] || event.headers['User-Agent'] || null;
+  const { error: auditErr } = await supabaseAdmin
+    .from('admin_impersonations')
+    .insert({
+      admin_user_id: callerId,
+      admin_email: callerProfile.email,
+      target_user_id: targetProfile.id,
+      target_email: targetProfile.email,
+      reason,
+      ip,
+      user_agent: userAgent,
+    });
+  if (auditErr) {
+    // Audit insert failed AFTER the handoff row was already created. Don't
+    // fail the request — the handoff row itself is an audit-trail anchor
+    // (admin_user_id + target_user_id + created_at). Log the discrepancy
+    // for ops to reconcile.
+    console.error('[admin-impersonate-session] audit insert failed', auditErr);
+  }
   console.log(
     `[admin-impersonate-session] admin=${callerProfile.email} (${callerId}) `
     + `→ target=${targetProfile.email} (${targetProfile.id}) handoff=${handoff.id}`

@@ -5,30 +5,19 @@ import { computeSlots } from './_lib/slot-math.js';
 import { isEffectiveSchedulerActive } from './_lib/subscription-gating.js';
 import { getStripe } from './_lib/stripe.js';
 import { parsePriceToCents, computeDepositCents } from './_lib/deposit-math.js';
+import { checkAndRecordRateLimit } from './_shared/rateLimit.js';
+import { PUBLIC_CORS, PUBLIC_CORS_JSON } from './_shared/cors.js';
 
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Content-Type': 'application/json',
-};
+// Public widget endpoint — called from scheduler.js injected on every
+// customer's published site. Uses wide-open CORS by design (each
+// customer has their own domain). Rate limit + honeypot + validation
+// are the actual guards.
+const CORS = PUBLIC_CORS_JSON;
 
 const WEEKDAY_KEYS = ['sun','mon','tue','wed','thu','fri','sat'];
 
-const rateBuckets = new Map();
-function rateLimited(ip, siteId) {
-  const key = `${ip}:${siteId}`;
-  const now = Date.now();
-  const arr = rateBuckets.get(key) || [];
-  const recent = arr.filter((t) => now - t < 60 * 60 * 1000);
-  if (recent.length >= 5) return true;
-  recent.push(now);
-  rateBuckets.set(key, recent);
-  return false;
-}
-
 export const handler = async (event) => {
-  if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: CORS };
+  if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: PUBLIC_CORS };
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, headers: CORS, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
@@ -41,15 +30,25 @@ export const handler = async (event) => {
   if (v.honeypot) return { statusCode: 200, headers: CORS, body: JSON.stringify({ ok: true }) };
   if (!v.ok) return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: v.error }) };
 
-  const ip = event.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown';
-  if (rateLimited(ip, payload.siteId)) {
-    return { statusCode: 429, headers: CORS, body: JSON.stringify({ error: 'Too many requests' }) };
-  }
-
   const supabase = createClient(
     process.env.VITE_SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
   );
+
+  // Postgres-backed rate limit: 5 bookings per IP+site per hour. Replaces
+  // the previous in-memory Map which was bypassable across containers.
+  // (Security Audit H2 / CC-5)
+  const ip = event.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown';
+  const { limited } = await checkAndRecordRateLimit({
+    db: supabase,
+    ip,
+    kind: `create-booking:${payload.siteId}`,
+    windowMs: 60 * 60 * 1000,
+    limit: 5,
+  });
+  if (limited) {
+    return { statusCode: 429, headers: CORS, body: JSON.stringify({ error: 'Too many requests' }) };
+  }
 
   const { data: site } = await supabase
     .from('sites')

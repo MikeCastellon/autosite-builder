@@ -1,5 +1,6 @@
 import { generateSlug } from './publishUtils.js';
 import { exportHtmlString } from './exportHtml.js';
+import { supabase } from './supabase.js';
 
 /**
  * Publish a site by uploading HTML to Cloudflare R2.
@@ -9,9 +10,16 @@ export async function publishSite({ siteId, businessInfo, generatedCopy, templat
   const slug = generateSlug(businessInfo.businessName);
   const htmlContent = await exportHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, selectedWidgetIds || [], siteId, isPro);
 
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData?.session?.access_token;
+  if (!token) throw new Error('Sign in required to publish.');
+
   const res = await fetch('/.netlify/functions/publish-site', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
     body: JSON.stringify({ siteId, htmlContent, slug }),
   });
 

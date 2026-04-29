@@ -8,10 +8,12 @@ export function supabaseAdmin() {
 }
 
 /**
- * Verify the request is authenticated and the user owns the site.
- * Returns { user, site } or throws an Error with .status code.
+ * Verify the request is authenticated. Returns the user or throws an
+ * Error with .status code. Use this for endpoints that need a signed-in
+ * user but aren't bound to a specific site (e.g. places-search,
+ * generate-website).
  */
-export async function requireSiteOwner(event, siteId) {
+export async function requireUser(event) {
   const auth = event.headers.authorization || event.headers.Authorization;
   if (!auth?.startsWith('Bearer ')) {
     const err = new Error('Not signed in. Please sign in again.');
@@ -20,7 +22,6 @@ export async function requireSiteOwner(event, siteId) {
   }
   const token = auth.slice(7);
 
-  let user;
   try {
     const admin = supabaseAdmin();
     const { data, error } = await admin.auth.getUser(token);
@@ -35,7 +36,7 @@ export async function requireSiteOwner(event, siteId) {
       err.status = 401;
       throw err;
     }
-    user = data.user;
+    return data.user;
   } catch (e) {
     if (e.status) throw e;
     console.error('[auth] getUser threw:', e?.message || e);
@@ -43,6 +44,14 @@ export async function requireSiteOwner(event, siteId) {
     err.status = 401;
     throw err;
   }
+}
+
+/**
+ * Verify the request is authenticated and the user owns the site.
+ * Returns { user, site } or throws an Error with .status code.
+ */
+export async function requireSiteOwner(event, siteId) {
+  const user = await requireUser(event);
 
   const admin = supabaseAdmin();
   const { data: site, error: siteErr } = await admin

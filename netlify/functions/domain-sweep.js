@@ -4,7 +4,26 @@ import { sendPostmarkEmail } from './_shared/postmark.js';
 // Probes pending custom domains every few minutes, flips them to active_ssl
 // once they respond over HTTPS from Netlify, and emails the owner on the
 // pending_dns/active_dns → active_ssl transition.
-export const handler = async () => {
+//
+// Auth gate (Security Audit C3): Netlify scheduled functions are also
+// reachable from the public internet by default. Without a guard, an
+// external caller could trigger sweeps on demand — wasting Netlify
+// quota and firing notification emails on transitions. Reject anything
+// that isn't either:
+//   - Netlify's scheduled invocation (header `x-netlify-event: schedule`)
+//   - An internal call carrying a shared secret (DOMAIN_SWEEP_TOKEN)
+export const handler = async (event = {}) => {
+  const headers = event.headers || {};
+  const isScheduled = headers['x-netlify-event'] === 'schedule';
+  const adminToken = process.env.DOMAIN_SWEEP_TOKEN;
+  const supplied =
+    headers['x-domain-sweep-token'] || headers['X-Domain-Sweep-Token'];
+  const authorized =
+    isScheduled || (adminToken && supplied && supplied === adminToken);
+  if (!authorized) {
+    return { statusCode: 401, body: 'unauthorized' };
+  }
+
   const admin = supabaseAdmin();
 
   const { data: sites } = await admin

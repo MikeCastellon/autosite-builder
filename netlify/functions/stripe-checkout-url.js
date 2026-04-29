@@ -1,17 +1,14 @@
 // netlify/functions/stripe-checkout-url.js
 import { createClient } from '@supabase/supabase-js';
 import { getStripe } from './_lib/stripe.js';
-
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Content-Type': 'application/json',
-};
-const fail = (status, body) => ({ statusCode: status, headers: CORS, body: JSON.stringify(body) });
+import { corsHeaders, jsonHeaders } from './_shared/cors.js';
 
 export const handler = async (event) => {
-  if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: CORS };
+  const cors = corsHeaders(event.headers);
+  const CORS = jsonHeaders(event.headers);
+  const fail = (status, body) => ({ statusCode: status, headers: CORS, body: JSON.stringify(body) });
+
+  if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors };
   if (event.httpMethod !== 'GET') return fail(405, { error: 'Method not allowed' });
 
   const auth = event.headers.authorization || event.headers.Authorization;

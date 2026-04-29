@@ -136,6 +136,17 @@ export default function AdminUserDrawer({ user, allTags, onClose, onRefresh }) {
 
   async function handleViewAsUser() {
     if (impersonating) return;
+    // Reason captured in the audit log (admin_impersonations table). Required
+    // by the netlify function — no reason, no link. Forces accountability.
+    const reason = window.prompt(
+      `Why are you signing in as ${user.email}?\n\n`
+      + `This is logged in the admin_impersonations audit table.`,
+    );
+    if (reason === null) return; // user cancelled
+    if (reason.trim().length < 4) {
+      toast('Reason required (min 4 chars)', 'error');
+      return;
+    }
     setImpersonating(true);
     try {
       const { data: sessData } = await supabase.auth.getSession();
@@ -144,7 +155,7 @@ export default function AdminUserDrawer({ user, allTags, onClose, onRefresh }) {
       const res = await fetch('/.netlify/functions/admin-impersonate-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ target_user_id: user.id }),
+        body: JSON.stringify({ target_user_id: user.id, reason: reason.trim() }),
       });
       const body = await res.json();
       if (!res.ok) throw new Error(body.error || 'Could not start impersonation');

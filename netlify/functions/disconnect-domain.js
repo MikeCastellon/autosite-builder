@@ -1,18 +1,15 @@
 import { requireSiteOwner, supabaseAdmin } from './_shared/auth.js';
-
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Content-Type': 'application/json',
-};
+import { corsHeaders, jsonHeaders } from './_shared/cors.js';
 
 const NETLIFY_API = 'https://api.netlify.com/api/v1';
 const NETLIFY_SITE_ID = process.env.NETLIFY_SITE_ID || 'b5123609-d632-43df-9ff1-db707714162b';
 const NETLIFY_TOKEN = process.env.NETLIFY_ACCESS_TOKEN;
 
 export const handler = async (event) => {
-  if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: CORS };
+  const cors = corsHeaders(event.headers);
+  const CORS = jsonHeaders(event.headers);
+
+  if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors };
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, headers: CORS, body: JSON.stringify({ error: 'Method not allowed' }) };
   }

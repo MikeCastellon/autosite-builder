@@ -1,9 +1,18 @@
+import { supabase } from './supabase.js';
+
 export async function generateWebsite(businessInfo, templateMeta) {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData?.session?.access_token;
+  if (!token) throw new Error('Sign in required to generate a website.');
+
   let response;
   try {
     response = await fetch('/.netlify/functions/generate-website', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify({ businessInfo, templateMeta }),
     });
   } catch (networkErr) {

@@ -14,34 +14,23 @@ import { createClient } from '@supabase/supabase-js';
 import { listOpenSlots } from './_lib/support-slots.js';
 import { createZoomMeeting } from './_lib/zoom.js';
 import { supportBookingToCustomer, supportBookingToHost } from './_lib/postmark.js';
+import { checkAndRecordRateLimit } from './_shared/rateLimit.js';
+import { PUBLIC_CORS, PUBLIC_CORS_JSON } from './_shared/cors.js';
 
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Content-Type': 'application/json',
-};
+// Public marketing-page endpoint — book a support call. Uses wide-open
+// CORS so the marketing site (separate origin from the app) can call
+// it. Rate limit + honeypot + slot freshness are the actual guards.
+const CORS = PUBLIC_CORS_JSON;
 
 const SUPPORT_HOST_EMAIL = process.env.SUPPORT_HOST_EMAIL || process.env.POSTMARK_FROM_EMAIL || 'support@example.com';
 const SUPPORT_TIMEZONE = process.env.SUPPORT_TIMEZONE || 'America/New_York';
-
-const rateBuckets = new Map();
-function rateLimited(ip) {
-  const now = Date.now();
-  const arr = rateBuckets.get(ip) || [];
-  const recent = arr.filter((t) => now - t < 60 * 60 * 1000);
-  if (recent.length >= 3) return true;
-  recent.push(now);
-  rateBuckets.set(ip, recent);
-  return false;
-}
 
 function isEmail(s) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(s || '').trim());
 }
 
 export const handler = async (event) => {
-  if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: CORS };
+  if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: PUBLIC_CORS };
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, headers: CORS, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
@@ -52,11 +41,6 @@ export const handler = async (event) => {
 
   // Honeypot — silently succeed so bots think they got through
   if (payload.website) return { statusCode: 200, headers: CORS, body: JSON.stringify({ ok: true }) };
-
-  const ip = event.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown';
-  if (rateLimited(ip)) {
-    return { statusCode: 429, headers: CORS, body: JSON.stringify({ error: 'Too many bookings — try again in an hour' }) };
-  }
 
   const customerName = String(payload.customer_name || '').trim();
   const customerEmail = String(payload.customer_email || '').trim().toLowerCase();
@@ -75,6 +59,22 @@ export const handler = async (event) => {
     process.env.SUPABASE_SERVICE_ROLE_KEY,
     { auth: { persistSession: false } },
   );
+
+  // Postgres-backed rate limit: 3 support bookings per IP per hour.
+  // Replaces the in-memory Map which was bypassable. Done after input
+  // validation so a malformed request doesn't burn a slot.
+  // (Security Audit H2 / CC-5)
+  const ip = event.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown';
+  const { limited } = await checkAndRecordRateLimit({
+    db: supabase,
+    ip,
+    kind: 'support-book',
+    windowMs: 60 * 60 * 1000,
+    limit: 3,
+  });
+  if (limited) {
+    return { statusCode: 429, headers: CORS, body: JSON.stringify({ error: 'Too many bookings — try again in an hour' }) };
+  }
 
   // Re-validate slot against current bookings — rejects double-bookings
   // even if the UI showed a stale slot list.

@@ -1,17 +1,28 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabase.js';
+import { supabase, isImpersonationTab } from '../../lib/supabase.js';
 import { publishSite } from '../../lib/publishSite.js';
 import { TEMPLATES } from '../../data/templates.js';
 import { isEffectiveSchedulerActive } from '../../lib/subscriptionGating.js';
 import { useAlert } from '../ui/AlertProvider.jsx';
 import CustomDomainPanel from '../CustomDomainPanel.jsx';
 import UpgradeProDialog from '../ui/UpgradeProDialog.jsx';
+import CustomWebsitePromoModal from '../ui/CustomWebsitePromoModal.jsx';
 import EditBusinessInfoModal from './EditBusinessInfoModal.jsx';
 import UpgradeFunnel from './UpgradeFunnel.jsx';
 import AppHeader from '../ui/AppHeader.jsx';
 
 const MAX_SITES = 1;
 const CUSTOM_DOMAIN_ENABLED = import.meta.env.VITE_CUSTOM_DOMAIN_ENABLED === 'true';
+// Two-stage dismissal for the custom-website upsell:
+//   1) Popup closes → a small "Looking to upgrade?" banner takes its place
+//      in the bottom-left so the offer is still recoverable in one click.
+//   2) Banner closes (the X on the banner) → 30-day cooldown starts;
+//      neither popup nor banner shows until the cooldown expires.
+const CUSTOM_PROMO_SEEN_KEY = 'gw.customWebsitePromoSeen';
+const CUSTOM_PROMO_DISMISSED_KEY = 'gw.customWebsitePromoDismissedAt';
+const CUSTOM_PROMO_REPROMPT_MS = 30 * 24 * 60 * 60 * 1000;
+// Delay before the popup appears on a fresh dashboard mount.
+const CUSTOM_PROMO_DELAY_MS = 1500;
 
 export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEmail, profile, onOpenAdmin, onOpenBookings, onOpenCustomers, onOpenProfile, onOpenPaymentsConnect, onOpenCharges, onCharge, onOpenBookingSettings }) {
   const { toast, confirm: confirmDialog } = useAlert();
@@ -23,10 +34,14 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
   const [proDialogOpen, setProDialogOpen] = useState(false);
   const [editBizSite, setEditBizSite] = useState(null);
   const [showWelcome, setShowWelcome] = useState(false);
+  const [customPromoOpen, setCustomPromoOpen] = useState(false);
+  const [customBannerOpen, setCustomBannerOpen] = useState(false);
   const schedulerEnabled = !!profile?.scheduler_enabled;
   const isAdmin = !!profile?.is_super_admin;
   const isPro = isEffectiveSchedulerActive(profile);
-  const canCreateSite = isAdmin || sites.length < MAX_SITES;
+  // Block site creation while impersonating — admin shouldn't be able to
+  // spawn a new site under the customer's account.
+  const canCreateSite = !isImpersonationTab && (isAdmin || sites.length < MAX_SITES);
 
   const headerProps = {
     active: 'sites',
@@ -52,6 +67,62 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
     }
   }, []);
 
+  // Custom-website upsell decision tree on dashboard mount:
+  //   - Within the 30-day cooldown (banner was X'd recently) → show nothing
+  //   - User has seen the popup before but hasn't X'd the banner →
+  //     show the banner only (no auto-popup nag)
+  //   - Fresh visitor → auto-show the popup after a short delay
+  //   - Just upgraded via Stripe → suppress everything to avoid stacking
+  //     with the welcome flash
+  useEffect(() => {
+    let inCooldown = false;
+    let popupSeen = false;
+    try {
+      const raw = window.localStorage.getItem(CUSTOM_PROMO_DISMISSED_KEY);
+      const dismissedAt = raw ? Number(raw) : 0;
+      if (Number.isFinite(dismissedAt) && dismissedAt > 0 &&
+          Date.now() - dismissedAt < CUSTOM_PROMO_REPROMPT_MS) {
+        inCooldown = true;
+      }
+      popupSeen = window.localStorage.getItem(CUSTOM_PROMO_SEEN_KEY) === '1';
+    } catch { /* localStorage unavailable — show fresh */ }
+
+    const params = new URLSearchParams(window.location.search);
+    const justUpgraded = params.get('stripe_success') === '1';
+    if (inCooldown || justUpgraded) return;
+
+    if (popupSeen) {
+      setCustomBannerOpen(true);
+      return;
+    }
+    const t = setTimeout(() => setCustomPromoOpen(true), CUSTOM_PROMO_DELAY_MS);
+    return () => clearTimeout(t);
+  }, []);
+
+  const handleCustomPromoClose = () => {
+    setCustomPromoOpen(false);
+    setCustomBannerOpen(true);
+    try {
+      window.localStorage.setItem(CUSTOM_PROMO_SEEN_KEY, '1');
+    } catch { /* ignore */ }
+  };
+
+  const handleReopenCustomPromo = () => {
+    // Banner click — just re-open the popup. Banner stays "open" in state
+    // so it returns when the popup closes again, and we don't write to
+    // dismissedAt (that's reserved for the explicit X on the banner).
+    setCustomPromoOpen(true);
+  };
+
+  const handleBannerDismiss = () => {
+    // Explicit X on the banner — the user is telling us "stop showing me
+    // this." Start the 30-day cooldown.
+    setCustomBannerOpen(false);
+    try {
+      window.localStorage.setItem(CUSTOM_PROMO_DISMISSED_KEY, String(Date.now()));
+    } catch { /* ignore */ }
+  };
+
   useEffect(() => {
     async function fetchSites() {
       const { data, error } = await supabase
@@ -76,17 +147,31 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
     });
     if (!ok) return;
     const site = sites.find(s => s.id === id);
+
+    // Unpublish first so the auth-gated function can still verify
+    // ownership. If we deleted the DB row first, the ownership check
+    // would 404 and the published HTML would be orphaned forever.
+    if (site?.slug) {
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData?.session?.access_token;
+        if (token) {
+          await fetch('/.netlify/functions/unpublish-site', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ siteId: site.id }),
+          });
+        }
+      } catch { /* best-effort — proceed with DB delete either way */ }
+    }
+
     const { error } = await supabase.from('sites').delete().eq('id', id);
     if (error) {
       toast('Failed to delete site. Please try again.', 'error');
       return;
-    }
-    if (site?.slug) {
-      fetch('/.netlify/functions/unpublish-site', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug: site.slug, siteId: site.id }),
-      }).catch(() => {});
     }
     setSites((prev) => prev.filter((s) => s.id !== id));
     toast('Site deleted', 'success');
@@ -205,12 +290,14 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
         ) : sites.length === 0 ? (
           <div className="text-center py-20 border border-black/[0.07] rounded-2xl bg-white">
             <p className="text-[#888] mb-4">No sites yet.</p>
-            <button
-              onClick={onNewSite}
-              className="px-6 py-3 bg-[#1a1a1a] hover:bg-[#cc0000] text-white rounded-xl font-semibold text-sm transition-colors"
-            >
-              Build My Site
-            </button>
+            {!isImpersonationTab && (
+              <button
+                onClick={onNewSite}
+                className="px-6 py-3 bg-[#1a1a1a] hover:bg-[#cc0000] text-white rounded-xl font-semibold text-sm transition-colors"
+              >
+                Build My Site
+              </button>
+            )}
           </div>
         ) : (
           <div className="bg-white border border-black/[0.07] rounded-2xl shadow-sm overflow-hidden">
@@ -300,7 +387,12 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
                   })()}
                 </div>
 
-                {/* Actions */}
+                {/* Actions — hidden entirely while impersonating so the
+                    admin can't accidentally Edit, Delete, Republish, or
+                    re-config the customer's site on their behalf. The
+                    "VIEWING AS …" banner makes the read-only context
+                    obvious; this just enforces it. */}
+                {!isImpersonationTab && (
                 <div className="flex flex-wrap gap-2 sm:flex-col sm:items-stretch sm:w-auto">
                   {onEditSite && (
                     <button
@@ -366,6 +458,7 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
                     Delete
                   </button>
                 </div>
+                )}
               </div>
             ))}
             </div>
@@ -380,6 +473,44 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
             <UpgradeFunnel onUpgrade={() => setProDialogOpen(true)} />
           </div>
         </section>
+      )}
+
+      {/* Custom-website upsell banner. Fixed-position bottom-left so it
+          stays available without occupying flow space. Hidden while the
+          popup itself is open (avoid visual stacking) and during the
+          30-day cooldown after the user X's it. */}
+      {customBannerOpen && !customPromoOpen && (
+        <div
+          className="fixed bottom-4 left-4 z-40 max-w-[280px] bg-white border border-black/[0.10] rounded-xl shadow-lg overflow-hidden"
+          role="region"
+          aria-label="Custom website upsell"
+        >
+          <button
+            type="button"
+            onClick={handleReopenCustomPromo}
+            className="block w-full text-left pl-4 pr-10 pt-3 pb-3 hover:bg-[#faf9f7] transition-colors"
+          >
+            <span className="block text-[10px] font-bold uppercase tracking-[2px] text-[#cc0000] mb-1">
+              Looking to upgrade?
+            </span>
+            <span className="block text-[13px] font-bold text-[#1a1a1a] leading-snug">
+              Custom website — $499
+            </span>
+            <span className="block text-[11px] text-[#888] mt-0.5">
+              Designed and built for you
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={handleBannerDismiss}
+            aria-label="Dismiss for 30 days"
+            className="absolute top-2 right-2 w-7 h-7 rounded-full text-[#888] hover:text-[#1a1a1a] hover:bg-black/[0.05] flex items-center justify-center transition-colors z-10"
+          >
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
       )}
 
       {domainPanelSiteId && (
@@ -412,6 +543,11 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
         onClose={() => setProDialogOpen(false)}
         heading="Custom domains are a Pro feature"
         subheading="Connect your own domain (mybusiness.com) instead of the free subdomain — plus everything else included with Pro."
+      />
+
+      <CustomWebsitePromoModal
+        open={customPromoOpen}
+        onClose={handleCustomPromoClose}
       />
 
       {editBizSite && (

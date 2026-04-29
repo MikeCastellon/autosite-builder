@@ -1,11 +1,5 @@
 import { requireSiteOwner, supabaseAdmin } from './_shared/auth.js';
-
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Content-Type': 'application/json',
-};
+import { corsHeaders, jsonHeaders } from './_shared/cors.js';
 
 const NETLIFY_API = 'https://api.netlify.com/api/v1';
 const NETLIFY_SITE_ID = process.env.NETLIFY_SITE_ID || 'b5123609-d632-43df-9ff1-db707714162b';
@@ -22,7 +16,10 @@ const CACHE_TTL_MS = 5000;
 //   1. Asking Netlify whether the domain alias has a provisioned SSL cert.
 //   2. If yes -> active_ssl. If still pending -> pending_dns or verifying.
 export const handler = async (event) => {
-  if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: CORS };
+  const cors = corsHeaders(event.headers);
+  const CORS = jsonHeaders(event.headers);
+
+  if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors };
   if (event.httpMethod !== 'GET') {
     return { statusCode: 405, headers: CORS, body: JSON.stringify({ error: 'Method not allowed' }) };
   }

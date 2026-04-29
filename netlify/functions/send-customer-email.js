@@ -1,17 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 import { ownerToCustomerMessage } from './_lib/postmark.js';
+import { corsHeaders, jsonHeaders } from './_shared/cors.js';
 
 // Owner-initiated free-form email to a customer, sent through the same
 // Postmark + branded shell that the automated booking emails use. Caller
 // must own the site referenced by siteId — used both for ownership check
 // and to populate the business-info block in the email footer.
-
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Content-Type': 'application/json',
-};
 
 const MAX_SUBJECT = 200;
 const MAX_BODY = 10_000;
@@ -21,7 +15,10 @@ function isValidEmail(s) {
 }
 
 export const handler = async (event) => {
-  if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: CORS };
+  const cors = corsHeaders(event.headers);
+  const CORS = jsonHeaders(event.headers);
+
+  if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors };
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, headers: CORS, body: JSON.stringify({ error: 'Method not allowed' }) };
   }

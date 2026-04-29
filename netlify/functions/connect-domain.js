@@ -1,18 +1,12 @@
 import { normalizeDomain, isValidDomain } from './_shared/domainUtils.js';
 import { requireSiteOwner, supabaseAdmin } from './_shared/auth.js';
+import { corsHeaders, jsonHeaders } from './_shared/cors.js';
 
 // Netlify-backed custom domains. Instead of Cloudflare for SaaS (which
 // 522s when proxying to same-zone origins), we attach the customer's
 // www.<domain> to the existing Netlify site as a domain alias. Netlify
 // auto-provisions SSL and routes traffic to our edge function, which
 // resolves the Host to the right slug and proxies to R2.
-
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Content-Type': 'application/json',
-};
 
 const NETLIFY_API = 'https://api.netlify.com/api/v1';
 const NETLIFY_SITE_ID = process.env.NETLIFY_SITE_ID || 'b5123609-d632-43df-9ff1-db707714162b';
@@ -27,7 +21,10 @@ const DNS_RECORDS = [
 ];
 
 export const handler = async (event) => {
-  if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: CORS };
+  const cors = corsHeaders(event.headers);
+  const CORS = jsonHeaders(event.headers);
+
+  if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors };
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, headers: CORS, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
@@ -87,7 +84,7 @@ export const handler = async (event) => {
       throw new Error(`Netlify alias add failed: ${err}`);
     }
 
-    await admin.from('sites').update({
+    const { error: upErr } = await admin.from('sites').update({
       custom_domain: apex,
       custom_domain_status: 'pending_dns',
       custom_domain_connected_at: new Date().toISOString(),
@@ -96,6 +93,20 @@ export const handler = async (event) => {
       custom_hostname_apex_id: null,
       custom_hostname_www_id: null,
     }).eq('id', siteId);
+
+    // The DB-level UNIQUE(custom_domain) is the source of truth (Security
+    // Audit H9). The pre-check above closes the common case but loses to
+    // a TOCTOU race; here we translate the constraint violation into a
+    // clean 409 if a parallel writer beat us to it.
+    if (upErr) {
+      const code = upErr.code || '';
+      const msg  = (upErr.message || '').toLowerCase();
+      if (code === '23505' || msg.includes('duplicate') || msg.includes('unique')) {
+        return { statusCode: 409, headers: CORS, body: JSON.stringify({ error: 'Domain already connected to another site' }) };
+      }
+      console.error('connect-domain update error:', upErr);
+      return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: 'Could not save domain' }) };
+    }
 
     return {
       statusCode: 200,

@@ -3,7 +3,7 @@
 // Returns the list of open Zoom support slots within the booking horizon.
 // Public (no auth required) — there's nothing sensitive about availability,
 // and we want signed-out users to be able to see it from the help drawer
-// before they decide to engage.
+// before they decide to engage. Wide-open CORS by design.
 import { createClient } from '@supabase/supabase-js';
 import { listOpenSlots, SUPPORT_CONFIG } from './_lib/support-slots.js';
 

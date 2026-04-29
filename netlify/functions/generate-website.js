@@ -1,4 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { requireUser, supabaseAdmin } from './_shared/auth.js';
+import { checkAndRecordRateLimit } from './_shared/rateLimit.js';
+import { corsHeaders, jsonHeaders } from './_shared/cors.js';
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -9,8 +12,35 @@ Use the city name naturally throughout the copy for local SEO.
 Always respond with valid JSON only — no markdown code fences, no prose outside the JSON object.`;
 
 export const handler = async (event) => {
+  const cors = corsHeaders(event.headers);
+  const json = jsonHeaders(event.headers);
+
+  if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors };
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
+    return { statusCode: 405, headers: json, body: JSON.stringify({ error: 'Method not allowed' }) };
+  }
+
+  // Auth gate (Security Audit H4): this calls Anthropic with a paid API
+  // key. An unauthenticated endpoint is a free Claude proxy. Bind every
+  // generation to a signed-in user.
+  let user;
+  try {
+    user = await requireUser(event);
+  } catch (err) {
+    return { statusCode: err.status || 500, headers: json, body: JSON.stringify({ error: err.message }) };
+  }
+
+  // Per-user daily cap. Keep generous to not get in the way of legit
+  // wizard re-runs while making batch abuse uneconomical.
+  const { limited } = await checkAndRecordRateLimit({
+    db: supabaseAdmin(),
+    ip: user.id,            // bucket by user id, not IP
+    kind: 'generate-website',
+    windowMs: 24 * 60 * 60 * 1000,
+    limit: 30,
+  });
+  if (limited) {
+    return { statusCode: 429, headers: json, body: JSON.stringify({ error: 'Daily generation limit reached. Try again in 24h.' }) };
   }
 
   try {
@@ -18,7 +48,7 @@ export const handler = async (event) => {
     const { businessInfo, templateMeta } = body;
 
     if (!businessInfo?.businessName || !businessInfo?.city) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'Missing required business info' }) };
+      return { statusCode: 400, headers: json, body: JSON.stringify({ error: 'Missing required business info' }) };
     }
 
     const servicesText = Array.isArray(businessInfo.services)
@@ -130,7 +160,7 @@ Return ONLY this JSON structure (no markdown, no explanation):
 
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: json,
       body: JSON.stringify({ success: true, copy: parsed }),
     };
   } catch (error) {
@@ -138,7 +168,7 @@ Return ONLY this JSON structure (no markdown, no explanation):
     console.error(`[generate-website] FAILED for "${bizName}":`, error?.message || error);
     return {
       statusCode: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: json,
       body: JSON.stringify({ error: error.message || String(error) }),
     };
   }
