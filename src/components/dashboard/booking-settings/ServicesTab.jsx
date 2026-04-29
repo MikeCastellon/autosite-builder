@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { saveSchedulerConfig } from '../../../lib/schedulerConfig.js';
 import { useAlert } from '../../ui/AlertProvider.jsx';
+import { formatPrice } from '../../../lib/formatPrice.js';
 
 function newService() {
   const id = 'svc_' + (crypto.randomUUID ? crypto.randomUUID().replace(/-/g, '').slice(0, 12) : Math.random().toString(36).slice(2, 14));
@@ -85,7 +86,19 @@ export default function ServicesTab({ siteId, config, onSaved }) {
                   </td>
                   <td className="px-4 py-3">
                     {editing
-                      ? <input value={s.price || ''} onChange={(e) => patch(s.id, { price: e.target.value })} className="w-20 border border-gray-200 rounded px-2 py-1 text-sm" placeholder="$149" />
+                      ? <input
+                          value={s.price || ''}
+                          onChange={(e) => patch(s.id, { price: e.target.value })}
+                          onBlur={(e) => {
+                            // Auto-prepend "$" when the user typed a bare
+                            // number ("149" → "$149"). formatPrice keeps
+                            // text values like "Free" intact.
+                            const formatted = formatPrice(e.target.value);
+                            if (formatted !== e.target.value) patch(s.id, { price: formatted });
+                          }}
+                          className="w-20 border border-gray-200 rounded px-2 py-1 text-sm"
+                          placeholder="$149"
+                        />
                       : <span className="text-gray-700">{s.price || '—'}</span>}
                   </td>
                   <td className="px-4 py-3 text-right">

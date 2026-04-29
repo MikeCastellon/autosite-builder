@@ -57,7 +57,7 @@ export const COMMON_FIELDS = [
   { key: 'address',         label: 'Street Address',       type: 'text',     required: false, placeholder: '123 Main St (optional)' },
   { key: 'tagline',         label: 'Your Tagline or Vibe', type: 'text',     required: false, placeholder: 'e.g. Where Every Detail Matters' },
   { key: 'yearsInBusiness', label: 'Years in Business',    type: 'number',   required: false, placeholder: 'e.g. 8' },
-  { key: 'hours',           label: 'Business Hours',       type: 'text',     required: false, placeholder: 'e.g. Mon–Sat 8am–6pm' },
+  { key: 'hours',           label: 'Business Hours',       type: 'hours',    required: false },
   { key: 'instagram',       label: 'Instagram Handle',     type: 'text',     required: false, placeholder: '@yourbusiness' },
   { key: 'facebook',        label: 'Facebook Page URL',    type: 'text',     required: false, placeholder: 'facebook.com/yourbusiness' },
   { key: 'tiktok',          label: 'TikTok Handle',        type: 'text',     required: false, placeholder: '@yourbusiness' },

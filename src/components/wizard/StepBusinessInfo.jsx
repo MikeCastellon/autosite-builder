@@ -3,8 +3,57 @@ import { COMMON_FIELDS, COMMON_EXTRA_FIELDS, TYPE_SPECIFIC_FIELDS, BUSINESS_TYPE
 import { DEMO_BUSINESS_INFO } from '../../data/demoData.js';
 import { useAuth } from '../../lib/AuthContext.jsx';
 import { supabase } from '../../lib/supabase.js';
+import { formatPrice } from '../../lib/formatPrice.js';
 
 const SOCIALFEEDS_URL = import.meta.env.VITE_SOCIALFEEDS_URL || 'https://social-feeds-app.netlify.app';
+
+// Per-day business hours editor uses this canonical day order.
+const HOURS_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+// Best-effort migration from the previous free-text "Mon-Fri 8am-6pm" /
+// `{ "Mon-Fri": "8am-6pm" }` formats into a per-day object so the new UI can
+// render existing data without forcing the user to retype. Empty string =
+// closed.
+function expandHoursToDays(hoursMaybeObj) {
+  const result = Object.fromEntries(HOURS_DAYS.map((d) => [d, '']));
+  if (!hoursMaybeObj) return result;
+
+  const setRange = (startLabel, endLabel, time) => {
+    const norm = (s) => String(s || '').toLowerCase().slice(0, 3);
+    const startIdx = HOURS_DAYS.findIndex((d) => d.toLowerCase().startsWith(norm(startLabel)));
+    const endIdx = HOURS_DAYS.findIndex((d) => d.toLowerCase().startsWith(norm(endLabel)));
+    if (startIdx >= 0 && endIdx >= 0 && startIdx <= endIdx) {
+      for (let i = startIdx; i <= endIdx; i++) result[HOURS_DAYS[i]] = time;
+    }
+  };
+  const setSingleDay = (label, time) => {
+    const norm = String(label || '').toLowerCase().slice(0, 3);
+    const idx = HOURS_DAYS.findIndex((d) => d.toLowerCase().startsWith(norm));
+    if (idx >= 0) result[HOURS_DAYS[idx]] = time;
+  };
+  const applyDayPart = (dayPart, timePart) => {
+    const range = String(dayPart).match(/^([A-Za-z]+)\s*[-–]\s*([A-Za-z]+)$/);
+    if (range) setRange(range[1], range[2], timePart);
+    else setSingleDay(dayPart, timePart);
+  };
+
+  if (typeof hoursMaybeObj === 'object' && !Array.isArray(hoursMaybeObj)) {
+    for (const [k, v] of Object.entries(hoursMaybeObj)) {
+      if (HOURS_DAYS.includes(k)) result[k] = v ?? '';
+      else applyDayPart(k, v ?? '');
+    }
+    return result;
+  }
+  if (typeof hoursMaybeObj === 'string') {
+    const parts = hoursMaybeObj.split(/[·;|]+/).map((s) => s.trim()).filter(Boolean);
+    for (const part of parts) {
+      const m = part.match(/^(.+?)\s+(.+)$/);
+      if (m) applyDayPart(m[1].trim(), m[2].trim());
+    }
+    return result;
+  }
+  return result;
+}
 
 export default function StepBusinessInfo({ businessType, initialValues, onSubmit, submitLabel = 'Choose a Template' }) {
   const { session } = useAuth();
@@ -345,7 +394,9 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
 
                 const addPackage = () => {
                   if (!draft.name.trim()) return;
-                  handleChange(field.key, [...pkgs, { name: draft.name.trim(), price: draft.price.trim(), description: draft.description.trim() }]);
+                  // formatPrice on save catches the case where the user pressed
+                  // Enter without blurring — bare "120" still becomes "$120".
+                  handleChange(field.key, [...pkgs, { name: draft.name.trim(), price: formatPrice(draft.price.trim()), description: draft.description.trim() }]);
                   setPackageDrafts((prev) => ({ ...prev, [field.key]: { name: '', price: '', description: '' } }));
                 };
 
@@ -365,7 +416,7 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
                             <div className="min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span className="text-[13px] font-semibold text-[#1a1a1a]">{pkg.name}</span>
-                                {pkg.price && <span className="text-[13px] font-bold text-[#cc0000]">{pkg.price}</span>}
+                                {pkg.price && <span className="text-[13px] font-bold text-[#cc0000]">{formatPrice(pkg.price)}</span>}
                               </div>
                               {pkg.description && <p className="text-[12px] text-[#888] mt-0.5 leading-snug">{pkg.description}</p>}
                             </div>
@@ -417,6 +468,13 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
                           type="text"
                           value={draft.price}
                           onChange={(e) => updateDraft('price', e.target.value)}
+                          onBlur={(e) => {
+                            // Auto-prepend "$" when the user typed a bare
+                            // number ("120" → "$120"). formatPrice keeps
+                            // text values like "Free" / "from 99" intact.
+                            const formatted = formatPrice(e.target.value);
+                            if (formatted !== e.target.value) updateDraft('price', formatted);
+                          }}
                           onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addPackage())}
                           placeholder="Price (e.g. $299)"
                           className="col-span-1 bg-white border border-black/[0.12] rounded-lg px-3 py-2 text-[13px] text-[#1a1a1a] placeholder-[#aaa] focus:outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000] transition"
@@ -464,6 +522,60 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
                   className={`${inputBase} ${errors[field.key] ? 'border-[#cc0000] ring-1 ring-[#cc0000]/30' : 'border-black/[0.12]'}`}
                 />
               )}
+
+              {field.type === 'hours' && (() => {
+                const hoursObj = expandHoursToDays(values[field.key]);
+                const setDay = (day, value) => handleChange(field.key, { ...hoursObj, [day]: value });
+                const toggleClosed = (day) => setDay(day, hoursObj[day] === '' ? '9am-5pm' : '');
+                const copyToAll = (sourceDay) => {
+                  const value = hoursObj[sourceDay] || '';
+                  handleChange(field.key, Object.fromEntries(HOURS_DAYS.map((d) => [d, value])));
+                };
+                const firstFilled = HOURS_DAYS.find((d) => hoursObj[d]);
+                return (
+                  <div className="space-y-1.5">
+                    {HOURS_DAYS.map((day) => {
+                      const value = hoursObj[day] ?? '';
+                      const isClosed = value === '';
+                      return (
+                        <div key={day} className="flex items-center gap-2">
+                          <span className="w-12 shrink-0 text-[12px] font-semibold text-[#1a1a1a]">{day}</span>
+                          <input
+                            type="text"
+                            value={value}
+                            onChange={(e) => setDay(day, e.target.value)}
+                            placeholder={isClosed ? 'Closed' : 'e.g. 8am-6pm'}
+                            disabled={isClosed}
+                            className="flex-1 bg-white border border-black/[0.12] rounded-lg px-3 py-1.5 text-[13px] text-[#1a1a1a] placeholder-[#aaa] focus:outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000] transition disabled:bg-[#f6f5f3] disabled:text-[#aaa]"
+                          />
+                          <label className="flex items-center gap-1 text-[11px] text-[#888] cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              checked={isClosed}
+                              onChange={() => toggleClosed(day)}
+                              className="accent-[#cc0000]"
+                            />
+                            Closed
+                          </label>
+                          {firstFilled === day && value && (
+                            <button
+                              type="button"
+                              onClick={() => copyToAll(day)}
+                              className="shrink-0 text-[11px] font-semibold text-[#cc0000] hover:underline"
+                              title="Copy this time to every day"
+                            >
+                              Copy to all
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                    <p className="text-[11px] text-[#888] mt-1">
+                      Format flexibly — "8am-6pm", "9-5", "By appointment", etc. Uncheck "Closed" to enter hours.
+                    </p>
+                  </div>
+                );
+              })()}
 
               {errors[field.key] && (
                 <p className="text-[#cc0000] text-xs mt-1">{errors[field.key]}</p>
