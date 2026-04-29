@@ -71,15 +71,6 @@ export default function AppHeader({
         </nav>
 
         <div className="hidden md:flex items-center gap-3">
-          {isConnected && onCharge && (
-            <button
-              onClick={onCharge}
-              aria-label="Charge a customer"
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#cc0000] hover:bg-[#a80000] text-white text-[13px] font-semibold transition-colors"
-            >
-              Charge $
-            </button>
-          )}
           <NeedAssistanceButton />
           {userEmail && (
             <div className="relative">
@@ -150,14 +141,6 @@ export default function AppHeader({
             </div>
           )}
           <nav className="flex flex-col gap-1">
-            {isConnected && onCharge && (
-              <button
-                onClick={() => { setMobileOpen(false); onCharge(); }}
-                className="w-full text-left px-3 py-2.5 rounded-lg text-[14px] font-semibold text-white bg-[#cc0000] hover:bg-[#a80000] transition-colors"
-              >
-                Charge $
-              </button>
-            )}
             <div className="px-1 pb-1">
               <NeedAssistanceButton />
             </div>

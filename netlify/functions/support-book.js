@@ -136,17 +136,20 @@ export const handler = async (event) => {
     return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: 'Could not save booking' }) };
   }
 
-  // Fire emails — don't block the response if email fails. The booking is
-  // already saved; user gets the join URL inline below as a backup.
-  Promise.allSettled([
+  // Send emails BEFORE returning. Netlify functions terminate when the
+  // handler returns, so an unawaited promise here gets killed mid-flight
+  // and the emails never actually go out. Use allSettled so a single
+  // bounce (e.g. host's address rejecting) doesn't block the customer's
+  // confirmation. The booking is already saved either way — the user
+  // also sees the join URL inline below as a fallback.
+  const emailResults = await Promise.allSettled([
     supportBookingToCustomer({ booking: insertRows }),
     supportBookingToHost({ booking: insertRows, hostEmail: SUPPORT_HOST_EMAIL }),
-  ]).then((results) => {
-    results.forEach((r, i) => {
-      if (r.status === 'rejected') {
-        console.error(`[support-book] email ${i} failed:`, r.reason?.message || r.reason);
-      }
-    });
+  ]);
+  emailResults.forEach((r, i) => {
+    if (r.status === 'rejected') {
+      console.error(`[support-book] email ${i} failed:`, r.reason?.message || r.reason);
+    }
   });
 
   return {
