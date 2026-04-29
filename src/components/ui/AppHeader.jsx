@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { canSeeBookingsNav } from '../../lib/subscriptionGating.js';
+import NeedAssistanceButton from './NeedAssistanceButton.jsx';
 
 const ACG_LOGO = 'https://www.autocaregenius.com/cdn/shop/files/v11_1.svg?v=1760731533&width=200';
 
@@ -79,6 +80,7 @@ export default function AppHeader({
               Charge $
             </button>
           )}
+          <NeedAssistanceButton />
           {userEmail && (
             <div className="relative">
               <button
@@ -156,6 +158,9 @@ export default function AppHeader({
                 Charge $
               </button>
             )}
+            <div className="px-1 pb-1">
+              <NeedAssistanceButton />
+            </div>
             {navItems.map((item) => (
               <button
                 key={item.id}

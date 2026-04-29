@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { ARTICLES } from './articles.js';
 import { formatInline } from './formatInline.jsx';
 import { isEffectiveSchedulerActive } from '../../lib/subscriptionGating.js';
-import SupportBlock from './SupportBlock.jsx';
 
 function Callout({ callout }) {
   if (!callout) return null;
@@ -84,7 +83,6 @@ function ArticleList({ articles, query, onQueryChange, onSelect }) {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <SupportBlock />
       <div className="px-4 pt-4 pb-2">
         <input
           type="search"
