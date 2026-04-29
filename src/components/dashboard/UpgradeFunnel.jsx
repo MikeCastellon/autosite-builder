@@ -98,43 +98,6 @@ function BookingMockup() {
   );
 }
 
-function ReviewsMockup() {
-  const reviews = [
-    { name: 'Carlos M.', stars: 5, text: 'Fastest detail in town. My Tesla looks brand new.' },
-    { name: 'Jasmine R.', stars: 5, text: 'Booked online in 30 seconds. They came to my house.' },
-    { name: 'Derek T.',   stars: 5, text: 'Best ceramic coat I\'ve ever had. Worth every penny.' },
-  ];
-  return (
-    <BrowserChrome url="yourshop.com">
-      <div className="p-5 bg-white">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <span className="text-[16px] font-bold tracking-tight">
-              <span style={{ color: '#4285F4' }}>G</span><span style={{ color: '#EA4335' }}>o</span><span style={{ color: '#FBBC05' }}>o</span><span style={{ color: '#4285F4' }}>g</span><span style={{ color: '#34A853' }}>l</span><span style={{ color: '#EA4335' }}>e</span> Reviews
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-[14px] font-bold text-[#1a1a1a]">5.0</span>
-            <span className="text-[#fbbc05] text-[12px]">★★★★★</span>
-            <span className="text-[10px] text-[#888]">(178)</span>
-          </div>
-        </div>
-        <div className="space-y-2">
-          {reviews.map((r) => (
-            <div key={r.name} className="border border-black/[0.06] rounded-lg p-2.5">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[11px] font-semibold text-[#1a1a1a]">{r.name}</span>
-                <span className="text-[#fbbc05] text-[10px]">{'★'.repeat(r.stars)}</span>
-              </div>
-              <p className="text-[10px] text-[#555] leading-snug">"{r.text}"</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </BrowserChrome>
-  );
-}
-
 function DomainMockup() {
   return (
     <div className="space-y-3">
@@ -243,30 +206,24 @@ const SECTIONS = [
     mockup: <BookingMockup />,
   },
   {
-    eyebrow: 'Live Google Reviews',
-    title: 'Real reviews, pulled from Google in real time.',
-    body: 'Connect your Google Business profile and the latest 5-star reviews appear on your site automatically. New reviews show up the moment customers leave them.',
-    mockup: <ReviewsMockup />,
-    reverse: true,
-  },
-  {
     eyebrow: 'Custom Domain',
     title: 'Use your own domain instead of a subdomain.',
     body: 'Connect mybusiness.com (or anything you own) so your site looks like a fully independent business — not a free subdomain. We handle the SSL automatically.',
     mockup: <DomainMockup />,
+    reverse: true,
   },
   {
     eyebrow: 'Priority Live Chat',
     title: 'Direct line to our team. Answers in minutes.',
     body: 'Hit a snag? Skip the support queue. Pro customers get a private chat with our team — typical reply time is under 5 minutes during business hours.',
     mockup: <ChatMockup />,
-    reverse: true,
   },
   {
     eyebrow: 'Remove Branding',
     title: 'Your site, 100% your brand.',
     body: 'Free sites show a small "Powered by Auto Care Genius" bar at the bottom. Pro removes it entirely so visitors only see your business — never ours.',
     mockup: <BrandingMockup />,
+    reverse: true,
   },
 ];
 

@@ -341,7 +341,6 @@ export default function LandingPage({ onSignIn, onSignUp }) {
                 ['Booking Deposits via Stripe', 'Lock in appointments with a deposit'],
                 ['Customer CRM', 'Track every lead and returning client'],
                 ['Stripe Merchant Payments', 'Get paid directly from your website'],
-                ['Live Google Reviews Widget', 'Auto-pulls your latest 5-star reviews'],
                 ['Custom Domain', 'Connect your own .com'],
                 ['Remove "Powered by" Branding', '100% your brand'],
                 ['Priority Live Chat Support', 'Replies in minutes'],
