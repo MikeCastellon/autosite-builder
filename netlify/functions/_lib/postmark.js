@@ -71,6 +71,14 @@ function renderEmailShell({ icon = '✉', eyebrow = 'Genius Websites', title, in
          <a href="${esc(cta.href)}" style="display:inline-block;background:linear-gradient(135deg,#cc0000,#8a0000);color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:14px 36px;border-radius:12px;letter-spacing:0.01em;">${esc(cta.label)}</a>
        </td></tr></table>`
     : '';
+  // Allow callers to skip the red icon square entirely by passing `icon: null`.
+  // Existing callers that don't pass anything still get the default ✉ envelope
+  // icon, so this is backward-compatible.
+  const iconHtml = icon
+    ? `<table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding-bottom:24px;">
+         <div style="width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#cc0000,#8a0000);display:inline-block;margin:0 auto;text-align:center;line-height:52px;font-size:24px;color:#ffffff;">${icon}</div>
+       </td></tr></table>`
+    : '';
   return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /></head>
 <body style="margin:0;padding:0;background:#fafafa;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#fafafa;padding:40px 16px;"><tr><td align="center">
@@ -80,9 +88,7 @@ function renderEmailShell({ icon = '✉', eyebrow = 'Genius Websites', title, in
     <p style="margin:0;font-size:11px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:#a1a1aa;">${esc(eyebrow)}</p>
   </td></tr>
   <tr><td style="background:#ffffff;border-radius:20px;border:1px solid #e4e4e7;padding:40px 36px;box-shadow:0 1px 3px rgba(0,0,0,0.04),0 8px 32px rgba(0,0,0,0.04);">
-    <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding-bottom:24px;">
-      <div style="width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#cc0000,#8a0000);display:inline-block;margin:0 auto;text-align:center;line-height:52px;font-size:24px;color:#ffffff;">${icon}</div>
-    </td></tr></table>
+    ${iconHtml}
     <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#18181b;text-align:center;letter-spacing:-0.02em;">${title}</h1>
     ${intro ? `<p style="margin:0 0 24px;font-size:14px;color:#71717a;text-align:center;line-height:1.6;">${intro}</p>` : ''}
     ${ctaHtml}
@@ -377,7 +383,7 @@ export async function supportBookingToCustomer({ booking }) {
     <p style="margin:0;font-size:12px;color:#a1a1aa;text-align:center;line-height:1.6;">A calendar invite is attached. Need to reschedule? Just reply to this email.</p>`;
 
   const html = renderEmailShell({
-    icon: '🎥',
+    icon: null,
     eyebrow: SUPPORT_HOST_NAME,
     title: 'Your support call is confirmed',
     intro: `We'll see you on Zoom at <strong style="color:#18181b;">${esc(formatWhen(b.scheduled_at))} ET</strong>.`,
@@ -430,7 +436,7 @@ export async function supportBookingToHost({ booking, hostEmail }) {
     </td></tr></table>`;
 
   const html = renderEmailShell({
-    icon: '📞',
+    icon: null,
     eyebrow: 'Support booking',
     title: `${esc(b.customer_name)} booked a Zoom`,
     intro: `<strong style="color:#18181b;">${esc(formatWhen(b.scheduled_at))} ET</strong> — calendar invite attached.`,
