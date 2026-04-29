@@ -49,10 +49,24 @@ export const handler = async (event) => {
     return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'target_user_id required' }) };
   }
 
+  // Two clients on purpose:
+  //   - supabaseAdmin: stays "logged in as nobody" (service role) the entire
+  //     request. Used for all DB writes + admin API calls.
+  //   - otpClient: a throwaway anon client used ONLY for verifyOtp. Calling
+  //     verifyOtp on the admin client causes its internal session state to
+  //     flip to the target user, which means subsequent .from() inserts run
+  //     under the target user's RLS — and they can't write to
+  //     impersonation_handoffs (no policy). Keeping verifyOtp on a separate
+  //     client preserves the admin client's clean service-role identity.
   const supabaseAdmin = createClient(
     process.env.VITE_SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY,
-    { auth: { persistSession: false } },
+    { auth: { persistSession: false, autoRefreshToken: false } },
+  );
+  const otpClient = createClient(
+    process.env.VITE_SUPABASE_URL,
+    process.env.VITE_SUPABASE_ANON_KEY,
+    { auth: { persistSession: false, autoRefreshToken: false } },
   );
 
   // Verify caller
@@ -93,10 +107,10 @@ export const handler = async (event) => {
     return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: linkErr?.message || 'Could not generate link' }) };
   }
 
-  // Step 2: server-side verifyOtp consumes the magic link and yields a real
-  // session. We use the SAME admin client because verifyOtp is called with
-  // the hashed_token directly — no email/OTP roundtrip.
-  const { data: sessionData, error: verifyErr } = await supabaseAdmin.auth.verifyOtp({
+  // Step 2: consume the magic link via the throwaway client. The resulting
+  // session lives only on otpClient, so supabaseAdmin keeps acting as
+  // service role for the insert below.
+  const { data: sessionData, error: verifyErr } = await otpClient.auth.verifyOtp({
     type: 'magiclink',
     token_hash: linkData.properties.hashed_token,
   });
@@ -104,8 +118,12 @@ export const handler = async (event) => {
     console.error('[admin-impersonate-session] verifyOtp failed', verifyErr);
     return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: verifyErr?.message || 'Could not mint session' }) };
   }
+  if (!sessionData.session.refresh_token) {
+    console.error('[admin-impersonate-session] no refresh_token in session');
+    return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: 'Session did not include refresh_token' }) };
+  }
 
-  // Step 3: store the tokens in a short-lived handoff record
+  // Step 3: store the tokens in a short-lived handoff record (service role).
   const expiresAt = new Date(Date.now() + 60_000).toISOString(); // 60s TTL
   const { data: handoff, error: insertErr } = await supabaseAdmin
     .from('impersonation_handoffs')
@@ -119,8 +137,8 @@ export const handler = async (event) => {
     .select('id')
     .single();
   if (insertErr || !handoff?.id) {
-    console.error('[admin-impersonate-session] handoff insert failed', insertErr);
-    return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: 'Could not save handoff' }) };
+    console.error('[admin-impersonate-session] handoff insert failed', JSON.stringify(insertErr));
+    return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: `Could not save handoff: ${insertErr?.message || 'unknown'}` }) };
   }
 
   // Audit
