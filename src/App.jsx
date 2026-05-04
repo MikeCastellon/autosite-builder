@@ -23,6 +23,7 @@ import ProfilePage from './components/profile/ProfilePage.jsx';
 import PaymentsConnectPage from './components/dashboard/payments-connect/PaymentsConnectPage.jsx';
 import ChargesPage from './components/dashboard/charges/ChargesPage.jsx';
 import HelpChrome from './components/help/HelpChrome.jsx';
+import SectionTogglesPreview from './components/preview/SectionTogglesPreview.jsx';
 import { saveSite } from './lib/saveSite.js';
 import { supabase } from './lib/supabase.js';
 
@@ -261,6 +262,12 @@ export default function App() {
   useEffect(() => {
     if (view !== 'charges') setChargesAutoOpen(false);
   }, [view]);
+
+  // Local design preview — three variants of the section-toggles panel.
+  // Mounted before auth so /dev/section-toggles works without a session.
+  if (typeof window !== 'undefined' && window.location.pathname === '/dev/section-toggles') {
+    return <SectionTogglesPreview />;
+  }
 
   // Domain Connect callback: close popup, notify opener
   if (typeof window !== 'undefined' && window.location.pathname === '/domain-connected') {
