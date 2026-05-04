@@ -4,11 +4,54 @@ import { DEMO_BUSINESS_INFO } from '../../data/demoData.js';
 import { useAuth } from '../../lib/AuthContext.jsx';
 import { supabase } from '../../lib/supabase.js';
 import { formatPrice } from '../../lib/formatPrice.js';
+import { formatPhone } from '../../lib/formatPhone.js';
 
 const SOCIALFEEDS_URL = import.meta.env.VITE_SOCIALFEEDS_URL || 'https://social-feeds-app.netlify.app';
 
 // Per-day business hours editor uses this canonical day order.
 const HOURS_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+// Bridge between native <input type="time"> ("HH:MM" 24h) and the friendly
+// "9am-5pm" string format that downstream templates already understand.
+function time24To12(t) {
+  if (!t) return '';
+  const [hStr, mStr] = String(t).split(':');
+  let h = parseInt(hStr, 10);
+  const m = parseInt(mStr || '0', 10);
+  if (!Number.isFinite(h)) return '';
+  const ampm = h >= 12 ? 'pm' : 'am';
+  h = h % 12 || 12;
+  return m === 0 ? `${h}${ampm}` : `${h}:${String(m).padStart(2, '0')}${ampm}`;
+}
+
+function time12To24(label) {
+  if (!label) return '';
+  const m = String(label).match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+  if (!m) return '';
+  let h = parseInt(m[1], 10);
+  const min = parseInt(m[2] || '0', 10);
+  const ap = (m[3] || '').toLowerCase();
+  if (!Number.isFinite(h)) return '';
+  if (ap === 'pm' && h < 12) h += 12;
+  if (ap === 'am' && h === 12) h = 0;
+  return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
+}
+
+// Splits "9am-5pm" / "9am - 5pm" / "9am" into 24h open/close strings the
+// time inputs can render. Tolerates partial values during edits.
+function parseRange(s) {
+  if (!s) return { open: '', close: '' };
+  const m = String(s).match(/^([^-–]*)\s*[-–]\s*(.*)$/);
+  if (!m) return { open: time12To24(s.trim()), close: '' };
+  return { open: time12To24(m[1].trim()), close: time12To24(m[2].trim()) };
+}
+
+function rangeToString(open24, close24) {
+  const o = time24To12(open24);
+  const c = time24To12(close24);
+  if (!o && !c) return '';
+  return `${o}-${c}`;
+}
 
 // Best-effort migration from the previous free-text "Mon-Fri 8am-6pm" /
 // `{ "Mon-Fri": "8am-6pm" }` formats into a per-day object so the new UI can
@@ -267,9 +310,15 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
                 </label>
                 <input
                   type={field.type}
+                  inputMode={field.type === 'tel' ? 'tel' : undefined}
+                  autoComplete={field.type === 'tel' ? 'tel-national' : undefined}
                   data-field-key={field.key}
-                  value={values[field.key] || ''}
-                  onChange={(e) => handleChange(field.key, e.target.value)}
+                  value={field.type === 'tel' ? formatPhone(values[field.key]) : (values[field.key] || '')}
+                  onChange={(e) => handleChange(
+                    field.key,
+                    field.type === 'tel' ? formatPhone(e.target.value) : e.target.value
+                  )}
+                  maxLength={field.type === 'tel' ? 14 : undefined}
                   placeholder={field.placeholder}
                   aria-invalid={!!errors[field.key]}
                   className={`${inputBase} ${errors[field.key] ? 'border-[#cc0000] ring-1 ring-[#cc0000]/30' : 'border-black/[0.12]'}`}
@@ -464,21 +513,25 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
                           placeholder="Name (e.g. Full Detail, Basic)"
                           className="col-span-1 bg-white border border-black/[0.12] rounded-lg px-3 py-2 text-[13px] text-[#1a1a1a] placeholder-[#aaa] focus:outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000] transition"
                         />
-                        <input
-                          type="text"
-                          value={draft.price}
-                          onChange={(e) => updateDraft('price', e.target.value)}
-                          onBlur={(e) => {
-                            // Auto-prepend "$" when the user typed a bare
-                            // number ("120" → "$120"). formatPrice keeps
-                            // text values like "Free" / "from 99" intact.
-                            const formatted = formatPrice(e.target.value);
-                            if (formatted !== e.target.value) updateDraft('price', formatted);
-                          }}
-                          onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addPackage())}
-                          placeholder="Price (e.g. $299)"
-                          className="col-span-1 bg-white border border-black/[0.12] rounded-lg px-3 py-2 text-[13px] text-[#1a1a1a] placeholder-[#aaa] focus:outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000] transition"
-                        />
+                        <div className="col-span-1 relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] font-medium text-[#888] pointer-events-none">$</span>
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            value={String(draft.price || '').replace(/^\$/, '')}
+                            onChange={(e) => updateDraft('price', e.target.value)}
+                            onBlur={(e) => {
+                              // Persist with "$" prefix so saved packages
+                              // and templates stay consistent. formatPrice
+                              // also keeps text values like "Free" intact.
+                              const formatted = formatPrice(e.target.value);
+                              if (formatted !== e.target.value) updateDraft('price', formatted);
+                            }}
+                            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addPackage())}
+                            placeholder="299 or Free"
+                            className="w-full bg-white border border-black/[0.12] rounded-lg pl-7 pr-3 py-2 text-[13px] text-[#1a1a1a] placeholder-[#aaa] focus:outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000] transition"
+                          />
+                        </div>
                       </div>
                       <input
                         type="text"
@@ -514,9 +567,15 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
               {(field.type === 'text' || field.type === 'tel' || field.type === 'number') && (
                 <input
                   type={field.type}
+                  inputMode={field.type === 'tel' ? 'tel' : undefined}
+                  autoComplete={field.type === 'tel' ? 'tel-national' : undefined}
                   data-field-key={field.key}
-                  value={values[field.key] || ''}
-                  onChange={(e) => handleChange(field.key, e.target.value)}
+                  value={field.type === 'tel' ? formatPhone(values[field.key]) : (values[field.key] || '')}
+                  onChange={(e) => handleChange(
+                    field.key,
+                    field.type === 'tel' ? formatPhone(e.target.value) : e.target.value
+                  )}
+                  maxLength={field.type === 'tel' ? 14 : undefined}
                   placeholder={field.placeholder}
                   aria-invalid={!!errors[field.key]}
                   className={`${inputBase} ${errors[field.key] ? 'border-[#cc0000] ring-1 ring-[#cc0000]/30' : 'border-black/[0.12]'}`}
@@ -525,8 +584,10 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
 
               {field.type === 'hours' && (() => {
                 const hoursObj = expandHoursToDays(values[field.key]);
-                const setDay = (day, value) => handleChange(field.key, { ...hoursObj, [day]: value });
-                const toggleClosed = (day) => setDay(day, hoursObj[day] === '' ? '9am-5pm' : '');
+                const setRange = (day, open24, close24) =>
+                  handleChange(field.key, { ...hoursObj, [day]: rangeToString(open24, close24) });
+                const toggleClosed = (day) =>
+                  handleChange(field.key, { ...hoursObj, [day]: hoursObj[day] === '' ? '9am-5pm' : '' });
                 const copyToAll = (sourceDay) => {
                   const value = hoursObj[sourceDay] || '';
                   handleChange(field.key, Object.fromEntries(HOURS_DAYS.map((d) => [d, value])));
@@ -537,17 +598,31 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
                     {HOURS_DAYS.map((day) => {
                       const value = hoursObj[day] ?? '';
                       const isClosed = value === '';
+                      const { open, close } = parseRange(value);
                       return (
-                        <div key={day} className="flex items-center gap-2">
+                        <div key={day} className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
                           <span className="w-12 shrink-0 text-[12px] font-semibold text-[#1a1a1a]">{day}</span>
-                          <input
-                            type="text"
-                            value={value}
-                            onChange={(e) => setDay(day, e.target.value)}
-                            placeholder={isClosed ? 'Closed' : 'e.g. 8am-6pm'}
-                            disabled={isClosed}
-                            className="flex-1 bg-white border border-black/[0.12] rounded-lg px-3 py-1.5 text-[13px] text-[#1a1a1a] placeholder-[#aaa] focus:outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000] transition disabled:bg-[#f6f5f3] disabled:text-[#aaa]"
-                          />
+                          {isClosed ? (
+                            <span className="flex-1 text-[12px] text-[#aaa] italic px-3 py-1.5">Closed</span>
+                          ) : (
+                            <div className="flex-1 flex items-center gap-1.5 min-w-0">
+                              <input
+                                type="time"
+                                value={open}
+                                onChange={(e) => setRange(day, e.target.value, close)}
+                                aria-label={`${day} open time`}
+                                className="bg-white border border-black/[0.12] rounded-lg px-2 py-1.5 text-[13px] text-[#1a1a1a] focus:outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000] transition"
+                              />
+                              <span className="text-[11px] text-[#888]">to</span>
+                              <input
+                                type="time"
+                                value={close}
+                                onChange={(e) => setRange(day, open, e.target.value)}
+                                aria-label={`${day} close time`}
+                                className="bg-white border border-black/[0.12] rounded-lg px-2 py-1.5 text-[13px] text-[#1a1a1a] focus:outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000] transition"
+                              />
+                            </div>
+                          )}
                           <label className="flex items-center gap-1 text-[11px] text-[#888] cursor-pointer select-none">
                             <input
                               type="checkbox"
@@ -571,7 +646,7 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
                       );
                     })}
                     <p className="text-[11px] text-[#888] mt-1">
-                      Format flexibly — "8am-6pm", "9-5", "By appointment", etc. Uncheck "Closed" to enter hours.
+                      Pick open & close times for each day, or check "Closed".
                     </p>
                   </div>
                 );
