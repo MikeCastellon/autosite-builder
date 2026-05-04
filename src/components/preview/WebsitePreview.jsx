@@ -9,7 +9,7 @@ import { isEffectiveSchedulerActive } from '../../lib/subscriptionGating.js';
 
 const ACG_LOGO = 'https://www.autocaregenius.com/cdn/shop/files/v11_1.svg?v=1760731533&width=160';
 
-export default function WebsitePreview({ businessInfo, onBusinessInfoChange, generatedCopy, editedCopy, onEditedCopyChange, images, onImagesChange, templateId, templateMeta, customColors, onCustomColors, customFonts, onCustomFonts, onBack, backLabel, onExport, onStartOver, onSwitchTemplate, isDemoPreview, editingExistingSite, onPreviewDemo }) {
+export default function WebsitePreview({ businessInfo, onBusinessInfoChange, generatedCopy, editedCopy, onEditedCopyChange, images, onImagesChange, templateId, templateMeta, customColors, onCustomColors, customFonts, onCustomFonts, onBack, backLabel, onExport, onSaveDraft, onStartOver, onSwitchTemplate, isDemoPreview, editingExistingSite, onPreviewDemo }) {
   const { profile } = useAuth();
   const isPro = isEffectiveSchedulerActive(profile);
   const isAdmin = !!profile?.is_super_admin;
@@ -52,6 +52,7 @@ export default function WebsitePreview({ businessInfo, onBusinessInfoChange, gen
         onBack={onBack}
         backLabel={backLabel}
         onExport={isDemoPreview ? null : onExport}
+        onSaveDraft={isDemoPreview ? null : onSaveDraft}
         onStartOver={onStartOver}
         onEdit={() => setEditorOpen((o) => !o)}
         editorOpen={editorOpen}

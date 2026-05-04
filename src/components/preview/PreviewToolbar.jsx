@@ -1,4 +1,7 @@
-export default function PreviewToolbar({ viewMode, onViewMode, onBack, backLabel = 'Back to Templates', onExport, onEdit, editorOpen, isDemoPreview, onPreviewDemo }) {
+import { useState } from 'react';
+
+export default function PreviewToolbar({ viewMode, onViewMode, onBack, backLabel = 'Back to Templates', onExport, onSaveDraft, onEdit, editorOpen, isDemoPreview, onPreviewDemo }) {
+  const [savingDraft, setSavingDraft] = useState(false);
   return (
     <div className="fixed top-0 left-0 z-50 bg-white border-b border-gray-200 px-3 sm:px-5 h-13 flex items-center justify-between gap-2 sm:gap-4" style={{ height: 52, right: editorOpen ? 320 : 0, transition: 'right 0.2s ease' }}>
       {/* Left: back */}
@@ -63,6 +66,20 @@ export default function PreviewToolbar({ viewMode, onViewMode, onBack, backLabel
           >
             <span className="hidden sm:inline">Finalize Website</span>
             <span className="sm:hidden">Finalize</span>
+          </button>
+        )}
+        {!isDemoPreview && onSaveDraft && (
+          <button
+            onClick={async () => {
+              setSavingDraft(true);
+              try { await onSaveDraft(); } finally { setSavingDraft(false); }
+            }}
+            data-tour="save-draft-btn"
+            disabled={savingDraft}
+            className="bg-gray-900 hover:bg-gray-800 text-white text-[13px] font-semibold px-3 sm:px-4 py-2 rounded-lg transition-colors disabled:opacity-60 disabled:cursor-wait"
+          >
+            <span className="hidden sm:inline">{savingDraft ? 'Saving…' : 'Save Draft'}</span>
+            <span className="sm:hidden">{savingDraft ? 'Saving…' : 'Save'}</span>
           </button>
         )}
       </div>

@@ -586,6 +586,33 @@ export default function App() {
     setStep(5);
   };
 
+  // "Save Draft" from the editor toolbar (only shown when editing an
+  // existing site). Flushes the autoSave debounce so the latest edits land
+  // in Supabase before we leave the editor, then navigates back to the
+  // dashboard. Republishing happens via the dashboard's existing action.
+  const handleSaveDraft = async () => {
+    clearTimeout(saveTimerRef.current);
+    if (siteId && session?.user?.id) {
+      try {
+        await saveSite({
+          siteId,
+          userId: session.user.id,
+          businessInfo,
+          generatedCopy: editedCopy,
+          templateId: selectedTemplate,
+          images,
+          widgetConfigIds: selectedWidgetIds,
+          customColors,
+          customFonts,
+        });
+      } catch (err) {
+        console.error('Save draft failed:', err);
+        // Fall through — autoSave will retry on the next edit.
+      }
+    }
+    setView('dashboard');
+  };
+
   if (view === 'dashboard') {
     return (
       <>
@@ -665,7 +692,8 @@ export default function App() {
               : () => goTo(3)
         }
         backLabel={editingExistingSite ? 'Back to Sites' : 'Back to Templates'}
-        onExport={isDemoPreview ? null : () => goTo(6)}
+        onExport={isDemoPreview || editingExistingSite ? null : () => goTo(6)}
+        onSaveDraft={!isDemoPreview && editingExistingSite ? handleSaveDraft : null}
         onStartOver={() => { handleStartOver(); setView('dashboard'); }}
         onSwitchTemplate={(newTemplateId) => {
           setSelectedTemplate(newTemplateId);
