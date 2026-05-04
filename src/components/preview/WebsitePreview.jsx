@@ -9,16 +9,17 @@ import { isEffectiveSchedulerActive } from '../../lib/subscriptionGating.js';
 
 const ACG_LOGO = 'https://www.autocaregenius.com/cdn/shop/files/v11_1.svg?v=1760731533&width=160';
 
-export default function WebsitePreview({ businessInfo, onBusinessInfoChange, generatedCopy, editedCopy, onEditedCopyChange, images, onImagesChange, templateId, templateMeta, customColors, onCustomColors, customFonts, onCustomFonts, onBack, backLabel, onExport, onStartOver, onSwitchTemplate, isDemoPreview, editingExistingSite }) {
+export default function WebsitePreview({ businessInfo, onBusinessInfoChange, generatedCopy, editedCopy, onEditedCopyChange, images, onImagesChange, templateId, templateMeta, customColors, onCustomColors, customFonts, onCustomFonts, onBack, backLabel, onExport, onStartOver, onSwitchTemplate, isDemoPreview, editingExistingSite, onPreviewDemo }) {
   const { profile } = useAuth();
   const isPro = isEffectiveSchedulerActive(profile);
+  const isAdmin = !!profile?.is_super_admin;
   const normalizedInfo = useMemo(() => normalizeBusinessInfo(businessInfo), [businessInfo]);
   const [viewMode, setViewMode] = useState('desktop');
   const [editorOpen, setEditorOpen] = useState(false);
 
   useEffect(() => {
     if (editingExistingSite) {
-      try { localStorage.setItem('editor_tour_done_v2', '1'); } catch { /* ignore */ }
+      try { localStorage.setItem('editor_tour_done_v3', '1'); } catch { /* ignore */ }
     }
   }, [editingExistingSite]);
 
@@ -44,7 +45,7 @@ export default function WebsitePreview({ businessInfo, onBusinessInfoChange, gen
 
   return (
     <div className="min-h-screen bg-gray-900">
-      {!editingExistingSite && !isDemoPreview && <EditorTour />}
+      {!editingExistingSite && <EditorTour />}
       <PreviewToolbar
         viewMode={viewMode}
         onViewMode={setViewMode}
@@ -55,6 +56,7 @@ export default function WebsitePreview({ businessInfo, onBusinessInfoChange, gen
         onEdit={() => setEditorOpen((o) => !o)}
         editorOpen={editorOpen}
         isDemoPreview={isDemoPreview}
+        onPreviewDemo={isAdmin && !isDemoPreview ? onPreviewDemo : null}
       />
 
       <ContentEditor

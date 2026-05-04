@@ -24,7 +24,54 @@ const CUSTOM_PROMO_REPROMPT_MS = 30 * 24 * 60 * 60 * 1000;
 // Delay before the popup appears on a fresh dashboard mount.
 const CUSTOM_PROMO_DELAY_MS = 1500;
 
-export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEmail, profile, onOpenAdmin, onOpenBookings, onOpenCustomers, onOpenProfile, onOpenPaymentsConnect, onOpenCharges, onCharge, onOpenBookingSettings }) {
+// One-time "what's new" banner shown above the sites list. Bump the key
+// (e.g. `2026-08`) when the next news update ships so dismissed users see
+// the new one. Dismissal persists per-browser for the lifetime of this key.
+const NEWS_BANNER_KEY = 'gw.dashNews.2026-05.dismissed';
+
+function DashboardNewsBanner() {
+  const [dismissed, setDismissed] = useState(() => {
+    try { return localStorage.getItem(NEWS_BANNER_KEY) === '1'; } catch { return false; }
+  });
+  if (dismissed) return null;
+  const dismiss = () => {
+    try { localStorage.setItem(NEWS_BANNER_KEY, '1'); } catch { /* ignore */ }
+    setDismissed(true);
+  };
+  return (
+    <div className="relative bg-[#f4f4f5] border border-[#e4e4e7] rounded-2xl p-5 sm:p-6 mb-6">
+      <button
+        onClick={dismiss}
+        aria-label="Dismiss"
+        className="absolute top-3 right-3 w-7 h-7 rounded-full text-[#888] hover:text-[#1a1a1a] hover:bg-black/5 flex items-center justify-center transition-colors"
+      >
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+          <path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+      </button>
+      <p className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#cc0000] mb-2">What's New</p>
+      <h3 className="text-lg sm:text-xl font-black text-[#1a1a1a] mb-3 leading-tight pr-10">
+        Editor refresh + booking reminders
+      </h3>
+      <ul className="text-sm text-[#52525b] space-y-1.5 leading-snug">
+        <li className="flex gap-2">
+          <span className="text-[#cc0000] font-bold shrink-0">·</span>
+          <span><strong className="text-[#1a1a1a] font-semibold">Send a booking reminder in one tap</strong> — open any pending or confirmed booking and use the new Email or Text buttons. Texts open your phone's messages app prefilled, sent from your own number.</span>
+        </li>
+        <li className="flex gap-2">
+          <span className="text-[#cc0000] font-bold shrink-0">·</span>
+          <span><strong className="text-[#1a1a1a] font-semibold">Cleaner editor sidebar</strong> — sections are now grouped by Content, Design, and Settings with quick-jump icons. Easier to find what you're looking for.</span>
+        </li>
+        <li className="flex gap-2">
+          <span className="text-[#cc0000] font-bold shrink-0">·</span>
+          <span><strong className="text-[#1a1a1a] font-semibold">Per-day business hours editor</strong> — pick open and close times for each day. Phone numbers also auto-format as you type.</span>
+        </li>
+      </ul>
+    </div>
+  );
+}
+
+export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEmail, profile, onOpenAdmin, onOpenBookings, onOpenCustomers, onOpenProfile, onOpenPaymentsConnect, onOpenCharges, onCharge, onOpenBookingSettings, onPreviewDemo }) {
   const { toast, confirm: confirmDialog } = useAlert();
   const [sites, setSites] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -257,9 +304,21 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
           </div>
         )}
 
+        <DashboardNewsBanner />
+
         <div className="flex items-center justify-between mb-3 mt-8">
           <h2 className="text-3xl sm:text-4xl font-black text-[#1a1a1a] tracking-tight">Your Site</h2>
           <div className="flex items-center gap-2">
+            {isAdmin && onPreviewDemo && (
+              <button
+                type="button"
+                onClick={() => onPreviewDemo()}
+                title="Open the editor with stub data — testing & demoing only, admin-only"
+                className="text-xs font-semibold text-[#1a1a1a] bg-white border border-black/[0.12] hover:bg-black/5 px-4 py-2 rounded-lg transition-colors"
+              >
+                Preview Demo
+              </button>
+            )}
             {canCreateSite && sites.length > 0 && (
               <button
                 type="button"

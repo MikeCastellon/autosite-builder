@@ -4,7 +4,7 @@ import { supabase } from './supabase.js';
 const AuthContext = createContext(null);
 
 // localStorage cache for the user profile. Lets returning users see the full
-// header nav (Bookings, Customers, Charges, Charge $ button, etc.) on first
+// header nav (Bookings, Customers, Charges, Charge button, etc.) on first
 // paint instead of waiting for the profile fetch to resolve and watching
 // items pop in. Background refresh keeps it fresh.
 const PROFILE_CACHE_KEY = 'genius-profile-cache:v1';

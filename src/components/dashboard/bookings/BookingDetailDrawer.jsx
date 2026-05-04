@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import StatusPill from './StatusPill.jsx';
-import { updateBooking, saveOwnerNotes } from '../../../lib/bookings.js';
+import { updateBooking, saveOwnerNotes, sendBookingReminder, buildSmsReminderHref, defaultReminderMessage } from '../../../lib/bookings.js';
+import { supabase } from '../../../lib/supabase.js';
 
 function fmt(iso) {
   return new Date(iso).toLocaleString('en-US', {
@@ -31,8 +32,23 @@ export default function BookingDetailDrawer({ booking, onClose, onUpdated }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
   const [showDecline, setShowDecline] = useState(false);
+  const [site, setSite] = useState(null);
+  const [reminderState, setReminderState] = useState({ status: 'idle', error: null });
 
-  useEffect(() => { setB(booking); setNotes(booking?.owner_notes || ''); setShowDecline(false); setErr(null); }, [booking?.id]);
+  useEffect(() => { setB(booking); setNotes(booking?.owner_notes || ''); setShowDecline(false); setErr(null); setReminderState({ status: 'idle', error: null }); }, [booking?.id]);
+
+  // Pull the site so reminder copy + email footer can use the business name.
+  useEffect(() => {
+    if (!booking?.site_id) { setSite(null); return; }
+    let cancelled = false;
+    supabase
+      .from('sites')
+      .select('id, business_info, slug, published_url')
+      .eq('id', booking.site_id)
+      .maybeSingle()
+      .then(({ data }) => { if (!cancelled) setSite(data || null); });
+    return () => { cancelled = true; };
+  }, [booking?.site_id]);
 
   if (!b) return null;
 
@@ -56,6 +72,23 @@ export default function BookingDetailDrawer({ booking, onClose, onUpdated }) {
     try { const updated = await saveOwnerNotes(b.id, notes); setB(updated); onUpdated && onUpdated(updated); }
     catch (e) { setErr(e.message); }
   }
+
+  async function sendEmailReminder() {
+    setReminderState({ status: 'sending', error: null });
+    try {
+      await sendBookingReminder({ bookingId: b.id });
+      setReminderState({ status: 'sent', error: null });
+    } catch (e) {
+      setReminderState({ status: 'idle', error: e.message });
+    }
+  }
+
+  const smsHref = buildSmsReminderHref({
+    phone: b.customer_phone,
+    message: defaultReminderMessage(b, site),
+  });
+  const canEmail = !!b.customer_email;
+  const remindable = ['pending', 'confirmed'].includes(b.status);
 
   const actions = ACTIONS_FOR[b.status] || [];
 
@@ -123,6 +156,47 @@ export default function BookingDetailDrawer({ booking, onClose, onUpdated }) {
                 </div>
               )}
             </dl>
+          </div>
+        )}
+
+        {remindable && (
+          <div className="border-t border-black/[0.07] pt-4 mt-4 mb-6">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-[#888] mb-2">Send reminder</h3>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={sendEmailReminder}
+                disabled={!canEmail || reminderState.status === 'sending'}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold border border-gray-300 bg-white hover:bg-gray-50 text-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                  <path d="M2 3h10a1 1 0 011 1v6a1 1 0 01-1 1H2a1 1 0 01-1-1V4a1 1 0 011-1zm0 1l5 4 5-4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                {reminderState.status === 'sending' ? 'Sending…' : reminderState.status === 'sent' ? 'Email sent ✓' : 'Email reminder'}
+              </button>
+              {smsHref ? (
+                <a
+                  href={smsHref}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold border border-gray-300 bg-white hover:bg-gray-50 text-gray-800 transition-colors"
+                  title="Opens your phone's text app pre-filled — sends from your own number"
+                >
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                    <path d="M3 2h8a1 1 0 011 1v6a1 1 0 01-1 1H6l-3 2.5V3a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  Text reminder
+                </a>
+              ) : (
+                <button type="button" disabled className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold border border-gray-200 bg-white text-gray-400 cursor-not-allowed">
+                  Text reminder (no phone on file)
+                </button>
+              )}
+            </div>
+            <p className="text-[11px] text-gray-400 mt-2 leading-snug">
+              Email goes through Postmark using your business info. Text opens your phone's messaging app pre-filled — you send it from your own number, no extra charge.
+            </p>
+            {reminderState.error && (
+              <p className="text-xs text-red-600 mt-2">{reminderState.error}</p>
+            )}
           </div>
         )}
 

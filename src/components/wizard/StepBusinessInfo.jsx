@@ -4,55 +4,81 @@ import { DEMO_BUSINESS_INFO } from '../../data/demoData.js';
 import { useAuth } from '../../lib/AuthContext.jsx';
 import { supabase } from '../../lib/supabase.js';
 import { formatPrice } from '../../lib/formatPrice.js';
+import { formatPhone } from '../../lib/formatPhone.js';
+import { HOURS_DAYS, parseRange, rangeToString, expandHoursToDays } from '../../lib/businessHours.js';
 
 const SOCIALFEEDS_URL = import.meta.env.VITE_SOCIALFEEDS_URL || 'https://social-feeds-app.netlify.app';
 
-// Per-day business hours editor uses this canonical day order.
-const HOURS_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
-// Best-effort migration from the previous free-text "Mon-Fri 8am-6pm" /
-// `{ "Mon-Fri": "8am-6pm" }` formats into a per-day object so the new UI can
-// render existing data without forcing the user to retype. Empty string =
-// closed.
-function expandHoursToDays(hoursMaybeObj) {
-  const result = Object.fromEntries(HOURS_DAYS.map((d) => [d, '']));
-  if (!hoursMaybeObj) return result;
-
-  const setRange = (startLabel, endLabel, time) => {
-    const norm = (s) => String(s || '').toLowerCase().slice(0, 3);
-    const startIdx = HOURS_DAYS.findIndex((d) => d.toLowerCase().startsWith(norm(startLabel)));
-    const endIdx = HOURS_DAYS.findIndex((d) => d.toLowerCase().startsWith(norm(endLabel)));
-    if (startIdx >= 0 && endIdx >= 0 && startIdx <= endIdx) {
-      for (let i = startIdx; i <= endIdx; i++) result[HOURS_DAYS[i]] = time;
-    }
+// Per-day hours editor used in both COMMON_FIELDS and TYPE_SPECIFIC_FIELDS
+// renderers. Reads/writes the canonical { Mon: '9am-5pm', ..., Sun: '' } shape.
+function WizardHoursEditor({ value, onChange }) {
+  const hoursObj = expandHoursToDays(value);
+  const setRange = (day, open24, close24) =>
+    onChange({ ...hoursObj, [day]: rangeToString(open24, close24) });
+  const toggleClosed = (day) =>
+    onChange({ ...hoursObj, [day]: hoursObj[day] === '' ? '9am-5pm' : '' });
+  const copyToAll = (sourceDay) => {
+    const v = hoursObj[sourceDay] || '';
+    onChange(Object.fromEntries(HOURS_DAYS.map((d) => [d, v])));
   };
-  const setSingleDay = (label, time) => {
-    const norm = String(label || '').toLowerCase().slice(0, 3);
-    const idx = HOURS_DAYS.findIndex((d) => d.toLowerCase().startsWith(norm));
-    if (idx >= 0) result[HOURS_DAYS[idx]] = time;
-  };
-  const applyDayPart = (dayPart, timePart) => {
-    const range = String(dayPart).match(/^([A-Za-z]+)\s*[-–]\s*([A-Za-z]+)$/);
-    if (range) setRange(range[1], range[2], timePart);
-    else setSingleDay(dayPart, timePart);
-  };
-
-  if (typeof hoursMaybeObj === 'object' && !Array.isArray(hoursMaybeObj)) {
-    for (const [k, v] of Object.entries(hoursMaybeObj)) {
-      if (HOURS_DAYS.includes(k)) result[k] = v ?? '';
-      else applyDayPart(k, v ?? '');
-    }
-    return result;
-  }
-  if (typeof hoursMaybeObj === 'string') {
-    const parts = hoursMaybeObj.split(/[·;|]+/).map((s) => s.trim()).filter(Boolean);
-    for (const part of parts) {
-      const m = part.match(/^(.+?)\s+(.+)$/);
-      if (m) applyDayPart(m[1].trim(), m[2].trim());
-    }
-    return result;
-  }
-  return result;
+  const firstFilled = HOURS_DAYS.find((d) => hoursObj[d]);
+  return (
+    <div className="space-y-1.5">
+      {HOURS_DAYS.map((day) => {
+        const dayValue = hoursObj[day] ?? '';
+        const isClosed = dayValue === '';
+        const { open, close } = parseRange(dayValue);
+        return (
+          <div key={day} className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+            <span className="w-12 shrink-0 text-[12px] font-semibold text-[#1a1a1a]">{day}</span>
+            {isClosed ? (
+              <span className="flex-1 text-[12px] text-[#aaa] italic px-3 py-1.5">Closed</span>
+            ) : (
+              <div className="flex-1 flex items-center gap-1.5 min-w-0">
+                <input
+                  type="time"
+                  value={open}
+                  onChange={(e) => setRange(day, e.target.value, close)}
+                  aria-label={`${day} open time`}
+                  className="bg-white border border-black/[0.12] rounded-lg px-2 py-1.5 text-[13px] text-[#1a1a1a] focus:outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000] transition"
+                />
+                <span className="text-[11px] text-[#888]">to</span>
+                <input
+                  type="time"
+                  value={close}
+                  onChange={(e) => setRange(day, open, e.target.value)}
+                  aria-label={`${day} close time`}
+                  className="bg-white border border-black/[0.12] rounded-lg px-2 py-1.5 text-[13px] text-[#1a1a1a] focus:outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000] transition"
+                />
+              </div>
+            )}
+            <label className="flex items-center gap-1 text-[11px] text-[#888] cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={isClosed}
+                onChange={() => toggleClosed(day)}
+                className="accent-[#cc0000]"
+              />
+              Closed
+            </label>
+            {firstFilled === day && dayValue && (
+              <button
+                type="button"
+                onClick={() => copyToAll(day)}
+                className="shrink-0 text-[11px] font-semibold text-[#cc0000] hover:underline"
+                title="Copy this time to every day"
+              >
+                Copy to all
+              </button>
+            )}
+          </div>
+        );
+      })}
+      <p className="text-[11px] text-[#888] mt-1">
+        Pick open & close times for each day, or check "Closed".
+      </p>
+    </div>
+  );
 }
 
 export default function StepBusinessInfo({ businessType, initialValues, onSubmit, submitLabel = 'Choose a Template' }) {
@@ -260,20 +286,33 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
           <p className="text-[11px] font-semibold text-[#cc0000] uppercase tracking-[1.5px]">Basic Information</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {COMMON_FIELDS.map((field) => (
-              <div key={field.key} className={field.key === 'tagline' ? 'sm:col-span-2' : ''}>
+              <div key={field.key} className={field.key === 'tagline' || field.type === 'hours' ? 'sm:col-span-2' : ''}>
                 <label className="block text-[13px] font-medium text-[#1a1a1a] mb-1.5">
                   {field.label}
                   {field.required && <span className="text-[#cc0000] ml-1">*</span>}
                 </label>
-                <input
-                  type={field.type}
-                  data-field-key={field.key}
-                  value={values[field.key] || ''}
-                  onChange={(e) => handleChange(field.key, e.target.value)}
-                  placeholder={field.placeholder}
-                  aria-invalid={!!errors[field.key]}
-                  className={`${inputBase} ${errors[field.key] ? 'border-[#cc0000] ring-1 ring-[#cc0000]/30' : 'border-black/[0.12]'}`}
-                />
+                {field.type === 'hours' ? (
+                  <WizardHoursEditor
+                    value={values[field.key]}
+                    onChange={(v) => handleChange(field.key, v)}
+                  />
+                ) : (
+                  <input
+                    type={field.type}
+                    inputMode={field.type === 'tel' ? 'tel' : undefined}
+                    autoComplete={field.type === 'tel' ? 'tel-national' : undefined}
+                    data-field-key={field.key}
+                    value={field.type === 'tel' ? formatPhone(values[field.key]) : (values[field.key] || '')}
+                    onChange={(e) => handleChange(
+                      field.key,
+                      field.type === 'tel' ? formatPhone(e.target.value) : e.target.value
+                    )}
+                    maxLength={field.type === 'tel' ? 14 : undefined}
+                    placeholder={field.placeholder}
+                    aria-invalid={!!errors[field.key]}
+                    className={`${inputBase} ${errors[field.key] ? 'border-[#cc0000] ring-1 ring-[#cc0000]/30' : 'border-black/[0.12]'}`}
+                  />
+                )}
                 {errors[field.key] && (
                   <p className="text-[#cc0000] text-xs mt-1">{errors[field.key]}</p>
                 )}
@@ -464,21 +503,25 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
                           placeholder="Name (e.g. Full Detail, Basic)"
                           className="col-span-1 bg-white border border-black/[0.12] rounded-lg px-3 py-2 text-[13px] text-[#1a1a1a] placeholder-[#aaa] focus:outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000] transition"
                         />
-                        <input
-                          type="text"
-                          value={draft.price}
-                          onChange={(e) => updateDraft('price', e.target.value)}
-                          onBlur={(e) => {
-                            // Auto-prepend "$" when the user typed a bare
-                            // number ("120" → "$120"). formatPrice keeps
-                            // text values like "Free" / "from 99" intact.
-                            const formatted = formatPrice(e.target.value);
-                            if (formatted !== e.target.value) updateDraft('price', formatted);
-                          }}
-                          onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addPackage())}
-                          placeholder="Price (e.g. $299)"
-                          className="col-span-1 bg-white border border-black/[0.12] rounded-lg px-3 py-2 text-[13px] text-[#1a1a1a] placeholder-[#aaa] focus:outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000] transition"
-                        />
+                        <div className="col-span-1 relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] font-medium text-[#888] pointer-events-none">$</span>
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            value={String(draft.price || '').replace(/^\$/, '')}
+                            onChange={(e) => updateDraft('price', e.target.value)}
+                            onBlur={(e) => {
+                              // Persist with "$" prefix so saved packages
+                              // and templates stay consistent. formatPrice
+                              // also keeps text values like "Free" intact.
+                              const formatted = formatPrice(e.target.value);
+                              if (formatted !== e.target.value) updateDraft('price', formatted);
+                            }}
+                            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addPackage())}
+                            placeholder="299 or Free"
+                            className="w-full bg-white border border-black/[0.12] rounded-lg pl-7 pr-3 py-2 text-[13px] text-[#1a1a1a] placeholder-[#aaa] focus:outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000] transition"
+                          />
+                        </div>
                       </div>
                       <input
                         type="text"
@@ -514,68 +557,27 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
               {(field.type === 'text' || field.type === 'tel' || field.type === 'number') && (
                 <input
                   type={field.type}
+                  inputMode={field.type === 'tel' ? 'tel' : undefined}
+                  autoComplete={field.type === 'tel' ? 'tel-national' : undefined}
                   data-field-key={field.key}
-                  value={values[field.key] || ''}
-                  onChange={(e) => handleChange(field.key, e.target.value)}
+                  value={field.type === 'tel' ? formatPhone(values[field.key]) : (values[field.key] || '')}
+                  onChange={(e) => handleChange(
+                    field.key,
+                    field.type === 'tel' ? formatPhone(e.target.value) : e.target.value
+                  )}
+                  maxLength={field.type === 'tel' ? 14 : undefined}
                   placeholder={field.placeholder}
                   aria-invalid={!!errors[field.key]}
                   className={`${inputBase} ${errors[field.key] ? 'border-[#cc0000] ring-1 ring-[#cc0000]/30' : 'border-black/[0.12]'}`}
                 />
               )}
 
-              {field.type === 'hours' && (() => {
-                const hoursObj = expandHoursToDays(values[field.key]);
-                const setDay = (day, value) => handleChange(field.key, { ...hoursObj, [day]: value });
-                const toggleClosed = (day) => setDay(day, hoursObj[day] === '' ? '9am-5pm' : '');
-                const copyToAll = (sourceDay) => {
-                  const value = hoursObj[sourceDay] || '';
-                  handleChange(field.key, Object.fromEntries(HOURS_DAYS.map((d) => [d, value])));
-                };
-                const firstFilled = HOURS_DAYS.find((d) => hoursObj[d]);
-                return (
-                  <div className="space-y-1.5">
-                    {HOURS_DAYS.map((day) => {
-                      const value = hoursObj[day] ?? '';
-                      const isClosed = value === '';
-                      return (
-                        <div key={day} className="flex items-center gap-2">
-                          <span className="w-12 shrink-0 text-[12px] font-semibold text-[#1a1a1a]">{day}</span>
-                          <input
-                            type="text"
-                            value={value}
-                            onChange={(e) => setDay(day, e.target.value)}
-                            placeholder={isClosed ? 'Closed' : 'e.g. 8am-6pm'}
-                            disabled={isClosed}
-                            className="flex-1 bg-white border border-black/[0.12] rounded-lg px-3 py-1.5 text-[13px] text-[#1a1a1a] placeholder-[#aaa] focus:outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000] transition disabled:bg-[#f6f5f3] disabled:text-[#aaa]"
-                          />
-                          <label className="flex items-center gap-1 text-[11px] text-[#888] cursor-pointer select-none">
-                            <input
-                              type="checkbox"
-                              checked={isClosed}
-                              onChange={() => toggleClosed(day)}
-                              className="accent-[#cc0000]"
-                            />
-                            Closed
-                          </label>
-                          {firstFilled === day && value && (
-                            <button
-                              type="button"
-                              onClick={() => copyToAll(day)}
-                              className="shrink-0 text-[11px] font-semibold text-[#cc0000] hover:underline"
-                              title="Copy this time to every day"
-                            >
-                              Copy to all
-                            </button>
-                          )}
-                        </div>
-                      );
-                    })}
-                    <p className="text-[11px] text-[#888] mt-1">
-                      Format flexibly — "8am-6pm", "9-5", "By appointment", etc. Uncheck "Closed" to enter hours.
-                    </p>
-                  </div>
-                );
-              })()}
+              {field.type === 'hours' && (
+                <WizardHoursEditor
+                  value={values[field.key]}
+                  onChange={(v) => handleChange(field.key, v)}
+                />
+              )}
 
               {errors[field.key] && (
                 <p className="text-[#cc0000] text-xs mt-1">{errors[field.key]}</p>

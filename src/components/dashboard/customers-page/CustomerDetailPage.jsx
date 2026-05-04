@@ -395,7 +395,7 @@ export default function CustomerDetailPage({
                     onClick={() => setShowChargeModal(true)}
                     className="px-4 py-2 rounded-lg text-[13px] font-semibold bg-[#cc0000] text-white hover:bg-[#a80000] transition-colors"
                   >
-                    Charge $
+                    Charge
                   </button>
                 )}
                 <button

@@ -262,6 +262,7 @@ export default function App() {
     if (view !== 'charges') setChargesAutoOpen(false);
   }, [view]);
 
+
   // Domain Connect callback: close popup, notify opener
   if (typeof window !== 'undefined' && window.location.pathname === '/domain-connected') {
     try {
@@ -568,6 +569,23 @@ export default function App() {
     );
   }
 
+  // Admin-only: jump straight into the editor with stub data, skipping the
+  // wizard. Useful for testing tour/editor changes and for showcasing the
+  // editor to prospects without spinning up real data. Resets
+  // editingExistingSite (so WebsitePreview's tour-suppression effect won't
+  // fire) and clears the tour flag (so the tour actually shows).
+  const handleDashboardDemo = (templateId = 'detailing_sporty') => {
+    setSelectedTemplate(templateId);
+    setGeneratedCopy(DEMO_GENERATED_COPY);
+    setEditedCopy(structuredClone(DEMO_GENERATED_COPY));
+    setImages({});
+    setIsDemoPreview(true);
+    setEditingExistingSite(false);
+    try { localStorage.removeItem('editor_tour_done_v3'); } catch { /* ignore */ }
+    setView('wizard');
+    setStep(5);
+  };
+
   if (view === 'dashboard') {
     return (
       <>
@@ -585,6 +603,7 @@ export default function App() {
           onOpenCharges={onOpenChargesProp}
           onCharge={onChargeProp}
           onOpenBookingSettings={(siteId) => { setSettingsSiteId(siteId); setView('booking-settings'); }}
+          onPreviewDemo={handleDashboardDemo}
         />
         <HelpChrome profile={profile} />
       </>
@@ -656,6 +675,7 @@ export default function App() {
         }}
         isDemoPreview={isDemoPreview}
         editingExistingSite={editingExistingSite}
+        onPreviewDemo={handleDashboardDemo}
       />
       <HelpChrome profile={profile} />
       </>

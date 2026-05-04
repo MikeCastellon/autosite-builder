@@ -11,13 +11,24 @@ const STEPS = [
   {
     selector: 'edit-btn',
     placement: 'below-right',
-    copy: 'Click Edit to open the customization panel. You can also hit Next to keep moving.',
+    autoClick: true,
+    copy: 'The Edit button at the top right opens the customization panel where you build your site. We opened it for you to start — hit Next to continue.',
+  },
+  {
+    selector: 'section-rail',
+    placement: 'left',
+    copy: 'This sidebar is your map of the site. Sections are grouped into Content (what visitors see), Design (look and feel), and Settings (business info and template). Click any icon to jump there.',
   },
   {
     selector: 'tab-visibility',
     placement: 'left',
     autoClick: true,
-    copy: "Toggle which sections appear on your site and drag to reorder. Hidden sections don't show up when you publish.",
+    copy: 'The Sections tab at the top of the sidebar is where you toggle which sections appear on your live site and drag to reorder them.',
+  },
+  {
+    selector: 'group-content',
+    placement: 'left',
+    copy: "Content — Hero, Services, About, Gallery, Reviews, and Contact — is everything your visitors actually read on the page. Let's walk through each one.",
   },
   {
     selector: 'tab-hero',
@@ -56,6 +67,11 @@ const STEPS = [
     copy: 'Configure your contact CTA — headline, subtext, primary button, and phone / secondary button link.',
   },
   {
+    selector: 'group-design',
+    placement: 'left',
+    copy: 'Design — Colors & Fonts and Footer — controls the look that flows across every section of your site.',
+  },
+  {
     selector: 'tab-colors',
     placement: 'left',
     autoClick: true,
@@ -66,6 +82,12 @@ const STEPS = [
     placement: 'left',
     autoClick: true,
     copy: 'Edit your footer tagline and choose which social icons (Instagram, Facebook, TikTok) appear.',
+  },
+  {
+    selector: 'group-settings',
+    placement: 'left',
+    optional: true,
+    copy: 'Settings — your business info and the underlying template — control everything outside the page itself.',
   },
   {
     selector: 'tab-business',
@@ -88,9 +110,9 @@ const STEPS = [
   },
 ];
 
-// Bumped from `editor_tour_done` to `_v2` so users who dismissed the old
-// broken react-joyride tour get a fresh run of the new one.
-const FLAG_KEY = 'editor_tour_done_v2';
+// Bumped to _v3 so existing users who dismissed the v2 tour get one fresh
+// run on the new rail-based editor layout.
+const FLAG_KEY = 'editor_tour_done_v3';
 const TOOLTIP_WIDTH = 300;
 const POLL_INTERVAL_MS = 150;
 const WATCHDOG_MS = 5000;
@@ -153,6 +175,7 @@ export default function EditorTour() {
 
     const selector = `[data-tour="${step.selector}"]`;
     let found = false;
+    const reMeasureTimers = [];
     const poll = setInterval(() => {
       const el = document.querySelector(selector);
       if (el) {
@@ -163,7 +186,18 @@ export default function EditorTour() {
         // Auto-open the tab so its content is visible while the tooltip
         // describes it. Synthetic clicks have isTrusted=false, which the
         // click-on-target listener uses to skip advancing.
-        if (step.autoClick) el.click();
+        if (step.autoClick) {
+          el.click();
+          // The toolbar reflows when the panel opens (CSS transition ~200ms),
+          // moving the highlighted button. Re-measure across the transition
+          // so the spotlight stays anchored.
+          for (const delay of [50, 150, 280]) {
+            reMeasureTimers.push(setTimeout(() => {
+              const el2 = document.querySelector(selector);
+              if (el2) setRect(el2.getBoundingClientRect());
+            }, delay));
+          }
+        }
       }
     }, POLL_INTERVAL_MS);
 
@@ -182,6 +216,7 @@ export default function EditorTour() {
     return () => {
       clearInterval(poll);
       clearTimeout(watchdog);
+      for (const t of reMeasureTimers) clearTimeout(t);
     };
   }, [phase, stepIdx, dismissed, step.selector, step.autoClick, step.optional]);
 

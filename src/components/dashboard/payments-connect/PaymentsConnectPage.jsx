@@ -160,7 +160,7 @@ export default function PaymentsConnectPage({
                       onClick={onOpenCharges}
                       className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#cc0000] hover:bg-[#a80000] text-white text-[13px] font-semibold transition-colors"
                     >
-                      Charge $
+                      Charge
                     </button>
                   )}
                 </div>

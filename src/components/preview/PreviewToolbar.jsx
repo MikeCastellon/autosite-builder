@@ -1,4 +1,4 @@
-export default function PreviewToolbar({ viewMode, onViewMode, onBack, backLabel = 'Back to Templates', onExport, onEdit, editorOpen, isDemoPreview }) {
+export default function PreviewToolbar({ viewMode, onViewMode, onBack, backLabel = 'Back to Templates', onExport, onEdit, editorOpen, isDemoPreview, onPreviewDemo }) {
   return (
     <div className="fixed top-0 left-0 z-50 bg-white border-b border-gray-200 px-3 sm:px-5 h-13 flex items-center justify-between gap-2 sm:gap-4" style={{ height: 52, right: editorOpen ? 320 : 0, transition: 'right 0.2s ease' }}>
       {/* Left: back */}
@@ -31,6 +31,16 @@ export default function PreviewToolbar({ viewMode, onViewMode, onBack, backLabel
 
       {/* Right: actions */}
       <div className="flex items-center gap-2 shrink-0">
+        {onPreviewDemo && (
+          <button
+            type="button"
+            onClick={() => onPreviewDemo()}
+            title="Switch the editor to demo content (admin only — for testing & showcasing)"
+            className="hidden sm:inline-flex items-center gap-1.5 text-[12px] font-medium px-3 py-2 rounded-lg border border-dashed border-gray-300 text-gray-500 hover:text-gray-900 hover:border-gray-400 transition-colors"
+          >
+            Preview Demo
+          </button>
+        )}
         <button
           onClick={onEdit}
           data-tour="edit-btn"

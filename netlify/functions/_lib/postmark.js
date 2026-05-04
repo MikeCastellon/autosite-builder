@@ -273,6 +273,64 @@ export async function statusUpdateToCustomer({ booking, site, status, reason }) 
   }
 }
 
+// Owner-triggered booking reminder to the customer. Sent from the booking
+// detail drawer. Reuses the branded shell + business-info footer so it
+// matches the rest of the booking emails. Storage is unchanged — this just
+// composes and sends; no DB writes.
+export async function bookingReminderToCustomer({ booking, site, customMessage }) {
+  if (!client) { console.warn('Postmark not configured; skipping email'); return; }
+  const b = booking;
+  const name = site?.business_info?.businessName || 'your appointment';
+  const bizBlockHtml = businessInfoHtmlBlock(site);
+  const bizBlockText = businessInfoTextBlock(site);
+  const vehicleLine = [b.vehicle_year, b.vehicle_make, b.vehicle_model].filter(Boolean).join(' ');
+
+  const intro = customMessage
+    ? esc(customMessage)
+    : `Just a friendly reminder — your appointment is on <strong style="color:#18181b;">${esc(formatWhen(b.preferred_at))}</strong>.`;
+
+  const detailCard = `
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fafafa;border:1px solid #f4f4f5;border-radius:12px;padding:16px 18px;margin-bottom:8px;"><tr><td>
+      <p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">When:</strong> ${esc(formatWhen(b.preferred_at))}</p>
+      ${b.service_name ? `<p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Service:</strong> ${esc(b.service_name)}</p>` : ''}
+      ${vehicleLine ? `<p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Vehicle:</strong> ${esc(vehicleLine)}${b.vehicle_size ? ' (' + esc(b.vehicle_size) + ')' : ''}</p>` : ''}
+      ${b.service_address ? `<p style="margin:0;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Address:</strong> ${esc(b.service_address)}</p>` : ''}
+    </td></tr></table>
+    ${bizBlockHtml}
+    <p style="margin:20px 0 0;font-size:12px;color:#a1a1aa;text-align:center;">Need to reschedule? Just reply to this email.</p>`;
+  const html = renderEmailShell({
+    icon: '⏰',
+    title: `Reminder: your appointment with ${esc(name)}`,
+    intro,
+    body: detailCard,
+  });
+  const text =
+    `Reminder: your appointment with ${name}\n\n` +
+    (customMessage || `Your appointment is on ${formatWhen(b.preferred_at)}.`) +
+    `\n\nWhen: ${formatWhen(b.preferred_at)}` +
+    (b.service_name ? `\nService: ${b.service_name}` : '') +
+    (vehicleLine ? `\nVehicle: ${vehicleLine}${b.vehicle_size ? ' (' + b.vehicle_size + ')' : ''}` : '') +
+    (b.service_address ? `\nAddress: ${b.service_address}` : '') +
+    bizBlockText +
+    `\n\nNeed to reschedule? Just reply to this email.`;
+
+  try {
+    const res = await client.sendEmail({
+      From: FROM,
+      To: b.customer_email,
+      Subject: `Reminder: your appointment with ${name}`,
+      HtmlBody: html,
+      TextBody: text,
+      MessageStream: 'outbound',
+    });
+    console.log(`[postmark:bookingReminderToCustomer] to=${b.customer_email} messageId=${res?.MessageID}`);
+    return res;
+  } catch (err) {
+    logPostmarkFailure('bookingReminderToCustomer', err);
+    throw err;
+  }
+}
+
 // Free-form owner → customer message, sent from the Customer detail page.
 // Rendered in the same branded shell as the automated emails so replies land
 // back to the owner (replyTo) and customer sees a familiar layout. Body is

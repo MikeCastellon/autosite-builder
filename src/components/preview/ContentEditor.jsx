@@ -3,6 +3,8 @@ import { FONT_SLOTS } from '../../data/fontOptions.js';
 import { TEMPLATES } from '../../data/templates.js';
 import { BUSINESS_TYPES } from '../../data/businessTypes.js';
 import { useAlert } from '../ui/AlertProvider.jsx';
+import { formatPhone } from '../../lib/formatPhone.js';
+import { HOURS_DAYS, parseRange, rangeToString, expandHoursToDays } from '../../lib/businessHours.js';
 
 const EMOJI_GROUPS = {
   'Common': ['⭐', '✅', '🏆', '💎', '🔧', '🛞', '🚗', '🏎️', '💰', '💳', '🕐', '⏱️', '📞', '📍', '🎯', '✓', '★', '♦'],
@@ -46,6 +48,52 @@ function IconOrEmoji({ value, size = 16, color = 'currentColor' }) {
   }
   return <span>{value}</span>;
 }
+
+// Section nav icons for the rail. Separate from SVG_ICONS above (which
+// are user-content icons like service icons). 16×16 viewBox, line style.
+const NAV_ICON_PATHS = {
+  visibility:   <path d="M2 4h12M2 8h12M2 12h12" />,
+  hero:         <><rect x="2" y="3" width="12" height="10" rx="1" /><path d="M2 11l3-3 2.5 2.5 3-3L14 11" /><circle cx="11" cy="6" r="1" /></>,
+  services:     <><path d="M9.5 3.5a3 3 0 014 4l-7 7a1.5 1.5 0 01-2-2l7-7z" /><path d="M9.5 3.5l-2-2H4l-2 2v3.5l2 2h3.5" /></>,
+  howItWorks:   <><path d="M3 4h2v2H3zM3 8h2v2H3zM3 12h2v2H3z" fill="currentColor" stroke="none" /><path d="M7 5h6M7 9h6M7 13h4" /></>,
+  whyUs:        <><circle cx="8" cy="8" r="6" /><path d="M5 8L7.5 10.5 11 6" /></>,
+  products:     <><rect x="3" y="3" width="10" height="10" rx="1" /><path d="M3 7h10" /><path d="M5 5h.01M9 5h.01" /></>,
+  brands:       <><path d="M2 7l5 5 7-7-5-5H4a2 2 0 00-2 2v5z" /><circle cx="6" cy="6" r="1" fill="currentColor" stroke="none" /></>,
+  filmBrands:   <><path d="M2 7l5 5 7-7-5-5H4a2 2 0 00-2 2v5z" /><circle cx="6" cy="6" r="1" fill="currentColor" stroke="none" /></>,
+  shadeGuide:   <><circle cx="8" cy="8" r="6" /><path d="M8 2v12M2 8h12" /></>,
+  trustBar:     <path d="M8 1l6 2.5v4c0 3.5-2.5 6.5-6 7.5-3.5-1-6-4-6-7.5v-4L8 1z" />,
+  ticker:       <><path d="M2 8h12" /><path d="M11 5l3 3-3 3M5 5L2 8l3 3" /></>,
+  about:        <><circle cx="8" cy="5.5" r="2.5" /><path d="M3 14a5 5 0 0110 0" /></>,
+  gallery:      <><rect x="2" y="3" width="12" height="10" rx="1" /><circle cx="6" cy="7" r="1" /><path d="M2 12l4-4 3 3 2-2 3 3" /></>,
+  testimonials: <path d="M8 2l1.8 4 4.2.6-3 2.9.8 4.2L8 11.7l-3.8 2 .8-4.2-3-2.9 4.2-.6z" />,
+  contact:      <path d="M3 3.5C3 3 3.4 2.5 4 2.5h2.5l1 3-1.5 1c.8 2 2.5 3.7 4.5 4.5l1-1.5 3 1V13c0 .5-.5 1-1 1A11 11 0 013 3.5z" />,
+  colors:       <><path d="M8 2a6 6 0 100 12c.6 0 1-.4 1-1 0-.4-.2-.7-.4-1-.2-.3-.3-.6-.3-1 0-.6.4-1 1-1H10a4 4 0 100-8z" /><circle cx="5" cy="7" r="0.8" fill="currentColor" stroke="none" /><circle cx="8" cy="5" r="0.8" fill="currentColor" stroke="none" /><circle cx="11.5" cy="7.5" r="0.8" fill="currentColor" stroke="none" /></>,
+  footer:       <><rect x="2" y="3" width="12" height="10" rx="1" /><path d="M2 10.5h12" /><path d="M5 12.5h2M9 12.5h2" /></>,
+  business:     <><path d="M3 14V6l5-3 5 3v8" /><path d="M2 14h12" /><path d="M6.5 14v-3h3v3" /><path d="M6 8h.01M10 8h.01" /></>,
+  template:     <><rect x="2" y="2" width="5" height="5" rx="0.5" /><rect x="9" y="2" width="5" height="5" rx="0.5" /><rect x="2" y="9" width="5" height="5" rx="0.5" /><rect x="9" y="9" width="5" height="5" rx="0.5" /></>,
+};
+
+function NavIcon({ id, className = 'w-[18px] h-[18px]' }) {
+  const inner = NAV_ICON_PATHS[id];
+  if (!inner) {
+    return <span className={`${className} flex items-center justify-center text-[10px] font-bold leading-none`}>{(id || '?').slice(0, 1).toUpperCase()}</span>;
+  }
+  return (
+    <svg viewBox="0 0 16 16" className={className} fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {inner}
+    </svg>
+  );
+}
+
+const SECTION_GROUPS = {
+  visibility: 'top',
+  hero: 'content', services: 'content', howItWorks: 'content', whyUs: 'content',
+  products: 'content', brands: 'content', filmBrands: 'content', shadeGuide: 'content',
+  trustBar: 'content', ticker: 'content', about: 'content', gallery: 'content',
+  testimonials: 'content', contact: 'content',
+  colors: 'design', footer: 'design',
+  business: 'settings', template: 'settings',
+};
 
 function EmojiPicker({ value, onChange, placeholder = '⭐' }) {
   const [open, setOpen] = useState(false);
@@ -142,6 +190,96 @@ function Field({ label, value, onChange, multiline = false, rows = 3 }) {
         <textarea rows={rows} value={value || ''} onChange={(e) => onChange(e.target.value)} className={base} />
       ) : (
         <input type="text" value={value || ''} onChange={(e) => onChange(e.target.value)} className={base} />
+      )}
+    </div>
+  );
+}
+
+function PhoneField({ label, value, onChange }) {
+  const base = 'w-full text-[13px] text-gray-800 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition';
+  return (
+    <div className="mb-4">
+      <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">{label}</label>
+      <input
+        type="tel"
+        inputMode="tel"
+        autoComplete="tel-national"
+        maxLength={14}
+        value={formatPhone(value)}
+        onChange={(e) => onChange(formatPhone(e.target.value))}
+        className={base}
+      />
+    </div>
+  );
+}
+
+function HoursEditor({ label, value, onChange }) {
+  const hoursObj = expandHoursToDays(value);
+  const setDay = (day, val) => onChange({ ...hoursObj, [day]: val });
+  const firstFilled = HOURS_DAYS.find((d) => hoursObj[d]);
+  const inputClass = 'flex-1 min-w-0 text-[12px] text-gray-700 border border-gray-200 rounded px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-transparent';
+  return (
+    <div className="mb-4">
+      <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">{label}</label>
+      <div className="space-y-1">
+        {HOURS_DAYS.map((day) => {
+          const dayValue = hoursObj[day] ?? '';
+          const isClosed = dayValue === '';
+          const { open, close } = parseRange(dayValue);
+          return (
+            <div key={day} className="flex items-center gap-1.5">
+              <span className="w-9 shrink-0 text-[11px] font-semibold text-gray-700">{day}</span>
+              {isClosed ? (
+                <>
+                  <span className="flex-1 text-[11px] text-gray-400 italic px-1.5">Closed</span>
+                  <button
+                    type="button"
+                    onClick={() => setDay(day, '9am-5pm')}
+                    className="shrink-0 text-[10px] font-semibold text-gray-500 hover:text-gray-900 hover:bg-gray-100 px-1.5 py-1 rounded transition"
+                  >
+                    Open
+                  </button>
+                </>
+              ) : (
+                <>
+                  <input
+                    type="time"
+                    value={open}
+                    onChange={(e) => setDay(day, rangeToString(e.target.value, close))}
+                    aria-label={`${day} open time`}
+                    className={inputClass}
+                  />
+                  <span className="text-[10px] text-gray-400 shrink-0">to</span>
+                  <input
+                    type="time"
+                    value={close}
+                    onChange={(e) => setDay(day, rangeToString(open, e.target.value))}
+                    aria-label={`${day} close time`}
+                    className={inputClass}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setDay(day, '')}
+                    aria-label={`Mark ${day} closed`}
+                    title="Mark closed"
+                    className="shrink-0 text-gray-300 hover:text-red-500 transition p-0.5"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 12 12"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+                  </button>
+                </>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {firstFilled && (
+        <button
+          type="button"
+          onClick={() => onChange(Object.fromEntries(HOURS_DAYS.map((d) => [d, hoursObj[firstFilled]])))}
+          className="mt-2 text-[10px] font-semibold text-gray-500 hover:text-gray-900 hover:underline"
+        >
+          Copy {firstFilled} hours to all days
+        </button>
       )}
     </div>
   );
@@ -471,24 +609,56 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
           </button>
         </div>
 
-        {/* Section tabs */}
-        <div className="flex gap-0.5 px-3 pt-3 pb-2 shrink-0 flex-wrap" style={{ position: 'relative', zIndex: 2 }}>
-          {sections.map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              data-tour={`tab-${s.id}`}
-              onClick={(e) => { e.stopPropagation(); setActiveSection(s.id); }}
-              className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
-                activeSection === s.id
-                  ? 'bg-gray-900 text-white'
-                  : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
-              }`}
-            >
-              {s.label}
-            </button>
-          ))}
-        </div>
+        {/* Section nav rail + content pane */}
+        <div className="flex-1 flex min-h-0">
+          {/* Rail */}
+          <div data-tour="section-rail" className="w-[60px] shrink-0 border-r border-gray-100 bg-gray-50 px-1.5 py-2 overflow-y-auto" style={{ position: 'relative', zIndex: 2 }}>
+            {(() => {
+              const groups = { top: [], content: [], design: [], settings: [] };
+              for (const s of sections) groups[SECTION_GROUPS[s.id] || 'content'].push(s);
+              const order = ['top', 'content', 'design', 'settings'];
+              const groupLabels = { content: 'Content', design: 'Design', settings: 'Settings' };
+              return order.map((g, gi) => {
+                if (!groups[g].length) return null;
+                return (
+                  <div key={g} data-tour={`group-${g}`} className={gi > 0 ? 'mt-3' : ''}>
+                    {g !== 'top' && (
+                      <p className="text-[8px] font-bold uppercase tracking-wider text-gray-400 text-center mb-1">{groupLabels[g]}</p>
+                    )}
+                    {groups[g].map(s => (
+                      <button
+                        key={s.id}
+                        type="button"
+                        data-tour={`tab-${s.id}`}
+                        onClick={(e) => { e.stopPropagation(); setActiveSection(s.id); }}
+                        className={`w-full flex flex-col items-center gap-0.5 py-2 rounded-lg transition mb-0.5 ${
+                          activeSection === s.id
+                            ? 'bg-gray-900 text-white'
+                            : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+                        }`}
+                        title={s.label}
+                      >
+                        <NavIcon id={s.id} />
+                        <span className="text-[9px] font-semibold tracking-tight truncate max-w-full px-1">
+                          {s.label.split(' ')[0]}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                );
+              });
+            })()}
+          </div>
+
+          {/* Content pane */}
+          <div className="flex-1 flex flex-col min-w-0">
+            {/* Active section sub-header */}
+            <div className="px-4 py-2.5 border-b border-gray-100 shrink-0 flex items-center gap-2">
+              <NavIcon id={activeSection} className="w-4 h-4 text-gray-700" />
+              <p className="text-[13px] font-semibold text-gray-900">
+                {(sections.find(s => s.id === activeSection) || {}).label}
+              </p>
+            </div>
 
         {/* Scrollable fields */}
         <div className="flex-1 overflow-y-auto px-4 py-2">
@@ -1138,13 +1308,13 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
                 Changes save automatically. Hit Republish on the dashboard once done so live visitors see them.
               </p>
               <Field label="Business Name" value={businessInfo?.businessName} onChange={(v) => setBiz('businessName', v)} />
-              <Field label="Phone" value={businessInfo?.phone} onChange={(v) => setBiz('phone', v)} />
+              <PhoneField label="Phone" value={businessInfo?.phone} onChange={(v) => setBiz('phone', v)} />
               <Field label="Email" value={businessInfo?.email} onChange={(v) => setBiz('email', v)} />
               <Field label="Street Address" value={businessInfo?.address} onChange={(v) => setBiz('address', v)} />
               <Field label="City" value={businessInfo?.city} onChange={(v) => setBiz('city', v)} />
               <Field label="State" value={businessInfo?.state} onChange={(v) => setBiz('state', v)} />
               <Field label="Tagline" value={businessInfo?.tagline} onChange={(v) => setBiz('tagline', v)} />
-              <Field label="Business Hours" value={typeof businessInfo?.hours === 'string' ? businessInfo.hours : Object.entries(businessInfo?.hours || {}).map(([d, t]) => `${d} ${t}`).filter(Boolean).join(' · ')} onChange={(v) => setBiz('hours', v)} />
+              <HoursEditor label="Business Hours" value={businessInfo?.hours} onChange={(v) => setBiz('hours', v)} />
               <Field label="Years in Business" value={businessInfo?.yearsInBusiness} onChange={(v) => setBiz('yearsInBusiness', v)} />
               <Field label="Awards" value={businessInfo?.awards} onChange={(v) => setBiz('awards', v)} />
               <Field label="Instagram Handle" value={businessInfo?.instagram} onChange={(v) => setBiz('instagram', v)} />
@@ -1234,6 +1404,8 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
             );
           })()}
 
+        </div>
+          </div>
         </div>
       </div>
     </>
