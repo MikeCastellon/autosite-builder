@@ -108,24 +108,18 @@ export default function AlertProvider({ children }) {
 
 const TOAST_STYLES = {
   success: {
-    border: 'border-green-600',
     bg: 'bg-green-50',
     text: 'text-green-900',
-    iconBg: '#16a34a',
     icon: (<><circle cx="12" cy="12" r="10" fill="#16a34a"/><path d="M8 12.5l2.5 2.5L16 9.5" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></>),
   },
   error: {
-    border: 'border-[#cc0000]',
     bg: 'bg-red-50',
     text: 'text-[#8a0000]',
-    iconBg: '#cc0000',
     icon: (<><circle cx="12" cy="12" r="10" fill="#cc0000"/><path d="M12 7v6" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"/><circle cx="12" cy="16.5" r="1.2" fill="#fff"/></>),
   },
   info: {
-    border: 'border-[#1a1a1a]',
     bg: 'bg-gray-50',
     text: 'text-[#1a1a1a]',
-    iconBg: '#1a1a1a',
     icon: (<><circle cx="12" cy="12" r="10" fill="#1a1a1a"/><path d="M12 10v7" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"/><circle cx="12" cy="7" r="1.2" fill="#fff"/></>),
   },
 };
@@ -135,18 +129,18 @@ function Toast({ type = 'info', children, onClose }) {
   return (
     <div
       role={type === 'error' ? 'alert' : 'status'}
-      className={`pointer-events-auto flex items-start gap-3 rounded-xl border-2 ${s.border} ${s.bg} ${s.text} px-4 py-3 shadow-lg min-w-[280px] max-w-sm`}
+      className={`pointer-events-auto flex items-center gap-2.5 rounded-lg ${s.bg} ${s.text} px-3 py-2 shadow-md max-w-sm`}
     >
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="shrink-0 mt-0.5" aria-hidden="true">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="shrink-0" aria-hidden="true">
         {s.icon}
       </svg>
-      <p className="text-[14px] font-semibold leading-snug flex-1">{children}</p>
+      <p className="text-[13px] font-semibold leading-snug flex-1">{children}</p>
       <button
         onClick={onClose}
         className={`shrink-0 ${s.text} opacity-60 hover:opacity-100 transition-opacity`}
         aria-label="Dismiss"
       >
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
+        <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
       </button>
     </div>
   );

@@ -24,10 +24,15 @@ import PaymentsConnectPage from './components/dashboard/payments-connect/Payment
 import ChargesPage from './components/dashboard/charges/ChargesPage.jsx';
 import HelpChrome from './components/help/HelpChrome.jsx';
 import { saveSite } from './lib/saveSite.js';
+import { publishSite } from './lib/publishSite.js';
 import { supabase } from './lib/supabase.js';
+import { useAlert } from './components/ui/AlertProvider.jsx';
+import { isEffectiveSchedulerActive } from './lib/subscriptionGating.js';
 
 export default function App() {
   const { session, loading, isRecovery, clearRecovery, profile } = useAuth();
+  const { toast } = useAlert();
+  const isPro = isEffectiveSchedulerActive(profile);
 
   const [step, setStep] = useState(1);
   const [businessType, setBusinessType] = useState(null);
@@ -586,31 +591,63 @@ export default function App() {
     setStep(5);
   };
 
-  // "Save Draft" from the editor toolbar (only shown when editing an
-  // existing site). Flushes the autoSave debounce so the latest edits land
-  // in Supabase before we leave the editor, then navigates back to the
-  // dashboard. Republishing happens via the dashboard's existing action.
-  const handleSaveDraft = async () => {
+  // Flush any debounced autoSave and persist the latest edits synchronously.
+  // Returns true on success so callers (Save Draft / Publish) can chain on it.
+  const flushSaveSite = async () => {
     clearTimeout(saveTimerRef.current);
-    if (siteId && session?.user?.id) {
-      try {
-        await saveSite({
-          siteId,
-          userId: session.user.id,
-          businessInfo,
-          generatedCopy: editedCopy,
-          templateId: selectedTemplate,
-          images,
-          widgetConfigIds: selectedWidgetIds,
-          customColors,
-          customFonts,
-        });
-      } catch (err) {
-        console.error('Save draft failed:', err);
-        // Fall through — autoSave will retry on the next edit.
-      }
+    if (!siteId || !session?.user?.id) return true;
+    await saveSite({
+      siteId,
+      userId: session.user.id,
+      businessInfo,
+      generatedCopy: editedCopy,
+      templateId: selectedTemplate,
+      images,
+      widgetConfigIds: selectedWidgetIds,
+      customColors,
+      customFonts,
+    });
+    return true;
+  };
+
+  // "Save Draft" from the editor toolbar — saves the latest edits to
+  // Supabase without leaving the editor. Republishing the live site
+  // happens via the Publish button (handlePublish below) or the
+  // dashboard's existing Republish action. Errors get a top-right toast
+  // because they need attention; success is an inline "Saved" checkmark
+  // on the button itself, so we don't toast and don't swallow the throw.
+  const handleSaveDraft = async () => {
+    try {
+      await flushSaveSite();
+    } catch (err) {
+      console.error('Save draft failed:', err);
+      toast(`Save failed: ${err.message}`, 'error');
+      throw err;
     }
-    setView('dashboard');
+  };
+
+  // "Publish" from the editor toolbar — saves the draft first, then
+  // pushes the latest content live via publishSite (R2 upload). Same
+  // pattern as Save Draft: silent on success (inline button feedback),
+  // toast on error.
+  const handlePublishFromEditor = async () => {
+    try {
+      await flushSaveSite();
+      await publishSite({
+        siteId,
+        businessInfo,
+        generatedCopy: editedCopy,
+        templateId: selectedTemplate,
+        templateMeta: { ...templateMeta, colors: templateMeta?.colors || {} },
+        images,
+        selectedWidgetIds,
+        isPro,
+      });
+    } catch (err) {
+      console.error('Publish failed:', err);
+      toast(`Publish failed: ${err.message}`, 'error');
+      throw err;
+    }
   };
 
   if (view === 'dashboard') {
@@ -694,6 +731,7 @@ export default function App() {
         backLabel={editingExistingSite ? 'Back to Sites' : 'Back to Templates'}
         onExport={isDemoPreview || editingExistingSite ? null : () => goTo(6)}
         onSaveDraft={!isDemoPreview && editingExistingSite ? handleSaveDraft : null}
+        onPublish={!isDemoPreview && editingExistingSite ? handlePublishFromEditor : null}
         onStartOver={() => { handleStartOver(); setView('dashboard'); }}
         onSwitchTemplate={(newTemplateId) => {
           setSelectedTemplate(newTemplateId);

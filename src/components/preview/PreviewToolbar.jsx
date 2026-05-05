@@ -1,7 +1,44 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-export default function PreviewToolbar({ viewMode, onViewMode, onBack, backLabel = 'Back to Templates', onExport, onSaveDraft, onEdit, editorOpen, isDemoPreview, onPreviewDemo }) {
+const SAVED_FLASH_MS = 2000;
+
+export default function PreviewToolbar({ viewMode, onViewMode, onBack, backLabel = 'Back to Templates', onExport, onSaveDraft, onPublish, onEdit, editorOpen, isDemoPreview, onPreviewDemo }) {
   const [savingDraft, setSavingDraft] = useState(false);
+  const [savedDraft, setSavedDraft] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [published, setPublished] = useState(false);
+  const flashTimers = useRef({ draft: null, publish: null });
+  // Clear any pending flash timers on unmount so they don't setState on a
+  // dead component (no-op warning in dev).
+  useEffect(() => () => {
+    if (flashTimers.current.draft) clearTimeout(flashTimers.current.draft);
+    if (flashTimers.current.publish) clearTimeout(flashTimers.current.publish);
+  }, []);
+
+  const handleSaveDraftClick = async () => {
+    setSavingDraft(true);
+    try {
+      await onSaveDraft();
+      setSavedDraft(true);
+      flashTimers.current.draft = setTimeout(() => setSavedDraft(false), SAVED_FLASH_MS);
+    } catch { /* parent already toasted */ }
+    finally { setSavingDraft(false); }
+  };
+  const handlePublishClick = async () => {
+    setPublishing(true);
+    try {
+      await onPublish();
+      setPublished(true);
+      flashTimers.current.publish = setTimeout(() => setPublished(false), SAVED_FLASH_MS);
+    } catch { /* parent already toasted */ }
+    finally { setPublishing(false); }
+  };
+
+  const Check = () => (
+    <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+      <path d="M2.5 6.5l2 2 5-6" stroke="currentColor" strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
   return (
     <div className="fixed top-0 left-0 z-50 bg-white border-b border-gray-200 px-3 sm:px-5 h-13 flex items-center justify-between gap-2 sm:gap-4" style={{ height: 52, right: editorOpen ? 320 : 0, transition: 'right 0.2s ease' }}>
       {/* Left: back */}
@@ -70,16 +107,36 @@ export default function PreviewToolbar({ viewMode, onViewMode, onBack, backLabel
         )}
         {!isDemoPreview && onSaveDraft && (
           <button
-            onClick={async () => {
-              setSavingDraft(true);
-              try { await onSaveDraft(); } finally { setSavingDraft(false); }
-            }}
+            onClick={handleSaveDraftClick}
             data-tour="save-draft-btn"
-            disabled={savingDraft}
-            className="bg-gray-900 hover:bg-gray-800 text-white text-[13px] font-semibold px-3 sm:px-4 py-2 rounded-lg transition-colors disabled:opacity-60 disabled:cursor-wait"
+            disabled={savingDraft || publishing}
+            className={`text-[13px] font-semibold px-3 sm:px-4 py-2 rounded-lg border transition-colors disabled:cursor-wait
+              ${savedDraft
+                ? 'bg-emerald-50 border-emerald-300 text-emerald-700'
+                : 'bg-white hover:bg-gray-50 border-gray-300 hover:border-gray-400 text-gray-800 disabled:opacity-60'}`}
           >
-            <span className="hidden sm:inline">{savingDraft ? 'Saving…' : 'Save Draft'}</span>
-            <span className="sm:hidden">{savingDraft ? 'Saving…' : 'Save'}</span>
+            <span className="inline-flex items-center gap-1">
+              {savedDraft && <Check />}
+              <span className="hidden sm:inline">{savedDraft ? 'Saved' : savingDraft ? 'Saving…' : 'Save Draft'}</span>
+              <span className="sm:hidden">{savedDraft ? 'Saved' : savingDraft ? 'Saving…' : 'Save'}</span>
+            </span>
+          </button>
+        )}
+        {!isDemoPreview && onPublish && (
+          <button
+            onClick={handlePublishClick}
+            data-tour="publish-btn"
+            disabled={publishing || savingDraft}
+            className={`text-[13px] font-semibold px-3 sm:px-4 py-2 rounded-lg transition-colors disabled:cursor-wait
+              ${published
+                ? 'bg-emerald-600 hover:bg-emerald-600 text-white'
+                : 'bg-gray-900 hover:bg-gray-800 text-white disabled:opacity-60'}`}
+          >
+            <span className="inline-flex items-center gap-1">
+              {published && <Check />}
+              <span className="hidden sm:inline">{published ? 'Published' : publishing ? 'Publishing…' : 'Publish'}</span>
+              <span className="sm:hidden">{published ? 'Done' : publishing ? '…' : 'Publish'}</span>
+            </span>
           </button>
         )}
       </div>
