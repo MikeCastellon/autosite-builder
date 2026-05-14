@@ -28,16 +28,18 @@ export const handler = async (event) => {
     return { statusCode: 500, headers: json, body: JSON.stringify({ error: 'API key not configured' }) };
   }
 
-  // Append city/state to the query so Text Search biases results to the
-  // user's area — mirrors how Google's normal search behaves and fixes the
-  // "I see them on Google but search misses them" case.
+  // Append city/state so predictions are biased to the user's area —
+  // mirrors how Google's own search-as-you-type behaves.
   const city = event.queryStringParameters?.city?.trim();
   const state = event.queryStringParameters?.state?.trim();
   const locationSuffix = [city, state].filter(Boolean).join(', ');
   const fullQuery = locationSuffix ? `${query} ${locationSuffix}` : query;
 
   try {
-    const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(fullQuery)}&region=us&key=${apiKey}`;
+    // Autocomplete is the API behind Google's search-as-you-type. It finds
+    // small businesses + partial/abbreviated names that Find Place and Text
+    // Search miss (e.g. "og detailing" → "OG Detailing").
+    const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(fullQuery)}&types=establishment&components=country:us&key=${apiKey}`;
     const res = await fetch(url);
     const data = await res.json();
 
@@ -45,12 +47,10 @@ export const handler = async (event) => {
       return { statusCode: 502, headers: json, body: JSON.stringify({ error: `Places API error: ${data.status}` }) };
     }
 
-    const results = (data.results || []).slice(0, 10).map((p) => ({
-      name: p.name,
-      address: p.formatted_address,
+    const results = (data.predictions || []).slice(0, 10).map((p) => ({
+      name: p.structured_formatting?.main_text || p.description,
+      address: p.structured_formatting?.secondary_text || '',
       place_id: p.place_id,
-      rating: p.rating,
-      review_count: p.user_ratings_total,
     }));
 
     return { statusCode: 200, headers: json, body: JSON.stringify({ results }) };
