@@ -5,7 +5,7 @@ import { useAuth } from '../../lib/AuthContext.jsx';
 const SOCIALFEEDS_URL = import.meta.env.VITE_SOCIALFEEDS_URL || 'https://social-feeds-app.netlify.app';
 const PLACES_SEARCH_URL = '/.netlify/functions/places-search';
 
-export default function StepSocialFeeds({ selectedWidgetIds, onWidgetIdsChange, onNext, onBack, onWidgetKeysChange }) {
+export default function StepSocialFeeds({ selectedWidgetIds, onWidgetIdsChange, onNext, onBack, onWidgetKeysChange, businessInfo }) {
   const { session } = useAuth();
   const [widgets, setWidgets] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -57,7 +57,10 @@ export default function StepSocialFeeds({ selectedWidgetIds, onWidgetIdsChange, 
     setError(null);
     try {
       const token = session?.access_token;
-      const res = await fetch(`${PLACES_SEARCH_URL}?q=${encodeURIComponent(searchQuery)}`, {
+      const params = new URLSearchParams({ q: searchQuery });
+      if (businessInfo?.city) params.set('city', businessInfo.city);
+      if (businessInfo?.state) params.set('state', businessInfo.state);
+      const res = await fetch(`${PLACES_SEARCH_URL}?${params}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const json = await res.json();

@@ -28,8 +28,16 @@ export const handler = async (event) => {
     return { statusCode: 500, headers: json, body: JSON.stringify({ error: 'API key not configured' }) };
   }
 
+  // Append city/state to the query so Text Search biases results to the
+  // user's area — mirrors how Google's normal search behaves and fixes the
+  // "I see them on Google but search misses them" case.
+  const city = event.queryStringParameters?.city?.trim();
+  const state = event.queryStringParameters?.state?.trim();
+  const locationSuffix = [city, state].filter(Boolean).join(', ');
+  const fullQuery = locationSuffix ? `${query} ${locationSuffix}` : query;
+
   try {
-    const url = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(query)}&inputtype=textquery&fields=name,formatted_address,place_id,rating,user_ratings_total&key=${apiKey}`;
+    const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(fullQuery)}&region=us&key=${apiKey}`;
     const res = await fetch(url);
     const data = await res.json();
 
@@ -37,7 +45,7 @@ export const handler = async (event) => {
       return { statusCode: 502, headers: json, body: JSON.stringify({ error: `Places API error: ${data.status}` }) };
     }
 
-    const results = (data.candidates || []).map((p) => ({
+    const results = (data.results || []).slice(0, 10).map((p) => ({
       name: p.name,
       address: p.formatted_address,
       place_id: p.place_id,

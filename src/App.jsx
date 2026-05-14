@@ -755,6 +755,7 @@ export default function App() {
         <StepSocialFeeds
           selectedWidgetIds={selectedWidgetIds}
           onWidgetIdsChange={setSelectedWidgetIds}
+          businessInfo={businessInfo}
           onWidgetKeysChange={({ googleWidgetKey, instagramWidgetKey }) => {
             setEditedCopy((prev) => ({ ...prev, googleWidgetKey, instagramWidgetKey }));
           }}
