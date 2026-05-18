@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
   makeInstanceId,
   getDefaultSectionsForTemplate,
@@ -142,6 +142,17 @@ describe('moveInstance', () => {
 
   it('refuses to move any instance into the last position (reserved for bottom-lock)', () => {
     expect(moveInstance(sections, 'b', sections.length - 1)).toBe(sections);
+  });
+
+  it('clamps targetIdx > sections.length - 1 so moved item never lands past the bottom-lock', () => {
+    const out = moveInstance(sections, 'b', 99);
+    // 'b' should land just above 'd' (the bottom-locked cta), i.e. at index 2.
+    expect(out.map(s => s.id)).toEqual(['a','c','b','d']);
+  });
+
+  it('returns same reference for a no-op move (targetIdx === fromIdx)', () => {
+    const out = moveInstance(sections, 'b', 1);
+    expect(out).toBe(sections);
   });
 });
 

@@ -1,8 +1,10 @@
 import { getCatalogEntry, getDefaultSectionTypesForTemplate } from '../data/sectionCatalog.js';
 
 export function makeInstanceId() {
-  // 8 base36 chars give ~2.8e12 combos — collision-free within a single site
-  return 'inst_' + Math.random().toString(36).slice(2, 10);
+  // 8 base36 chars give ~2.8e12 combos — collision-free within a single site.
+  // padEnd guards against the astronomically rare case where Math.random() is
+  // small enough that its base36 representation has fewer than 10 chars.
+  return 'inst_' + Math.random().toString(36).padEnd(10, '0').slice(2, 10);
 }
 
 export function getDefaultSectionsForTemplate(templateId) {
@@ -54,12 +56,24 @@ export function moveInstance(sections, id, targetIdx) {
 
   const topLocked = sections[0]?.locked === 'top';
   const bottomLocked = sections[sections.length - 1]?.locked === 'bottom';
+
+  // Clamp targetIdx into the slots non-locked entries are allowed to occupy.
+  const minIdx = topLocked ? 1 : 0;
+  const maxIdx = bottomLocked ? sections.length - 2 : sections.length - 1;
+  const clamped = Math.min(Math.max(targetIdx, minIdx), maxIdx);
+
+  // Existing locked-slot rejections (kept for explicitness even though the clamp
+  // would already prevent them — the original explicit rejection returns the same
+  // reference, matching the same-ref sentinel pattern used throughout this module).
   if (topLocked && targetIdx === 0) return sections;
   if (bottomLocked && targetIdx === sections.length - 1) return sections;
 
+  // No-op move
+  if (clamped === fromIdx) return sections;
+
   const next = sections.slice();
   next.splice(fromIdx, 1);
-  next.splice(targetIdx, 0, moving);
+  next.splice(clamped, 0, moving);
   return next;
 }
 
