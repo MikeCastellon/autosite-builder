@@ -4,6 +4,9 @@ import StepBusinessType from './components/wizard/StepBusinessType.jsx';
 import StepBusinessInfo from './components/wizard/StepBusinessInfo.jsx';
 import StepTemplatePicker from './components/wizard/StepTemplatePicker.jsx';
 import StepGenerating from './components/wizard/StepGenerating.jsx';
+import StepChooseSections from './components/wizard/StepChooseSections.jsx';
+import { getDefaultSectionsForTemplate } from './lib/sectionInstances.js';
+import { migrateSections } from './lib/migrateSections.js';
 import WebsitePreview from './components/preview/WebsitePreview.jsx';
 import StepExport from './components/wizard/StepExport.jsx';
 import StepSocialFeeds from './components/wizard/StepSocialFeeds.jsx';
@@ -38,6 +41,7 @@ export default function App() {
   const [businessType, setBusinessType] = useState(null);
   const [businessInfo, setBusinessInfo] = useState({});
   const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [selectedSections, setSelectedSections] = useState(null);
   const [generatedCopy, setGeneratedCopy] = useState(null);
   const [editedCopy, setEditedCopy] = useState(null);
   const [images, setImages] = useState({});
@@ -76,7 +80,8 @@ export default function App() {
         if (draft?.businessType) setBusinessType(draft.businessType);
         if (draft?.businessInfo) setBusinessInfo(draft.businessInfo);
         if (draft?.selectedTemplate) setSelectedTemplate(draft.selectedTemplate);
-        if (draft?.step && draft.step >= 1 && draft.step <= 4) setStep(draft.step);
+        if (draft?.selectedSections) setSelectedSections(draft.selectedSections);
+        if (draft?.step && draft.step >= 1 && draft.step < 5) setStep(draft.step);
       }
     } catch { /* ignore */ }
     setDraftRestored(true);
@@ -99,11 +104,12 @@ export default function App() {
         businessType,
         businessInfo,
         selectedTemplate,
+        selectedSections,
         step,
         savedAt: Date.now(),
       }));
     } catch { /* quota exceeded — ignore */ }
-  }, [draftKey, draftRestored, businessType, businessInfo, selectedTemplate, step, siteId]);
+  }, [draftKey, draftRestored, businessType, businessInfo, selectedTemplate, selectedSections, step, siteId]);
 
   // Ensure Google Reviews widget key is in editedCopy when user is signed in
   useEffect(() => {
@@ -180,6 +186,15 @@ export default function App() {
     setSelectedTemplate(templateId);
     setCustomColors({});
     setCustomFonts({});
+    setSelectedSections(null);
+  };
+
+  const handleChooseSections = () => {
+    setError(null);
+    // Only seed defaults the first time the user enters this step for a given
+    // template. If they navigate back and forth, preserve their composition.
+    setSelectedSections(prev => prev ?? getDefaultSectionsForTemplate(selectedTemplate));
+    goTo(3.5);
   };
 
   const handleGenerate = () => {
@@ -210,6 +225,11 @@ export default function App() {
           if (gr && !merged.googleWidgetKey) merged.googleWidgetKey = gr.widget_key;
         }
       } catch (e) { /* ignore */ }
+    }
+
+    if (selectedSections) {
+      merged.sections = selectedSections;
+      merged.sectionContent = { ...(merged.sectionContent || {}), ...(copy.sectionContent || {}) };
     }
 
     setGeneratedCopy(merged);
@@ -395,8 +415,9 @@ export default function App() {
       } catch (e) { /* ignore */ }
     }
 
-    setGeneratedCopy(copy);
-    setEditedCopy(structuredClone(copy));
+    const migrated = migrateSections(copy, site.template_id);
+    setGeneratedCopy(migrated);
+    setEditedCopy(structuredClone(migrated));
     setImages(siteImages);
     setSelectedWidgetIds(site.widget_config_ids || []);
     setCustomColors(savedCustomColors);
@@ -805,17 +826,27 @@ export default function App() {
             businessType={businessType}
             selected={selectedTemplate}
             onSelect={handleTemplateSelect}
-            onGenerate={handleGenerate}
+            onGenerate={handleChooseSections}
             onPreview={handlePreviewDemo}
             error={error}
             customColors={customColors}
             onCustomColors={setCustomColors}
           />
         )}
+        {step === 3.5 && (
+          <StepChooseSections
+            templateId={selectedTemplate}
+            sections={selectedSections || []}
+            onSectionsChange={setSelectedSections}
+            onGenerate={handleGenerate}
+            error={error}
+          />
+        )}
         {step === 4 && (
           <StepGenerating
             businessInfo={businessInfo}
             templateMeta={templateMeta}
+            sections={selectedSections}
             onSuccess={handleGenerateSuccess}
             onError={handleGenerateError}
           />
