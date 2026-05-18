@@ -383,7 +383,12 @@
         if (!state.details.submitted) return renderSimpleForm(enabledServices);
         return renderSuccess();
       }
-      if (!state.service && enabledServices.length > 1) return renderServices(enabledServices);
+      // Always show the service picker when any service has add-ons — the
+      // customer needs to see what service they're picking add-ons for.
+      // Otherwise we only show it when there's more than one to pick from.
+      var anyServiceHasAddons = enabledServices.some(function (s) { return serviceAddons(s).length > 0; });
+      var showServicePicker = enabledServices.length > 1 || anyServiceHasAddons;
+      if (!state.service && showServicePicker) return renderServices(enabledServices);
       // Add-ons step lives between service pick and date/time. Skipped if
       // the chosen service has no add-ons to offer.
       if (state.service && serviceAddons(state.service).length > 0 && !state.addonsConfirmed) {
@@ -394,14 +399,15 @@
       return renderSuccess();
     }
 
-    // Step counts: service-pick (if >1 service) + add-ons (if any) +
-    // date/time + details. Used by stepBar() for the progress indicator.
+    // Step counts: service-pick + add-ons (if any) + date/time + details.
+    // Used by stepBar() for the progress indicator.
     function stepCounts() {
       var enabledServices = (cfg.services || []).filter(function (s) { return s.enabled !== false; });
-      var hasMultipleServices = enabledServices.length > 1;
+      var anyServiceHasAddons = enabledServices.some(function (s) { return serviceAddons(s).length > 0; });
+      var showServicePicker = enabledServices.length > 1 || anyServiceHasAddons;
       var hasAddons = state.service && serviceAddons(state.service).length > 0;
-      var total = 2 + (hasMultipleServices ? 1 : 0) + (hasAddons ? 1 : 0);
-      return { total: total, hasMultipleServices: hasMultipleServices, hasAddons: hasAddons };
+      var total = 2 + (showServicePicker ? 1 : 0) + (hasAddons ? 1 : 0);
+      return { total: total, hasMultipleServices: showServicePicker, hasAddons: hasAddons };
     }
 
     function renderSimpleForm(services) {
