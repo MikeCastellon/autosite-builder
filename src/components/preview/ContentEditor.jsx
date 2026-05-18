@@ -722,21 +722,33 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
           )}
 
           {activeSection === 'services' && (() => {
-            // Editor source of truth = businessInfo.packages (what templates actually
-            // render with prices). If empty, seed from copy.servicesSection.items so
-            // users see the same names/descriptions they had before; the first edit
-            // persists the seeded list into businessInfo.packages.
-            const rawPackages = Array.isArray(businessInfo?.packages) ? businessInfo.packages : [];
-            const normalizedPackages = rawPackages.map((p) =>
-              typeof p === 'string' ? { name: p, price: '', description: '' } : { name: p?.name || '', price: p?.price || '', description: p?.description || '' }
-            );
+            // Source of truth: the wizard writes packages-with-prices to
+            // businessInfo.services (as {name, price, description} objects). The
+            // normalize layer mirrors services -> packages for template rendering.
+            // Fall back to businessInfo.packages (legacy) and finally to
+            // copy.servicesSection.items so the editor never opens blank.
+            const toObj = (p) => typeof p === 'string'
+              ? { name: p, price: '', description: '' }
+              : { name: p?.name || '', price: p?.price || '', description: p?.description || '' };
+            const rawServices = Array.isArray(businessInfo?.services) ? businessInfo.services.map(toObj) : [];
+            const rawPackages = Array.isArray(businessInfo?.packages) ? businessInfo.packages.map(toObj) : [];
             const seedFromCopy = (copy.servicesSection?.items || []).map((item) => ({
               name: item?.name || '',
               price: '',
               description: item?.description || '',
             }));
-            const packages = normalizedPackages.length > 0 ? normalizedPackages : seedFromCopy;
-            const writePackages = (next) => setBiz('packages', next);
+            const packages = rawServices.length > 0
+              ? rawServices
+              : rawPackages.length > 0
+                ? rawPackages
+                : seedFromCopy;
+            // Write to both `services` (wizard's canonical key) and `packages`
+            // (used by some templates and the normalize fallback), so edits
+            // always show up regardless of which field a template reads.
+            const writePackages = (next) => {
+              if (!onBusinessInfoChange) return;
+              onBusinessInfoChange((prev) => ({ ...(prev || {}), services: next, packages: next }));
+            };
             const updatePackage = (i, field, value) => {
               writePackages(packages.map((p, idx) => (idx === i ? { ...p, [field]: value } : p)));
             };
@@ -766,7 +778,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
                           const formatted = formatPrice(e.target.value);
                           if (formatted !== pkg.price) updatePackage(i, 'price', formatted);
                         }}
-                        placeholder="e.g. 99, from 50, Call for quote"
+                        placeholder="e.g. $99"
                         className="w-full text-[13px] text-gray-800 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition"
                       />
                     </div>
