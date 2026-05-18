@@ -46,7 +46,7 @@ export default function SectionCompositionPanel({ sections, onChange }) {
                 className="flex items-center gap-2.5 py-3 px-3 rounded-lg border border-black/[0.07] bg-white select-none"
                 style={{
                   opacity: dragIdx === idx ? 0.35 : 1,
-                  borderTop: dragOverIdx === idx && dragIdx !== idx ? '2px solid #cc0000' : '1px solid rgba(0,0,0,0.07)',
+                  boxShadow: dragOverIdx === idx && dragIdx !== idx ? 'inset 0 2px 0 0 #cc0000' : 'none',
                   cursor: isLocked ? 'default' : 'grab',
                 }}
               >

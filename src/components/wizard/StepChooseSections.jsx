@@ -29,6 +29,7 @@ export default function StepChooseSections({ templateId, sections, onSectionsCha
 
       <div className="border-t border-black/[0.07] bg-white px-4 sm:px-8 py-4">
         <button
+          type="button"
           onClick={onGenerate}
           className="w-full font-semibold py-3.5 px-6 rounded-xl bg-[#1a1a1a] hover:bg-[#cc0000] text-white text-[15px] transition-colors"
         >
