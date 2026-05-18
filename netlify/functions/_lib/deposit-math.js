@@ -25,6 +25,40 @@ export function parsePriceToCents(input) {
   return cents > 0 ? cents : null;
 }
 
+// Service `price_cents` is the source of truth; legacy services only have
+// the free-text `price` field. This helper returns whichever is available.
+// Returns null if neither is parseable (e.g. "Call for quote").
+export function servicePriceCents(service) {
+  if (!service) return null;
+  if (typeof service.price_cents === 'number' && service.price_cents > 0) {
+    return service.price_cents;
+  }
+  return parsePriceToCents(service.price);
+}
+
+// Sum the price_cents of a list of add-on snapshots (or live add-on records).
+// Returns 0 if list is empty/missing — never null, because zero add-ons is a
+// valid total contribution.
+export function sumAddonsCents(addons) {
+  if (!Array.isArray(addons)) return 0;
+  let total = 0;
+  for (const a of addons) {
+    if (a && typeof a.price_cents === 'number' && a.price_cents > 0) {
+      total += a.price_cents;
+    }
+  }
+  return total;
+}
+
+// The total a customer commits to: service base + every selected add-on.
+// If the service has no numeric price, the total is also null — we can't
+// quote a partial total when we don't know the base.
+export function computeTotalCents(servicePriceCentsValue, addons) {
+  if (servicePriceCentsValue == null) return null;
+  if (servicePriceCentsValue <= 0) return null;
+  return servicePriceCentsValue + sumAddonsCents(addons);
+}
+
 export function computeDepositCents(priceCents, percentage) {
   if (priceCents == null || percentage == null) return null;
   if (typeof percentage !== 'number' || !Number.isFinite(percentage)) return null;

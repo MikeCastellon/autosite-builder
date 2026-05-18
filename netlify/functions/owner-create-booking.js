@@ -10,6 +10,7 @@ import { createClient } from '@supabase/supabase-js';
 import { bookingReceivedToCustomer } from './_lib/postmark.js';
 import { isEffectiveSchedulerActive } from './_lib/subscription-gating.js';
 import { corsHeaders, jsonHeaders } from './_shared/cors.js';
+import { servicePriceCents, computeTotalCents } from './_lib/deposit-math.js';
 
 export const handler = async (event) => {
   const cors = corsHeaders(event.headers);
@@ -40,6 +41,7 @@ export const handler = async (event) => {
     vehicle_size,
     service_id,
     service_name,
+    addon_ids,
     notes,
     send_email = true,
   } = payload;
@@ -68,6 +70,27 @@ export const handler = async (event) => {
     .maybeSingle();
   if (!isEffectiveSchedulerActive(profile)) return fail(403, { error: 'Pro subscription required' });
 
+  // Resolve add-ons against the chosen service so totals stay honest even
+  // when an owner books on a customer's behalf.
+  const services = (site.scheduler_config?.services) || [];
+  const chosenService = service_id ? services.find((s) => s.id === service_id) : null;
+  const requestedAddonIds = Array.isArray(addon_ids) ? addon_ids : [];
+  let resolvedAddons = [];
+  if (requestedAddonIds.length > 0 && chosenService && Array.isArray(chosenService.addons)) {
+    for (const id of requestedAddonIds) {
+      const match = chosenService.addons.find((a) => a.id === id && a.enabled !== false);
+      if (match) {
+        resolvedAddons.push({
+          id: match.id,
+          name: match.name,
+          price_cents: typeof match.price_cents === 'number' && match.price_cents > 0 ? match.price_cents : 0,
+        });
+      }
+    }
+  }
+  const servicePriceCentsValue = chosenService ? servicePriceCents(chosenService) : null;
+  const totalCents = computeTotalCents(servicePriceCentsValue, resolvedAddons);
+
   const { data: inserted, error: insErr } = await supabase
     .from('bookings')
     .insert({
@@ -87,6 +110,9 @@ export const handler = async (event) => {
       referral_source: 'owner-dashboard',
       service_id: service_id || null,
       service_name: service_name || null,
+      service_price_cents: servicePriceCentsValue,
+      addons: resolvedAddons.length > 0 ? resolvedAddons : null,
+      total_cents: totalCents,
     })
     .select()
     .single();

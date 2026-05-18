@@ -40,6 +40,50 @@ function formatHoursBlock(hours) {
   return '';
 }
 
+function formatCents(cents) {
+  if (typeof cents !== 'number' || cents <= 0) return '';
+  if (cents % 100 === 0) return `$${cents / 100}`;
+  return `$${(cents / 100).toFixed(2)}`;
+}
+
+// HTML breakdown showing the locked-in service price, each add-on, and the
+// total. Renders nothing when there's no add-ons AND no numeric price —
+// legacy bookings without any snapshot pricing get nothing extra in the email.
+function addonsBreakdownHtml(booking) {
+  const addons = Array.isArray(booking?.addons) ? booking.addons : [];
+  const hasService = typeof booking?.service_price_cents === 'number' && booking.service_price_cents > 0;
+  if (!hasService && addons.length === 0) return '';
+  const rows = [];
+  if (hasService) {
+    rows.push(`<tr><td style="padding:4px 0;font-size:13px;color:#52525b;">${esc(booking.service_name || 'Service')}</td><td align="right" style="padding:4px 0;font-size:13px;color:#52525b;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${esc(formatCents(booking.service_price_cents))}</td></tr>`);
+  }
+  for (const a of addons) {
+    const cents = typeof a?.price_cents === 'number' && a.price_cents > 0 ? a.price_cents : 0;
+    rows.push(`<tr><td style="padding:4px 0;font-size:13px;color:#52525b;">+ ${esc(a?.name || 'Add-on')}</td><td align="right" style="padding:4px 0;font-size:13px;color:#52525b;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${esc(formatCents(cents))}</td></tr>`);
+  }
+  const totalRow = typeof booking?.total_cents === 'number' && booking.total_cents > 0
+    ? `<tr><td style="padding:8px 0 0;border-top:1px solid #e4e4e7;font-size:14px;font-weight:700;color:#18181b;">Total</td><td align="right" style="padding:8px 0 0;border-top:1px solid #e4e4e7;font-size:14px;font-weight:700;color:#18181b;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${esc(formatCents(booking.total_cents))}</td></tr>`
+    : '';
+  return `<table width="100%" cellpadding="0" cellspacing="0" style="background:#fafafa;border:1px solid #f4f4f5;border-radius:12px;padding:14px 18px;margin-bottom:8px;">${rows.join('')}${totalRow}</table>`;
+}
+
+// Plain-text equivalent of addonsBreakdownHtml.
+function addonsBreakdownText(booking) {
+  const addons = Array.isArray(booking?.addons) ? booking.addons : [];
+  const hasService = typeof booking?.service_price_cents === 'number' && booking.service_price_cents > 0;
+  if (!hasService && addons.length === 0) return '';
+  const lines = [];
+  if (hasService) lines.push(`${booking.service_name || 'Service'}: ${formatCents(booking.service_price_cents)}`);
+  for (const a of addons) {
+    const cents = typeof a?.price_cents === 'number' && a.price_cents > 0 ? a.price_cents : 0;
+    lines.push(`+ ${a?.name || 'Add-on'}: ${formatCents(cents)}`);
+  }
+  if (typeof booking?.total_cents === 'number' && booking.total_cents > 0) {
+    lines.push(`Total: ${formatCents(booking.total_cents)}`);
+  }
+  return `\n\n${lines.join('\n')}`;
+}
+
 // Compact business-info block (HTML) shown in customer-facing emails.
 function businessInfoHtmlBlock(site) {
   const biz = site?.business_info || {};
@@ -130,10 +174,12 @@ export async function newBookingToOwner({ booking, site, ownerEmail }) {
       <p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Email:</strong> <a href="mailto:${esc(b.customer_email)}" style="color:#cc0000;text-decoration:none;">${esc(b.customer_email)}</a></p>
       <p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Phone:</strong> <a href="tel:${esc(b.customer_phone)}" style="color:#cc0000;text-decoration:none;">${esc(b.customer_phone)}</a></p>
       ${vehicleLine ? `<p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Vehicle:</strong> ${esc(vehicleLine)}${b.vehicle_size ? ' (' + esc(b.vehicle_size) + ')' : ''}</p>` : ''}
+      ${b.service_name ? `<p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Service:</strong> ${esc(b.service_name)}</p>` : ''}
       ${b.service_address ? `<p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Service address:</strong> ${esc(b.service_address)}</p>` : ''}
       ${b.notes ? `<p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Notes:</strong> ${esc(b.notes)}</p>` : ''}
       ${b.referral_source ? `<p style="margin:0;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Heard via:</strong> ${esc(b.referral_source)}</p>` : ''}
-    </td></tr></table>`;
+    </td></tr></table>
+    ${addonsBreakdownHtml(b)}`;
   const html = renderEmailShell({
     icon: '📅',
     title: `${esc(b.customer_name)} wants to book`,
@@ -141,7 +187,7 @@ export async function newBookingToOwner({ booking, site, ownerEmail }) {
     cta: { label: 'Open in your dashboard', href: dashLink },
     body: detailCard,
   });
-  const text = `New booking request for ${name}\n\n${b.customer_name} (${b.customer_email}, ${b.customer_phone}) wants to book for ${formatWhen(b.preferred_at)}.\nVehicle: ${b.vehicle_year} ${b.vehicle_make} ${b.vehicle_model} (${b.vehicle_size})\n${b.service_address ? 'Service address: ' + b.service_address + '\n' : ''}${b.notes ? 'Notes: ' + b.notes + '\n' : ''}Open: ${dashLink}`;
+  const text = `New booking request for ${name}\n\n${b.customer_name} (${b.customer_email}, ${b.customer_phone}) wants to book for ${formatWhen(b.preferred_at)}.\nVehicle: ${b.vehicle_year} ${b.vehicle_make} ${b.vehicle_model} (${b.vehicle_size})\n${b.service_name ? 'Service: ' + b.service_name + '\n' : ''}${b.service_address ? 'Service address: ' + b.service_address + '\n' : ''}${b.notes ? 'Notes: ' + b.notes + '\n' : ''}${addonsBreakdownText(b)}\nOpen: ${dashLink}`;
 
   try {
     const res = await client.sendEmail({
@@ -182,6 +228,7 @@ export async function bookingReceivedToCustomer({ booking, site, isSimple }) {
       ${b.service_address ? `<p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Service address:</strong> ${esc(b.service_address)}</p>` : ''}
       ${b.notes ? `<p style="margin:0;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Notes:</strong> ${esc(b.notes).replace(/\n/g, '<br/>')}</p>` : ''}
     </td></tr></table>
+    ${addonsBreakdownHtml(b)}
     ${bizBlockHtml}
     <p style="margin:20px 0 0;font-size:12px;color:#a1a1aa;text-align:center;">If you need to change anything, just reply to this email.</p>`;
   const html = renderEmailShell({
@@ -200,6 +247,7 @@ export async function bookingReceivedToCustomer({ booking, site, isSimple }) {
     (vehicleLine ? `\nVehicle: ${vehicleLine}${b.vehicle_size ? ' (' + b.vehicle_size + ')' : ''}` : '') +
     (b.service_address ? `\nService address: ${b.service_address}` : '') +
     (b.notes ? `\nNotes: ${b.notes}` : '') +
+    addonsBreakdownText(b) +
     bizBlockText +
     `\n\nIf you need to change anything, just reply to this email.`;
 
