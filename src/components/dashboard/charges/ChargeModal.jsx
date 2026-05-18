@@ -142,13 +142,19 @@ export default function ChargeModal({
     setLoading(true);
     setErr(null);
     try {
-      const usingServiceWithId = mode === 'service' && selectedService?.id && siteId;
+      // When picking a service, the service object carries _site_id (the
+      // site it actually belongs to). Owners can have the same service name
+      // across multiple sites with different add-ons, so we must use the
+      // service-specific site id, not the modal's default siteId prop.
+      const serviceSiteId = mode === 'service' ? selectedService?._site_id : null;
+      const effectiveSiteId = serviceSiteId || siteId || null;
+      const usingServiceWithId = mode === 'service' && selectedService?.id && effectiveSiteId;
       const { charge_id, checkout_url } = await createCharge({
         amount_cents: amountCents,
         service_name: mode === 'service' ? selectedService?.name : null,
         customer_name: customerName.trim() || null,
         customer_phone: customerPhone.trim() || null,
-        site_id: siteId || null,
+        site_id: effectiveSiteId,
         service_id: usingServiceWithId ? selectedService.id : undefined,
         addon_ids: usingServiceWithId ? chosenAddons.map((a) => a.id) : undefined,
       });
