@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase.js';
 import { useAuth } from '../../lib/AuthContext.jsx';
 import { useAlert } from '../ui/AlertProvider.jsx';
 import AppHeader from '../ui/AppHeader.jsx';
+import { CHANGELOG, formatChangelogDate } from '../../data/changelog.js';
 
 export default function ProfilePage({ onExit, onOpenBookings, onOpenCustomers, onOpenAdmin, onOpenPaymentsConnect, onOpenCharges, onCharge, onSignOut }) {
   const { session, profile, refreshProfile } = useAuth();
@@ -276,6 +277,32 @@ export default function ProfilePage({ onExit, onOpenBookings, onOpenCustomers, o
             </button>
           </div>
         </form>
+
+        {/* What's New archive — always available even after dismissing the dashboard banner. */}
+        <section className="bg-white border border-black/[0.07] rounded-2xl p-6 sm:p-7 mt-6">
+          <div className="mb-5">
+            <h3 className="text-[15px] font-bold text-[#1a1a1a]">What's New</h3>
+            <p className="text-[12px] text-[#888] mt-0.5">Recent updates to Genius Websites — newest first.</p>
+          </div>
+          <div className="space-y-5">
+            {CHANGELOG.map((entry) => (
+              <article key={entry.id} className="border-l-2 border-[#e4e4e7] pl-4">
+                <p className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#cc0000] mb-1">{formatChangelogDate(entry.date)}</p>
+                <h4 className="text-sm font-bold text-[#1a1a1a] mb-2 leading-tight">{entry.title}</h4>
+                <ul className="text-[13px] text-[#52525b] space-y-1.5 leading-snug">
+                  {entry.items.map((item, i) => (
+                    <li key={i} className="flex gap-2">
+                      <span className="text-[#cc0000] font-bold shrink-0">·</span>
+                      <span>
+                        <strong className="text-[#1a1a1a] font-semibold">{item.strong}</strong> {item.text}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </article>
+            ))}
+          </div>
+        </section>
       </main>
     </div>
   );

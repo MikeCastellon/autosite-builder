@@ -8,6 +8,11 @@ import {
 } from '../../../lib/schedulerConfig.js';
 import { useAlert } from '../../ui/AlertProvider.jsx';
 
+// Dismissable hint shown to owners who haven't tried add-ons yet. Once
+// X'd it stays gone — they can always re-read the same content in the
+// dashboard "What's New" banner or under Profile → What's New.
+const ADDONS_HINT_KEY = 'gw.servicesTab.addonsHintDismissed';
+
 function newService() {
   const id = 'svc_' + (crypto.randomUUID ? crypto.randomUUID().replace(/-/g, '').slice(0, 12) : Math.random().toString(36).slice(2, 14));
   return {
@@ -35,6 +40,18 @@ export default function ServicesTab({ siteId, config, onSaved }) {
   const [err, setErr] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [expandedAddonsId, setExpandedAddonsId] = useState(null);
+  const [addonsHintDismissed, setAddonsHintDismissed] = useState(() => {
+    try { return localStorage.getItem(ADDONS_HINT_KEY) === '1'; } catch { return false; }
+  });
+
+  const hasEligibleService = services.some((s) => typeof s.price_cents === 'number' && s.price_cents > 0);
+  const hasAnyAddon = services.some((s) => Array.isArray(s.addons) && s.addons.length > 0);
+  const showAddonsHint = !addonsHintDismissed && hasEligibleService && !hasAnyAddon;
+
+  function dismissAddonsHint() {
+    try { localStorage.setItem(ADDONS_HINT_KEY, '1'); } catch { /* ignore */ }
+    setAddonsHintDismissed(true);
+  }
 
   function patch(id, fields) {
     setServices((prev) => prev.map((s) => (s.id === id ? { ...s, ...fields } : s)));
@@ -140,6 +157,27 @@ export default function ServicesTab({ siteId, config, onSaved }) {
         <p className="text-sm text-gray-600">Customers pick one of these when booking. Add-ons (optional extras) appear right after the customer picks a service — the total they pay reflects everything they select.</p>
         <button onClick={add} className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#1a1a1a] text-white hover:bg-[#cc0000]">+ Add service</button>
       </div>
+
+      {showAddonsHint && (
+        <div className="relative bg-[#fff8eb] border border-[#f5d78b] rounded-xl p-4 sm:p-5 mb-4">
+          <button
+            onClick={dismissAddonsHint}
+            aria-label="Dismiss tip"
+            className="absolute top-2.5 right-2.5 w-6 h-6 rounded-full text-[#a16207] hover:text-[#78350f] hover:bg-black/5 flex items-center justify-center transition-colors"
+          >
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+              <path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </button>
+          <p className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#a16207] mb-1.5">New · Add-ons</p>
+          <h4 className="text-sm font-bold text-[#1a1a1a] mb-1.5 leading-tight pr-8">
+            Charge for the extras you already do
+          </h4>
+          <p className="text-[13px] text-[#52525b] leading-snug">
+            Click the <strong className="font-semibold">Add-ons</strong> column on any service to offer optional extras like "Pet hair removal +$25". Customers see them right after they pick that service, and the total they pay (and deposit) updates automatically.
+          </p>
+        </div>
+      )}
 
       <div className="bg-white border border-black/[0.07] rounded-xl overflow-hidden">
         <table className="w-full text-sm">
