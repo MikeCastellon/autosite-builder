@@ -3,7 +3,13 @@ import { supabase } from './supabase.js';
 
 /**
  * Creates an in-person charge and returns { charge_id, checkout_url }.
- * @param {{ amount_cents: number, service_name?: string, customer_name?: string, customer_phone?: string, site_id?: string }} opts
+ *
+ * Two modes:
+ *   - service_id + addon_ids: server resolves prices from scheduler_config,
+ *     amount_cents is ignored (server computes the total)
+ *   - amount_cents + service_name: legacy custom-amount path
+ *
+ * @param {{ amount_cents?: number, service_name?: string, customer_name?: string, customer_phone?: string, site_id?: string, service_id?: string, addon_ids?: string[] }} opts
  */
 export async function createCharge(opts) {
   const { data: sessionData } = await supabase.auth.getSession();

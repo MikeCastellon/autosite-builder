@@ -23,6 +23,14 @@ function formatCents(cents) {
   return `$${(cents / 100).toFixed(2)}`;
 }
 
+// Returns the cents value for a service (prefers numeric price_cents, falls
+// back to parsing the legacy free-text price field).
+function serviceCents(svc) {
+  if (!svc) return null;
+  if (typeof svc.price_cents === 'number' && svc.price_cents > 0) return svc.price_cents;
+  return parsePriceToCents(svc.price);
+}
+
 export default function ChargeModal({
   userId,
   profile,
@@ -36,6 +44,9 @@ export default function ChargeModal({
 
   const [mode, setMode] = useState('service');
   const [selectedService, setSelectedService] = useState(null);
+  // Map of addon_id → true for the add-ons selected on the current service.
+  // Cleared whenever the picked service changes.
+  const [selectedAddonIds, setSelectedAddonIds] = useState({});
   const [customAmount, setCustomAmount] = useState('');
   const [customerName, setCustomerName] = useState(prefillName || '');
   const [customerPhone, setCustomerPhone] = useState(prefillPhone || '');
@@ -110,8 +121,18 @@ export default function ChargeModal({
 
   const enabledServices = (services || []).filter((s) => s.enabled !== false);
 
+  const serviceAddons = (selectedService && Array.isArray(selectedService.addons))
+    ? selectedService.addons.filter((a) => a && a.enabled !== false)
+    : [];
+  const chosenAddons = serviceAddons.filter((a) => selectedAddonIds[a.id]);
+  const addonTotalCents = chosenAddons.reduce(
+    (sum, a) => sum + (typeof a.price_cents === 'number' && a.price_cents > 0 ? a.price_cents : 0),
+    0
+  );
+
+  const serviceBaseCents = mode === 'service' && selectedService ? serviceCents(selectedService) : null;
   const amountCents = mode === 'service'
-    ? (selectedService ? parsePriceToCents(selectedService.price) : null)
+    ? (serviceBaseCents != null ? serviceBaseCents + addonTotalCents : null)
     : parsePriceToCents(customAmount);
 
   const canSubmit = !!amountCents && amountCents >= 50;
@@ -121,12 +142,15 @@ export default function ChargeModal({
     setLoading(true);
     setErr(null);
     try {
+      const usingServiceWithId = mode === 'service' && selectedService?.id && siteId;
       const { charge_id, checkout_url } = await createCharge({
         amount_cents: amountCents,
         service_name: mode === 'service' ? selectedService?.name : null,
         customer_name: customerName.trim() || null,
         customer_phone: customerPhone.trim() || null,
         site_id: siteId || null,
+        service_id: usingServiceWithId ? selectedService.id : undefined,
+        addon_ids: usingServiceWithId ? chosenAddons.map((a) => a.id) : undefined,
       });
       setChargeId(charge_id);
       setCheckoutUrl(checkout_url);
@@ -231,20 +255,67 @@ export default function ChargeModal({
                   {enabledServices.length === 0 && (
                     <p className="text-sm text-[#888] text-center py-4">No services configured. Use custom amount.</p>
                   )}
-                  {enabledServices.map((svc) => (
-                    <button
-                      key={svc.id}
-                      onClick={() => setSelectedService(svc)}
-                      className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border text-left transition-colors ${
-                        selectedService?.id === svc.id
-                          ? 'border-[#cc0000] bg-[#cc0000]/[0.04]'
-                          : 'border-black/[0.09] hover:border-black/[0.2] bg-white'
-                      }`}
-                    >
-                      <span className="text-sm font-semibold text-[#1a1a1a]">{svc.name}</span>
-                      <span className="text-sm font-bold text-[#1a1a1a]">{svc.price}</span>
-                    </button>
-                  ))}
+                  {enabledServices.map((svc) => {
+                    const cents = serviceCents(svc);
+                    const priceLabel = cents != null ? formatCents(cents) : (svc.price || '');
+                    return (
+                      <button
+                        key={svc.id}
+                        onClick={() => {
+                          setSelectedService(svc);
+                          setSelectedAddonIds({});
+                        }}
+                        className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border text-left transition-colors ${
+                          selectedService?.id === svc.id
+                            ? 'border-[#cc0000] bg-[#cc0000]/[0.04]'
+                            : 'border-black/[0.09] hover:border-black/[0.2] bg-white'
+                        }`}
+                      >
+                        <span className="text-sm font-semibold text-[#1a1a1a]">{svc.name}</span>
+                        <span className="text-sm font-bold text-[#1a1a1a]">{priceLabel}</span>
+                      </button>
+                    );
+                  })}
+
+                  {selectedService && serviceAddons.length > 0 && (
+                    <div className="pt-3 mt-1">
+                      <p className="text-[11px] font-semibold text-[#555] uppercase tracking-wide mb-2">Add-ons (optional)</p>
+                      <div className="space-y-1.5">
+                        {serviceAddons.map((a) => {
+                          const checked = !!selectedAddonIds[a.id];
+                          const priceLabel = a.price_cents > 0 ? `+${formatCents(a.price_cents)}` : 'Free';
+                          return (
+                            <label
+                              key={a.id}
+                              className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl border cursor-pointer transition-colors ${
+                                checked
+                                  ? 'border-[#cc0000] bg-[#cc0000]/[0.04]'
+                                  : 'border-black/[0.09] hover:border-black/[0.2] bg-white'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={(e) =>
+                                  setSelectedAddonIds((prev) => ({ ...prev, [a.id]: e.target.checked }))
+                                }
+                                className="w-4 h-4 accent-[#cc0000] cursor-pointer"
+                              />
+                              <span className="flex-1 text-sm font-semibold text-[#1a1a1a]">{a.name}</span>
+                              <span className="text-sm font-bold text-[#1a1a1a]">{priceLabel}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedService && chosenAddons.length > 0 && amountCents != null && (
+                    <div className="flex items-center justify-between px-4 py-2.5 mt-2 rounded-xl bg-[#faf9f7] border border-black/[0.07]">
+                      <span className="text-[11px] font-semibold text-[#555] uppercase tracking-wide">Total</span>
+                      <span className="text-base font-black text-[#1a1a1a]">{formatCents(amountCents)}</span>
+                    </div>
+                  )}
                 </div>
               )}
 

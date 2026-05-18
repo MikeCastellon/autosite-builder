@@ -5,6 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 import { getStripe } from './_lib/stripe.js';
 import { isEffectiveSchedulerActive } from './_lib/subscription-gating.js';
 import { corsHeaders, jsonHeaders } from './_shared/cors.js';
+import { servicePriceCents, computeTotalCents } from './_lib/deposit-math.js';
 
 export const handler = async (event) => {
   const cors = corsHeaders(event.headers);
@@ -38,10 +39,66 @@ export const handler = async (event) => {
   try { payload = JSON.parse(event.body || '{}'); }
   catch { return fail(400, { error: 'Invalid JSON' }); }
 
-  const { amount_cents, service_name, customer_name, customer_phone, site_id } = payload;
+  const {
+    amount_cents,
+    service_name,
+    customer_name,
+    customer_phone,
+    site_id,
+    service_id,
+    addon_ids,
+  } = payload;
 
-  if (!amount_cents || typeof amount_cents !== 'number' || amount_cents < 50) {
-    return fail(400, { error: 'amount_cents must be a number >= 50' });
+  // Add-on path: when the client picks a service + add-ons, we resolve them
+  // server-side against the site's scheduler_config so prices can't be
+  // tampered with. The client-supplied amount_cents is ignored in this case.
+  let resolvedService = null;
+  let resolvedAddons = [];
+  let finalServiceName = service_name || null;
+  let finalAmountCents = null;
+  const requestedAddonIds = Array.isArray(addon_ids) ? addon_ids : [];
+
+  if (service_id && site_id) {
+    const { data: site } = await db
+      .from('sites')
+      .select('id, user_id, scheduler_config')
+      .eq('id', site_id)
+      .maybeSingle();
+    if (!site) return fail(404, { error: 'Site not found' });
+    if (site.user_id !== user.id) return fail(403, { error: 'Forbidden' });
+
+    const services = (site.scheduler_config?.services) || [];
+    resolvedService = services.find((s) => s.id === service_id) || null;
+    if (!resolvedService) return fail(400, { error: 'Unknown service' });
+
+    const available = Array.isArray(resolvedService.addons) ? resolvedService.addons : [];
+    for (const id of requestedAddonIds) {
+      const match = available.find((a) => a.id === id && a.enabled !== false);
+      if (!match) return fail(400, { error: 'Unknown or disabled add-on' });
+      resolvedAddons.push({
+        id: match.id,
+        name: match.name,
+        price_cents: typeof match.price_cents === 'number' && match.price_cents > 0 ? match.price_cents : 0,
+      });
+    }
+
+    const basePriceCents = servicePriceCents(resolvedService);
+    if (basePriceCents == null) return fail(400, { error: 'Service has no chargeable price' });
+    finalAmountCents = computeTotalCents(basePriceCents, resolvedAddons);
+    finalServiceName = resolvedAddons.length > 0
+      ? `${resolvedService.name} + ${resolvedAddons.length} add-on${resolvedAddons.length === 1 ? '' : 's'}`
+      : resolvedService.name;
+  } else {
+    // Legacy path: client-supplied amount + free-text service name (custom
+    // amount, or service picked without an id like the old flow).
+    if (!amount_cents || typeof amount_cents !== 'number' || amount_cents < 50) {
+      return fail(400, { error: 'amount_cents must be a number >= 50' });
+    }
+    finalAmountCents = amount_cents;
+  }
+
+  if (!finalAmountCents || finalAmountCents < 50) {
+    return fail(400, { error: 'Total must be at least $0.50' });
   }
 
   // Insert the charge row first so we have an id for client_reference_id
@@ -50,8 +107,8 @@ export const handler = async (event) => {
     site_id: site_id || null,
     customer_name: customer_name || null,
     customer_phone: customer_phone || null,
-    service_name: service_name || null,
-    amount_cents,
+    service_name: finalServiceName,
+    amount_cents: finalAmountCents,
     status: 'pending',
   }).select().single();
 
@@ -62,21 +119,45 @@ export const handler = async (event) => {
 
   const appUrl = (process.env.MAIN_APP_URL || 'https://sitebuilder.autocaregenius.com').replace(/\/$/, '');
 
+  // Build itemized line items so the Stripe Checkout receipt shows the
+  // service + each add-on on its own row. Falls back to a single row for
+  // the legacy custom-amount path.
+  const lineItems = resolvedService
+    ? [
+        {
+          price_data: {
+            currency: 'usd',
+            unit_amount: servicePriceCents(resolvedService),
+            product_data: { name: resolvedService.name },
+          },
+          quantity: 1,
+        },
+        ...resolvedAddons.map((a) => ({
+          price_data: {
+            currency: 'usd',
+            unit_amount: a.price_cents,
+            product_data: { name: a.name },
+          },
+          quantity: 1,
+        })),
+      ]
+    : [
+        {
+          price_data: {
+            currency: 'usd',
+            unit_amount: finalAmountCents,
+            product_data: { name: finalServiceName || 'Service Payment' },
+          },
+          quantity: 1,
+        },
+      ];
+
   try {
     const stripe = getStripe();
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       client_reference_id: charge.id,
-      line_items: [{
-        price_data: {
-          currency: 'usd',
-          unit_amount: amount_cents,
-          product_data: {
-            name: service_name || 'Service Payment',
-          },
-        },
-        quantity: 1,
-      }],
+      line_items: lineItems,
       payment_intent_data: {
         application_fee_amount: 200,
         metadata: { charge_id: charge.id, type: 'charge' },
