@@ -4,6 +4,7 @@ import { TEMPLATES } from '../../data/templates.js';
 import { BUSINESS_TYPES } from '../../data/businessTypes.js';
 import { useAlert } from '../ui/AlertProvider.jsx';
 import { formatPhone } from '../../lib/formatPhone.js';
+import { formatPrice } from '../../lib/formatPrice.js';
 import { HOURS_DAYS, parseRange, rangeToString, expandHoursToDays } from '../../lib/businessHours.js';
 
 const EMOJI_GROUPS = {
@@ -407,12 +408,6 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
     onCopyChange(next);
   };
 
-  const setServiceItem = (index, field, value) => {
-    const next = structuredClone(copy);
-    next.servicesSection.items[index][field] = value;
-    onCopyChange(next);
-  };
-
   const setTestimonial = (index, field, value) => {
     const next = structuredClone(copy);
     next.testimonialPlaceholders[index][field] = value;
@@ -726,18 +721,62 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
             </>
           )}
 
-          {activeSection === 'services' && (
-            <>
-              <Field label="Services Intro" value={copy.servicesSection?.intro} onChange={(v) => setCopy('servicesSection.intro', v)} multiline rows={2} />
-              {copy.servicesSection?.items?.map((item, i) => (
-                <div key={i} className="mb-5 p-3 bg-gray-50 rounded-lg">
-                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Service {i + 1}</p>
-                  <Field label="Name" value={item.name} onChange={(v) => setServiceItem(i, 'name', v)} />
-                  <Field label="Description" value={item.description} onChange={(v) => setServiceItem(i, 'description', v)} multiline rows={2} />
-                </div>
-              ))}
-            </>
-          )}
+          {activeSection === 'services' && (() => {
+            // Editor source of truth = businessInfo.packages (what templates actually
+            // render with prices). If empty, seed from copy.servicesSection.items so
+            // users see the same names/descriptions they had before; the first edit
+            // persists the seeded list into businessInfo.packages.
+            const rawPackages = Array.isArray(businessInfo?.packages) ? businessInfo.packages : [];
+            const normalizedPackages = rawPackages.map((p) =>
+              typeof p === 'string' ? { name: p, price: '', description: '' } : { name: p?.name || '', price: p?.price || '', description: p?.description || '' }
+            );
+            const seedFromCopy = (copy.servicesSection?.items || []).map((item) => ({
+              name: item?.name || '',
+              price: '',
+              description: item?.description || '',
+            }));
+            const packages = normalizedPackages.length > 0 ? normalizedPackages : seedFromCopy;
+            const writePackages = (next) => setBiz('packages', next);
+            const updatePackage = (i, field, value) => {
+              writePackages(packages.map((p, idx) => (idx === i ? { ...p, [field]: value } : p)));
+            };
+            const removePackage = (i) => {
+              writePackages(packages.filter((_, idx) => idx !== i));
+            };
+            const addPackage = () => {
+              writePackages([...packages, { name: '', price: '', description: '' }]);
+            };
+            return (
+              <>
+                <Field label="Services Intro" value={copy.servicesSection?.intro} onChange={(v) => setCopy('servicesSection.intro', v)} multiline rows={2} />
+                {packages.map((pkg, i) => (
+                  <div key={i} className="mb-5 p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Service {i + 1}</p>
+                      <button type="button" onClick={() => removePackage(i)} className="text-[11px] text-red-400 hover:text-red-600 transition">Remove</button>
+                    </div>
+                    <Field label="Name" value={pkg.name} onChange={(v) => updatePackage(i, 'name', v)} />
+                    <div className="mb-4">
+                      <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Price</label>
+                      <input
+                        type="text"
+                        value={String(pkg.price || '').replace(/^\$/, '')}
+                        onChange={(e) => updatePackage(i, 'price', e.target.value)}
+                        onBlur={(e) => {
+                          const formatted = formatPrice(e.target.value);
+                          if (formatted !== pkg.price) updatePackage(i, 'price', formatted);
+                        }}
+                        placeholder="e.g. 99, from 50, Call for quote"
+                        className="w-full text-[13px] text-gray-800 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition"
+                      />
+                    </div>
+                    <Field label="Description" value={pkg.description} onChange={(v) => updatePackage(i, 'description', v)} multiline rows={2} />
+                  </div>
+                ))}
+                <button type="button" onClick={addPackage} className="w-full py-2 text-[12px] font-semibold text-gray-500 border border-dashed border-gray-300 rounded-lg hover:border-gray-400 hover:text-gray-700 transition mb-2">+ Add Service</button>
+              </>
+            );
+          })()}
 
           {activeSection === 'howItWorks' && (isSudsy || isBubble) && (() => {
             const defaults = [
