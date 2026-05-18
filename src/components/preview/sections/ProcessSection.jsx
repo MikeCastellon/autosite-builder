@@ -1,15 +1,17 @@
 // src/components/preview/sections/ProcessSection.jsx
-// Renders a numbered "How It Works" steps block. Pulls copy from generatedCopy.process.
+// Renders a numbered "How It Works" steps block. Per-instance content lives in
+// generatedCopy.sectionContent[instance.id] = { intro, steps: [{title, description}, ...] }.
 // Falls back to a generic 4-step placeholder if AI hasn't returned content yet.
 
-export default function ProcessSection({ generatedCopy, templateMeta }) {
+export default function ProcessSection({ instance, generatedCopy, templateMeta }) {
   const c = templateMeta.colors;
   const font = templateMeta.font;
   const bodyFont = templateMeta.bodyFont;
 
-  const intro = generatedCopy?.process?.intro || 'How working with us looks.';
-  const steps = generatedCopy?.process?.steps?.length
-    ? generatedCopy.process.steps
+  const content = generatedCopy?.sectionContent?.[instance?.id] || {};
+  const intro = content.intro || 'How working with us looks.';
+  const steps = content.steps?.length
+    ? content.steps
     : [
       { title: 'Get in touch',  description: 'Tell us what you need.' },
       { title: 'We plan it',    description: 'You get a clear quote.' },

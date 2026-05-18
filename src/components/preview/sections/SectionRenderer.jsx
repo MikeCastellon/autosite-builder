@@ -17,6 +17,7 @@ const REGISTRY = {
 };
 
 export default function SectionRenderer({ instance, order, ...shared }) {
+  if (!instance) return null;
   const Comp = REGISTRY[instance.type];
   if (!Comp) return null;
   return (
