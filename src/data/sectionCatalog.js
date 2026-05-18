@@ -57,7 +57,7 @@ export const SECTION_GROUPS = {
 // where a template would naturally have a "process" block today. For new
 // templates, the _default key applies.
 export const TEMPLATE_DEFAULT_SECTIONS = {
-  _default:           ['hero','statsBar','services','about','gallery','testimonials','cta'],
+  _default:           ['hero','services','about','gallery','testimonials','cta'],
   mechanic_ironclad:  ['hero','ticker','ctaBand','about','services','gallery','whyUs','testimonials','cta'],
   wheel_apex:         ['hero','trustBar','ticker','products','brands','about','gallery','testimonials','cta'],
   wheel_edge:         ['hero','statsBar','services','brands','about','gallery','testimonials','cta'],
@@ -68,6 +68,11 @@ export const TEMPLATE_DEFAULT_SECTIONS = {
   tint_sleek:         ['hero','statsBar','services','brands','about','gallery','testimonials','cta'],
   mobile_sudsy:       ['hero','services','process','whyUs','about','gallery','testimonials','cta'],
   carwash_bubble:     ['hero','services','process','about','whyUs','gallery','testimonials','cta'],
+  detailing_sporty:   ['hero','statsBar','services','about','gallery','testimonials','cta'],
+  mobile_bold:        ['hero','statsBar','services','about','gallery','testimonials','cta'],
+  mobile_modern:      ['hero','statsBar','services','about','gallery','testimonials','cta'],
+  mobile_rugged:      ['hero','statsBar','services','about','gallery','testimonials','cta'],
+  mobile_chrome:      ['hero','statsBar','services','about','gallery','testimonials','cta'],
 };
 
 export function getCatalogEntry(type) {
