@@ -1,5 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 import { isEffectiveSchedulerActive } from './_lib/subscription-gating.js';
+import { servicePriceCents } from './_lib/deposit-math.js';
+
+function formatCents(cents) {
+  if (typeof cents !== 'number' || cents <= 0) return '';
+  if (cents % 100 === 0) return `$${cents / 100}`;
+  return `$${(cents / 100).toFixed(2)}`;
+}
 
 // Public widget endpoint — called from scheduler.js injected on every
 // customer's published site. Wide-open CORS by design.
@@ -85,13 +92,28 @@ export const handler = async (event) => {
       slot_granularity_minutes: cfg.slot_granularity_minutes ?? 30,
       cta_selector: cfg.cta_selector || '',
       cancellation_policy: cfg.cancellation_policy || '',
-      services: enabledServices.map((s) => ({
-        id: s.id,
-        name: s.name,
-        duration_minutes: s.duration_minutes,
-        price: s.price ?? '',
-        description: s.description ?? '',
-      })),
+      services: enabledServices.map((s) => {
+        const cents = servicePriceCents(s);
+        const enabledAddons = Array.isArray(s.addons)
+          ? s.addons
+              .filter((a) => a && a.enabled !== false && typeof a.name === 'string' && a.name.trim() !== '')
+              .map((a) => ({
+                id: a.id,
+                name: a.name,
+                price_cents: typeof a.price_cents === 'number' && a.price_cents > 0 ? a.price_cents : 0,
+              }))
+          : [];
+        return {
+          id: s.id,
+          name: s.name,
+          duration_minutes: s.duration_minutes,
+          // `price` retained for display fallback; widgets prefer price_cents.
+          price: s.price ?? (cents != null ? formatCents(cents) : ''),
+          price_cents: cents,
+          description: s.description ?? '',
+          addons: enabledAddons,
+        };
+      }),
       availability: cfg.availability || {},
     }),
   };

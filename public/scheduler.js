@@ -293,7 +293,34 @@
       slotISO: null,
       details: {},
       step: null,
+      // Map of addon_id → true for the selected add-ons on the currently
+      // chosen service. Cleared whenever the service changes.
+      addonSelections: {},
+      // True once the customer has confirmed the add-ons step (or skipped
+      // it because there are none). Reset when service changes.
+      addonsConfirmed: false,
     };
+
+    function serviceAddons(s) {
+      return (s && Array.isArray(s.addons)) ? s.addons : [];
+    }
+    function selectedAddons() {
+      return serviceAddons(state.service).filter(function (a) {
+        return state.addonSelections[a.id];
+      });
+    }
+    function formatCents(cents) {
+      if (typeof cents !== 'number' || cents <= 0) return '';
+      if (cents % 100 === 0) return '$' + (cents / 100);
+      return '$' + (cents / 100).toFixed(2);
+    }
+    function totalCents() {
+      if (!state.service) return null;
+      var base = typeof state.service.price_cents === 'number' ? state.service.price_cents : null;
+      if (base == null) return null;
+      var addOnTotal = selectedAddons().reduce(function (sum, a) { return sum + (a.price_cents || 0); }, 0);
+      return base + addOnTotal;
+    }
 
     function close() { container.remove(); }
 
@@ -357,9 +384,24 @@
         return renderSuccess();
       }
       if (!state.service && enabledServices.length > 1) return renderServices(enabledServices);
+      // Add-ons step lives between service pick and date/time. Skipped if
+      // the chosen service has no add-ons to offer.
+      if (state.service && serviceAddons(state.service).length > 0 && !state.addonsConfirmed) {
+        return renderAddons();
+      }
       if (!state.dateISO || !state.slotISO) return renderDateTime();
       if (!state.details.submitted) return renderDetails();
       return renderSuccess();
+    }
+
+    // Step counts: service-pick (if >1 service) + add-ons (if any) +
+    // date/time + details. Used by stepBar() for the progress indicator.
+    function stepCounts() {
+      var enabledServices = (cfg.services || []).filter(function (s) { return s.enabled !== false; });
+      var hasMultipleServices = enabledServices.length > 1;
+      var hasAddons = state.service && serviceAddons(state.service).length > 0;
+      var total = 2 + (hasMultipleServices ? 1 : 0) + (hasAddons ? 1 : 0);
+      return { total: total, hasMultipleServices: hasMultipleServices, hasAddons: hasAddons };
     }
 
     function renderSimpleForm(services) {
@@ -489,47 +531,134 @@
     }
 
     function renderServices(services) {
-      var totalSteps = 3;
+      var counts = stepCounts();
       var items = services.map(function (s) {
+        var priceLabel = (typeof s.price_cents === 'number' && s.price_cents > 0)
+          ? formatCents(s.price_cents)
+          : (s.price || '');
         return '<button type="button" data-svc="' + esc(s.id) + '" style="display:block;width:100%;text-align:left;padding:16px 18px;margin-bottom:10px;border:1px solid ' + T.chipBorder + ';border-radius:12px;background:' + T.chipBg + ';color:' + T.text + ';cursor:pointer;transition:all 0.15s ease;font-family:' + FONT + ';" onmouseover="this.style.borderColor=\'' + brand + '\';this.style.background=\'' + T.chipHoverBg + '\';" onmouseout="this.style.borderColor=\'' + T.chipBorder + '\';this.style.background=\'' + T.chipBg + '\';">' +
           '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;">' +
             '<div style="font-weight:700;color:' + T.text + ';font-size:15px;letter-spacing:-0.2px;">' + esc(s.name) + '</div>' +
-            (s.price ? '<div style="font-weight:700;color:' + brand + ';font-size:14px;white-space:nowrap;">' + esc(s.price) + '</div>' : '') +
+            (priceLabel ? '<div style="font-weight:700;color:' + brand + ';font-size:14px;white-space:nowrap;">' + esc(priceLabel) + '</div>' : '') +
           '</div>' +
           '<div style="font-size:12px;color:' + T.softMuted + ';margin-top:4px;letter-spacing:0.2px;">' + esc(s.duration_minutes) + ' min appointment</div>' +
           (s.description ? '<div style="font-size:13px;color:' + T.muted + ';margin-top:8px;line-height:1.5;">' + esc(s.description) + '</div>' : '') +
         '</button>';
       }).join('');
-      card.innerHTML = brandBar() + brandHeader() + stepBar(1, totalSteps) +
+      card.innerHTML = brandBar() + brandHeader() + stepBar(1, counts.total) +
         sectionTitle('Pick a service', cfg.welcome_text || '') +
         bodyOpen() + items + bodyClose();
       wireClose();
       card.querySelectorAll('[data-svc]').forEach(function (btn) {
         btn.addEventListener('click', function () {
           state.service = services.find(function (s) { return s.id === btn.getAttribute('data-svc'); });
+          // Reset add-on state whenever the service changes — the previous
+          // selection belonged to a different menu.
+          state.addonSelections = {};
+          state.addonsConfirmed = false;
           render();
         });
       });
     }
 
+    function renderAddons() {
+      var counts = stepCounts();
+      var addons = serviceAddons(state.service);
+      var basePriceCents = (typeof state.service.price_cents === 'number' && state.service.price_cents > 0)
+        ? state.service.price_cents
+        : null;
+      var items = addons.map(function (a) {
+        var checked = !!state.addonSelections[a.id];
+        var priceLabel = a.price_cents > 0 ? ('+' + formatCents(a.price_cents)) : 'Free';
+        var borderColor = checked ? brand : T.chipBorder;
+        var bg = checked ? T.chipHoverBg : T.chipBg;
+        return '<label data-addon-row="' + esc(a.id) + '" style="display:flex;align-items:center;gap:12px;padding:14px 16px;margin-bottom:8px;border:1px solid ' + borderColor + ';border-radius:12px;background:' + bg + ';color:' + T.text + ';cursor:pointer;transition:all 0.15s ease;font-family:' + FONT + ';">' +
+          '<input type="checkbox" data-addon="' + esc(a.id) + '"' + (checked ? ' checked' : '') + ' style="width:18px;height:18px;accent-color:' + brand + ';flex-shrink:0;cursor:pointer;" />' +
+          '<div style="flex:1;font-weight:600;font-size:14px;color:' + T.text + ';">' + esc(a.name) + '</div>' +
+          '<div style="font-weight:700;color:' + brand + ';font-size:14px;white-space:nowrap;">' + esc(priceLabel) + '</div>' +
+        '</label>';
+      }).join('');
+
+      var currentStep = (counts.hasMultipleServices ? 2 : 1);
+      var totalLabel = '';
+      var totalC = totalCents();
+      if (totalC != null) {
+        totalLabel = '<div style="display:flex;justify-content:space-between;align-items:baseline;padding:14px 16px;margin-top:6px;background:' + T.subtle + ';border-radius:12px;">' +
+          '<div style="font-weight:600;font-size:13px;color:' + T.muted + ';letter-spacing:0.3px;text-transform:uppercase;">Total</div>' +
+          '<div style="font-weight:800;font-size:18px;color:' + T.text + ';">' + esc(formatCents(totalC)) + '</div>' +
+        '</div>';
+      } else if (basePriceCents == null) {
+        totalLabel = '<div style="padding:10px 12px;margin-top:6px;background:' + T.subtle + ';border-radius:10px;font-size:12px;color:' + T.muted + ';">Price for this service is quoted at booking. Add-ons listed are extras you can request.</div>';
+      }
+
+      var subtitle = state.service.name + ' · ' + state.service.duration_minutes + ' min';
+
+      card.innerHTML = brandBar() + brandHeader() + stepBar(currentStep + 1, counts.total) +
+        sectionTitle('Want any add-ons?', subtitle) +
+        bodyOpen() +
+          '<div id="acg-addons-list">' + items + '</div>' +
+          totalLabel +
+          '<div style="display:flex;gap:10px;margin-top:18px;justify-content:space-between;align-items:center;">' +
+            (counts.hasMultipleServices
+              ? '<button type="button" data-back style="background:none;border:0;color:' + T.softMuted + ';cursor:pointer;font-size:13px;font-weight:600;font-family:' + FONT + ';padding:6px 0;">← Back</button>'
+              : '<span></span>') +
+            '<button type="button" data-continue style="padding:12px 26px;background:' + brand + ';color:#fff;border:0;border-radius:12px;font-family:' + FONT + ';font-weight:700;font-size:14px;cursor:pointer;letter-spacing:0.2px;">Continue</button>' +
+          '</div>' +
+        bodyClose();
+      wireClose();
+
+      card.querySelectorAll('[data-addon]').forEach(function (input) {
+        input.addEventListener('change', function () {
+          state.addonSelections[input.getAttribute('data-addon')] = input.checked;
+          renderAddons();
+        });
+      });
+      var backBtn = card.querySelector('[data-back]');
+      if (backBtn) backBtn.addEventListener('click', function () {
+        state.service = null;
+        state.addonSelections = {};
+        state.addonsConfirmed = false;
+        render();
+      });
+      card.querySelector('[data-continue]').addEventListener('click', function () {
+        state.addonsConfirmed = true;
+        render();
+      });
+    }
+
     function renderDateTime() {
-      var hasMultipleServices = cfg.services && cfg.services.length > 1;
-      var totalSteps = hasMultipleServices ? 3 : 2;
-      var currentStep = hasMultipleServices ? 2 : 1;
+      var counts = stepCounts();
+      // Step number: service(?) + addons(?) + 1 = us
+      var currentStep = 1 + (counts.hasMultipleServices ? 1 : 0) + (counts.hasAddons ? 1 : 0);
       var subtitle = state.service ? state.service.name + ' · ' + state.service.duration_minutes + ' min' : '';
-      card.innerHTML = brandBar() + brandHeader() + stepBar(currentStep, totalSteps) +
+      var totalC = totalCents();
+      if (totalC != null && selectedAddons().length > 0) {
+        subtitle += ' · ' + formatCents(totalC) + ' total';
+      }
+      var canGoBack = state.service && (counts.hasMultipleServices || counts.hasAddons);
+      card.innerHTML = brandBar() + brandHeader() + stepBar(currentStep, counts.total) +
         sectionTitle('Pick a date and time', subtitle) +
         bodyOpen() +
           '<div id="acg-cal" style="margin-bottom:14px;"></div>' +
           '<div id="acg-slots" style="display:flex;flex-wrap:wrap;gap:6px;min-height:32px;"></div>' +
-          (state.service && hasMultipleServices
+          (canGoBack
             ? '<button type="button" data-back style="margin-top:18px;background:none;border:0;color:' + T.softMuted + ';cursor:pointer;font-size:13px;font-weight:600;font-family:' + FONT + ';padding:0;">← Back</button>'
             : '') +
         bodyClose();
       wireClose();
       renderCalendar(card.querySelector('#acg-cal'));
       var backBtn = card.querySelector('[data-back]');
-      if (backBtn) backBtn.addEventListener('click', function () { state.service = null; state.dateISO = null; state.slotISO = null; render(); });
+      if (backBtn) backBtn.addEventListener('click', function () {
+        // Step back to add-ons if there are any; otherwise back to service pick.
+        state.dateISO = null;
+        state.slotISO = null;
+        if (counts.hasAddons) {
+          state.addonsConfirmed = false;
+        } else {
+          state.service = null;
+        }
+        render();
+      });
     }
 
     function renderCalendar(host) {
@@ -600,10 +729,25 @@
     }
 
     function renderDetails() {
-      var hasMultipleServices = cfg.services && cfg.services.length > 1;
-      var totalSteps = hasMultipleServices ? 3 : 2;
+      var counts = stepCounts();
       var whenLabel = new Date(state.slotISO).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'UTC' });
       var subtitle = (state.service ? state.service.name + ' · ' : '') + whenLabel;
+      var chosenAddons = selectedAddons();
+      var totalC = totalCents();
+      var breakdown = '';
+      if (totalC != null) {
+        var lines = '';
+        var baseLabel = formatCents(state.service.price_cents);
+        lines += '<div style="display:flex;justify-content:space-between;font-size:13px;color:' + T.muted + ';padding:2px 0;">' +
+          '<span>' + esc(state.service.name) + '</span><span>' + esc(baseLabel) + '</span></div>';
+        chosenAddons.forEach(function (a) {
+          lines += '<div style="display:flex;justify-content:space-between;font-size:13px;color:' + T.muted + ';padding:2px 0;">' +
+            '<span>+ ' + esc(a.name) + '</span><span>' + esc(formatCents(a.price_cents)) + '</span></div>';
+        });
+        lines += '<div style="display:flex;justify-content:space-between;font-size:14px;font-weight:800;color:' + T.text + ';padding:6px 0 0;border-top:1px solid ' + T.divider + ';margin-top:6px;">' +
+          '<span>Total</span><span>' + esc(formatCents(totalC)) + '</span></div>';
+        breakdown = '<div style="padding:12px 14px;margin-bottom:14px;background:' + T.subtle + ';border-radius:10px;">' + lines + '</div>';
+      }
       // Cancellation policy link + collapsible body. Only rendered when the
       // business owner has set a policy in Booking Settings. Agreement is
       // implicit by submitting — link is offered so customers can review
@@ -620,9 +764,10 @@
             esc(policyText) +
           '</div>';
       }
-      card.innerHTML = brandBar() + brandHeader() + stepBar(totalSteps, totalSteps) +
+      card.innerHTML = brandBar() + brandHeader() + stepBar(counts.total, counts.total) +
         sectionTitle('Your details', subtitle) +
         bodyOpen() +
+          breakdown +
           '<form id="acg-booking-form" novalidate>' +
             // Row 1: Name | Email
             row(
@@ -700,6 +845,7 @@
       var errBox = card.querySelector('#acg-form-error');
       errBox.style.display = 'none';
       var data = Object.fromEntries(new FormData(form).entries());
+      var chosen = selectedAddons();
       var payload = {
         siteId: siteId,
         customer_name: data.customer_name,
@@ -715,6 +861,7 @@
         referral_source: data.referral_source || undefined,
         website: data.website || undefined,
         service_id: state.service ? state.service.id : undefined,
+        addon_ids: chosen.map(function (a) { return a.id; }),
       };
       var submitBtn = form.querySelector('button[type="submit"]');
       submitBtn.disabled = true;

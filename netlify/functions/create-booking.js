@@ -4,7 +4,11 @@ import { newBookingToOwner, bookingReceivedToCustomer } from './_lib/postmark.js
 import { computeSlots } from './_lib/slot-math.js';
 import { isEffectiveSchedulerActive } from './_lib/subscription-gating.js';
 import { getStripe } from './_lib/stripe.js';
-import { parsePriceToCents, computeDepositCents } from './_lib/deposit-math.js';
+import {
+  computeDepositCents,
+  servicePriceCents,
+  computeTotalCents,
+} from './_lib/deposit-math.js';
 import { checkAndRecordRateLimit } from './_shared/rateLimit.js';
 import { PUBLIC_CORS, PUBLIC_CORS_JSON } from './_shared/cors.js';
 
@@ -85,6 +89,33 @@ export const handler = async (event) => {
     chosenService = enabledServices[0];
   }
 
+  // Resolve + validate add-ons. The widget sends `addon_ids: [...]`.
+  // We snapshot full add-on rows onto the booking so subsequent edits to
+  // the owner's menu don't rewrite history. Unknown / disabled IDs are
+  // rejected — the user wants the price to be accurate.
+  const requestedAddonIds = Array.isArray(payload.addon_ids) ? payload.addon_ids : [];
+  let resolvedAddons = [];
+  if (requestedAddonIds.length > 0) {
+    if (!chosenService) {
+      return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'add-ons require a service' }) };
+    }
+    const available = Array.isArray(chosenService.addons) ? chosenService.addons : [];
+    for (const id of requestedAddonIds) {
+      const match = available.find((a) => a.id === id && a.enabled !== false);
+      if (!match) {
+        return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Unknown or disabled add-on' }) };
+      }
+      resolvedAddons.push({
+        id: match.id,
+        name: match.name,
+        price_cents: typeof match.price_cents === 'number' && match.price_cents > 0 ? match.price_cents : 0,
+      });
+    }
+  }
+
+  const servicePriceCentsValue = chosenService ? servicePriceCents(chosenService) : null;
+  const totalCents = computeTotalCents(servicePriceCentsValue, resolvedAddons);
+
   const when = new Date(payload.preferred_at);
   const isSimple = cfg.booking_mode === 'simple' || payload.is_simple_request === true;
 
@@ -149,6 +180,9 @@ export const handler = async (event) => {
       referral_source: payload.referral_source || null,
       service_id: chosenService?.id || null,
       service_name: chosenService?.name || null,
+      service_price_cents: servicePriceCentsValue,
+      addons: resolvedAddons.length > 0 ? resolvedAddons : null,
+      total_cents: totalCents,
     })
     .select()
     .single();
@@ -159,13 +193,14 @@ export const handler = async (event) => {
   }
 
   // Compute deposit if configured. Failures here are non-fatal — the booking
-  // still exists; we just don't take a deposit.
+  // still exists; we just don't take a deposit. Deposit basis is the full
+  // total (service + add-ons), so what the customer pays upfront matches
+  // what they saw in the booking summary.
   let checkoutUrl = null;
   let depositRequiredCents = null;
   try {
     const pct = Number(cfg.deposit_percentage) || 0;
-    const priceCents = chosenService ? parsePriceToCents(chosenService.price) : null;
-    depositRequiredCents = computeDepositCents(priceCents, pct);
+    depositRequiredCents = computeDepositCents(totalCents, pct);
 
     const connectReady = owner.stripe_connect_account_id && owner.stripe_connect_charges_enabled === true;
 
@@ -173,6 +208,9 @@ export const handler = async (event) => {
       const stripe = getStripe();
       const successBase = `${process.env.APP_URL || ''}/booking-confirmed`;
       const cancelBase  = `${process.env.APP_URL || ''}/booking-cancelled`;
+      const addonSummary = resolvedAddons.length > 0
+        ? ` + ${resolvedAddons.length} add-on${resolvedAddons.length === 1 ? '' : 's'}`
+        : '';
 
       const checkoutSession = await stripe.checkout.sessions.create({
         mode: 'payment',
@@ -182,7 +220,7 @@ export const handler = async (event) => {
             currency: 'usd',
             unit_amount: depositRequiredCents,
             product_data: {
-              name: `Deposit — ${chosenService.name}`,
+              name: `Deposit — ${chosenService.name}${addonSummary}`,
               description: `Deposit toward your booking with ${site.business_info?.businessName || 'us'}.`,
             },
           },

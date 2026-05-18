@@ -1,6 +1,12 @@
 // tests/functions/deposit-math.test.js
 import { describe, it, expect } from 'vitest';
-import { parsePriceToCents, computeDepositCents } from '../../netlify/functions/_lib/deposit-math.js';
+import {
+  parsePriceToCents,
+  computeDepositCents,
+  servicePriceCents,
+  sumAddonsCents,
+  computeTotalCents,
+} from '../../netlify/functions/_lib/deposit-math.js';
 
 describe('parsePriceToCents', () => {
   it('plain integer string', () => { expect(parsePriceToCents('99')).toBe(9900); });
@@ -36,5 +42,56 @@ describe('computeDepositCents', () => {
   });
   it('Stripe minimum check: deposits below 50¢ → null', () => {
     expect(computeDepositCents(100, 25)).toBeNull(); // 25¢ — below Stripe's $0.50 minimum
+  });
+});
+
+describe('servicePriceCents', () => {
+  it('prefers numeric price_cents', () => {
+    expect(servicePriceCents({ price_cents: 14900, price: '$1,000,000' })).toBe(14900);
+  });
+  it('falls back to legacy free-text price', () => {
+    expect(servicePriceCents({ price: '$149' })).toBe(14900);
+  });
+  it('null when neither parseable', () => {
+    expect(servicePriceCents({ price: 'Call for quote' })).toBeNull();
+    expect(servicePriceCents({})).toBeNull();
+    expect(servicePriceCents(null)).toBeNull();
+  });
+  it('ignores zero / negative price_cents', () => {
+    expect(servicePriceCents({ price_cents: 0, price: '$50' })).toBe(5000);
+    expect(servicePriceCents({ price_cents: -10, price: '$50' })).toBe(5000);
+  });
+});
+
+describe('sumAddonsCents', () => {
+  it('empty list returns 0', () => {
+    expect(sumAddonsCents([])).toBe(0);
+    expect(sumAddonsCents(null)).toBe(0);
+    expect(sumAddonsCents(undefined)).toBe(0);
+  });
+  it('sums valid price_cents', () => {
+    expect(sumAddonsCents([{ price_cents: 2500 }, { price_cents: 3500 }])).toBe(6000);
+  });
+  it('ignores items without numeric price_cents', () => {
+    expect(sumAddonsCents([{ price_cents: 2500 }, { price_cents: 'oops' }, {}])).toBe(2500);
+  });
+  it('ignores zero/negative entries (defensive)', () => {
+    expect(sumAddonsCents([{ price_cents: 2500 }, { price_cents: 0 }, { price_cents: -100 }])).toBe(2500);
+  });
+});
+
+describe('computeTotalCents', () => {
+  it('service + no add-ons', () => {
+    expect(computeTotalCents(14900, [])).toBe(14900);
+    expect(computeTotalCents(14900, null)).toBe(14900);
+  });
+  it('service + add-ons', () => {
+    expect(computeTotalCents(14900, [{ price_cents: 2500 }, { price_cents: 3500 }])).toBe(20900);
+  });
+  it('null service price → null total', () => {
+    expect(computeTotalCents(null, [{ price_cents: 2500 }])).toBeNull();
+  });
+  it('zero/negative service price → null', () => {
+    expect(computeTotalCents(0, [{ price_cents: 2500 }])).toBeNull();
   });
 });

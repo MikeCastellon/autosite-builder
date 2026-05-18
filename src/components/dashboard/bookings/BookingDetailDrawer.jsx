@@ -119,12 +119,39 @@ export default function BookingDetailDrawer({ booking, onClose, onUpdated }) {
         <dl className="text-sm space-y-2 mb-6">
           <Row term="When"     def={fmt(b.preferred_at)} />
           <Row term="Vehicle"  def={`${b.vehicle_year} ${b.vehicle_make} ${b.vehicle_model} (${b.vehicle_size})`} />
+          {b.service_name     && <Row term="Service" def={b.service_name} />}
           {b.service_address  && <Row term="Address" def={b.service_address} />}
           {b.notes            && <Row term="Notes" def={b.notes} />}
           {b.referral_source  && <Row term="Heard via" def={b.referral_source} />}
           {b.declined_reason  && <Row term="Declined" def={b.declined_reason} />}
           <Row term="Created" def={fmt(b.created_at)} />
         </dl>
+
+        {Array.isArray(b.addons) && b.addons.length > 0 && (
+          <div className="border-t border-black/[0.07] pt-4 mt-4 mb-6">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-[#888] mb-2">Add-ons & total</h3>
+            <dl className="text-sm space-y-1">
+              {b.service_price_cents != null && (
+                <div className="flex justify-between">
+                  <dt className="text-[#888]">{b.service_name || 'Service'}</dt>
+                  <dd className="font-mono">${(b.service_price_cents / 100).toFixed(2)}</dd>
+                </div>
+              )}
+              {b.addons.map((a) => (
+                <div key={a.id} className="flex justify-between">
+                  <dt className="text-[#888]">+ {a.name}</dt>
+                  <dd className="font-mono">${((a.price_cents || 0) / 100).toFixed(2)}</dd>
+                </div>
+              ))}
+              {b.total_cents != null && (
+                <div className="flex justify-between border-t border-black/[0.07] pt-1 mt-1">
+                  <dt className="font-semibold text-[#1a1a1a]">Total</dt>
+                  <dd className="font-mono font-semibold">${(b.total_cents / 100).toFixed(2)}</dd>
+                </div>
+              )}
+            </dl>
+          </div>
+        )}
 
         {b?.deposit_status && b.deposit_status !== 'not_required' && (
           <div className="border-t border-black/[0.07] pt-4 mt-4 mb-6">

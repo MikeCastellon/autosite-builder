@@ -2,6 +2,29 @@ import { supabase } from './supabase.js';
 
 const DEFAULT_HOURS = [{ start: '09:00', end: '17:00' }];
 
+// Mirror of netlify/functions/_lib/deposit-math.js parsePriceToCents.
+// Kept inline so the dashboard bundle doesn't need to import server-only code.
+export function parseDollarsToCents(input) {
+  if (input == null) return null;
+  if (typeof input === 'number') {
+    return Number.isFinite(input) && input > 0 ? Math.round(input * 100) : null;
+  }
+  if (typeof input !== 'string') return null;
+  const cleaned = input.replace(/[\s$,]/g, '');
+  const match = cleaned.match(/^(\d+)(?:\.(\d{1,2}))?/);
+  if (!match) return null;
+  const dollars = parseInt(match[1], 10);
+  const fractional = match[2] ? parseInt(match[2].padEnd(2, '0'), 10) : 0;
+  const cents = dollars * 100 + fractional;
+  return cents > 0 ? cents : null;
+}
+
+export function formatCentsAsDisplay(cents) {
+  if (typeof cents !== 'number' || cents <= 0) return '';
+  if (cents % 100 === 0) return `$${cents / 100}`;
+  return `$${(cents / 100).toFixed(2)}`;
+}
+
 export function defaultSchedulerConfig() {
   return {
     welcome_text: "Tell us about your car and we'll be in touch.",
@@ -23,18 +46,48 @@ function newServiceId() {
   return 'svc_' + (crypto.randomUUID ? crypto.randomUUID().replace(/-/g, '').slice(0, 12) : Math.random().toString(36).slice(2, 14));
 }
 
+export function newAddonId() {
+  return 'add_' + (crypto.randomUUID ? crypto.randomUUID().replace(/-/g, '').slice(0, 12) : Math.random().toString(36).slice(2, 14));
+}
+
 export function seedServicesFromBusinessInfo(bizServices) {
   if (!Array.isArray(bizServices)) return [];
   return bizServices
     .filter((s) => s && typeof s.name === 'string' && s.name.trim() !== '')
-    .map((s) => ({
-      id: newServiceId(),
-      name: String(s.name),
-      duration_minutes: 60,
-      price: s.price ?? '',
-      description: s.description ?? '',
-      enabled: true,
+    .map((s) => {
+      const cents = parseDollarsToCents(s.price);
+      return {
+        id: newServiceId(),
+        name: String(s.name),
+        duration_minutes: 60,
+        price: s.price ?? '',
+        price_cents: cents,
+        description: s.description ?? '',
+        enabled: true,
+        addons: [],
+      };
+    });
+}
+
+// Bring an existing service forward into the new shape — fills price_cents
+// from the legacy text and guarantees an addons[] array. Idempotent.
+export function normalizeService(service) {
+  if (!service || typeof service !== 'object') return service;
+  const out = { ...service };
+  if (typeof out.price_cents !== 'number' || out.price_cents <= 0) {
+    const parsed = parseDollarsToCents(out.price);
+    if (parsed != null) out.price_cents = parsed;
+  }
+  if (!Array.isArray(out.addons)) out.addons = [];
+  out.addons = out.addons
+    .filter((a) => a && typeof a.name === 'string')
+    .map((a) => ({
+      id: a.id || newAddonId(),
+      name: String(a.name),
+      price_cents: typeof a.price_cents === 'number' && a.price_cents > 0 ? a.price_cents : 0,
+      enabled: a.enabled !== false,
     }));
+  return out;
 }
 
 export function mergeServicesFromBusinessInfo(existing, bizServices) {
