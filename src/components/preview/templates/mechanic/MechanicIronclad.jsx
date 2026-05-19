@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
-import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import SectionRenderer, { isRendererManagedType } from '../../sections/SectionRenderer.jsx';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 
@@ -61,8 +61,12 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
-  const hidden = (id) => copy?.hiddenSections?.includes(id);
-  const getOrder = buildSectionOrder(copy, ['hero','ticker','ctaBand','about','services','gallery','whyUs','testimonials','cta']);
+  const sectionsList = copy?.sections || [];
+  const present = (type) => sectionsList.some(s => s.type === type);
+  const orderFor = (type) => {
+    const idx = sectionsList.findIndex(s => s.type === type);
+    return idx >= 0 ? idx : 999;
+  };
 
   // ── Font stacks ───────────────────────────────────────────────────
   const bebas     = "'Bebas Neue', 'Barlow Condensed', sans-serif";
@@ -228,9 +232,9 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
       {/* ═══════════════════════════════════════════════════════════
           HERO — full-viewport, diagonal steel-plate layout
       ═══════════════════════════════════════════════════════════ */}
-      {!hidden('hero') && (
+      {present('hero') && (
       <header
-        style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh', order: getOrder('hero') } : { minHeight: '100vh', paddingTop: 68, position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', order: getOrder('hero') }}
+        style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh', order: orderFor('hero') } : { minHeight: '100vh', paddingTop: 68, position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', order: orderFor('hero') }}
       >
         {!splitHero && <HeroImage src={images.hero} />}
         {/* Dark diagonal base gradient */}
@@ -324,8 +328,8 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
       {/* ═══════════════════════════════════════════════════════════
           MARQUEE TICKER
       ═══════════════════════════════════════════════════════════ */}
-      {!hidden('ticker') && (
-      <div style={{ background: c.accent, borderTop: '2px solid #8B0000', borderBottom: '2px solid #8B0000', padding: '14px 0', overflow: 'hidden', order: getOrder('ticker') }}>
+      {present('ticker') && (
+      <div style={{ background: c.accent, borderTop: '2px solid #8B0000', borderBottom: '2px solid #8B0000', padding: '14px 0', overflow: 'hidden', order: orderFor('ticker') }}>
         <div style={{ display: 'flex', animation: 'ironcladMarquee 28s linear infinite', width: 'max-content' }}>
           {[0, 1].map((pass) =>
             (services.length > 0
@@ -350,8 +354,8 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
       {/* ═══════════════════════════════════════════════════════════
           SERVICES GRID
       ═══════════════════════════════════════════════════════════ */}
-      {!hidden('services') && (
-      <section id="services" style={{ padding: 'clamp(72px, 10cqi, 120px) 5%', background: '#141414', position: 'relative' , order: getOrder('services') }}>
+      {present('services') && (
+      <section id="services" style={{ padding: 'clamp(72px, 10cqi, 120px) 5%', background: '#141414', position: 'relative' , order: orderFor('services') }}>
         {/* Top dashed rust stripe */}
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, backgroundImage: dashedRust }} />
         <div style={{ maxWidth: 1200, margin: '0 auto'  }}>
@@ -395,8 +399,8 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
       {/* ═══════════════════════════════════════════════════════════
           ABOUT / SHOP — split: CSS garage visual | copy
       ═══════════════════════════════════════════════════════════ */}
-      {!hidden('about') && (
-      <section id="about" style={{ background: c.bg, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', borderTop: '1px solid rgba(255,255,255,0.06)' , order: getOrder('about') }}>
+      {present('about') && (
+      <section id="about" style={{ background: c.bg, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', borderTop: '1px solid rgba(255,255,255,0.06)' , order: orderFor('about') }}>
 
         {/* LEFT — garage visual / about image */}
         <div style={{ position: 'relative', minHeight: 520, background: '#242424', overflow: 'hidden'  }}>
@@ -476,8 +480,8 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
       )}
 
       {/* GALLERY */}
-      {!hidden('gallery') && (
-      <div style={{ order: getOrder('gallery') }}>
+      {present('gallery') && (
+      <div style={{ order: orderFor('gallery') }}>
       <GallerySection images={images} colors={c} font={templateMeta.font} bodyFont={bodyFont} />
       </div>
       )}
@@ -485,8 +489,8 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
       {/* ═══════════════════════════════════════════════════════════
           WHY IRONCLAD — 4-cell grid
       ═══════════════════════════════════════════════════════════ */}
-      {!hidden('whyUs') && (
-      <section style={{ background: '#1C1C1C', padding: 'clamp(72px, 10cqi, 100px) 5%', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' , order: getOrder('whyUs') }}>
+      {present('whyUs') && (
+      <section style={{ background: '#1C1C1C', padding: 'clamp(72px, 10cqi, 100px) 5%', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' , order: orderFor('whyUs') }}>
         <div style={{ maxWidth: 1200, margin: '0 auto'  }}>
           <div style={{ marginBottom: 64 }}>
             <EyebrowBar label="Why Choose Us" />
@@ -516,14 +520,14 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
       {/* ═══════════════════════════════════════════════════════════
           TESTIMONIALS
       ═══════════════════════════════════════════════════════════ */}
-      {!hidden('testimonials') && (
+      {present('testimonials') && (
         copy?.googleWidgetKey ? (
-          <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+          <div style={{ order: orderFor('testimonials'), padding: '80px 5%' }}>
             {copy.googleReviewsTitle && <h2 style={{ fontFamily: bebas || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} theme={copy?.googleReviewsTheme} />
           </div>
         ) : testimonials.length > 0 ? (
-        <section id="testimonials" style={{ background: c.bg, padding: 'clamp(72px, 10cqi, 100px) 5%', position: 'relative' , order: getOrder('testimonials') }}>
+        <section id="testimonials" style={{ background: c.bg, padding: 'clamp(72px, 10cqi, 100px) 5%', position: 'relative' , order: orderFor('testimonials') }}>
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, backgroundImage: dashedRust }} />
           <div style={{ maxWidth: 1200, margin: '0 auto' }}>
             <div style={{ marginBottom: 64 }}>
@@ -569,10 +573,10 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
       {/* ═══════════════════════════════════════════════════════════
           CONTACT + HOURS — two-column
       ═══════════════════════════════════════════════════════════ */}
-      {!hidden('cta') && (
+      {present('cta') && (
       <section
         id="contact"
-        style={{ background: '#141414', padding: 'clamp(72px, 10cqi, 100px) 5%', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'clamp(40px, 6cqi, 80px)', alignItems: 'start', order: getOrder('cta') }}
+        style={{ background: '#141414', padding: 'clamp(72px, 10cqi, 100px) 5%', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'clamp(40px, 6cqi, 80px)', alignItems: 'start', order: orderFor('cta') }}
       >
         {/* Left — contact detail cards */}
         <div>
@@ -583,7 +587,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
           <p style={{ fontSize: 15, color: '#6B6560', lineHeight: 1.75, marginBottom: 36, maxWidth: 380 }}>
             {copy.footerTagline || `Serving ${biz.city || 'your area'} and surrounding communities.`}
           </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 3 , order: getOrder('cta') }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 3 , order: orderFor('cta') }}>
             {biz.phone && (
               <a href={`tel:${biz.phone}`} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '20px 24px', background: '#1C1C1C', borderLeft: `3px solid ${c.accent}`, textDecoration: 'none' }}>
                 <span style={{ fontSize: 20, width: 28, textAlign: 'center' }}>📞</span>
@@ -641,8 +645,8 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
       {/* ═══════════════════════════════════════════════════════════
           CTA BAND
       ═══════════════════════════════════════════════════════════ */}
-      {!hidden('ctaBand') && (
-      <section style={{ background: c.accent, padding: 'clamp(64px, 10cqi, 96px) 5%', textAlign: 'center', position: 'relative', overflow: 'hidden', order: getOrder('ctaBand') }}>
+      {present('ctaBand') && (
+      <section style={{ background: c.accent, padding: 'clamp(64px, 10cqi, 96px) 5%', textAlign: 'center', position: 'relative', overflow: 'hidden', order: orderFor('ctaBand') }}>
         <div style={{ position: 'absolute', inset: 0, backgroundImage: hatch, opacity: 0.4 }} />
         <div style={{ position: 'relative', zIndex: 1 }}>
           <h2 style={{ fontFamily: bebas, fontSize: 'clamp(36px, 6cqi, 72px)', letterSpacing: 3, color: '#fff', margin: '0 0 14px', lineHeight: 0.95 }}>
@@ -676,6 +680,14 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
       {/* ═══════════════════════════════════════════════════════════
           FOOTER
       ═══════════════════════════════════════════════════════════ */}
+      {sectionsList.map((inst, i) =>
+        isRendererManagedType(inst.type)
+          ? <SectionRenderer key={inst.id} instance={inst} order={i}
+              generatedCopy={generatedCopy} templateMeta={templateMeta}
+              businessInfo={businessInfo} images={images} />
+          : null
+      )}
+
       <footer style={{ background: c.bg, borderTop: `2px solid ${c.accent}`, padding: 'clamp(48px, 8cqi, 64px) 5% clamp(24px, 4cqi, 32px)', order: 9999 }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'clamp(28px, 5cqi, 56px)', marginBottom: 48 }}>

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
-import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import SectionRenderer, { isRendererManagedType } from '../../sections/SectionRenderer.jsx';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 
@@ -14,8 +14,12 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-  const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
-  const getOrder = buildSectionOrder(generatedCopy, ['hero','statsBar','services','about','gallery','testimonials','cta']);
+  const sectionsList = generatedCopy?.sections || [];
+  const present = (type) => sectionsList.some(s => s.type === type);
+  const orderFor = (type) => {
+    const idx = sectionsList.findIndex(s => s.type === type);
+    return idx >= 0 ? idx : 999;
+  };
 
   const c = templateMeta.colors;
   const font = templateMeta.font;
@@ -190,8 +194,8 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
       </nav>
 
       {/* HERO */}
-      {!hidden('hero') && (
-      <section style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh', order: getOrder('hero') } : { ...heroStyle, order: getOrder('hero') }}>
+      {present('hero') && (
+      <section style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh', order: orderFor('hero') } : { ...heroStyle, order: orderFor('hero') }}>
         {!splitHero && <HeroImage src={images.hero} />}
         {!splitHero && [...Array(8)].map((_, i) => (
           <div key={i} style={heroAccentLine(`${10 + i * 12}%`, i % 3 === 0 ? 0.08 : 0.04)} />
@@ -226,8 +230,8 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
       )}
 
       {/* STATS BAR */}
-      {!hidden('statsBar') && (
-      <section style={{ background: c.accent, padding: '36px 24px', fontFamily: bodyFont , order: getOrder('statsBar') }}>
+      {present('statsBar') && (
+      <section style={{ background: c.accent, padding: '36px 24px', fontFamily: bodyFont , order: orderFor('statsBar') }}>
         <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: '24px'  }}>
           {stats.map((s, i) => (
             <div key={i} style={{ textAlign: 'center' }}>
@@ -240,8 +244,8 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
       )}
 
       {/* SERVICES */}
-      {!hidden('services') && (
-      <section id="services" style={{ ...sectionStyle(), order: getOrder('services') }}>
+      {present('services') && (
+      <section id="services" style={{ ...sectionStyle(), order: orderFor('services') }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto'  }}>
           <div style={{ marginBottom: '56px' }}>
             <div style={{ color: c.accent, fontWeight: 800, fontSize: '0.78rem', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '10px' }}>What We Do</div>
@@ -280,8 +284,8 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
       </section>
 
       {/* PACKAGES */}
-      {!hidden('services') && businessInfo.packages && businessInfo.packages.length > 0 && (
-        <section id="packages" style={{ ...sectionStyle(), order: getOrder('services') }}>
+      {present('services') && businessInfo.packages && businessInfo.packages.length > 0 && (
+        <section id="packages" style={{ ...sectionStyle(), order: orderFor('services') }}>
           <div style={{ maxWidth: '1100px', margin: '0 auto'  }}>
             <h2 style={{ fontFamily: font, fontSize: '2.2rem', fontWeight: 900, color: c.text, textTransform: 'uppercase', marginBottom: '48px' }}>Service Packages</h2>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
@@ -298,8 +302,8 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
       )}
 
       {/* ABOUT */}
-      {!hidden('about') && (
-      <section id="about" style={{ ...sectionStyle(c.secondary), backgroundImage: concreteTexture , order: getOrder('about') }}>
+      {present('about') && (
+      <section id="about" style={{ ...sectionStyle(c.secondary), backgroundImage: concreteTexture , order: orderFor('about') }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', gap: '64px', alignItems: 'flex-start', flexWrap: 'wrap'  }}>
           <div style={{ flex: '1 1 340px' }}>
             <div style={{ color: c.accent, fontWeight: 800, fontSize: '0.78rem', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '10px' }}>Our Story</div>
@@ -357,21 +361,21 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
       )}
 
       {/* GALLERY */}
-      {!hidden('gallery') && (
-      <div style={{ order: getOrder('gallery') }}>
+      {present('gallery') && (
+      <div style={{ order: orderFor('gallery') }}>
       <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
       </div>
       )}
 
       {/* TESTIMONIALS */}
-      {!hidden('testimonials') && (
+      {present('testimonials') && (
         generatedCopy?.googleWidgetKey ? (
-          <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+          <div style={{ order: orderFor('testimonials'), padding: '80px 5%' }}>
             {generatedCopy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{generatedCopy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={generatedCopy.googleWidgetKey} theme={generatedCopy?.googleReviewsTheme} />
           </div>
         ) : generatedCopy.testimonialPlaceholders?.length > 0 ? (
-      <section style={{ ...sectionStyle(), order: getOrder('testimonials') }}>
+      <section style={{ ...sectionStyle(), order: orderFor('testimonials') }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto'  }}>
           <h2 style={{ fontFamily: font, fontSize: '2.2rem', fontWeight: 900, color: c.text, textTransform: 'uppercase', marginBottom: '48px' }}>Straight From Our Customers</h2>
           <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
@@ -389,8 +393,8 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
       )}
 
       {/* CONTACT CTA - orange background */}
-      {!hidden('cta') && (
-      <section id="contact" style={{ background: c.accent, padding: '72px 24px', fontFamily: bodyFont , order: getOrder('cta') }}>
+      {present('cta') && (
+      <section id="contact" style={{ background: c.accent, padding: '72px 24px', fontFamily: bodyFont , order: orderFor('cta') }}>
         <div style={{ maxWidth: '900px', margin: '0 auto', display: 'flex', gap: '48px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between'  }}>
           <div>
             <h2 style={{ fontFamily: font, fontSize: '2rem', fontWeight: 900, color: '#000000', textTransform: 'uppercase', marginBottom: '8px' }}>
@@ -417,6 +421,14 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
       )}
 
       {/* FOOTER */}
+      {sectionsList.map((inst, i) =>
+        isRendererManagedType(inst.type)
+          ? <SectionRenderer key={inst.id} instance={inst} order={i}
+              generatedCopy={generatedCopy} templateMeta={templateMeta}
+              businessInfo={businessInfo} images={images} />
+          : null
+      )}
+
       <footer style={{ background: '#0a0a0a', backgroundImage: concreteTexture, padding: '48px 24px', fontFamily: bodyFont , order: 9999 }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '32px', marginBottom: '36px' }}>
