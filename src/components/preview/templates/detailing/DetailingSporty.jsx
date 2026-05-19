@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
-import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import SectionRenderer, { isRendererManagedType } from '../../sections/SectionRenderer.jsx';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 
@@ -20,8 +20,12 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
-  const getOrder = buildSectionOrder(generatedCopy, ['hero', 'statsBar', 'services', 'about', 'gallery', 'testimonials', 'cta']);
+  const sectionsList = generatedCopy?.sections || [];
+  const present = (type) => sectionsList.some(s => s.type === type);
+  const orderFor = (type) => {
+    const idx = sectionsList.findIndex(s => s.type === type);
+    return idx >= 0 ? idx : 999;
+  };
 
   const s = {
     nav: {
@@ -219,8 +223,8 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
       </nav>
 
       {/* HERO */}
-      {!hidden('hero') && (
-      <section id="hero" style={splitHero ? { order: getOrder('hero'), display: 'flex', flexDirection: 'row', minHeight: '85vh' } : { ...s.hero, order: getOrder('hero') }}>
+      {present('hero') && (
+      <section id="hero" style={splitHero ? { order: orderFor('hero'), display: 'flex', flexDirection: 'row', minHeight: '85vh' } : { ...s.hero, order: orderFor('hero') }}>
         {!splitHero && <HeroImage src={images.hero} />}
         {!splitHero && <div style={s.heroSlash} />}
         {!splitHero && <div style={s.heroSlash2} />}
@@ -252,8 +256,8 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
       )}
 
       {/* STATS BAR */}
-      {!hidden('statsBar') && (
-      <div style={{ ...s.statsBar, order: getOrder('statsBar') }}>
+      {present('statsBar') && (
+      <div style={{ ...s.statsBar, order: orderFor('statsBar') }}>
         {stats.map((st, i) => (
           <div key={i} style={st.alt ? s.statBoxAlt : s.statBox}>
             <span style={st.alt ? s.statNumAlt : s.statNum}>{st.num}</span>
@@ -264,8 +268,8 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
       )}
 
       {/* SERVICES */}
-      {!hidden('services') && (
-      <section id="services" style={{ ...s.section, order: getOrder('services') }}>
+      {present('services') && (
+      <section id="services" style={{ ...s.section, order: orderFor('services') }}>
         <div style={s.sectionTag}>What We Do</div>
         <h2 style={s.sectionTitle}>Our Services</h2>
         <p style={s.sectionSub}>{generatedCopy.servicesSection?.intro}</p>
@@ -293,8 +297,8 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
       )}
 
       {/* ABOUT */}
-      {!hidden('about') && (
-      <section id="about" style={{ ...s.sectionAlt, order: getOrder('about') }}>
+      {present('about') && (
+      <section id="about" style={{ ...s.sectionAlt, order: orderFor('about') }}>
         <div style={s.aboutGrid}>
           {(generatedCopy?.aboutLayout || 'image') !== 'stats' ? (
             images.about
@@ -320,21 +324,21 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
       )}
 
       {/* GALLERY */}
-      {!hidden('gallery') && (
-      <div style={{ order: getOrder('gallery') }}>
+      {present('gallery') && (
+      <div style={{ order: orderFor('gallery') }}>
       <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
       </div>
       )}
 
       {/* TESTIMONIALS */}
-      {!hidden('testimonials') && (
+      {present('testimonials') && (
         generatedCopy?.googleWidgetKey ? (
-          <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+          <div style={{ order: orderFor('testimonials'), padding: '80px 5%' }}>
             {generatedCopy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{generatedCopy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={generatedCopy.googleWidgetKey} theme={generatedCopy?.googleReviewsTheme} />
           </div>
         ) : (generatedCopy.testimonialPlaceholders || []).length > 0 ? (
-      <section id="reviews" style={{ ...s.section, order: getOrder('testimonials') }}>
+      <section id="reviews" style={{ ...s.section, order: orderFor('testimonials') }}>
         <div style={s.sectionTag}>Real Reviews</div>
         <h2 style={{ ...s.sectionTitle, marginBottom: '2rem' }}>The People Know</h2>
         <div style={s.testimonialRow}>
@@ -351,8 +355,8 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
       )}
 
       {/* CTA SPLIT */}
-      {!hidden('cta') && (
-      <div style={{ ...s.ctaBand, order: getOrder('cta') }}>
+      {present('cta') && (
+      <div style={{ ...s.ctaBand, order: orderFor('cta') }}>
         <div style={s.ctaLeft}>
           <div style={s.ctaHeading}>{generatedCopy.ctaHeadline || fb.ctaHeadline}</div>
           <div style={s.ctaPhone}>{businessInfo.phone}</div>
@@ -371,6 +375,14 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
           )}
         </div>
       </div>
+      )}
+
+      {sectionsList.map((inst, i) =>
+        isRendererManagedType(inst.type)
+          ? <SectionRenderer key={inst.id} instance={inst} order={i}
+              generatedCopy={generatedCopy} templateMeta={templateMeta}
+              businessInfo={businessInfo} images={images} />
+          : null
       )}
 
       {/* FOOTER */}
