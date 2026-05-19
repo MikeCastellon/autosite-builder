@@ -47,6 +47,21 @@ export const handler = async (event) => {
     const body = JSON.parse(event.body || '{}');
     const { businessInfo, templateMeta } = body;
 
+    // --- Dynamic section schema support ---
+    const sections = Array.isArray(businessInfo.sections) ? businessInfo.sections : null;
+
+    // types present anywhere in the section list
+    const presentTypes = sections ? new Set(sections.map(s => s.type)) : null;
+    const mediaTextInstances  = sections ? sections.filter(s => s.type === 'mediaText') : [];
+    const faqInstance         = sections ? sections.find(s => s.type === 'faq') : null;
+    const processInstance     = sections ? sections.find(s => s.type === 'process') : null;
+
+    // When `sections` is absent (legacy callers), include() is permissive — include everything.
+    function include(type) {
+      return !presentTypes || presentTypes.has(type);
+    }
+    // --- End dynamic section schema support ---
+
     if (!businessInfo?.businessName || !businessInfo?.city) {
       return { statusCode: 400, headers: json, body: JSON.stringify({ error: 'Missing required business info' }) };
     }
@@ -54,6 +69,50 @@ export const handler = async (event) => {
     const servicesText = Array.isArray(businessInfo.services)
       ? businessInfo.services.map(s => (typeof s === 'object' ? s.name : s)).filter(Boolean).join(', ')
       : businessInfo.services || 'General auto services';
+
+    // Build dynamic JSON schema based on which section types the user chose
+    const schemaParts = [];
+    if (include('hero')) {
+      schemaParts.push(`"headline": "Main hero headline including ${businessInfo.city} (8-12 words, punchy, city-specific)"`);
+      schemaParts.push(`"subheadline": "Supporting hero tagline (10-15 words, highlights key value)"`);
+    }
+    if (include('about')) {
+      schemaParts.push(`"aboutText": "Full about section — 2-3 short paragraphs separated by newlines (~180 words). Mention ${businessInfo.city} 2-3 times. Tell their story, build trust."`);
+    }
+    if (include('services')) {
+      schemaParts.push(`"servicesSection": { "intro": "1-2 sentences introducing services, referencing ${businessInfo.city} (20-30 words)", "items": [ { "name": "Exact service name from their list", "description": "2-3 sentence description (30-50 words)" } ] }`);
+    }
+    if (include('cta') || include('hero')) {
+      schemaParts.push(`"ctaPrimary": "Primary CTA button text (3-5 words, action-oriented)"`);
+      schemaParts.push(`"ctaSecondary": "Secondary CTA text (3-5 words)"`);
+    }
+    if (include('testimonials')) {
+      schemaParts.push(`"testimonialPlaceholders": [ { "text": "Realistic customer testimonial mentioning the business (20-30 words)", "name": "First name + Last initial" }, { "text": "Second testimonial (different angle)", "name": "First name + Last initial" }, { "text": "Third testimonial", "name": "First name + Last initial" } ]`);
+    }
+
+    // Per-instance content goes into sectionContent
+    const instanceParts = [];
+    if (faqInstance) {
+      instanceParts.push(`"${faqInstance.id}": { "items": [ { "q": "Common customer question", "a": "Short helpful answer (1-2 sentences)" } ] }`);
+    }
+    if (processInstance) {
+      instanceParts.push(`"${processInstance.id}": { "intro": "1-2 sentences about how the service flows (20-30 words)", "steps": [ { "title": "Step name (2-4 words)", "description": "Step description (15-25 words)" } ] }`);
+    }
+    for (const m of mediaTextInstances) {
+      instanceParts.push(`"${m.id}": { "heading": "Short section heading (3-6 words)", "body": "On-topic paragraph for ${businessInfo.businessName} (40-70 words)", "alignment": "left" }`);
+    }
+    if (instanceParts.length) {
+      schemaParts.push(`"sectionContent": { ${instanceParts.join(', ')} }`);
+    }
+
+    // SEO + meta (always)
+    schemaParts.push(`"metaDescription": "SEO meta description: business name + city + top 2 services (140-160 chars exactly)"`);
+    schemaParts.push(`"metaTitle": "${businessInfo.businessName} | Auto Service in ${businessInfo.city}, ${businessInfo.state}"`);
+    schemaParts.push(`"keywords": ["${businessInfo.city} auto detailing", "${businessInfo.city} car care", "auto service ${businessInfo.city} ${businessInfo.state}"]`);
+    schemaParts.push(`"footerTagline": "Proudly serving ${businessInfo.city} and surrounding areas — 4-7 word memorable line"`);
+    schemaParts.push(`"schemaType": "AutoRepair"`);
+
+    const jsonSchema = `{\n  ${schemaParts.join(',\n  ')}\n}`;
 
     const USER_PROMPT = `Generate website copy for this automotive business:
 
@@ -87,33 +146,11 @@ CRITICAL INSTRUCTIONS:
 - If a field says "Not provided", do not mention it at all in the copy
 
 Return ONLY this JSON structure (no markdown, no explanation):
-{
-  "headline": "Main hero headline including ${businessInfo.city} (8-12 words, punchy, city-specific)",
-  "subheadline": "Supporting hero tagline (10-15 words, highlights key value)",
-  "aboutText": "Full about section — 2-3 short paragraphs separated by newlines (~180 words). Mention ${businessInfo.city} 2-3 times. Tell their story, build trust.",
-  "servicesSection": {
-    "intro": "1-2 sentences introducing services, referencing ${businessInfo.city} (20-30 words)",
-    "items": [
-      { "name": "Exact service name from their list", "description": "2-3 sentence description of this service (30-50 words)" }
-    ]
-  },
-  "ctaPrimary": "Primary CTA button text (3-5 words, action-oriented)",
-  "ctaSecondary": "Secondary CTA text (3-5 words)",
-  "testimonialPlaceholders": [
-    { "text": "Realistic-sounding customer testimonial mentioning the business (20-30 words)", "name": "First name + Last initial" },
-    { "text": "Second testimonial (different angle — quality, speed, price, or friendliness)", "name": "First name + Last initial" },
-    { "text": "Third testimonial", "name": "First name + Last initial" }
-  ],
-  "metaDescription": "SEO meta description: business name + city + top 2 services (140-160 chars exactly)",
-  "metaTitle": "${businessInfo.businessName} | Auto Service in ${businessInfo.city}, ${businessInfo.state}",
-  "keywords": ["${businessInfo.city} auto detailing", "${businessInfo.city} car care", "auto service ${businessInfo.city} ${businessInfo.state}"],
-  "footerTagline": "Proudly serving ${businessInfo.city} and surrounding areas — 4-7 word memorable line",
-  "schemaType": "AutoRepair"
-}`;
+${jsonSchema}`;
 
     const message = await client.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 2500,
+      max_tokens: 3500,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: USER_PROMPT }],
     });
