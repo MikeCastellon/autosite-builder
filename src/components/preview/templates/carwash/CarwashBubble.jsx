@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
-import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import SectionRenderer, { isRendererManagedType } from '../../sections/SectionRenderer.jsx';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 
@@ -47,8 +47,12 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
-  const hidden = (id) => copy?.hiddenSections?.includes(id);
-  const getOrder = buildSectionOrder(copy, ['hero','services','process','about','gallery','testimonials','cta']);
+  const sectionsList = copy?.sections || [];
+  const present = (type) => sectionsList.some(s => s.type === type);
+  const orderFor = (type) => {
+    const idx = sectionsList.findIndex(s => s.type === type);
+    return idx >= 0 ? idx : 999;
+  };
 
   const accentLight = '#bae6fd';
   const deepBg      = '#0c2340';
@@ -174,12 +178,12 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
       </nav>
 
       {/* ═══ HERO ═══ */}
-      {!hidden('hero') && (
-      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh', order: getOrder('hero') } : {
+      {present('hero') && (
+      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh', order: orderFor('hero') } : {
         minHeight: '100vh', position: 'relative', display: 'flex', alignItems: 'center',
         background: 'linear-gradient(160deg, #e0f7ff 0%, #f0f9ff 50%, #eff6ff 100%)',
         overflow: 'hidden', paddingTop: 66,
-        order: getOrder('hero'),
+        order: orderFor('hero'),
       }}>
         {!splitHero && <HeroImage src={images.hero} />}
         {!splitHero && <BubbleBlob size='480px' top='-120px' left='-120px' opacity={0.22} blur={8} />}
@@ -280,8 +284,8 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
       </div>
 
       {/* ═══ PACKAGES ═══ */}
-      {!hidden('services') && (
-      <section id='packages' style={{ background: 'white', padding: '100px 5%', position: 'relative', overflow: 'hidden', order: getOrder('services') }}>
+      {present('services') && (
+      <section id='packages' style={{ background: 'white', padding: '100px 5%', position: 'relative', overflow: 'hidden', order: orderFor('services') }}>
         <BubbleBlob size='300px' top='-80px' right='-60px' opacity={0.08} blur={10} color={c.accent} />
         <BubbleBlob size='180px' bottom='40px' left='-50px' opacity={0.06} blur={8} color='#14b8a6' />
         <div style={{ maxWidth: 1100, margin: '0 auto', position: 'relative', zIndex: 1  }}>
@@ -335,8 +339,8 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
       )}
 
       {/* ═══ HOW IT WORKS ═══ */}
-      {!hidden('process') && (
-      <section id='how' style={{ background: `linear-gradient(160deg, ${c.secondary || '#e0f7fa'} 0%, ${c.bg} 100%)`, padding: '100px 5%', position: 'relative', overflow: 'hidden', order: getOrder('process') }}>
+      {present('process') && (
+      <section id='how' style={{ background: `linear-gradient(160deg, ${c.secondary || '#e0f7fa'} 0%, ${c.bg} 100%)`, padding: '100px 5%', position: 'relative', overflow: 'hidden', order: orderFor('process') }}>
         <BubbleBlob size='500px' top='-180px' left='-120px' opacity={0.14} blur={20} color={c.accent} />
         <BubbleBlob size='350px' bottom='-100px' right='-80px' opacity={0.11} blur={16} color='#a78bfa' />
         <div style={{ maxWidth: 1100, margin: '0 auto', position: 'relative', zIndex: 1  }}>
@@ -362,8 +366,8 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
       )}
 
       {/* ═══ FEATURES + ABOUT ═══ */}
-      {!hidden('about') && (
-      <section style={{ background: 'white', padding: '100px 5%', position: 'relative', overflow: 'hidden' , order: getOrder('about') }}>
+      {present('about') && (
+      <section style={{ background: 'white', padding: '100px 5%', position: 'relative', overflow: 'hidden' , order: orderFor('about') }}>
         <BubbleBlob size='260px' top='-60px' right='-60px' opacity={0.07} blur={10} color={c.accent} />
         <div style={{ maxWidth: 1100, margin: '0 auto'  }}>
           <div style={{ textAlign: 'center', marginBottom: 60 }}>
@@ -442,21 +446,21 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
       )}
 
       {/* GALLERY */}
-      {!hidden('gallery') && (
-      <div style={{ order: getOrder('gallery') }}>
+      {present('gallery') && (
+      <div style={{ order: orderFor('gallery') }}>
       <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
       </div>
       )}
 
       {/* ═══ TESTIMONIALS ═══ */}
-      {!hidden('testimonials') && (
+      {present('testimonials') && (
         copy?.googleWidgetKey ? (
-          <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+          <div style={{ order: orderFor('testimonials'), padding: '80px 5%' }}>
             {copy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} theme={copy?.googleReviewsTheme} />
           </div>
         ) : testimonials.length > 0 ? (
-        <section id='reviews' style={{ background: `linear-gradient(170deg, ${c.bg} 0%, ${c.secondary || '#e0f7fa'} 100%)`, padding: '100px 5%', position: 'relative', overflow: 'hidden', order: getOrder('testimonials') }}>
+        <section id='reviews' style={{ background: `linear-gradient(170deg, ${c.bg} 0%, ${c.secondary || '#e0f7fa'} 100%)`, padding: '100px 5%', position: 'relative', overflow: 'hidden', order: orderFor('testimonials') }}>
           <BubbleBlob size='280px' top='0' right='5%' opacity={0.13} blur={12} color='#a78bfa' />
           <BubbleBlob size='180px' bottom='0' left='8%' opacity={0.11} blur={8} color='#14b8a6' />
           <div style={{ maxWidth: 1100, margin: '0 auto', position: 'relative', zIndex: 1  }}>
@@ -491,8 +495,8 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
       )}
 
       {/* ═══ CTA BAND ═══ */}
-      {!hidden('cta') && (
-      <section style={{ padding: '100px 5%', background: `linear-gradient(135deg, ${deepBg} 0%, #0c2340 60%, #0c1a2e 100%)`, position: 'relative', overflow: 'hidden', textAlign: 'center' , order: getOrder('cta') }}>
+      {present('cta') && (
+      <section style={{ padding: '100px 5%', background: `linear-gradient(135deg, ${deepBg} 0%, #0c2340 60%, #0c1a2e 100%)`, position: 'relative', overflow: 'hidden', textAlign: 'center' , order: orderFor('cta') }}>
         <div style={{ position: 'absolute', inset: 0, background: `conic-gradient(from 0deg at 50% 50%, ${c.accent}12, #a78bfa0c, #14b8a60c, ${c.accent}12)`, pointerEvents: 'none' }} />
         <SmallBubble size='110px' top='10%'  left='5%' />
         <SmallBubble size='70px'  top='60%'  right='8%' />
@@ -521,6 +525,14 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
           )}
         </div>
       </section>
+      )}
+
+      {sectionsList.map((inst, i) =>
+        isRendererManagedType(inst.type)
+          ? <SectionRenderer key={inst.id} instance={inst} order={i}
+              generatedCopy={generatedCopy} templateMeta={templateMeta}
+              businessInfo={businessInfo} images={images} />
+          : null
       )}
 
       {/* ═══ FOOTER ═══ */}
