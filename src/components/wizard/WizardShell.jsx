@@ -129,7 +129,7 @@ export default function WizardShell({ step, onBack, children, userEmail, onMySit
       {/* Progress */}
       <div className="border-b border-black/[0.07] bg-[#faf9f7] px-4 sm:px-8 py-4">
         <div className="max-w-2xl mx-auto w-full">
-          <ProgressBar step={step === 3.5 ? 4 : step > 3.5 ? step + 1 : step} labels={STEP_LABELS} />
+          <ProgressBar step={step === 3.5 ? 4 : step === 5.5 ? 6 : step > 3.5 ? step + 1 : step} labels={STEP_LABELS} />
         </div>
       </div>
 

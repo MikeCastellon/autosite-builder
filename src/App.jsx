@@ -165,7 +165,17 @@ export default function App() {
     : null;
 
   const goTo = (s) => setStep(s);
-  const goBack = () => setStep((s) => Math.max(1, s - 1));
+  const goBack = () => setStep((s) => {
+    // Honor the fractional step model:
+    //   step 3.5 (Choose Sections) → step 3 (Template)
+    //   step 4   (Generating)      → step 3.5 (Choose Sections)
+    //   step 5.5 (Social Feeds)    → step 5 (Preview)
+    // Other transitions are integer-decrement as before.
+    if (s === 3.5) return 3;
+    if (s === 4) return 3.5;
+    if (s === 5.5) return 5;
+    return Math.max(1, s - 1);
+  });
 
   const handleBusinessTypeSelect = (typeId) => {
     setBusinessType(typeId);
@@ -229,7 +239,9 @@ export default function App() {
 
     if (selectedSections) {
       merged.sections = selectedSections;
-      merged.sectionContent = { ...(merged.sectionContent || {}), ...(copy.sectionContent || {}) };
+      // `merged` is `{ ...copy }` so merged.sectionContent === copy.sectionContent here;
+      // explicit assignment makes the intent clear and tolerates copy.sectionContent being undefined.
+      merged.sectionContent = copy.sectionContent || {};
     }
 
     setGeneratedCopy(merged);
@@ -239,12 +251,12 @@ export default function App() {
     setSiteId(newSiteId);
     goTo(5);
     // Auto-save after generation
-    autoSave({ siteId: newSiteId, editedCopy: copy });
+    autoSave({ siteId: newSiteId, editedCopy: merged });
   };
 
   const handleGenerateError = (msg) => {
     setError(msg);
-    goTo(3);
+    goTo(3.5);
   };
 
   const handleStartOver = () => {
