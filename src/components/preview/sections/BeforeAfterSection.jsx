@@ -21,8 +21,8 @@ export default function BeforeAfterSection({ instance, generatedCopy, templateMe
 
   if (!hasAnyImages) {
     return (
-      <section style={{ background: c.bg, padding: 'clamp(3rem,6cqi,5rem) clamp(1.5rem,5cqi,3rem)' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto', textAlign: 'center' }}>
+      <section style={{ background: c.bg, padding: 'clamp(3rem, 7cqi, 6rem) clamp(1.5rem, 7cqi, 5rem)' }}>
+        <div style={{ textAlign: 'center' }}>
           <h2 style={{ fontFamily: font, color: c.text, fontWeight: 900, fontSize: 'clamp(1.6rem,3.5cqi,2.5rem)', marginBottom: '0.5rem' }}>{heading}</h2>
           <p style={{ fontFamily: bodyFont, color: c.muted, fontSize: '0.95rem' }}>
             Upload before/after photos in the editor to populate this section.
@@ -33,8 +33,8 @@ export default function BeforeAfterSection({ instance, generatedCopy, templateMe
   }
 
   return (
-    <section style={{ background: c.bg, padding: 'clamp(3rem,6cqi,5rem) clamp(1.5rem,5cqi,3rem)' }}>
-      <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+    <section style={{ background: c.bg, padding: 'clamp(3rem, 7cqi, 6rem) clamp(1.5rem, 7cqi, 5rem)' }}>
+      <div>
         <h2 style={{ fontFamily: font, color: c.text, fontWeight: 900, fontSize: 'clamp(1.6rem,3.5cqi,2.5rem)', marginBottom: '0.5rem', textAlign: 'center' }}>{heading}</h2>
         <p style={{ fontFamily: bodyFont, color: c.muted, fontSize: 'clamp(0.95rem,1.4cqi,1.05rem)', textAlign: 'center', marginBottom: '2.5rem', maxWidth: 640, marginInline: 'auto' }}>{intro}</p>
         <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>

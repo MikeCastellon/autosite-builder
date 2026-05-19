@@ -20,10 +20,9 @@ export default function MediaTextSection({ instance, generatedCopy, templateMeta
 
   return (
     <section style={{
-      background: c.bg, padding: 'clamp(3rem,6cqi,5rem) clamp(1.5rem,5cqi,3rem)',
+      background: c.bg, padding: 'clamp(3rem, 7cqi, 6rem) clamp(1.5rem, 7cqi, 5rem)',
     }}>
       <div style={{
-        maxWidth: 1100, margin: '0 auto',
         display: 'grid', gap: 'clamp(1.5rem,3cqi,3rem)',
         gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
         direction: reverse ? 'rtl' : 'ltr',

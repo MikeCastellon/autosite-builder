@@ -24,8 +24,8 @@ export default function FAQSection({ instance, generatedCopy, templateMeta, busi
   const [open, setOpen] = useState(0);
 
   return (
-    <section style={{ background: c.bg, padding: 'clamp(3rem,6cqi,5rem) clamp(1.5rem,5cqi,3rem)' }}>
-      <div style={{ maxWidth: 820, margin: '0 auto' }}>
+    <section style={{ background: c.bg, padding: 'clamp(3rem, 7cqi, 6rem) clamp(1.5rem, 7cqi, 5rem)' }}>
+      <div>
         <h2 style={{
           fontFamily: font, color: c.text, fontWeight: 900,
           fontSize: 'clamp(1.6rem,3.5cqi,2.5rem)', marginBottom: '2rem', textAlign: 'center',
