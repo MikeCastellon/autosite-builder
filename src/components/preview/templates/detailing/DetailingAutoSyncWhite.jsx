@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
-import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import SectionRenderer, { isRendererManagedType } from '../../sections/SectionRenderer.jsx';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 
@@ -21,8 +21,12 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
     document.head.appendChild(link);
     return () => { if (document.head.contains(link)) document.head.removeChild(link); };
   }, []);
-  const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
-  const getOrder = buildSectionOrder(generatedCopy, ['hero', 'services', 'about', 'gallery', 'testimonials', 'cta']);
+  const sectionsList = generatedCopy?.sections || [];
+  const present = (type) => sectionsList.some(s => s.type === type);
+  const orderFor = (type) => {
+    const idx = sectionsList.findIndex(s => s.type === type);
+    return idx >= 0 ? idx : 999;
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -185,8 +189,8 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
       </nav>
 
       {/* HERO */}
-      {!hidden('hero') && (
-      <section id="hero" style={splitHero ? { order: getOrder('hero'), display: 'flex', flexDirection: 'row', minHeight: '85vh' } : { ...s.hero, order: getOrder('hero') }}>
+      {present('hero') && (
+      <section id="hero" style={splitHero ? { order: orderFor('hero'), display: 'flex', flexDirection: 'row', minHeight: '85vh' } : { ...s.hero, order: orderFor('hero') }}>
         {!splitHero && <HeroImage src={images.hero} />}
         {!splitHero && <div style={s.heroGradient} />}
         <div style={splitHero ? {
@@ -234,8 +238,8 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
       )}
 
       {/* SERVICES BENTO */}
-      {!hidden('services') && (
-      <section id="services" style={{ ...s.sectionWhite, order: getOrder('services') }}>
+      {present('services') && (
+      <section id="services" style={{ ...s.sectionWhite, order: orderFor('services') }}>
         <div style={s.servicesIntro}>
           <span style={s.eyebrow}>Services</span>
           <h2 style={s.sectionTitle}>
@@ -289,8 +293,8 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
       </div>
 
       {/* ABOUT */}
-      {!hidden('about') && (
-      <section id="about" style={{ ...s.sectionWhite, background: off, order: getOrder('about') }}>
+      {present('about') && (
+      <section id="about" style={{ ...s.sectionWhite, background: off, order: orderFor('about') }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', gap: isMobile ? '48px' : '80px', alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ flex: '1 1 320px', minWidth: '280px' }}>
             {(generatedCopy?.aboutLayout || 'image') !== 'stats' ? (
@@ -331,21 +335,21 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
       )}
 
       {/* GALLERY */}
-      {!hidden('gallery') && (
-      <div style={{ order: getOrder('gallery') }}>
+      {present('gallery') && (
+      <div style={{ order: orderFor('gallery') }}>
       <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
       </div>
       )}
 
       {/* TESTIMONIALS */}
-      {!hidden('testimonials') && (
+      {present('testimonials') && (
         generatedCopy?.googleWidgetKey ? (
-          <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+          <div style={{ order: orderFor('testimonials'), padding: '80px 5%' }}>
             {generatedCopy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{generatedCopy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={generatedCopy.googleWidgetKey} theme={generatedCopy?.googleReviewsTheme} />
           </div>
         ) : testimonials.length > 0 ? (
-      <section id="reviews" style={{ ...s.sectionOff, order: getOrder('testimonials') }}>
+      <section id="reviews" style={{ ...s.sectionOff, order: orderFor('testimonials') }}>
         <div style={{ maxWidth: '520px', margin: '0 auto 72px', textAlign: 'center' }}>
           <span style={s.eyebrow}>Reviews</span>
           <h2 style={s.sectionTitle}>
@@ -377,8 +381,8 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
       )}
 
       {/* CONTACT */}
-      {!hidden('cta') && (
-      <section id="contact" style={{ order: getOrder('cta'), background: blue, padding: isMobile ? '80px 24px' : '100px 80px', textAlign: 'center' }}>
+      {present('cta') && (
+      <section id="contact" style={{ order: orderFor('cta'), background: blue, padding: isMobile ? '80px 24px' : '100px 80px', textAlign: 'center' }}>
         <span style={{ ...s.eyebrow, color: 'rgba(255,255,255,0.6)' }}>Contact</span>
         <h2 style={{ ...s.sectionTitle, color: white, marginBottom: '16px' }}>
           {generatedCopy.ctaHeadline || fb.ctaHeadline}
@@ -397,6 +401,14 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
           </a>
         </div>
       </section>
+      )}
+
+      {sectionsList.map((inst, i) =>
+        isRendererManagedType(inst.type)
+          ? <SectionRenderer key={inst.id} instance={inst} order={i}
+              generatedCopy={generatedCopy} templateMeta={templateMeta}
+              businessInfo={businessInfo} images={images} />
+          : null
       )}
 
       {/* FOOTER */}
