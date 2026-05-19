@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
-import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import SectionRenderer, { isRendererManagedType } from '../../sections/SectionRenderer.jsx';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 
@@ -35,8 +35,12 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
     ? (Array.isArray(_fb) ? _fb.map(b => typeof b === 'object' ? (b.name || '') : b).filter(Boolean) : typeof _fb === 'string' ? _fb.split(/,|·/).map(b => b.trim()).filter(Boolean) : [])
     : [];
 
-  const hidden = (id) => copy?.hiddenSections?.includes(id);
-  const getOrder = buildSectionOrder(copy, ['hero', 'statsBar', 'services', 'brands', 'about', 'gallery', 'testimonials', 'cta']);
+  const sectionsList = copy?.sections || [];
+  const present = (type) => sectionsList.some(s => s.type === type);
+  const orderFor = (type) => {
+    const idx = sectionsList.findIndex(s => s.type === type);
+    return idx >= 0 ? idx : 999;
+  };
 
   return (
     <div style={{ fontFamily: font, background: c.bg, color: c.text, minHeight: '100vh', overflowX: 'clip', margin: 0, padding: 0, containerType: 'inline-size', display: 'flex', flexDirection: 'column' }}>
@@ -76,14 +80,14 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
       </nav>
 
       {/* HERO — two-column layout */}
-      {!hidden('hero') && (
-      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh', order: getOrder('hero') } : {
+      {present('hero') && (
+      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh', order: orderFor('hero') } : {
         minHeight: '100vh', display: 'flex', alignItems: 'center',
         background: `linear-gradient(135deg, ${c.bg} 0%, #111827 100%)`,
         padding: '96px 5% 72px',
         borderBottom: `2px solid ${c.accent}44`,
         position: 'relative', overflow: 'hidden',
-        order: getOrder('hero'),
+        order: orderFor('hero'),
       }}>
         {!splitHero && <HeroImage src={images.hero} />}
         {splitHero ? (
@@ -199,7 +203,7 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
       )}
 
       {/* STATS */}
-      <section style={{ background: c.secondary, padding: '48px 5%', borderBottom: `1px solid ${c.accent}22`, order: getOrder('statsBar') }}>
+      <section style={{ background: c.secondary, padding: '48px 5%', borderBottom: `1px solid ${c.accent}22`, order: orderFor('statsBar') }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 24, textAlign: 'center' }}>
           {[
             { val: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'Years of Service' },
@@ -216,8 +220,8 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
       </section>
 
       {/* SERVICES — cards with teal left border */}
-      {!hidden('services') && (
-      <section id="services" style={{ padding: '80px 5%', order: getOrder('services') }}>
+      {present('services') && (
+      <section id="services" style={{ padding: '80px 5%', order: orderFor('services') }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ marginBottom: 48 }}>
             <div style={{ color: c.accent, fontWeight: 700, letterSpacing: 3, fontSize: 11, textTransform: 'uppercase', marginBottom: 10 }}>SERVICES</div>
@@ -275,8 +279,8 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
       )}
 
       {/* FILM BRANDS — styled pills */}
-      {!hidden('brands') && (filmBrandsList.length > 0 || biz.filmBrands) && (
-        <section id="films" style={{ padding: '72px 5%', background: c.secondary, borderTop: `1px solid ${c.accent}22`, order: getOrder('brands') }}>
+      {present('brands') && (filmBrandsList.length > 0 || biz.filmBrands) && (
+        <section id="films" style={{ padding: '72px 5%', background: c.secondary, borderTop: `1px solid ${c.accent}22`, order: orderFor('brands') }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ color: c.accent, fontWeight: 700, letterSpacing: 3, fontSize: 11, textTransform: 'uppercase', marginBottom: 10 }}>FILM PRODUCTS</div>
             <h2 style={{ fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, marginBottom: 32 }}>Film Brands We Use</h2>
@@ -324,8 +328,8 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
       )}
 
       {/* ABOUT */}
-      {!hidden('about') && (
-      <section id="about" style={{ padding: '80px 5%', borderTop: `1px solid ${c.accent}22`, order: getOrder('about') }}>
+      {present('about') && (
+      <section id="about" style={{ padding: '80px 5%', borderTop: `1px solid ${c.accent}22`, order: orderFor('about') }}>
         <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'start' }}>
           <div>
             <div style={{ color: c.accent, fontWeight: 700, letterSpacing: 3, fontSize: 11, textTransform: 'uppercase', marginBottom: 10 }}>ABOUT US</div>
@@ -386,21 +390,21 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
       )}
 
       {/* GALLERY */}
-      {!hidden('gallery') && (
-      <div style={{ order: getOrder('gallery') }}>
+      {present('gallery') && (
+      <div style={{ order: orderFor('gallery') }}>
       <GallerySection images={images} colors={c} font={font} bodyFont={templateMeta.bodyFont} />
       </div>
       )}
 
       {/* TESTIMONIALS */}
-      {!hidden('testimonials') && (
+      {present('testimonials') && (
         copy?.googleWidgetKey ? (
-          <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+          <div style={{ order: orderFor('testimonials'), padding: '80px 5%' }}>
             {copy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} theme={copy?.googleReviewsTheme} />
           </div>
         ) : testimonials.length > 0 ? (
-        <section style={{ padding: '80px 5%', background: c.secondary, borderTop: `1px solid ${c.accent}22`, order: getOrder('testimonials') }}>
+        <section style={{ padding: '80px 5%', background: c.secondary, borderTop: `1px solid ${c.accent}22`, order: orderFor('testimonials') }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ textAlign: 'center', marginBottom: 48 }}>
               <div style={{ color: c.accent, fontWeight: 700, letterSpacing: 3, fontSize: 11, textTransform: 'uppercase', marginBottom: 10 }}>REVIEWS</div>
@@ -424,8 +428,8 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
       )}
 
       {/* CTA */}
-      {!hidden('cta') && (
-      <section style={{ background: c.accent, padding: '80px 5%', textAlign: 'center', order: getOrder('cta') }}>
+      {present('cta') && (
+      <section style={{ background: c.accent, padding: '80px 5%', textAlign: 'center', order: orderFor('cta') }}>
         <h2 style={{ fontSize: 'clamp(2rem, 4cqi, 3rem)', fontWeight: 800, color: '#fff', margin: '0 0 16px' }}>{copy.ctaHeadline || 'Get a Free Quote'}</h2>
         <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 16, marginBottom: 36 }}>
           {copy.ctaSubtext || copy.ctaSecondary || `${biz.city || 'Your city'}, ${biz.state || ''} · Same-day quotes available`}
@@ -444,6 +448,14 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
           </p>
         )}
       </section>
+      )}
+
+      {sectionsList.map((inst, i) =>
+        isRendererManagedType(inst.type)
+          ? <SectionRenderer key={inst.id} instance={inst} order={i}
+              generatedCopy={generatedCopy} templateMeta={templateMeta}
+              businessInfo={businessInfo} images={images} />
+          : null
       )}
 
       {/* FOOTER with social links */}
