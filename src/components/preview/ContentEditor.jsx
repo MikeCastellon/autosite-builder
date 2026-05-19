@@ -461,7 +461,7 @@ function FAQEditor({ instanceId, content, setContent }) {
   return (
     <>
       {items.map((item, i) => (
-        <div key={i} className="mb-4 border-b border-gray-100 pb-3">
+        <div key={`${i}-${(item.q || '').slice(0, 16)}`} className="mb-4 border-b border-gray-100 pb-3">
           <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Q #{i + 1}</label>
           <input value={item.q || ''} onChange={(e) => update(i, 'q', e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] mb-2" />
           <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">A</label>
@@ -699,9 +699,10 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
   const handleDragEnd = () => { setDragIdx(null); setDragOverIdx(null); };
 
   const instanceSections = (copy?.sections || []).map((inst, i) => {
-    const entry = TOGGLEABLE._default.find(t => t.id === inst.type)
-               || Object.values(TOGGLEABLE).flat().find(t => t.id === inst.type)
-               || { id: inst.type, label: inst.type };
+    const catalogEntry = getCatalogEntry(inst.type);
+    const toggleableEntry = TOGGLEABLE._default.find(t => t.id === inst.type)
+                         || Object.values(TOGGLEABLE).flat().find(t => t.id === inst.type);
+    const entry = catalogEntry || toggleableEntry || { id: inst.type, label: inst.type };
     const sameTypeBefore = (copy?.sections || []).slice(0, i).filter(s => s.type === inst.type).length;
     const ordinal = sameTypeBefore + 1;
     const isMulti = (copy?.sections || []).filter(s => s.type === inst.type).length > 1;
@@ -820,12 +821,16 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
                     style={{
                       opacity: dragIdx === idx ? 0.35 : 1,
                       borderTop: dragOverIdx === idx && dragIdx !== idx ? '2px solid #3b82f6' : '2px solid transparent',
+                      transition: 'opacity 0.15s',
                     }}
                   >
                     <span className="text-gray-300 shrink-0 text-[14px] leading-none">{isLocked ? '🔒' : '⠿'}</span>
                     <span className="flex-1 text-[13px] font-medium text-gray-700">{label}</span>
                     {!isLocked && (
-                      <button type="button" onClick={() => setCopy('sections', removeInstance(copy.sections, inst.id))} className="text-gray-300 hover:text-red-500 text-[18px] leading-none w-6 h-6 flex items-center justify-center">×</button>
+                      <button type="button" onClick={() => {
+                        if (activeSection === `inst:${inst.id}`) setActiveSection('visibility');
+                        setCopy('sections', removeInstance(copy.sections, inst.id));
+                      }} className="text-gray-300 hover:text-red-500 text-[18px] leading-none w-6 h-6 flex items-center justify-center">×</button>
                     )}
                   </div>
                 );
@@ -1455,7 +1460,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
             </>
           )}
 
-          {activeType === 'contact' && (
+          {(activeType === 'contact' || activeType === 'cta') && (
             <>
               <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Contact / CTA Section</p>
               <Field label="Headline" value={copy?.ctaHeadline} onChange={(v) => setCopy('ctaHeadline', v)} />
