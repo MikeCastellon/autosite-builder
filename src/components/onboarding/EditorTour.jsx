@@ -23,7 +23,7 @@ const STEPS = [
     selector: 'tab-visibility',
     placement: 'left',
     autoClick: true,
-    copy: 'The Sections tab at the top of the sidebar is where you toggle which sections appear on your live site and drag to reorder them.',
+    copy: 'The Layout tab at the top of the sidebar is where you toggle which sections appear on your live site and drag to reorder them.',
   },
   {
     selector: 'group-content',
