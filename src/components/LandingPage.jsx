@@ -328,7 +328,7 @@ export default function LandingPage({ onSignIn, onSignUp }) {
                 </div>
                 <div className="inline-flex items-center gap-1.5 bg-white/20 rounded-full px-3 py-1 mt-2">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5l2.78 6.42 6.97.5-5.27 4.6 1.6 6.81L12 16.5l-6.08 3.33 1.6-6.81L2.25 8.42l6.97-.5L12 1.5z"/></svg>
-                  <span className="text-[12px] font-bold">30 days free — no charge today</span>
+                  <span className="text-[12px] font-bold">Cancel anytime — no contract</span>
                 </div>
               </div>
             </div>
@@ -364,7 +364,7 @@ export default function LandingPage({ onSignIn, onSignUp }) {
                 onClick={onStart}
                 className="block w-full py-4 rounded-xl bg-[#cc0000] hover:bg-[#aa0000] text-white text-center font-bold text-[15px] transition-colors shadow-sm"
               >
-                ⭐ Start 30-Day Free Trial
+                ⭐ Upgrade to Pro — $19.99/month
               </button>
               <p className="text-[11px] text-[#888] text-center mt-3">
                 Create your free account · then activate Pro inside the dashboard · cancel anytime.
