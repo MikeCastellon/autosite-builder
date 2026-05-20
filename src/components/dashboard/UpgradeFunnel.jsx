@@ -27,7 +27,7 @@ function CtaButton({ onClick }) {
       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12 1.5l2.78 6.42 6.97.5-5.27 4.6 1.6 6.81L12 16.5l-6.08 3.33 1.6-6.81L2.25 8.42l6.97-.5L12 1.5z" />
       </svg>
-      Start Free Trial
+      Upgrade — $19.99/mo
     </button>
   );
 }
@@ -237,7 +237,7 @@ export default function UpgradeFunnel({ onUpgrade }) {
           Every feature, with a real preview.
         </h2>
         <p className="text-[15px] text-[#666] mt-3 max-w-xl mx-auto">
-          Scroll through the toolkit. Start free for 30 days — then $19.99/month. Cancel anytime.
+          Scroll through the toolkit. $19.99/month — cancel anytime.
         </p>
       </div>
 
@@ -263,10 +263,9 @@ export default function UpgradeFunnel({ onUpgrade }) {
         <h2 className="text-[clamp(28px,4vw,40px)] font-[900] tracking-[-1px] leading-[1.05] mb-4">
           Ready to get booked?
         </h2>
-        <p className="text-[16px] opacity-90 mb-2 max-w-md mx-auto">
-          Try everything free for 30 days — then $19.99/month. Cancel anytime.
+        <p className="text-[16px] opacity-90 mb-6 max-w-md mx-auto">
+          $19.99/month — cancel anytime, no contract.
         </p>
-        <p className="text-[13px] opacity-70 mb-6">No charge today. No commitment.</p>
         <button
           type="button"
           onClick={onUpgrade}
@@ -275,7 +274,7 @@ export default function UpgradeFunnel({ onUpgrade }) {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 1.5l2.78 6.42 6.97.5-5.27 4.6 1.6 6.81L12 16.5l-6.08 3.33 1.6-6.81L2.25 8.42l6.97-.5L12 1.5z" />
           </svg>
-          Start Free Trial
+          Upgrade to Pro — $19.99/month
         </button>
       </div>
     </div>
