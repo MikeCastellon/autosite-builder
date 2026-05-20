@@ -34,6 +34,34 @@
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
 
+# Baseline security headers for the builder app (sitebuilder.autocaregenius.com).
+# Customer-published sites are served by the serve-custom-domain edge function
+# and set their own headers, so this block does NOT govern those sites.
+#
+# CSP notes:
+#  - 'unsafe-inline' + 'unsafe-eval' are required because Vite emits an inline
+#    bootstrap script and some third-party libs use Function(). Tightening
+#    these (nonce-based CSP) is a separate, larger change.
+#  - frame-src https: is intentionally permissive because the dashboard
+#    iframes customer-published sites on autocaregeniushub.com AND any custom
+#    domain a user has connected (could be anything).
+#  - connect-src lists Supabase + Stripe API; if Sentry/PostHog gets added,
+#    extend this list at the same time.
+#  - frame-ancestors 'none' + X-Frame-Options DENY together prevent the
+#    builder dashboard from being embedded in clickjacking iframes.
+#
+# 2026-05-20 cleanup audit, Tier 1 item 2 (the only remaining Day-1-7 item
+# from the 2026-04-29 platform audit's M6).
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co https://api.stripe.com; frame-src 'self' https:; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self' https://checkout.stripe.com"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(self), interest-cohort=()"
+
 # Serve /.well-known/* directly from public/ (no SPA rewrite)
 [[redirects]]
   from = "/.well-known/*"
