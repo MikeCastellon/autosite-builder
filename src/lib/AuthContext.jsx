@@ -31,21 +31,21 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(() => readCachedProfile());
 
   useEffect(() => {
-    console.log('[Auth] Initializing... URL hash:', window.location.hash.substring(0, 80));
+    if (import.meta.env.DEV) console.log('[Auth] Initializing... URL hash:', window.location.hash.substring(0, 80));
 
     // Detect recovery from URL query param or hash
     const params = new URLSearchParams(window.location.search);
     const hash = window.location.hash;
     if (params.get('reset') === 'true' || hash.includes('type=recovery')) {
-      console.log('[Auth] Recovery flow detected from URL');
+      if (import.meta.env.DEV) console.log('[Auth] Recovery flow detected from URL');
       setIsRecovery(true);
     }
 
     // Listen for auth changes FIRST
     const { data: listener } = supabase.auth.onAuthStateChange((event, s) => {
-      console.log('[Auth] onAuthStateChange:', event, s ? `user=${s.user?.email}` : 'no session');
+      if (import.meta.env.DEV) console.log('[Auth] onAuthStateChange:', event, s ? `user=${s.user?.email}` : 'no session');
       if (event === 'PASSWORD_RECOVERY') {
-        console.log('[Auth] PASSWORD_RECOVERY event fired');
+        if (import.meta.env.DEV) console.log('[Auth] PASSWORD_RECOVERY event fired');
         setIsRecovery(true);
       }
       setSession(s);
@@ -53,7 +53,7 @@ export function AuthProvider({ children }) {
 
     // Then get initial session
     supabase.auth.getSession().then(({ data: { session: s }, error }) => {
-      console.log('[Auth] getSession:', s ? `user=${s.user?.email}` : 'no session', error || '');
+      if (import.meta.env.DEV) console.log('[Auth] getSession:', s ? `user=${s.user?.email}` : 'no session', error || '');
       setSession(prev => {
         if (prev === undefined) return s;
         return prev;
@@ -64,7 +64,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const loading = session === undefined;
-  console.log('[Auth] Render — loading:', loading, 'session:', session ? 'yes' : 'no');
+  if (import.meta.env.DEV) console.log('[Auth] Render — loading:', loading, 'session:', session ? 'yes' : 'no');
 
   const refreshProfile = useCallback(async () => {
     if (!session?.user?.id) { setProfile(null); writeCachedProfile(null); return; }
