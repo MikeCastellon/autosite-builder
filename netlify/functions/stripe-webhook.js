@@ -64,6 +64,24 @@ export const handler = async (event) => {
 
   const db = createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
+  // Dedup against Stripe replays (manual "Resend" from the dashboard, retries
+  // after 500s, network duplicates). Stripe deliveries are at-least-once;
+  // we want exactly-once handler invocation per event_id.
+  //
+  // Pattern: check-before-handler, INSERT-after-success. A failed handler
+  // returns 500 → Stripe retries → on retry there's no record yet, so the
+  // handler runs again. Combined with the existing per-row guards in the
+  // booking-deposit and stripe-charge handlers, the retry is safe.
+  const { data: alreadyProcessed } = await db
+    .from('processed_stripe_events')
+    .select('event_id')
+    .eq('event_id', stripeEvent.id)
+    .maybeSingle();
+  if (alreadyProcessed) {
+    console.log(`[stripe-webhook] dropping replay of ${stripeEvent.id} (${stripeEvent.type})`);
+    return ok({ received: true, duplicate: true });
+  }
+
   try {
     switch (stripeEvent.type) {
       case 'checkout.session.completed': {
@@ -103,6 +121,19 @@ export const handler = async (event) => {
   } catch (err) {
     console.error(`[stripe-webhook] handler error [${stripeEvent.type}]:`, err);
     return fail(500, { error: 'Handler failed' });
+  }
+
+  // Record successful processing AFTER handler completes. INSERT-after means
+  // a failed handler leaves no row, so Stripe's retry will run the handler
+  // again. We don't fail the webhook if the record-insert fails — the
+  // handler already succeeded; recording is best-effort.
+  const { error: recordErr } = await db
+    .from('processed_stripe_events')
+    .insert({ event_id: stripeEvent.id, event_type: stripeEvent.type });
+  if (recordErr && recordErr.code !== '23505') {
+    // 23505 = unique_violation; happens if two deliveries raced and both
+    // completed before either recorded. Safe to ignore.
+    console.error('[stripe-webhook] failed to record processed event:', recordErr);
   }
 
   return ok({ received: true });
