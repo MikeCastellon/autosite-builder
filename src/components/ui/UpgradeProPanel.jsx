@@ -100,10 +100,10 @@ export default function UpgradeProPanel({ heading = 'Unlock the full toolkit', s
           disabled={busy}
           className={`block w-full ${isLg ? 'py-3.5 text-[15px]' : 'py-3 text-[14px]'} px-6 rounded-xl bg-[#cc0000] hover:bg-[#aa0000] disabled:opacity-60 disabled:cursor-not-allowed text-white text-center font-semibold transition-colors shadow-sm`}
         >
-          {busy ? 'Loading...' : '⭐ Start 30-Day Free Trial'}
+          {busy ? 'Loading...' : '⭐ Upgrade to Pro — $19.99/month'}
         </button>
         <p className="text-[11px] text-[#888] text-center mt-2.5">
-          30 days free · then $19.99/month · Cancel anytime.
+          $19.99/month · Cancel anytime · No contract.
         </p>
       </div>
     </div>
