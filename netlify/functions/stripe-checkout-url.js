@@ -48,7 +48,6 @@ export const handler = async (event) => {
     client_reference_id: user.id,
     line_items: [{ price: priceId, quantity: 1 }],
     subscription_data: {
-      trial_period_days: 30,
       metadata: { supabase_user_id: user.id },
     },
     payment_method_collection: 'always',
