@@ -326,8 +326,7 @@ export default function LandingPage({ onSignIn, onSignUp }) {
                   <span className="text-[48px] font-[900] tracking-[-2px] leading-none">$19.99</span>
                   <span className="text-[16px] opacity-70 mb-2">/month</span>
                 </div>
-                <div className="inline-flex items-center gap-1.5 bg-white/20 rounded-full px-3 py-1 mt-2">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5l2.78 6.42 6.97.5-5.27 4.6 1.6 6.81L12 16.5l-6.08 3.33 1.6-6.81L2.25 8.42l6.97-.5L12 1.5z"/></svg>
+                <div className="inline-flex items-center bg-white/20 rounded-full px-3 py-1 mt-2">
                   <span className="text-[12px] font-bold">Cancel anytime — no contract</span>
                 </div>
               </div>
