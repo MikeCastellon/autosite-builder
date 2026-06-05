@@ -43,10 +43,13 @@ export const handler = async (event) => {
 
   const { data: site } = await supabase
     .from('sites')
-    .select('id, user_id')
+    .select('id, user_id, published_url')
     .eq('id', payload.siteId)
     .maybeSingle();
-  if (!site) {
+  // Only published sites accept inquiries. The contact widget is only injected
+  // into published HTML; treat unpublished/unknown sites the same (404) so we
+  // don't leak which site UUIDs exist.
+  if (!site || !site.published_url) {
     return { statusCode: 404, headers: CORS, body: JSON.stringify({ error: 'Site not found' }) };
   }
 
