@@ -9,6 +9,11 @@ const SCHEDULER_WIDGET_URL =
     ? window.location.origin
     : 'https://app.autocaregenius.com') + '/scheduler.js';
 
+const CONTACT_WIDGET_URL =
+  (typeof window !== 'undefined' && window.location && window.location.origin
+    ? window.location.origin
+    : 'https://app.autocaregenius.com') + '/contact-form.js';
+
 const MAIN_APP_URL =
   (typeof window !== 'undefined' && window.location && window.location.origin)
     ? window.location.origin
@@ -110,6 +115,9 @@ function buildSeoHead(businessInfo, generatedCopy, siteId, images, templateMeta)
 
   <!-- Scheduler widget (visible only if owner has scheduler enabled) -->
   ${siteId ? `<script src="${SCHEDULER_WIDGET_URL}" data-site-id="${siteId}" defer></script>` : ''}
+
+  <!-- Contact / inquiry form widget (free for all published sites) -->
+  ${siteId ? `<script src="${CONTACT_WIDGET_URL}" data-site-id="${siteId}" data-accent="${escapeAttr(templateMeta?.colors?.primary || templateMeta?.colors?.accent || '#cc0000')}" defer></script>` : ''}
 
   <style>
     *, *::before, *::after { box-sizing: border-box; }
