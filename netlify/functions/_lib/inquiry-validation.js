@@ -25,9 +25,8 @@ export function validateInquiryPayload(p) {
   if (p.message.length > MAX_MESSAGE) return fail('message too long');
 
   if (p.phone != null && p.phone !== '') {
-    if (typeof p.phone !== 'string' || p.phone.length > MAX_PHONE) {
-      return fail('Invalid phone');
-    }
+    if (typeof p.phone !== 'string') return fail('phone must be a string');
+    if (p.phone.length > MAX_PHONE) return fail('phone too long');
   }
 
   return { ok: true };

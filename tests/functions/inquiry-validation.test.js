@@ -66,4 +66,21 @@ describe('validateInquiryPayload', () => {
     expect(r.ok).toBe(false);
     expect(r.honeypot).toBe(true);
   });
+
+  it('rejects missing email', () => {
+    const { email, ...rest } = base;
+    const r = validateInquiryPayload(rest);
+    expect(r.ok).toBe(false);
+    expect(r.error).toMatch(/email/i);
+  });
+
+  it('rejects an over-length phone', () => {
+    const r = validateInquiryPayload({ ...base, phone: 'x'.repeat(41) });
+    expect(r.ok).toBe(false);
+    expect(r.error).toMatch(/phone/);
+  });
+
+  it('treats an empty honeypot as valid', () => {
+    expect(validateInquiryPayload({ ...base, website: '' }).ok).toBe(true);
+  });
 });
