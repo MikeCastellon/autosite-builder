@@ -9,7 +9,11 @@
   })();
   var siteId = script && script.getAttribute('data-site-id');
   var accent = (script && script.getAttribute('data-accent')) || '#1a1a1a';
-  if (!siteId) return;
+  if (!siteId || !script.src) return;
+
+  // Only allow characters valid in a CSS color value — defends against the
+  // accent attribute being used to break out of the inline style string.
+  if (!/^[a-zA-Z0-9#(),%. +-]+$/.test(accent)) accent = '#1a1a1a';
 
   var API = script.src.replace(/\/contact-form\.js.*$/, '');
 
@@ -94,14 +98,22 @@
     return 'width:100%;box-sizing:border-box;padding:12px 14px;margin-bottom:12px;border:1px solid rgba(0,0,0,0.15);border-radius:10px;font-size:15px;font-family:inherit;background:#fff;color:#1a1a1a;';
   }
 
+  function srLabel(id, text) {
+    return '<label for="' + id + '" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;">' + text + '</label>';
+  }
+
   function formHtml(accent) {
     return ''
       + '<h3 style="font-size:1.4rem;font-weight:700;margin:0 0 16px;color:inherit;">Send us a message</h3>'
-      + '<form novalidate>'
-      + '<input name="name" type="text" placeholder="Your name" autocomplete="name" style="' + fieldCss() + '" />'
-      + '<input name="email" type="email" placeholder="Email address" autocomplete="email" style="' + fieldCss() + '" />'
-      + '<input name="phone" type="tel" placeholder="Phone (optional)" autocomplete="tel" style="' + fieldCss() + '" />'
-      + '<textarea name="message" rows="4" placeholder="How can we help?" style="' + fieldCss() + 'resize:vertical;"></textarea>'
+      + '<form novalidate aria-label="Contact form">'
+      + srLabel('acg-cf-name', 'Your name')
+      + '<input id="acg-cf-name" name="name" type="text" placeholder="Your name" autocomplete="name" style="' + fieldCss() + '" />'
+      + srLabel('acg-cf-email', 'Email address')
+      + '<input id="acg-cf-email" name="email" type="email" placeholder="Email address" autocomplete="email" style="' + fieldCss() + '" />'
+      + srLabel('acg-cf-phone', 'Phone (optional)')
+      + '<input id="acg-cf-phone" name="phone" type="tel" placeholder="Phone (optional)" autocomplete="tel" style="' + fieldCss() + '" />'
+      + srLabel('acg-cf-message', 'Your message')
+      + '<textarea id="acg-cf-message" name="message" rows="4" placeholder="How can we help?" style="' + fieldCss() + 'resize:vertical;"></textarea>'
       + '<input name="website" type="text" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;" />'
       + '<button type="submit" style="width:100%;padding:13px 16px;border:0;border-radius:10px;background:' + accent + ';color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">Send message</button>'
       + '<p data-acg-status role="status" style="margin:10px 0 0;font-size:13px;min-height:16px;"></p>'
