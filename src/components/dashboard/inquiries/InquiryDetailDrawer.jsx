@@ -90,7 +90,7 @@ export default function InquiryDetailDrawer({ inquiry, onClose, onUpdated }) {
           onBlur={onNotesBlur}
           rows={3}
           readOnly={isImpersonationTab}
-          className="w-full border border-gray-200 rounded-lg p-2 text-sm focus:outline-none focus:border-gray-400 disabled:opacity-60"
+          className="w-full border border-gray-200 rounded-lg p-2 text-sm focus:outline-none focus:border-gray-400 read-only:opacity-60 read-only:cursor-not-allowed"
         />
 
         {err && <p className="mt-3 text-sm text-red-600">{err}</p>}
