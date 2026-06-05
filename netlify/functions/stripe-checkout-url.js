@@ -1,6 +1,7 @@
 // netlify/functions/stripe-checkout-url.js
 import { createClient } from '@supabase/supabase-js';
 import { getStripe } from './_lib/stripe.js';
+import { findBlockingSubscription } from './_lib/subscription-guard.js';
 import { corsHeaders, jsonHeaders } from './_shared/cors.js';
 
 export const handler = async (event) => {
@@ -33,6 +34,25 @@ export const handler = async (event) => {
     .maybeSingle();
 
   let customerId = profile?.stripe_customer_id || null;
+
+  // Guard against duplicate subscriptions. Stripe does NOT dedupe — every
+  // completed Checkout Session mints a new subscription, so a customer who
+  // reaches checkout twice ends up billed twice in parallel. If this (existing)
+  // customer already has a live subscription, don't create another checkout.
+  if (customerId) {
+    const existing = await findBlockingSubscription(stripe, customerId);
+    if (existing) {
+      return {
+        statusCode: 200,
+        headers: CORS,
+        body: JSON.stringify({
+          alreadySubscribed: true,
+          error: 'You already have an active Genius Websites Pro subscription. Manage it from your account billing settings.',
+        }),
+      };
+    }
+  }
+
   if (!customerId) {
     const customer = await stripe.customers.create({
       email: user.email || profile?.email,
