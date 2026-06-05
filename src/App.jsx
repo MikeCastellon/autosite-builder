@@ -16,6 +16,7 @@ import ResetPasswordPage from './components/auth/ResetPasswordPage.jsx';
 import DashboardPage from './components/dashboard/DashboardPage.jsx';
 import BookingSettingsPage from './components/dashboard/booking-settings/BookingSettingsPage.jsx';
 import BookingsPage from './components/dashboard/bookings-page/BookingsPage.jsx';
+import InquiriesPage from './components/dashboard/inquiries-page/InquiriesPage.jsx';
 import CustomersPage from './components/dashboard/customers-page/CustomersPage.jsx';
 import CustomerDetailPage from './components/dashboard/customers-page/CustomerDetailPage.jsx';
 import AdminPage from './components/admin/AdminPage.jsx';
@@ -407,6 +408,28 @@ export default function App() {
     setView('wizard');
   };
 
+  if (view === 'inquiries') {
+    return (
+      <>
+        <InquiriesPage
+          userId={session?.user?.id}
+          profile={profile}
+          userEmail={session?.user?.email}
+          onExit={() => setView('dashboard')}
+          onOpenBookings={() => setView('bookings-page')}
+          onOpenCustomers={() => setView('customers')}
+          onOpenAdmin={() => setView('admin')}
+          onOpenProfile={() => setView('profile')}
+          onOpenPaymentsConnect={onOpenPaymentsConnectProp}
+          onOpenCharges={onOpenChargesProp}
+          onCharge={onChargeProp}
+          onSignOut={handleSignOut}
+        />
+        <HelpChrome profile={profile} />
+      </>
+    );
+  }
+
   if (view === 'bookings-page') {
     return (
       <>
@@ -415,6 +438,7 @@ export default function App() {
           profile={profile}
           userEmail={session?.user?.email}
           onExit={() => setView('dashboard')}
+          onOpenInquiries={() => setView('inquiries')}
           onOpenCustomers={() => setView('customers')}
           onOpenAdmin={() => setView('admin')}
           onOpenProfile={() => setView('profile')}
@@ -436,6 +460,7 @@ export default function App() {
           profile={profile}
           userEmail={session?.user?.email}
           onExit={() => setView('dashboard')}
+          onOpenInquiries={() => setView('inquiries')}
           onOpenBookings={() => setView('bookings-page')}
           onOpenAdmin={() => setView('admin')}
           onOpenProfile={() => setView('profile')}
@@ -460,6 +485,7 @@ export default function App() {
           identityKey={selectedCustomerKey}
           onExit={() => { setSelectedCustomerKey(null); setView('dashboard'); }}
           onBackToCustomers={() => { setSelectedCustomerKey(null); setView('customers'); }}
+          onOpenInquiries={() => { setSelectedCustomerKey(null); setView('inquiries'); }}
           onOpenBookings={() => { setSelectedCustomerKey(null); setView('bookings-page'); }}
           onOpenAdmin={() => { setSelectedCustomerKey(null); setView('admin'); }}
           onOpenProfile={() => { setSelectedCustomerKey(null); setView('profile'); }}
@@ -479,6 +505,7 @@ export default function App() {
         <BookingSettingsPage
           siteId={settingsSiteId}
           onExit={() => { setSettingsSiteId(null); setView('dashboard'); }}
+          onOpenInquiries={() => { setSettingsSiteId(null); setView('inquiries'); }}
           onOpenBookings={() => { setSettingsSiteId(null); setView('bookings-page'); }}
           onOpenCustomers={() => { setSettingsSiteId(null); setView('customers'); }}
           onOpenAdmin={() => { setSettingsSiteId(null); setView('admin'); }}
@@ -537,6 +564,7 @@ export default function App() {
           profile={profile}
           userEmail={session?.user?.email}
           onExit={() => setView('dashboard')}
+          onOpenInquiries={() => setView('inquiries')}
           onOpenBookings={() => setView('bookings-page')}
           onOpenCustomers={() => setView('customers')}
           onOpenAdmin={() => setView('admin')}
@@ -560,6 +588,7 @@ export default function App() {
           userEmail={session?.user?.email}
           autoOpen={chargesAutoOpen}
           onExit={() => setView('dashboard')}
+          onOpenInquiries={() => setView('inquiries')}
           onOpenBookings={() => setView('bookings-page')}
           onOpenCustomers={() => setView('customers')}
           onOpenAdmin={() => setView('admin')}
@@ -660,6 +689,7 @@ export default function App() {
           userEmail={session?.user?.email}
           profile={profile}
           onOpenAdmin={() => setView('admin')}
+          onOpenInquiries={() => setView('inquiries')}
           onOpenBookings={() => setView('bookings-page')}
           onOpenCustomers={() => setView('customers')}
           onOpenProfile={() => setView('profile')}
