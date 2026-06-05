@@ -26,10 +26,14 @@ create index if not exists inquiries_site_created_idx
   on inquiries (site_id, created_at desc);
 
 -- Helper: can the anon role create an inquiry for this site?
--- Only requires the site to exist (no scheduler/subscription gate).
+-- Requires the site to exist AND be published (no scheduler/subscription gate).
+-- Mirrors the create-inquiry function's published-site check so a direct
+-- anon REST insert can't bypass it.
 create or replace function public.can_inquire_site(p_site_id uuid) returns boolean
 language sql stable security definer set search_path = public as $$
-  select exists (select 1 from sites s where s.id = p_site_id);
+  select exists (
+    select 1 from sites s where s.id = p_site_id and s.published_url is not null
+  );
 $$;
 
 alter table inquiries enable row level security;
