@@ -2,7 +2,7 @@ import SchedulerSettings from './SchedulerSettings.jsx';
 import AppHeader from '../../ui/AppHeader.jsx';
 import { useAuth } from '../../../lib/AuthContext.jsx';
 
-export default function BookingSettingsPage({ siteId, onExit, onOpenBookings, onOpenCustomers, onOpenAdmin, onOpenProfile, onOpenPaymentsConnect, onOpenCharges, onCharge, onSignOut }) {
+export default function BookingSettingsPage({ siteId, onExit, onOpenInquiries, onOpenBookings, onOpenCustomers, onOpenAdmin, onOpenProfile, onOpenPaymentsConnect, onOpenCharges, onCharge, onSignOut }) {
   const { session, profile } = useAuth();
   const userEmail = session?.user?.email;
 
@@ -11,6 +11,7 @@ export default function BookingSettingsPage({ siteId, onExit, onOpenBookings, on
     userEmail,
     profile,
     onMySites: onExit,
+    onOpenInquiries,
     onOpenBookings,
     onOpenCustomers,
     onOpenAdmin,
