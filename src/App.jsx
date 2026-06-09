@@ -14,6 +14,7 @@ import LoginPage from './components/auth/LoginPage.jsx';
 import LandingPage from './components/LandingPage.jsx';
 import ResetPasswordPage from './components/auth/ResetPasswordPage.jsx';
 import DashboardPage from './components/dashboard/DashboardPage.jsx';
+import BookingOnlySetup from './components/dashboard/booking-only/BookingOnlySetup.jsx';
 import BookingSettingsPage from './components/dashboard/booking-settings/BookingSettingsPage.jsx';
 import BookingsPage from './components/dashboard/bookings-page/BookingsPage.jsx';
 import InquiriesPage from './components/dashboard/inquiries-page/InquiriesPage.jsx';
@@ -679,11 +680,24 @@ export default function App() {
     }
   };
 
+  if (view === 'booking-only-setup') {
+    return (
+      <>
+        <BookingOnlySetup
+          onDone={() => setView('dashboard')}
+          onCancel={() => setView('dashboard')}
+        />
+        <HelpChrome profile={profile} />
+      </>
+    );
+  }
+
   if (view === 'dashboard') {
     return (
       <>
         <DashboardPage
           onNewSite={() => { handleStartOver(); setView('wizard'); }}
+          onNewBookingPage={() => setView('booking-only-setup')}
           onEditSite={handleEditSite}
           onSignOut={handleSignOut}
           userEmail={session?.user?.email}

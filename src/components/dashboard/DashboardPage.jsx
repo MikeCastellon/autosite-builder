@@ -11,6 +11,12 @@ import CustomWebsitePromoModal from '../ui/CustomWebsitePromoModal.jsx';
 import EditBusinessInfoModal from './EditBusinessInfoModal.jsx';
 import UpgradeFunnel from './UpgradeFunnel.jsx';
 import AppHeader from '../ui/AppHeader.jsx';
+import ShareBookingCard from './booking-only/ShareBookingCard.jsx';
+
+function bookingUrlFor(site) {
+  if (!site?.published_url) return '';
+  return site.site_type === 'booking_only' ? site.published_url : `${site.published_url}/book`;
+}
 
 const MAX_SITES = 1;
 const CUSTOM_DOMAIN_ENABLED = import.meta.env.VITE_CUSTOM_DOMAIN_ENABLED === 'true';
@@ -117,7 +123,7 @@ function DashboardNewsBanner() {
   );
 }
 
-export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEmail, profile, onOpenAdmin, onOpenInquiries, onOpenBookings, onOpenCustomers, onOpenProfile, onOpenPaymentsConnect, onOpenCharges, onCharge, onOpenBookingSettings, onPreviewDemo }) {
+export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite, onSignOut, userEmail, profile, onOpenAdmin, onOpenInquiries, onOpenBookings, onOpenCustomers, onOpenProfile, onOpenPaymentsConnect, onOpenCharges, onCharge, onOpenBookingSettings, onPreviewDemo }) {
   const { toast, confirm: confirmDialog } = useAlert();
   const [sites, setSites] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -375,6 +381,15 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
                 + New Site
               </button>
             )}
+            {onNewBookingPage && sites.length > 0 && (
+              <button
+                type="button"
+                onClick={onNewBookingPage}
+                className="text-xs font-semibold text-[#1a1a1a] bg-white border border-black/[0.12] hover:bg-black/5 px-4 py-2 rounded-lg transition-colors"
+              >
+                Create booking page (no website)
+              </button>
+            )}
             {!isPro && (
               <button
                 type="button"
@@ -397,12 +412,22 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
           <div className="text-center py-20 border border-black/[0.07] rounded-2xl bg-white">
             <p className="text-[#888] mb-4">No sites yet.</p>
             {!isImpersonationTab && (
-              <button
-                onClick={onNewSite}
-                className="px-6 py-3 bg-[#1a1a1a] hover:bg-[#cc0000] text-white rounded-xl font-semibold text-sm transition-colors"
-              >
-                Build My Site
-              </button>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <button
+                  onClick={onNewSite}
+                  className="px-6 py-3 bg-[#1a1a1a] hover:bg-[#cc0000] text-white rounded-xl font-semibold text-sm transition-colors"
+                >
+                  Build My Site
+                </button>
+                {onNewBookingPage && (
+                  <button
+                    onClick={onNewBookingPage}
+                    className="px-6 py-3 bg-white border border-black/[0.12] hover:bg-black/5 text-[#1a1a1a] rounded-xl font-semibold text-sm transition-colors"
+                  >
+                    Create booking page (no website)
+                  </button>
+                )}
+              </div>
             )}
           </div>
         ) : (
@@ -491,6 +516,11 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
                       </a>
                     );
                   })()}
+                  {(site.site_type === 'booking_only' || site.scheduler_enabled) && (
+                    <div className="mt-3">
+                      <ShareBookingCard bookingUrl={bookingUrlFor(site)} />
+                    </div>
+                  )}
                 </div>
 
                 {/* Actions — hidden entirely while impersonating so the
@@ -500,20 +530,32 @@ export default function DashboardPage({ onNewSite, onEditSite, onSignOut, userEm
                     obvious; this just enforces it. */}
                 {!isImpersonationTab && (
                 <div className="flex flex-wrap gap-2 sm:flex-col sm:items-stretch sm:w-auto">
-                  {onEditSite && (
+                  {site.site_type !== 'booking_only' && (
+                    <>
+                      {onEditSite && (
+                        <button
+                          onClick={() => onEditSite(site)}
+                          className="px-4 py-2 text-[13px] font-semibold bg-[#1a1a1a] text-white rounded-lg hover:bg-[#cc0000] transition-colors"
+                        >
+                          Edit
+                        </button>
+                      )}
+                      <button
+                        onClick={() => setEditBizSite(site)}
+                        className="px-4 py-2 text-[13px] font-medium border border-black/10 rounded-lg hover:border-[#cc0000]/30 hover:text-[#cc0000] transition-colors"
+                      >
+                        Business Info
+                      </button>
+                    </>
+                  )}
+                  {site.site_type === 'booking_only' && onOpenBookingSettings && (
                     <button
-                      onClick={() => onEditSite(site)}
+                      onClick={() => onOpenBookingSettings(site.id)}
                       className="px-4 py-2 text-[13px] font-semibold bg-[#1a1a1a] text-white rounded-lg hover:bg-[#cc0000] transition-colors"
                     >
-                      Edit
+                      Booking Settings
                     </button>
                   )}
-                  <button
-                    onClick={() => setEditBizSite(site)}
-                    className="px-4 py-2 text-[13px] font-medium border border-black/10 rounded-lg hover:border-[#cc0000]/30 hover:text-[#cc0000] transition-colors"
-                  >
-                    Business Info
-                  </button>
                   {site.published_url && (
                     <button
                       onClick={() => handleRepublish(site)}
