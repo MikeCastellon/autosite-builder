@@ -20,9 +20,9 @@ export const handler = async (event) => {
   try { body = JSON.parse(event.body || '{}'); }
   catch { return { statusCode: 400, headers: json, body: JSON.stringify({ error: 'Invalid JSON' }) }; }
 
-  const { siteId, htmlContent, slug } = body;
-  if (!siteId || !htmlContent || !slug) {
-    return { statusCode: 400, headers: json, body: JSON.stringify({ error: 'Missing required fields (siteId, htmlContent, slug)' }) };
+  const { siteId, htmlContent, slug, bookingPageHtml } = body;
+  if (!siteId || !slug || (!htmlContent && !bookingPageHtml)) {
+    return { statusCode: 400, headers: json, body: JSON.stringify({ error: 'Missing required fields (siteId, slug, and htmlContent or bookingPageHtml)' }) };
   }
 
   // Slug shape — used as a hostname label and as part of the R2 object
@@ -48,24 +48,41 @@ export const handler = async (event) => {
   const supabase = supabaseAdmin();
 
   try {
-    const r2Key = `${slug}/index.html`;
-    const r2Url = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/r2/buckets/${R2_BUCKET}/objects/${encodeURIComponent(r2Key)}`;
+    if (htmlContent) {
+      const r2Key = `${slug}/index.html`;
+      const r2Url = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/r2/buckets/${R2_BUCKET}/objects/${encodeURIComponent(r2Key)}`;
 
-    const uploadRes = await fetch(r2Url, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${CF_TOKEN}`,
-        'Content-Type': 'text/html; charset=utf-8',
-      },
-      body: htmlContent,
-    });
+      const uploadRes = await fetch(r2Url, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${CF_TOKEN}`,
+          'Content-Type': 'text/html; charset=utf-8',
+        },
+        body: htmlContent,
+      });
 
-    if (!uploadRes.ok) {
-      const errText = await uploadRes.text();
-      throw new Error(`R2 upload failed (${uploadRes.status}): ${errText}`);
+      if (!uploadRes.ok) {
+        const errText = await uploadRes.text();
+        throw new Error(`R2 upload failed (${uploadRes.status}): ${errText}`);
+      }
+    }
+
+    if (bookingPageHtml) {
+      const bookingKey = `${slug}/book/index.html`;
+      const bookingR2Url = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/r2/buckets/${R2_BUCKET}/objects/${encodeURIComponent(bookingKey)}`;
+      const bookingRes = await fetch(bookingR2Url, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${CF_TOKEN}`, 'Content-Type': 'text/html; charset=utf-8' },
+        body: bookingPageHtml,
+      });
+      if (!bookingRes.ok) {
+        const t = await bookingRes.text();
+        throw new Error(`R2 booking-page upload failed (${bookingRes.status}): ${t}`);
+      }
     }
 
     const publishedUrl = `https://${slug}.${PUBLISH_DOMAIN}`;
+    const bookingUrl = bookingPageHtml ? `${publishedUrl}/book` : publishedUrl;
 
     await supabase.from('sites').update({
       slug,
@@ -75,7 +92,7 @@ export const handler = async (event) => {
     return {
       statusCode: 200,
       headers: json,
-      body: JSON.stringify({ publishedUrl }),
+      body: JSON.stringify({ publishedUrl, bookingUrl }),
     };
 
   } catch (err) {
