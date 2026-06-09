@@ -8,6 +8,7 @@ import {
   saveSchedulerConfig,
 } from '../../../lib/schedulerConfig.js';
 import GeneralTab from './GeneralTab.jsx';
+import AppearanceTab from './AppearanceTab.jsx';
 import ServicesTab from './ServicesTab.jsx';
 import AvailabilityTab from './AvailabilityTab.jsx';
 
@@ -195,11 +196,13 @@ export default function SchedulerSettings({ siteId, onExit }) {
       <div className="bg-white rounded-2xl border border-black/[0.07] shadow-sm overflow-hidden">
         <div className="flex gap-1 border-b border-black/[0.05] px-4 sm:px-6 pt-3">
           <TabBtn on={tab === 'general'} onClick={() => setTab('general')}>General</TabBtn>
+          <TabBtn on={tab === 'appearance'} onClick={() => setTab('appearance')}>Appearance</TabBtn>
           <TabBtn on={tab === 'services'} onClick={() => setTab('services')}>Services</TabBtn>
           <TabBtn on={tab === 'availability'} onClick={() => setTab('availability')}>Availability</TabBtn>
         </div>
         <div className="p-5 sm:p-6">
           {tab === 'general' && <GeneralTab siteId={siteId} config={site.scheduler_config} siteImages={site.generated_content?._images} onSaved={onSaved} />}
+          {tab === 'appearance' && <AppearanceTab siteId={siteId} config={site.scheduler_config} onSaved={onSaved} />}
           {tab === 'services' && <ServicesTab siteId={siteId} config={site.scheduler_config} onSaved={onSaved} />}
           {tab === 'availability' && <AvailabilityTab siteId={siteId} config={site.scheduler_config} onSaved={onSaved} />}
         </div>
