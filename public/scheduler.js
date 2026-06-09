@@ -15,6 +15,7 @@
   if (!autoOpen && typeof window !== 'undefined' && window.location && window.location.hash === '#book') {
     autoOpen = true;
   }
+  var fullPage = script && script.getAttribute('data-full-page') === 'true';
   if (!siteId) return;
 
   var API = script.src.replace(/\/scheduler\.js.*$/, '');
@@ -28,10 +29,77 @@
     .catch(function () { return { enabled: false }; })
     .then(function (cfg) {
       if (!cfg || !cfg.enabled) return;
-      if (previewMode) openModal(cfg, { inline: true });
+      if (fullPage) renderFullPage(cfg);
+      else if (previewMode) openModal(cfg, { inline: true });
       else if (autoOpen) openModal(cfg, { inline: false });
       else mountButton(cfg);
     });
+
+  function renderFullPage(cfg) {
+    var loading = document.querySelector('.acg-loading');
+    if (loading) loading.remove();
+    var a = cfg.appearance || {};
+    var accent = a.accent_color || cfg.brandColor || '#1a1a1a';
+    var radius = a.corner_style === 'sharp' ? '0px' : '16px';
+    var dark = a.background === 'dark';
+    var pageBg = dark ? '#0f1115' : '#f0f1f3';
+    var cardBg = dark ? '#1b1e24' : '#ffffff';
+    var textColor = dark ? '#f5f6f8' : '#1a1a1a';
+    if (a.background === 'image' && a.background_image_url) {
+      pageBg = "#0f1115 url('" + a.background_image_url + "') center/cover no-repeat";
+    }
+    var fontFamily = (a.font || 'Inter') + ",-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif";
+
+    document.body.style.margin = '0';
+    document.body.style.background = pageBg;
+    document.body.style.fontFamily = fontFamily;
+    document.body.style.minHeight = '100vh';
+
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'max-width:520px;margin:0 auto;padding:32px 16px 64px;box-sizing:border-box;';
+
+    if (a.page_style !== 'minimal') {
+      var hero = document.createElement('div');
+      hero.style.cssText =
+        'border-radius:' + radius + ';overflow:hidden;margin-bottom:18px;color:#fff;' +
+        'background:linear-gradient(135deg,' + accent + ',rgba(0,0,0,0.55));padding:28px 24px;';
+      var nameEl = document.createElement('div');
+      nameEl.textContent = cfg.businessName || 'Book an appointment';
+      nameEl.style.cssText = 'font-weight:800;font-size:22px;line-height:1.15;';
+      hero.appendChild(nameEl);
+      if (a.tagline) {
+        var tagEl = document.createElement('div');
+        tagEl.textContent = a.tagline;
+        tagEl.style.cssText = 'opacity:0.85;font-size:13px;margin-top:6px;';
+        hero.appendChild(tagEl);
+      }
+      wrap.appendChild(hero);
+    } else {
+      var head = document.createElement('div');
+      head.style.cssText = 'text-align:center;margin-bottom:18px;color:' + textColor + ';';
+      if (cfg.logo_url) {
+        var img = document.createElement('img');
+        img.src = cfg.logo_url;
+        img.alt = '';
+        img.style.cssText = 'width:56px;height:56px;border-radius:50%;object-fit:cover;margin:0 auto 10px;display:block;';
+        head.appendChild(img);
+      }
+      var h = document.createElement('div');
+      h.textContent = cfg.businessName || 'Book an appointment';
+      h.style.cssText = 'font-weight:800;font-size:20px;';
+      head.appendChild(h);
+      wrap.appendChild(head);
+    }
+
+    var host = document.createElement('div');
+    host.id = 'acg-scheduler-preview-host';
+    host.style.cssText = 'background:' + cardBg + ';color:' + textColor + ';border-radius:' + radius +
+      ';box-shadow:0 12px 36px rgba(0,0,0,0.12);overflow:hidden;';
+    wrap.appendChild(host);
+    document.body.appendChild(wrap);
+
+    openModal(cfg, { inline: true });
+  }
 
   function mountButton(cfg) {
     var brand = cfg.brandColor || '#1a1a1a';
