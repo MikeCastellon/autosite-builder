@@ -6,3 +6,7 @@ netlify/functions/node_modules
 
 # Local Netlify folder
 .netlify
+
+# Superpowers brainstorm/visual-companion scratch
+.superpowers/
+.claude/worktrees/
