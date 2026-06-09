@@ -1,12 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { isEffectiveSchedulerActive } from './_lib/subscription-gating.js';
-import { servicePriceCents } from './_lib/deposit-math.js';
-
-function formatCents(cents) {
-  if (typeof cents !== 'number' || cents <= 0) return '';
-  if (cents % 100 === 0) return `$${cents / 100}`;
-  return `$${(cents / 100).toFixed(2)}`;
-}
+import { buildSchedulerPayload } from './_lib/scheduler-payload.js';
 
 // Public widget endpoint — called from scheduler.js injected on every
 // customer's published site. Wide-open CORS by design.
@@ -21,8 +15,6 @@ const CORS = {
   // DB directly. The endpoint is a single indexed lookup, cost is fine.
   'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
 };
-
-const TEMPLATE_FALLBACK_COLORS = { default: '#1a1a1a' };
 
 function disabled() {
   return { statusCode: 200, headers: CORS, body: JSON.stringify({ enabled: false }) };
@@ -46,7 +38,7 @@ export const handler = async (event) => {
 
   const { data: site } = await supabase
     .from('sites')
-    .select('id, user_id, business_info, generated_content, template_id, scheduler_enabled, scheduler_config')
+    .select('id, user_id, business_info, generated_content, template_id, site_type, scheduler_enabled, scheduler_config')
     .eq('id', siteId)
     .maybeSingle();
 
@@ -60,61 +52,9 @@ export const handler = async (event) => {
 
   if (!isEffectiveSchedulerActive(profile)) return disabled();
 
-  const businessName = site.business_info?.businessName || 'Book Now';
-  const customColors = site.generated_content?._customColors || {};
-  const brandColor =
-    customColors.primary ||
-    customColors.accent ||
-    TEMPLATE_FALLBACK_COLORS[site.template_id] ||
-    TEMPLATE_FALLBACK_COLORS.default;
-
-  const cfg = site.scheduler_config || {};
-  const enabledServices = (cfg.services || []).filter((s) => s.enabled !== false);
-
-  // Logo: explicit booking logo override > site logo uploaded in the editor.
-  const siteLogo = site.generated_content?._images?.logo || null;
-  const logoUrl = cfg.logo_url || siteLogo || null;
-
   return {
     statusCode: 200,
     headers: CORS,
-    body: JSON.stringify({
-      enabled: true,
-      businessName,
-      brandColor,
-      logo_url: logoUrl,
-      city: site.business_info?.city || '',
-      booking_mode: cfg.booking_mode === 'simple' ? 'simple' : 'full',
-      modal_theme: cfg.modal_theme || 'light',
-      welcome_text: cfg.welcome_text || "Tell us about your car and we'll be in touch.",
-      button_label: cfg.button_label || 'Book Now',
-      lead_time_hours: cfg.lead_time_hours ?? 24,
-      slot_granularity_minutes: cfg.slot_granularity_minutes ?? 30,
-      cta_selector: cfg.cta_selector || '',
-      cancellation_policy: cfg.cancellation_policy || '',
-      services: enabledServices.map((s) => {
-        const cents = servicePriceCents(s);
-        const enabledAddons = Array.isArray(s.addons)
-          ? s.addons
-              .filter((a) => a && a.enabled !== false && typeof a.name === 'string' && a.name.trim() !== '')
-              .map((a) => ({
-                id: a.id,
-                name: a.name,
-                price_cents: typeof a.price_cents === 'number' && a.price_cents > 0 ? a.price_cents : 0,
-              }))
-          : [];
-        return {
-          id: s.id,
-          name: s.name,
-          duration_minutes: s.duration_minutes,
-          // `price` retained for display fallback; widgets prefer price_cents.
-          price: s.price ?? (cents != null ? formatCents(cents) : ''),
-          price_cents: cents,
-          description: s.description ?? '',
-          addons: enabledAddons,
-        };
-      }),
-      availability: cfg.availability || {},
-    }),
+    body: JSON.stringify(buildSchedulerPayload(site)),
   };
 };
