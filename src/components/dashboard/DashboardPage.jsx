@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase, isImpersonationTab } from '../../lib/supabase.js';
-import { publishSite } from '../../lib/publishSite.js';
+import { publishSite, publishBookingPage } from '../../lib/publishSite.js';
 import { TEMPLATES } from '../../data/templates.js';
 import { CHANGELOG, formatChangelogDate } from '../../data/changelog.js';
 import { isEffectiveSchedulerActive } from '../../lib/subscriptionGating.js';
@@ -284,6 +284,17 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
     });
     if (!ok) return;
     try {
+      if (site.site_type === 'booking_only') {
+        await publishBookingPage({
+          siteId: site.id,
+          businessName: site.business_info?.businessName || 'Book an appointment',
+          slug: site.slug,
+          asSubpath: false,
+        });
+        toast(`${site.business_info?.businessName || 'Site'} republished successfully`, 'success');
+        return;
+      }
+
       const { TEMPLATES } = await import('../../data/templates.js');
       const templateMeta = TEMPLATES[site.template_id];
       await publishSite({
@@ -297,6 +308,19 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
         isPro,
       });
       toast(`${site.business_info?.businessName || 'Site'} republished successfully`, 'success');
+
+      if (site.scheduler_enabled && site.slug) {
+        try {
+          await publishBookingPage({
+            siteId: site.id,
+            businessName: site.business_info?.businessName || 'Book an appointment',
+            slug: site.slug,
+            asSubpath: true,
+          });
+        } catch (bookErr) {
+          toast(`Site published, but the booking page failed: ${bookErr.message}`, 'error');
+        }
+      }
     } catch (err) {
       toast(`Republish failed: ${err.message}`, 'error');
     }

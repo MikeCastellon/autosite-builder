@@ -46,7 +46,8 @@
     var cardBg = dark ? '#1b1e24' : '#ffffff';
     var textColor = dark ? '#f5f6f8' : '#1a1a1a';
     if (a.background === 'image' && a.background_image_url) {
-      pageBg = "#0f1115 url('" + a.background_image_url + "') center/cover no-repeat";
+      var safeUrl = String(a.background_image_url).replace(/['")\\\s]/g, '');
+      if (safeUrl) pageBg = "#0f1115 url('" + safeUrl + "') center/cover no-repeat";
     }
     var fontFamily = (a.font || 'Inter') + ",-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif";
 

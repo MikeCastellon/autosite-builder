@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { saveSchedulerConfig, defaultAppearance, normalizeAppearance } from '../../../lib/schedulerConfig.js';
+import { saveSchedulerConfig, normalizeAppearance } from '../../../lib/schedulerConfig.js';
 
 const labelBase = 'block text-[12px] font-semibold text-[#1a1a1a] mb-1.5 uppercase tracking-[0.5px]';
 const helpBase = 'text-[12px] text-[#888] mt-1.5 leading-relaxed';
