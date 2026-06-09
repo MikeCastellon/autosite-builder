@@ -25,6 +25,41 @@ export function formatCentsAsDisplay(cents) {
   return `$${(cents / 100).toFixed(2)}`;
 }
 
+const APPEARANCE_ENUMS = {
+  page_style: ['branded', 'minimal'],
+  background: ['light', 'dark', 'image'],
+  corner_style: ['rounded', 'sharp'],
+};
+
+export function defaultAppearance() {
+  return {
+    page_style: 'branded',
+    accent_color: '#1a1a1a',
+    background: 'light',
+    background_image_url: '',
+    corner_style: 'rounded',
+    font: 'Inter',
+    logo_url: '',
+    tagline: '',
+  };
+}
+
+export function normalizeAppearance(input) {
+  const base = defaultAppearance();
+  if (!input || typeof input !== 'object') return base;
+  const out = { ...base };
+  for (const key of Object.keys(base)) {
+    const val = input[key];
+    if (val == null) continue;
+    if (APPEARANCE_ENUMS[key]) {
+      if (APPEARANCE_ENUMS[key].includes(val)) out[key] = val;
+    } else if (typeof val === 'string') {
+      out[key] = val;
+    }
+  }
+  return out;
+}
+
 export function defaultSchedulerConfig() {
   return {
     welcome_text: "Tell us about your car and we'll be in touch.",
@@ -35,6 +70,7 @@ export function defaultSchedulerConfig() {
     cta_selector: '',
     cancellation_policy: '',
     services: [],
+    appearance: defaultAppearance(),
     availability: {
       mon: [...DEFAULT_HOURS], tue: [...DEFAULT_HOURS], wed: [...DEFAULT_HOURS],
       thu: [...DEFAULT_HOURS], fri: [...DEFAULT_HOURS], sat: [], sun: [],
