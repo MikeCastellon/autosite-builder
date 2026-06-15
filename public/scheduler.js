@@ -20,6 +20,24 @@
 
   var API = script.src.replace(/\/scheduler\.js.*$/, '');
 
+  // Fire a one-shot page-view beacon (skips owner previews). Independent of
+  // whether the scheduler is enabled, so website views count too.
+  if (siteId && !previewMode) {
+    try {
+      var viewUrl = API + '/.netlify/functions/track-view';
+      var viewPayload = JSON.stringify({
+        siteId: siteId,
+        kind: fullPage ? 'booking' : 'site',
+        referrer: (document && document.referrer) || ''
+      });
+      if (navigator && navigator.sendBeacon) {
+        navigator.sendBeacon(viewUrl, new Blob([viewPayload], { type: 'application/json' }));
+      } else {
+        fetch(viewUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: viewPayload, keepalive: true });
+      }
+    } catch (e) { /* never let tracking break the page */ }
+  }
+
   // Always bypass browser cache — owners expect theme/logo/services
   // changes to appear instantly for their customers.
   var cfgUrl = API + '/.netlify/functions/scheduler-config?siteId=' + encodeURIComponent(siteId) + '&t=' + Date.now();
