@@ -39,6 +39,7 @@ export default function CustomerDetailPage({
   identityKey,             // dedup key from customerIdentity.js
   onExit,                  // back to dashboard
   onBackToCustomers,       // back to the Customers list
+  onOpenOverview,
   onOpenInquiries,
   onOpenBookings,
   onOpenAdmin,
@@ -52,6 +53,7 @@ export default function CustomerDetailPage({
     active: 'customers',     // keep the Customers tab highlighted on detail
     userEmail,
     profile,
+    onOpenOverview,
     onMySites: onExit,
     onOpenInquiries,
     onOpenBookings,

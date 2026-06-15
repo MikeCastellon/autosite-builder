@@ -123,7 +123,7 @@ function DashboardNewsBanner() {
   );
 }
 
-export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite, onSignOut, userEmail, profile, onOpenAdmin, onOpenInquiries, onOpenBookings, onOpenCustomers, onOpenProfile, onOpenPaymentsConnect, onOpenCharges, onCharge, onOpenBookingSettings, onPreviewDemo }) {
+export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite, onSignOut, userEmail, profile, onOpenOverview, onOpenAdmin, onOpenInquiries, onOpenBookings, onOpenCustomers, onOpenProfile, onOpenPaymentsConnect, onOpenCharges, onCharge, onOpenBookingSettings, onPreviewDemo }) {
   const { toast, confirm: confirmDialog } = useAlert();
   const [sites, setSites] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -146,6 +146,7 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
     active: 'sites',
     userEmail,
     profile,
+    onOpenOverview,
     onMySites: () => {}, // already on dashboard
     onOpenInquiries,
     onOpenBookings,

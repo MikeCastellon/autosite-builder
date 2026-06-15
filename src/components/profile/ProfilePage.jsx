@@ -5,7 +5,7 @@ import { useAlert } from '../ui/AlertProvider.jsx';
 import AppHeader from '../ui/AppHeader.jsx';
 import { CHANGELOG, formatChangelogDate } from '../../data/changelog.js';
 
-export default function ProfilePage({ onExit, onOpenBookings, onOpenCustomers, onOpenAdmin, onOpenPaymentsConnect, onOpenCharges, onCharge, onSignOut }) {
+export default function ProfilePage({ onExit, onOpenOverview, onOpenBookings, onOpenCustomers, onOpenAdmin, onOpenPaymentsConnect, onOpenCharges, onCharge, onSignOut }) {
   const { session, profile, refreshProfile } = useAuth();
   const userEmail = session?.user?.email;
   const { toast } = useAlert();
@@ -74,6 +74,7 @@ export default function ProfilePage({ onExit, onOpenBookings, onOpenCustomers, o
     active: 'profile',
     userEmail,
     profile,
+    onOpenOverview,
     onMySites: onExit,
     onOpenBookings,
     onOpenCustomers,

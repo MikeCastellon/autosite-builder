@@ -4,7 +4,7 @@ import AppHeader from '../../ui/AppHeader.jsx';
 import InquiriesView from '../inquiries/InquiriesView.jsx';
 
 export default function InquiriesPage({
-  userId, profile, userEmail, onExit,
+  userId, profile, userEmail, onExit, onOpenOverview,
   onOpenBookings, onOpenCustomers, onOpenAdmin, onOpenProfile,
   onOpenPaymentsConnect, onOpenCharges, onCharge, onSignOut,
 }) {
@@ -12,6 +12,7 @@ export default function InquiriesPage({
     active: 'inquiries',
     userEmail,
     profile,
+    onOpenOverview,
     onMySites: onExit,
     onOpenInquiries: () => {},
     onOpenBookings,

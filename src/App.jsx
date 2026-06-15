@@ -24,6 +24,7 @@ import AdminPage from './components/admin/AdminPage.jsx';
 import ProfilePage from './components/profile/ProfilePage.jsx';
 import PaymentsConnectPage from './components/dashboard/payments-connect/PaymentsConnectPage.jsx';
 import ChargesPage from './components/dashboard/charges/ChargesPage.jsx';
+import OverviewPage from './components/dashboard/overview/OverviewPage.jsx';
 import HelpChrome from './components/help/HelpChrome.jsx';
 import { saveSite } from './lib/saveSite.js';
 import { publishSite } from './lib/publishSite.js';
@@ -50,7 +51,7 @@ export default function App() {
   // Default landing view for an authenticated user is the dashboard so returning
   // users see their existing site (and free-plan limit) instead of being dropped
   // back into the wizard. New users with zero sites see the "Build My Site" CTA there.
-  const [view, setView] = useState('dashboard'); // 'wizard' | 'dashboard' | 'admin' | 'bookings-page' | 'customers' | 'customer-detail' | 'booking-settings' | 'profile' | 'payments-connect' | 'charges'
+  const [view, setView] = useState('overview'); // 'wizard' | 'overview' | 'dashboard' | 'admin' | 'bookings-page' | 'customers' | 'customer-detail' | 'booking-settings' | 'profile' | 'payments-connect' | 'charges'
   const [settingsSiteId, setSettingsSiteId] = useState(null);
   const [selectedCustomerKey, setSelectedCustomerKey] = useState(null);
   const [showResetPassword, setShowResetPassword] = useState(false);
@@ -417,6 +418,7 @@ export default function App() {
           profile={profile}
           userEmail={session?.user?.email}
           onExit={() => setView('dashboard')}
+          onOpenOverview={() => setView('overview')}
           onOpenBookings={() => setView('bookings-page')}
           onOpenCustomers={() => setView('customers')}
           onOpenAdmin={() => setView('admin')}
@@ -439,6 +441,7 @@ export default function App() {
           profile={profile}
           userEmail={session?.user?.email}
           onExit={() => setView('dashboard')}
+          onOpenOverview={() => setView('overview')}
           onOpenInquiries={() => setView('inquiries')}
           onOpenCustomers={() => setView('customers')}
           onOpenAdmin={() => setView('admin')}
@@ -461,6 +464,7 @@ export default function App() {
           profile={profile}
           userEmail={session?.user?.email}
           onExit={() => setView('dashboard')}
+          onOpenOverview={() => setView('overview')}
           onOpenInquiries={() => setView('inquiries')}
           onOpenBookings={() => setView('bookings-page')}
           onOpenAdmin={() => setView('admin')}
@@ -486,6 +490,7 @@ export default function App() {
           identityKey={selectedCustomerKey}
           onExit={() => { setSelectedCustomerKey(null); setView('dashboard'); }}
           onBackToCustomers={() => { setSelectedCustomerKey(null); setView('customers'); }}
+          onOpenOverview={() => { setSelectedCustomerKey(null); setView('overview'); }}
           onOpenInquiries={() => { setSelectedCustomerKey(null); setView('inquiries'); }}
           onOpenBookings={() => { setSelectedCustomerKey(null); setView('bookings-page'); }}
           onOpenAdmin={() => { setSelectedCustomerKey(null); setView('admin'); }}
@@ -506,6 +511,7 @@ export default function App() {
         <BookingSettingsPage
           siteId={settingsSiteId}
           onExit={() => { setSettingsSiteId(null); setView('dashboard'); }}
+          onOpenOverview={() => { setSettingsSiteId(null); setView('overview'); }}
           onOpenInquiries={() => { setSettingsSiteId(null); setView('inquiries'); }}
           onOpenBookings={() => { setSettingsSiteId(null); setView('bookings-page'); }}
           onOpenCustomers={() => { setSettingsSiteId(null); setView('customers'); }}
@@ -526,6 +532,7 @@ export default function App() {
       <>
         <AdminPage
           onExit={() => setView('dashboard')}
+          onOpenOverview={() => setView('overview')}
           onOpenBookings={() => setView('bookings-page')}
           onOpenCustomers={() => setView('customers')}
           onOpenProfile={() => setView('profile')}
@@ -544,6 +551,7 @@ export default function App() {
       <>
         <ProfilePage
           onExit={() => setView('dashboard')}
+          onOpenOverview={() => setView('overview')}
           onOpenBookings={() => setView('bookings-page')}
           onOpenCustomers={() => setView('customers')}
           onOpenAdmin={() => setView('admin')}
@@ -565,6 +573,7 @@ export default function App() {
           profile={profile}
           userEmail={session?.user?.email}
           onExit={() => setView('dashboard')}
+          onOpenOverview={() => setView('overview')}
           onOpenInquiries={() => setView('inquiries')}
           onOpenBookings={() => setView('bookings-page')}
           onOpenCustomers={() => setView('customers')}
@@ -589,6 +598,7 @@ export default function App() {
           userEmail={session?.user?.email}
           autoOpen={chargesAutoOpen}
           onExit={() => setView('dashboard')}
+          onOpenOverview={() => setView('overview')}
           onOpenInquiries={() => setView('inquiries')}
           onOpenBookings={() => setView('bookings-page')}
           onOpenCustomers={() => setView('customers')}
@@ -692,6 +702,27 @@ export default function App() {
     );
   }
 
+  if (view === 'overview') {
+    return (
+      <>
+        <OverviewPage
+          profile={profile}
+          userEmail={session?.user?.email}
+          onMySites={() => setView('dashboard')}
+          onOpenInquiries={() => setView('inquiries')}
+          onOpenBookings={() => setView('bookings-page')}
+          onOpenCustomers={() => setView('customers')}
+          onOpenCharges={() => setView('charges')}
+          onOpenPaymentsConnect={() => setView('payments-connect')}
+          onOpenAdmin={() => setView('admin')}
+          onOpenProfile={() => setView('profile')}
+          onSignOut={handleSignOut}
+        />
+        <HelpChrome profile={profile} />
+      </>
+    );
+  }
+
   if (view === 'dashboard') {
     return (
       <>
@@ -702,6 +733,7 @@ export default function App() {
           onSignOut={handleSignOut}
           userEmail={session?.user?.email}
           profile={profile}
+          onOpenOverview={() => setView('overview')}
           onOpenAdmin={() => setView('admin')}
           onOpenInquiries={() => setView('inquiries')}
           onOpenBookings={() => setView('bookings-page')}

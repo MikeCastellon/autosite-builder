@@ -5,11 +5,12 @@ import SchedulerSettings from '../booking-settings/SchedulerSettings.jsx';
 import SubscribeGate from './SubscribeGate.jsx';
 import AppHeader from '../../ui/AppHeader.jsx';
 
-export default function BookingsPage({ userId, profile, userEmail, onExit, onOpenInquiries, onOpenCustomers, onOpenAdmin, onOpenProfile, onOpenPaymentsConnect, onOpenCharges, onCharge, onSignOut }) {
+export default function BookingsPage({ userId, profile, userEmail, onExit, onOpenOverview, onOpenInquiries, onOpenCustomers, onOpenAdmin, onOpenProfile, onOpenPaymentsConnect, onOpenCharges, onCharge, onSignOut }) {
   const headerProps = {
     active: 'bookings',
     userEmail,
     profile,
+    onOpenOverview,
     onMySites: onExit,
     onOpenInquiries,
     onOpenBookings: () => {},
