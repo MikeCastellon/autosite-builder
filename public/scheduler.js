@@ -16,13 +16,14 @@
     autoOpen = true;
   }
   var fullPage = script && script.getAttribute('data-full-page') === 'true';
+  var noTrack = script && script.getAttribute('data-no-track') === 'true';
   if (!siteId) return;
 
   var API = script.src.replace(/\/scheduler\.js.*$/, '');
 
   // Fire a one-shot page-view beacon (skips owner previews). Independent of
   // whether the scheduler is enabled, so website views count too.
-  if (siteId && !previewMode) {
+  if (siteId && !previewMode && !noTrack) {
     try {
       var viewUrl = API + '/.netlify/functions/track-view';
       var viewPayload = JSON.stringify({

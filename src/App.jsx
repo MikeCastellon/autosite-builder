@@ -48,9 +48,9 @@ export default function App() {
   const [customColors, setCustomColors] = useState({});
   const [showLogin, setShowLogin] = useState(null); // null | 'signin' | 'signup'
   const [customFonts, setCustomFonts] = useState({});
-  // Default landing view for an authenticated user is the dashboard so returning
-  // users see their existing site (and free-plan limit) instead of being dropped
-  // back into the wizard. New users with zero sites see the "Build My Site" CTA there.
+  // Default landing view for an authenticated user is the Overview dashboard so
+  // returning users see how their booking page is performing. New users with zero
+  // sites see a "Build My Site" empty-state CTA on the Overview instead.
   const [view, setView] = useState('overview'); // 'wizard' | 'overview' | 'dashboard' | 'admin' | 'bookings-page' | 'customers' | 'customer-detail' | 'booking-settings' | 'profile' | 'payments-connect' | 'charges'
   const [settingsSiteId, setSettingsSiteId] = useState(null);
   const [selectedCustomerKey, setSelectedCustomerKey] = useState(null);
@@ -708,6 +708,8 @@ export default function App() {
         <OverviewPage
           profile={profile}
           userEmail={session?.user?.email}
+          onNewSite={() => { handleStartOver(); setView('wizard'); }}
+          onNewBookingPage={() => setView('booking-only-setup')}
           onMySites={() => setView('dashboard')}
           onOpenInquiries={() => setView('inquiries')}
           onOpenBookings={() => setView('bookings-page')}

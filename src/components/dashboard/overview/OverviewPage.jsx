@@ -5,6 +5,7 @@ import AppHeader from '../../ui/AppHeader.jsx';
 import StatCard from './StatCard.jsx';
 import TrendChart from './TrendChart.jsx';
 import ShareBookingCard from '../booking-only/ShareBookingCard.jsx';
+import { bookingShareUrl } from '../../../lib/bookingUrl.js';
 
 const RANGES = [{ k: 7, l: '7d' }, { k: 30, l: '30d' }, { k: 90, l: '90d' }, { k: 'all', l: 'All' }];
 
@@ -16,17 +17,13 @@ function pct(cur, prev) {
   if (!prev) return null;
   return Math.round(((cur - prev) / prev) * 100);
 }
-function bookingUrlFor(site) {
-  if (!site?.published_url) return '';
-  return site.site_type === 'booking_only' ? site.published_url : `${site.published_url}/book`;
-}
-
-export default function OverviewPage(navProps) {
+export default function OverviewPage({ onNewSite, onNewBookingPage, ...navProps }) {
   const [range, setRange] = useState(30);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [recent, setRecent] = useState([]);
   const [site, setSite] = useState(null);
+  const [siteCount, setSiteCount] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -44,10 +41,11 @@ export default function OverviewPage(navProps) {
       .order('created_at', { ascending: false }).limit(5)
       .then(({ data }) => setRecent(data || []));
     supabase.from('sites')
-      .select('published_url, site_type, scheduler_enabled')
+      .select('published_url, site_type, scheduler_enabled, custom_domain, custom_domain_status')
       .order('created_at', { ascending: false })
       .then(({ data }) => {
         const list = data || [];
+        setSiteCount(list.length);
         setSite(list.find((s) => s.site_type === 'booking_only' || s.scheduler_enabled) || list[0] || null);
       });
   }, []);
@@ -60,6 +58,29 @@ export default function OverviewPage(navProps) {
     <>
       <AppHeader active="overview" {...navProps} />
       <div className="max-w-[1000px] mx-auto px-5 py-6">
+        {siteCount === 0 ? (
+          <div className="text-center py-20 border border-black/[0.07] rounded-2xl bg-white">
+            <h1 className="text-[21px] font-extrabold text-[#1a1a1a] mb-2">Welcome 👋 Let's get you set up</h1>
+            <p className="text-[#888] text-sm mb-5">Build a website or a standalone booking page to start taking appointments.</p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <button
+                onClick={onNewSite}
+                className="px-6 py-3 bg-[#1a1a1a] hover:bg-[#cc0000] text-white rounded-xl font-semibold text-sm transition-colors"
+              >
+                Build My Site
+              </button>
+              {onNewBookingPage && (
+                <button
+                  onClick={onNewBookingPage}
+                  className="px-6 py-3 bg-white border border-black/[0.12] hover:bg-black/5 text-[#1a1a1a] rounded-xl font-semibold text-sm transition-colors"
+                >
+                  Create booking page (no website)
+                </button>
+              )}
+            </div>
+          </div>
+        ) : (
+        <>
         <div className="flex items-center justify-between flex-wrap gap-3 mb-5">
           <div>
             <h1 className="text-[21px] font-extrabold text-[#1a1a1a]">Overview</h1>
@@ -105,10 +126,12 @@ export default function OverviewPage(navProps) {
                 ))}
               </div>
               <div>
-                {site ? <ShareBookingCard bookingUrl={bookingUrlFor(site)} /> : null}
+                {site ? <ShareBookingCard bookingUrl={bookingShareUrl(site)} /> : null}
               </div>
             </div>
           </>
+        )}
+        </>
         )}
       </div>
     </>
