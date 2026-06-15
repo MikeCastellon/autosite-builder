@@ -11,12 +11,6 @@ import CustomWebsitePromoModal from '../ui/CustomWebsitePromoModal.jsx';
 import EditBusinessInfoModal from './EditBusinessInfoModal.jsx';
 import UpgradeFunnel from './UpgradeFunnel.jsx';
 import AppHeader from '../ui/AppHeader.jsx';
-import ShareBookingCard from './booking-only/ShareBookingCard.jsx';
-
-function bookingUrlFor(site) {
-  if (!site?.published_url) return '';
-  return site.site_type === 'booking_only' ? site.published_url : `${site.published_url}/book`;
-}
 
 const MAX_SITES = 1;
 const CUSTOM_DOMAIN_ENABLED = import.meta.env.VITE_CUSTOM_DOMAIN_ENABLED === 'true';
@@ -541,11 +535,6 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
                       </a>
                     );
                   })()}
-                  {(site.site_type === 'booking_only' || site.scheduler_enabled) && (
-                    <div className="mt-3">
-                      <ShareBookingCard bookingUrl={bookingUrlFor(site)} />
-                    </div>
-                  )}
                 </div>
 
                 {/* Actions — hidden entirely while impersonating so the

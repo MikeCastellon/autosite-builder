@@ -11,6 +11,12 @@ import GeneralTab from './GeneralTab.jsx';
 import AppearanceTab from './AppearanceTab.jsx';
 import ServicesTab from './ServicesTab.jsx';
 import AvailabilityTab from './AvailabilityTab.jsx';
+import ShareBookingCard from '../booking-only/ShareBookingCard.jsx';
+
+function bookingUrlFor(site) {
+  if (!site?.published_url) return '';
+  return site.site_type === 'booking_only' ? site.published_url : `${site.published_url}/book`;
+}
 
 export default function SchedulerSettings({ siteId, onExit }) {
   const [tab, setTab] = useState('general');
@@ -103,6 +109,10 @@ export default function SchedulerSettings({ siteId, onExit }) {
 
   return (
     <div>
+      <div className="mb-4">
+        <ShareBookingCard bookingUrl={bookingUrlFor(site)} />
+      </div>
+
       {/* Status card: toggle + preview */}
       <div className="bg-white rounded-2xl border border-black/[0.07] shadow-sm p-5 sm:p-6 mb-6 flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-4 flex-1 min-w-0">
