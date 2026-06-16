@@ -17,6 +17,31 @@ function pct(cur, prev) {
   if (!prev) return null;
   return Math.round(((cur - prev) / prev) * 100);
 }
+// Expand the RPC's sparse day series (only days with views) into a complete
+// daily series across the selected range, so the chart shows quiet days as a
+// baseline instead of collapsing to a single stretched bar.
+function fillSeries(rpcSeries, rangeDays) {
+  const byDay = new Map((rpcSeries || []).map((d) => [String(d.bucket), d]));
+  const today = new Date();
+  let start;
+  if (rangeDays === 'all') {
+    if (!rpcSeries || rpcSeries.length === 0) return [];
+    start = new Date(`${rpcSeries[0].bucket}T00:00:00Z`);
+  } else {
+    start = new Date(today.getTime() - (rangeDays - 1) * 86400000);
+  }
+  const out = [];
+  const cur = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()));
+  const end = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+  let guard = 0;
+  while (cur <= end && guard++ < 800) {
+    const key = cur.toISOString().slice(0, 10);
+    const hit = byDay.get(key);
+    out.push({ bucket: key, booking_views: hit ? (hit.booking_views || 0) : 0, site_views: hit ? (hit.site_views || 0) : 0 });
+    cur.setUTCDate(cur.getUTCDate() + 1);
+  }
+  return out;
+}
 export default function OverviewPage({ onNewSite, onNewBookingPage, ...navProps }) {
   const [range, setRange] = useState(30);
   const [data, setData] = useState(null);
@@ -111,7 +136,7 @@ export default function OverviewPage({ onNewSite, onNewBookingPage, ...navProps 
             <div className="bg-white border border-black/[0.07] rounded-2xl p-[18px] mb-4">
               <h3 className="text-[15px] font-bold text-[#1a1a1a]">Views over time</h3>
               <p className="text-[12px] text-[#888] mb-3.5">Booking page vs website</p>
-              <TrendChart series={data.series} />
+              <TrendChart series={fillSeries(data.series, range)} />
             </div>
 
             <div className="grid md:grid-cols-[1.4fr_1fr] gap-4">
