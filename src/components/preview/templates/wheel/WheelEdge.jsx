@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
-import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import SectionRenderer, { isRendererManagedType } from '../../sections/SectionRenderer.jsx';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 
@@ -28,8 +28,12 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
   const svcCols = services.length >= 6 ? Math.ceil(services.length / 2) : services.length || 1;
   const testimonials = copy.testimonialPlaceholders || [];
   const payments = biz.paymentMethods || [];
-  const hidden = (id) => copy?.hiddenSections?.includes(id);
-  const getOrder = buildSectionOrder(copy, ['hero', 'statsBar', 'services', 'brands', 'about', 'gallery', 'testimonials', 'cta']);
+  const sectionsList = copy?.sections || [];
+  const present = (type) => sectionsList.some(s => s.type === type);
+  const orderFor = (type) => {
+    const idx = sectionsList.findIndex(s => s.type === type);
+    return idx >= 0 ? idx : 999;
+  };
 
   const parseBrands = (val) => {
     if (!val) return [];
@@ -79,9 +83,9 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
       </nav>
 
       {/* HERO — full height with circular ring decoration */}
-      {!hidden('hero') && (
-      <header style={splitHero ? { order: getOrder('hero'), display: 'flex', flexDirection: 'row', minHeight: '85vh' } : {
-        order: getOrder('hero'), minHeight: '100vh', position: 'relative', display: 'flex', alignItems: 'center',
+      {present('hero') && (
+      <header style={splitHero ? { order: orderFor('hero'), display: 'flex', flexDirection: 'row', minHeight: '85vh' } : {
+        order: orderFor('hero'), minHeight: '100vh', position: 'relative', display: 'flex', alignItems: 'center',
         background: `radial-gradient(ellipse at 70% 50%, ${c.secondary || '#1a1a2e'} 0%, ${c.bg} 65%)`,
         overflow: 'hidden',
       }}>
@@ -166,8 +170,8 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
       )}
 
       {/* STATS */}
-      {!hidden('statsBar') && (
-      <section style={{ order: getOrder('statsBar'), background: c.secondary || '#1a1a2e', padding: '3rem 5%', borderBottom: `1px solid ${c.accent}33` }}>
+      {present('statsBar') && (
+      <section style={{ order: orderFor('statsBar'), background: c.secondary || '#1a1a2e', padding: '3rem 5%', borderBottom: `1px solid ${c.accent}33` }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 24, textAlign: 'center' }}>
           {[
             { val: biz.yearsInBusiness ? `${biz.yearsInBusiness}+` : '10+', label: 'YEARS IN BUSINESS' },
@@ -184,8 +188,8 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
       )}
 
       {/* SERVICES — product-catalog grid */}
-      {!hidden('services') && (
-      <section id="services" style={{ order: getOrder('services'), padding: '80px 5%' }}>
+      {present('services') && (
+      <section id="services" style={{ order: orderFor('services'), padding: '80px 5%' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ marginBottom: 48 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
@@ -253,8 +257,8 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
       )}
 
       {/* BRANDS CARRIED */}
-      {!hidden('brands') && (brands.length > 0 || tireBrands.length > 0) && (
-        <section id="brands" style={{ order: getOrder('brands'), padding: '72px 5%', background: c.secondary, borderTop: `1px solid ${c.accent}33` }}>
+      {present('brands') && (brands.length > 0 || tireBrands.length > 0) && (
+        <section id="brands" style={{ order: orderFor('brands'), padding: '72px 5%', background: c.secondary, borderTop: `1px solid ${c.accent}33` }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 48 }}>
               <div style={{ width: 40, height: 2, background: c.accent }} />
@@ -296,8 +300,8 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
       )}
 
       {/* ABOUT */}
-      {!hidden('about') && (
-      <section id="about" style={{ order: getOrder('about'), padding: '80px 5%', borderTop: `1px solid ${c.accent}33` }}>
+      {present('about') && (
+      <section id="about" style={{ order: orderFor('about'), padding: '80px 5%', borderTop: `1px solid ${c.accent}33` }}>
         <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'center' }}>
           <div>
             {(copy?.aboutLayout || 'image') !== 'stats' ? (
@@ -361,21 +365,21 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
       )}
 
       {/* GALLERY */}
-      {!hidden('gallery') && (
-      <div style={{ order: getOrder('gallery') }}>
+      {present('gallery') && (
+      <div style={{ order: orderFor('gallery') }}>
       <GallerySection images={images} colors={c} font={font} bodyFont={templateMeta.bodyFont} />
       </div>
       )}
 
       {/* TESTIMONIALS */}
-      {!hidden('testimonials') && (
+      {present('testimonials') && (
         copy?.googleWidgetKey ? (
-          <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+          <div style={{ order: orderFor('testimonials'), padding: '80px 5%' }}>
             {copy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} theme={copy?.googleReviewsTheme} />
           </div>
         ) : testimonials.length > 0 ? (
-        <section style={{ order: getOrder('testimonials'), padding: '80px 5%', background: c.secondary, borderTop: `1px solid ${c.accent}33` }}>
+        <section style={{ order: orderFor('testimonials'), padding: '80px 5%', background: c.secondary, borderTop: `1px solid ${c.accent}33` }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 48 }}>
               <div style={{ width: 40, height: 2, background: c.accent }} />
@@ -399,8 +403,8 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
       )}
 
       {/* CTA */}
-      {!hidden('cta') && (
-      <section style={{ order: getOrder('cta'), background: c.secondary, padding: '80px 5%', textAlign: 'center', borderTop: `1px solid ${c.accent}33` }}>
+      {present('cta') && (
+      <section style={{ order: orderFor('cta'), background: c.secondary, padding: '80px 5%', textAlign: 'center', borderTop: `1px solid ${c.accent}33` }}>
         <h2 style={{ fontSize: 'clamp(2rem, 4cqi, 3rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 16px', letterSpacing: '-0.01em' }}>{copy.ctaHeadline || 'READY TO UPGRADE?'}</h2>
         <p style={{ color: c.muted, fontSize: 16, marginBottom: 36 }}>
           {copy.ctaSubtext || copy.ctaSecondary || `${biz.city || 'Your city'}, ${biz.state || ''} — Call or stop by today`}
@@ -421,6 +425,14 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
           </p>
         )}
       </section>
+      )}
+
+      {sectionsList.map((inst, i) =>
+        isRendererManagedType(inst.type)
+          ? <SectionRenderer key={inst.id} instance={inst} order={i}
+              generatedCopy={generatedCopy} templateMeta={templateMeta}
+              businessInfo={businessInfo} images={images} />
+          : null
       )}
 
       {/* FOOTER */}

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
-import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import SectionRenderer, { isRendererManagedType } from '../../sections/SectionRenderer.jsx';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 
@@ -29,8 +29,12 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
   const payments = biz.paymentMethods || [];
   const packages = biz.packages || [];
 
-  const hidden = (id) => copy?.hiddenSections?.includes(id);
-  const getOrder = buildSectionOrder(copy, ['hero','services','about','gallery','testimonials','cta']);
+  const sectionsList = copy?.sections || [];
+  const present = (type) => sectionsList.some(s => s.type === type);
+  const orderFor = (type) => {
+    const idx = sectionsList.findIndex(s => s.type === type);
+    return idx >= 0 ? idx : 999;
+  };
 
   const splitHero = generatedCopy?.heroLayout === 'split';
 
@@ -85,12 +89,12 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
       </nav>
 
       {/* HERO — full height with diagonal slash overlay */}
-      {!hidden('hero') && (
-      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh', order: getOrder('hero') } : {
+      {present('hero') && (
+      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh', order: orderFor('hero') } : {
         minHeight: '100vh', position: 'relative', display: 'flex', alignItems: 'center',
         background: `linear-gradient(135deg, #1a1a1a 0%, #2d1800 55%, #1a1a1a 100%)`,
         overflow: 'hidden',
-        order: getOrder('hero'),
+        order: orderFor('hero'),
       }}>
         {!splitHero && <HeroImage src={images.hero} />}
         {!splitHero && <div style={{ position: 'absolute', inset: 0, background: slashBg }} />}
@@ -158,8 +162,8 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
       )}
 
       {/* SERVICES */}
-      {!hidden('services') && (
-      <section id="services" style={{ padding: '80px 5%' , order: getOrder('services') }}>
+      {present('services') && (
+      <section id="services" style={{ padding: '80px 5%' , order: orderFor('services') }}>
         <div style={{ maxWidth: 1200, margin: '0 auto'  }}>
           <div style={{ marginBottom: 48 }}>
             <div style={{ color: c.accent, fontWeight: 900, letterSpacing: 3, fontSize: 11, textTransform: 'uppercase', marginBottom: 8 }}>WHAT WE DO</div>
@@ -224,8 +228,8 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
       )}
 
       {/* ABOUT */}
-      {!hidden('about') && (
-      <section id="about" style={{ padding: '80px 5%' , order: getOrder('about') }}>
+      {present('about') && (
+      <section id="about" style={{ padding: '80px 5%' , order: orderFor('about') }}>
         <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'center' }}>
           <div>
             {(copy?.aboutLayout || 'image') !== 'stats' ? (
@@ -289,21 +293,21 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
       )}
 
       {/* GALLERY */}
-      {!hidden('gallery') && (
-      <div style={{ order: getOrder('gallery') }}>
+      {present('gallery') && (
+      <div style={{ order: orderFor('gallery') }}>
       <GallerySection images={images} colors={c} font={font} bodyFont={templateMeta.bodyFont} />
       </div>
       )}
 
       {/* TESTIMONIALS */}
-      {!hidden('testimonials') && (
+      {present('testimonials') && (
         copy?.googleWidgetKey ? (
-          <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+          <div style={{ order: orderFor('testimonials'), padding: '80px 5%' }}>
             {copy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} theme={copy?.googleReviewsTheme} />
           </div>
         ) : testimonials.length > 0 ? (
-        <section style={{ padding: '80px 5%', background: c.secondary || '#2a2a2a', borderTop: '1px solid #333' , order: getOrder('testimonials') }}>
+        <section style={{ padding: '80px 5%', background: c.secondary || '#2a2a2a', borderTop: '1px solid #333' , order: orderFor('testimonials') }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ textAlign: 'center', marginBottom: 48 }}>
               <div style={{ color: c.accent, fontWeight: 900, letterSpacing: 3, fontSize: 11, textTransform: 'uppercase', marginBottom: 8 }}>WHAT CLIENTS SAY</div>
@@ -324,8 +328,8 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
       )}
 
       {/* CTA SECTION */}
-      {!hidden('cta') && (
-      <section style={{ padding: '80px 5%', textAlign: 'center' , order: getOrder('cta') }}>
+      {present('cta') && (
+      <section style={{ padding: '80px 5%', textAlign: 'center' , order: orderFor('cta') }}>
         <h2 style={{ fontSize: 'clamp(2rem, 5cqi, 3.5rem)', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 16px', lineHeight: 1 }}>{copy.ctaHeadline || 'READY TO BOOK?'}</h2>
         <p style={{ color: '#888', fontSize: 16, marginBottom: 40 }}>{copy.ctaSubtext || copy.ctaSecondary || `Serving ${biz.city || 'your area'}. We come to you.`}</p>
         <a href={copy?.ctaUrl || (`tel:${biz.phone}`)} style={{
@@ -346,6 +350,14 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
       )}
 
       {/* FOOTER */}
+      {sectionsList.map((inst, i) =>
+        isRendererManagedType(inst.type)
+          ? <SectionRenderer key={inst.id} instance={inst} order={i}
+              generatedCopy={generatedCopy} templateMeta={templateMeta}
+              businessInfo={businessInfo} images={images} />
+          : null
+      )}
+
       <footer style={{ background: '#111', padding: '48px 5% 28px', borderTop: `3px solid ${c.accent}`, order: 9999 }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 36, marginBottom: 32 }}>
           <div>

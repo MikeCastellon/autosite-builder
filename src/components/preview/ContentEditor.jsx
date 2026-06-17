@@ -6,6 +6,8 @@ import { useAlert } from '../ui/AlertProvider.jsx';
 import { formatPhone } from '../../lib/formatPhone.js';
 import { formatPrice } from '../../lib/formatPrice.js';
 import { HOURS_DAYS, parseRange, rangeToString, expandHoursToDays } from '../../lib/businessHours.js';
+import { addInstance, removeInstance, moveInstance, hasInstance } from '../../lib/sectionInstances.js';
+import { getCatalogForTemplate, getCatalogEntry } from '../../data/sectionCatalog.js';
 
 const EMOJI_GROUPS = {
   'Common': ['⭐', '✅', '🏆', '💎', '🔧', '🛞', '🚗', '🏎️', '💰', '💳', '🕐', '⏱️', '📞', '📍', '🎯', '✓', '★', '♦'],
@@ -391,6 +393,135 @@ function Toggle({ value, onChange, options }) {
   );
 }
 
+function MediaTextEditor({ instanceId, content, setContent, images, setImage }) {
+  return (
+    <>
+      <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Image</p>
+      <ImageSlot label="Section Image" value={images?.[`mediaText_${instanceId}`]} onChange={(v) => setImage(`mediaText_${instanceId}`, v)} />
+      <hr className="my-3 border-gray-100" />
+      <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Heading</label>
+      <input
+        type="text"
+        value={content.heading || ''}
+        onChange={(e) => setContent({ ...content, heading: e.target.value })}
+        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] mb-3"
+        placeholder="Section heading"
+      />
+      <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Body</label>
+      <textarea
+        value={content.body || ''}
+        onChange={(e) => setContent({ ...content, body: e.target.value })}
+        rows={5}
+        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] mb-3 leading-relaxed"
+        placeholder="Custom paragraph"
+      />
+      <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Image Alignment</label>
+      <div className="flex gap-2 mb-3">
+        {['left', 'right'].map(a => (
+          <button
+            key={a}
+            type="button"
+            onClick={() => setContent({ ...content, alignment: a })}
+            className={`flex-1 py-2 text-[12px] font-medium rounded-lg border transition-colors ${
+              (content.alignment || 'left') === a
+                ? 'bg-gray-900 text-white border-gray-900'
+                : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'
+            }`}
+          >Image {a}</button>
+        ))}
+      </div>
+      <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Button Label (optional)</label>
+      <input
+        type="text"
+        value={content.ctaLabel || ''}
+        onChange={(e) => setContent({ ...content, ctaLabel: e.target.value })}
+        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] mb-3"
+      />
+      <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Button URL (optional)</label>
+      <input
+        type="text"
+        value={content.ctaUrl || ''}
+        onChange={(e) => setContent({ ...content, ctaUrl: e.target.value })}
+        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px]"
+        placeholder="#contact"
+      />
+    </>
+  );
+}
+
+function FAQEditor({ instanceId, content, setContent }) {
+  const items = content.items || [];
+  const update = (i, key, value) => {
+    const next = [...items];
+    next[i] = { ...next[i], [key]: value };
+    setContent({ ...content, items: next });
+  };
+  const add = () => setContent({ ...content, items: [...items, { q: '', a: '' }] });
+  const remove = (i) => setContent({ ...content, items: items.filter((_, idx) => idx !== i) });
+  return (
+    <>
+      {items.map((item, i) => (
+        <div key={`${i}-${(item.q || '').slice(0, 16)}`} className="mb-4 border-b border-gray-100 pb-3">
+          <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Q #{i + 1}</label>
+          <input value={item.q || ''} onChange={(e) => update(i, 'q', e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] mb-2" />
+          <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">A</label>
+          <textarea value={item.a || ''} onChange={(e) => update(i, 'a', e.target.value)} rows={3} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px]" />
+          <button type="button" onClick={() => remove(i)} className="text-[11px] text-red-500 mt-1">Remove</button>
+        </div>
+      ))}
+      <button type="button" onClick={add} className="w-full text-[12px] py-2 border border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-gray-500 hover:text-gray-700">+ Add question</button>
+    </>
+  );
+}
+
+function BeforeAfterEditor({ instanceId, content, setContent, images, setImage }) {
+  const pairCount = content.pairCount || 3;
+  return (
+    <>
+      <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Heading</label>
+      <input value={content.heading || ''} onChange={(e) => setContent({ ...content, heading: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] mb-3" placeholder="Before & After" />
+      <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Intro</label>
+      <input value={content.intro || ''} onChange={(e) => setContent({ ...content, intro: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] mb-3" />
+      <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Number of Pairs</label>
+      <input type="number" min={1} max={8} value={pairCount} onChange={(e) => setContent({ ...content, pairCount: Math.max(1, Math.min(8, Number(e.target.value) || 1)) })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] mb-3" />
+      {Array.from({ length: pairCount }).map((_, i) => (
+        <div key={i} className="mb-3 border-t border-gray-100 pt-2">
+          <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Pair {i + 1}</p>
+          <ImageSlot label="Before" value={images?.[`${instanceId}_pair${i}_before`]} onChange={(v) => setImage(`${instanceId}_pair${i}_before`, v)} />
+          <ImageSlot label="After"  value={images?.[`${instanceId}_pair${i}_after`]}  onChange={(v) => setImage(`${instanceId}_pair${i}_after`,  v)} />
+        </div>
+      ))}
+    </>
+  );
+}
+
+function ProcessEditor({ instanceId, content, setContent }) {
+  const steps = content.steps || [];
+  const updateStep = (i, key, value) => {
+    const next = [...steps];
+    next[i] = { ...next[i], [key]: value };
+    setContent({ ...content, steps: next });
+  };
+  const addStep = () => setContent({ ...content, steps: [...steps, { title: '', description: '' }] });
+  const removeStep = (i) => setContent({ ...content, steps: steps.filter((_, idx) => idx !== i) });
+  return (
+    <>
+      <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Intro</label>
+      <textarea value={content.intro || ''} onChange={(e) => setContent({ ...content, intro: e.target.value })} rows={2} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] mb-3" />
+      {steps.map((s, i) => (
+        <div key={i} className="mb-3 border-b border-gray-100 pb-2">
+          <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Step {i + 1} Title</label>
+          <input value={s.title || ''} onChange={(e) => updateStep(i, 'title', e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] mb-1" />
+          <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Description</label>
+          <textarea value={s.description || ''} onChange={(e) => updateStep(i, 'description', e.target.value)} rows={2} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px]" />
+          <button type="button" onClick={() => removeStep(i)} className="text-[11px] text-red-500 mt-1">Remove</button>
+        </div>
+      ))}
+      <button type="button" onClick={addStep} className="w-full text-[12px] py-2 border border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-gray-500 hover:text-gray-700">+ Add step</button>
+    </>
+  );
+}
+
 export default function ContentEditor({ isOpen, onClose, copy, images, onCopyChange, onImagesChange, templateMeta, templateId, customColors = {}, onCustomColors, customFonts = {}, onCustomFonts, businessType, onSwitchTemplate, businessInfo, onBusinessInfoChange }) {
   const { confirm: confirmDialog } = useAlert();
   const setBiz = (key, val) => {
@@ -399,11 +530,19 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
   };
   const [activeSection, setActiveSection] = useState('visibility');
 
+  const activeInst = activeSection.startsWith('inst:')
+    ? (copy?.sections || []).find(s => `inst:${s.id}` === activeSection)
+    : null;
+  const activeType = activeInst?.type || activeSection;
+
   const setCopy = (path, value) => {
     const parts = path.split('.');
     const next = structuredClone(copy);
     let obj = next;
-    for (let i = 0; i < parts.length - 1; i++) obj = obj[parts[i]];
+    for (let i = 0; i < parts.length - 1; i++) {
+      if (obj[parts[i]] == null) obj[parts[i]] = {};
+      obj = obj[parts[i]];
+    }
     obj[parts[parts.length - 1]] = value;
     onCopyChange(next);
   };
@@ -549,33 +688,35 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
   const [dragOverIdx, setDragOverIdx] = useState(null);
   const handleDragStart = (idx) => { setDragIdx(idx); };
   const handleDragOver = (e, idx) => { e.preventDefault(); setDragOverIdx(idx); };
-  const handleDrop = (idx) => {
+  const handleDropInstance = (idx) => {
     if (dragIdx === null || dragIdx === idx) { setDragIdx(null); setDragOverIdx(null); return; }
-    const ids = orderedSections.map(s => s.id);
-    const [moved] = ids.splice(dragIdx, 1);
-    ids.splice(idx, 0, moved);
-    setCopy('sectionOrder', ids);
+    const moving = (copy?.sections || [])[dragIdx];
+    if (moving?.locked) { setDragIdx(null); setDragOverIdx(null); return; }
+    setCopy('sections', moveInstance(copy.sections, moving.id, idx));
     setDragIdx(null);
     setDragOverIdx(null);
   };
   const handleDragEnd = () => { setDragIdx(null); setDragOverIdx(null); };
 
+  const instanceSections = (copy?.sections || []).map((inst, i) => {
+    const catalogEntry = getCatalogEntry(inst.type);
+    const toggleableEntry = TOGGLEABLE._default.find(t => t.id === inst.type)
+                         || Object.values(TOGGLEABLE).flat().find(t => t.id === inst.type);
+    const entry = catalogEntry || toggleableEntry || { id: inst.type, label: inst.type };
+    const sameTypeBefore = (copy?.sections || []).slice(0, i).filter(s => s.type === inst.type).length;
+    const ordinal = sameTypeBefore + 1;
+    const isMulti = (copy?.sections || []).filter(s => s.type === inst.type).length > 1;
+    return {
+      id: `inst:${inst.id}`,
+      instanceId: inst.id,
+      type: inst.type,
+      label: isMulti ? `${entry.label} #${ordinal}` : entry.label,
+    };
+  });
+
   const sections = [
-    { id: 'visibility', label: 'Sections' },
-    { id: 'hero', label: 'Hero' },
-    { id: 'services', label: 'Services' },
-    ...(isSudsy ? [{ id: 'howItWorks', label: 'How It Works' }, { id: 'whyUs', label: 'Why Us' }] : []),
-    ...(isBubble ? [{ id: 'howItWorks', label: 'How It Works' }] : []),
-    ...(isIronclad || isBubble ? [{ id: 'whyUs', label: 'Why Us' }] : []),
-    ...(isWheel ? [{ id: 'products', label: 'Products' }, { id: 'brands', label: 'Brands' }] : []),
-    ...(isTint && !isWheel ? [{ id: 'filmBrands', label: 'Film Brands' }] : []),
-    ...(isObsidian ? [{ id: 'shadeGuide', label: 'Shades' }] : []),
-    ...(isApex ? [{ id: 'trustBar', label: 'Trust Bar' }, { id: 'ticker', label: 'Ticker' }] : []),
-    { id: 'about', label: 'About' },
-    { id: 'gallery', label: 'Gallery' },
-    { id: 'testimonials', label: 'Reviews' },
-    // Instagram tab disabled pending Meta App Review
-    { id: 'contact', label: 'Contact' },
+    { id: 'visibility', label: 'Layout' },
+    ...instanceSections,
     { id: 'colors', label: 'Colors & Fonts' },
     { id: 'footer', label: 'Footer' },
     ...(onBusinessInfoChange ? [{ id: 'business', label: 'Business Info' }] : []),
@@ -660,48 +801,59 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
 
           {activeSection === 'visibility' && (
             <>
-              <p className="text-[11px] text-gray-400 mb-4">Drag to reorder · toggle to show/hide.</p>
-              {orderedSections.map(({ id, label }, idx) => (
-                <div
-                  key={id}
-                  draggable
-                  onDragStart={() => handleDragStart(idx)}
-                  onDragOver={(e) => handleDragOver(e, idx)}
-                  onDrop={() => handleDrop(idx)}
-                  onDragEnd={handleDragEnd}
-                  className="flex items-center gap-2.5 py-2.5 border-b border-gray-100 select-none"
-                  style={{
-                    opacity: dragIdx === idx ? 0.35 : 1,
-                    borderTop: dragOverIdx === idx && dragIdx !== idx ? '2px solid #3b82f6' : '2px solid transparent',
-                    transition: 'opacity 0.15s',
-                  }}
-                >
-                  {/* Drag handle */}
-                  <span className="text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing shrink-0 text-[14px] leading-none" title="Drag to reorder">⠿</span>
-                  {/* Label */}
-                  <span className={`flex-1 text-[13px] font-medium ${isSectionHidden(id) ? 'text-gray-400 line-through' : 'text-gray-700'}`}>{label}</span>
-                  {/* Toggle */}
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={!isSectionHidden(id)}
-                    onClick={() => toggleSection(id)}
-                    className={`relative w-9 h-5 rounded-full transition-colors shrink-0 ${!isSectionHidden(id) ? 'bg-gray-900' : 'bg-gray-300'}`}
+              <p className="text-[11px] text-gray-400 mb-4">Drag to reorder · click × to remove · use buttons below to add.</p>
+              {(copy?.sections || []).map((inst, idx) => {
+                const entry = getCatalogEntry(inst.type) || { label: inst.type };
+                const isLocked = !!inst.locked;
+                const sameTypeBefore = (copy?.sections || []).slice(0, idx).filter(s => s.type === inst.type).length;
+                const ordinal = sameTypeBefore + 1;
+                const isMulti = (copy?.sections || []).filter(s => s.type === inst.type).length > 1;
+                const label = isMulti ? `${entry.label} #${ordinal}` : entry.label;
+                return (
+                  <div
+                    key={inst.id}
+                    draggable={!isLocked}
+                    onDragStart={() => handleDragStart(idx)}
+                    onDragOver={(e) => handleDragOver(e, idx)}
+                    onDrop={() => handleDropInstance(idx)}
+                    onDragEnd={handleDragEnd}
+                    className="flex items-center gap-2.5 py-2.5 border-b border-gray-100 select-none"
+                    style={{
+                      opacity: dragIdx === idx ? 0.35 : 1,
+                      borderTop: dragOverIdx === idx && dragIdx !== idx ? '2px solid #3b82f6' : '2px solid transparent',
+                      transition: 'opacity 0.15s',
+                    }}
                   >
-                    <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${!isSectionHidden(id) ? 'translate-x-4' : 'translate-x-0'}`} />
-                  </button>
+                    <span className="text-gray-300 shrink-0 text-[14px] leading-none">{isLocked ? '🔒' : '⠿'}</span>
+                    <span className="flex-1 text-[13px] font-medium text-gray-700">{label}</span>
+                    {!isLocked && (
+                      <button type="button" onClick={() => {
+                        if (activeSection === `inst:${inst.id}`) setActiveSection('visibility');
+                        setCopy('sections', removeInstance(copy.sections, inst.id));
+                      }} className="text-gray-300 hover:text-red-500 text-[18px] leading-none w-6 h-6 flex items-center justify-center">×</button>
+                    )}
+                  </div>
+                );
+              })}
+              <div className="mt-4">
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Add a section</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {getCatalogForTemplate(templateId)
+                    .filter(c => !c.locked && (c.multi || !hasInstance(copy?.sections || [], c.type)))
+                    .map(c => (
+                      <button
+                        key={c.type}
+                        type="button"
+                        onClick={() => setCopy('sections', addInstance(copy?.sections || [], c.type))}
+                        className="text-[11px] px-2 py-1.5 border border-gray-200 rounded-lg hover:border-gray-500 text-gray-700"
+                      >+ {c.label}</button>
+                    ))}
                 </div>
-              ))}
-              {copy?.sectionOrder?.length > 0 && (
-                <button type="button" onClick={() => setCopy('sectionOrder', null)}
-                  className="mt-3 text-[12px] text-gray-400 hover:text-red-500 border border-gray-200 rounded-lg px-3 py-1.5 w-full transition">
-                  Reset to default order
-                </button>
-              )}
+              </div>
             </>
           )}
 
-          {activeSection === 'hero' && (
+          {activeType === 'hero' && (
             <>
               <ImageSlot label="Hero Background" value={images?.hero} onChange={(v) => setImage('hero', v)} />
               <ImageSlot label="Business Logo" value={images?.logo} onChange={(v) => setImage('logo', v)} />
@@ -721,7 +873,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
             </>
           )}
 
-          {activeSection === 'services' && (() => {
+          {activeType === 'services' && (() => {
             // Source of truth: the wizard writes packages-with-prices to
             // businessInfo.services (as {name, price, description} objects). The
             // normalize layer mirrors services -> packages for template rendering.
@@ -790,7 +942,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
             );
           })()}
 
-          {activeSection === 'howItWorks' && (isSudsy || isBubble) && (() => {
+          {activeType === 'howItWorks' && (isSudsy || isBubble) && (() => {
             const defaults = [
               { emoji: '📱', title: 'You Book', desc: 'Call, text, or tap — your choice. Takes about 2 minutes.' },
               { emoji: '🚐', title: 'We Show Up', desc: 'Our van rolls up to your driveway, parking lot, or office.' },
@@ -834,7 +986,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
             );
           })()}
 
-          {activeSection === 'whyUs' && (isSudsy || isIronclad || isBubble) && (() => {
+          {activeType === 'whyUs' && (isSudsy || isIronclad || isBubble) && (() => {
             const defaultCards = [
               { icon: '🏠', title: 'We Come To You', desc: 'Zero trips to a shop. We bring the whole operation to your door.' },
               { icon: '🏆', title: 'Professional Results', desc: 'Pro-grade products and equipment — not a bucket and a sponge.' },
@@ -880,7 +1032,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
             );
           })()}
 
-          {activeSection === 'products' && isWheel && (() => {
+          {activeType === 'products' && isWheel && (() => {
             const products = copy?.products || [];
             const showProducts = copy?.showProducts !== false;
             const updateProduct = (i, key, val) => {
@@ -959,7 +1111,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
             );
           })()}
 
-          {activeSection === 'brands' && isWheel && (
+          {activeType === 'brands' && isWheel && (
             <>
               <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Wheel Brands</p>
               <Field label="Comma-separated" value={copy?.wheelBrands?.join?.(', ') ?? ''} onChange={(v) => setCopy('wheelBrands', v.split(',').map(s => s.trim()).filter(Boolean))} multiline rows={2} />
@@ -968,7 +1120,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
             </>
           )}
 
-          {activeSection === 'filmBrands' && isTint && (
+          {activeType === 'filmBrands' && isTint && (
             <>
               <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Film Brands</p>
               <Field label="Comma-separated (e.g. XPEL, LLumar, 3M)" value={copy?.filmBrandsList?.join?.(', ') ?? ''} onChange={(v) => setCopy('filmBrandsList', v.split(',').map(s => s.trim()).filter(Boolean))} multiline rows={2} />
@@ -976,7 +1128,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
             </>
           )}
 
-          {activeSection === 'shadeGuide' && isObsidian && (() => {
+          {activeType === 'shadeGuide' && isObsidian && (() => {
             const defaultShades = [
               { vlt: '5', name: 'Limo Black', legal: 'Rear windows only' },
               { vlt: '15', name: 'Midnight', legal: 'Rear-legal in most states' },
@@ -1037,7 +1189,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
             );
           })()}
 
-          {activeSection === 'trustBar' && isApex && (() => {
+          {activeType === 'trustBar' && isApex && (() => {
             const defaultTrust = [
               { emoji: '🕐', label: 'Professional service', sub: 'Trusted locally' },
               { emoji: '✓', label: 'Fitment guaranteed', sub: 'Or free return' },
@@ -1081,7 +1233,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
             );
           })()}
 
-          {activeSection === 'ticker' && isApex && (() => {
+          {activeType === 'ticker' && isApex && (() => {
             const items = copy?.tickerItems || [];
             return (
               <>
@@ -1099,7 +1251,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
             );
           })()}
 
-          {activeSection === 'about' && (
+          {activeType === 'about' && (
             <>
               {(copy?.aboutLayout || 'image') === 'image' && (
                 <ImageSlot label="About Photo" value={images?.about} onChange={(v) => setImage('about', v)} />
@@ -1145,7 +1297,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
             </>
           )}
 
-          {activeSection === 'testimonials' && (
+          {activeType === 'testimonials' && (
             <>
               <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Review Source</p>
               <Toggle
@@ -1213,7 +1365,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
             </>
           )}
 
-          {activeSection === 'gallery' && (
+          {activeType === 'gallery' && (
             <GallerySlots images={images} setImage={setImage} />
           )}
 
@@ -1308,7 +1460,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
             </>
           )}
 
-          {activeSection === 'contact' && (
+          {(activeType === 'contact' || activeType === 'cta') && (
             <>
               <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Contact / CTA Section</p>
               <Field label="Headline" value={copy?.ctaHeadline} onChange={(v) => setCopy('ctaHeadline', v)} />
@@ -1322,6 +1474,39 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
               <Field label="Button Text (default: phone number)" value={copy?.ctaSecondaryText} onChange={(v) => setCopy('ctaSecondaryText', v)} />
               <Field label="Button URL (default: tel:phone)" value={copy?.ctaSecondaryUrl} onChange={(v) => setCopy('ctaSecondaryUrl', v)} />
             </>
+          )}
+
+          {activeType === 'mediaText' && activeInst && (
+            <MediaTextEditor
+              instanceId={activeInst.id}
+              content={copy?.sectionContent?.[activeInst.id] || {}}
+              setContent={(next) => setCopy(`sectionContent.${activeInst.id}`, next)}
+              images={images}
+              setImage={setImage}
+            />
+          )}
+          {activeType === 'faq' && activeInst && (
+            <FAQEditor
+              instanceId={activeInst.id}
+              content={copy?.sectionContent?.[activeInst.id] || { items: [] }}
+              setContent={(next) => setCopy(`sectionContent.${activeInst.id}`, next)}
+            />
+          )}
+          {activeType === 'beforeAfter' && activeInst && (
+            <BeforeAfterEditor
+              instanceId={activeInst.id}
+              content={copy?.sectionContent?.[activeInst.id] || { pairCount: 3 }}
+              setContent={(next) => setCopy(`sectionContent.${activeInst.id}`, next)}
+              images={images}
+              setImage={setImage}
+            />
+          )}
+          {activeType === 'process' && activeInst && (
+            <ProcessEditor
+              instanceId={activeInst.id}
+              content={copy?.sectionContent?.[activeInst.id] || {}}
+              setContent={(next) => setCopy(`sectionContent.${activeInst.id}`, next)}
+            />
           )}
 
           {activeSection === 'footer' && (

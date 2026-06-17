@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
-import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import SectionRenderer, { isRendererManagedType } from '../../sections/SectionRenderer.jsx';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 
@@ -18,8 +18,12 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
-  const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
-  const getOrder = buildSectionOrder(generatedCopy, ['hero', 'statsBar', 'services', 'about', 'testimonials', 'cta', 'gallery']);
+  const sectionsList = generatedCopy?.sections || [];
+  const present = (type) => sectionsList.some(s => s.type === type);
+  const orderFor = (type) => {
+    const idx = sectionsList.findIndex(s => s.type === type);
+    return idx >= 0 ? idx : 999;
+  };
 
   const s = {
     nav: {
@@ -202,8 +206,8 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
       </nav>
 
       {/* HERO */}
-      {!hidden('hero') && (
-      <section style={{ ...s.hero, order: getOrder('hero') }}>
+      {present('hero') && (
+      <section style={{ ...s.hero, order: orderFor('hero') }}>
         <HeroImage src={images.hero} />
         <div style={s.heroDiag} />
         <div style={s.heroDiag2} />
@@ -221,8 +225,8 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
       )}
 
       {/* STATS BAR */}
-      {!hidden('statsBar') && (
-      <div style={{ ...s.statsBar, order: getOrder('statsBar') }}>
+      {present('statsBar') && (
+      <div style={{ ...s.statsBar, order: orderFor('statsBar') }}>
         {stats.map((st, i) => (
           <div key={i} style={s.statItem}>
             <span style={s.statNum}>{st.num}</span>
@@ -233,8 +237,8 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
       )}
 
       {/* SERVICES */}
-      {!hidden('services') && (
-      <section style={{ ...s.section, order: getOrder('services') }}>
+      {present('services') && (
+      <section style={{ ...s.section, order: orderFor('services') }}>
         <div style={s.sectionLabel}>Our Services</div>
         <h2 style={s.sectionTitle}>Precision. Perfection. Prestige.</h2>
         <p style={s.sectionSub}>{generatedCopy.servicesSection?.intro}</p>
@@ -262,8 +266,8 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
       )}
 
       {/* ABOUT */}
-      {!hidden('about') && (
-      <section style={{ ...s.sectionAlt, order: getOrder('about') }}>
+      {present('about') && (
+      <section style={{ ...s.sectionAlt, order: orderFor('about') }}>
         <div style={s.aboutGrid}>
           <div>
             <div style={s.sectionLabel}>Our Story</div>
@@ -279,14 +283,14 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
       )}
 
       {/* TESTIMONIALS */}
-      {!hidden('testimonials') && (
+      {present('testimonials') && (
         generatedCopy?.googleWidgetKey ? (
-          <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+          <div style={{ order: orderFor('testimonials'), padding: '80px 5%' }}>
             {generatedCopy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{generatedCopy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={generatedCopy.googleWidgetKey} theme={generatedCopy?.googleReviewsTheme} />
           </div>
         ) : (generatedCopy.testimonialPlaceholders || []).length > 0 ? (
-      <section style={{ ...s.section, order: getOrder('testimonials') }}>
+      <section style={{ ...s.section, order: orderFor('testimonials') }}>
         <div style={s.sectionLabel}>Client Words</div>
         <h2 style={{ ...s.sectionTitle, marginBottom: '2rem' }}>What Our Clients Say</h2>
         <div style={s.testimonialGrid}>
@@ -303,8 +307,8 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
       )}
 
       {/* CTA SECTION */}
-      {!hidden('cta') && (
-      <section style={{ ...s.ctaSection, order: getOrder('cta') }}>
+      {present('cta') && (
+      <section style={{ ...s.ctaSection, order: orderFor('cta') }}>
         <div style={s.sectionLabel}>{generatedCopy.ctaSubtext || 'Ready to Begin?'}</div>
         <div style={s.ctaBig}>{generatedCopy.ctaHeadline || fb.ctaHeadline}</div>
         <div style={s.ctaPhone}>{businessInfo.phone}</div>
@@ -329,10 +333,17 @@ export default function DetailingPremium({ businessInfo, generatedCopy, template
       {/* FOOTER */}
 
       {/* GALLERY */}
-      {!hidden('gallery') && (
-      <div style={{ order: getOrder('gallery') }}>
+      {present('gallery') && (
+      <div style={{ order: orderFor('gallery') }}>
       <GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} />
       </div>
+      )}
+      {sectionsList.map((inst, i) =>
+        isRendererManagedType(inst.type)
+          ? <SectionRenderer key={inst.id} instance={inst} order={i}
+              generatedCopy={generatedCopy} templateMeta={templateMeta}
+              businessInfo={businessInfo} images={images} />
+          : null
       )}
       <footer style={{ ...s.footer, order: 9999 }}>
         <div>

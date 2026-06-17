@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
-import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import SectionRenderer, { isRendererManagedType } from '../../sections/SectionRenderer.jsx';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 
@@ -52,8 +52,12 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
     label: s.label || defaultStats[i]?.label || '',
   }));
   if (stats.length === 0) stats.push(...defaultStats);
-  const hidden = (id) => generatedCopy?.hiddenSections?.includes(id);
-  const getOrder = buildSectionOrder(generatedCopy, ['hero', 'statsBar', 'services', 'about', 'gallery', 'testimonials', 'cta']);
+  const sectionsList = generatedCopy?.sections || [];
+  const present = (type) => sectionsList.some(s => s.type === type);
+  const orderFor = (type) => {
+    const idx = sectionsList.findIndex(s => s.type === type);
+    return idx >= 0 ? idx : 999;
+  };
 
   const processSteps = [
     { num: '01', title: 'Consultation', desc: 'We assess your vehicle or fleet, discuss your goals, and recommend the right service package based on condition, timeline, and budget.' },
@@ -209,8 +213,8 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
       </nav>
 
       {/* HERO */}
-      {!hidden('hero') && (
-      <section id="hero" style={splitHero ? { order: getOrder('hero'), display: 'flex', flexDirection: 'row', minHeight: '85vh' } : { ...s.hero, order: getOrder('hero') }}>
+      {present('hero') && (
+      <section id="hero" style={splitHero ? { order: orderFor('hero'), display: 'flex', flexDirection: 'row', minHeight: '85vh' } : { ...s.hero, order: orderFor('hero') }}>
         {!splitHero && <div style={s.heroBg} />}
         {!splitHero && <div style={s.heroGrid} />}
         {!splitHero && <div style={s.heroLine} />}
@@ -250,7 +254,7 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
       )}
 
       {/* STATS BAR */}
-      {!hidden('statsBar') && <div style={{ ...s.statsBar, order: getOrder('statsBar') }}>
+      {present('statsBar') && <div style={{ ...s.statsBar, order: orderFor('statsBar') }}>
         {stats.map((st, i) => (
           <div key={i} style={i === stats.length - 1 ? s.statItemLast : s.statItem}>
             <span style={s.statNum}>{st.num}</span>
@@ -260,7 +264,7 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
       </div>}
 
       {/* SERVICES */}
-      {!hidden('services') && <section id="services" style={{ ...s.servicesSection, order: getOrder('services') }}>
+      {present('services') && <section id="services" style={{ ...s.servicesSection, order: orderFor('services') }}>
         <div style={s.servicesHeader}>
           <div style={s.servicesHeaderLeft}>
             <div style={s.sectionLabel}>
@@ -372,8 +376,8 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
       </section>
 
       {/* ABOUT */}
-      {!hidden('about') && generatedCopy.aboutText && (
-        <section id="about" style={{ order: getOrder('about'), background: c.bg, padding: 'clamp(4rem,8cqi,7.5rem) clamp(1.5rem,5cqi,3.75rem)' }}>
+      {present('about') && generatedCopy.aboutText && (
+        <section id="about" style={{ order: orderFor('about'), background: c.bg, padding: 'clamp(4rem,8cqi,7.5rem) clamp(1.5rem,5cqi,3.75rem)' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px,1fr))', gap: 'clamp(2rem,4cqi,5rem)', alignItems: 'start' }}>
             <div>
               {(generatedCopy?.aboutLayout || 'image') !== 'stats' ? (
@@ -416,17 +420,17 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
       )}
 
       {/* GALLERY */}
-      {!hidden('gallery') && <div style={{ order: getOrder('gallery') }}><GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} /></div>}
+      {present('gallery') && <div style={{ order: orderFor('gallery') }}><GallerySection images={images} colors={c} font={font} bodyFont={bodyFont} /></div>}
 
       {/* TESTIMONIALS */}
-      {!hidden('testimonials') && (
+      {present('testimonials') && (
         generatedCopy?.googleWidgetKey ? (
-          <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+          <div style={{ order: orderFor('testimonials'), padding: '80px 5%' }}>
             {generatedCopy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: textColor }}>{generatedCopy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={generatedCopy.googleWidgetKey} theme={generatedCopy?.googleReviewsTheme} />
           </div>
         ) : testimonials.length > 0 ? (
-        <section id="reviews" style={{ ...s.testimonialsSection, order: getOrder('testimonials') }}>
+        <section id="reviews" style={{ ...s.testimonialsSection, order: orderFor('testimonials') }}>
         <div style={s.sectionLabel}>
           <div style={s.sectionLabelLine} />
           <span style={s.sectionLabelText}>Client Testimonials</span>
@@ -459,7 +463,7 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
       )}
 
       {/* CTA SECTION */}
-      {!hidden('cta') && <section style={{ ...s.ctaSection, order: getOrder('cta') }}>
+      {present('cta') && <section style={{ ...s.ctaSection, order: orderFor('cta') }}>
         <div style={{ ...s.sectionLabel, justifyContent: 'center', marginBottom: '1rem' }}>
           <div style={s.sectionLabelLine} />
           <span style={s.sectionLabelText}>Ready to Begin?</span>
@@ -505,6 +509,14 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
           </a>
         </div>
       </section>}
+
+      {sectionsList.map((inst, i) =>
+        isRendererManagedType(inst.type)
+          ? <SectionRenderer key={inst.id} instance={inst} order={i}
+              generatedCopy={generatedCopy} templateMeta={templateMeta}
+              businessInfo={businessInfo} images={images} />
+          : null
+      )}
 
       {/* FOOTER */}
       <footer style={{ ...s.footer, order: 9999 }}>

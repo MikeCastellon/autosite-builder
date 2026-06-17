@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
-import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import SectionRenderer, { isRendererManagedType } from '../../sections/SectionRenderer.jsx';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 
@@ -65,8 +65,12 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
     { num: '// 04', icon: '🔬', title: 'Final Inspection', body: 'Every detail is checked under studio lighting before we hand the keys back. We do not release a vehicle until it is perfect.' },
   ];
 
-  const hidden = (id) => copy?.hiddenSections?.includes(id);
-  const getOrder = buildSectionOrder(copy, ['hero','services','process','about','gallery','testimonials','cta']);
+  const sectionsList = copy?.sections || [];
+  const present = (type) => sectionsList.some(s => s.type === type);
+  const orderFor = (type) => {
+    const idx = sectionsList.findIndex(s => s.type === type);
+    return idx >= 0 ? idx : 999;
+  };
 
   const panelBg = c.secondary || '#0d0d12';
 
@@ -131,8 +135,8 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
       </nav>
 
       {/* ============================================================ HERO ============================================================ */}
-      {!hidden('hero') && (
-      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' , order: getOrder('hero') } : { minHeight: '100vh', position: 'relative', display: 'flex', alignItems: 'center', background: c.bg, overflow: 'hidden' , order: getOrder('hero') }}>
+      {present('hero') && (
+      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' , order: orderFor('hero') } : { minHeight: '100vh', position: 'relative', display: 'flex', alignItems: 'center', background: c.bg, overflow: 'hidden' , order: orderFor('hero') }}>
         {!splitHero && <HeroImage src={images.hero} />}
         {!splitHero && <div style={{
           position: 'absolute', top: '-15%', right: '-8%', width: 800, height: 800,
@@ -228,8 +232,8 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
 
 
       {/* ============================================================ SERVICES ============================================================ */}
-      {!hidden('services') && (
-      <section id="services" style={{ padding: '100px 5%' , order: getOrder('services') }}>
+      {present('services') && (
+      <section id="services" style={{ padding: '100px 5%' , order: orderFor('services') }}>
         <div style={{ maxWidth: 1280, margin: '0 auto'  }}>
           <div style={{ marginBottom: 64 }}>
             <div style={labelTagStyle}>
@@ -290,8 +294,8 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
       )}
 
       {/* ============================================================ PROCESS ============================================================ */}
-      {!hidden('process') && (
-      <section id="process" style={{ padding: '100px 5%', background: panelBg, borderTop: `1px solid ${c.accent}1a` , order: getOrder('process') }}>
+      {present('process') && (
+      <section id="process" style={{ padding: '100px 5%', background: panelBg, borderTop: `1px solid ${c.accent}1a` , order: orderFor('process') }}>
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
           <div style={{ marginBottom: 72 }}>
             <div style={labelTagStyle}>
@@ -319,8 +323,8 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
       )}
 
       {/* ============================================================ ABOUT ============================================================ */}
-      {!hidden('about') && (
-      <section id="about" style={{ padding: '100px 5%', borderTop: `1px solid ${c.accent}1a` , order: getOrder('about') }}>
+      {present('about') && (
+      <section id="about" style={{ padding: '100px 5%', borderTop: `1px solid ${c.accent}1a` , order: orderFor('about') }}>
         <div className="tp-2col" style={{ maxWidth: 1280, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'center' }}>
           {/* Left: image or stats box */}
           <div>
@@ -387,21 +391,21 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
       </section>
       )}
       {/* GALLERY */}
-      {!hidden('gallery') && (
-      <div style={{ order: getOrder('gallery') }}>
+      {present('gallery') && (
+      <div style={{ order: orderFor('gallery') }}>
       <GallerySection images={images} colors={c} font={templateMeta.font} bodyFont={bodyFont} />
       </div>
       )}
 
       {/* ============================================================ TESTIMONIALS ============================================================ */}
-      {!hidden('testimonials') && (
+      {present('testimonials') && (
         copy?.googleWidgetKey ? (
-          <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+          <div style={{ order: orderFor('testimonials'), padding: '80px 5%' }}>
             {copy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} theme={copy?.googleReviewsTheme} />
           </div>
         ) : testimonials.length > 0 ? (
-        <section style={{ padding: '100px 5%', background: panelBg, borderTop: `1px solid ${c.accent}1a` , order: getOrder('testimonials') }}>
+        <section style={{ padding: '100px 5%', background: panelBg, borderTop: `1px solid ${c.accent}1a` , order: orderFor('testimonials') }}>
           <div style={{ maxWidth: 1280, margin: '0 auto' }}>
             <div style={{ textAlign: 'center', marginBottom: 64 }}>
               <div style={{ ...labelTagStyle, justifyContent: 'center' }}>
@@ -453,8 +457,8 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
       )}
 
       {/* ============================================================ CTA BAND ============================================================ */}
-      {!hidden('cta') && (
-      <section style={{ padding: '90px 5%', textAlign: 'center', position: 'relative', overflow: 'hidden' , order: getOrder('cta') }}>
+      {present('cta') && (
+      <section style={{ padding: '90px 5%', textAlign: 'center', position: 'relative', overflow: 'hidden' , order: orderFor('cta') }}>
         <div style={{
           position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
           width: 700, height: 450,
@@ -498,6 +502,14 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
           </div>
         </div>
       </section>
+      )}
+
+      {sectionsList.map((inst, i) =>
+        isRendererManagedType(inst.type)
+          ? <SectionRenderer key={inst.id} instance={inst} order={i}
+              generatedCopy={generatedCopy} templateMeta={templateMeta}
+              businessInfo={businessInfo} images={images} />
+          : null
       )}
 
       {/* ============================================================ FOOTER ============================================================ */}

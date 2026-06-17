@@ -3,7 +3,7 @@ import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import IconOrEmoji from '../IconOrEmoji.jsx';
-import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import SectionRenderer, { isRendererManagedType } from '../../sections/SectionRenderer.jsx';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 
@@ -38,8 +38,12 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
   const testimonials = copy.testimonialPlaceholders || [];
   const payments = biz.paymentMethods || [];
   const packages = biz.packages || [];
-  const hidden = (id) => copy?.hiddenSections?.includes(id);
-  const getOrder = buildSectionOrder(copy, ['hero', 'ticker', 'trustBar', 'products', 'about', 'brands', 'gallery', 'testimonials', 'cta']);
+  const sectionsList = copy?.sections || [];
+  const present = (type) => sectionsList.some(s => s.type === type);
+  const orderFor = (type) => {
+    const idx = sectionsList.findIndex(s => s.type === type);
+    return idx >= 0 ? idx : 999;
+  };
 
   const D = {
     bg: '#F0F1F3', bg2: '#E8EAED', bg3: '#DDDFE3',
@@ -105,11 +109,11 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
       </nav>
 
       {/* HERO */}
-      {!hidden('hero') && (
+      {present('hero') && (
       <header style={splitHero ? {
-        order: getOrder('hero'), display: 'grid', gridTemplateColumns: '1fr 1fr', minHeight: 500, background: D.card, borderBottom: `1px solid ${D.border}`,
+        order: orderFor('hero'), display: 'grid', gridTemplateColumns: '1fr 1fr', minHeight: 500, background: D.card, borderBottom: `1px solid ${D.border}`,
       } : {
-        order: getOrder('hero'), minHeight: '100vh', display: 'flex', alignItems: 'center',
+        order: orderFor('hero'), minHeight: '100vh', display: 'flex', alignItems: 'center',
         background: D.card, borderBottom: `1px solid ${D.border}`,
         position: 'relative', overflow: 'hidden',
       }}>
@@ -160,8 +164,8 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
       )}
 
       {/* TICKER */}
-      {!hidden('ticker') && (
-      <div style={{ order: getOrder('ticker'), background: D.ink, padding: '10px 0', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+      {present('ticker') && (
+      <div style={{ order: orderFor('ticker'), background: D.ink, padding: '10px 0', overflow: 'hidden', whiteSpace: 'nowrap' }}>
         <div style={{ display: 'inline-flex', gap: 40, animation: 'apexTick 22s linear infinite' }}>
           {[...Array(2)].map((_, r) => {
             const rawTicker = copy?.tickerItems?.length > 0
@@ -179,7 +183,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
       )}
 
       {/* TRUST BAR */}
-      {!hidden('trustBar') && (() => {
+      {present('trustBar') && (() => {
         const defaultTrust = [
           { emoji: '🕐', label: biz.yearsInBusiness ? `${biz.yearsInBusiness}+ years experience` : 'Professional service', sub: 'Trusted locally' },
           { emoji: '✓', label: fb.guaranteeLabel, sub: 'Or we make it right' },
@@ -194,7 +198,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
             }))
           : defaultTrust;
         return (
-          <div className="tp-trust-bar" style={{ order: getOrder('trustBar'), display: 'flex', borderBottom: `1px solid ${D.border}`, background: D.card }}>
+          <div className="tp-trust-bar" style={{ order: orderFor('trustBar'), display: 'flex', borderBottom: `1px solid ${D.border}`, background: D.card }}>
             {trustItems.map((item, i) => (
               <div key={i} style={{ flex: 1, padding: '14px 20px', borderRight: i < trustItems.length - 1 ? `1px solid ${D.border}` : 'none', display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div style={{ width: 32, height: 32, background: D.bronzeBg, border: '1px solid #E8D9C0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14 }}>
@@ -211,10 +215,10 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
       })()}
 
       {/* SERVICES / PRODUCTS — product card grid */}
-      {!hidden('products') && (() => {
+      {present('products') && (() => {
         const products = copy?.products?.length > 0 ? copy.products : (packages.length > 0 ? packages : services.length > 0 ? services : fb.defaultProducts);
         return (
-          <section id="services" style={{ order: getOrder('products'), padding: 'clamp(40px, 8cqi, 64px) clamp(16px, 6cqi, 48px)' }}>
+          <section id="services" style={{ order: orderFor('products'), padding: 'clamp(40px, 8cqi, 64px) clamp(16px, 6cqi, 48px)' }}>
             <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 32 }}>
               <div>
@@ -260,8 +264,8 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
       })()}
 
       {/* ABOUT — standard pattern: image/stats left, text right */}
-      {!hidden('about') && (
-      <section id="about" style={{ order: getOrder('about'), padding: 'clamp(48px, 8cqi, 80px) clamp(16px, 6cqi, 48px)', background: D.card, borderTop: `1px solid ${D.border}`, borderBottom: `1px solid ${D.border}` }}>
+      {present('about') && (
+      <section id="about" style={{ order: orderFor('about'), padding: 'clamp(48px, 8cqi, 80px) clamp(16px, 6cqi, 48px)', background: D.card, borderTop: `1px solid ${D.border}`, borderBottom: `1px solid ${D.border}` }}>
         <div className="tp-2col" style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'center' }}>
           <div>
             {(copy?.aboutLayout || 'image') !== 'stats' ? (
@@ -319,8 +323,8 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
       )}
 
       {/* BRANDS */}
-      {!hidden('brands') && (brandsList.length > 0 || tireBrandsList.length > 0) && (
-        <section id="brands" style={{ order: getOrder('brands'), padding: '48px', background: D.card, borderTop: `1px solid ${D.border}` }}>
+      {present('brands') && (brandsList.length > 0 || tireBrandsList.length > 0) && (
+        <section id="brands" style={{ order: orderFor('brands'), padding: '48px', background: D.card, borderTop: `1px solid ${D.border}` }}>
           <div style={{ fontSize: 11, letterSpacing: 3, textTransform: 'uppercase', color: D.muted, textAlign: 'center', marginBottom: 24 }}>Brands we carry</div>
           <div style={{ display: 'flex', border: `1px solid ${D.border}` }}>
             {(brandsList.length > 0 ? brandsList : ['ENKEI', 'VOSSEN', 'HRE', 'ROTIFORM', 'WORK']).map((brand, i, arr) => (
@@ -344,21 +348,21 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
       )}
 
       {/* GALLERY */}
-      {!hidden('gallery') && (
-      <div style={{ order: getOrder('gallery') }}>
+      {present('gallery') && (
+      <div style={{ order: orderFor('gallery') }}>
       <GallerySection images={images} colors={{ ...c, bg: D.bg, accent: D.bronze, text: D.ink, secondary: D.card, muted: D.muted }} font={display} bodyFont={body} />
       </div>
       )}
 
       {/* TESTIMONIALS */}
-      {!hidden('testimonials') && (
+      {present('testimonials') && (
         copy?.googleWidgetKey ? (
-          <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+          <div style={{ order: orderFor('testimonials'), padding: '80px 5%' }}>
             {copy.googleReviewsTitle && <h2 style={{ fontFamily: display || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: D.ink }}>{copy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} theme={copy?.googleReviewsTheme} />
           </div>
         ) : testimonials.length > 0 ? (
-        <section style={{ order: getOrder('testimonials'), padding: 'clamp(40px, 8cqi, 64px) clamp(16px, 6cqi, 48px)', background: D.card, borderTop: `1px solid ${D.border}` }}>
+        <section style={{ order: orderFor('testimonials'), padding: 'clamp(40px, 8cqi, 64px) clamp(16px, 6cqi, 48px)', background: D.card, borderTop: `1px solid ${D.border}` }}>
           <div style={{ marginBottom: 32 }}>
             <p style={{ fontSize: 11, letterSpacing: 3, textTransform: 'uppercase', color: D.bronze, marginBottom: 8, fontWeight: 500 }}>◆ Reviews</p>
             <h2 style={{ fontFamily: display, fontSize: 44, letterSpacing: 1, color: D.ink, lineHeight: 1, margin: 0 }}>Customer Reviews</h2>
@@ -377,8 +381,8 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
       )}
 
       {/* CTA / CONTACT */}
-      {!hidden('cta') && (
-      <section id="contact" style={{ order: getOrder('cta'), background: D.bronzeBg, borderTop: '1px solid #E8D9C0', borderBottom: '1px solid #E8D9C0', padding: '48px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 32, flexWrap: 'wrap' }}>
+      {present('cta') && (
+      <section id="contact" style={{ order: orderFor('cta'), background: D.bronzeBg, borderTop: '1px solid #E8D9C0', borderBottom: '1px solid #E8D9C0', padding: '48px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 32, flexWrap: 'wrap' }}>
         <div>
           <p style={{ fontSize: 11, letterSpacing: 3, textTransform: 'uppercase', color: D.bronze, marginBottom: 8, fontWeight: 500 }}>{copy.ctaSubtext || '◆ Get in touch'}</p>
           <div style={{ fontFamily: display, fontSize: 38, letterSpacing: 1, color: D.ink, lineHeight: 1 }}>{copy.ctaHeadline || 'Ready to upgrade?'}</div>
@@ -393,6 +397,14 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
           </a>
         </div>
       </section>
+      )}
+
+      {sectionsList.map((inst, i) =>
+        isRendererManagedType(inst.type)
+          ? <SectionRenderer key={inst.id} instance={inst} order={i}
+              generatedCopy={generatedCopy} templateMeta={templateMeta}
+              businessInfo={businessInfo} images={images} />
+          : null
       )}
 
       {/* FOOTER */}

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { SocialRow } from '../SocialIcons.jsx';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
-import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import SectionRenderer, { isRendererManagedType } from '../../sections/SectionRenderer.jsx';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import IconOrEmoji from '../IconOrEmoji.jsx';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
@@ -47,8 +47,12 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
     window.addEventListener('scroll', h);
     return () => window.removeEventListener('scroll', h);
   }, []);
-  const hidden = (id) => copy?.hiddenSections?.includes(id);
-  const getOrder = buildSectionOrder(copy, ['hero','services','process','whyUs','about','gallery','testimonials','cta']);
+  const sectionsList = copy?.sections || [];
+  const present = (type) => sectionsList.some(s => s.type === type);
+  const orderFor = (type) => {
+    const idx = sectionsList.findIndex(s => s.type === type);
+    return idx >= 0 ? idx : 999;
+  };
 
   const heroBubbles = [
     { w: 80,  h: 80,  top: '12%', left: '5%',  opacity: 0.18, color: '#2d9cdb' },
@@ -165,8 +169,8 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
       </nav>
 
       {/* HERO */}
-      {!hidden('hero') && (
-      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' , order: getOrder('hero') } : {
+      {present('hero') && (
+      <header style={splitHero ? { display: 'flex', flexDirection: 'row', minHeight: '85vh' , order: orderFor('hero') } : {
         minHeight: '100vh', position: 'relative',
         display: 'flex', alignItems: 'center',
         background: `linear-gradient(135deg, ${c.bg} 0%, ${c.secondary} 60%, #fde68a 100%)`,
@@ -292,8 +296,8 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
 
 
       {/* SERVICES */}
-      {!hidden('services') && (
-      <section id='services' style={{ padding: '100px 5%', background: c.bg, position: 'relative', order: getOrder('services') }}>
+      {present('services') && (
+      <section id='services' style={{ padding: '100px 5%', background: c.bg, position: 'relative', order: orderFor('services') }}>
         <div style={{ maxWidth: 1200, margin: '0 auto'  }}>
           <div style={{ textAlign: 'center', marginBottom: 64 }}>
             <div style={sectionTagStyle('1deg')}>{String.fromCodePoint(0x1FAA7)} Our Services</div>
@@ -340,8 +344,8 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
       )}
 
       {/* HOW IT WORKS */}
-      {!hidden('process') && (
-      <section id='how' style={{ background: c.accent, padding: '100px 5%', borderTop: `4px solid ${c.text}`, borderBottom: `4px solid ${c.text}`, position: 'relative', overflow: 'hidden', order: getOrder('process') }}>
+      {present('process') && (
+      <section id='how' style={{ background: c.accent, padding: '100px 5%', borderTop: `4px solid ${c.text}`, borderBottom: `4px solid ${c.text}`, position: 'relative', overflow: 'hidden', order: orderFor('process') }}>
         <div style={{ position: 'absolute', top: 10, left: 0, right: 0, fontSize: 20, letterSpacing: 10, opacity: 0.2, whiteSpace: 'nowrap', overflow: 'hidden', pointerEvents: 'none'  }}>
           {String.fromCodePoint(0x1FAA7).repeat(40)}
         </div>
@@ -366,8 +370,8 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
       )}
 
       {/* WHY US */}
-      {!hidden('whyUs') && (
-      <section style={{ padding: '100px 5%', background: '#2d9cdb', borderBottom: `4px solid ${c.text}`, position: 'relative', overflow: 'hidden' , order: getOrder('whyUs') }}>
+      {present('whyUs') && (
+      <section style={{ padding: '100px 5%', background: '#2d9cdb', borderBottom: `4px solid ${c.text}`, position: 'relative', overflow: 'hidden' , order: orderFor('whyUs') }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 64 }}>
             <div style={{ ...sectionTagStyle(), background: '#fff' }}>{String.fromCodePoint(0x1F4AA)} Why Choose Us</div>
@@ -387,8 +391,8 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
       )}
 
       {/* ABOUT */}
-      {!hidden('about') && (
-      <section id="about" style={{ padding: "100px 5%", background: c.bg , order: getOrder('about') }}>
+      {present('about') && (
+      <section id="about" style={{ padding: "100px 5%", background: c.bg , order: orderFor('about') }}>
         <div className="tp-2col" style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "center" }}>
           <div>
             {(copy?.aboutLayout || 'image') !== 'stats' ? (
@@ -444,21 +448,21 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
       )}
 
       {/* GALLERY */}
-      {!hidden('gallery') && (
-      <div style={{ order: getOrder('gallery') }}>
+      {present('gallery') && (
+      <div style={{ order: orderFor('gallery') }}>
       <GallerySection images={images} colors={c} font={templateMeta.font} bodyFont={bodyFont} />
       </div>
       )}
 
       {/* TESTIMONIALS */}
-      {!hidden('testimonials') && (
+      {present('testimonials') && (
         copy?.googleWidgetKey ? (
-          <div style={{ order: getOrder('testimonials'), padding: '80px 5%' }}>
+          <div style={{ order: orderFor('testimonials'), padding: '80px 5%' }}>
             {copy.googleReviewsTitle && <h2 style={{ fontFamily: font || 'inherit', fontSize: 'clamp(1.8rem, 3cqi, 2.5rem)', fontWeight: 800, textAlign: 'center', marginBottom: 32, color: c.text }}>{copy.googleReviewsTitle}</h2>}
             <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} theme={copy?.googleReviewsTheme} />
           </div>
         ) : testimonials.length > 0 ? (
-        <section id="reviews" style={{ padding: "100px 5%", background: c.bg, borderTop: `4px solid ${c.text}` , order: getOrder('testimonials') }}>
+        <section id="reviews" style={{ padding: "100px 5%", background: c.bg, borderTop: `4px solid ${c.text}` , order: orderFor('testimonials') }}>
           <div style={{ maxWidth: 1200, margin: "0 auto" }}>
             <div style={{ textAlign: "center", marginBottom: 64 }}>
               <div style={sectionTagStyle()}>Reviews</div>
@@ -493,8 +497,8 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
       )}
 
       {/* CTA SECTION */}
-      {!hidden('cta') && (
-      <section id="contact" style={{ background: "#ff6b9d", borderTop: `4px solid ${c.text}`, borderBottom: `4px solid ${c.text}`, padding: "80px 5%" , order: getOrder('cta') }}>
+      {present('cta') && (
+      <section id="contact" style={{ background: "#ff6b9d", borderTop: `4px solid ${c.text}`, borderBottom: `4px solid ${c.text}`, padding: "80px 5%" , order: orderFor('cta') }}>
         <div className="tp-2col" style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "center" }}>
           <div>
             <h2 style={{ fontFamily: font, fontSize: "clamp(36px, 4cqi, 58px)", color: "#fff", lineHeight: 1.05, marginBottom: 20 }}>
@@ -533,6 +537,14 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
       )}
 
       {/* FOOTER */}
+      {sectionsList.map((inst, i) =>
+        isRendererManagedType(inst.type)
+          ? <SectionRenderer key={inst.id} instance={inst} order={i}
+              generatedCopy={generatedCopy} templateMeta={templateMeta}
+              businessInfo={businessInfo} images={images} />
+          : null
+      )}
+
       <footer style={{ background: c.text, padding: "60px 5% 28px", position: "relative", overflow: "hidden" , order: 9999 }}>
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 40, background: "#ff6b9d", clipPath: "polygon(0 0, 3% 100%, 6% 0, 9% 100%, 12% 0, 15% 100%, 18% 0, 21% 100%, 24% 0, 27% 100%, 30% 0, 33% 100%, 36% 0, 39% 100%, 42% 0, 45% 100%, 48% 0, 51% 100%, 54% 0, 57% 100%, 60% 0, 63% 100%, 66% 0, 69% 100%, 72% 0, 75% 100%, 78% 0, 81% 100%, 84% 0, 87% 100%, 90% 0, 93% 100%, 96% 0, 99% 100%, 100% 0)" }} />
         <div style={{ maxWidth: 1200, margin: "0 auto", paddingTop: 48, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 48, marginBottom: 48 }}>

@@ -229,6 +229,7 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
   const DEMO_ALLOWED_EMAILS = [
     'dev@639hz.com',
     'mike.castellon5@gmail.com',
+    'mikecast3o5@gmail.com',
   ];
   const canFillDemo = DEMO_ALLOWED_EMAILS.includes(session?.user?.email?.toLowerCase() ?? '');
 

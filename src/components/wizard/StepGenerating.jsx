@@ -13,7 +13,7 @@ const STATUS_MESSAGES = [
 
 const MAX_ATTEMPTS = 3;
 
-export default function StepGenerating({ businessInfo, templateMeta, onSuccess, onError }) {
+export default function StepGenerating({ businessInfo, templateMeta, sections, onSuccess, onError }) {
   const [statusIndex, setStatusIndex] = useState(0);
   const [attempt, setAttempt] = useState(1);
   const [retrying, setRetrying] = useState(false);
@@ -39,7 +39,7 @@ export default function StepGenerating({ businessInfo, templateMeta, onSuccess, 
             // Short delay before retry so the UI updates
             await new Promise((res) => setTimeout(res, 1500));
           }
-          const copy = await generateWebsite(businessInfo, templateMeta);
+          const copy = await generateWebsite({ ...businessInfo, sections }, templateMeta);
           setRetrying(false);
           onSuccess(copy);
           return;
