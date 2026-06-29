@@ -2,43 +2,14 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase.js';
 import { createConnectAccount, fetchAccountLink } from '../../../lib/stripeConnect.js';
-import AppHeader from '../../ui/AppHeader.jsx';
 import SubscribeGate from '../bookings-page/SubscribeGate.jsx';
 import ConnectStatusBadge from './ConnectStatusBadge.jsx';
 
 export default function PaymentsConnectPage({
   userId,
   profile: initialProfile,
-  userEmail,
-  onExit,
-  onOpenOverview,
-  onOpenInquiries,
-  onOpenBookings,
-  onOpenCustomers,
-  onOpenAdmin,
-  onOpenProfile,
-  onOpenPaymentsConnect,
   onOpenCharges,
-  onCharge,
-  onSignOut,
 }) {
-  const headerProps = {
-    active: 'payments-connect',
-    userEmail,
-    profile: initialProfile,
-    onOpenOverview,
-    onMySites: onExit,
-    onOpenInquiries,
-    onOpenBookings,
-    onOpenCustomers,
-    onOpenAdmin,
-    onOpenProfile,
-    onOpenPaymentsConnect: () => {},
-    onOpenCharges,
-    onCharge,
-    onSignOut,
-  };
-
   const [profile, setProfile] = useState(initialProfile);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState(null);
@@ -96,13 +67,11 @@ export default function PaymentsConnectPage({
   const setupStarted   = !!accountId && !fullyConnected;
 
   return (
-    <div className="min-h-screen bg-[#faf9f7]">
-      <AppHeader {...headerProps} />
-      <SubscribeGate
-        profile={initialProfile}
-        heading="Payments is a Pro feature"
-        subheading="Connect your Stripe account to take deposits, charge customers, and get paid out."
-      >
+    <SubscribeGate
+      profile={initialProfile}
+      heading="Payments is a Pro feature"
+      subheading="Connect your Stripe account to take deposits, charge customers, and get paid out."
+    >
         <main className="max-w-7xl mx-auto px-3 py-10">
           <div className="mb-6 mt-8">
             <div className="flex items-center flex-wrap gap-x-3 gap-y-2">
@@ -219,7 +188,6 @@ export default function PaymentsConnectPage({
             </div>
           )}
         </main>
-      </SubscribeGate>
-    </div>
+    </SubscribeGate>
   );
 }

@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase.js';
 import { loadOverview } from '../../../lib/overview.js';
-import AppHeader from '../../ui/AppHeader.jsx';
 import StatCard from './StatCard.jsx';
 import TrendChart from './TrendChart.jsx';
 import ShareBookingCard from '../booking-only/ShareBookingCard.jsx';
@@ -42,7 +41,7 @@ function fillSeries(rpcSeries, rangeDays) {
   }
   return out;
 }
-export default function OverviewPage({ onNewSite, onNewBookingPage, ...navProps }) {
+export default function OverviewPage({ onNewSite, onNewBookingPage }) {
   const [range, setRange] = useState(30);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -80,9 +79,7 @@ export default function OverviewPage({ onNewSite, onNewBookingPage, ...navProps 
     : '—';
 
   return (
-    <>
-      <AppHeader active="overview" {...navProps} />
-      <div className="max-w-[1000px] mx-auto px-5 py-6">
+    <div className="max-w-[1000px] mx-auto px-5 py-6">
         {siteCount === 0 ? (
           <div className="text-center py-20 border border-black/[0.07] rounded-2xl bg-white">
             <h1 className="text-[21px] font-extrabold text-[#1a1a1a] mb-2">Welcome 👋 Let's get you set up</h1>
@@ -158,7 +155,6 @@ export default function OverviewPage({ onNewSite, onNewBookingPage, ...navProps 
         )}
         </>
         )}
-      </div>
-    </>
+    </div>
   );
 }

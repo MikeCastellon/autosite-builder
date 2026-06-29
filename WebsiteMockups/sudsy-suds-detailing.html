@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Squeaky Clean Mobile Detailing 🫧</title>
+<link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --yellow: #FFE234;
+    --yellow-dark: #F5C800;
+    --blue: #2D9CDB;
+    --blue-dark: #1A7BB8;
+    --blue-light: #E8F6FE;
+    --pink: #FF6B9D;
+    --green: #27AE60;
+    --green-light: #E8F8EE;
+    --orange: #FF8C42;
+    --white: #FFFEF5;
+    --dark: #1A1A2E;
+    --ink: #2C2C3E;
+    --bubble1: #C8F0FF;
+    --bubble2: #FFD6EB;
+    --bubble3: #D4F5D4;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--white);
+    font-family: 'Nunito', sans-serif;
+    overflow-x: hidden;
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='%232D9CDB' opacity='0.3' stroke='%231A7BB8' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='4' fill='%23FFE234'/%3E%3C/svg%3E") 16 16, auto;
+  }
+
+  /* ─── BUBBLE CURSOR TRAIL ─── */
+  .cursor-bubble {
+    position: fixed; pointer-events: none; z-index: 9999;
+    border-radius: 50%; opacity: 0;
+    animation: bubblePop 0.8s ease forwards;
+  }
+  @keyframes bubblePop {
+    0% { opacity: 0.7; transform: scale(0.3) translateY(0); }
+    60% { opacity: 0.4; }
+    100% { opacity: 0; transform: scale(1.5) translateY(-30px); }
+  }
+
+  /* ─── NAV ─── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+    background: var(--yellow);
+    border-bottom: 3px solid var(--ink);
+    padding: 12px 48px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 4px 0 var(--ink);
+  }
+  .nav-logo {
+    font-family: 'Boogaloo', cursive;
+    font-size: 26px; color: var(--ink); text-decoration: none;
+    display: flex; align-items: center; gap: 10px;
+    letter-spacing: 0.5px;
+  }
+  .logo-emoji { font-size: 30px; animation: wiggle 2s ease-in-out infinite; display: inline-block; }
+  @keyframes wiggle {
+    0%,100% { transform: rotate(-8deg); }
+    50% { transform: rotate(8deg); }
+  }
+  .nav-links { display: flex; gap: 6px; list-style: none; }
+  .nav-links a {
+    font-size: 14px; font-weight: 800; color: var(--ink);
+    text-decoration: none; padding: 7px 16px;
+    border: 2.5px solid transparent; border-radius: 980px;
+    transition: all 0.15s; letter-spacing: 0.2px;
+  }
+  .nav-links a:hover { background: var(--ink); color: var(--yellow); border-color: var(--ink); transform: rotate(-1deg) scale(1.05); }
+  .nav-cta {
+    background: var(--ink); color: var(--yellow);
+    font-family: 'Boogaloo', cursive; font-size: 18px;
+    padding: 10px 24px; border-radius: 980px;
+    text-decoration: none; border: 2.5px solid var(--ink);
+    box-shadow: 3px 3px 0 var(--yellow-dark);
+    transition: all 0.15s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .nav-cta:hover { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 var(--yellow-dark); }
+
+  /* ─── BUBBLES BG ─── */
+  .bubbles-bg {
+    position: absolute; inset: 0; pointer-events: none; overflow: hidden;
+  }
+  .bg-bubble {
+    position: absolute; border-radius: 50%;
+    border: 3px solid rgba(45,156,219,0.2);
+    animation: floatUp linear infinite;
+  }
+  @keyframes floatUp {
+    0% { transform: translateY(100%) scale(0.5); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 0.5; }
+    100% { transform: translateY(-20vh) scale(1); opacity: 0; }
+  }
+
+  /* ─── HERO ─── */
+  .hero {
+    padding-top: 80px;
+    min-height: 100vh;
+    background: var(--blue-light);
+    position: relative; overflow: hidden;
+    display: flex; align-items: center;
+    border-bottom: 4px solid var(--ink);
+  }
+  .hero-zigzag {
+    position: absolute; bottom: -2px; left: 0; right: 0;
+    height: 60px;
+    background: var(--white);
+    clip-path: polygon(0 100%, 5% 0, 10% 100%, 15% 0, 20% 100%, 25% 0, 30% 100%, 35% 0, 40% 100%, 45% 0, 50% 100%, 55% 0, 60% 100%, 65% 0, 70% 100%, 75% 0, 80% 100%, 85% 0, 90% 100%, 95% 0, 100% 100%);
+  }
+  .hero-inner {
+    position: relative; z-index: 2;
+    display: grid; grid-template-columns: 1fr 1fr;
+    align-items: center; gap: 48px;
+    padding: 60px 72px;
+    width: 100%; max-width: 1300px; margin: 0 auto;
+  }
+  .hero-left { }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--yellow); border: 3px solid var(--ink);
+    padding: 8px 18px; border-radius: 980px;
+    font-size: 13px; font-weight: 800; color: var(--ink);
+    margin-bottom: 24px;
+    box-shadow: 3px 3px 0 var(--ink);
+    transform: rotate(-2deg); display: inline-block;
+    animation: badgeBounce 3s ease-in-out infinite;
+  }
+  @keyframes badgeBounce {
+    0%,100% { transform: rotate(-2deg) translateY(0); }
+    50% { transform: rotate(-2deg) translateY(-6px); }
+  }
+  .hero h1 {
+    font-family: 'Boogaloo', cursive;
+    font-size: clamp(50px, 6vw, 80px);
+    line-height: 1.05; color: var(--ink);
+    margin-bottom: 20px; letter-spacing: 0.5px;
+  }
+  .hero h1 .highlight {
+    color: var(--blue); display: inline-block;
+    position: relative;
+  }
+  .hero h1 .highlight::after {
+    content: '';
+    position: absolute; bottom: 2px; left: 0; right: 0; height: 6px;
+    background: var(--yellow); z-index: -1;
+    transform: skewX(-3deg);
+  }
+  .hero h1 .squiggle {
+    color: var(--pink); display: inline-block;
+    animation: squiggleDance 1.5s ease-in-out infinite;
+  }
+  @keyframes squiggleDance {
+    0%,100% { transform: rotate(-3deg); }
+    50% { transform: rotate(3deg); }
+  }
+  .hero-sub {
+    font-size: 18px; line-height: 1.65; color: #555;
+    font-weight: 600; margin-bottom: 36px; max-width: 440px;
+  }
+  .hero-actions { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .btn-big {
+    background: var(--pink); color: white;
+    font-family: 'Boogaloo', cursive; font-size: 22px;
+    padding: 14px 36px; border-radius: 16px;
+    text-decoration: none; border: 3px solid var(--ink);
+    box-shadow: 5px 5px 0 var(--ink);
+    transition: all 0.15s; display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn-big:hover { transform: translate(-3px,-3px); box-shadow: 8px 8px 0 var(--ink); }
+  .btn-big:active { transform: translate(2px,2px); box-shadow: 3px 3px 0 var(--ink); }
+  .btn-outline {
+    background: white; color: var(--ink);
+    font-family: 'Boogaloo', cursive; font-size: 20px;
+    padding: 14px 28px; border-radius: 16px;
+    text-decoration: none; border: 3px solid var(--ink);
+    box-shadow: 4px 4px 0 var(--ink);
+    transition: all 0.15s;
+  }
+  .btn-outline:hover { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 var(--ink); background: var(--yellow); }
+
+  /* ─── CAR ILLUSTRATION ─── */
+  .hero-car {
+    position: relative; display: flex; justify-content: center; align-items: center;
+  }
+  .car-svg-wrap {
+    animation: carBob 3s ease-in-out infinite;
+    filter: drop-shadow(0 20px 40px rgba(45,156,219,0.25));
+  }
+  @keyframes carBob {
+    0%,100% { transform: translateY(0) rotate(-1deg); }
+    50% { transform: translateY(-14px) rotate(1deg); }
+  }
+  .car-bubbles { position: absolute; top: 0; right: 0; left: 0; bottom: 0; pointer-events: none; }
+  .car-bubble {
+    position: absolute; border-radius: 50%;
+    border: 3px solid rgba(45,156,219,0.5);
+    background: rgba(200,240,255,0.4);
+    animation: carBubbleFloat ease-in-out infinite;
+  }
+  @keyframes carBubbleFloat {
+    0% { transform: translateY(0) scale(1); opacity: 0.8; }
+    100% { transform: translateY(-120px) scale(0.3); opacity: 0; }
+  }
+  .sparkle {
+    position: absolute; font-size: 24px;
+    animation: sparkleSpin 2s ease-in-out infinite;
+  }
+  @keyframes sparkleSpin {
+    0%,100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    50% { transform: scale(1.4) rotate(20deg); opacity: 0.6; }
+  }
+
+  /* ─── TRUST BAR ─── */
+  .trust-bar {
+    background: var(--ink);
+    padding: 20px 48px;
+    display: flex; justify-content: center; align-items: center;
+    gap: 48px; flex-wrap: wrap;
+  }
+  .trust-item {
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'Boogaloo', cursive; font-size: 18px; color: var(--yellow);
+    letter-spacing: 0.3px;
+  }
+  .trust-item span:first-child { font-size: 22px; }
+  .trust-sep { color: rgba(255,255,255,0.2); font-size: 20px; }
+
+  /* ─── SERVICES ─── */
+  .services {
+    padding: 100px 72px;
+    background: var(--white);
+    position: relative;
+  }
+  .section-header { text-align: center; margin-bottom: 64px; }
+  .section-tag {
+    display: inline-block;
+    background: var(--yellow); border: 3px solid var(--ink);
+    padding: 6px 20px; border-radius: 980px;
+    font-size: 13px; font-weight: 800; color: var(--ink);
+    box-shadow: 3px 3px 0 var(--ink);
+    margin-bottom: 16px; transform: rotate(1deg);
+    letter-spacing: 1px; text-transform: uppercase;
+  }
+  .section-title {
+    font-family: 'Boogaloo', cursive;
+    font-size: clamp(36px, 4vw, 56px);
+    color: var(--ink); line-height: 1.1;
+  }
+  .section-title .color-blue { color: var(--blue); }
+  .section-title .color-pink { color: var(--pink); }
+  .section-sub { font-size: 16px; color: #777; font-weight: 600; margin-top: 12px; }
+
+  .services-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; }
+  .service-card {
+    background: white;
+    border: 3px solid var(--ink);
+    border-radius: 24px;
+    padding: 36px 32px;
+    box-shadow: 6px 6px 0 var(--ink);
+    transition: all 0.15s; cursor: default;
+    position: relative; overflow: hidden;
+  }
+  .service-card:hover { transform: translate(-4px,-4px); box-shadow: 10px 10px 0 var(--ink); }
+  .service-card:nth-child(1) { background: #FFF5F8; }
+  .service-card:nth-child(2) { background: var(--blue-light); }
+  .service-card:nth-child(3) { background: #FFFADD; }
+  .service-card:nth-child(4) { background: var(--green-light); }
+  .service-card:nth-child(5) { background: #FFF0E8; }
+  .service-card:nth-child(6) { background: #F5F0FF; }
+  .card-emoji { font-size: 48px; margin-bottom: 14px; display: block;
+    animation: emojiWobble 3s ease-in-out infinite; }
+  @keyframes emojiWobble {
+    0%,100% { transform: rotate(-5deg); }
+    50% { transform: rotate(5deg); }
+  }
+  .service-card:nth-child(odd) .card-emoji { animation-direction: reverse; }
+  .service-card h3 { font-family: 'Boogaloo', cursive; font-size: 26px; color: var(--ink); margin-bottom: 10px; }
+  .service-card p { font-size: 14px; color: #555; line-height: 1.65; font-weight: 600; }
+  .card-price {
+    margin-top: 20px; padding-top: 16px;
+    border-top: 2.5px dashed rgba(0,0,0,0.12);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .card-price-from { font-size: 12px; font-weight: 800; color: #999; text-transform: uppercase; letter-spacing: 0.5px; }
+  .card-price-val { font-family: 'Boogaloo', cursive; font-size: 30px; color: var(--ink); }
+  .card-ribbon {
+    position: absolute; top: 16px; right: -8px;
+    background: var(--pink); color: white;
+    font-size: 11px; font-weight: 800; letter-spacing: 0.5px;
+    padding: 4px 16px 4px 12px; text-transform: uppercase;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 8% 50%);
+    border-left: none;
+  }
+
+  /* ─── HOW IT WORKS ─── */
+  .how {
+    background: var(--yellow);
+    padding: 100px 72px;
+    border-top: 4px solid var(--ink);
+    border-bottom: 4px solid var(--ink);
+    position: relative; overflow: hidden;
+  }
+  .how::before {
+    content: '🫧🫧🫧🫧🫧🫧🫧🫧🫧🫧🫧🫧🫧🫧🫧🫧🫧🫧🫧🫧🫧🫧🫧🫧🫧🫧🫧🫧';
+    position: absolute; top: 8px; left: 0; right: 0;
+    font-size: 22px; letter-spacing: 8px;
+    opacity: 0.25; white-space: nowrap; overflow: hidden;
+    animation: scrollText 20s linear infinite;
+  }
+  @keyframes scrollText { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  .how-steps {
+    display: grid; grid-template-columns: repeat(4,1fr); gap: 20px; margin-top: 56px;
+    position: relative; z-index: 1;
+  }
+  .how-step {
+    background: white; border: 3px solid var(--ink);
+    border-radius: 24px; padding: 36px 28px; text-align: center;
+    box-shadow: 5px 5px 0 var(--ink);
+    transition: all 0.15s;
+    position: relative;
+  }
+  .how-step:hover { transform: translate(-3px,-3px) rotate(-1deg); box-shadow: 8px 8px 0 var(--ink); }
+  .step-arrow {
+    position: absolute; top: 50%; right: -28px;
+    font-size: 28px; z-index: 2; transform: translateY(-50%);
+    animation: arrowBounce 1.5s ease-in-out infinite;
+  }
+  @keyframes arrowBounce {
+    0%,100% { transform: translateY(-50%) translateX(0); }
+    50% { transform: translateY(-50%) translateX(4px); }
+  }
+  .how-step:last-child .step-arrow { display: none; }
+  .step-num {
+    font-family: 'Boogaloo', cursive;
+    font-size: 52px; color: var(--blue); line-height: 1;
+    margin-bottom: 8px;
+  }
+  .step-emoji { font-size: 42px; margin-bottom: 14px; display: block; }
+  .how-step h3 { font-family: 'Boogaloo', cursive; font-size: 22px; color: var(--ink); margin-bottom: 8px; }
+  .how-step p { font-size: 13px; color: #666; font-weight: 600; line-height: 1.5; }
+
+  /* ─── WHY US ─── */
+  .why {
+    padding: 100px 72px;
+    background: var(--blue);
+    border-bottom: 4px solid var(--ink);
+    position: relative; overflow: hidden;
+  }
+  .why::after {
+    content: '✨ SQUEAKY CLEAN ✨ WE COME TO YOU ✨ SPARKLING RESULTS ✨ SQUEAKY CLEAN ✨ WE COME TO YOU ✨ SPARKLING RESULTS ✨ SQUEAKY CLEAN ✨ WE COME TO YOU ✨';
+    position: absolute; bottom: 12px; left: 0; right: 0;
+    font-size: 14px; font-weight: 800; letter-spacing: 2px;
+    color: rgba(255,255,255,0.25); white-space: nowrap; overflow: hidden;
+    animation: scrollText 30s linear infinite;
+  }
+  .why .section-title { color: white; }
+  .why .section-tag { background: white; }
+  .why-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; margin-top: 56px; }
+  .why-card {
+    background: rgba(255,255,255,0.12);
+    border: 3px solid rgba(255,255,255,0.4);
+    border-radius: 24px; padding: 36px 28px;
+    backdrop-filter: blur(10px);
+    transition: all 0.2s;
+  }
+  .why-card:hover { background: rgba(255,255,255,0.2); transform: translateY(-4px) rotate(1deg); }
+  .why-icon { font-size: 48px; margin-bottom: 16px; display: block; }
+  .why-card h3 { font-family: 'Boogaloo', cursive; font-size: 24px; color: white; margin-bottom: 10px; }
+  .why-card p { font-size: 14px; color: rgba(255,255,255,0.75); font-weight: 600; line-height: 1.65; }
+
+  /* ─── TESTIMONIALS ─── */
+  .reviews {
+    padding: 100px 72px;
+    background: var(--white);
+    position: relative;
+  }
+  .reviews-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; margin-top: 56px; }
+  .review-card {
+    background: white; border: 3px solid var(--ink);
+    border-radius: 24px; padding: 32px;
+    box-shadow: 5px 5px 0 var(--ink);
+    transition: all 0.15s; position: relative;
+  }
+  .review-card:hover { transform: translate(-3px,-3px) rotate(-0.5deg); box-shadow: 8px 8px 0 var(--ink); }
+  .review-card:nth-child(1) { background: #FFF5F8; }
+  .review-card:nth-child(2) { background: #FFFADD; transform: rotate(1deg); }
+  .review-card:nth-child(2):hover { transform: translate(-3px,-3px) rotate(0.5deg); }
+  .review-card:nth-child(3) { background: var(--blue-light); }
+  .review-stars { font-size: 20px; margin-bottom: 14px; letter-spacing: 2px; }
+  .review-quote { font-size: 15px; color: var(--ink); line-height: 1.7; font-weight: 600; font-style: italic; margin-bottom: 20px; }
+  .review-quote::before { content: '"'; font-family: 'Boogaloo', cursive; font-size: 40px; color: var(--blue); line-height: 0; vertical-align: -14px; margin-right: 4px; }
+  .review-author { display: flex; align-items: center; gap: 12px; }
+  .review-av {
+    width: 46px; height: 46px; border-radius: 50%;
+    background: var(--yellow); border: 3px solid var(--ink);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Boogaloo', cursive; font-size: 18px; color: var(--ink);
+    font-weight: 700; flex-shrink: 0;
+    box-shadow: 2px 2px 0 var(--ink);
+  }
+  .review-name { font-weight: 800; font-size: 14px; color: var(--ink); }
+  .review-role { font-size: 12px; color: #999; font-weight: 600; }
+  .speech-bubble-decorator {
+    position: absolute; top: -18px; right: 24px;
+    font-size: 32px;
+  }
+
+  /* ─── CTA / CONTACT ─── */
+  .cta-section {
+    background: var(--pink);
+    border-top: 4px solid var(--ink);
+    border-bottom: 4px solid var(--ink);
+    padding: 80px 72px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center;
+  }
+  .cta-left { }
+  .cta-left h2 {
+    font-family: 'Boogaloo', cursive;
+    font-size: clamp(38px, 4vw, 62px);
+    color: white; line-height: 1.05; margin-bottom: 20px;
+  }
+  .cta-left p { font-size: 16px; color: rgba(255,255,255,0.85); font-weight: 600; line-height: 1.65; margin-bottom: 32px; }
+  .cta-contact { display: flex; flex-direction: column; gap: 14px; }
+  .cinfo-fun {
+    display: flex; align-items: center; gap: 14px;
+    background: white; border: 3px solid var(--ink);
+    border-radius: 16px; padding: 14px 20px;
+    box-shadow: 4px 4px 0 var(--ink);
+    transition: all 0.15s;
+  }
+  .cinfo-fun:hover { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 var(--ink); }
+  .cinfo-fun-icon { font-size: 28px; }
+  .cinfo-fun-label { font-size: 11px; font-weight: 800; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; }
+  .cinfo-fun-val { font-family: 'Boogaloo', cursive; font-size: 18px; color: var(--ink); }
+
+  .contact-form-fun {
+    background: white; border: 3px solid var(--ink);
+    border-radius: 28px; padding: 44px;
+    box-shadow: 8px 8px 0 var(--ink);
+  }
+  .form-fun-title {
+    font-family: 'Boogaloo', cursive; font-size: 28px; color: var(--ink);
+    margin-bottom: 24px; display: flex; align-items: center; gap: 8px;
+  }
+  .frow { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .fgrp { display: flex; flex-direction: column; gap: 7px; margin-bottom: 14px; }
+  .fgrp.full { grid-column: span 2; margin-bottom: 0; }
+  .fgrp label { font-size: 13px; font-weight: 800; color: var(--ink); }
+  .fgrp input, .fgrp select, .fgrp textarea {
+    background: var(--off, #f9f9f5); border: 2.5px solid var(--ink);
+    border-radius: 12px; padding: 12px 16px;
+    font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 600; color: var(--ink);
+    outline: none; transition: all 0.15s;
+    -webkit-appearance: none;
+  }
+  .fgrp input:focus, .fgrp select:focus, .fgrp textarea:focus {
+    border-color: var(--blue); box-shadow: 3px 3px 0 var(--blue);
+  }
+  .fgrp textarea { resize: none; height: 90px; }
+  .btn-form-fun {
+    width: 100%; background: var(--yellow); color: var(--ink);
+    border: 3px solid var(--ink); border-radius: 16px;
+    padding: 16px; font-family: 'Boogaloo', cursive;
+    font-size: 22px; cursor: pointer;
+    box-shadow: 5px 5px 0 var(--ink);
+    transition: all 0.15s; margin-top: 20px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-form-fun:hover { transform: translate(-3px,-3px); box-shadow: 8px 8px 0 var(--ink); }
+  .btn-form-fun:active { transform: translate(2px,2px); box-shadow: 3px 3px 0 var(--ink); }
+
+  /* ─── FOOTER ─── */
+  footer {
+    background: var(--ink);
+    padding: 60px 72px 32px;
+    position: relative; overflow: hidden;
+  }
+  footer::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 60px;
+    background: var(--white);
+    clip-path: polygon(0 0, 5% 100%, 10% 0, 15% 100%, 20% 0, 25% 100%, 30% 0, 35% 100%, 40% 0, 45% 100%, 50% 0, 55% 100%, 60% 0, 65% 100%, 70% 0, 75% 100%, 80% 0, 85% 100%, 90% 0, 95% 100%, 100% 0, 100% 0, 0 0);
+  }
+  .footer-top {
+    padding-top: 40px;
+    display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 48px; margin-bottom: 48px;
+  }
+  .footer-brand-fun { }
+  .footer-logo-big {
+    font-family: 'Boogaloo', cursive; font-size: 28px;
+    color: var(--yellow); display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+  }
+  .footer-brand-fun p { font-size: 13px; color: rgba(255,255,255,0.55); line-height: 1.7; font-weight: 600; max-width: 240px; }
+  .footer-col h4 { font-family: 'Boogaloo', cursive; font-size: 20px; color: var(--yellow); margin-bottom: 16px; }
+  .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .footer-col ul a { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.5); text-decoration: none; transition: color 0.2s; }
+  .footer-col ul a:hover { color: var(--yellow); }
+  .footer-bottom {
+    border-top: 2px dashed rgba(255,255,255,0.12);
+    padding-top: 24px; display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 12px;
+  }
+  .footer-bottom p { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.4); }
+  .footer-fun-tagline {
+    font-family: 'Boogaloo', cursive; font-size: 18px; color: var(--yellow);
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  /* ─── FLOATING BUBBLES ─── */
+  .float-bubbles { position: fixed; inset: 0; pointer-events: none; z-index: 1; }
+  .float-bubble {
+    position: absolute; border-radius: 50%;
+    border: 2px solid rgba(45,156,219,0.2);
+    background: rgba(200,240,255,0.08);
+    animation: floatBubble ease-in-out infinite;
+  }
+  @keyframes floatBubble {
+    0%,100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-20px) scale(1.05); }
+  }
+
+  /* ─── SCROLL REVEAL ─── */
+  .reveal {
+    opacity: 0; transform: translateY(20px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 1024px) {
+    .services { padding: 80px 36px; }
+    .how, .why, .reviews, .cta-section, footer { padding-left: 36px; padding-right: 36px; }
+    .services-grid, .why-grid, .reviews-grid { grid-template-columns: 1fr 1fr; }
+    .how-steps { grid-template-columns: 1fr 1fr; }
+    .step-arrow { display: none; }
+    .hero-inner { padding: 60px 36px; }
+    .footer-top { grid-template-columns: 1fr 1fr; gap: 36px; }
+  }
+  @media (max-width: 768px) {
+    nav { padding: 12px 20px; }
+    .nav-links { display: none; }
+    .hero-inner { grid-template-columns: 1fr; padding: 40px 20px; text-align: center; }
+    .hero-actions { justify-content: center; }
+    .hero-car { margin-top: 32px; }
+    .services-grid, .why-grid, .reviews-grid, .how-steps { grid-template-columns: 1fr; }
+    .cta-section { grid-template-columns: 1fr; gap: 48px; padding: 60px 20px; }
+    .frow { grid-template-columns: 1fr; }
+    .fgrp.full { grid-column: span 1; }
+    .footer-top { grid-template-columns: 1fr; }
+    .footer-bottom { flex-direction: column; text-align: center; }
+    .services, .how, .why, .reviews { padding: 72px 20px; }
+    footer { padding: 60px 20px 28px; }
+    .trust-bar { gap: 20px; padding: 20px; }
+    .trust-sep { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- FLOATING BUBBLES -->
+<div class="float-bubbles" id="floatBubbles"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <span class="logo-emoji">🫧</span>
+    Squeaky Clean
+  </a>
+  <ul class="nav-links">
+    <li><a href="#services">Services</a></li>
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#reviews">Reviews</a></li>
+    <li><a href="#contact">Book Now!</a></li>
+  </ul>
+  <a href="#contact" class="nav-cta">📞 Call Us!</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="bubbles-bg" id="heroBubbles"></div>
+  <div class="hero-inner">
+    <div class="hero-left">
+      <div class="hero-badge">📍 We Come To YOU · Kissimmee, FL</div>
+      <h1>
+        Your Car is<br>
+        <span class="highlight">Dirty.</span><br>
+        We <span class="squiggle">Fix</span> That.
+      </h1>
+      <p class="hero-sub">Mobile detailing that shows up at your door, driveway, or parking lot — and leaves your car so clean you'll want to eat off the hood. 🍽️</p>
+      <div class="hero-actions">
+        <a href="#contact" class="btn-big">🫧 Book a Detail!</a>
+        <a href="#services" class="btn-outline">See Prices →</a>
+      </div>
+    </div>
+    <div class="hero-car">
+      <div class="car-bubbles" id="carBubbles"></div>
+      <!-- Inline SVG car illustration -->
+      <div class="car-svg-wrap">
+        <svg width="420" height="280" viewBox="0 0 420 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Road shadow -->
+          <ellipse cx="210" cy="248" rx="160" ry="18" fill="rgba(0,0,0,0.08)"/>
+          <!-- Car body bottom -->
+          <rect x="40" y="160" width="340" height="72" rx="16" fill="#2D9CDB"/>
+          <rect x="40" y="160" width="340" height="72" rx="16" fill="url(#carGrad)"/>
+          <!-- Car top -->
+          <path d="M110 160 C120 110 150 90 180 85 L240 85 C270 85 300 110 310 160 Z" fill="#1A7BB8"/>
+          <path d="M115 155 C125 112 152 95 182 90 L238 90 C268 90 295 112 305 155 Z" fill="#2D9CDB"/>
+          <!-- Windshields -->
+          <path d="M130 150 C138 120 158 104 178 100 L220 100 L225 150 Z" fill="#C8F0FF" stroke="white" stroke-width="2"/>
+          <path d="M195 150 L210 100 L240 100 C262 104 278 118 285 150 Z" fill="#C8F0FF" stroke="white" stroke-width="2"/>
+          <!-- Door line -->
+          <line x1="210" y1="162" x2="210" y2="230" stroke="white" stroke-width="2.5" stroke-dasharray="4 3"/>
+          <!-- Door handles -->
+          <rect x="150" y="192" width="30" height="8" rx="4" fill="white" opacity="0.7"/>
+          <rect x="240" y="192" width="30" height="8" rx="4" fill="white" opacity="0.7"/>
+          <!-- Windows side -->
+          <rect x="125" y="168" width="36" height="26" rx="6" fill="#C8F0FF" opacity="0.8"/>
+          <rect x="258" y="168" width="36" height="26" rx="6" fill="#C8F0FF" opacity="0.8"/>
+          <!-- Wheels -->
+          <circle cx="108" cy="232" r="34" fill="#1A1A2E"/>
+          <circle cx="108" cy="232" r="24" fill="#333"/>
+          <circle cx="108" cy="232" r="14" fill="#AAA"/>
+          <circle cx="108" cy="232" r="6" fill="#FFE234"/>
+          <circle cx="312" cy="232" r="34" fill="#1A1A2E"/>
+          <circle cx="312" cy="232" r="24" fill="#333"/>
+          <circle cx="312" cy="232" r="14" fill="#AAA"/>
+          <circle cx="312" cy="232" r="6" fill="#FFE234"/>
+          <!-- Headlights -->
+          <rect x="44" y="174" width="32" height="20" rx="8" fill="#FFE234" stroke="var(--ink)" stroke-width="2"/>
+          <rect x="344" y="174" width="32" height="20" rx="8" fill="#FF6B6B" stroke="var(--ink)" stroke-width="2"/>
+          <!-- Bumpers -->
+          <rect x="36" y="196" width="22" height="28" rx="6" fill="#1A7BB8" stroke="white" stroke-width="1.5"/>
+          <rect x="362" y="196" width="22" height="28" rx="6" fill="#1A7BB8" stroke="white" stroke-width="1.5"/>
+          <!-- Shine lines -->
+          <path d="M145 105 Q165 95 185 100" stroke="white" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+          <path d="M150 118 Q175 108 195 112" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
+          <!-- Gradient def -->
+          <defs>
+            <linearGradient id="carGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="rgba(255,255,255,0.15)"/>
+              <stop offset="100%" stop-color="rgba(0,0,0,0.1)"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <span class="sparkle" style="top:20px;right:80px;animation-delay:0s">✨</span>
+      <span class="sparkle" style="top:60px;left:60px;animation-delay:0.5s;font-size:18px">💫</span>
+      <span class="sparkle" style="bottom:70px;right:40px;animation-delay:1s;font-size:28px">⭐</span>
+      <span class="sparkle" style="top:10px;left:140px;animation-delay:0.8s;font-size:16px">✨</span>
+    </div>
+  </div>
+  <div class="hero-zigzag"></div>
+</section>
+
+<!-- TRUST BAR -->
+<div class="trust-bar">
+  <div class="trust-item"><span>⭐</span> 5-Star Rated</div>
+  <div class="trust-sep">·</div>
+  <div class="trust-item"><span>🚗</span> 2,000+ Cars Cleaned</div>
+  <div class="trust-sep">·</div>
+  <div class="trust-item"><span>📍</span> We Come To You!</div>
+  <div class="trust-sep">·</div>
+  <div class="trust-item"><span>⚡</span> Same-Day Available</div>
+  <div class="trust-sep">·</div>
+  <div class="trust-item"><span>💯</span> Satisfaction Guaranteed</div>
+</div>
+
+<!-- SERVICES -->
+<section class="services" id="services">
+  <div class="section-header reveal">
+    <div class="section-tag">🫧 Our Services</div>
+    <h2 class="section-title">We clean <span class="color-blue">everything.</span><br>No excuses. 🧹</h2>
+    <p class="section-sub">Seriously dirty? We've seen worse. Probably. Maybe. Book us anyway.</p>
+  </div>
+  <div class="services-grid">
+    <div class="service-card reveal">
+      <div class="card-ribbon">Fan Fave!</div>
+      <span class="card-emoji">🚿</span>
+      <h3>The Works</h3>
+      <p>Full interior + exterior deep clean. We get in every crack, crevice, and crumb. Your car will forget what a French fry looks like.</p>
+      <div class="card-price">
+        <span class="card-price-from">From</span>
+        <span class="card-price-val">$199</span>
+      </div>
+    </div>
+    <div class="service-card reveal">
+      <span class="card-emoji">✨</span>
+      <h3>Exterior Shine</h3>
+      <p>Wash, clay bar, polish, and protect. We make your paint look so good your neighbors will ask what car you bought.</p>
+      <div class="card-price">
+        <span class="card-price-from">From</span>
+        <span class="card-price-val">$99</span>
+      </div>
+    </div>
+    <div class="service-card reveal">
+      <span class="card-emoji">🧹</span>
+      <h3>Interior Refresh</h3>
+      <p>Vacuum, shampoo, wipe-down, and deodorize. Goodbye mystery smells. Hello "new car" smell you forgot existed.</p>
+      <div class="card-price">
+        <span class="card-price-from">From</span>
+        <span class="card-price-val">$89</span>
+      </div>
+    </div>
+    <div class="service-card reveal">
+      <span class="card-emoji">🛡️</span>
+      <h3>Ceramic Coating</h3>
+      <p>Bulletproof (not literally) ceramic protection that keeps your car clean longer. Rain? Dirt? Bird stuff? Slides right off. 💪</p>
+      <div class="card-price">
+        <span class="card-price-from">From</span>
+        <span class="card-price-val">$599</span>
+      </div>
+    </div>
+    <div class="service-card reveal">
+      <span class="card-emoji">🎨</span>
+      <h3>Paint Correction</h3>
+      <p>Those swirl marks making you sad? We'll machine polish them away until your paint looks like it's made of liquid glass.</p>
+      <div class="card-price">
+        <span class="card-price-from">From</span>
+        <span class="card-price-val">$349</span>
+      </div>
+    </div>
+    <div class="service-card reveal">
+      <span class="card-emoji">⚡</span>
+      <h3>Quick Freshen</h3>
+      <p>Short on time? Our 30-min express hits the highlights — exterior wash + interior vacuum. Because even a quick clean counts!</p>
+      <div class="card-price">
+        <span class="card-price-from">From</span>
+        <span class="card-price-val">$49</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how" id="how">
+  <div class="section-header reveal" style="position:relative;z-index:1;">
+    <div class="section-tag">🗺️ Super Simple</div>
+    <h2 class="section-title">How it <span class="color-blue">works</span> 🤔</h2>
+    <p class="section-sub">Spoiler: it's embarrassingly easy. Like, really easy.</p>
+  </div>
+  <div class="how-steps">
+    <div class="how-step reveal">
+      <span class="step-arrow">→</span>
+      <div class="step-num">01</div>
+      <span class="step-emoji">📱</span>
+      <h3>You Book</h3>
+      <p>Click the button, fill the form, give us a call — whatever's easiest for you. Takes 2 minutes tops.</p>
+    </div>
+    <div class="how-step reveal">
+      <span class="step-arrow">→</span>
+      <div class="step-num">02</div>
+      <span class="step-emoji">🚐</span>
+      <h3>We Show Up</h3>
+      <p>Our van rolls up to wherever your car lives. Driveway, parking lot, office — we're there!</p>
+    </div>
+    <div class="how-step reveal">
+      <span class="step-arrow">→</span>
+      <div class="step-num">03</div>
+      <span class="step-emoji">🫧</span>
+      <h3>We Clean</h3>
+      <p>Our crew goes to work with all the pro gear while you chill, work, nap — whatever you want!</p>
+    </div>
+    <div class="how-step reveal">
+      <div class="step-num">04</div>
+      <span class="step-emoji">😍</span>
+      <h3>You Freak Out</h3>
+      <p>You see your car, you gasp, you smile, you maybe shed a single tear of joy. This happens a lot.</p>
+    </div>
+  </div>
+</section>
+
+<!-- WHY US -->
+<section class="why">
+  <div class="section-header reveal">
+    <div class="section-tag" style="background: var(--yellow);">💪 Why Squeaky Clean</div>
+    <h2 class="section-title" style="color:white;">We're kinda <span style="color:var(--yellow);">obsessed</span><br>with clean cars.</h2>
+  </div>
+  <div class="why-grid">
+    <div class="why-card reveal">
+      <span class="why-icon">🏠</span>
+      <h3>We Come To You</h3>
+      <p>Zero driving to a shop. Zero waiting. We bring the whole operation to your door. You literally don't have to move. Well, maybe move your car to the driveway. That's it.</p>
+    </div>
+    <div class="why-card reveal">
+      <span class="why-icon">🏆</span>
+      <h3>Actually Really Good</h3>
+      <p>We use professional products — Koch Chemie, CARPRO, Rupes machines. We're not out here with a bucket and a paper towel. This is legit stuff.</p>
+    </div>
+    <div class="why-card reveal">
+      <span class="why-icon">⏰</span>
+      <h3>Fast & Flexible</h3>
+      <p>Same-day appointments often available. Early morning, weekends, we work around your schedule. Because you've got stuff to do and your car can wait.</p>
+    </div>
+    <div class="why-card reveal">
+      <span class="why-icon">💰</span>
+      <h3>Fair Prices</h3>
+      <p>No "luxury car wash" markups. Just honest pricing for seriously good work. Check our prices, then check the reviews, then book. Easy math.</p>
+    </div>
+    <div class="why-card reveal">
+      <span class="why-icon">😤</span>
+      <h3>Zero Excuses Policy</h3>
+      <p>We don't ghost you, we don't cancel last minute, and we don't cut corners. If it's not right, we fix it. That's the whole promise.</p>
+    </div>
+    <div class="why-card reveal">
+      <span class="why-icon">🌎</span>
+      <h3>Eco-Friendly</h3>
+      <p>Water-efficient techniques and biodegradable products. Your car gets clean, and the planet doesn't get mad at you. Win-win!</p>
+    </div>
+  </div>
+</section>
+
+<!-- REVIEWS -->
+<section class="reviews" id="reviews">
+  <div class="section-header reveal">
+    <div class="section-tag">⭐ Real People Say</div>
+    <h2 class="section-title">They used to have <span class="color-pink">dirty cars</span> too. 🚗</h2>
+    <p class="section-sub">These are real customers. Their cars were really dirty. Now they're not.</p>
+  </div>
+  <div class="reviews-grid">
+    <div class="review-card reveal">
+      <div class="speech-bubble-decorator">🤩</div>
+      <div class="review-stars">⭐⭐⭐⭐⭐</div>
+      <p class="review-quote">I have a golden retriever, a toddler, and a husband who eats in the car. These guys didn't even flinch. My SUV looks brand new. I cried a little.</p>
+      <div class="review-author">
+        <div class="review-av">SM</div>
+        <div>
+          <div class="review-name">Sarah M.</div>
+          <div class="review-role">Dog Mom · Kissimmee</div>
+        </div>
+      </div>
+    </div>
+    <div class="review-card reveal">
+      <div class="speech-bubble-decorator">🫶</div>
+      <div class="review-stars">⭐⭐⭐⭐⭐</div>
+      <p class="review-quote">Booked at 8am, they were here by noon. Finished in 2 hours. I watched Netflix the whole time and came out to a spotless truck. Best $150 I've ever spent.</p>
+      <div class="review-author">
+        <div class="review-av">MJ</div>
+        <div>
+          <div class="review-name">Marcus J.</div>
+          <div class="review-role">Happy Truck Owner · Orlando</div>
+        </div>
+      </div>
+    </div>
+    <div class="review-card reveal">
+      <div class="speech-bubble-decorator">😂</div>
+      <div class="review-stars">⭐⭐⭐⭐⭐</div>
+      <p class="review-quote">My car was embarrassingly dirty. Like, I was ashamed to drive people places dirty. Now strangers compliment my paint in parking lots. Life-changing. Not joking.</p>
+      <div class="review-author">
+        <div class="review-av">KR</div>
+        <div>
+          <div class="review-name">Kevin R.</div>
+          <div class="review-role">Formerly Embarrassed · St. Cloud</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA / CONTACT -->
+<div class="cta-section" id="contact">
+  <div class="cta-left">
+    <h2>Ready for the<br>cleanest car<br>of your life? 🫧</h2>
+    <p>Seriously, stop looking at your dirty car and do something about it. We make it painless, easy, and honestly kinda fun (for us at least).</p>
+    <div class="cta-contact">
+      <div class="cinfo-fun">
+        <div class="cinfo-fun-icon">📞</div>
+        <div>
+          <div class="cinfo-fun-label">Give us a ring!</div>
+          <div class="cinfo-fun-val">(407) 555-0199</div>
+        </div>
+      </div>
+      <div class="cinfo-fun">
+        <div class="cinfo-fun-icon">✉️</div>
+        <div>
+          <div class="cinfo-fun-label">Email us!</div>
+          <div class="cinfo-fun-val">hello@squeakyclean.com</div>
+        </div>
+      </div>
+      <div class="cinfo-fun">
+        <div class="cinfo-fun-icon">📍</div>
+        <div>
+          <div class="cinfo-fun-label">We serve!</div>
+          <div class="cinfo-fun-val">Kissimmee & Greater Orlando</div>
+        </div>
+      </div>
+      <div class="cinfo-fun">
+        <div class="cinfo-fun-icon">🕐</div>
+        <div>
+          <div class="cinfo-fun-label">Hours!</div>
+          <div class="cinfo-fun-val">7 Days a Week, 7am–7pm</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="contact-form-fun reveal">
+    <p class="form-fun-title">📋 Book Your Detail!</p>
+    <div class="frow">
+      <div class="fgrp">
+        <label>Your Name 👋</label>
+        <input type="text" placeholder="John Smith">
+      </div>
+      <div class="fgrp">
+        <label>Phone Number 📱</label>
+        <input type="tel" placeholder="(407) 000-0000">
+      </div>
+      <div class="fgrp">
+        <label>Email Address ✉️</label>
+        <input type="email" placeholder="john@email.com">
+      </div>
+      <div class="fgrp">
+        <label>Vehicle Type 🚗</label>
+        <input type="text" placeholder="2020 Honda Accord">
+      </div>
+      <div class="fgrp full">
+        <label>What do you need? 🧹</label>
+        <select>
+          <option value="">Pick a service...</option>
+          <option>The Works (Full Detail) — $199+</option>
+          <option>Exterior Shine — $99+</option>
+          <option>Interior Refresh — $89+</option>
+          <option>Ceramic Coating — $599+</option>
+          <option>Paint Correction — $349+</option>
+          <option>Quick Freshen — $49+</option>
+          <option>Not Sure — Surprise Me!</option>
+        </select>
+      </div>
+      <div class="fgrp full">
+        <label>Anything else we should know? 🤔</label>
+        <textarea placeholder="Dog hair everywhere? Coffee explosion? We've seen it all. Tell us!"></textarea>
+      </div>
+    </div>
+    <button class="btn-form-fun" id="bookBtn">🫧 Let's Get Cleaning!</button>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand-fun">
+      <div class="footer-logo-big"><span style="animation: wiggle 2s ease-in-out infinite; display:inline-block;">🫧</span> Squeaky Clean</div>
+      <p>Mobile auto detailing that comes to you, anywhere in Kissimmee and Greater Orlando. Your car deserves better. Let's make it happen. 🚗✨</p>
+    </div>
+    <div class="footer-col">
+      <h4>Services</h4>
+      <ul>
+        <li><a href="#services">The Works</a></li>
+        <li><a href="#services">Exterior Shine</a></li>
+        <li><a href="#services">Interior Refresh</a></li>
+        <li><a href="#services">Ceramic Coating</a></li>
+        <li><a href="#services">Paint Correction</a></li>
+        <li><a href="#services">Quick Freshen</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>About</h4>
+      <ul>
+        <li><a href="#">Our Story</a></li>
+        <li><a href="#how">How It Works</a></li>
+        <li><a href="#reviews">Reviews</a></li>
+        <li><a href="#">Before & After</a></li>
+        <li><a href="#">FAQ</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Let's Talk!</h4>
+      <ul>
+        <li><a href="tel:4075550199">(407) 555-0199</a></li>
+        <li><a href="#">hello@squeakyclean.com</a></li>
+        <li><a href="#contact">Book Online</a></li>
+        <li><a href="#">Instagram</a></li>
+        <li><a href="#">TikTok</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2025 Squeaky Clean Mobile Detailing · Kissimmee, FL · All rights reserved</p>
+    <div class="footer-fun-tagline"><span>🫧</span> We make dirty cars cry tears of joy.</div>
+  </div>
+</footer>
+
+<script>
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), i * 80);
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.08 });
+  reveals.forEach(el => io.observe(el));
+
+  // Floating background bubbles
+  const floatBubbles = document.getElementById('floatBubbles');
+  for (let i = 0; i < 12; i++) {
+    const b = document.createElement('div');
+    b.className = 'float-bubble';
+    const size = 40 + Math.random() * 100;
+    b.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${Math.random()*100}%;
+      top:${Math.random()*100}%;
+      animation-duration:${4+Math.random()*6}s;
+      animation-delay:${Math.random()*4}s;
+    `;
+    floatBubbles.appendChild(b);
+  }
+
+  // Hero bubbles
+  const heroBubbles = document.getElementById('heroBubbles');
+  for (let i = 0; i < 15; i++) {
+    const b = document.createElement('div');
+    b.className = 'bg-bubble';
+    const size = 20 + Math.random() * 60;
+    b.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${Math.random()*100}%;
+      bottom:0;
+      animation-duration:${3+Math.random()*5}s;
+      animation-delay:${Math.random()*5}s;
+    `;
+    heroBubbles.appendChild(b);
+  }
+
+  // Car bubbles
+  const carBubbles = document.getElementById('carBubbles');
+  for (let i = 0; i < 8; i++) {
+    const b = document.createElement('div');
+    b.className = 'car-bubble';
+    const size = 12 + Math.random() * 32;
+    b.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${20+Math.random()*60}%;
+      bottom:${30+Math.random()*20}%;
+      animation-duration:${2+Math.random()*3}s;
+      animation-delay:${Math.random()*3}s;
+    `;
+    carBubbles.appendChild(b);
+  }
+
+  // Cursor bubble trail
+  let lastBubble = 0;
+  document.addEventListener('mousemove', (e) => {
+    const now = Date.now();
+    if (now - lastBubble < 80) return;
+    lastBubble = now;
+    const b = document.createElement('div');
+    b.className = 'cursor-bubble';
+    const size = 16 + Math.random() * 24;
+    const colors = ['rgba(200,240,255,0.8)','rgba(255,214,235,0.8)','rgba(212,245,212,0.8)','rgba(255,226,52,0.6)'];
+    b.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${e.clientX - size/2}px; top:${e.clientY - size/2}px;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      border: 2px solid rgba(45,156,219,0.3);
+    `;
+    document.body.appendChild(b);
+    setTimeout(() => b.remove(), 800);
+  });
+
+  // Form submit
+  document.getElementById('bookBtn').addEventListener('click', function() {
+    const btn = this;
+    btn.textContent = '✅ Booked! We\'ll call you soon!';
+    btn.style.background = '#27AE60';
+    btn.style.color = 'white';
+    setTimeout(() => {
+      btn.textContent = '🫧 Let\'s Get Cleaning!';
+      btn.style.background = '';
+      btn.style.color = '';
+    }, 3000);
+  });
+</script>
+</body>
+</html>

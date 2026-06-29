@@ -4,7 +4,6 @@ import { listBookingsForOwner } from '../../../lib/bookings.js';
 import { getCustomerMetadata, saveCustomerMetadata } from '../../../lib/customers.js';
 import { groupBookingsIntoCustomers, pickPrimarySiteId, makeCustomerLikeFromProfile } from '../../../lib/customerIdentity.js';
 import { getCustomerProfileByIdentityKey, upsertCustomerPhoto } from '../../../lib/customerProfiles.js';
-import AppHeader from '../../ui/AppHeader.jsx';
 import SubscribeGate from '../bookings-page/SubscribeGate.jsx';
 import { useAlert } from '../../ui/AlertProvider.jsx';
 import EmailComposerModal from './EmailComposerModal.jsx';
@@ -37,34 +36,9 @@ export default function CustomerDetailPage({
   userEmail,
   profile,
   identityKey,             // dedup key from customerIdentity.js
-  onExit,                  // back to dashboard
   onBackToCustomers,       // back to the Customers list
-  onOpenOverview,
-  onOpenInquiries,
   onOpenBookings,
-  onOpenAdmin,
-  onOpenProfile,
-  onOpenPaymentsConnect,
-  onOpenCharges,
-  onCharge,
-  onSignOut,
 }) {
-  const headerProps = {
-    active: 'customers',     // keep the Customers tab highlighted on detail
-    userEmail,
-    profile,
-    onOpenOverview,
-    onMySites: onExit,
-    onOpenInquiries,
-    onOpenBookings,
-    onOpenCustomers: onBackToCustomers,
-    onOpenAdmin,
-    onOpenProfile,
-    onOpenPaymentsConnect,
-    onOpenCharges,
-    onCharge,
-    onSignOut,
-  };
   const { toast } = useAlert();
 
   const [bookings, setBookings] = useState([]);
@@ -294,42 +268,33 @@ export default function CustomerDetailPage({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#faf9f7]">
-        <AppHeader {...headerProps} />
-        <main className="max-w-7xl mx-auto px-3 py-10">
-          <p className="text-[#888] text-sm">Loading…</p>
-        </main>
-      </div>
+      <main className="max-w-7xl mx-auto px-3 py-10">
+        <p className="text-[#888] text-sm">Loading…</p>
+      </main>
     );
   }
 
   if (err) {
     return (
-      <div className="min-h-screen bg-[#faf9f7]">
-        <AppHeader {...headerProps} />
-        <main className="max-w-7xl mx-auto px-3 py-10">
-          <div className="border border-[#cc0000]/20 rounded-xl p-4 text-sm text-[#cc0000] bg-[#cc0000]/5">{err}</div>
-        </main>
-      </div>
+      <main className="max-w-7xl mx-auto px-3 py-10">
+        <div className="border border-[#cc0000]/20 rounded-xl p-4 text-sm text-[#cc0000] bg-[#cc0000]/5">{err}</div>
+      </main>
     );
   }
 
   if (!customer) {
     return (
-      <div className="min-h-screen bg-[#faf9f7]">
-        <AppHeader {...headerProps} />
-        <main className="max-w-7xl mx-auto px-3 py-10">
-          <button
-            onClick={onBackToCustomers}
-            className="text-[12px] font-semibold text-[#1a1a1a] hover:text-[#cc0000] transition-colors mb-4"
-          >
-            ← Back to Customers
-          </button>
-          <div className="border border-black/[0.07] rounded-xl p-6 bg-white text-sm text-[#555]">
-            Customer not found. They may have been removed.
-          </div>
-        </main>
-      </div>
+      <main className="max-w-7xl mx-auto px-3 py-10">
+        <button
+          onClick={onBackToCustomers}
+          className="text-[12px] font-semibold text-[#1a1a1a] hover:text-[#cc0000] transition-colors mb-4"
+        >
+          ← Back to Customers
+        </button>
+        <div className="border border-black/[0.07] rounded-xl p-6 bg-white text-sm text-[#555]">
+          Customer not found. They may have been removed.
+        </div>
+      </main>
     );
   }
 
@@ -339,8 +304,7 @@ export default function CustomerDetailPage({
   const topService = [...customer.services.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || '—';
 
   return (
-    <div className="min-h-screen bg-[#faf9f7]">
-      <AppHeader {...headerProps} />
+    <>
       <SubscribeGate
         profile={profile}
         heading="Customers is a Pro feature"
@@ -696,7 +660,7 @@ export default function CustomerDetailPage({
           }}
         />
       )}
-    </div>
+    </>
   );
 }
 

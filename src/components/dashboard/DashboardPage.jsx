@@ -11,7 +11,6 @@ import UpgradeProDialog from '../ui/UpgradeProDialog.jsx';
 import CustomWebsitePromoModal from '../ui/CustomWebsitePromoModal.jsx';
 import EditBusinessInfoModal from './EditBusinessInfoModal.jsx';
 import UpgradeFunnel from './UpgradeFunnel.jsx';
-import AppHeader from '../ui/AppHeader.jsx';
 
 const MAX_SITES = 1;
 const CUSTOM_DOMAIN_ENABLED = import.meta.env.VITE_CUSTOM_DOMAIN_ENABLED === 'true';
@@ -118,7 +117,7 @@ function DashboardNewsBanner() {
   );
 }
 
-export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite, onSignOut, userEmail, profile, onOpenOverview, onOpenAdmin, onOpenInquiries, onOpenBookings, onOpenCustomers, onOpenProfile, onOpenPaymentsConnect, onOpenCharges, onCharge, onOpenBookingSettings, onPreviewDemo }) {
+export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite, profile, onOpenBookingSettings, onPreviewDemo }) {
   const { toast, confirm: confirmDialog } = useAlert();
   const { session } = useAuth();
   const userId = session?.user?.id;
@@ -138,23 +137,6 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
   // Block site creation while impersonating — admin shouldn't be able to
   // spawn a new site under the customer's account.
   const canCreateSite = !isImpersonationTab && (isAdmin || sites.length < MAX_SITES);
-
-  const headerProps = {
-    active: 'sites',
-    userEmail,
-    profile,
-    onOpenOverview,
-    onMySites: () => {}, // already on dashboard
-    onOpenInquiries,
-    onOpenBookings,
-    onOpenCustomers,
-    onOpenAdmin,
-    onOpenProfile,
-    onOpenPaymentsConnect,
-    onOpenCharges,
-    onCharge,
-    onSignOut,
-  };
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -363,9 +345,7 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
   };
 
   return (
-    <div className="min-h-screen bg-[#faf9f7]">
-      <AppHeader {...headerProps} />
-
+    <>
       <main className="max-w-7xl mx-auto px-3 py-10">
         {showWelcome && (
           <div className="relative mb-6 rounded-2xl border border-black/[0.07] bg-white shadow-sm overflow-hidden">
@@ -746,6 +726,6 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
           }}
         />
       )}
-    </div>
+    </>
   );
 }

@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IRONCLAD AUTO — Built Tough. Done Right.</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;500;600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black:    #0A0A0A;
+    --steel:    #141414;
+    --iron:     #1C1C1C;
+    --plate:    #242424;
+    --rust:     #C0392B;
+    --rust2:    #E74C3C;
+    --amber:    #F39C12;
+    --chrome:   #C0C0C0;
+    --chrome2:  #8A8A8A;
+    --white:    #F0EDE8;
+    --off:      #D8D4CE;
+    --dim:      #6B6560;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Barlow', sans-serif;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── TEXTURE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='4' height='4' fill='%23000'/%3E%3Crect x='0' y='0' width='1' height='1' fill='%23fff' opacity='0.015'/%3E%3Crect x='2' y='2' width='1' height='1' fill='%23fff' opacity='0.01'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    mix-blend-mode: overlay;
+  }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--black); }
+  ::-webkit-scrollbar-thumb { background: var(--rust); }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+    height: 68px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 56px;
+    background: rgba(10,10,10,0.95);
+    border-bottom: 2px solid var(--rust);
+    backdrop-filter: blur(12px);
+  }
+  nav::after {
+    content: '';
+    position: absolute; bottom: -6px; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--amber), transparent);
+    opacity: 0.4;
+  }
+  .nav-logo {
+    display: flex; align-items: center; gap: 14px; text-decoration: none;
+  }
+  .logo-icon {
+    width: 42px; height: 42px;
+    background: var(--rust);
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-family: 'Bebas Neue', sans-serif;
+    color: white; letter-spacing: 0;
+    position: relative; flex-shrink: 0;
+  }
+  .logo-text-wrap { }
+  .logo-main {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px; letter-spacing: 3px;
+    color: var(--white); line-height: 1; display: block;
+  }
+  .logo-sub {
+    font-size: 9px; letter-spacing: 4px; color: var(--rust);
+    font-weight: 700; text-transform: uppercase; display: block; margin-top: 1px;
+  }
+  .nav-links { display: flex; gap: 32px; list-style: none; }
+  .nav-links a {
+    font-size: 12px; font-weight: 700; letter-spacing: 2.5px;
+    text-transform: uppercase; color: var(--chrome2);
+    text-decoration: none; transition: color 0.2s;
+    position: relative;
+  }
+  .nav-links a::after {
+    content: ''; position: absolute; bottom: -4px; left: 0; right: 0; height: 2px;
+    background: var(--rust); transform: scaleX(0); transition: transform 0.2s;
+  }
+  .nav-links a:hover { color: var(--white); }
+  .nav-links a:hover::after { transform: scaleX(1); }
+  .nav-cta {
+    background: var(--rust); color: white;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px; font-weight: 800; letter-spacing: 2px;
+    text-transform: uppercase; padding: 11px 26px;
+    text-decoration: none; clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    transition: all 0.2s;
+  }
+  .nav-cta:hover { background: var(--rust2); transform: scaleX(1.04); }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    padding-top: 68px;
+    position: relative; overflow: hidden;
+    display: flex; align-items: center;
+  }
+  /* diagonal steel plate bg */
+  .hero-bg {
+    position: absolute; inset: 0;
+    background:
+      linear-gradient(135deg, #0A0A0A 0%, #1a1a1a 40%, #0f0f0f 100%);
+  }
+  .hero-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(192,57,43,0.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(192,57,43,0.07) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+  .hero-slash {
+    position: absolute; top: 0; right: 0; bottom: 0; width: 55%;
+    background: var(--iron);
+    clip-path: polygon(12% 0, 100% 0, 100% 100%, 0% 100%);
+  }
+  .hero-slash::before {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 20px,
+        rgba(255,255,255,0.012) 20px,
+        rgba(255,255,255,0.012) 40px
+      );
+  }
+  /* big odometer number bg */
+  .hero-bg-num {
+    position: absolute; right: 4%; top: 50%; transform: translateY(-50%);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(200px, 25vw, 360px);
+    color: rgba(255,255,255,0.025);
+    line-height: 1; pointer-events: none; user-select: none;
+    letter-spacing: -8px;
+  }
+  .hero-content {
+    position: relative; z-index: 2;
+    padding: 80px 56px;
+    max-width: 700px;
+    animation: heroIn 1s ease forwards;
+  }
+  @keyframes heroIn {
+    from { opacity:0; transform: translateX(-30px); }
+    to { opacity:1; transform: translateX(0); }
+  }
+  .hero-kicker {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 24px;
+  }
+  .kicker-bar { width: 40px; height: 3px; background: var(--rust); }
+  .kicker-text {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px; font-weight: 800; letter-spacing: 4px;
+    text-transform: uppercase; color: var(--rust);
+  }
+  .hero h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(72px, 10vw, 130px);
+    line-height: 0.92; letter-spacing: 2px;
+    color: var(--white);
+    margin-bottom: 28px;
+  }
+  .hero h1 .red { color: var(--rust); }
+  .hero h1 .outline {
+    -webkit-text-stroke: 2px var(--chrome);
+    color: transparent;
+  }
+  .hero-desc {
+    font-size: 17px; line-height: 1.7; color: var(--chrome2);
+    max-width: 460px; margin-bottom: 44px; font-weight: 400;
+  }
+  .hero-ctas { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  .btn-primary {
+    background: var(--rust); color: white;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px; font-weight: 800; letter-spacing: 2.5px;
+    text-transform: uppercase; padding: 16px 40px;
+    text-decoration: none;
+    clip-path: polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%);
+    transition: all 0.2s; border: none; cursor: pointer;
+    position: relative; overflow: hidden;
+  }
+  .btn-primary::before {
+    content: ''; position: absolute; top: 0; left: -100%; width: 60px; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.4s;
+  }
+  .btn-primary:hover::before { left: 150%; }
+  .btn-primary:hover { background: var(--rust2); }
+  .btn-ghost {
+    color: var(--white); font-family: 'Barlow Condensed', sans-serif;
+    font-size: 15px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; text-decoration: none;
+    display: flex; align-items: center; gap: 10px;
+    border-bottom: 2px solid var(--chrome2); padding-bottom: 4px;
+    transition: all 0.2s;
+  }
+  .btn-ghost:hover { color: var(--amber); border-color: var(--amber); }
+  .hero-stats {
+    display: flex; gap: 48px; margin-top: 60px;
+    padding-top: 40px; border-top: 1px solid rgba(255,255,255,0.08);
+  }
+  .hstat-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 42px; color: var(--rust); line-height: 1; letter-spacing: 1px;
+  }
+  .hstat-label { font-size: 11px; letter-spacing: 2px; color: var(--dim); text-transform: uppercase; font-weight: 600; margin-top: 4px; }
+
+  /* ── MARQUEE ── */
+  .marquee-wrap {
+    background: var(--rust);
+    border-top: 2px solid #8B0000;
+    border-bottom: 2px solid #8B0000;
+    padding: 14px 0; overflow: hidden;
+    position: relative;
+  }
+  .marquee-track {
+    display: flex; gap: 0;
+    animation: marqueeScroll 25s linear infinite;
+    width: max-content;
+  }
+  .marquee-track:hover { animation-play-state: paused; }
+  @keyframes marqueeScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  .marquee-item {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px; letter-spacing: 4px;
+    color: rgba(255,255,255,0.85); padding: 0 40px;
+    display: flex; align-items: center; gap: 40px; white-space: nowrap;
+  }
+  .marquee-item::after { content: '⚙'; color: rgba(255,255,255,0.5); font-size: 16px; }
+
+  /* ── SERVICES ── */
+  .services {
+    padding: 120px 56px;
+    background: var(--steel);
+    position: relative;
+  }
+  .services::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    background: repeating-linear-gradient(90deg, var(--rust) 0px, var(--rust) 30px, transparent 30px, transparent 40px);
+  }
+  .section-header { margin-bottom: 72px; }
+  .section-eyebrow {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px; font-weight: 800; letter-spacing: 5px;
+    text-transform: uppercase; color: var(--rust);
+    display: flex; align-items: center; gap: 12px; margin-bottom: 14px;
+  }
+  .section-eyebrow::before { content: ''; width: 28px; height: 2px; background: var(--rust); }
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(44px, 5vw, 72px);
+    letter-spacing: 2px; line-height: 0.95; color: var(--white);
+  }
+  .section-title .accent { color: var(--rust); }
+  .section-body { font-size: 16px; color: var(--dim); line-height: 1.75; max-width: 500px; margin-top: 18px; }
+
+  .services-grid {
+    display: grid; grid-template-columns: repeat(3,1fr); gap: 3px;
+    background: rgba(255,255,255,0.04);
+  }
+  .svc-card {
+    background: var(--iron);
+    padding: 44px 36px;
+    position: relative; overflow: hidden;
+    transition: all 0.3s; cursor: default;
+  }
+  .svc-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: var(--rust); transform: scaleX(0); transform-origin: left;
+    transition: transform 0.35s;
+  }
+  .svc-card:hover::before { transform: scaleX(1); }
+  .svc-card:hover { background: #202020; }
+  .svc-card-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 72px; color: rgba(255,255,255,0.04);
+    line-height: 1; margin-bottom: 20px;
+    transition: color 0.3s;
+  }
+  .svc-card:hover .svc-card-num { color: rgba(192,57,43,0.12); }
+  .svc-icon { font-size: 32px; margin-bottom: 16px; display: block; }
+  .svc-card h3 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 22px; font-weight: 800; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--white); margin-bottom: 12px;
+  }
+  .svc-card p { font-size: 14px; color: var(--dim); line-height: 1.7; }
+  .svc-price-row {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    margin-top: 28px; padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,0.07);
+  }
+  .svc-from { font-size: 10px; letter-spacing: 2px; color: var(--dim); text-transform: uppercase; }
+  .svc-price {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 30px; color: var(--amber); letter-spacing: 1px;
+  }
+
+  /* ── ABOUT / SHOP ── */
+  .about {
+    padding: 0;
+    background: var(--black);
+    display: grid; grid-template-columns: 1fr 1fr;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+  .about-visual {
+    position: relative; min-height: 600px;
+    background: var(--plate);
+    display: flex; align-items: flex-end;
+    overflow: hidden;
+  }
+  /* SVG garage illustration area */
+  .garage-svg { width: 100%; height: 100%; position: absolute; inset: 0; }
+  .about-visual-content {
+    position: relative; z-index: 2;
+    padding: 48px;
+    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%);
+    width: 100%;
+  }
+  .about-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    border: 1px solid var(--rust); padding: 8px 18px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px; font-weight: 700; letter-spacing: 3px;
+    color: var(--rust); text-transform: uppercase; margin-bottom: 12px;
+  }
+  .about-visual-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 48px; letter-spacing: 1px; color: var(--white); line-height: 1;
+  }
+  .about-content {
+    padding: 80px 64px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .about-content .section-body { margin-bottom: 36px; max-width: 420px; }
+  .about-content .section-body + .section-body { margin-top: -16px; }
+  .cred-list { list-style: none; display: flex; flex-direction: column; gap: 16px; margin: 32px 0; }
+  .cred-item {
+    display: flex; align-items: center; gap: 16px;
+    font-size: 14px; color: var(--chrome2); font-weight: 500;
+  }
+  .cred-icon {
+    width: 36px; height: 36px; flex-shrink: 0;
+    background: var(--iron); border: 1px solid rgba(255,255,255,0.08);
+    display: flex; align-items: center; justify-content: center; font-size: 16px;
+  }
+  .cred-strong { color: var(--white); font-weight: 700; }
+
+  /* ── SPECS / WHY ── */
+  .why {
+    background: var(--iron);
+    padding: 100px 56px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .why-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 2px; margin-top: 64px; background: rgba(255,255,255,0.04); }
+  .why-cell {
+    background: var(--steel);
+    padding: 44px 32px;
+    position: relative; transition: all 0.25s;
+  }
+  .why-cell:hover { background: var(--iron); }
+  .why-cell::after {
+    content: '';
+    position: absolute; bottom: 0; left: 32px; right: 32px; height: 2px;
+    background: linear-gradient(90deg, var(--rust), transparent);
+    transform: scaleX(0); transform-origin: left; transition: transform 0.3s;
+  }
+  .why-cell:hover::after { transform: scaleX(1); }
+  .why-glyph {
+    font-size: 36px; margin-bottom: 20px; display: block;
+    filter: grayscale(0.3);
+  }
+  .why-cell h3 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 19px; font-weight: 800; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--white); margin-bottom: 10px;
+  }
+  .why-cell p { font-size: 13px; color: var(--dim); line-height: 1.7; }
+
+  /* ── TESTIMONIALS ── */
+  .testimonials {
+    background: var(--black);
+    padding: 100px 56px;
+    position: relative;
+  }
+  .testimonials::after {
+    content: '';
+    position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+    background: repeating-linear-gradient(90deg, var(--rust) 0px, var(--rust) 30px, transparent 30px, transparent 40px);
+  }
+  .testi-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; margin-top: 64px; }
+  .tcard {
+    background: var(--iron);
+    border: 1px solid rgba(255,255,255,0.06);
+    padding: 40px;
+    position: relative; overflow: hidden;
+    transition: all 0.25s;
+  }
+  .tcard:hover { border-color: rgba(192,57,43,0.35); transform: translateY(-3px); box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+  .tcard::before {
+    content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%;
+    background: var(--rust); opacity: 0; transition: opacity 0.25s;
+  }
+  .tcard:hover::before { opacity: 1; }
+  .tcard-stars { color: var(--amber); font-size: 15px; letter-spacing: 2px; margin-bottom: 18px; }
+  .tcard-quote {
+    font-size: 15px; color: var(--chrome2); line-height: 1.75;
+    font-style: italic; font-weight: 300; margin-bottom: 28px;
+  }
+  .tcard-quote::before {
+    content: '"';
+    font-family: 'Bebas Neue', sans-serif; font-size: 52px;
+    color: var(--rust); line-height: 0; vertical-align: -18px; margin-right: 6px;
+  }
+  .tcard-author { display: flex; align-items: center; gap: 14px; }
+  .tcard-av {
+    width: 44px; height: 44px;
+    background: var(--rust);
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Bebas Neue', sans-serif; font-size: 16px; color: white; flex-shrink: 0;
+  }
+  .tcard-name { font-size: 14px; font-weight: 700; color: var(--white); letter-spacing: 0.5px; }
+  .tcard-role { font-size: 11px; color: var(--dim); letter-spacing: 1px; text-transform: uppercase; margin-top: 2px; }
+
+  /* ── CONTACT ── */
+  .contact {
+    background: var(--steel);
+    padding: 100px 56px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: start;
+  }
+  .contact-left .section-body { margin-top: 20px; margin-bottom: 44px; }
+  .contact-details { display: flex; flex-direction: column; gap: 3px; }
+  .cdetail {
+    display: flex; align-items: center; gap: 16px;
+    padding: 20px 24px;
+    background: var(--iron);
+    border-left: 3px solid transparent;
+    transition: all 0.2s;
+  }
+  .cdetail:hover { border-left-color: var(--rust); background: var(--plate); }
+  .cdetail-icon { font-size: 20px; flex-shrink: 0; width: 28px; text-align: center; }
+  .cdetail-label { font-size: 10px; letter-spacing: 2px; color: var(--dim); text-transform: uppercase; font-weight: 600; }
+  .cdetail-val { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; color: var(--white); letter-spacing: 0.5px; margin-top: 2px; }
+  .hours-table { margin-top: 28px; background: var(--iron); }
+  .hours-row {
+    display: flex; justify-content: space-between;
+    padding: 14px 24px; border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 13px; font-weight: 500;
+  }
+  .hours-row:last-child { border-bottom: none; }
+  .hours-day { color: var(--chrome2); }
+  .hours-time { color: var(--white); font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 700; letter-spacing: 0.5px; }
+  .hours-time.closed { color: var(--dim); }
+
+  .contact-form {
+    background: var(--iron);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-top: 3px solid var(--rust);
+    padding: 44px;
+  }
+  .form-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px; letter-spacing: 2px; color: var(--white); margin-bottom: 28px;
+  }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .fgrp { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+  .fgrp.full { grid-column: span 2; margin-bottom: 0; }
+  .fgrp label {
+    font-size: 10px; font-weight: 800; letter-spacing: 2.5px;
+    color: var(--rust); text-transform: uppercase;
+  }
+  .fgrp input, .fgrp select, .fgrp textarea {
+    background: var(--steel); border: 1px solid rgba(255,255,255,0.08);
+    color: var(--white); padding: 13px 16px;
+    font-family: 'Barlow', sans-serif; font-size: 14px;
+    outline: none; transition: border-color 0.2s;
+    -webkit-appearance: none; border-radius: 0;
+  }
+  .fgrp input::placeholder, .fgrp textarea::placeholder { color: var(--dim); }
+  .fgrp input:focus, .fgrp select:focus, .fgrp textarea:focus {
+    border-color: var(--rust);
+  }
+  .fgrp textarea { resize: none; height: 100px; }
+  .fgrp select option { background: var(--steel); }
+  .btn-submit {
+    width: 100%; background: var(--rust); color: white; border: none;
+    font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 4px;
+    padding: 18px; cursor: pointer; transition: all 0.2s; margin-top: 20px;
+    clip-path: polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%);
+    position: relative; overflow: hidden;
+  }
+  .btn-submit::before {
+    content: ''; position: absolute; top: 0; left: -100%; width: 60px; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    transition: left 0.5s;
+  }
+  .btn-submit:hover::before { left: 150%; }
+  .btn-submit:hover { background: var(--rust2); }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--black);
+    border-top: 2px solid var(--rust);
+    padding: 64px 56px 32px;
+  }
+  .footer-top {
+    display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 56px; margin-bottom: 48px;
+  }
+  .footer-brand-desc {
+    font-size: 13px; color: var(--dim); line-height: 1.8; margin-top: 16px; max-width: 260px;
+  }
+  .footer-col h4 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px; font-weight: 800; letter-spacing: 3px;
+    text-transform: uppercase; color: var(--rust); margin-bottom: 18px;
+  }
+  .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .footer-col ul a { font-size: 13px; color: var(--dim); text-decoration: none; font-weight: 500; transition: color 0.2s; }
+  .footer-col ul a:hover { color: var(--white); }
+  .footer-bottom {
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding-top: 24px; display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 12px;
+  }
+  .footer-bottom p { font-size: 12px; color: var(--dim); letter-spacing: 0.5px; }
+  .footer-tag {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px; letter-spacing: 3px; color: var(--rust);
+  }
+
+  /* ── GARAGE ILLUSTRATION (CSS) ── */
+  .garage-scene {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 0;
+  }
+  .gscene-inner {
+    position: relative; width: 100%; height: 100%;
+    background:
+      linear-gradient(to bottom, #0d0d0d 0%, #1a1a1a 60%, #111 100%);
+    overflow: hidden;
+  }
+  /* floor */
+  .g-floor {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 35%;
+    background: #161616;
+    border-top: 3px solid #2a2a2a;
+  }
+  .g-floor::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(
+      90deg,
+      transparent 0px, transparent 39px,
+      rgba(255,255,255,0.03) 39px, rgba(255,255,255,0.03) 40px
+    );
+  }
+  /* garage door */
+  .g-door-wrap {
+    position: absolute; top: 10%; left: 50%; transform: translateX(-50%);
+    width: 68%; height: 62%;
+    background: #202020;
+    border: 3px solid #333;
+    overflow: hidden;
+  }
+  .g-door-panels {
+    display: flex; flex-direction: column; gap: 2px; padding: 4px;
+  }
+  .g-door-panel {
+    height: 28px; background: #2a2a2a;
+    border: 1px solid #333;
+    position: relative;
+  }
+  .g-door-panel::after {
+    content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    width: 40%; height: 2px; background: rgba(255,255,255,0.05);
+  }
+  /* light strip */
+  .g-light {
+    position: absolute; top: 8%; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, transparent, var(--amber), transparent);
+    box-shadow: 0 0 20px var(--amber), 0 0 60px rgba(243,156,18,0.3);
+    opacity: 0.7;
+  }
+  /* tool shadow silhouettes */
+  .g-tool { position: absolute; }
+  /* wall mounted tools on right */
+  .g-wrench {
+    top: 20%; right: 8%;
+    font-size: 48px; color: rgba(255,255,255,0.07);
+    transform: rotate(45deg);
+  }
+  .g-gear {
+    bottom: 38%; left: 6%;
+    font-size: 56px; color: rgba(255,255,255,0.05);
+    animation: gearSpin 8s linear infinite;
+  }
+  .g-gear2 {
+    bottom: 42%; left: 14%;
+    font-size: 32px; color: rgba(255,255,255,0.04);
+    animation: gearSpin 5s linear infinite reverse;
+  }
+  @keyframes gearSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  /* sparks */
+  .spark {
+    position: absolute; width: 2px; height: 2px; border-radius: 50%;
+    background: var(--amber); box-shadow: 0 0 4px var(--amber);
+    animation: sparkle 3s ease-in-out infinite;
+  }
+  @keyframes sparkle {
+    0%,100% { opacity: 0; transform: scale(0); }
+    50% { opacity: 1; transform: scale(1); }
+  }
+
+  /* ── REVEAL ── */
+  .reveal {
+    opacity: 0; transform: translateY(18px);
+    transition: opacity 0.65s ease, transform 0.65s ease;
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 1100px) {
+    nav, .services, .why, .testimonials, .contact, footer { padding-left: 32px; padding-right: 32px; }
+    .hero-content { padding: 80px 32px; }
+    .services-grid { grid-template-columns: 1fr 1fr; }
+    .about { grid-template-columns: 1fr; }
+    .about-visual { min-height: 400px; }
+    .why-grid { grid-template-columns: 1fr 1fr; }
+    .footer-top { grid-template-columns: 1fr 1fr; gap: 36px; }
+    .contact { grid-template-columns: 1fr; gap: 48px; }
+  }
+  @media (max-width: 768px) {
+    nav { padding: 0 20px; }
+    .nav-links { display: none; }
+    .hero h1 { font-size: 60px; }
+    .hero-stats { gap: 28px; flex-wrap: wrap; }
+    .hero-bg-num { display: none; }
+    .services-grid, .testi-grid, .why-grid { grid-template-columns: 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+    .fgrp.full { grid-column: span 1; }
+    .footer-top { grid-template-columns: 1fr; }
+    .footer-bottom { flex-direction: column; text-align: center; }
+    .services, .why, .testimonials { padding: 72px 20px; }
+    footer { padding: 60px 20px 28px; }
+    .contact { padding: 72px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="logo-icon">IC</div>
+    <div class="logo-text-wrap">
+      <span class="logo-main">IRONCLAD AUTO</span>
+      <span class="logo-sub">Kissimmee, Florida</span>
+    </div>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#services">Services</a></li>
+    <li><a href="#about">Our Shop</a></li>
+    <li><a href="#testimonials">Reviews</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <a href="#contact" class="nav-cta">Book Service</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-slash"></div>
+  <div class="hero-bg-num">360</div>
+
+  <div class="hero-content">
+    <div class="hero-kicker">
+      <div class="kicker-bar"></div>
+      <span class="kicker-text">Est. 2016 · Kissimmee, FL</span>
+    </div>
+    <h1>
+      BUILT<br>
+      <span class="red">TOUGH.</span><br>
+      <span class="outline">DONE RIGHT.</span>
+    </h1>
+    <p class="hero-desc">
+      Real mechanics. Real tools. No shortcuts. We've been turning wrenches in Central Florida for over 8 years, and we stand behind every bolt we touch.
+    </p>
+    <div class="hero-ctas">
+      <a href="#contact" class="btn-primary">Schedule Service →</a>
+      <a href="#services" class="btn-ghost">View All Services</a>
+    </div>
+    <div class="hero-stats">
+      <div>
+        <div class="hstat-num">8+</div>
+        <div class="hstat-label">Years in Business</div>
+      </div>
+      <div>
+        <div class="hstat-num">5,000+</div>
+        <div class="hstat-label">Cars Serviced</div>
+      </div>
+      <div>
+        <div class="hstat-num">100%</div>
+        <div class="hstat-label">Guaranteed Work</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee-wrap">
+  <div class="marquee-track">
+    <!-- doubled for seamless loop -->
+    <span class="marquee-item">ENGINE REPAIR</span>
+    <span class="marquee-item">BRAKE SERVICE</span>
+    <span class="marquee-item">OIL CHANGE</span>
+    <span class="marquee-item">TRANSMISSION</span>
+    <span class="marquee-item">AC REPAIR</span>
+    <span class="marquee-item">SUSPENSION</span>
+    <span class="marquee-item">DIAGNOSTICS</span>
+    <span class="marquee-item">EXHAUST SYSTEMS</span>
+    <span class="marquee-item">ENGINE REPAIR</span>
+    <span class="marquee-item">BRAKE SERVICE</span>
+    <span class="marquee-item">OIL CHANGE</span>
+    <span class="marquee-item">TRANSMISSION</span>
+    <span class="marquee-item">AC REPAIR</span>
+    <span class="marquee-item">SUSPENSION</span>
+    <span class="marquee-item">DIAGNOSTICS</span>
+    <span class="marquee-item">EXHAUST SYSTEMS</span>
+  </div>
+</div>
+
+<!-- SERVICES -->
+<section class="services" id="services">
+  <div class="section-header reveal">
+    <div class="section-eyebrow">What We Do</div>
+    <h2 class="section-title">NO JOB TOO<br><span class="accent">HEAVY.</span></h2>
+    <p class="section-body">From a quick oil change to a full engine rebuild — our certified techs handle everything with the same no-BS attitude and quality workmanship.</p>
+  </div>
+  <div class="services-grid">
+    <div class="svc-card reveal">
+      <div class="svc-card-num">01</div>
+      <span class="svc-icon">🔧</span>
+      <h3>Engine Diagnostics & Repair</h3>
+      <p>State-of-the-art OBD scanners and old-fashioned know-how. We find the problem fast and fix it right — no guesswork, no upsells.</p>
+      <div class="svc-price-row">
+        <span class="svc-from">Diagnostic From</span>
+        <span class="svc-price">$89</span>
+      </div>
+    </div>
+    <div class="svc-card reveal">
+      <div class="svc-card-num">02</div>
+      <span class="svc-icon">🛑</span>
+      <h3>Brake Service & Repair</h3>
+      <p>Pads, rotors, calipers, fluid flush — if it slows you down, we service it. We don't just change pads; we inspect the whole system.</p>
+      <div class="svc-price-row">
+        <span class="svc-from">Front Brakes From</span>
+        <span class="svc-price">$149</span>
+      </div>
+    </div>
+    <div class="svc-card reveal">
+      <div class="svc-card-num">03</div>
+      <span class="svc-icon">⚙️</span>
+      <h3>Transmission Service</h3>
+      <p>Automatic or manual, fluid change to full rebuild. Transmission problems don't get better on their own — catch it early, save big.</p>
+      <div class="svc-price-row">
+        <span class="svc-from">Service From</span>
+        <span class="svc-price">$199</span>
+      </div>
+    </div>
+    <div class="svc-card reveal">
+      <div class="svc-card-num">04</div>
+      <span class="svc-icon">❄️</span>
+      <h3>AC & Heating Systems</h3>
+      <p>Florida heat is no joke. We recharge, diagnose, and repair your AC fast. Cabin comfortable year-round or it's not done right.</p>
+      <div class="svc-price-row">
+        <span class="svc-from">Recharge From</span>
+        <span class="svc-price">$129</span>
+      </div>
+    </div>
+    <div class="svc-card reveal">
+      <div class="svc-card-num">05</div>
+      <span class="svc-icon">🛢️</span>
+      <h3>Oil Change & Maintenance</h3>
+      <p>Conventional, synthetic, high-mileage — plus a full 27-point inspection on every visit. No appointment needed, in-and-out fast.</p>
+      <div class="svc-price-row">
+        <span class="svc-from">Conventional From</span>
+        <span class="svc-price">$49</span>
+      </div>
+    </div>
+    <div class="svc-card reveal">
+      <div class="svc-card-num">06</div>
+      <span class="svc-icon">🔩</span>
+      <h3>Suspension & Steering</h3>
+      <p>Ball joints, tie rods, shocks, struts, wheel alignment. If your car's pulling, bouncing, or clunking — we find it and fix it.</p>
+      <div class="svc-price-row">
+        <span class="svc-from">Inspection From</span>
+        <span class="svc-price">$79</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT / SHOP -->
+<div class="about" id="about">
+  <div class="about-visual">
+    <!-- CSS Garage Scene -->
+    <div class="gscene-inner">
+      <div class="g-floor"></div>
+      <div class="g-door-wrap">
+        <div class="g-door-panels">
+          <div class="g-door-panel"></div>
+          <div class="g-door-panel"></div>
+          <div class="g-door-panel"></div>
+          <div class="g-door-panel"></div>
+          <div class="g-door-panel"></div>
+          <div class="g-door-panel"></div>
+          <div class="g-door-panel"></div>
+        </div>
+      </div>
+      <div class="g-light"></div>
+      <div class="g-tool g-wrench">🔧</div>
+      <div class="g-tool g-gear">⚙️</div>
+      <div class="g-tool g-gear2">⚙️</div>
+      <!-- sparks -->
+      <div class="spark" style="top:45%;left:55%;animation-delay:0s"></div>
+      <div class="spark" style="top:48%;left:60%;animation-delay:0.8s;background:#C0392B;box-shadow:0 0 4px #C0392B"></div>
+      <div class="spark" style="top:43%;left:58%;animation-delay:1.4s"></div>
+      <div class="spark" style="top:52%;left:52%;animation-delay:2s"></div>
+      <!-- Overlay text -->
+      <div style="position:absolute;bottom:0;left:0;right:0;padding:40px;background:linear-gradient(to top,rgba(0,0,0,0.9),transparent);">
+        <div class="about-badge">🏆 ASE Certified Technicians</div>
+        <div class="about-visual-title" style="font-family:'Bebas Neue',sans-serif;font-size:42px;letter-spacing:1px;color:#F0EDE8;line-height:1.1;margin-top:8px;">IRONCLAD GARAGE<br><span style="color:#C0392B;">KISSIMMEE, FL</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="about-content reveal">
+    <div class="section-eyebrow">About the Shop</div>
+    <h2 class="section-title" style="margin-bottom:0;">WE DON'T<br>CUT <span class="accent">CORNERS.</span></h2>
+    <p class="section-body" style="margin-top:18px;">Ironclad Auto was built by mechanics who got tired of watching other shops upsell customers on parts they don't need. We believe in straight talk, fair prices, and work you can stake your safety on.</p>
+    <ul class="cred-list">
+      <li class="cred-item">
+        <div class="cred-icon">🔧</div>
+        <span><span class="cred-strong">ASE Certified</span> master technicians on every shift — not just the front desk.</span>
+      </li>
+      <li class="cred-item">
+        <div class="cred-icon">📋</div>
+        <span><span class="cred-strong">Written estimates</span> before any work starts. No surprise bills. Ever.</span>
+      </li>
+      <li class="cred-item">
+        <div class="cred-icon">🛡️</div>
+        <span><span class="cred-strong">24-month / 24,000-mile warranty</span> on all parts and labor. We stand behind it.</span>
+      </li>
+      <li class="cred-item">
+        <div class="cred-icon">🏎️</div>
+        <span><span class="cred-strong">All makes & models</span> — domestic, import, trucks, SUVs, fleet vehicles.</span>
+      </li>
+      <li class="cred-item">
+        <div class="cred-icon">💰</div>
+        <span><span class="cred-strong">Price match guarantee</span> — find it cheaper at a certified shop, we'll beat it.</span>
+      </li>
+    </ul>
+    <a href="#contact" class="btn-primary" style="display:inline-block;margin-top:12px;">Schedule Your Visit →</a>
+  </div>
+</div>
+
+<!-- WHY -->
+<section class="why">
+  <div class="section-header reveal">
+    <div class="section-eyebrow">Why Ironclad</div>
+    <h2 class="section-title">STRAIGHT TALK.<br><span class="accent">SOLID WORK.</span></h2>
+  </div>
+  <div class="why-grid">
+    <div class="why-cell reveal">
+      <span class="why-glyph">⚡</span>
+      <h3>Fast Turnaround</h3>
+      <p>Most jobs are same-day. We know your car is your livelihood — we don't let it sit in the bay longer than it has to.</p>
+    </div>
+    <div class="why-cell reveal">
+      <span class="why-glyph">💯</span>
+      <h3>No Upsells</h3>
+      <p>We fix what's broken. Period. If it ain't broke, we're not going to tell you it is just to pad the bill.</p>
+    </div>
+    <div class="why-cell reveal">
+      <span class="why-glyph">🔩</span>
+      <h3>Quality Parts Only</h3>
+      <p>OEM or top-tier aftermarket — no junkyard specials. The repair lasts or we do it again. Simple as that.</p>
+    </div>
+    <div class="why-cell reveal">
+      <span class="why-glyph">🤝</span>
+      <h3>Family-Owned</h3>
+      <p>We're not a chain. Your car isn't a number here. We remember your vehicle, your history, and we treat you like a neighbor.</p>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="testimonials" id="testimonials">
+  <div class="section-header reveal">
+    <div class="section-eyebrow">What Customers Say</div>
+    <h2 class="section-title">THEY CAME IN<br><span class="accent">SKEPTICAL.</span></h2>
+  </div>
+  <div class="testi-grid">
+    <div class="tcard reveal">
+      <div class="tcard-stars">★★★★★</div>
+      <p class="tcard-quote">Took my truck in for a check engine light. Three other shops gave me a laundry list worth $2,400. Ironclad found ONE actual issue, fixed it for $310. These guys are the real deal.</p>
+      <div class="tcard-author">
+        <div class="tcard-av">TR</div>
+        <div>
+          <div class="tcard-name">Tony R.</div>
+          <div class="tcard-role">F-150 Owner · St. Cloud</div>
+        </div>
+      </div>
+    </div>
+    <div class="tcard reveal">
+      <div class="tcard-stars">★★★★★</div>
+      <p class="tcard-quote">My transmission started slipping on a Friday. They had it diagnosed and back on the road by Monday morning. Work's been perfect 8 months later. Won't take my cars anywhere else.</p>
+      <div class="tcard-author">
+        <div class="tcard-av">DM</div>
+        <div>
+          <div class="tcard-name">Derek M.</div>
+          <div class="tcard-role">2018 Ram 1500 · Kissimmee</div>
+        </div>
+      </div>
+    </div>
+    <div class="tcard reveal">
+      <div class="tcard-stars">★★★★★</div>
+      <p class="tcard-quote">As a woman who doesn't know much about cars, I always dreaded going to a mechanic. These guys showed me exactly what was wrong, what it would cost, and didn't make me feel stupid. Earned a customer for life.</p>
+      <div class="tcard-author">
+        <div class="tcard-av">LV</div>
+        <div>
+          <div class="tcard-name">Lisa V.</div>
+          <div class="tcard-role">Honda CR-V · Orlando</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section class="contact" id="contact">
+  <div class="contact-left">
+    <div class="section-eyebrow">Get In Touch</div>
+    <h2 class="section-title">LET'S GET<br><span class="accent">TO WORK.</span></h2>
+    <p class="section-body">Drop it off or call us. No appointment needed for oil changes and quick services. Everything else — book ahead and we'll be ready.</p>
+
+    <div class="contact-details">
+      <div class="cdetail">
+        <div class="cdetail-icon">📞</div>
+        <div>
+          <div class="cdetail-label">Phone</div>
+          <div class="cdetail-val">(407) 555-0199</div>
+        </div>
+      </div>
+      <div class="cdetail">
+        <div class="cdetail-icon">✉</div>
+        <div>
+          <div class="cdetail-label">Email</div>
+          <div class="cdetail-val">service@ironcladauto.com</div>
+        </div>
+      </div>
+      <div class="cdetail">
+        <div class="cdetail-icon">📍</div>
+        <div>
+          <div class="cdetail-label">Address</div>
+          <div class="cdetail-val">1247 Orange Blossom Trail, Kissimmee FL</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hours-table">
+      <div class="hours-row">
+        <span class="hours-day">Monday – Friday</span>
+        <span class="hours-time">7:00 AM – 6:00 PM</span>
+      </div>
+      <div class="hours-row">
+        <span class="hours-day">Saturday</span>
+        <span class="hours-time">8:00 AM – 4:00 PM</span>
+      </div>
+      <div class="hours-row">
+        <span class="hours-day">Sunday</span>
+        <span class="hours-time closed">Closed</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="contact-form reveal">
+    <p class="form-title">SCHEDULE SERVICE</p>
+    <div class="form-row">
+      <div class="fgrp">
+        <label>Full Name</label>
+        <input type="text" placeholder="John Smith">
+      </div>
+      <div class="fgrp">
+        <label>Phone Number</label>
+        <input type="tel" placeholder="(407) 000-0000">
+      </div>
+      <div class="fgrp">
+        <label>Email Address</label>
+        <input type="email" placeholder="john@email.com">
+      </div>
+      <div class="fgrp">
+        <label>Vehicle Year / Make / Model</label>
+        <input type="text" placeholder="2019 Ford F-150">
+      </div>
+      <div class="fgrp full">
+        <label>Service Needed</label>
+        <select>
+          <option value="">Select a service...</option>
+          <option>Engine Diagnostics</option>
+          <option>Brake Service</option>
+          <option>Transmission Service</option>
+          <option>AC / Heating Repair</option>
+          <option>Oil Change</option>
+          <option>Suspension / Steering</option>
+          <option>Exhaust System</option>
+          <option>Not Sure — Need Inspection</option>
+        </select>
+      </div>
+      <div class="fgrp full">
+        <label>Describe the Problem</label>
+        <textarea placeholder="Tell us what's going on — noises, warning lights, symptoms..."></textarea>
+      </div>
+    </div>
+    <button class="btn-submit" id="submitBtn">SEND IT →</button>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-top">
+    <div>
+      <a href="#" class="nav-logo" style="text-decoration:none;">
+        <div class="logo-icon">IC</div>
+        <div class="logo-text-wrap">
+          <span class="logo-main">IRONCLAD AUTO</span>
+          <span class="logo-sub">Kissimmee, Florida</span>
+        </div>
+      </a>
+      <p class="footer-brand-desc">Family-owned and operated auto repair in Kissimmee, FL. Real mechanics, fair prices, work guaranteed for 24 months or 24,000 miles.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Services</h4>
+      <ul>
+        <li><a href="#services">Engine Repair</a></li>
+        <li><a href="#services">Brake Service</a></li>
+        <li><a href="#services">Transmission</a></li>
+        <li><a href="#services">AC & Heating</a></li>
+        <li><a href="#services">Oil Changes</a></li>
+        <li><a href="#services">Suspension</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Shop</h4>
+      <ul>
+        <li><a href="#about">About Us</a></li>
+        <li><a href="#testimonials">Reviews</a></li>
+        <li><a href="#">Warranties</a></li>
+        <li><a href="#">Financing</a></li>
+        <li><a href="#">Fleet Services</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Contact</h4>
+      <ul>
+        <li><a href="tel:4075550199">(407) 555-0199</a></li>
+        <li><a href="#">service@ironcladauto.com</a></li>
+        <li><a href="#contact">Schedule Service</a></li>
+        <li><a href="#">Facebook</a></li>
+        <li><a href="#">Google Maps</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2025 Ironclad Auto · Kissimmee, Florida · All rights reserved</p>
+    <span class="footer-tag">BUILT TOUGH. DONE RIGHT.</span>
+  </div>
+</footer>
+
+<script>
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), i * 90);
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.08 });
+  reveals.forEach(el => io.observe(el));
+
+  // Submit button
+  document.getElementById('submitBtn').addEventListener('click', function () {
+    const btn = this;
+    btn.textContent = 'REQUEST SENT ✓';
+    btn.style.background = '#27AE60';
+    btn.style.clipPath = 'none';
+    setTimeout(() => {
+      btn.textContent = 'SEND IT →';
+      btn.style.background = '';
+      btn.style.clipPath = '';
+    }, 3000);
+  });
+
+  // Nav scroll effect
+  const nav = document.querySelector('nav');
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 60) {
+      nav.style.background = 'rgba(8,8,8,0.98)';
+    } else {
+      nav.style.background = 'rgba(10,10,10,0.95)';
+    }
+  });
+</script>
+</body>
+</html>

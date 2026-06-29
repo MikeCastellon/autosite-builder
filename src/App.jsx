@@ -26,6 +26,7 @@ import PaymentsConnectPage from './components/dashboard/payments-connect/Payment
 import ChargesPage from './components/dashboard/charges/ChargesPage.jsx';
 import OverviewPage from './components/dashboard/overview/OverviewPage.jsx';
 import HelpChrome from './components/help/HelpChrome.jsx';
+import AppShell from './components/ui/AppShell.jsx';
 import { saveSite } from './lib/saveSite.js';
 import { publishSite } from './lib/publishSite.js';
 import { supabase } from './lib/supabase.js';
@@ -367,6 +368,23 @@ export default function App() {
     await supabase.auth.signOut();
   };
 
+  // Single source of truth for header navigation, spread into <AppShell> so
+  // every authenticated page renders the identical nav. The active item is
+  // driven by AppShell's `active` prop, not by which handler a page omits.
+  const navHandlers = {
+    onOpenOverview: () => setView('overview'),
+    onMySites: () => setView('dashboard'),
+    onOpenInquiries: () => setView('inquiries'),
+    onOpenBookings: () => setView('bookings-page'),
+    onOpenCustomers: () => setView('customers'),
+    onOpenCharges: onOpenChargesProp,
+    onCharge: onChargeProp,
+    onOpenPaymentsConnect: onOpenPaymentsConnectProp,
+    onOpenAdmin: () => setView('admin'),
+    onOpenProfile: () => setView('profile'),
+    onSignOut: handleSignOut,
+  };
+
   const handleEditSite = async (site) => {
     setSiteId(site.id);
     setBusinessType(site.business_info?.businessType || null);
@@ -426,205 +444,105 @@ export default function App() {
 
   if (view === 'inquiries') {
     return (
-      <>
+      <AppShell active="inquiries" nav={navHandlers} userEmail={session?.user?.email} profile={profile}>
         <InquiriesPage
           userId={session?.user?.id}
           profile={profile}
-          userEmail={session?.user?.email}
           onExit={() => setView('dashboard')}
-          onOpenOverview={() => setView('overview')}
-          onOpenBookings={() => setView('bookings-page')}
-          onOpenCustomers={() => setView('customers')}
-          onOpenAdmin={() => setView('admin')}
-          onOpenProfile={() => setView('profile')}
-          onOpenPaymentsConnect={onOpenPaymentsConnectProp}
-          onOpenCharges={onOpenChargesProp}
-          onCharge={onChargeProp}
-          onSignOut={handleSignOut}
         />
-        <HelpChrome profile={profile} />
-      </>
+      </AppShell>
     );
   }
 
   if (view === 'bookings-page') {
     return (
-      <>
+      <AppShell active="bookings" nav={navHandlers} userEmail={session?.user?.email} profile={profile}>
         <BookingsPage
           userId={session?.user?.id}
           profile={profile}
-          userEmail={session?.user?.email}
           onExit={() => setView('dashboard')}
-          onOpenOverview={() => setView('overview')}
-          onOpenInquiries={() => setView('inquiries')}
-          onOpenCustomers={() => setView('customers')}
-          onOpenAdmin={() => setView('admin')}
-          onOpenProfile={() => setView('profile')}
-          onOpenPaymentsConnect={onOpenPaymentsConnectProp}
-          onOpenCharges={onOpenChargesProp}
-          onCharge={onChargeProp}
-          onSignOut={handleSignOut}
         />
-        <HelpChrome profile={profile} />
-      </>
+      </AppShell>
     );
   }
 
   if (view === 'customers') {
     return (
-      <>
+      <AppShell active="customers" nav={navHandlers} userEmail={session?.user?.email} profile={profile}>
         <CustomersPage
           userId={session?.user?.id}
           profile={profile}
-          userEmail={session?.user?.email}
           onExit={() => setView('dashboard')}
-          onOpenOverview={() => setView('overview')}
-          onOpenInquiries={() => setView('inquiries')}
-          onOpenBookings={() => setView('bookings-page')}
-          onOpenAdmin={() => setView('admin')}
-          onOpenProfile={() => setView('profile')}
-          onOpenPaymentsConnect={onOpenPaymentsConnectProp}
-          onOpenCharges={onOpenChargesProp}
-          onCharge={onChargeProp}
           onOpenCustomerDetail={(key) => { setSelectedCustomerKey(key); setView('customer-detail'); }}
-          onSignOut={handleSignOut}
         />
-        <HelpChrome profile={profile} />
-      </>
+      </AppShell>
     );
   }
 
   if (view === 'customer-detail' && selectedCustomerKey) {
     return (
-      <>
+      <AppShell active="customers" nav={navHandlers} userEmail={session?.user?.email} profile={profile}>
         <CustomerDetailPage
           userId={session?.user?.id}
           userEmail={session?.user?.email}
           profile={profile}
           identityKey={selectedCustomerKey}
-          onExit={() => { setSelectedCustomerKey(null); setView('dashboard'); }}
           onBackToCustomers={() => { setSelectedCustomerKey(null); setView('customers'); }}
-          onOpenOverview={() => { setSelectedCustomerKey(null); setView('overview'); }}
-          onOpenInquiries={() => { setSelectedCustomerKey(null); setView('inquiries'); }}
           onOpenBookings={() => { setSelectedCustomerKey(null); setView('bookings-page'); }}
-          onOpenAdmin={() => { setSelectedCustomerKey(null); setView('admin'); }}
-          onOpenProfile={() => { setSelectedCustomerKey(null); setView('profile'); }}
-          onOpenPaymentsConnect={PAYMENTS_TAB_ENABLED ? () => { setSelectedCustomerKey(null); setView('payments-connect'); } : undefined}
-          onOpenCharges={PAYMENTS_TAB_ENABLED ? () => { setSelectedCustomerKey(null); setView('charges'); } : undefined}
-          onCharge={PAYMENTS_TAB_ENABLED ? () => { setSelectedCustomerKey(null); goCharge(); } : undefined}
-          onSignOut={handleSignOut}
         />
-        <HelpChrome profile={profile} />
-      </>
+      </AppShell>
     );
   }
 
   if (view === 'booking-settings' && settingsSiteId) {
     return (
-      <>
+      <AppShell active="bookings" nav={navHandlers} userEmail={session?.user?.email} profile={profile}>
         <BookingSettingsPage
           siteId={settingsSiteId}
           onExit={() => { setSettingsSiteId(null); setView('dashboard'); }}
-          onOpenOverview={() => { setSettingsSiteId(null); setView('overview'); }}
-          onOpenInquiries={() => { setSettingsSiteId(null); setView('inquiries'); }}
-          onOpenBookings={() => { setSettingsSiteId(null); setView('bookings-page'); }}
-          onOpenCustomers={() => { setSettingsSiteId(null); setView('customers'); }}
-          onOpenAdmin={() => { setSettingsSiteId(null); setView('admin'); }}
-          onOpenProfile={() => { setSettingsSiteId(null); setView('profile'); }}
-          onOpenPaymentsConnect={PAYMENTS_TAB_ENABLED ? () => { setSettingsSiteId(null); setView('payments-connect'); } : undefined}
-          onOpenCharges={PAYMENTS_TAB_ENABLED ? () => { setSettingsSiteId(null); setView('charges'); } : undefined}
-          onCharge={PAYMENTS_TAB_ENABLED ? () => { setSettingsSiteId(null); goCharge(); } : undefined}
-          onSignOut={handleSignOut}
         />
-        <HelpChrome profile={profile} />
-      </>
+      </AppShell>
     );
   }
 
   if (view === 'admin') {
     return (
-      <>
-        <AdminPage
-          onExit={() => setView('dashboard')}
-          onOpenOverview={() => setView('overview')}
-          onOpenBookings={() => setView('bookings-page')}
-          onOpenCustomers={() => setView('customers')}
-          onOpenProfile={() => setView('profile')}
-          onOpenPaymentsConnect={onOpenPaymentsConnectProp}
-          onOpenCharges={onOpenChargesProp}
-          onCharge={onChargeProp}
-          onSignOut={handleSignOut}
-        />
-        <HelpChrome profile={profile} />
-      </>
+      <AppShell active="admin" nav={navHandlers} userEmail={session?.user?.email} profile={profile}>
+        <AdminPage onExit={() => setView('dashboard')} />
+      </AppShell>
     );
   }
 
   if (view === 'profile') {
     return (
-      <>
-        <ProfilePage
-          onExit={() => setView('dashboard')}
-          onOpenOverview={() => setView('overview')}
-          onOpenBookings={() => setView('bookings-page')}
-          onOpenCustomers={() => setView('customers')}
-          onOpenAdmin={() => setView('admin')}
-          onOpenPaymentsConnect={onOpenPaymentsConnectProp}
-          onOpenCharges={onOpenChargesProp}
-          onCharge={onChargeProp}
-          onSignOut={handleSignOut}
-        />
-        <HelpChrome profile={profile} />
-      </>
+      <AppShell active="profile" nav={navHandlers} userEmail={session?.user?.email} profile={profile}>
+        <ProfilePage onExit={() => setView('dashboard')} />
+      </AppShell>
     );
   }
 
   if (view === 'payments-connect') {
     return (
-      <>
+      <AppShell active="payments-connect" nav={navHandlers} userEmail={session?.user?.email} profile={profile}>
         <PaymentsConnectPage
           userId={session?.user?.id}
           profile={profile}
-          userEmail={session?.user?.email}
-          onExit={() => setView('dashboard')}
-          onOpenOverview={() => setView('overview')}
-          onOpenInquiries={() => setView('inquiries')}
-          onOpenBookings={() => setView('bookings-page')}
-          onOpenCustomers={() => setView('customers')}
-          onOpenAdmin={() => setView('admin')}
-          onOpenProfile={() => setView('profile')}
-          onOpenPaymentsConnect={onOpenPaymentsConnectProp}
           onOpenCharges={onOpenChargesProp}
-          onCharge={onChargeProp}
-          onSignOut={handleSignOut}
         />
-        <HelpChrome profile={profile} />
-      </>
+      </AppShell>
     );
   }
 
   if (view === 'charges') {
     return (
-      <>
+      <AppShell active="charges" nav={navHandlers} userEmail={session?.user?.email} profile={profile}>
         <ChargesPage
           userId={session?.user?.id}
           profile={profile}
-          userEmail={session?.user?.email}
           autoOpen={chargesAutoOpen}
           onExit={() => setView('dashboard')}
-          onOpenOverview={() => setView('overview')}
-          onOpenInquiries={() => setView('inquiries')}
-          onOpenBookings={() => setView('bookings-page')}
-          onOpenCustomers={() => setView('customers')}
-          onOpenAdmin={() => setView('admin')}
-          onOpenProfile={() => setView('profile')}
-          onOpenPaymentsConnect={onOpenPaymentsConnectProp}
-          onOpenCharges={onOpenChargesProp}
-          onCharge={onChargeProp}
-          onSignOut={handleSignOut}
         />
-        <HelpChrome profile={profile} />
-      </>
+      </AppShell>
     );
   }
 
@@ -718,51 +636,27 @@ export default function App() {
 
   if (view === 'overview') {
     return (
-      <>
+      <AppShell active="overview" nav={navHandlers} userEmail={session?.user?.email} profile={profile}>
         <OverviewPage
-          profile={profile}
-          userEmail={session?.user?.email}
           onNewSite={() => { handleStartOver(); setView('wizard'); }}
           onNewBookingPage={() => setView('booking-only-setup')}
-          onMySites={() => setView('dashboard')}
-          onOpenInquiries={() => setView('inquiries')}
-          onOpenBookings={() => setView('bookings-page')}
-          onOpenCustomers={() => setView('customers')}
-          onOpenCharges={() => setView('charges')}
-          onOpenPaymentsConnect={() => setView('payments-connect')}
-          onOpenAdmin={() => setView('admin')}
-          onOpenProfile={() => setView('profile')}
-          onSignOut={handleSignOut}
         />
-        <HelpChrome profile={profile} />
-      </>
+      </AppShell>
     );
   }
 
   if (view === 'dashboard') {
     return (
-      <>
+      <AppShell active="sites" nav={navHandlers} userEmail={session?.user?.email} profile={profile}>
         <DashboardPage
           onNewSite={() => { handleStartOver(); setView('wizard'); }}
           onNewBookingPage={() => setView('booking-only-setup')}
           onEditSite={handleEditSite}
-          onSignOut={handleSignOut}
-          userEmail={session?.user?.email}
           profile={profile}
-          onOpenOverview={() => setView('overview')}
-          onOpenAdmin={() => setView('admin')}
-          onOpenInquiries={() => setView('inquiries')}
-          onOpenBookings={() => setView('bookings-page')}
-          onOpenCustomers={() => setView('customers')}
-          onOpenProfile={() => setView('profile')}
-          onOpenPaymentsConnect={onOpenPaymentsConnectProp}
-          onOpenCharges={onOpenChargesProp}
-          onCharge={onChargeProp}
           onOpenBookingSettings={(siteId) => { setSettingsSiteId(siteId); setView('booking-settings'); }}
           onPreviewDemo={handleDashboardDemo}
         />
-        <HelpChrome profile={profile} />
-      </>
+      </AppShell>
     );
   }
 

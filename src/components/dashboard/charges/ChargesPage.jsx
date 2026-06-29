@@ -1,7 +1,6 @@
 // src/components/dashboard/charges/ChargesPage.jsx
 import { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase.js';
-import AppHeader from '../../ui/AppHeader.jsx';
 import SubscribeGate from '../bookings-page/SubscribeGate.jsx';
 import ChargeModal from './ChargeModal.jsx';
 
@@ -40,37 +39,8 @@ function StatusBadge({ status }) {
 export default function ChargesPage({
   userId,
   profile,
-  userEmail,
   autoOpen = false,
-  onExit,
-  onOpenOverview,
-  onOpenInquiries,
-  onOpenBookings,
-  onOpenCustomers,
-  onOpenAdmin,
-  onOpenProfile,
-  onOpenPaymentsConnect,
-  onOpenCharges,
-  onCharge,
-  onSignOut,
 }) {
-  const headerProps = {
-    active: 'charges',
-    userEmail,
-    profile,
-    onOpenOverview,
-    onMySites: onExit,
-    onOpenInquiries,
-    onOpenBookings,
-    onOpenCustomers,
-    onOpenAdmin,
-    onOpenProfile,
-    onOpenPaymentsConnect,
-    onOpenCharges: () => {},
-    onCharge,
-    onSignOut,
-  };
-
   const [charges, setCharges] = useState([]);
   const [sites, setSites] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -86,6 +56,7 @@ export default function ChargesPage({
     const { data } = await supabase
       .from('charges')
       .select('*')
+      .eq('owner_user_id', userId)
       .order('created_at', { ascending: false });
     setCharges(data || []);
   }
@@ -124,8 +95,7 @@ export default function ChargesPage({
   }
 
   return (
-    <div className="min-h-screen bg-[#faf9f7]">
-      <AppHeader {...headerProps} />
+    <>
       <SubscribeGate
         profile={profile}
         heading="Charges is a Pro feature"
@@ -212,6 +182,6 @@ export default function ChargesPage({
           onClose={() => { setShowModal(false); fetchCharges(); }}
         />
       )}
-    </div>
+    </>
   );
 }

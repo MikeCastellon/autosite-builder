@@ -2,10 +2,9 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase.js';
 import { useAuth } from '../../lib/AuthContext.jsx';
 import { useAlert } from '../ui/AlertProvider.jsx';
-import AppHeader from '../ui/AppHeader.jsx';
 import { CHANGELOG, formatChangelogDate } from '../../data/changelog.js';
 
-export default function ProfilePage({ onExit, onOpenOverview, onOpenBookings, onOpenCustomers, onOpenAdmin, onOpenPaymentsConnect, onOpenCharges, onCharge, onSignOut }) {
+export default function ProfilePage() {
   const { session, profile, refreshProfile } = useAuth();
   const userEmail = session?.user?.email;
   const { toast } = useAlert();
@@ -70,22 +69,6 @@ export default function ProfilePage({ onExit, onOpenOverview, onOpenBookings, on
     await persistPhoto(null);
   }
 
-  const headerProps = {
-    active: 'profile',
-    userEmail,
-    profile,
-    onOpenOverview,
-    onMySites: onExit,
-    onOpenBookings,
-    onOpenCustomers,
-    onOpenAdmin,
-    onOpenPaymentsConnect,
-    onOpenCharges,
-    onCharge,
-    onOpenProfile: () => {},
-    onSignOut,
-  };
-
   const handleSaveProfile = async (e) => {
     e.preventDefault();
     if (!session?.user?.id) return;
@@ -131,10 +114,7 @@ export default function ProfilePage({ onExit, onOpenOverview, onOpenBookings, on
   const labelBase = 'block text-[13px] font-semibold text-[#1a1a1a] mb-1.5';
 
   return (
-    <div className="min-h-screen bg-[#faf9f7]">
-      <AppHeader {...headerProps} />
-
-      <main className="max-w-2xl mx-auto px-4 sm:px-3 py-10">
+    <main className="max-w-2xl mx-auto px-4 sm:px-3 py-10">
         <h1 className="text-3xl sm:text-4xl font-black text-[#1a1a1a] tracking-tight mb-1">Your Profile</h1>
         <p className="text-[#666] text-[15px] mb-8">Manage your account details and password.</p>
 
@@ -305,6 +285,5 @@ export default function ProfilePage({ onExit, onOpenOverview, onOpenBookings, on
           </div>
         </section>
       </main>
-    </div>
   );
 }

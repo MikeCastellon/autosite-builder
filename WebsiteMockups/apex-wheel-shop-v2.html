@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX Wheel Co. — Custom Wheel Specialists · Kissimmee</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,300;0,400;0,500;0,600;0,700;0,900;1,400&family=Barlow+Condensed:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --white:     #FFFFFF;
+    --offwhite:  #F5F6F8;
+    --fog:       #ECEEF1;
+    --mist:      #E0E3E8;
+    --alloy:     #C8CDD6;
+    --alloy2:    #A8ADB8;
+    --steel:     #7A8292;
+    --slate:     #4A5264;
+    --dark:      #1E2330;
+    --black:     #10131A;
+    --blue:      #1A5CFF;
+    --blue2:     #3A78FF;
+    --blue3:     #5E97FF;
+    --bluedark:  #0F3FCC;
+    --bluefaint: rgba(26,92,255,0.06);
+    --blueborder:rgba(26,92,255,0.15);
+    --border:    rgba(0,0,0,0.08);
+    --border2:   rgba(0,0,0,0.05);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body {
+    background: var(--white);
+    color: var(--dark);
+    font-family: 'Barlow', sans-serif;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--fog); }
+  ::-webkit-scrollbar-thumb { background: var(--blue); }
+
+  /* ─── NAV ─── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 500;
+    height: 68px;
+    background: rgba(255,255,255,0.96);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(20px);
+    display: flex; align-items: center;
+  }
+  .nav-inner {
+    width: 100%; max-width: 1320px; margin: 0 auto;
+    padding: 0 48px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .nav-logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+  .logo-badge {
+    width: 36px; height: 36px;
+    background: var(--dark);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .logo-badge span {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 900;
+    font-size: 16px; letter-spacing: 1px; color: white;
+  }
+  .logo-text-wrap { display: flex; flex-direction: column; }
+  .logo-name {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+    font-size: 18px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--dark); line-height: 1;
+  }
+  .logo-sub {
+    font-size: 10px; font-weight: 500; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--steel); margin-top: 1px;
+  }
+  .nav-links { display: flex; gap: 32px; list-style: none; }
+  .nav-links a {
+    font-size: 13px; font-weight: 600; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--slate);
+    text-decoration: none; transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--blue); }
+  .nav-right { display: flex; align-items: center; gap: 12px; }
+  .nav-phone {
+    font-size: 13px; font-weight: 600; color: var(--slate);
+    letter-spacing: 0.5px; text-decoration: none;
+    transition: color 0.2s;
+  }
+  .nav-phone:hover { color: var(--blue); }
+  .nav-cta {
+    font-size: 13px; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase; color: white;
+    background: var(--blue); text-decoration: none;
+    padding: 10px 24px; transition: background 0.2s;
+  }
+  .nav-cta:hover { background: var(--bluedark); }
+
+  /* ─── HERO ─── */
+  .hero {
+    padding-top: 68px; min-height: 92vh;
+    background: var(--offwhite);
+    display: grid; grid-template-columns: 1fr 1fr;
+    align-items: stretch; overflow: hidden;
+    position: relative;
+  }
+  .hero-left {
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 80px 64px 80px 80px;
+    position: relative; z-index: 2;
+  }
+  .hero-eyebrow {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-size: 11px; font-weight: 600; letter-spacing: 3px;
+    text-transform: uppercase; color: var(--blue);
+    margin-bottom: 24px;
+  }
+  .hero-eyebrow::before {
+    content: ''; width: 24px; height: 2px;
+    background: var(--blue); flex-shrink: 0;
+  }
+  .hero h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: clamp(52px, 5.5vw, 84px);
+    font-weight: 900; line-height: 0.95;
+    letter-spacing: -0.5px; color: var(--dark);
+    margin-bottom: 24px;
+  }
+  .hero h1 .blue-line { color: var(--blue); display: block; }
+  .hero h1 .light-line { color: var(--alloy2); display: block; font-weight: 300; letter-spacing: 2px; font-style: italic; font-size: 0.62em; margin-top: 6px; }
+  .hero-desc {
+    font-size: 17px; font-weight: 400; line-height: 1.7;
+    color: var(--steel); max-width: 420px; margin-bottom: 44px;
+  }
+  .hero-ctas { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 60px; }
+  .cta-primary {
+    font-size: 13px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; color: white; background: var(--blue);
+    padding: 15px 36px; text-decoration: none; transition: all 0.2s;
+  }
+  .cta-primary:hover { background: var(--bluedark); }
+  .cta-secondary {
+    font-size: 13px; font-weight: 600; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--slate);
+    padding: 14px 32px; border: 1.5px solid var(--alloy);
+    text-decoration: none; transition: all 0.2s;
+  }
+  .cta-secondary:hover { border-color: var(--blue); color: var(--blue); }
+
+  /* stats */
+  .hero-stats { display: flex; gap: 0; border-top: 1px solid var(--border); padding-top: 32px; }
+  .h-stat { padding-right: 32px; margin-right: 32px; border-right: 1px solid var(--border); }
+  .h-stat:last-child { border-right: none; }
+  .h-stat-num {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 900;
+    font-size: 34px; letter-spacing: -0.5px; line-height: 1;
+    color: var(--dark);
+  }
+  .h-stat-num .unit { font-size: 18px; color: var(--blue); }
+  .h-stat-lbl { font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--steel); margin-top: 4px; }
+
+  /* hero right — large alloy photo panel */
+  .hero-right {
+    position: relative; overflow: hidden;
+    background: var(--mist);
+  }
+  /* layered aluminum texture */
+  .hero-right-bg {
+    position: absolute; inset: 0;
+    background:
+      linear-gradient(110deg,
+        #E8EAED 0%,
+        #D8DCE3 20%,
+        #ECEEF2 35%,
+        #C8CDD6 50%,
+        #E2E5EA 65%,
+        #D0D4DD 80%,
+        #E8EAED 100%
+      );
+  }
+  /* brushed aluminum horizontal lines */
+  .hero-right-texture {
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 3px,
+      rgba(255,255,255,0.35) 3px,
+      rgba(255,255,255,0.35) 4px
+    );
+    opacity: 0.6;
+  }
+  /* diagonal sheen */
+  .hero-right-sheen {
+    position: absolute; inset: 0;
+    background: linear-gradient(
+      120deg,
+      transparent 20%,
+      rgba(255,255,255,0.25) 45%,
+      rgba(255,255,255,0.5) 50%,
+      rgba(255,255,255,0.2) 55%,
+      transparent 75%
+    );
+  }
+  /* big centered text on the panel */
+  .hero-panel-text {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center;
+  }
+  .panel-big-text {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 900;
+    font-size: clamp(100px, 14vw, 190px);
+    letter-spacing: -4px; line-height: 0.85;
+    color: rgba(74, 82, 100, 0.12);
+    user-select: none; pointer-events: none;
+  }
+  .panel-badge {
+    position: absolute; bottom: 48px; right: 48px;
+    background: white; padding: 20px 28px;
+    border-left: 4px solid var(--blue);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.1);
+  }
+  .panel-badge-title {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+    font-size: 13px; letter-spacing: 2.5px; text-transform: uppercase;
+    color: var(--dark); margin-bottom: 4px;
+  }
+  .panel-badge-sub { font-size: 12px; color: var(--steel); font-weight: 500; }
+  .panel-badge-num {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 900;
+    font-size: 36px; color: var(--blue); line-height: 1; margin-top: 8px;
+    letter-spacing: -1px;
+  }
+  .panel-top-tag {
+    position: absolute; top: 40px; left: 40px;
+    background: var(--blue); color: white;
+    padding: 8px 18px;
+    font-size: 11px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase;
+  }
+
+  /* ─── BRAND STRIP ─── */
+  .brand-strip {
+    background: var(--dark); padding: 24px 0;
+    overflow: hidden;
+  }
+  .brand-strip-inner {
+    max-width: 1320px; margin: 0 auto; padding: 0 48px;
+    display: flex; align-items: center; gap: 0;
+  }
+  .strip-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 3px;
+    text-transform: uppercase; color: var(--alloy2);
+    white-space: nowrap; padding-right: 40px;
+    border-right: 1px solid rgba(255,255,255,0.1);
+    margin-right: 40px; flex-shrink: 0;
+  }
+  .brand-names { display: flex; gap: 40px; align-items: center; overflow: hidden; }
+  .brand-name-item {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+    font-size: 16px; letter-spacing: 3px; text-transform: uppercase;
+    color: rgba(255,255,255,0.35); white-space: nowrap; transition: color 0.2s;
+    flex-shrink: 0;
+  }
+  .brand-name-item:hover { color: rgba(255,255,255,0.8); }
+  .brand-sep { color: rgba(255,255,255,0.1); flex-shrink: 0; font-size: 12px; }
+
+  /* ─── SECTION SHARED ─── */
+  .section-wrap { max-width: 1320px; margin: 0 auto; padding: 0 48px; }
+  .section-head { margin-bottom: 64px; }
+  .sec-eyebrow {
+    font-size: 11px; font-weight: 600; letter-spacing: 3px;
+    text-transform: uppercase; color: var(--blue);
+    margin-bottom: 12px; display: flex; align-items: center; gap: 12px;
+  }
+  .sec-eyebrow::before { content: ''; width: 20px; height: 2px; background: var(--blue); flex-shrink: 0; }
+  .sec-title {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 900;
+    font-size: clamp(36px, 4vw, 58px); line-height: 0.95;
+    letter-spacing: -0.5px; color: var(--dark);
+  }
+  .sec-title .b { color: var(--blue); }
+  .sec-body { font-size: 16px; color: var(--steel); line-height: 1.75; font-weight: 400; }
+
+  /* ─── BRANDS ─── */
+  .brands-section {
+    padding: 100px 0; background: var(--white);
+    border-top: 1px solid var(--border2);
+  }
+  .brands-header-row { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: end; margin-bottom: 56px; }
+  .brand-cards { display: grid; grid-template-columns: repeat(4,1fr); gap: 1px; background: var(--border); }
+  .brand-card {
+    background: var(--white); padding: 40px 32px;
+    position: relative; overflow: hidden;
+    cursor: pointer; transition: background 0.2s;
+    border: 1px solid transparent;
+  }
+  .brand-card:hover { background: var(--offwhite); border-color: var(--border); }
+  .brand-card::after {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: var(--blue); transform: scaleX(0); transform-origin: left; transition: transform 0.3s;
+  }
+  .brand-card:hover::after { transform: scaleX(1); }
+  .b-country {
+    font-size: 10px; font-weight: 600; letter-spacing: 2.5px;
+    text-transform: uppercase; color: var(--blue); margin-bottom: 10px;
+  }
+  .b-name {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 900;
+    font-size: 28px; letter-spacing: 1.5px; color: var(--dark);
+    margin-bottom: 14px; line-height: 1;
+  }
+  .b-desc { font-size: 13px; color: var(--steel); line-height: 1.65; font-weight: 400; }
+  .b-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 20px; }
+  .b-chip {
+    font-size: 11px; font-weight: 600; letter-spacing: 1.5px;
+    text-transform: uppercase; padding: 4px 10px;
+    background: var(--fog); color: var(--slate);
+    transition: all 0.2s;
+  }
+  .brand-card:hover .b-chip { background: var(--bluefaint); color: var(--blue); }
+  .b-arrow {
+    position: absolute; bottom: 28px; right: 28px;
+    width: 32px; height: 32px; background: var(--fog);
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; font-size: 16px;
+  }
+  .brand-card:hover .b-arrow { background: var(--blue); color: white; }
+
+  /* more brands row */
+  .more-brands {
+    margin-top: 1px; padding: 24px 32px;
+    background: var(--fog); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;
+  }
+  .more-brands p { font-size: 14px; color: var(--slate); font-weight: 500; }
+  .more-brands strong { color: var(--dark); }
+  .link-blue {
+    font-size: 13px; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--blue); text-decoration: none;
+    display: flex; align-items: center; gap: 8px; transition: gap 0.2s;
+  }
+  .link-blue:hover { gap: 14px; }
+
+  /* ─── SERVICES ─── */
+  .services-section {
+    padding: 100px 0;
+    background: var(--offwhite);
+    border-top: 1px solid var(--border2);
+  }
+  .svc-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; background: var(--border); }
+  .svc-card {
+    background: var(--offwhite); padding: 48px 36px;
+    position: relative; cursor: pointer; transition: background 0.2s;
+  }
+  .svc-card:hover { background: var(--white); }
+  .svc-num {
+    font-size: 11px; font-weight: 700; letter-spacing: 2px;
+    color: var(--blue); margin-bottom: 24px; display: flex; align-items: center; gap: 10px;
+  }
+  .svc-num::after { content: ''; flex: 1; height: 1px; background: var(--alloy); }
+  .svc-ico { font-size: 28px; margin-bottom: 16px; display: block; }
+  .svc-title {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+    font-size: 22px; letter-spacing: 0.5px; color: var(--dark); margin-bottom: 12px;
+  }
+  .svc-desc { font-size: 14px; color: var(--steel); line-height: 1.75; }
+  .svc-price-row {
+    margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: flex-end;
+  }
+  .svc-from { font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--alloy2); }
+  .svc-price {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 900;
+    font-size: 26px; letter-spacing: -0.5px; color: var(--dark);
+  }
+  .svc-price .unit { font-size: 14px; color: var(--blue); font-weight: 600; }
+
+  /* ─── FITMENT BAND ─── */
+  .fitment-band {
+    background: var(--dark); padding: 80px 0;
+    position: relative; overflow: hidden;
+  }
+  .fitment-band::before {
+    content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 4px;
+    background: var(--blue);
+  }
+  .fitment-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 100px; align-items: center; }
+  .fitment-left h2 {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 900;
+    font-size: clamp(38px, 4vw, 60px); line-height: 0.95; letter-spacing: -0.5px;
+    color: white; margin-bottom: 20px;
+  }
+  .fitment-left h2 .b { color: var(--blue2); }
+  .fitment-left p { font-size: 16px; color: var(--alloy2); line-height: 1.75; margin-bottom: 36px; }
+  .fit-specs { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: rgba(255,255,255,0.08); }
+  .fit-item {
+    background: rgba(255,255,255,0.04); padding: 20px 24px;
+    transition: background 0.2s;
+  }
+  .fit-item:hover { background: rgba(26,92,255,0.12); }
+  .fit-key { font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--alloy2); margin-bottom: 6px; }
+  .fit-val {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+    font-size: 18px; letter-spacing: 0.5px; color: white;
+  }
+  /* alloy panel right side */
+  .fitment-right {
+    position: relative; height: 380px;
+    background: linear-gradient(135deg, #C8CDD6 0%, #E0E3E8 30%, #D0D4DD 50%, #E8EAED 70%, #C0C5CE 100%);
+    overflow: hidden;
+  }
+  .fitment-right::before {
+    content: '';  position: absolute; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,255,255,0.3) 3px, rgba(255,255,255,0.3) 4px);
+  }
+  .fitment-right::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.4) 50%, transparent 70%);
+  }
+  .fit-panel-content {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 8px;
+  }
+  .fit-panel-title {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 900;
+    font-size: 100px; letter-spacing: -3px;
+    color: rgba(74,82,100,0.15); line-height: 1; user-select: none;
+  }
+  .fit-panel-sub {
+    font-size: 12px; font-weight: 700; letter-spacing: 4px;
+    text-transform: uppercase; color: rgba(74,82,100,0.5);
+  }
+  .fit-panel-badge {
+    position: absolute; bottom: 28px; left: 28px;
+    background: white; padding: 14px 20px;
+    border-left: 3px solid var(--blue);
+  }
+  .fit-panel-badge p { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--steel); }
+  .fit-panel-badge span { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 22px; color: var(--dark); }
+
+  /* ─── PROCESS ─── */
+  .process-section {
+    padding: 100px 0;
+    background: var(--white);
+    border-top: 1px solid var(--border2);
+  }
+  .proc-steps { display: grid; grid-template-columns: repeat(4,1fr); gap: 1px; background: var(--border); margin-top: 56px; }
+  .proc-step {
+    background: var(--white); padding: 44px 32px;
+    position: relative; transition: background 0.2s;
+  }
+  .proc-step:hover { background: var(--offwhite); }
+  .proc-step::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--blue); transform: scaleX(0); transform-origin: left; transition: transform 0.35s; }
+  .proc-step:hover::before { transform: scaleX(1); }
+  .proc-num {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 900;
+    font-size: 52px; letter-spacing: -2px; line-height: 1;
+    color: var(--mist); margin-bottom: 16px; transition: color 0.2s;
+  }
+  .proc-step:hover .proc-num { color: var(--alloy); }
+  .proc-icon { font-size: 26px; margin-bottom: 14px; display: block; }
+  .proc-step h3 {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+    font-size: 20px; letter-spacing: 0.5px; color: var(--dark); margin-bottom: 10px;
+  }
+  .proc-step p { font-size: 13px; color: var(--steel); line-height: 1.7; }
+
+  /* ─── TESTIMONIALS ─── */
+  .testimonials-section {
+    padding: 100px 0;
+    background: var(--offwhite);
+    border-top: 1px solid var(--border2);
+  }
+  .t-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; background: var(--border); margin-top: 56px; }
+  .tcard {
+    background: var(--offwhite); padding: 40px 36px;
+    transition: background 0.2s; position: relative;
+  }
+  .tcard:hover { background: var(--white); }
+  .tcard::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: var(--blue); transform: scaleX(0); transform-origin: left; transition: transform 0.35s; }
+  .tcard:hover::after { transform: scaleX(1); }
+  .t-stars { margin-bottom: 16px; color: var(--blue); font-size: 13px; letter-spacing: 2px; }
+  .t-text { font-size: 15px; color: var(--slate); line-height: 1.75; font-style: italic; margin-bottom: 24px; }
+  .t-text::before { content: '"'; font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 44px; color: var(--alloy); line-height: 0; vertical-align: -16px; margin-right: 4px; }
+  .t-author { display: flex; align-items: center; gap: 14px; border-top: 1px solid var(--border); padding-top: 20px; margin-top: 20px; }
+  .t-av {
+    width: 40px; height: 40px; background: var(--dark); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+    font-size: 14px; color: white;
+  }
+  .t-name { font-size: 14px; font-weight: 700; color: var(--dark); letter-spacing: 0.3px; }
+  .t-vehicle { font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--blue); margin-top: 2px; }
+
+  /* ─── CTA BAND ─── */
+  .cta-band {
+    background: var(--blue); padding: 72px 0;
+    position: relative; overflow: hidden;
+  }
+  .cta-band::before {
+    content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 40%;
+    background: linear-gradient(to left, rgba(255,255,255,0.06), transparent);
+    pointer-events: none;
+  }
+  .cta-band-inner {
+    max-width: 1320px; margin: 0 auto; padding: 0 48px;
+    display: flex; align-items: center; justify-content: space-between; gap: 40px; flex-wrap: wrap;
+  }
+  .cta-band h2 {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 900;
+    font-size: clamp(32px, 4vw, 52px); letter-spacing: -0.5px; color: white; line-height: 0.95;
+  }
+  .cta-band p { font-size: 16px; color: rgba(255,255,255,0.75); margin-top: 10px; max-width: 480px; }
+  .cta-band-btns { display: flex; gap: 12px; flex-wrap: wrap; flex-shrink: 0; }
+  .cta-white {
+    font-size: 13px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--blue); background: white;
+    padding: 15px 36px; text-decoration: none; transition: all 0.2s;
+  }
+  .cta-white:hover { background: var(--offwhite); }
+  .cta-outline-white {
+    font-size: 13px; font-weight: 600; letter-spacing: 2px;
+    text-transform: uppercase; color: white;
+    padding: 14px 32px; border: 1.5px solid rgba(255,255,255,0.4);
+    text-decoration: none; transition: all 0.2s;
+  }
+  .cta-outline-white:hover { border-color: white; background: rgba(255,255,255,0.1); }
+
+  /* ─── CONTACT ─── */
+  .contact-section {
+    padding: 100px 0;
+    background: var(--white);
+    border-top: 1px solid var(--border2);
+  }
+  .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: start; margin-top: 56px; }
+  .contact-info { display: flex; flex-direction: column; gap: 3px; }
+  .info-row {
+    display: flex; align-items: center; gap: 16px;
+    padding: 20px 24px; background: var(--fog);
+    border-left: 3px solid transparent; transition: all 0.2s;
+  }
+  .info-row:hover { border-left-color: var(--blue); background: var(--offwhite); }
+  .info-ico { font-size: 18px; flex-shrink: 0; }
+  .info-lbl { font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--blue); }
+  .info-val { font-size: 15px; font-weight: 600; color: var(--dark); margin-top: 2px; }
+
+  /* form */
+  .contact-form {
+    background: var(--offwhite); border: 1px solid var(--border);
+    border-top: 3px solid var(--blue); padding: 48px;
+  }
+  .form-title {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+    font-size: 24px; letter-spacing: 0.5px; color: var(--dark); margin-bottom: 28px;
+  }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .fg { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+  .fg.full { grid-column: span 2; margin-bottom: 0; }
+  .fg label { font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--steel); }
+  .fg input, .fg select, .fg textarea {
+    background: white; border: 1.5px solid var(--alloy);
+    color: var(--dark); padding: 12px 16px;
+    font-family: 'Barlow', sans-serif; font-size: 15px; font-weight: 500;
+    outline: none; transition: all 0.2s; -webkit-appearance: none; border-radius: 0;
+  }
+  .fg input::placeholder, .fg textarea::placeholder { color: var(--alloy2); }
+  .fg input:focus, .fg select:focus, .fg textarea:focus {
+    border-color: var(--blue); box-shadow: 0 0 0 3px rgba(26,92,255,0.08);
+  }
+  .fg textarea { resize: none; height: 90px; }
+  .fg select option { background: white; }
+  .submit-btn {
+    width: 100%; padding: 15px; border: none; cursor: pointer;
+    background: var(--blue); color: white;
+    font-family: 'Barlow', sans-serif; font-size: 14px; font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase;
+    transition: background 0.2s; margin-top: 20px;
+  }
+  .submit-btn:hover { background: var(--bluedark); }
+
+  /* ─── FOOTER ─── */
+  footer {
+    background: var(--dark); padding: 72px 0 32px;
+    border-top: 3px solid var(--blue);
+  }
+  .footer-inner { max-width: 1320px; margin: 0 auto; padding: 0 48px; }
+  .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 60px; margin-bottom: 56px; }
+  .foot-brand-desc { font-size: 14px; color: var(--alloy2); line-height: 1.8; margin-top: 16px; max-width: 270px; }
+  .foot-col h4 { font-size: 11px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; color: var(--alloy); margin-bottom: 20px; }
+  .foot-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .foot-col ul a { font-size: 14px; color: var(--alloy2); text-decoration: none; transition: color 0.2s; }
+  .foot-col ul a:hover { color: var(--white); }
+  .footer-bot {
+    border-top: 1px solid rgba(255,255,255,0.08); padding-top: 28px;
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
+  }
+  .footer-bot p { font-size: 12px; color: var(--alloy2); }
+  .footer-slogan {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+    font-size: 14px; letter-spacing: 4px; text-transform: uppercase; color: var(--blue2);
+  }
+
+  /* ─── REVEAL ─── */
+  .reveal { opacity:0; transform:translateY(16px); transition: opacity 0.6s ease, transform 0.6s ease; }
+  .reveal.visible { opacity:1; transform:translateY(0); }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 1100px) {
+    .nav-inner, .section-wrap, .fitment-band .section-wrap, .cta-band-inner, .footer-inner { padding-left: 36px; padding-right: 36px; }
+    .hero-left { padding: 60px 40px; }
+    .hero { grid-template-columns: 1fr; min-height: auto; }
+    .hero-right { height: 320px; }
+    .brands-header-row { grid-template-columns: 1fr; gap: 24px; }
+    .brand-cards, .proc-steps { grid-template-columns: 1fr 1fr; }
+    .svc-grid { grid-template-columns: 1fr 1fr; }
+    .fitment-inner { grid-template-columns: 1fr; gap: 48px; }
+    .fitment-right { height: 240px; }
+    .contact-grid { grid-template-columns: 1fr; gap: 48px; }
+    .footer-grid { grid-template-columns: 1fr 1fr; gap: 40px; }
+    .t-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 768px) {
+    .nav-inner { padding: 0 20px; } .nav-links { display: none; } .nav-phone { display: none; }
+    .hero-left { padding: 48px 24px; }
+    .hero h1 { font-size: 52px; }
+    .brand-strip-inner { padding: 0 20px; overflow: hidden; }
+    .section-wrap { padding: 0 24px; }
+    .footer-inner { padding: 0 24px; }
+    .cta-band-inner { padding: 0 24px; }
+    .brand-cards, .svc-grid, .proc-steps, .t-grid { grid-template-columns: 1fr; }
+    .hero-stats { flex-wrap: wrap; gap: 16px; }
+    .h-stat { border-right: none; margin: 0; padding: 0; }
+    .form-grid { grid-template-columns: 1fr; }
+    .fg.full { grid-column: span 1; }
+    .footer-grid { grid-template-columns: 1fr; }
+    .footer-bot { flex-direction: column; text-align: center; }
+    .brands-section, .services-section, .process-section, .testimonials-section, .contact-section { padding: 72px 0; }
+    .fitment-band { padding: 60px 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ─── NAV ─── -->
+<nav>
+  <div class="nav-inner">
+    <a href="#" class="nav-logo">
+      <div class="logo-badge"><span>AX</span></div>
+      <div class="logo-text-wrap">
+        <span class="logo-name">Apex Wheel Co.</span>
+        <span class="logo-sub">Kissimmee, Florida</span>
+      </div>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#brands">Brands</a></li>
+      <li><a href="#services">Services</a></li>
+      <li><a href="#fitment">Fitment</a></li>
+      <li><a href="#process">Process</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <div class="nav-right">
+      <a href="tel:4075550218" class="nav-phone">(407) 555-0218</a>
+      <a href="#contact" class="nav-cta">Get a Quote</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ─── HERO ─── -->
+<section class="hero">
+  <div class="hero-left">
+    <span class="hero-eyebrow">Kissimmee's Premier Wheel Studio</span>
+    <h1>
+      THE RIGHT WHEEL.<br>
+      <span class="blue-line">PERFECT FIT.</span>
+      <span class="light-line">Since 2011 · 14,000+ Sets Installed</span>
+    </h1>
+    <p class="hero-desc">Custom wheels, precision fitment, and professional service for every vehicle. From daily drivers to show builds — we stock it, spec it, and install it right the first time.</p>
+    <div class="hero-ctas">
+      <a href="#brands" class="cta-primary">Browse Our Brands</a>
+      <a href="#contact" class="cta-secondary">Get a Free Quote</a>
+    </div>
+    <div class="hero-stats">
+      <div class="h-stat">
+        <div class="h-stat-num">80<span class="unit">+</span></div>
+        <div class="h-stat-lbl">Brands Stocked</div>
+      </div>
+      <div class="h-stat">
+        <div class="h-stat-num">14<span class="unit">K</span></div>
+        <div class="h-stat-lbl">Sets Installed</div>
+      </div>
+      <div class="h-stat">
+        <div class="h-stat-num">4.9<span class="unit">★</span></div>
+        <div class="h-stat-lbl">Google Rating</div>
+      </div>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="hero-right-bg"></div>
+    <div class="hero-right-texture"></div>
+    <div class="hero-right-sheen"></div>
+    <div class="hero-panel-text">
+      <div class="panel-big-text">APEX</div>
+    </div>
+    <div class="panel-top-tag">Central Florida's #1 Wheel Shop</div>
+    <div class="panel-badge">
+      <div class="panel-badge-title">Wheels in Stock</div>
+      <div class="panel-badge-sub">Ready to mount today</div>
+      <div class="panel-badge-num">1,200+</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── BRAND STRIP ─── -->
+<div class="brand-strip">
+  <div class="brand-strip-inner">
+    <span class="strip-label">Brands We Carry</span>
+    <div class="brand-names">
+      <span class="brand-name-item">Rays</span>
+      <span class="brand-sep">·</span>
+      <span class="brand-name-item">HRE</span>
+      <span class="brand-sep">·</span>
+      <span class="brand-name-item">Vossen</span>
+      <span class="brand-sep">·</span>
+      <span class="brand-name-item">Work</span>
+      <span class="brand-sep">·</span>
+      <span class="brand-name-item">Rotiform</span>
+      <span class="brand-sep">·</span>
+      <span class="brand-name-item">BBS</span>
+      <span class="brand-sep">·</span>
+      <span class="brand-name-item">Enkei</span>
+      <span class="brand-sep">·</span>
+      <span class="brand-name-item">Forgeline</span>
+      <span class="brand-sep">·</span>
+      <span class="brand-name-item">Fifteen52</span>
+      <span class="brand-sep">·</span>
+      <span class="brand-name-item">Advan</span>
+      <span class="brand-sep">·</span>
+      <span class="brand-name-item">Gram Lights</span>
+      <span class="brand-sep">·</span>
+      <span class="brand-name-item">OZ Racing</span>
+    </div>
+  </div>
+</div>
+
+<!-- ─── BRANDS ─── -->
+<section class="brands-section" id="brands">
+  <div class="section-wrap">
+    <div class="brands-header-row reveal">
+      <div>
+        <div class="sec-eyebrow">Featured Brands</div>
+        <h2 class="sec-title">Wheels built<br>to <span class="b">perform.</span></h2>
+      </div>
+      <p class="sec-body">We carry the brands that matter — from JDM forged legends to European luxury to American custom. Every brand we stock is one we'd put on our own car.</p>
+    </div>
+    <div class="brand-cards">
+      <div class="brand-card reveal">
+        <div class="b-country">Japan · Since 1973</div>
+        <div class="b-name">RAYS</div>
+        <p class="b-desc">The gold standard in forged JDM wheels. Volk Racing, Gram Lights, and Homura — the brand trusted by OEM race programs worldwide. Lightweight, strong, and iconic.</p>
+        <div class="b-chips"><span class="b-chip">Forged</span><span class="b-chip">JDM</span><span class="b-chip">Track</span><span class="b-chip">Street</span></div>
+        <div class="b-arrow">→</div>
+      </div>
+      <div class="brand-card reveal">
+        <div class="b-country">USA · California</div>
+        <div class="b-name">HRE</div>
+        <p class="b-desc">American-made bespoke forged wheels machined to your exact specification. Custom offsets, finishes, and bolt patterns. The pinnacle of American wheel engineering.</p>
+        <div class="b-chips"><span class="b-chip">Bespoke</span><span class="b-chip">Monoblock</span><span class="b-chip">3-Piece</span></div>
+        <div class="b-arrow">→</div>
+      </div>
+      <div class="brand-card reveal">
+        <div class="b-country">USA · Miami</div>
+        <div class="b-name">VOSSEN</div>
+        <p class="b-desc">Luxury performance wheels bridging aggression and refinement. Deep concave profiles and wide-body fitments. The go-to for M cars, Porsches, and G-Wagons.</p>
+        <div class="b-chips"><span class="b-chip">Luxury</span><span class="b-chip">Concave</span><span class="b-chip">Wide Body</span></div>
+        <div class="b-arrow">→</div>
+      </div>
+      <div class="brand-card reveal">
+        <div class="b-country">Japan · Since 1977</div>
+        <div class="b-name">WORK</div>
+        <p class="b-desc">The definitive Japanese stance and culture wheel. Emotion, Meister, VS-XX, and Equip — chosen by JDM purists and stance builders for over four decades.</p>
+        <div class="b-chips"><span class="b-chip">JDM</span><span class="b-chip">Stance</span><span class="b-chip">Classic</span></div>
+        <div class="b-arrow">→</div>
+      </div>
+    </div>
+    <div class="more-brands reveal">
+      <p><strong>80+ additional brands available</strong> — Enkei, BBS, Rotiform, Forgeline, Fifteen52, Advan, OZ Racing, and more. If you've seen it online, we can source it.</p>
+      <a href="#contact" class="link-blue">Request a Brand →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ─── SERVICES ─── -->
+<section class="services-section" id="services">
+  <div class="section-wrap">
+    <div class="section-head reveal">
+      <div class="sec-eyebrow">Our Services</div>
+      <h2 class="sec-title">Everything your<br>wheels <span class="b">need.</span></h2>
+    </div>
+    <div class="svc-grid">
+      <div class="svc-card reveal">
+        <div class="svc-num">01</div>
+        <span class="svc-ico">🎡</span>
+        <div class="svc-title">Wheel Sales</div>
+        <p class="svc-desc">New wheels from 80+ brands — in stock or ordered direct. We spec the right diameter, offset, and finish for your vehicle and your goal, not just whatever's on the shelf.</p>
+        <div class="svc-price-row"><span class="svc-from">Starting from</span><span class="svc-price">$180<span class="unit">/wheel</span></span></div>
+      </div>
+      <div class="svc-card reveal">
+        <div class="svc-num">02</div>
+        <span class="svc-ico">⚖️</span>
+        <div class="svc-title">Mount & Balance</div>
+        <p class="svc-desc">Hunter Roadforce balancing on every set — not just spin balance. We match-mount tires to minimize runout and eliminate road vibration at any speed.</p>
+        <div class="svc-price-row"><span class="svc-from">Starting from</span><span class="svc-price">$25<span class="unit">/wheel</span></span></div>
+      </div>
+      <div class="svc-card reveal">
+        <div class="svc-num">03</div>
+        <span class="svc-ico">🔧</span>
+        <div class="svc-title">Wheel Repair</div>
+        <p class="svc-desc">Bent beads, curb rash, cracked lips — straightened, welded, and refinished in-house. Most repairs completed same-day. We've saved sets other shops called totaled.</p>
+        <div class="svc-price-row"><span class="svc-from">Starting from</span><span class="svc-price">$85<span class="unit">/wheel</span></span></div>
+      </div>
+      <div class="svc-card reveal">
+        <div class="svc-num">04</div>
+        <span class="svc-ico">🎨</span>
+        <div class="svc-title">Powder Coating</div>
+        <p class="svc-desc">Sand-blasted and powder coated in our in-house booth. 200+ colors available — gloss, matte, satin, candy, two-tone, and chrome delete. Factory-level durability.</p>
+        <div class="svc-price-row"><span class="svc-from">Starting from</span><span class="svc-price">$100<span class="unit">/wheel</span></span></div>
+      </div>
+      <div class="svc-card reveal">
+        <div class="svc-num">05</div>
+        <span class="svc-ico">📐</span>
+        <div class="svc-title">Fitment Consulting</div>
+        <p class="svc-desc">Drop height, bolt pattern, offset, tire size — we dial it all in based on your exact car and build goals. Free for every customer, every time. No appointment needed.</p>
+        <div class="svc-price-row"><span class="svc-from">Always</span><span class="svc-price">Free</span></div>
+      </div>
+      <div class="svc-card reveal">
+        <div class="svc-num">06</div>
+        <span class="svc-ico">🏆</span>
+        <div class="svc-title">Show Builds</div>
+        <p class="svc-desc">Building for a show, a meet, or SEMA? We've built trophies. We know what judges look at first — and we make sure yours stops them before they see anything else.</p>
+        <div class="svc-price-row"><span class="svc-from">Pricing</span><span class="svc-price">Custom</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── FITMENT BAND ─── -->
+<div class="fitment-band" id="fitment">
+  <div class="section-wrap">
+    <div class="fitment-inner">
+      <div class="fitment-left reveal">
+        <h2>Flush isn't luck.<br><span class="b">It's math.</span></h2>
+        <p>We run your exact vehicle — year, make, model, drop, and suspension setup — through our fitment database to find the wheel and tire combo that gets you flush without rubbing. Thousands of successful fitments and counting.</p>
+        <div class="fit-specs">
+          <div class="fit-item"><div class="fit-key">Diameter</div><div class="fit-val">15" – 26"</div></div>
+          <div class="fit-item"><div class="fit-key">Width</div><div class="fit-val">6.5" – 12"</div></div>
+          <div class="fit-item"><div class="fit-key">Offset (ET)</div><div class="fit-val">–25 to +55</div></div>
+          <div class="fit-item"><div class="fit-key">Bolt Patterns</div><div class="fit-val">4×100 – 6×139.7</div></div>
+          <div class="fit-item"><div class="fit-key">Center Bore</div><div class="fit-val">Hubcentric Rings Incl.</div></div>
+          <div class="fit-item"><div class="fit-key">Finishes</div><div class="fit-val">200+ Options</div></div>
+        </div>
+      </div>
+      <div class="fitment-right reveal">
+        <div class="fit-panel-content">
+          <div class="fit-panel-title">FIT</div>
+          <div class="fit-panel-sub">Precision Fitment · Every Build</div>
+        </div>
+        <div class="fit-panel-badge">
+          <p>Fitment Accuracy</p>
+          <span>99.8%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── PROCESS ─── -->
+<section class="process-section" id="process">
+  <div class="section-wrap">
+    <div class="section-head reveal">
+      <div class="sec-eyebrow">How It Works</div>
+      <h2 class="sec-title">Consult to curb<br>in <span class="b">four steps.</span></h2>
+    </div>
+    <div class="proc-steps">
+      <div class="proc-step reveal">
+        <div class="proc-num">01</div>
+        <span class="proc-icon">🗣️</span>
+        <h3>Consult</h3>
+        <p>Tell us your vehicle, drop, style goals, and budget. We ask the right questions upfront so there are no surprises at the end.</p>
+      </div>
+      <div class="proc-step reveal">
+        <div class="proc-num">02</div>
+        <span class="proc-icon">🎯</span>
+        <h3>Select</h3>
+        <p>We show you wheel options that actually fit — size, offset, and finish dialed to your build. In-stock or order direct, no guesswork.</p>
+      </div>
+      <div class="proc-step reveal">
+        <div class="proc-num">03</div>
+        <span class="proc-icon">📦</span>
+        <h3>Source</h3>
+        <p>In-stock wheels go straight to the bay. Special orders ship in 3–7 days. Every wheel is inspected before a tire goes on it.</p>
+      </div>
+      <div class="proc-step reveal">
+        <div class="proc-num">04</div>
+        <span class="proc-icon">✅</span>
+        <h3>Install</h3>
+        <p>Roadforce balance, torque to spec, final fitment check. You leave with a car that looks exactly the way you planned it — every time.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── TESTIMONIALS ─── -->
+<section class="testimonials-section">
+  <div class="section-wrap">
+    <div class="section-head reveal">
+      <div class="sec-eyebrow">Customer Reviews</div>
+      <h2 class="sec-title">Built right.<br><span class="b">Every time.</span></h2>
+    </div>
+    <div class="t-grid">
+      <div class="tcard reveal">
+        <div class="t-stars">★★★★★</div>
+        <p class="t-text">Came in wanting 19s — they told me 17s would look better with my drop. They were completely right. Every car meet someone asks who spec'd the fitment. These guys saved me from a bad decision.</p>
+        <div class="t-author">
+          <div class="t-av">CM</div>
+          <div><div class="t-name">Carlos M.</div><div class="t-vehicle">Honda Civic EK · Flush Build</div></div>
+        </div>
+      </div>
+      <div class="tcard reveal">
+        <div class="t-stars">★★★★★</div>
+        <p class="t-text">Had curb rash on my Volk TE37Vs. Took them to Apex and they came back looking factory-fresh. Completely undetectable. I'm still amazed. Most wheel shops would have called them junk.</p>
+        <div class="t-author">
+          <div class="t-av">TN</div>
+          <div><div class="t-name">Tyler N.</div><div class="t-vehicle">Honda Civic Type R FK8</div></div>
+        </div>
+      </div>
+      <div class="tcard reveal">
+        <div class="t-stars">★★★★★</div>
+        <p class="t-text">Had my widebody M4 specced with HRE P101s in brushed titanium. The clearance on the front fenders is razor-thin and it's perfect. Measured twice, installed once. Apex is the only shop I trust.</p>
+        <div class="t-author">
+          <div class="t-av">JO</div>
+          <div><div class="t-name">Jordan O.</div><div class="t-vehicle">BMW M4 Competition · Widebody</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── CTA BAND ─── -->
+<div class="cta-band">
+  <div class="cta-band-inner">
+    <div>
+      <h2>Ready to build<br>your set?</h2>
+      <p>Tell us your car and your goals. We'll come back with a full recommendation — brand, size, offset, tire combo, and real pricing. Same-day quotes available.</p>
+    </div>
+    <div class="cta-band-btns">
+      <a href="#contact" class="cta-white">Request a Quote</a>
+      <a href="tel:4075550218" class="cta-outline-white">Call (407) 555-0218</a>
+    </div>
+  </div>
+</div>
+
+<!-- ─── CONTACT ─── -->
+<section class="contact-section" id="contact">
+  <div class="section-wrap">
+    <div class="section-head reveal">
+      <div class="sec-eyebrow">Get In Touch</div>
+      <h2 class="sec-title">Let's talk<br><span class="b">your build.</span></h2>
+    </div>
+    <div class="contact-grid">
+      <div>
+        <p class="sec-body" style="margin-bottom:32px;">Drop your details below and we'll get back to you with a full recommendation — no obligation, no pressure. Just the right wheels for your car.</p>
+        <div class="contact-info">
+          <div class="info-row reveal"><span class="info-ico">📞</span><div><div class="info-lbl">Call or Text</div><div class="info-val">(407) 555-0218</div></div></div>
+          <div class="info-row reveal"><span class="info-ico">✉</span><div><div class="info-lbl">Email</div><div class="info-val">builds@apexwheelco.com</div></div></div>
+          <div class="info-row reveal"><span class="info-ico">📍</span><div><div class="info-lbl">Location</div><div class="info-val">1840 S. Orange Blossom Trail, Kissimmee FL 34741</div></div></div>
+          <div class="info-row reveal"><span class="info-ico">🕐</span><div><div class="info-lbl">Hours</div><div class="info-val">Monday – Saturday · 8:30 AM – 6:00 PM</div></div></div>
+        </div>
+      </div>
+      <div class="reveal">
+        <div class="contact-form">
+          <p class="form-title">Request a Free Quote</p>
+          <div class="form-grid">
+            <div class="fg"><label>First Name</label><input type="text" placeholder="John"></div>
+            <div class="fg"><label>Phone</label><input type="tel" placeholder="(407) 000-0000"></div>
+            <div class="fg"><label>Year</label><input type="text" placeholder="2023"></div>
+            <div class="fg"><label>Make & Model</label><input type="text" placeholder="Honda Civic Type R"></div>
+            <div class="fg full">
+              <label>Service Needed</label>
+              <select>
+                <option value="">Select a service...</option>
+                <option>Wheel Purchase + Mount & Balance</option>
+                <option>Tires Only</option>
+                <option>Wheel Repair / Curb Rash</option>
+                <option>Powder Coating</option>
+                <option>Show Build Consultation</option>
+                <option>Free Fitment Consult</option>
+                <option>Fleet / Multiple Vehicles</option>
+              </select>
+            </div>
+            <div class="fg full"><label>Build Notes</label><textarea placeholder="Drop height, brand preference, budget range, wheel size in mind — anything helps us build the right spec for you."></textarea></div>
+          </div>
+          <button class="submit-btn" id="submitBtn">Submit Request</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── FOOTER ─── -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-grid">
+      <div>
+        <a href="#" class="nav-logo" style="text-decoration:none;display:inline-flex;">
+          <div class="logo-badge"><span>AX</span></div>
+          <div class="logo-text-wrap" style="margin-left:12px;">
+            <span class="logo-name" style="color:white;">Apex Wheel Co.</span>
+            <span class="logo-sub" style="color:var(--alloy2);">Kissimmee, Florida</span>
+          </div>
+        </a>
+        <p class="foot-brand-desc">Central Florida's premier custom wheel studio. Fitment specialists, repair experts, and car enthusiasts who are committed to getting your build exactly right.</p>
+      </div>
+      <div class="foot-col">
+        <h4>Services</h4>
+        <ul>
+          <li><a href="#services">Wheel Sales</a></li>
+          <li><a href="#services">Mount & Balance</a></li>
+          <li><a href="#services">Wheel Repair</a></li>
+          <li><a href="#services">Powder Coating</a></li>
+          <li><a href="#services">Show Builds</a></li>
+          <li><a href="#services">Fleet Orders</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h4>Brands</h4>
+        <ul>
+          <li><a href="#brands">Rays / Volk</a></li>
+          <li><a href="#brands">HRE Wheels</a></li>
+          <li><a href="#brands">Vossen</a></li>
+          <li><a href="#brands">Work Wheels</a></li>
+          <li><a href="#brands">BBS · Enkei</a></li>
+          <li><a href="#brands">All 80+ Brands</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h4>Contact</h4>
+        <ul>
+          <li><a href="tel:4075550218">(407) 555-0218</a></li>
+          <li><a href="#">builds@apexwheelco.com</a></li>
+          <li><a href="#contact">Get a Quote</a></li>
+          <li><a href="#">Instagram</a></li>
+          <li><a href="#">Google Maps</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bot">
+      <p>© 2025 Apex Wheel Co. · Kissimmee, Florida · All rights reserved</p>
+      <span class="footer-slogan">Reach the Apex.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  /* SCROLL REVEAL */
+  const io = new IntersectionObserver(entries => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), i * 65);
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.07 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  /* NAV scroll shadow */
+  window.addEventListener('scroll', () => {
+    const nav = document.querySelector('nav');
+    nav.style.boxShadow = window.scrollY > 20 ? '0 2px 20px rgba(0,0,0,0.08)' : 'none';
+  });
+
+  /* FORM SUBMIT */
+  document.getElementById('submitBtn').addEventListener('click', function() {
+    this.textContent = 'Request Sent — We\'ll Be In Touch ✓';
+    this.style.background = '#059669';
+    setTimeout(() => {
+      this.textContent = 'Submit Request';
+      this.style.background = '';
+    }, 3500);
+  });
+</script>
+</body>
+</html>

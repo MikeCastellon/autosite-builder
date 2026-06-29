@@ -4,7 +4,6 @@ import { listBookingsForOwner } from '../../../lib/bookings.js';
 import { listCustomerMetadata } from '../../../lib/customers.js';
 import { groupBookingsIntoCustomers, makeCustomerLikeFromProfile } from '../../../lib/customerIdentity.js';
 import { listManualCustomers } from '../../../lib/customerProfiles.js';
-import AppHeader from '../../ui/AppHeader.jsx';
 import SubscribeGate from '../bookings-page/SubscribeGate.jsx';
 import AddCustomerModal from './AddCustomerModal.jsx';
 
@@ -38,36 +37,8 @@ function downloadCSV(filename, rows) {
 export default function CustomersPage({
   userId,
   profile,
-  userEmail,
-  onExit,
-  onOpenOverview,
-  onOpenInquiries,
-  onOpenBookings,
-  onOpenAdmin,
-  onOpenProfile,
-  onOpenPaymentsConnect,
   onOpenCustomerDetail,
-  onOpenCharges,
-  onCharge,
-  onSignOut,
 }) {
-  const headerProps = {
-    active: 'customers',
-    userEmail,
-    profile,
-    onOpenOverview,
-    onMySites: onExit,
-    onOpenInquiries,
-    onOpenBookings,
-    onOpenCustomers: () => {},
-    onOpenAdmin,
-    onOpenProfile,
-    onOpenPaymentsConnect,
-    onOpenCharges,
-    onCharge,
-    onSignOut,
-  };
-
   const [bookings, setBookings] = useState([]);
   const [sites, setSites] = useState([]);
   const [metadataByKey, setMetadataByKey] = useState(new Map());
@@ -160,34 +131,26 @@ export default function CustomersPage({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#faf9f7]">
-        <AppHeader {...headerProps} />
-        <main className="max-w-7xl mx-auto px-3 py-10">
-          <p className="text-[#888] text-sm">Loading…</p>
-        </main>
-      </div>
+      <main className="max-w-7xl mx-auto px-3 py-10">
+        <p className="text-[#888] text-sm">Loading…</p>
+      </main>
     );
   }
 
   if (err) {
     return (
-      <div className="min-h-screen bg-[#faf9f7]">
-        <AppHeader {...headerProps} />
-        <main className="max-w-7xl mx-auto px-3 py-10">
-          <div className="border border-[#cc0000]/20 rounded-xl p-4 text-sm text-[#cc0000] bg-[#cc0000]/5">{err}</div>
-        </main>
-      </div>
+      <main className="max-w-7xl mx-auto px-3 py-10">
+        <div className="border border-[#cc0000]/20 rounded-xl p-4 text-sm text-[#cc0000] bg-[#cc0000]/5">{err}</div>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#faf9f7]">
-      <AppHeader {...headerProps} />
-      <SubscribeGate
-        profile={profile}
-        heading="Customers is a Pro feature"
-        subheading="Customer management relies on the Pro scheduler — upgrade to unlock it along with bookings and everything else in Pro."
-      >
+    <SubscribeGate
+      profile={profile}
+      heading="Customers is a Pro feature"
+      subheading="Customer management relies on the Pro scheduler — upgrade to unlock it along with bookings and everything else in Pro."
+    >
         <main className="max-w-7xl mx-auto px-3 py-10">
           <header className="mb-6">
             <div className="flex items-center justify-between gap-4">
@@ -368,6 +331,5 @@ export default function CustomersPage({
           )}
         </main>
       </SubscribeGate>
-    </div>
   );
 }

@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ApexWheel — Premium Alloy Wheels</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #F0F1F3; --bg2: #E8EAED; --bg3: #DDDFE3;
+      --card: #FFFFFF;
+      --alloy: #B8BEC7; --alloy-mid: #8A9099; --alloy-dark: #5C6270;
+      --bronze: #A8813A; --bronze-light: #C9A46A; --bronze-bg: #F7F0E6;
+      --ink: #1C1E24; --ink2: #3A3D46; --muted: #7A7D88;
+      --border: #D4D7DD; --border-light: #E4E6EA;
+      --display: 'Bebas Neue', sans-serif;
+      --body: 'DM Sans', sans-serif;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--body); background: var(--bg); color: var(--ink); min-height: 100vh; }
+
+    /* NAV */
+    .ws-nav { display: flex; align-items: center; justify-content: space-between; padding: 16px 48px; background: var(--card); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+    .ws-logo { font-family: var(--display); font-size: 26px; letter-spacing: 3px; color: var(--ink); text-decoration: none; }
+    .ws-logo span { color: var(--bronze); }
+    .ws-nav-links { display: flex; gap: 28px; list-style: none; }
+    .ws-nav-links a { font-size: 12px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; color: var(--alloy-dark); text-decoration: none; transition: color .2s; }
+    .ws-nav-links a:hover { color: var(--bronze); }
+    .ws-nav-right { display: flex; align-items: center; gap: 16px; }
+    .ws-nav-search { font-size: 12px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); background: none; border: none; cursor: pointer; font-family: var(--body); transition: color .2s; }
+    .ws-nav-search:hover { color: var(--ink); }
+    .ws-nav-cta { background: var(--ink); color: #fff; font-size: 11px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; padding: 10px 22px; border: none; cursor: pointer; font-family: var(--body); transition: background .2s; }
+    .ws-nav-cta:hover { background: var(--bronze); }
+
+    /* HERO */
+    .ws-hero { display: grid; grid-template-columns: 1fr 1fr; min-height: 500px; background: var(--card); border-bottom: 1px solid var(--border); }
+    .ws-hero-left { padding: 72px 48px; display: flex; flex-direction: column; justify-content: center; }
+    .ws-hero-tag { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--bronze); margin-bottom: 14px; font-weight: 500; }
+    .ws-hero-h1 { font-family: var(--display); font-size: 88px; line-height: .92; letter-spacing: 1px; color: var(--ink); margin-bottom: 24px; }
+    .ws-hero-h1 em { color: var(--alloy-mid); font-style: normal; }
+    .ws-hero-sub { font-size: 14px; color: var(--muted); line-height: 1.75; max-width: 320px; margin-bottom: 32px; font-weight: 300; }
+    .ws-btns { display: flex; gap: 12px; align-items: center; }
+    .btn-dark { background: var(--ink); color: #fff; font-size: 11px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; padding: 13px 28px; border: none; cursor: pointer; font-family: var(--body); transition: background .2s; }
+    .btn-dark:hover { background: var(--bronze); }
+    .btn-outline { background: transparent; color: var(--ink2); font-size: 11px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; padding: 13px 0; border: none; border-bottom: 1px solid var(--alloy-mid); cursor: pointer; font-family: var(--body); transition: color .2s, border-color .2s; }
+    .btn-outline:hover { color: var(--bronze); border-color: var(--bronze); }
+    .ws-hero-right { background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; border-left: 1px solid var(--border); }
+    .hero-img-placeholder { width: 320px; height: 300px; background: var(--bg2); border: 1px dashed var(--border); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; margin-bottom: 80px; }
+    .hero-img-placeholder span { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+    .ws-hero-stats { display: flex; width: 100%; position: absolute; bottom: 0; border-top: 1px solid var(--border); }
+    .ws-hero-stat { flex: 1; padding: 16px 20px; border-right: 1px solid var(--border); }
+    .ws-hero-stat:last-child { border-right: none; }
+    .ws-stat-num { font-family: var(--display); font-size: 28px; letter-spacing: 1px; color: var(--bronze); line-height: 1; }
+    .ws-stat-label { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-top: 3px; }
+
+    /* TICKER */
+    .ws-ticker { background: var(--ink); padding: 10px 0; overflow: hidden; white-space: nowrap; }
+    .ws-ticker-inner { display: inline-flex; gap: 40px; animation: tick 22s linear infinite; }
+    .ws-ticker span { font-size: 11px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; color: var(--alloy); }
+    .ws-ticker-dot { color: var(--bronze) !important; }
+    @keyframes tick { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
+    /* TRUST BAR */
+    .ws-bar { display: flex; border-bottom: 1px solid var(--border); background: var(--card); }
+    .ws-bar-item { flex: 1; padding: 14px 20px; border-right: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+    .ws-bar-item:last-child { border-right: none; }
+    .ws-bar-icon { width: 32px; height: 32px; background: var(--bronze-bg); border: 1px solid #E8D9C0; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .ws-bar-icon svg { width: 14px; height: 14px; }
+    .ws-bar-label { font-size: 13px; font-weight: 500; color: var(--ink2); }
+    .ws-bar-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+    /* COLLECTION */
+    .ws-collection { padding: 64px 48px; }
+    .ws-sec-head { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 32px; }
+    .ws-sec-tag { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--bronze); margin-bottom: 8px; }
+    .ws-sec-title { font-family: var(--display); font-size: 44px; letter-spacing: 1px; color: var(--ink); line-height: 1; }
+    .ws-view-all { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--alloy-mid); border-bottom: 1px solid var(--border); padding-bottom: 2px; cursor: pointer; font-weight: 500; text-decoration: none; transition: color .2s; }
+    .ws-view-all:hover { color: var(--bronze); }
+    .ws-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); }
+    .ws-card { background: var(--card); }
+    .ws-card-img { height: 220px; background: var(--bg); display: flex; align-items: center; justify-content: center; border-bottom: 1px solid var(--border); position: relative; transition: background .15s; }
+    .ws-card:hover .ws-card-img { background: var(--bg2); }
+    .ws-card-img-ph { width: 140px; height: 140px; background: var(--bg2); border: 1px dashed var(--border); display: flex; align-items: center; justify-content: center; }
+    .ws-card-img-ph span { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+    .ws-badge { position: absolute; top: 12px; left: 12px; font-size: 10px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; padding: 4px 9px; }
+    .badge-bronze { background: var(--bronze-bg); color: var(--bronze); }
+    .badge-new { background: var(--bg2); color: var(--alloy-dark); }
+    .badge-sale { background: #FCEAEA; color: #A32D2D; }
+    .ws-card-body { padding: 18px 20px; }
+    .ws-card-name { font-family: var(--display); font-size: 22px; letter-spacing: .5px; color: var(--ink); margin-bottom: 3px; }
+    .ws-card-sub { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+    .ws-card-foot { display: flex; align-items: center; justify-content: space-between; }
+    .ws-price { font-family: var(--display); font-size: 24px; color: var(--bronze); letter-spacing: .5px; }
+    .ws-price-note { font-size: 11px; color: var(--muted); margin-top: 1px; }
+    .ws-price-strike { font-family: var(--display); font-size: 24px; color: var(--alloy-mid); letter-spacing: .5px; }
+    .ws-price-was { font-size: 11px; color: var(--muted); text-decoration: line-through; margin-top: 1px; }
+    .ws-add { width: 36px; height: 36px; background: var(--bg); border: 1px solid var(--border); color: var(--alloy-dark); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; font-family: var(--body); line-height: 1; transition: background .15s, color .15s, border-color .15s; }
+    .ws-add:hover { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+    /* FINISH SELECTOR */
+    .ws-split { display: grid; grid-template-columns: 1fr 1fr; background: var(--card); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .ws-split-left { padding: 64px 48px; border-right: 1px solid var(--border); }
+    .ws-split-right { padding: 64px 48px; background: var(--bg); }
+    .ws-swatches { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 28px; }
+    .ws-swatch { cursor: pointer; text-align: center; }
+    .ws-swatch-dot { width: 48px; height: 48px; border-radius: 50%; margin: 0 auto 8px; border: 2px solid transparent; transition: border-color .2s; }
+    .ws-swatch.active .ws-swatch-dot, .ws-swatch:hover .ws-swatch-dot { border-color: var(--bronze); }
+    .sw-silver { background: #C4C8D0; } .sw-black { background: #2A2A30; } .sw-bronze { background: #C9A46A; } .sw-gun { background: #5E6470; }
+    .ws-swatch-name { font-size: 11px; letter-spacing: .8px; text-transform: uppercase; color: var(--muted); }
+    .ws-finish-detail { margin-top: 24px; padding: 20px; background: var(--card); border: 1px solid var(--border); }
+    .ws-finish-detail-tag { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--bronze); margin-bottom: 8px; font-weight: 500; }
+    .ws-finish-detail-body { font-size: 13px; color: var(--muted); line-height: 1.65; }
+    .ws-finish-chips { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+    .ws-chip { font-size: 11px; color: var(--alloy-dark); letter-spacing: .5px; padding: 4px 10px; background: var(--bg2); border: 1px solid var(--border); }
+
+    /* FITMENT */
+    .ws-fitment { background: var(--bronze-bg); border-top: 1px solid #E8D9C0; border-bottom: 1px solid #E8D9C0; padding: 48px; display: flex; align-items: center; justify-content: space-between; gap: 32px; flex-wrap: wrap; }
+    .ws-fit-title { font-family: var(--display); font-size: 38px; letter-spacing: 1px; color: var(--ink); line-height: 1; }
+    .ws-fit-sub { font-size: 13px; color: var(--muted); margin-top: 6px; }
+    .ws-fit-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .ws-fit-sel { background: var(--card); border: 1px solid var(--border); color: var(--ink2); font-family: var(--body); font-size: 13px; padding: 11px 16px; cursor: pointer; appearance: none; min-width: 110px; }
+    .ws-fit-btn { background: var(--ink); color: #fff; font-family: var(--body); font-size: 11px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; padding: 12px 24px; border: none; cursor: pointer; transition: background .2s; }
+    .ws-fit-btn:hover { background: var(--bronze); }
+
+    /* BRANDS */
+    .ws-brands { padding: 48px; background: var(--card); border-top: 1px solid var(--border); }
+    .ws-brands-label { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); text-align: center; margin-bottom: 24px; }
+    .ws-brands-row { display: flex; border: 1px solid var(--border); }
+    .ws-brand-slot { flex: 1; padding: 24px 0; border-right: 1px solid var(--border); text-align: center; font-family: var(--display); font-size: 18px; letter-spacing: 2px; color: var(--bg3); transition: color .2s; cursor: default; }
+    .ws-brand-slot:last-child { border-right: none; }
+    .ws-brand-slot:hover { color: var(--alloy-mid); }
+
+    /* FOOTER */
+    .ws-foot { padding: 36px 48px; background: var(--card); border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+    .ws-foot-logo { font-family: var(--display); font-size: 20px; letter-spacing: 3px; color: var(--alloy-mid); text-decoration: none; }
+    .ws-foot-logo span { color: var(--bronze); }
+    .ws-foot-links { display: flex; gap: 20px; list-style: none; }
+    .ws-foot-links a { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); text-decoration: none; transition: color .2s; }
+    .ws-foot-links a:hover { color: var(--bronze); }
+    .ws-foot-copy { font-size: 11px; color: var(--muted); letter-spacing: .3px; }
+
+    /* RESPONSIVE */
+    @media (max-width: 900px) {
+      .ws-nav { padding: 14px 24px; }
+      .ws-nav-links { display: none; }
+      .ws-hero { grid-template-columns: 1fr; }
+      .ws-hero-right { min-height: 300px; border-left: none; border-top: 1px solid var(--border); }
+      .hero-img-placeholder { margin-bottom: 72px; }
+      .ws-hero-left { padding: 48px 24px; }
+      .ws-hero-h1 { font-size: 64px; }
+      .ws-collection { padding: 40px 24px; }
+      .ws-grid { grid-template-columns: repeat(2, 1fr); }
+      .ws-split { grid-template-columns: 1fr; }
+      .ws-split-left { padding: 40px 24px; border-right: none; border-bottom: 1px solid var(--border); }
+      .ws-split-right { padding: 40px 24px; }
+      .ws-fitment { padding: 32px 24px; flex-direction: column; align-items: flex-start; }
+      .ws-brands { padding: 32px 24px; }
+      .ws-foot { padding: 24px; flex-direction: column; align-items: flex-start; gap: 20px; }
+      .ws-bar { flex-wrap: wrap; }
+      .ws-bar-item { min-width: 50%; border-bottom: 1px solid var(--border); }
+    }
+    @media (max-width: 560px) {
+      .ws-grid { grid-template-columns: 1fr; }
+      .ws-swatches { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="ws-nav">
+    <a href="#" class="ws-logo">APEX<span>WHEEL</span></a>
+    <ul class="ws-nav-links">
+      <li><a href="#">Wheels</a></li>
+      <li><a href="#">Fitment</a></li>
+      <li><a href="#">Finishes</a></li>
+      <li><a href="#">Brands</a></li>
+      <li><a href="#">Gallery</a></li>
+    </ul>
+    <div class="ws-nav-right">
+      <button class="ws-nav-search">Search</button>
+      <button class="ws-nav-cta">Get a quote</button>
+    </div>
+  </nav>
+
+  <section class="ws-hero">
+    <div class="ws-hero-left">
+      <p class="ws-hero-tag">◆ 2026 Collection — Now Available</p>
+      <h1 class="ws-hero-h1">FORGE<br><em>YOUR</em><br>RIDE</h1>
+      <p class="ws-hero-sub">Precision-engineered alloy wheels built for performance and presence. Flow form, forged monoblock, and custom bronze-tint concave.</p>
+      <div class="ws-btns">
+        <button class="btn-dark">Shop wheels</button>
+        <button class="btn-outline">Fitment guide →</button>
+      </div>
+    </div>
+    <div class="ws-hero-right">
+      <div class="hero-img-placeholder">
+        <!-- Replace with: <img src="your-hero-image.jpg" alt="Hero wheel" style="width:100%;height:100%;object-fit:cover;" /> -->
+        <span>Hero image</span>
+      </div>
+      <div class="ws-hero-stats">
+        <div class="ws-hero-stat"><div class="ws-stat-num">2,400+</div><div class="ws-stat-label">SKUs in stock</div></div>
+        <div class="ws-hero-stat"><div class="ws-stat-num">48hr</div><div class="ws-stat-label">Fitment guarantee</div></div>
+        <div class="ws-hero-stat"><div class="ws-stat-num">4.9</div><div class="ws-stat-label">Avg rating</div></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="ws-ticker">
+    <div class="ws-ticker-inner">
+      <span>Free shipping over $500</span><span class="ws-ticker-dot">◆</span>
+      <span>Flow Form · Forged · Cast</span><span class="ws-ticker-dot">◆</span>
+      <span>Alloy · Gloss Black · Bronze · Gunmetal</span><span class="ws-ticker-dot">◆</span>
+      <span>Guaranteed fitment or free replacement</span><span class="ws-ticker-dot">◆</span>
+      <span>18" to 24" diameter in stock</span><span class="ws-ticker-dot">◆</span>
+      <span>Free shipping over $500</span><span class="ws-ticker-dot">◆</span>
+      <span>Flow Form · Forged · Cast</span><span class="ws-ticker-dot">◆</span>
+      <span>Alloy · Gloss Black · Bronze · Gunmetal</span><span class="ws-ticker-dot">◆</span>
+      <span>Guaranteed fitment or free replacement</span><span class="ws-ticker-dot">◆</span>
+      <span>18" to 24" diameter in stock</span><span class="ws-ticker-dot">◆</span>
+    </div>
+  </div>
+
+  <div class="ws-bar">
+    <div class="ws-bar-item">
+      <div class="ws-bar-icon">
+        <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="7" cy="7" r="5.5" stroke="#A8813A" stroke-width="1.2"/><path d="M7 4v3.2l1.8 1.2" stroke="#A8813A" stroke-width="1.2" stroke-linecap="round"/></svg>
+      </div>
+      <div><div class="ws-bar-label">Ships in 48 hrs</div><div class="ws-bar-sub">In-stock items</div></div>
+    </div>
+    <div class="ws-bar-item">
+      <div class="ws-bar-icon">
+        <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 7.5l3.5 3.5 6.5-7" stroke="#A8813A" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div><div class="ws-bar-label">Fitment guaranteed</div><div class="ws-bar-sub">Or free return</div></div>
+    </div>
+    <div class="ws-bar-item">
+      <div class="ws-bar-icon">
+        <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="3.5" width="12" height="8" rx="1" stroke="#A8813A" stroke-width="1.2"/><path d="M1 6.5h12" stroke="#A8813A" stroke-width="1.2"/></svg>
+      </div>
+      <div><div class="ws-bar-label">Finance available</div><div class="ws-bar-sub">0% for 12 months</div></div>
+    </div>
+    <div class="ws-bar-item">
+      <div class="ws-bar-icon">
+        <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 1.5l1.5 3.2 3.5.5-2.5 2.4.6 3.4L7 9.3l-3.1 1.7.6-3.4L2 5.2l3.5-.5L7 1.5z" stroke="#A8813A" stroke-width="1.2" stroke-linejoin="round"/></svg>
+      </div>
+      <div><div class="ws-bar-label">4.9 star rating</div><div class="ws-bar-sub">3,200+ reviews</div></div>
+    </div>
+  </div>
+
+  <section class="ws-collection">
+    <div class="ws-sec-head">
+      <div>
+        <p class="ws-sec-tag">◆ Featured collection</p>
+        <h2 class="ws-sec-title">Apex lineup</h2>
+      </div>
+      <a href="#" class="ws-view-all">View all wheels →</a>
+    </div>
+    <div class="ws-grid">
+
+      <div class="ws-card">
+        <div class="ws-card-img">
+          <span class="ws-badge badge-bronze">Bestseller</span>
+          <div class="ws-card-img-ph"><!-- <img src="apex-s6.jpg" alt="Apex S6" style="width:100%;height:100%;object-fit:contain;" /> --><span>Image</span></div>
+        </div>
+        <div class="ws-card-body">
+          <div class="ws-card-name">Apex S6</div>
+          <div class="ws-card-sub">6-spoke flow form · Silver machined</div>
+          <div class="ws-card-foot">
+            <div><div class="ws-price">$349</div><div class="ws-price-note">per wheel · 18–22"</div></div>
+            <button class="ws-add">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="ws-card">
+        <div class="ws-card-img">
+          <span class="ws-badge badge-new">New</span>
+          <div class="ws-card-img-ph"><!-- <img src="aurum-5.jpg" alt="Aurum 5" style="width:100%;height:100%;object-fit:contain;" /> --><span>Image</span></div>
+        </div>
+        <div class="ws-card-body">
+          <div class="ws-card-name">Aurum 5</div>
+          <div class="ws-card-sub">5-spoke forged · Bronze tint</div>
+          <div class="ws-card-foot">
+            <div><div class="ws-price">$589</div><div class="ws-price-note">per wheel · 19–24"</div></div>
+            <button class="ws-add">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="ws-card">
+        <div class="ws-card-img">
+          <span class="ws-badge badge-sale">Sale</span>
+          <div class="ws-card-img-ph"><!-- <img src="eclipse-gt.jpg" alt="Eclipse GT" style="width:100%;height:100%;object-fit:contain;" /> --><span>Image</span></div>
+        </div>
+        <div class="ws-card-body">
+          <div class="ws-card-name">Eclipse GT</div>
+          <div class="ws-card-sub">Y-spoke cast · Gloss gunmetal</div>
+          <div class="ws-card-foot">
+            <div><div class="ws-price-strike">$219</div><div class="ws-price-was">Was $289 · 18–20"</div></div>
+            <button class="ws-add">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="ws-card">
+        <div class="ws-card-img">
+          <div class="ws-card-img-ph"><!-- <img src="void-10.jpg" alt="Void 10" style="width:100%;height:100%;object-fit:contain;" /> --><span>Image</span></div>
+        </div>
+        <div class="ws-card-body">
+          <div class="ws-card-name">Void 10</div>
+          <div class="ws-card-sub">10-spoke cast · Gloss black</div>
+          <div class="ws-card-foot">
+            <div><div class="ws-price">$275</div><div class="ws-price-note">per wheel · 18–20"</div></div>
+            <button class="ws-add">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="ws-card">
+        <div class="ws-card-img">
+          <span class="ws-badge badge-bronze">Top rated</span>
+          <div class="ws-card-img-ph"><!-- <img src="concave-r.jpg" alt="Concave R" style="width:100%;height:100%;object-fit:contain;" /> --><span>Image</span></div>
+        </div>
+        <div class="ws-card-body">
+          <div class="ws-card-name">Concave R</div>
+          <div class="ws-card-sub">Concave flow form · Hyper silver</div>
+          <div class="ws-card-foot">
+            <div><div class="ws-price">$449</div><div class="ws-price-note">per wheel · 19–22"</div></div>
+            <button class="ws-add">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="ws-card">
+        <div class="ws-card-img">
+          <span class="ws-badge badge-new">New</span>
+          <div class="ws-card-img-ph"><!-- <img src="split-7.jpg" alt="Split 7" style="width:100%;height:100%;object-fit:contain;" /> --><span>Image</span></div>
+        </div>
+        <div class="ws-card-body">
+          <div class="ws-card-name">Split 7</div>
+          <div class="ws-card-sub">Split-spoke forged · Satin bronze</div>
+          <div class="ws-card-foot">
+            <div><div class="ws-price">$695</div><div class="ws-price-note">per wheel · 20–24"</div></div>
+            <button class="ws-add">+</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="ws-split">
+    <div class="ws-split-left">
+      <p class="ws-sec-tag">◆ Customize your look</p>
+      <h2 class="ws-sec-title" style="font-size:40px;">Choose<br>your finish</h2>
+      <p style="font-size:14px;color:var(--muted);margin-top:14px;line-height:1.75;max-width:300px;font-weight:300;">Every wheel ships in your chosen finish. Mix across axles or go full matching — we cut and coat to order.</p>
+      <button class="btn-dark" style="margin-top:28px;">Build my set</button>
+    </div>
+    <div class="ws-split-right">
+      <p class="ws-sec-tag">◆ Available finishes</p>
+      <div class="ws-swatches">
+        <div class="ws-swatch active"><div class="ws-swatch-dot sw-silver"></div><div class="ws-swatch-name">Silver alloy</div></div>
+        <div class="ws-swatch"><div class="ws-swatch-dot sw-black"></div><div class="ws-swatch-name">Gloss black</div></div>
+        <div class="ws-swatch"><div class="ws-swatch-dot sw-bronze"></div><div class="ws-swatch-name">Bronze tint</div></div>
+        <div class="ws-swatch"><div class="ws-swatch-dot sw-gun"></div><div class="ws-swatch-name">Gunmetal</div></div>
+      </div>
+      <div class="ws-finish-detail">
+        <div class="ws-finish-detail-tag">Selected: Silver alloy machined</div>
+        <div class="ws-finish-detail-body">Machine-faced with a clear coat seal. Resistant to brake dust and road grime. Standard lead time: 5 business days.</div>
+        <div class="ws-finish-chips">
+          <span class="ws-chip">Clear coated</span>
+          <span class="ws-chip">TPMS ready</span>
+          <span class="ws-chip">Hub-centric</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="ws-fitment">
+    <div>
+      <div class="ws-fit-title">Find your fit</div>
+      <div class="ws-fit-sub">Enter your vehicle — we'll show only guaranteed-fitment wheels</div>
+    </div>
+    <div class="ws-fit-controls">
+      <select class="ws-fit-sel"><option>Year</option><option>2025</option><option>2024</option><option>2023</option><option>2022</option><option>2021</option><option>2020</option></select>
+      <select class="ws-fit-sel"><option>Make</option><option>Audi</option><option>BMW</option><option>Chevrolet</option><option>Ford</option><option>Honda</option><option>Jeep</option><option>Mercedes</option><option>Toyota</option></select>
+      <select class="ws-fit-sel"><option>Model</option><option>3 Series</option><option>Camry</option><option>Civic</option><option>M3</option><option>Mustang</option><option>Wrangler</option></select>
+      <button class="ws-fit-btn">Search →</button>
+    </div>
+  </section>
+
+  <div class="ws-brands">
+    <div class="ws-brands-label">Brands we carry</div>
+    <div class="ws-brands-row">
+      <div class="ws-brand-slot">ENKEI</div>
+      <div class="ws-brand-slot">VOSSEN</div>
+      <div class="ws-brand-slot">HRE</div>
+      <div class="ws-brand-slot">ROTIFORM</div>
+      <div class="ws-brand-slot">WORK</div>
+    </div>
+  </div>
+
+  <footer class="ws-foot">
+    <a href="#" class="ws-foot-logo">APEX<span>WHEEL</span></a>
+    <ul class="ws-foot-links">
+      <li><a href="#">Instagram</a></li>
+      <li><a href="#">Warranty</a></li>
+      <li><a href="#">Returns</a></li>
+      <li><a href="#">Contact</a></li>
+    </ul>
+    <div class="ws-foot-copy">© 2026 ApexWheel. All rights reserved.</div>
+  </footer>
+
+  <script>
+    const swatches = document.querySelectorAll('.ws-swatch');
+    const detailTag = document.querySelector('.ws-finish-detail-tag');
+    const detailBody = document.querySelector('.ws-finish-detail-body');
+    const chipsEl = document.querySelector('.ws-finish-chips');
+    const finishes = {
+      'Silver alloy': { label: 'Selected: Silver alloy machined', desc: 'Machine-faced with a clear coat seal. Resistant to brake dust and road grime. Standard lead time: 5 business days.', chips: ['Clear coated','TPMS ready','Hub-centric'] },
+      'Gloss black':  { label: 'Selected: Gloss black powder coat', desc: 'Full powder coat with high-gloss clear layer. Chip-resistant finish. Bold contrast against any vehicle color. Lead time: 7 business days.', chips: ['Powder coated','TPMS ready','Hub-centric'] },
+      'Bronze tint':  { label: 'Selected: Bronze tint anodized', desc: 'Warm bronze anodized layer over brushed alloy. Unique depth that shifts in sunlight. Most popular custom finish. Lead time: 8 business days.', chips: ['Anodized','TPMS ready','Hub-centric'] },
+      'Gunmetal':     { label: 'Selected: Gunmetal satin coat', desc: 'Dark satin gunmetal with matte clear over-coat. Stealthy and aggressive. Works with silver, black, and dark vehicle colors. Lead time: 6 business days.', chips: ['Satin coated','TPMS ready','Hub-centric'] }
+    };
+    swatches.forEach(sw => {
+      sw.addEventListener('click', () => {
+        swatches.forEach(s => s.classList.remove('active'));
+        sw.classList.add('active');
+        const name = sw.querySelector('.ws-swatch-name').textContent;
+        const d = finishes[name];
+        if (d) {
+          detailTag.textContent = d.label;
+          detailBody.textContent = d.desc;
+          chipsEl.innerHTML = d.chips.map(c => `<span class="ws-chip">${c}</span>`).join('');
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>
