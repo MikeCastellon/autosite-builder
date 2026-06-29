@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 import { supabase, isImpersonationTab } from '../../lib/supabase.js';
 
+// Fixed height of the active impersonation bar, in px. Exported so fixed-position
+// chrome (e.g. the editor toolbar) can offset itself below the bar instead of
+// being hidden behind it.
+export const IMPERSONATION_BAR_HEIGHT = 36;
+
 // Top-of-page banner that's only ever visible in an impersonation tab.
 // Three responsibilities:
 //   1. Make it impossible to forget you're impersonating.
@@ -106,7 +111,8 @@ export default function ImpersonationBanner() {
   if (status === 'active') {
     return (
       <div
-        className="bg-[#cc0000] text-white py-2 px-4 flex items-center justify-center gap-3 text-[12px] font-bold tracking-wide sticky top-0 z-[200]"
+        className="bg-[#cc0000] text-white px-4 flex items-center justify-center gap-3 text-[12px] font-bold tracking-wide sticky top-0 z-[200]"
+        style={{ height: IMPERSONATION_BAR_HEIGHT }}
         role="alert"
         aria-live="polite"
       >

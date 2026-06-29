@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 
 const SAVED_FLASH_MS = 2000;
 
-export default function PreviewToolbar({ viewMode, onViewMode, onBack, backLabel = 'Back to Templates', onExport, onSaveDraft, onPublish, onEdit, editorOpen, isDemoPreview, onPreviewDemo }) {
+export default function PreviewToolbar({ viewMode, onViewMode, onBack, backLabel = 'Back to Templates', onExport, onSaveDraft, onPublish, onEdit, editorOpen, isDemoPreview, onPreviewDemo, topOffset = 0 }) {
   const [savingDraft, setSavingDraft] = useState(false);
   const [savedDraft, setSavedDraft] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -40,7 +40,7 @@ export default function PreviewToolbar({ viewMode, onViewMode, onBack, backLabel
     </svg>
   );
   return (
-    <div className="fixed top-0 left-0 z-50 bg-white border-b border-gray-200 px-3 sm:px-5 h-13 flex items-center justify-between gap-2 sm:gap-4" style={{ height: 52, right: editorOpen ? 320 : 0, transition: 'right 0.2s ease' }}>
+    <div className="fixed left-0 z-50 bg-white border-b border-gray-200 px-3 sm:px-5 h-13 flex items-center justify-between gap-2 sm:gap-4" style={{ top: topOffset, height: 52, right: editorOpen ? 320 : 0, transition: 'right 0.2s ease' }}>
       {/* Left: back */}
       <button
         onClick={onBack}

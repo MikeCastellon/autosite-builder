@@ -412,7 +412,7 @@ function Toggle({ value, onChange, options }) {
   );
 }
 
-export default function ContentEditor({ isOpen, onClose, siteId, copy, images, onCopyChange, onImagesChange, templateMeta, templateId, customColors = {}, onCustomColors, customFonts = {}, onCustomFonts, businessType, onSwitchTemplate, businessInfo, onBusinessInfoChange }) {
+export default function ContentEditor({ isOpen, onClose, topOffset = 0, siteId, copy, images, onCopyChange, onImagesChange, templateMeta, templateId, customColors = {}, onCustomColors, customFonts = {}, onCustomFonts, businessType, onSwitchTemplate, businessInfo, onBusinessInfoChange }) {
   const { confirm: confirmDialog } = useAlert();
   const setBiz = (key, val) => {
     if (!onBusinessInfoChange) return;
@@ -611,7 +611,7 @@ export default function ContentEditor({ isOpen, onClose, siteId, copy, images, o
       <div className="fixed inset-0 bg-black/20" style={{ right: 320, zIndex: 9998 }} onClick={onClose} />
 
       {/* Panel */}
-      <div className="fixed top-0 right-0 bottom-0 w-80 bg-white border-l border-gray-200 flex flex-col shadow-2xl" style={{ top: 52, zIndex: 9999 }}>
+      <div className="fixed top-0 right-0 bottom-0 w-80 bg-white border-l border-gray-200 flex flex-col shadow-2xl" style={{ top: 52 + topOffset, zIndex: 9999 }}>
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 shrink-0">
           <div>

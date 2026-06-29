@@ -6,6 +6,8 @@ import ContentEditor from './ContentEditor.jsx';
 import EditorTour from '../onboarding/EditorTour.jsx';
 import { useAuth } from '../../lib/AuthContext.jsx';
 import { isEffectiveSchedulerActive } from '../../lib/subscriptionGating.js';
+import { isImpersonationTab } from '../../lib/supabase.js';
+import { IMPERSONATION_BAR_HEIGHT } from '../admin/ImpersonationBanner.jsx';
 
 const ACG_LOGO = 'https://www.autocaregenius.com/cdn/shop/files/v11_1.svg?v=1760731533&width=160';
 
@@ -16,6 +18,10 @@ export default function WebsitePreview({ siteId, businessInfo, onBusinessInfoCha
   const normalizedInfo = useMemo(() => normalizeBusinessInfo(businessInfo), [businessInfo]);
   const [viewMode, setViewMode] = useState('desktop');
   const [editorOpen, setEditorOpen] = useState(false);
+  // In an impersonation tab the sticky "VIEWING AS" bar occupies the top of the
+  // page; offset the editor's fixed chrome (toolbar, cover bar, sticky template
+  // nav) down by its height so the toolbar buttons aren't hidden behind it.
+  const bannerOffset = isImpersonationTab ? IMPERSONATION_BAR_HEIGHT : 0;
 
   useEffect(() => {
     if (editingExistingSite) {
@@ -59,11 +65,13 @@ export default function WebsitePreview({ siteId, businessInfo, onBusinessInfoCha
         editorOpen={editorOpen}
         isDemoPreview={isDemoPreview}
         onPreviewDemo={isAdmin && !isDemoPreview ? onPreviewDemo : null}
+        topOffset={bannerOffset}
       />
 
       <ContentEditor
         isOpen={editorOpen}
         onClose={() => setEditorOpen(false)}
+        topOffset={bannerOffset}
         siteId={siteId}
         copy={editedCopy}
         images={images}
@@ -82,11 +90,12 @@ export default function WebsitePreview({ siteId, businessInfo, onBusinessInfoCha
       />
 
       {/* Preview frame */}
-      {/* Inject CSS so sticky template navs sit below our fixed toolbar (52px) */}
-      <style>{`.preview-wrap nav { top: 52px !important; z-index: 10 !important; }`}</style>
+      {/* Inject CSS so sticky template navs sit below our fixed toolbar (52px,
+          plus the impersonation bar when present) */}
+      <style>{`.preview-wrap nav { top: ${52 + bannerOffset}px !important; z-index: 10 !important; }`}</style>
       <div className="min-h-screen" style={{ position: 'relative', marginTop: 52, paddingBottom: isPro ? 0 : 48 }}>
         {/* Cover bar: hides template content that scrolls up behind toolbar */}
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: 52, background: '#fff', zIndex: 40 }} />
+        <div style={{ position: 'fixed', top: bannerOffset, left: 0, right: 0, height: 52, background: '#fff', zIndex: 40 }} />
         <div className="preview-wrap" style={{ ...containerStyle, position: 'relative' }}>
           <Suspense
               fallback={
