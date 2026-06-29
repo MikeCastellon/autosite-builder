@@ -239,6 +239,20 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
     return data?.generated_content || null;
   }
 
+  // Opening the editor. While impersonating, warn the admin that anything they
+  // publish from the editor changes the customer's real, live site (only admins
+  // can ever be in an impersonation tab, so Edit is inherently admin-gated).
+  const handleEditClick = async (site) => {
+    if (isImpersonationTab) {
+      const ok = await confirmDialog(
+        `You're opening ${site.business_info?.businessName || 'this site'} as an admin while viewing as the customer. Anything you publish from the editor changes their live site. Continue?`,
+        { title: 'Edit customer site?', confirmText: 'Open editor' },
+      );
+      if (!ok) return;
+    }
+    onEditSite(site);
+  };
+
   const handleDelete = async (id) => {
     const ok = await confirmDialog('This will also unpublish it and remove any custom domain. This cannot be undone.', {
       title: 'Delete site?',
@@ -542,32 +556,37 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
                   })()}
                 </div>
 
-                {/* Actions — hidden entirely while impersonating so the
-                    admin can't accidentally Edit, Delete, Republish, or
-                    re-config the customer's site on their behalf. The
-                    "VIEWING AS …" banner makes the read-only context
-                    obvious; this just enforces it. */}
-                {!isImpersonationTab && (
+                {/* Actions. While impersonating, the destructive / config
+                    actions (Business Info, Booking Settings, Domain, Delete)
+                    stay hidden so an admin can't accidentally re-config a
+                    customer's site. Edit and Republish ARE shown so an admin
+                    can open the editor and test publishing on the customer's
+                    behalf — only admins can ever be in an impersonation tab,
+                    so this is inherently admin-gated, and Edit shows a confirm
+                    (see handleEditClick). The "VIEWING AS …" banner keeps the
+                    context obvious. */}
                 <div className="flex flex-wrap gap-2 sm:flex-col sm:items-stretch sm:w-auto">
                   {site.site_type !== 'booking_only' && (
                     <>
                       {onEditSite && (
                         <button
-                          onClick={() => onEditSite(site)}
+                          onClick={() => handleEditClick(site)}
                           className="px-4 py-2 text-[13px] font-semibold bg-[#1a1a1a] text-white rounded-lg hover:bg-[#cc0000] transition-colors"
                         >
                           Edit
                         </button>
                       )}
-                      <button
-                        onClick={() => setEditBizSite(site)}
-                        className="px-4 py-2 text-[13px] font-medium border border-black/10 rounded-lg hover:border-[#cc0000]/30 hover:text-[#cc0000] transition-colors"
-                      >
-                        Business Info
-                      </button>
+                      {!isImpersonationTab && (
+                        <button
+                          onClick={() => setEditBizSite(site)}
+                          className="px-4 py-2 text-[13px] font-medium border border-black/10 rounded-lg hover:border-[#cc0000]/30 hover:text-[#cc0000] transition-colors"
+                        >
+                          Business Info
+                        </button>
+                      )}
                     </>
                   )}
-                  {site.site_type === 'booking_only' && onOpenBookingSettings && (
+                  {site.site_type === 'booking_only' && onOpenBookingSettings && !isImpersonationTab && (
                     <button
                       onClick={() => onOpenBookingSettings(site.id)}
                       className="px-4 py-2 text-[13px] font-semibold bg-[#1a1a1a] text-white rounded-lg hover:bg-[#cc0000] transition-colors"
@@ -583,7 +602,7 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
                       Republish
                     </button>
                   )}
-                  {CUSTOM_DOMAIN_ENABLED && (
+                  {!isImpersonationTab && CUSTOM_DOMAIN_ENABLED && (
                     isPro ? (
                       site.published_url ? (
                         <button
@@ -618,14 +637,15 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
                       </button>
                     )
                   )}
-                  <button
-                    onClick={() => handleDelete(site.id)}
-                    className="px-4 py-2 text-[13px] font-medium text-[#888] hover:text-[#cc0000] transition-colors"
-                  >
-                    Delete
-                  </button>
+                  {!isImpersonationTab && (
+                    <button
+                      onClick={() => handleDelete(site.id)}
+                      className="px-4 py-2 text-[13px] font-medium text-[#888] hover:text-[#cc0000] transition-colors"
+                    >
+                      Delete
+                    </button>
+                  )}
                 </div>
-                )}
               </div>
             ))}
             </div>

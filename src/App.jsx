@@ -614,13 +614,27 @@ export default function App() {
   const handlePublishFromEditor = async () => {
     try {
       await flushSaveSite();
+      // Guarantee no inline base64 images remain before publishing — otherwise
+      // the exported HTML can exceed Netlify's ~6MB function limit and the
+      // publish fails. Opening the editor heals images in the background, but a
+      // quick Publish can beat it, so migrate any stragglers here first.
+      let imagesToPublish = images;
+      try {
+        const { migrateLegacyImages } = await import('./lib/imageUpload.js');
+        const { migrated, images: fixed } = await migrateLegacyImages(images, siteId);
+        if (migrated) {
+          imagesToPublish = fixed;
+          setImages(fixed);
+          autoSave({ images: fixed });
+        }
+      } catch { /* fall back to publishing whatever we have */ }
       await publishSite({
         siteId,
         businessInfo,
         generatedCopy: editedCopy,
         templateId: selectedTemplate,
         templateMeta: { ...templateMeta, colors: templateMeta?.colors || {} },
-        images,
+        images: imagesToPublish,
         selectedWidgetIds,
         isPro,
       });
