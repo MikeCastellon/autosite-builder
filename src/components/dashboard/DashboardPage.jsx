@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase, isImpersonationTab } from '../../lib/supabase.js';
+import { useAuth } from '../../lib/AuthContext.jsx';
 import { publishSite, publishBookingPage } from '../../lib/publishSite.js';
 import { TEMPLATES } from '../../data/templates.js';
 import { CHANGELOG, formatChangelogDate } from '../../data/changelog.js';
@@ -119,6 +120,8 @@ function DashboardNewsBanner() {
 
 export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite, onSignOut, userEmail, profile, onOpenOverview, onOpenAdmin, onOpenInquiries, onOpenBookings, onOpenCustomers, onOpenProfile, onOpenPaymentsConnect, onOpenCharges, onCharge, onOpenBookingSettings, onPreviewDemo }) {
   const { toast, confirm: confirmDialog } = useAlert();
+  const { session } = useAuth();
+  const userId = session?.user?.id;
   const [sites, setSites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
@@ -218,11 +221,19 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
     } catch { /* ignore */ }
   };
 
+  // Scope the dashboard to the signed-in user's own sites and select only the
+  // light columns the list renders. The heavy generated_content column (which
+  // can hold tens of MB of base64 images on legacy drafts) is fetched on demand
+  // in republish/re-export. Without the user_id filter, a super-admin's RLS
+  // returns every user's sites — pulling all those blobs and hanging the page.
   useEffect(() => {
+    if (!userId) return;
     async function fetchSites() {
+      setLoading(true);
       const { data, error } = await supabase
         .from('sites')
-        .select('*')
+        .select('id, user_id, business_info, template_id, slug, published_url, custom_domain, custom_domain_status, created_at, site_type, scheduler_enabled, widget_config_ids')
+        .eq('user_id', userId)
         .order('created_at', { ascending: false });
       if (error) {
         setFetchError('Failed to load sites. Please refresh.');
@@ -232,7 +243,19 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
       setLoading(false);
     }
     fetchSites();
-  }, []);
+  }, [userId]);
+
+  // Fetch the heavy generated_content for a single site only when needed
+  // (republish / re-export), keeping it out of the dashboard list payload.
+  async function loadGeneratedContent(siteId) {
+    const { data, error } = await supabase
+      .from('sites')
+      .select('generated_content')
+      .eq('id', siteId)
+      .single();
+    if (error) throw new Error('Could not load site content. Please try again.');
+    return data?.generated_content || null;
+  }
 
   const handleDelete = async (id) => {
     const ok = await confirmDialog('This will also unpublish it and remove any custom domain. This cannot be undone.', {
@@ -292,10 +315,11 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
 
       const { TEMPLATES } = await import('../../data/templates.js');
       const templateMeta = TEMPLATES[site.template_id];
+      const generatedContent = await loadGeneratedContent(site.id);
       await publishSite({
         siteId: site.id,
         businessInfo: site.business_info,
-        generatedCopy: site.generated_content,
+        generatedCopy: generatedContent,
         templateId: site.template_id,
         templateMeta: { ...templateMeta, colors: templateMeta?.colors || {} },
         images: {},
@@ -326,10 +350,11 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
     const { exportHtml } = await import('../../lib/exportHtml.js');
     const { TEMPLATES } = await import('../../data/templates.js');
     const templateMeta = TEMPLATES[site.template_id];
+    const generatedContent = await loadGeneratedContent(site.id);
     await exportHtml(
       site.template_id,
       site.business_info,
-      site.generated_content,
+      generatedContent,
       { ...templateMeta, colors: templateMeta?.colors || {} },
       {},
       site.widget_config_ids || [],
