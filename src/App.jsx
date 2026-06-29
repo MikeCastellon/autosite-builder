@@ -390,7 +390,16 @@ export default function App() {
     setBusinessType(site.business_info?.businessType || null);
     setBusinessInfo(site.business_info || {});
     setSelectedTemplate(site.template_id);
-    const copy = site.generated_content || {};
+    // The dashboard list query omits the heavy generated_content column (to keep
+    // the list light), so load it for this specific site before opening the
+    // editor — otherwise the editor renders with empty copy/images.
+    let fullGenerated = site.generated_content;
+    if (fullGenerated == null) {
+      const { data } = await supabase
+        .from('sites').select('generated_content').eq('id', site.id).single();
+      fullGenerated = data?.generated_content;
+    }
+    const copy = fullGenerated || {};
     const siteImages = copy._images || {};
     const savedCustomColors = copy._customColors || {};
     const savedCustomFonts = copy._customFonts || {};
