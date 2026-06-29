@@ -408,6 +408,20 @@ export default function App() {
     setEditingExistingSite(true);
     setStep(5);
     setView('wizard');
+
+    // Heal legacy base64 images: upload to storage, rewrite _images to URLs.
+    // Best-effort and non-blocking so the editor opens immediately. Old drafts
+    // with inline base64 otherwise blow past Netlify's publish payload limit.
+    (async () => {
+      try {
+        const { migrateLegacyImages } = await import('./lib/imageUpload.js');
+        const { migrated, images: fixed } = await migrateLegacyImages(siteImages, site.id);
+        if (migrated) {
+          setImages(fixed);
+          autoSave({ siteId: site.id, images: fixed });
+        }
+      } catch { /* leave base64 in place; retry next open */ }
+    })();
   };
 
   if (view === 'inquiries') {
@@ -774,6 +788,7 @@ export default function App() {
     return (
       <>
       <WebsitePreview
+        siteId={siteId}
         businessInfo={isDemoPreview ? DEMO_BUSINESS_INFO : { ...businessInfo, businessType: businessInfo?.businessType || businessType }}
         onBusinessInfoChange={isDemoPreview ? undefined : (next) => {
           const resolved = typeof next === 'function' ? next(businessInfo) : next;

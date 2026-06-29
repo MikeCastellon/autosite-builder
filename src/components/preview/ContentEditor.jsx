@@ -6,6 +6,7 @@ import { useAlert } from '../ui/AlertProvider.jsx';
 import { formatPhone } from '../../lib/formatPhone.js';
 import { formatPrice } from '../../lib/formatPrice.js';
 import { HOURS_DAYS, parseRange, rangeToString, expandHoursToDays } from '../../lib/businessHours.js';
+import { uploadSiteImage } from '../../lib/imageUpload.js';
 
 const EMOJI_GROUPS = {
   'Common': ['⭐', '✅', '🏆', '💎', '🔧', '🛞', '🚗', '🏎️', '💰', '💳', '🕐', '⏱️', '📞', '📍', '🎯', '✓', '★', '♦'],
@@ -286,13 +287,24 @@ function HoursEditor({ label, value, onChange }) {
   );
 }
 
-function ImageSlot({ label, value, onChange }) {
-  const handleFile = (e) => {
+function ImageSlot({ label, value, onChange, siteId, uploadKey }) {
+  const [uploading, setUploading] = useState(false);
+  const [err, setErr] = useState(null);
+
+  const handleFile = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => onChange(ev.target.result);
-    reader.readAsDataURL(file);
+    setErr(null);
+    setUploading(true);
+    try {
+      const url = await uploadSiteImage(file, { siteId, imageKey: uploadKey });
+      onChange(url);
+    } catch (ex) {
+      setErr(ex.message || 'Upload failed');
+    } finally {
+      setUploading(false);
+      e.target.value = ''; // allow re-selecting the same file
+    }
   };
 
   return (
@@ -303,20 +315,27 @@ function ImageSlot({ label, value, onChange }) {
           <div className="relative group rounded-lg overflow-hidden border border-gray-200">
             <img src={value} alt={label} className="w-full h-28 object-cover" />
             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-              <span className="text-white text-[12px] font-medium">Change Image</span>
+              <span className="text-white text-[12px] font-medium">{uploading ? 'Uploading…' : 'Change Image'}</span>
             </div>
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-20 border-2 border-dashed border-gray-200 rounded-lg hover:border-gray-400 transition text-gray-400 hover:text-gray-600">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="mb-1">
-              <path d="M10 4v12M4 10h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-            <span className="text-[12px]">Upload {label}</span>
+            {uploading ? (
+              <span className="text-[12px]">Uploading…</span>
+            ) : (
+              <>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="mb-1">
+                  <path d="M10 4v12M4 10h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+                <span className="text-[12px]">Upload {label}</span>
+              </>
+            )}
           </div>
         )}
-        <input type="file" accept="image/*" onChange={handleFile} className="sr-only" />
+        <input type="file" accept="image/*" onChange={handleFile} className="sr-only" disabled={uploading} />
       </label>
-      {value && (
+      {err && <p className="mt-1 text-[11px] text-red-500">{err}</p>}
+      {value && !uploading && (
         <button onClick={() => onChange(null)} className="mt-1 text-[11px] text-red-400 hover:text-red-600 transition">
           Remove
         </button>
@@ -330,7 +349,7 @@ function ImageSlot({ label, value, onChange }) {
 // When >3 photos are uploaded, the published gallery auto-switches to a
 // swipeable carousel (see GallerySection in templates/ImageLayers.jsx).
 const MAX_GALLERY = 12;
-function GallerySlots({ images, setImage }) {
+function GallerySlots({ images, setImage, siteId }) {
   // Lowest slot count we always show, expanded by either an existing high
   // slot in `images` or the user clicking "Add another photo".
   const usedKeys = Object.keys(images || {}).filter((k) => /^gallery\d+$/.test(k) && images[k]);
@@ -360,6 +379,8 @@ function GallerySlots({ images, setImage }) {
           label={`Gallery Photo ${i + 1}`}
           value={images?.[`gallery${i}`]}
           onChange={(v) => setImage(`gallery${i}`, v)}
+          siteId={siteId}
+          uploadKey={`gallery${i}`}
         />
       ))}
       {slotCount < MAX_GALLERY && (
@@ -391,7 +412,7 @@ function Toggle({ value, onChange, options }) {
   );
 }
 
-export default function ContentEditor({ isOpen, onClose, copy, images, onCopyChange, onImagesChange, templateMeta, templateId, customColors = {}, onCustomColors, customFonts = {}, onCustomFonts, businessType, onSwitchTemplate, businessInfo, onBusinessInfoChange }) {
+export default function ContentEditor({ isOpen, onClose, siteId, copy, images, onCopyChange, onImagesChange, templateMeta, templateId, customColors = {}, onCustomColors, customFonts = {}, onCustomFonts, businessType, onSwitchTemplate, businessInfo, onBusinessInfoChange }) {
   const { confirm: confirmDialog } = useAlert();
   const setBiz = (key, val) => {
     if (!onBusinessInfoChange) return;
@@ -703,8 +724,8 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
 
           {activeSection === 'hero' && (
             <>
-              <ImageSlot label="Hero Background" value={images?.hero} onChange={(v) => setImage('hero', v)} />
-              <ImageSlot label="Business Logo" value={images?.logo} onChange={(v) => setImage('logo', v)} />
+              <ImageSlot label="Hero Background" value={images?.hero} onChange={(v) => setImage('hero', v)} siteId={siteId} uploadKey="hero" />
+              <ImageSlot label="Business Logo" value={images?.logo} onChange={(v) => setImage('logo', v)} siteId={siteId} uploadKey="logo" />
               <hr className="my-3 border-gray-100" />
               <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Hero Layout</p>
               <Toggle
@@ -934,12 +955,17 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
                                 <span className="text-[11px]">+ Upload Image</span>
                               </div>
                             )}
-                            <input type="file" accept="image/*" onChange={(e) => {
+                            <input type="file" accept="image/*" onChange={async (e) => {
                               const file = e.target.files?.[0];
                               if (!file) return;
-                              const reader = new FileReader();
-                              reader.onload = (ev) => updateProduct(i, 'image', ev.target.result);
-                              reader.readAsDataURL(file);
+                              try {
+                                const url = await uploadSiteImage(file, { siteId, imageKey: `product${i}` });
+                                updateProduct(i, 'image', url);
+                              } catch (ex) {
+                                console.error('Product image upload failed:', ex.message);
+                              } finally {
+                                e.target.value = '';
+                              }
                             }} className="sr-only" />
                           </label>
                           {prod.image && (
@@ -1026,7 +1052,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
                         </div>
                         <input type="text" value={shade.legal ?? ''} onChange={(e) => updateShade(i, 'legal', e.target.value)} placeholder="Legal note (e.g. Rear-legal)" className="w-full bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 text-[12px] text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-400" />
                         <div className="mt-2">
-                          <ImageSlot label={`Shade ${i + 1} Photo`} value={images?.[`shade${i}`]} onChange={(v) => setImage(`shade${i}`, v)} />
+                          <ImageSlot label={`Shade ${i + 1} Photo`} value={images?.[`shade${i}`]} onChange={(v) => setImage(`shade${i}`, v)} siteId={siteId} uploadKey={`shade${i}`} />
                         </div>
                       </div>
                     ))}
@@ -1102,7 +1128,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
           {activeSection === 'about' && (
             <>
               {(copy?.aboutLayout || 'image') === 'image' && (
-                <ImageSlot label="About Photo" value={images?.about} onChange={(v) => setImage('about', v)} />
+                <ImageSlot label="About Photo" value={images?.about} onChange={(v) => setImage('about', v)} siteId={siteId} uploadKey="about" />
               )}
               <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Left Panel Style</p>
               <Toggle
@@ -1214,7 +1240,7 @@ export default function ContentEditor({ isOpen, onClose, copy, images, onCopyCha
           )}
 
           {activeSection === 'gallery' && (
-            <GallerySlots images={images} setImage={setImage} />
+            <GallerySlots images={images} setImage={setImage} siteId={siteId} />
           )}
 
           {activeSection === 'colors' && templateMeta && (
