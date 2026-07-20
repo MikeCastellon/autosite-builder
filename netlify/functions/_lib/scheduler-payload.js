@@ -1,5 +1,6 @@
 import { servicePriceCents } from './deposit-math.js';
 import { normalizeAppearance } from './appearance.js';
+import { enabledVehicleTypes } from './vehicle-pricing.js';
 
 function formatCents(cents) {
   if (typeof cents !== 'number' || cents <= 0) return '';
@@ -42,6 +43,7 @@ export function buildSchedulerPayload(site) {
     slot_granularity_minutes: cfg.slot_granularity_minutes ?? 30,
     cta_selector: cfg.cta_selector || '',
     cancellation_policy: cfg.cancellation_policy || '',
+    vehicle_types: enabledVehicleTypes(cfg.vehicle_types).map((t) => ({ id: t.id, name: t.name })),
     services: enabledServices.map((s) => {
       const cents = servicePriceCents(s);
       const enabledAddons = Array.isArray(s.addons)
@@ -51,6 +53,7 @@ export function buildSchedulerPayload(site) {
               id: a.id,
               name: a.name,
               price_cents: typeof a.price_cents === 'number' && a.price_cents > 0 ? a.price_cents : 0,
+              ...(a.prices && typeof a.prices === 'object' ? { prices: a.prices } : {}),
             }))
         : [];
       return {
@@ -60,6 +63,7 @@ export function buildSchedulerPayload(site) {
         price: s.price ?? (cents != null ? formatCents(cents) : ''),
         price_cents: cents,
         description: s.description ?? '',
+        ...(s.variants && typeof s.variants === 'object' ? { variants: s.variants } : {}),
         addons: enabledAddons,
       };
     }),
