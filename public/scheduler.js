@@ -765,8 +765,8 @@
         vehicle_make: data.vehicle_make,
         vehicle_model: data.vehicle_model,
         vehicle_year: Number(data.vehicle_year),
-        vehicle_size: vt ? sizeFromTypeName(vt.name) : data.vehicle_size,
-        vehicle_type_id: vt ? vt.id : undefined,
+        vehicle_size: vt ? sizeFromTypeName(vt.name) : (data.vehicle_size || undefined),
+        vehicle_type_id: data.vehicle_type_id || undefined,
         service_address: data.service_address || undefined,
         notes: combinedNotes || undefined,
         referral_source: undefined,
@@ -1282,7 +1282,7 @@
       var opts = options.map(function (o) {
         var value = typeof o === 'string' ? o : o.value;
         var display = typeof o === 'string' ? (o.charAt(0).toUpperCase() + o.slice(1)) : o.label;
-        return '<option value="' + value + '">' + display + '</option>';
+        return '<option value="' + esc(value) + '">' + esc(display) + '</option>';
       }).join('');
       var chevronColor = themeKey === 'light' ? '%23888' : '%23ccc';
       return '<label style="' + labelStyle() + '">' + label + ' <span style="color:' + brand + '">*</span>' +
