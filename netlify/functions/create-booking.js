@@ -113,7 +113,7 @@ export const handler = async (event) => {
   // We snapshot full add-on rows onto the booking so subsequent edits to
   // the owner's menu don't rewrite history. Unknown / disabled IDs are
   // rejected — the user wants the price to be accurate.
-  const requestedAddonIds = Array.isArray(payload.addon_ids) ? payload.addon_ids : [];
+  const requestedAddonIds = [...new Set(Array.isArray(payload.addon_ids) ? payload.addon_ids : [])];
   let resolvedAddons = [];
   if (requestedAddonIds.length > 0) {
     if (!chosenService) {
@@ -122,9 +122,12 @@ export const handler = async (event) => {
     const available = Array.isArray(chosenService.addons) ? chosenService.addons : [];
     for (const id of requestedAddonIds) {
       const match = available.find((a) => a.id === id && a.enabled !== false);
-      const addonPrice = match ? addonPriceForVehicle(match, chosenVehicleType?.id) : null;
-      if (!match || addonPrice == null) {
+      if (!match) {
         return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Unknown or disabled add-on' }) };
+      }
+      const addonPrice = addonPriceForVehicle(match, chosenVehicleType?.id);
+      if (addonPrice == null) {
+        return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'That add-on is not offered for the selected vehicle type' }) };
       }
       resolvedAddons.push({ id: match.id, name: match.name, price_cents: addonPrice });
     }

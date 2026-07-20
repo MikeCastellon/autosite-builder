@@ -62,6 +62,11 @@ export const handler = async (event) => {
     ?? (cfg.services || []).find((s) => s.enabled !== false)
     ?? null;
   const variant = resolveVariant(service, vehicleTypeId);
+  // A not-offered service/vehicle combination has no bookable slots — agree
+  // with create-booking's 400 instead of silently quoting 60-minute slots.
+  if (service && vehicleTypeId && !variant) {
+    return { statusCode: 200, headers: CORS, body: JSON.stringify({ slots: [] }) };
+  }
   const durationMin = variant?.duration_minutes ?? 60;
 
   const weekday = WEEKDAY_KEYS[new Date(`${date}T00:00:00.000Z`).getUTCDay()];
