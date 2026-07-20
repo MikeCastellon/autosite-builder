@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { supabase } from '../../../lib/supabase.js';
+import { openBillingPortal } from '../../../lib/billingPortal.js';
 import { shouldShowUpgradeCard } from '../../../lib/subscriptionGating.js';
 import UpgradeProPanel from '../../ui/UpgradeProPanel.jsx';
+import { useAlert } from '../../ui/AlertProvider.jsx';
 
 // Overlays the children (e.g. the bookings calendar) for non-Pro users.
 // Children stay rendered underneath so customers see what they're missing —
@@ -18,6 +19,7 @@ export default function SubscribeGate({
   subheading = 'Unlock the calendar behind this overlay — plus everything else included with Pro.',
 }) {
   const [portalBusy, setPortalBusy] = useState(false);
+  const { toast } = useAlert();
   const showCard = shouldShowUpgradeCard(profile);
   const pastDue = profile?.subscription_status === 'past_due';
 
@@ -25,17 +27,9 @@ export default function SubscribeGate({
     e.preventDefault();
     if (portalBusy) return;
     setPortalBusy(true);
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData?.session?.access_token;
-      const res = await fetch('/.netlify/functions/stripe-portal-url', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const body = await res.json().catch(() => ({}));
-      if (body.url) window.open(body.url, '_blank', 'noopener');
-    } finally {
-      setPortalBusy(false);
-    }
+    try { await openBillingPortal(); }
+    catch (err) { toast(err.message || 'Could not open billing — please try again.', 'error'); }
+    finally { setPortalBusy(false); }
   };
 
   if (!showCard) return children;

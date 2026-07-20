@@ -193,15 +193,15 @@ export const ARTICLES = [
       },
       {
         heading: 'How to upgrade',
-        body: "Click the **Free plan** pill on the Dashboard, or the **Upgrade to Pro** button. You'll see exactly what Pro includes and a **Subscribe** button that takes you to Shopify checkout. It's $19.99/month, billed through Shopify.",
+        body: "Click the **Free plan** pill on the Dashboard, or the **Upgrade to Pro** button. You'll see exactly what Pro includes and a **Subscribe** button that takes you to a secure Stripe checkout. It's $19.99/month.",
       },
       {
         heading: 'After you subscribe',
-        body: "You're upgraded immediately once Shopify confirms payment (usually under a minute). Refresh the Dashboard — the **Free plan** pill is gone, **Bookings** and **Customers** nav items appear, and the **Powered by** bar disappears from your published site.",
+        body: "You're upgraded immediately once payment is confirmed (usually under a minute). Refresh the Dashboard — the **Free plan** pill is gone, **Bookings** and **Customers** nav items appear, and the **Powered by** bar disappears from your published site.",
       },
       {
         heading: 'Cancel anytime',
-        body: "Cancel through the link in any Shopify receipt email. You keep Pro access until the end of your current billing period, then revert to Free. Your site stays up; Bookings and Customers go read-only until you renew.",
+        body: "Open the account menu (your avatar, top right) and click **Manage billing** — it opens a secure Stripe portal where you can cancel, update your card, or download invoices. You keep Pro access until the end of your current billing period, then revert to Free. Your site stays up; Bookings and Customers go read-only until you renew.\n\nSubscribed back when billing ran through Shopify? Cancel through the link in any Shopify receipt email instead.",
       },
     ],
   },

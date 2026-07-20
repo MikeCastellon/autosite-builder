@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { canSeeBookingsNav } from '../../lib/subscriptionGating.js';
+import { openBillingPortal } from '../../lib/billingPortal.js';
 import NeedAssistanceButton from './NeedAssistanceButton.jsx';
+import { useAlert } from './AlertProvider.jsx';
 
 const ACG_LOGO = 'https://www.autocaregenius.com/cdn/shop/files/v11_1.svg?v=1760731533&width=200';
 
@@ -25,7 +27,20 @@ export default function AppHeader({
 }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [billingBusy, setBillingBusy] = useState(false);
+  const { toast } = useAlert();
   const showBookingsNav = canSeeBookingsNav(profile);
+  // Only Stripe-billed subscribers have a Customer Portal to manage; legacy
+  // Shopify subscribers cancel via their Shopify receipt email instead.
+  const hasBilling = !!profile?.stripe_customer_id;
+
+  const handleManageBilling = async () => {
+    if (billingBusy) return;
+    setBillingBusy(true);
+    try { await openBillingPortal(); }
+    catch (e) { toast(e.message || 'Could not open billing — please try again.', 'error'); }
+    finally { setBillingBusy(false); }
+  };
   const isAdmin = !!profile?.is_super_admin;
   const isConnected = !!profile?.stripe_connect_charges_enabled;
   const initial = userEmail ? userEmail[0].toUpperCase() : '?';
@@ -103,6 +118,15 @@ export default function AppHeader({
                       Profile
                     </button>
                   )}
+                  {hasBilling && (
+                    <button
+                      onClick={() => { setDropdownOpen(false); handleManageBilling(); }}
+                      disabled={billingBusy}
+                      className="w-full text-left px-4 py-2.5 text-[13px] text-[#1a1a1a] hover:bg-[#faf9f7] transition-colors font-medium disabled:opacity-50"
+                    >
+                      {billingBusy ? 'Opening billing...' : 'Manage billing'}
+                    </button>
+                  )}
                   {onSignOut && (
                     <button
                       onClick={() => { setDropdownOpen(false); onSignOut(); }}
@@ -167,6 +191,15 @@ export default function AppHeader({
                 }`}
               >
                 Profile
+              </button>
+            )}
+            {hasBilling && (
+              <button
+                onClick={() => { setMobileOpen(false); handleManageBilling(); }}
+                disabled={billingBusy}
+                className="w-full text-left px-3 py-2.5 rounded-lg text-[14px] font-medium text-[#1a1a1a] hover:bg-black/[0.04] transition-colors disabled:opacity-50"
+              >
+                {billingBusy ? 'Opening billing...' : 'Manage billing'}
               </button>
             )}
             {onSignOut && (
