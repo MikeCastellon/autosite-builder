@@ -173,7 +173,7 @@ export async function newBookingToOwner({ booking, site, ownerEmail }) {
       <p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Customer:</strong> ${esc(b.customer_name)}</p>
       <p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Email:</strong> <a href="mailto:${esc(b.customer_email)}" style="color:#cc0000;text-decoration:none;">${esc(b.customer_email)}</a></p>
       <p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Phone:</strong> <a href="tel:${esc(b.customer_phone)}" style="color:#cc0000;text-decoration:none;">${esc(b.customer_phone)}</a></p>
-      ${vehicleLine ? `<p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Vehicle:</strong> ${esc(vehicleLine)}${b.vehicle_size ? ' (' + esc(b.vehicle_size) + ')' : ''}</p>` : ''}
+      ${vehicleLine ? `<p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Vehicle:</strong> ${esc(vehicleLine)}${(b.vehicle_type_name || b.vehicle_size) ? ' (' + esc(b.vehicle_type_name || b.vehicle_size) + ')' : ''}</p>` : ''}
       ${b.service_name ? `<p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Service:</strong> ${esc(b.service_name)}</p>` : ''}
       ${b.service_address ? `<p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Service address:</strong> ${esc(b.service_address)}</p>` : ''}
       ${b.notes ? `<p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Notes:</strong> ${esc(b.notes)}</p>` : ''}
@@ -187,7 +187,7 @@ export async function newBookingToOwner({ booking, site, ownerEmail }) {
     cta: { label: 'Open in your dashboard', href: dashLink },
     body: detailCard,
   });
-  const text = `New booking request for ${name}\n\n${b.customer_name} (${b.customer_email}, ${b.customer_phone}) wants to book for ${formatWhen(b.preferred_at)}.\nVehicle: ${b.vehicle_year} ${b.vehicle_make} ${b.vehicle_model} (${b.vehicle_size})\n${b.service_name ? 'Service: ' + b.service_name + '\n' : ''}${b.service_address ? 'Service address: ' + b.service_address + '\n' : ''}${b.notes ? 'Notes: ' + b.notes + '\n' : ''}${addonsBreakdownText(b)}\nOpen: ${dashLink}`;
+  const text = `New booking request for ${name}\n\n${b.customer_name} (${b.customer_email}, ${b.customer_phone}) wants to book for ${formatWhen(b.preferred_at)}.\nVehicle: ${b.vehicle_year} ${b.vehicle_make} ${b.vehicle_model} (${b.vehicle_type_name || b.vehicle_size})\n${b.service_name ? 'Service: ' + b.service_name + '\n' : ''}${b.service_address ? 'Service address: ' + b.service_address + '\n' : ''}${b.notes ? 'Notes: ' + b.notes + '\n' : ''}${addonsBreakdownText(b)}\nOpen: ${dashLink}`;
 
   try {
     const res = await client.sendEmail({
@@ -224,7 +224,7 @@ export async function bookingReceivedToCustomer({ booking, site, isSimple }) {
   const detailCard = `
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#fafafa;border:1px solid #f4f4f5;border-radius:12px;padding:16px 18px;margin-bottom:8px;"><tr><td>
       ${b.service_name ? `<p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Service:</strong> ${esc(b.service_name)}</p>` : ''}
-      ${vehicleLine ? `<p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Vehicle:</strong> ${esc(vehicleLine)}${b.vehicle_size ? ' (' + esc(b.vehicle_size) + ')' : ''}</p>` : ''}
+      ${vehicleLine ? `<p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Vehicle:</strong> ${esc(vehicleLine)}${(b.vehicle_type_name || b.vehicle_size) ? ' (' + esc(b.vehicle_type_name || b.vehicle_size) + ')' : ''}</p>` : ''}
       ${b.service_address ? `<p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Service address:</strong> ${esc(b.service_address)}</p>` : ''}
       ${b.notes ? `<p style="margin:0;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Notes:</strong> ${esc(b.notes).replace(/\n/g, '<br/>')}</p>` : ''}
     </td></tr></table>
@@ -244,7 +244,7 @@ export async function bookingReceivedToCustomer({ booking, site, isSimple }) {
       ? `We'll reach out shortly to confirm a time that works for you.\n`
       : `You requested ${formatWhen(b.preferred_at)}. We'll confirm availability shortly.\n`) +
     (b.service_name ? `\nService: ${b.service_name}` : '') +
-    (vehicleLine ? `\nVehicle: ${vehicleLine}${b.vehicle_size ? ' (' + b.vehicle_size + ')' : ''}` : '') +
+    (vehicleLine ? `\nVehicle: ${vehicleLine}${(b.vehicle_type_name || b.vehicle_size) ? ' (' + (b.vehicle_type_name || b.vehicle_size) + ')' : ''}` : '') +
     (b.service_address ? `\nService address: ${b.service_address}` : '') +
     (b.notes ? `\nNotes: ${b.notes}` : '') +
     addonsBreakdownText(b) +
@@ -341,7 +341,7 @@ export async function bookingReminderToCustomer({ booking, site, customMessage }
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#fafafa;border:1px solid #f4f4f5;border-radius:12px;padding:16px 18px;margin-bottom:8px;"><tr><td>
       <p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">When:</strong> ${esc(formatWhen(b.preferred_at))}</p>
       ${b.service_name ? `<p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Service:</strong> ${esc(b.service_name)}</p>` : ''}
-      ${vehicleLine ? `<p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Vehicle:</strong> ${esc(vehicleLine)}${b.vehicle_size ? ' (' + esc(b.vehicle_size) + ')' : ''}</p>` : ''}
+      ${vehicleLine ? `<p style="margin:0 0 4px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Vehicle:</strong> ${esc(vehicleLine)}${(b.vehicle_type_name || b.vehicle_size) ? ' (' + esc(b.vehicle_type_name || b.vehicle_size) + ')' : ''}</p>` : ''}
       ${b.service_address ? `<p style="margin:0;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Address:</strong> ${esc(b.service_address)}</p>` : ''}
     </td></tr></table>
     ${bizBlockHtml}
@@ -357,7 +357,7 @@ export async function bookingReminderToCustomer({ booking, site, customMessage }
     (customMessage || `Your appointment is on ${formatWhen(b.preferred_at)}.`) +
     `\n\nWhen: ${formatWhen(b.preferred_at)}` +
     (b.service_name ? `\nService: ${b.service_name}` : '') +
-    (vehicleLine ? `\nVehicle: ${vehicleLine}${b.vehicle_size ? ' (' + b.vehicle_size + ')' : ''}` : '') +
+    (vehicleLine ? `\nVehicle: ${vehicleLine}${(b.vehicle_type_name || b.vehicle_size) ? ' (' + (b.vehicle_type_name || b.vehicle_size) + ')' : ''}` : '') +
     (b.service_address ? `\nAddress: ${b.service_address}` : '') +
     bizBlockText +
     `\n\nNeed to reschedule? Just reply to this email.`;
