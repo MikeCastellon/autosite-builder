@@ -8,6 +8,7 @@ export default function BookCustomerModal({ customer, userId, onClose, onBooked 
   const [services, setServices] = useState([]);
   const [serviceId, setServiceId] = useState('');
   const [serviceName, setServiceName] = useState('');
+  const [vehicleTypeId, setVehicleTypeId] = useState('');
   const [when, setWhen] = useState('');              // datetime-local string
   const [vehicleMake, setVehicleMake] = useState(customer?.manualContact?.vehicleMake || '');
   const [vehicleModel, setVehicleModel] = useState(customer?.manualContact?.vehicleModel || '');
@@ -41,6 +42,7 @@ export default function BookCustomerModal({ customer, userId, onClose, onBooked 
 
   // When site changes, reload its services.
   useEffect(() => {
+    setVehicleTypeId('');
     const site = sites.find((s) => s.id === siteId);
     const svcs = ((site?.scheduler_config?.services) || []).filter((s) => s.enabled !== false);
     setServices(svcs);
@@ -80,6 +82,7 @@ export default function BookCustomerModal({ customer, userId, onClose, onBooked 
           vehicle_model: vehicleModel,
           vehicle_year: vehicleYear ? Number(vehicleYear) : null,
           vehicle_size: vehicleSize,
+          vehicle_type_id: vehicleTypeId || null,
           service_id: serviceId || null,
           service_name: serviceName || null,
           notes,
@@ -95,6 +98,25 @@ export default function BookCustomerModal({ customer, userId, onClose, onBooked 
       setBusy(false);
     }
   }
+
+  const site = sites.find((s) => s.id === siteId);
+  const siteVehicleTypes = (site?.scheduler_config?.vehicle_types || []).filter((t) => t && t.enabled !== false);
+  const chosenService = services.find((s) => s.id === serviceId) || null;
+  const chosenVariant = (() => {
+    if (!chosenService) return null;
+    const base = {
+      price_cents: typeof chosenService.price_cents === 'number' && chosenService.price_cents > 0 ? chosenService.price_cents : null,
+      duration_minutes: chosenService.duration_minutes || 60,
+    };
+    if (!vehicleTypeId || !chosenService.variants) return base;
+    const v = chosenService.variants[vehicleTypeId];
+    if (!v) return base;
+    if (v.enabled === false) return null;
+    return {
+      price_cents: typeof v.price_cents === 'number' && v.price_cents > 0 ? v.price_cents : base.price_cents,
+      duration_minutes: typeof v.duration_minutes === 'number' && v.duration_minutes > 0 ? v.duration_minutes : base.duration_minutes,
+    };
+  })();
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
@@ -151,6 +173,31 @@ export default function BookCustomerModal({ customer, userId, onClose, onBooked 
             </div>
           )}
 
+          {siteVehicleTypes.length > 0 && (
+            <div>
+              <label className="block text-xs font-medium text-[#1a1a1a] mb-1">Vehicle type *</label>
+              <select
+                required
+                value={vehicleTypeId}
+                onChange={(e) => setVehicleTypeId(e.target.value)}
+                className="w-full border border-black/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#cc0000]/30"
+              >
+                <option value="" disabled>Select vehicle type…</option>
+                {siteVehicleTypes.map((t) => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))}
+              </select>
+              {chosenVariant && chosenVariant.price_cents != null && (
+                <p className="text-[11px] text-[#888] mt-1">
+                  {`$${(chosenVariant.price_cents / 100) % 1 === 0 ? chosenVariant.price_cents / 100 : (chosenVariant.price_cents / 100).toFixed(2)} · ${chosenVariant.duration_minutes} min for this vehicle`}
+                </p>
+              )}
+              {chosenService && vehicleTypeId && !chosenVariant && (
+                <p className="text-[11px] text-amber-600 mt-1">This service is normally not offered for that vehicle — it will book at the base price.</p>
+              )}
+            </div>
+          )}
+
           <div>
             <label className="block text-xs font-medium text-[#1a1a1a] mb-1">Date + time *</label>
             <input
@@ -169,18 +216,20 @@ export default function BookCustomerModal({ customer, userId, onClose, onBooked 
               <TextField label="Make" value={vehicleMake} onChange={setVehicleMake} />
               <TextField label="Model" value={vehicleModel} onChange={setVehicleModel} />
               <TextField label="Year" type="number" value={vehicleYear} onChange={setVehicleYear} />
-              <div>
-                <label className="block text-xs font-medium text-[#1a1a1a] mb-1">Size</label>
-                <select
-                  value={vehicleSize}
-                  onChange={(e) => setVehicleSize(e.target.value)}
-                  className="w-full border border-black/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#cc0000]/30"
-                >
-                  {['sedan','suv','truck','van','other'].map((v) => (
-                    <option key={v} value={v}>{v.charAt(0).toUpperCase() + v.slice(1)}</option>
-                  ))}
-                </select>
-              </div>
+              {siteVehicleTypes.length === 0 && (
+                <div>
+                  <label className="block text-xs font-medium text-[#1a1a1a] mb-1">Size</label>
+                  <select
+                    value={vehicleSize}
+                    onChange={(e) => setVehicleSize(e.target.value)}
+                    className="w-full border border-black/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#cc0000]/30"
+                  >
+                    {['sedan','suv','truck','van','other'].map((v) => (
+                      <option key={v} value={v}>{v.charAt(0).toUpperCase() + v.slice(1)}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
           </div>
 
