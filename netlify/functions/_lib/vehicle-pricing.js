@@ -31,7 +31,7 @@ export function defaultVehicleTypes() {
 export function normalizeVehicleTypes(input) {
   if (!Array.isArray(input)) return [];
   return input
-    .filter((t) => t && typeof t.id === 'string' && typeof t.name === 'string' && t.name.trim() !== '')
+    .filter((t) => t && typeof t.id === 'string' && t.id.trim() !== '' && typeof t.name === 'string' && t.name.trim() !== '')
     .map((t) => ({ id: t.id, name: t.name.trim(), enabled: t.enabled !== false }));
 }
 

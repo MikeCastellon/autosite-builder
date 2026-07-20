@@ -56,6 +56,13 @@ describe('normalizeVehicleTypes / enabledVehicleTypes', () => {
     expect(normalizeVehicleTypes(undefined)).toEqual([]);
     expect(normalizeVehicleTypes(null)).toEqual([]);
   });
+
+  it('drops blank/whitespace-only ids', () => {
+    expect(normalizeVehicleTypes([
+      { id: '  ', name: 'Sedan' },
+      { id: '', name: 'SUV' },
+    ])).toEqual([]);
+  });
 });
 
 describe('resolveVariant', () => {
