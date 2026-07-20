@@ -634,12 +634,38 @@
           '</label>';
       }
 
+      // Vehicle-typed sites ask for the vehicle type (per-vehicle pricing);
+      // legacy sites keep the old Size select exactly as before.
+      var hasVehicleTypes = vehicleTypes().length > 0;
+      var vehicleField;
+      if (hasVehicleTypes) {
+        var vtOpts = vehicleTypes().map(function (t) {
+          return { value: t.id, label: t.name };
+        });
+        vehicleField = select('vehicle_type_id', 'Vehicle type', vtOpts);
+      } else {
+        vehicleField = select('vehicle_size', 'Size', [
+          {value:'sedan', label:'Sedan'},
+          {value:'suv', label:'SUV'},
+          {value:'truck', label:'Truck'},
+          {value:'van', label:'Van'},
+          {value:'other', label:'Other'},
+        ]);
+      }
+      // Per-vehicle price hint: under the service select, or under the
+      // vehicle row when there's only one service. Filled by
+      // updateSimplePrice() below.
+      var priceHint = hasVehicleTypes
+        ? '<div id="acg-simple-price" style="font-size:12px;font-weight:700;color:' + brand + ';margin:-4px 0 12px;"></div>'
+        : '';
+
       card.innerHTML = brandBar() + brandHeader() +
         sectionTitle('Request an appointment', cfg.welcome_text || '') +
         bodyOpen() +
           '<form id="acg-booking-form" novalidate>' +
-            (serviceOptionsHtml ||
-              (firstService ? '<input type="hidden" name="service_id" value="' + esc(firstService.id) + '" />' : '')) +
+            (serviceOptionsHtml
+              ? serviceOptionsHtml + priceHint
+              : (firstService ? '<input type="hidden" name="service_id" value="' + esc(firstService.id) + '" />' : '')) +
             row(
               field('customer_name', 'Name', 'text', true),
               field('customer_email', 'Email', 'email', true)
@@ -654,15 +680,10 @@
               field('vehicle_year', 'Year', 'number', true, 'min="1900" max="2100"')
             ) +
             row(
-              select('vehicle_size', 'Size', [
-                {value:'sedan', label:'Sedan'},
-                {value:'suv', label:'SUV'},
-                {value:'truck', label:'Truck'},
-                {value:'van', label:'Van'},
-                {value:'other', label:'Other'},
-              ]),
+              vehicleField,
               field('service_address', 'Service address (if mobile)', 'text', false)
             ) +
+            (serviceOptionsHtml ? '' : priceHint) +
             fieldTextarea('notes', 'What can we help with?', false) +
             '<input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;" aria-hidden="true" />' +
             '<div id="acg-form-error" style="color:' + brand + ';font-size:13px;margin:8px 0;display:none;font-weight:600;"></div>' +
@@ -672,6 +693,39 @@
           '</form>' +
         bodyClose();
       wireClose();
+      var svcSelect = card.querySelector('select[name="service_id"]');
+      var vtSelect = card.querySelector('select[name="vehicle_type_id"]');
+      // Resolve the currently selected service + vehicle type and show the
+      // per-vehicle price under the selects. Cleared when unresolvable.
+      function updateSimplePrice() {
+        var hintEl = card.querySelector('#acg-simple-price');
+        if (!hintEl) return;
+        var svc = firstService;
+        if (svcSelect) {
+          for (var i = 0; i < services.length; i++) {
+            if (services[i].id === svcSelect.value) { svc = services[i]; break; }
+          }
+        }
+        var vtId = vtSelect ? vtSelect.value : null;
+        var vtName = '';
+        if (vtId) {
+          var vts = vehicleTypes();
+          for (var j = 0; j < vts.length; j++) {
+            if (vts[j].id === vtId) { vtName = vts[j].name; break; }
+          }
+        }
+        var v = svc ? variantFor(svc, vtId || null) : null;
+        var label = '';
+        if (v && typeof v.price_cents === 'number' && v.price_cents > 0) {
+          label = (svc ? svc.name : '') + (vtName ? ' · ' + vtName : '') + ' — ' + formatCents(v.price_cents);
+        }
+        hintEl.textContent = label;
+      }
+      if (hasVehicleTypes) {
+        if (svcSelect) svcSelect.addEventListener('change', updateSimplePrice);
+        if (vtSelect) vtSelect.addEventListener('change', updateSimplePrice);
+        updateSimplePrice();
+      }
       card.querySelector('#acg-booking-form').addEventListener('submit', function (e) { e.preventDefault(); submitSimple(services); });
     }
 
@@ -684,6 +738,15 @@
       // Resolve selected service if the user picked one from a dropdown.
       if (data.service_id && services) {
         state.service = services.find(function (s) { return s.id === data.service_id; }) || state.service;
+      }
+
+      // Resolve the chosen vehicle type (vehicle-typed sites only).
+      var vt = null;
+      if (data.vehicle_type_id) {
+        var vts = vehicleTypes();
+        for (var vi = 0; vi < vts.length; vi++) {
+          if (vts[vi].id === data.vehicle_type_id) { vt = vts[vi]; break; }
+        }
       }
 
       // Simple mode has no slot — stash a far-future placeholder so the
@@ -702,7 +765,8 @@
         vehicle_make: data.vehicle_make,
         vehicle_model: data.vehicle_model,
         vehicle_year: Number(data.vehicle_year),
-        vehicle_size: data.vehicle_size,
+        vehicle_size: vt ? sizeFromTypeName(vt.name) : data.vehicle_size,
+        vehicle_type_id: vt ? vt.id : undefined,
         service_address: data.service_address || undefined,
         notes: combinedNotes || undefined,
         referral_source: undefined,
