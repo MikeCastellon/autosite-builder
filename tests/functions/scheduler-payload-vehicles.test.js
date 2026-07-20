@@ -81,6 +81,20 @@ describe('buildSchedulerPayload — vehicle types', () => {
     expect(p.services[0].addons[0].prices).toBeUndefined();
   });
 
+  it('drops an add-on whose prices only reference disabled vehicle types', () => {
+    const p = buildSchedulerPayload(siteWith({
+      vehicle_types: [{ id: 'vt_a', name: 'Sedan' }],
+      services: [{
+        id: 'svc_1', name: 'Detail', duration_minutes: 60, price_cents: 9900, enabled: true,
+        addons: [
+          { id: 'add_1', name: 'Truck only', price_cents: 5000, enabled: true, prices: { vt_gone: 5000 } },
+          { id: 'add_2', name: 'Everywhere', price_cents: 2500, enabled: true },
+        ],
+      }],
+    }));
+    expect(p.services[0].addons.map((a) => a.id)).toEqual(['add_2']);
+  });
+
   it('omits variants entirely when no vehicle types are saved', () => {
     const p = buildSchedulerPayload(siteWith({
       services: [{

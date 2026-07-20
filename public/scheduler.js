@@ -530,6 +530,9 @@
 
     function render() {
       var enabledServices = (cfg.services || []).filter(function (s) { return s.enabled !== false; });
+      if (vehicleTypes().length > 0) {
+        enabledServices = enabledServices.filter(function (s) { return offeredVehicleTypes(s).length > 0; });
+      }
       if (cfg.booking_mode === 'simple') {
         if (!state.details.submitted) return renderSimpleForm(enabledServices);
         return renderSuccess();
@@ -559,6 +562,9 @@
     // date/time + details. Used by stepBar().
     function stepCounts() {
       var enabledServices = (cfg.services || []).filter(function (s) { return s.enabled !== false; });
+      if (vehicleTypes().length > 0) {
+        enabledServices = enabledServices.filter(function (s) { return offeredVehicleTypes(s).length > 0; });
+      }
       var anyServiceHasAddons = enabledServices.some(function (s) { return serviceAddons(s).length > 0; });
       var showServicePicker = enabledServices.length > 1 || anyServiceHasAddons || vehicleTypes().length > 0;
       var offered = state.service ? offeredVehicleTypes(state.service) : vehicleTypes();
@@ -695,6 +701,11 @@
     }
 
     function renderServices(services) {
+      // A service disabled for every vehicle type can't be booked — don't
+      // show a priced card that dead-ends on an empty vehicle screen.
+      if (vehicleTypes().length > 0) {
+        services = services.filter(function (s) { return offeredVehicleTypes(s).length > 0; });
+      }
       var counts = stepCounts();
       var items = services.map(function (s) {
         var priceLabel = servicePriceLabel(s);
@@ -873,6 +884,7 @@
           state.vehicleType = null;
         } else {
           state.service = null;
+          state.vehicleType = null;
         }
         render();
       });

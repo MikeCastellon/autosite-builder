@@ -63,17 +63,25 @@ export function buildSchedulerPayload(site) {
       const enabledAddons = Array.isArray(s.addons)
         ? s.addons
             .filter((a) => a && a.enabled !== false && typeof a.name === 'string' && a.name.trim() !== '')
-            .map((a) => ({
-              id: a.id,
-              name: a.name,
-              price_cents: typeof a.price_cents === 'number' && a.price_cents > 0 ? a.price_cents : 0,
-              ...(a.prices && typeof a.prices === 'object' && !Array.isArray(a.prices)
-                ? (() => {
-                    const filtered = pickVehicleKeys(a.prices, vehicleTypeIds);
-                    return Object.keys(filtered).length > 0 ? { prices: filtered } : {};
-                  })()
-                : {}),
-            }))
+            .map((a) => {
+              const base = {
+                id: a.id,
+                name: a.name,
+                price_cents: typeof a.price_cents === 'number' && a.price_cents > 0 ? a.price_cents : 0,
+              };
+              if (a.prices && typeof a.prices === 'object' && !Array.isArray(a.prices)) {
+                // An add-on whose prices only reference vehicle types the
+                // owner no longer offers can't be booked anywhere — dropping
+                // the map would make the widget treat it as legacy (offered
+                // everywhere) and the server would 400 at submit. Drop the
+                // add-on entirely instead.
+                const filtered = pickVehicleKeys(a.prices, vehicleTypeIds);
+                if (Object.keys(filtered).length === 0) return null;
+                return { ...base, prices: filtered };
+              }
+              return base;
+            })
+            .filter(Boolean)
         : [];
       return {
         id: s.id,
