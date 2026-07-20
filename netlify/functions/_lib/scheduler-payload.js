@@ -74,9 +74,11 @@ export function buildSchedulerPayload(site) {
                 // owner no longer offers can't be booked anywhere — dropping
                 // the map would make the widget treat it as legacy (offered
                 // everywhere) and the server would 400 at submit. Drop the
-                // add-on entirely instead.
+                // add-on entirely instead. But when NO vehicle types are
+                // enabled (legacy flow), the server books it at its legacy
+                // price — keep it as a plain legacy add-on.
                 const filtered = pickVehicleKeys(a.prices, vehicleTypeIds);
-                if (Object.keys(filtered).length === 0) return null;
+                if (Object.keys(filtered).length === 0) return vehicleTypes.length > 0 ? null : base;
                 return { ...base, prices: filtered };
               }
               return base;

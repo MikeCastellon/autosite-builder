@@ -533,6 +533,12 @@
       if (vehicleTypes().length > 0) {
         enabledServices = enabledServices.filter(function (s) { return offeredVehicleTypes(s).length > 0; });
       }
+      // The single-service preset bypasses the picker — drop it if it turned
+      // out to be unbookable so the (possibly empty) picker renders instead.
+      if (state.service && vehicleTypes().length > 0 && offeredVehicleTypes(state.service).length === 0) {
+        state.service = null;
+        state.vehicleType = null;
+      }
       if (cfg.booking_mode === 'simple') {
         if (!state.details.submitted) return renderSimpleForm(enabledServices);
         return renderSuccess();

@@ -95,6 +95,16 @@ describe('buildSchedulerPayload — vehicle types', () => {
     expect(p.services[0].addons.map((a) => a.id)).toEqual(['add_2']);
   });
 
+  it('keeps a stale-priced add-on as legacy when no vehicle types are enabled', () => {
+    const p = buildSchedulerPayload(siteWith({
+      services: [{
+        id: 'svc_1', name: 'Detail', duration_minutes: 60, price_cents: 9900, enabled: true,
+        addons: [{ id: 'add_stale', name: 'Stale', price_cents: 2500, enabled: true, prices: { vt_orphan: 2500 } }],
+      }],
+    }));
+    expect(p.services[0].addons).toEqual([{ id: 'add_stale', name: 'Stale', price_cents: 2500 }]);
+  });
+
   it('omits variants entirely when no vehicle types are saved', () => {
     const p = buildSchedulerPayload(siteWith({
       services: [{
