@@ -6,6 +6,7 @@ import {
   defaultVehicleTypes,
   normalizeVehicleTypes,
   normalizeService,
+  resolveVariant,
 } from './schedulerConfig.js';
 
 describe('appearance', () => {
@@ -123,5 +124,26 @@ describe('normalizeService with vehicle types', () => {
       types
     );
     expect(s.variants.vt_a.duration_minutes).toBe(60);
+  });
+});
+
+describe('resolveVariant (client mirror)', () => {
+  const svc = {
+    id: 'svc_1', name: 'Detail', price_cents: 14900, duration_minutes: 90,
+    variants: {
+      vt_a: { enabled: true, price_cents: 19900, duration_minutes: 120 },
+      vt_off: { enabled: false, price_cents: 9900, duration_minutes: 60 },
+    },
+  };
+  it('resolves a variant and falls back to base without a vehicleTypeId', () => {
+    expect(resolveVariant(svc, 'vt_a')).toEqual({ price_cents: 19900, duration_minutes: 120 });
+    expect(resolveVariant(svc, null)).toEqual({ price_cents: 14900, duration_minutes: 90 });
+  });
+  it('returns null for a disabled variant', () => {
+    expect(resolveVariant(svc, 'vt_off')).toBeNull();
+  });
+  it('parses legacy text prices and guards bad durations', () => {
+    expect(resolveVariant({ id: 's', name: 'Q', price: '$75', duration_minutes: -30 }, null))
+      .toEqual({ price_cents: 7500, duration_minutes: 60 });
   });
 });

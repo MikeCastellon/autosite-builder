@@ -112,6 +112,34 @@ export function normalizeVehicleTypes(input) {
   return cleaned.length > 0 ? cleaned : defaultVehicleTypes();
 }
 
+// Mirror of netlify/functions/_lib/vehicle-pricing.js resolveVariant.
+// { price_cents, duration_minutes } the given vehicle books this service at,
+// or null when the service is not offered for that vehicle. No vehicleTypeId
+// (or no variants map) falls back to the base fields; legacy text prices parse.
+export function resolveVariant(service, vehicleTypeId) {
+  if (!service) return null;
+  const baseCents =
+    typeof service.price_cents === 'number' && service.price_cents > 0
+      ? service.price_cents
+      : parseDollarsToCents(service.price);
+  const base = {
+    price_cents: baseCents ?? null,
+    duration_minutes:
+      typeof service.duration_minutes === 'number' && service.duration_minutes > 0
+        ? service.duration_minutes
+        : 60,
+  };
+  if (!vehicleTypeId || !service.variants || typeof service.variants !== 'object') return base;
+  const v = service.variants[vehicleTypeId];
+  if (!v) return base;
+  if (v.enabled === false) return null;
+  return {
+    price_cents: typeof v.price_cents === 'number' && v.price_cents > 0 ? v.price_cents : base.price_cents,
+    duration_minutes:
+      typeof v.duration_minutes === 'number' && v.duration_minutes > 0 ? v.duration_minutes : base.duration_minutes,
+  };
+}
+
 export function seedServicesFromBusinessInfo(bizServices) {
   if (!Array.isArray(bizServices)) return [];
   return bizServices

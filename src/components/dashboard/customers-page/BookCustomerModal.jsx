@@ -1,6 +1,7 @@
 // src/components/dashboard/customers-page/BookCustomerModal.jsx
 import { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase.js';
+import { resolveVariant } from '../../../lib/schedulerConfig.js';
 
 export default function BookCustomerModal({ customer, userId, onClose, onBooked }) {
   const [sites, setSites] = useState([]);
@@ -102,21 +103,7 @@ export default function BookCustomerModal({ customer, userId, onClose, onBooked 
   const site = sites.find((s) => s.id === siteId);
   const siteVehicleTypes = (site?.scheduler_config?.vehicle_types || []).filter((t) => t && t.enabled !== false);
   const chosenService = services.find((s) => s.id === serviceId) || null;
-  const chosenVariant = (() => {
-    if (!chosenService) return null;
-    const base = {
-      price_cents: typeof chosenService.price_cents === 'number' && chosenService.price_cents > 0 ? chosenService.price_cents : null,
-      duration_minutes: chosenService.duration_minutes || 60,
-    };
-    if (!vehicleTypeId || !chosenService.variants) return base;
-    const v = chosenService.variants[vehicleTypeId];
-    if (!v) return base;
-    if (v.enabled === false) return null;
-    return {
-      price_cents: typeof v.price_cents === 'number' && v.price_cents > 0 ? v.price_cents : base.price_cents,
-      duration_minutes: typeof v.duration_minutes === 'number' && v.duration_minutes > 0 ? v.duration_minutes : base.duration_minutes,
-    };
-  })();
+  const chosenVariant = chosenService ? resolveVariant(chosenService, vehicleTypeId || null) : null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
