@@ -89,7 +89,7 @@ export default function BookingsPage({ userId, profile }) {
           const bookingUrl = site?.published_url ? (isCustomLive ? `https://www.${site.custom_domain}` : site.published_url) : null;
           return <BookingsView userId={userId} bookingUrl={bookingUrl} />;
         })()}
-        {tab === 'settings' && activeSiteId && <SchedulerSettings siteId={activeSiteId} />}
+        {tab === 'settings' && activeSiteId && <SchedulerSettings key={activeSiteId} siteId={activeSiteId} />}
       </main>
     </SubscribeGate>
   );

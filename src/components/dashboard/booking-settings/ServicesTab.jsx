@@ -118,7 +118,8 @@ export default function ServicesTab({ siteId, config, onSaved }) {
 
   // Add-on price cell: blank = not offered for that vehicle (null).
   function patchAddonPrice(serviceId, addonId, typeId, raw) {
-    const cents = raw.trim() === '' ? null : (parseDollarsToCents(raw) ?? 0);
+    const parsed = parseDollarsToCents(raw);
+    const cents = raw.trim() === '' ? null : (parsed != null ? parsed : (/\d/.test(raw) ? 0 : null));
     setServices((prev) =>
       prev.map((s) =>
         s.id === serviceId
@@ -170,6 +171,14 @@ export default function ServicesTab({ siteId, config, onSaved }) {
   }
 
   async function save() {
+    const unnamedType = vehicleTypes.some((t) => t.name.trim() === '');
+    const unnamedService = services.some((s) => s.name.trim() === '' && ((s.description || '').trim() !== '' || (s.addons || []).length > 0));
+    const unnamedAddon = services.some((s) => (s.addons || []).some((a) => (a.name || '').trim() === '' && Object.values(a.prices || {}).some((p) => typeof p === 'number' && p > 0)));
+    if (unnamedType || unnamedService || unnamedAddon) {
+      setErr('Name or remove the unnamed ' + (unnamedType ? 'vehicle type' : unnamedService ? 'service' : 'add-on') + ' before saving.');
+      return;
+    }
+
     const cleanedTypes = vehicleTypes
       .filter((t) => t.name.trim() !== '')
       .map((t) => ({ id: t.id, name: t.name.trim(), enabled: t.enabled !== false }));
@@ -210,7 +219,7 @@ export default function ServicesTab({ siteId, config, onSaved }) {
           });
         return {
           id: s.id,
-          name: s.name,
+          name: s.name.trim(),
           description: s.description ?? '',
           enabled: s.enabled !== false,
           duration_minutes: baseDuration,
@@ -380,7 +389,7 @@ export default function ServicesTab({ siteId, config, onSaved }) {
                                   <th className="px-3 py-2 w-10">On</th>
                                   <th className="px-3 py-2 min-w-[160px]">Add-on</th>
                                   {enabledTypes.map((t) => (
-                                    <th key={t.id} className="px-3 py-2 w-24">{t.name}</th>
+                                    <th key={t.id} className="px-3 py-2 w-24">{t.name || <em className="text-gray-400">unnamed</em>}</th>
                                   ))}
                                   <th className="px-3 py-2 w-12" />
                                 </tr>
@@ -433,7 +442,7 @@ export default function ServicesTab({ siteId, config, onSaved }) {
               );
             })}
             {services.length === 0 && (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-500">No services yet — click "+ Add service" or "Re-sync from site".</td></tr>
+              <tr><td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-500">No services yet — click "+ Add service" to create one.</td></tr>
             )}
           </tbody>
         </table>
