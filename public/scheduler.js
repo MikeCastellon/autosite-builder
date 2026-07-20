@@ -377,6 +377,7 @@
 
     var state = {
       service: cfg.services && cfg.services.length === 1 ? cfg.services[0] : null,
+      vehicleType: null,   // { id, name } chosen on the vehicle step
       dateISO: null,
       slotISO: null,
       details: {},
@@ -392,10 +393,68 @@
     function serviceAddons(s) {
       return (s && Array.isArray(s.addons)) ? s.addons : [];
     }
-    function selectedAddons() {
-      return serviceAddons(state.service).filter(function (a) {
-        return state.addonSelections[a.id];
+    function vehicleTypes() {
+      return Array.isArray(cfg.vehicle_types) ? cfg.vehicle_types : [];
+    }
+    // Mirror of netlify/functions/_lib/vehicle-pricing.js resolveVariant.
+    function variantFor(s, vtId) {
+      if (!s) return null;
+      var base = {
+        price_cents: (typeof s.price_cents === 'number' && s.price_cents > 0) ? s.price_cents : null,
+        duration_minutes: s.duration_minutes || 60,
+      };
+      if (!vtId || !s.variants) return base;
+      var v = s.variants[vtId];
+      if (!v) return base;
+      if (v.enabled === false) return null;
+      return {
+        price_cents: (typeof v.price_cents === 'number' && v.price_cents > 0) ? v.price_cents : base.price_cents,
+        duration_minutes: (typeof v.duration_minutes === 'number' && v.duration_minutes > 0) ? v.duration_minutes : base.duration_minutes,
+      };
+    }
+    function offeredVehicleTypes(s) {
+      return vehicleTypes().filter(function (t) { return variantFor(s, t.id) !== null; });
+    }
+    function chosenVariant() {
+      return variantFor(state.service, state.vehicleType ? state.vehicleType.id : null);
+    }
+    function addonPriceFor(a, vtId) {
+      var legacy = (typeof a.price_cents === 'number' && a.price_cents > 0) ? a.price_cents : 0;
+      if (!vtId || !a.prices) return legacy;
+      var p = a.prices[vtId];
+      if (p == null) return null;
+      return (typeof p === 'number' && p > 0) ? p : 0;
+    }
+    function offeredAddons() {
+      var vtId = state.vehicleType ? state.vehicleType.id : null;
+      return serviceAddons(state.service).filter(function (a) { return addonPriceFor(a, vtId) != null; });
+    }
+    function sizeFromTypeName(name) {
+      var n = String(name || '').toLowerCase();
+      if (n.indexOf('sedan') !== -1 || n.indexOf('coupe') !== -1) return 'sedan';
+      if (n.indexOf('suv') !== -1 || n.indexOf('crossover') !== -1) return 'suv';
+      if (n.indexOf('truck') !== -1) return 'truck';
+      if (n.indexOf('van') !== -1) return 'van';
+      return 'other';
+    }
+    function servicePriceLabel(s) {
+      var vts = vehicleTypes();
+      if (vts.length === 0) {
+        return (typeof s.price_cents === 'number' && s.price_cents > 0) ? formatCents(s.price_cents) : (s.price || '');
+      }
+      var min = null, max = null;
+      vts.forEach(function (t) {
+        var v = variantFor(s, t.id);
+        if (v && typeof v.price_cents === 'number' && v.price_cents > 0) {
+          if (min == null || v.price_cents < min) min = v.price_cents;
+          if (max == null || v.price_cents > max) max = v.price_cents;
+        }
       });
+      if (min == null) return s.price || '';
+      return min === max ? formatCents(min) : 'from ' + formatCents(min);
+    }
+    function selectedAddons() {
+      return offeredAddons().filter(function (a) { return state.addonSelections[a.id]; });
     }
     function formatCents(cents) {
       if (typeof cents !== 'number' || cents <= 0) return '';
@@ -404,9 +463,14 @@
     }
     function totalCents() {
       if (!state.service) return null;
-      var base = typeof state.service.price_cents === 'number' ? state.service.price_cents : null;
+      var v = chosenVariant();
+      var base = v ? v.price_cents : null;
       if (base == null) return null;
-      var addOnTotal = selectedAddons().reduce(function (sum, a) { return sum + (a.price_cents || 0); }, 0);
+      var vtId = state.vehicleType ? state.vehicleType.id : null;
+      var addOnTotal = selectedAddons().reduce(function (sum, a) {
+        var p = addonPriceFor(a, vtId);
+        return sum + (p || 0);
+      }, 0);
       return base + addOnTotal;
     }
 
@@ -466,20 +530,24 @@
 
     function render() {
       var enabledServices = (cfg.services || []).filter(function (s) { return s.enabled !== false; });
-      // Simple mode: skip service picker + calendar + slot picker entirely.
       if (cfg.booking_mode === 'simple') {
         if (!state.details.submitted) return renderSimpleForm(enabledServices);
         return renderSuccess();
       }
-      // Always show the service picker when any service has add-ons — the
-      // customer needs to see what service they're picking add-ons for.
-      // Otherwise we only show it when there's more than one to pick from.
       var anyServiceHasAddons = enabledServices.some(function (s) { return serviceAddons(s).length > 0; });
-      var showServicePicker = enabledServices.length > 1 || anyServiceHasAddons;
+      var showServicePicker = enabledServices.length > 1 || anyServiceHasAddons || vehicleTypes().length > 0;
       if (!state.service && showServicePicker) return renderServices(enabledServices);
-      // Add-ons step lives between service pick and date/time. Skipped if
-      // the chosen service has no add-ons to offer.
-      if (state.service && serviceAddons(state.service).length > 0 && !state.addonsConfirmed) {
+      // Vehicle step (Feature 2): shown when the owner saved vehicle types.
+      // A single offered type is auto-selected so the step disappears.
+      if (state.service && vehicleTypes().length > 0 && !state.vehicleType) {
+        var offered = offeredVehicleTypes(state.service);
+        if (offered.length === 1) {
+          state.vehicleType = { id: offered[0].id, name: offered[0].name };
+        } else {
+          return renderVehicles(offered);
+        }
+      }
+      if (state.service && offeredAddons().length > 0 && !state.addonsConfirmed) {
         return renderAddons();
       }
       if (!state.dateISO || !state.slotISO) return renderDateTime();
@@ -487,15 +555,17 @@
       return renderSuccess();
     }
 
-    // Step counts: service-pick + add-ons (if any) + date/time + details.
-    // Used by stepBar() for the progress indicator.
+    // Step counts: service-pick + vehicle (if any) + add-ons (if any) +
+    // date/time + details. Used by stepBar().
     function stepCounts() {
       var enabledServices = (cfg.services || []).filter(function (s) { return s.enabled !== false; });
       var anyServiceHasAddons = enabledServices.some(function (s) { return serviceAddons(s).length > 0; });
-      var showServicePicker = enabledServices.length > 1 || anyServiceHasAddons;
-      var hasAddons = state.service && serviceAddons(state.service).length > 0;
-      var total = 2 + (showServicePicker ? 1 : 0) + (hasAddons ? 1 : 0);
-      return { total: total, hasMultipleServices: showServicePicker, hasAddons: hasAddons };
+      var showServicePicker = enabledServices.length > 1 || anyServiceHasAddons || vehicleTypes().length > 0;
+      var offered = state.service ? offeredVehicleTypes(state.service) : vehicleTypes();
+      var hasVehicleStep = vehicleTypes().length > 0 && offered.length > 1;
+      var hasAddons = state.service && offeredAddons().length > 0;
+      var total = 2 + (showServicePicker ? 1 : 0) + (hasVehicleStep ? 1 : 0) + (hasAddons ? 1 : 0);
+      return { total: total, hasMultipleServices: showServicePicker, hasVehicleStep: hasVehicleStep, hasAddons: hasAddons };
     }
 
     function renderSimpleForm(services) {
@@ -627,9 +697,7 @@
     function renderServices(services) {
       var counts = stepCounts();
       var items = services.map(function (s) {
-        var priceLabel = (typeof s.price_cents === 'number' && s.price_cents > 0)
-          ? formatCents(s.price_cents)
-          : (s.price || '');
+        var priceLabel = servicePriceLabel(s);
         return '<button type="button" data-svc="' + esc(s.id) + '" style="display:block;width:100%;text-align:left;padding:16px 18px;margin-bottom:10px;border:1px solid ' + T.chipBorder + ';border-radius:12px;background:' + T.chipBg + ';color:' + T.text + ';cursor:pointer;transition:all 0.15s ease;font-family:' + FONT + ';" onmouseover="this.style.borderColor=\'' + brand + '\';this.style.background=\'' + T.chipHoverBg + '\';" onmouseout="this.style.borderColor=\'' + T.chipBorder + '\';this.style.background=\'' + T.chipBg + '\';">' +
           '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;">' +
             '<div style="font-weight:700;color:' + T.text + ';font-size:15px;letter-spacing:-0.2px;">' + esc(s.name) + '</div>' +
@@ -646,8 +714,9 @@
       card.querySelectorAll('[data-svc]').forEach(function (btn) {
         btn.addEventListener('click', function () {
           state.service = services.find(function (s) { return s.id === btn.getAttribute('data-svc'); });
-          // Reset add-on state whenever the service changes — the previous
-          // selection belonged to a different menu.
+          // Reset vehicle + add-on state whenever the service changes — the
+          // previous selection belonged to a different menu.
+          state.vehicleType = null;
           state.addonSelections = {};
           state.addonsConfirmed = false;
           render();
@@ -655,15 +724,57 @@
       });
     }
 
+    function renderVehicles(offered) {
+      var counts = stepCounts();
+      var currentStep = 1 + (counts.hasMultipleServices ? 1 : 0);
+      var items = offered.map(function (t) {
+        var v = variantFor(state.service, t.id);
+        var priceLabel = v && v.price_cents != null ? formatCents(v.price_cents) : '';
+        var durLabel = v ? v.duration_minutes + ' min' : '';
+        return '<button type="button" data-vt="' + esc(t.id) + '" style="display:block;width:100%;text-align:left;padding:16px 18px;margin-bottom:10px;border:1px solid ' + T.chipBorder + ';border-radius:12px;background:' + T.chipBg + ';color:' + T.text + ';cursor:pointer;transition:all 0.15s ease;font-family:' + FONT + ';" onmouseover="this.style.borderColor=\'' + brand + '\';this.style.background=\'' + T.chipHoverBg + '\';" onmouseout="this.style.borderColor=\'' + T.chipBorder + '\';this.style.background=\'' + T.chipBg + '\';">' +
+          '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;">' +
+            '<div style="font-weight:700;color:' + T.text + ';font-size:15px;letter-spacing:-0.2px;">' + esc(t.name) + '</div>' +
+            (priceLabel ? '<div style="font-weight:700;color:' + brand + ';font-size:14px;white-space:nowrap;">' + esc(priceLabel) + '</div>' : '') +
+          '</div>' +
+          (durLabel ? '<div style="font-size:12px;color:' + T.softMuted + ';margin-top:4px;letter-spacing:0.2px;">' + esc(durLabel) + ' appointment</div>' : '') +
+        '</button>';
+      }).join('');
+      card.innerHTML = brandBar() + brandHeader() + stepBar(currentStep + 1, counts.total) +
+        sectionTitle('What are we detailing?', state.service.name) +
+        bodyOpen() + items +
+          (counts.hasMultipleServices
+            ? '<button type="button" data-back style="background:none;border:0;color:' + T.softMuted + ';cursor:pointer;font-size:13px;font-weight:600;font-family:' + FONT + ';padding:6px 0;">← Back</button>'
+            : '') +
+        bodyClose();
+      wireClose();
+      card.querySelectorAll('[data-vt]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var t = offered.find(function (x) { return x.id === btn.getAttribute('data-vt'); });
+          state.vehicleType = { id: t.id, name: t.name };
+          state.addonSelections = {};
+          state.addonsConfirmed = false;
+          render();
+        });
+      });
+      var backBtn = card.querySelector('[data-back]');
+      if (backBtn) backBtn.addEventListener('click', function () {
+        state.service = null;
+        state.vehicleType = null;
+        state.addonSelections = {};
+        state.addonsConfirmed = false;
+        render();
+      });
+    }
+
     function renderAddons() {
       var counts = stepCounts();
-      var addons = serviceAddons(state.service);
-      var basePriceCents = (typeof state.service.price_cents === 'number' && state.service.price_cents > 0)
-        ? state.service.price_cents
-        : null;
+      var addons = offeredAddons();
+      var v = chosenVariant();
+      var basePriceCents = v ? v.price_cents : null;
       var items = addons.map(function (a) {
         var checked = !!state.addonSelections[a.id];
-        var priceLabel = a.price_cents > 0 ? ('+' + formatCents(a.price_cents)) : 'Free';
+        var itemPrice = addonPriceFor(a, state.vehicleType ? state.vehicleType.id : null);
+        var priceLabel = itemPrice > 0 ? ('+' + formatCents(itemPrice)) : 'Free';
         var borderColor = checked ? brand : T.chipBorder;
         var bg = checked ? T.chipHoverBg : T.chipBg;
         return '<label data-addon-row="' + esc(a.id) + '" style="display:flex;align-items:center;gap:12px;padding:14px 16px;margin-bottom:8px;border:1px solid ' + borderColor + ';border-radius:12px;background:' + bg + ';color:' + T.text + ';cursor:pointer;transition:all 0.15s ease;font-family:' + FONT + ';">' +
@@ -673,7 +784,7 @@
         '</label>';
       }).join('');
 
-      var currentStep = (counts.hasMultipleServices ? 2 : 1);
+      var currentStep = 1 + (counts.hasMultipleServices ? 1 : 0) + (counts.hasVehicleStep ? 1 : 0);
       var totalLabel = '';
       var totalC = totalCents();
       if (totalC != null) {
@@ -685,7 +796,9 @@
         totalLabel = '<div style="padding:10px 12px;margin-top:6px;background:' + T.subtle + ';border-radius:10px;font-size:12px;color:' + T.muted + ';">Price for this service is quoted at booking. Add-ons listed are extras you can request.</div>';
       }
 
-      var subtitle = state.service.name + ' · ' + state.service.duration_minutes + ' min';
+      var subtitle = state.service.name +
+        (state.vehicleType ? ' · ' + state.vehicleType.name : '') +
+        ' · ' + (v ? v.duration_minutes : state.service.duration_minutes) + ' min';
 
       card.innerHTML = brandBar() + brandHeader() + stepBar(currentStep + 1, counts.total) +
         sectionTitle('Want any add-ons?', subtitle) +
@@ -693,7 +806,7 @@
           '<div id="acg-addons-list">' + items + '</div>' +
           totalLabel +
           '<div style="display:flex;gap:10px;margin-top:18px;justify-content:space-between;align-items:center;">' +
-            (counts.hasMultipleServices
+            ((counts.hasMultipleServices || counts.hasVehicleStep)
               ? '<button type="button" data-back style="background:none;border:0;color:' + T.softMuted + ';cursor:pointer;font-size:13px;font-weight:600;font-family:' + FONT + ';padding:6px 0;">← Back</button>'
               : '<span></span>') +
             '<button type="button" data-continue style="padding:12px 26px;background:' + brand + ';color:#fff;border:0;border-radius:12px;font-family:' + FONT + ';font-weight:700;font-size:14px;cursor:pointer;letter-spacing:0.2px;">Continue</button>' +
@@ -709,9 +822,14 @@
       });
       var backBtn = card.querySelector('[data-back]');
       if (backBtn) backBtn.addEventListener('click', function () {
-        state.service = null;
         state.addonSelections = {};
         state.addonsConfirmed = false;
+        if (counts.hasVehicleStep) {
+          state.vehicleType = null;
+        } else {
+          state.service = null;
+          state.vehicleType = null;
+        }
         render();
       });
       card.querySelector('[data-continue]').addEventListener('click', function () {
@@ -722,14 +840,17 @@
 
     function renderDateTime() {
       var counts = stepCounts();
-      // Step number: service(?) + addons(?) + 1 = us
-      var currentStep = 1 + (counts.hasMultipleServices ? 1 : 0) + (counts.hasAddons ? 1 : 0);
-      var subtitle = state.service ? state.service.name + ' · ' + state.service.duration_minutes + ' min' : '';
+      // Step number: service(?) + vehicle(?) + addons(?) + 1 = us
+      var currentStep = 1 + (counts.hasMultipleServices ? 1 : 0) + (counts.hasVehicleStep ? 1 : 0) + (counts.hasAddons ? 1 : 0);
+      var v = chosenVariant();
+      var subtitle = state.service
+        ? state.service.name + (state.vehicleType ? ' · ' + state.vehicleType.name : '') + ' · ' + (v ? v.duration_minutes : state.service.duration_minutes) + ' min'
+        : '';
       var totalC = totalCents();
       if (totalC != null && selectedAddons().length > 0) {
         subtitle += ' · ' + formatCents(totalC) + ' total';
       }
-      var canGoBack = state.service && (counts.hasMultipleServices || counts.hasAddons);
+      var canGoBack = state.service && (counts.hasMultipleServices || counts.hasVehicleStep || counts.hasAddons);
       card.innerHTML = brandBar() + brandHeader() + stepBar(currentStep, counts.total) +
         sectionTitle('Pick a date and time', subtitle) +
         bodyOpen() +
@@ -743,11 +864,13 @@
       renderCalendar(card.querySelector('#acg-cal'));
       var backBtn = card.querySelector('[data-back]');
       if (backBtn) backBtn.addEventListener('click', function () {
-        // Step back to add-ons if there are any; otherwise back to service pick.
+        // Step back through add-ons → vehicle → service pick.
         state.dateISO = null;
         state.slotISO = null;
         if (counts.hasAddons) {
           state.addonsConfirmed = false;
+        } else if (counts.hasVehicleStep) {
+          state.vehicleType = null;
         } else {
           state.service = null;
         }
@@ -802,7 +925,8 @@
       slotsHost.innerHTML = '<div style="color:#888;font-size:13px;">Loading…</div>';
       var url = API + '/.netlify/functions/scheduler-slots?siteId=' + encodeURIComponent(siteId) +
         '&date=' + encodeURIComponent(state.dateISO) +
-        (state.service ? '&serviceId=' + encodeURIComponent(state.service.id) : '');
+        (state.service ? '&serviceId=' + encodeURIComponent(state.service.id) : '') +
+        (state.vehicleType ? '&vehicleTypeId=' + encodeURIComponent(state.vehicleType.id) : '');
       fetch(url).then(function (r) { return r.json(); }).then(function (res) {
         if (!res.slots || res.slots.length === 0) {
           slotsHost.innerHTML = '<div style="color:' + T.softMuted + ';font-size:13px;padding:16px 12px;background:' + T.subtle + ';border-radius:10px;text-align:center;width:100%;">No times available — try another day.</div>';
@@ -831,12 +955,13 @@
       var breakdown = '';
       if (totalC != null) {
         var lines = '';
-        var baseLabel = formatCents(state.service.price_cents);
+        var v2 = chosenVariant();
+        var baseLabel = formatCents(v2 ? v2.price_cents : state.service.price_cents);
         lines += '<div style="display:flex;justify-content:space-between;font-size:13px;color:' + T.muted + ';padding:2px 0;">' +
-          '<span>' + esc(state.service.name) + '</span><span>' + esc(baseLabel) + '</span></div>';
+          '<span>' + esc(state.service.name + (state.vehicleType ? ' — ' + state.vehicleType.name : '')) + '</span><span>' + esc(baseLabel) + '</span></div>';
         chosenAddons.forEach(function (a) {
           lines += '<div style="display:flex;justify-content:space-between;font-size:13px;color:' + T.muted + ';padding:2px 0;">' +
-            '<span>+ ' + esc(a.name) + '</span><span>' + esc(formatCents(a.price_cents)) + '</span></div>';
+            '<span>+ ' + esc(a.name) + '</span><span>' + esc(formatCents(addonPriceFor(a, state.vehicleType ? state.vehicleType.id : null))) + '</span></div>';
         });
         lines += '<div style="display:flex;justify-content:space-between;font-size:14px;font-weight:800;color:' + T.text + ';padding:6px 0 0;border-top:1px solid ' + T.divider + ';margin-top:6px;">' +
           '<span>Total</span><span>' + esc(formatCents(totalC)) + '</span></div>';
@@ -868,28 +993,36 @@
               field('customer_name', 'Name', 'text', true),
               field('customer_email', 'Email', 'email', true)
             ) +
-            // Row 2: Phone | Size
-            row(
-              field('customer_phone', 'Phone', 'tel', true),
-              select('vehicle_size', 'Size', [
-                {value:'sedan', label:'Sedan'},
-                {value:'suv', label:'SUV'},
-                {value:'truck', label:'Truck'},
-                {value:'van', label:'Van'},
-                {value:'other', label:'Other'},
-              ])
-            ) +
+            // Row 2: Phone | Size (legacy) — the Size select only appears when
+            // no vehicle type was chosen (legacy flow).
+            (state.vehicleType
+              ? row(
+                  field('customer_phone', 'Phone', 'tel', true),
+                  field('referral_source', 'How did you hear about us?', 'text', false)
+                )
+              : row(
+                  field('customer_phone', 'Phone', 'tel', true),
+                  select('vehicle_size', 'Size', [
+                    {value:'sedan', label:'Sedan'},
+                    {value:'suv', label:'SUV'},
+                    {value:'truck', label:'Truck'},
+                    {value:'van', label:'Van'},
+                    {value:'other', label:'Other'},
+                  ])
+                )) +
             // Row 3: Make | Model | Year (3-up)
             row3(
               field('vehicle_make', 'Make', 'text', true),
               field('vehicle_model', 'Model', 'text', true),
               field('vehicle_year', 'Year', 'number', true, 'min="1900" max="2100"')
             ) +
-            // Row 4: Address | Referral
-            row(
-              field('service_address', 'Service address (if mobile)', 'text', false),
-              field('referral_source', 'How did you hear about us?', 'text', false)
-            ) +
+            // Row 4: Address | Referral (referral moved up when vehicle chosen)
+            (state.vehicleType
+              ? field('service_address', 'Service address (if mobile)', 'text', false)
+              : row(
+                  field('service_address', 'Service address (if mobile)', 'text', false),
+                  field('referral_source', 'How did you hear about us?', 'text', false)
+                )) +
             fieldTextarea('notes', 'Notes', false) +
             '<input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;" aria-hidden="true" />' +
             '<div id="acg-form-error" style="color:' + brand + ';font-size:13px;margin:8px 0;display:none;font-weight:600;"></div>' +
@@ -949,7 +1082,8 @@
         vehicle_make: data.vehicle_make,
         vehicle_model: data.vehicle_model,
         vehicle_year: Number(data.vehicle_year),
-        vehicle_size: data.vehicle_size,
+        vehicle_size: state.vehicleType ? sizeFromTypeName(state.vehicleType.name) : data.vehicle_size,
+        vehicle_type_id: state.vehicleType ? state.vehicleType.id : undefined,
         service_address: data.service_address || undefined,
         notes: data.notes || undefined,
         referral_source: data.referral_source || undefined,
