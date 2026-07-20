@@ -5,6 +5,7 @@ import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
+import { ServiceCardCss, ServiceDescription, BookNowLink } from '../ServiceCardParts.jsx';
 
 // Template: Carwash Bubble
 // Bright, playful, cheerful car wash aesthetic. No canvas, no custom cursor JS.
@@ -22,6 +23,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
   const copy = generatedCopy || {};
   const services = copy.servicesSection?.items || [];
   const svcCols = services.length >= 6 ? Math.ceil(services.length / 2) : services.length || 1;
+  const pkgBookable = (biz.packages?.length > 0) || services.length > 0; // demo fallback cards are not bookable
   const testimonials = copy.testimonialPlaceholders || [];
   const payments = Array.isArray(biz.paymentMethods) ? biz.paymentMethods : [];
   const awards = Array.isArray(biz.awards) ? biz.awards : biz.awards ? [biz.awards] : [];
@@ -282,6 +284,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
       {/* ═══ PACKAGES ═══ */}
       {!hidden('services') && (
       <section id='packages' style={{ background: 'white', padding: '100px 5%', position: 'relative', overflow: 'hidden', order: getOrder('services') }}>
+        <ServiceCardCss />
         <BubbleBlob size='300px' top='-80px' right='-60px' opacity={0.08} blur={10} color={c.accent} />
         <BubbleBlob size='180px' bottom='40px' left='-50px' opacity={0.06} blur={8} color='#14b8a6' />
         <div style={{ maxWidth: 1100, margin: '0 auto', position: 'relative', zIndex: 1  }}>
@@ -303,7 +306,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
             ]).map((pkg, i, arr) => {
               const isFeatured = i === Math.floor(arr.length / 2);
               return (
-                <div key={i} style={{
+                <div key={i} className="acg-svc-card" style={{
                   position: 'relative',
                   background: isFeatured ? `linear-gradient(145deg, ${c.accent}, #14b8a6)` : 'white',
                   border: `2px solid ${isFeatured ? 'transparent' : accentLight}`,
@@ -317,7 +320,21 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
                   <div style={{ fontSize: 36, marginBottom: 12 }}>{packageIcons[i] || '🫧'}</div>
                   <h3 style={{ fontFamily: font, fontSize: 22, color: isFeatured ? '#fff' : c.text, margin: '0 0 10px' }}>{pkg.name || pkg}</h3>
                   {pkg.price && <div style={{ fontFamily: font, fontSize: '1.8rem', fontWeight: 800, color: isFeatured ? '#fff' : c.accent, margin: '0.4rem 0 0.75rem' }}>{pkg.price}</div>}
-                  <p style={{ fontSize: 14, lineHeight: 1.65, color: isFeatured ? 'rgba(255,255,255,0.85)' : c.muted || '#64748b', margin: '0 0 12px', fontWeight: 600 }}>{pkg.description}</p>
+                  <ServiceDescription
+                    id={`svc-more-pkg-${i}`}
+                    text={pkg.description}
+                    style={{ fontSize: 14, lineHeight: 1.65, color: isFeatured ? 'rgba(255,255,255,0.85)' : c.muted || '#64748b', fontWeight: 600 }}
+                    accentColor={isFeatured ? '#fff' : c.accent}
+                  />
+                  {pkgBookable && (
+                    <div className="acg-svc-foot">
+                      <BookNowLink
+                        serviceName={pkg.name || pkg}
+                        phone={biz.phone}
+                        style={{ color: isFeatured ? '#fff' : c.accent, fontWeight: 800, fontSize: 13, textDecoration: 'none' }}
+                      />
+                    </div>
+                  )}
                 </div>
               );
             })}

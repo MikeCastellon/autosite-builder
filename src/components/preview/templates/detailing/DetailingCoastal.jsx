@@ -5,6 +5,7 @@ import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
+import { ServiceCardCss, ServiceDescription, BookNowLink } from '../ServiceCardParts.jsx';
 
 export default function DetailingCoastal({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const fb = getFallbacks(businessInfo.businessType);
@@ -197,6 +198,7 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
       {!hidden('services') && (
       <section id="services" style={{ ...sectionStyle(c.bg), order: getOrder('services') }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          <ServiceCardCss />
           <div style={{ textAlign: 'center', marginBottom: '56px' }}>
             <h2 style={{ fontFamily: font, fontSize: '2.4rem', fontWeight: 800, color: c.text, marginBottom: '12px' }}>Our Services</h2>
             <p style={{ color: c.muted, maxWidth: '560px', margin: '0 auto', fontSize: '1.05rem', lineHeight: 1.7 }}>{generatedCopy.servicesSection.intro}</p>
@@ -204,23 +206,25 @@ export default function DetailingCoastal({ businessInfo, generatedCopy, template
           {businessInfo.packages?.length > 0 ? (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', justifyContent: 'center' }}>
               {businessInfo.packages.map((pkg, i) => (
-                <div key={i} style={{ ...cardStyle, border: i === 1 ? `2px solid ${c.accent}` : '2px solid transparent', position: 'relative', overflow: 'hidden' }}>
+                <div key={i} className="acg-svc-card" style={{ ...cardStyle, border: i === 1 ? `2px solid ${c.accent}` : '2px solid transparent', position: 'relative', overflow: 'hidden' }}>
                   {i === 1 && <div style={{ position: 'absolute', top: '16px', right: '16px', background: c.accent, color: '#fff', fontSize: '0.7rem', fontWeight: 700, padding: '4px 10px', borderRadius: '50px', letterSpacing: '1px' }}>POPULAR</div>}
                   <h3 style={{ fontFamily: font, fontSize: '1.25rem', fontWeight: 700, color: c.text, marginBottom: '8px' }}>{pkg.name || pkg}</h3>
                   {pkg.price && <div style={{ fontFamily: font, fontSize: '1.8rem', fontWeight: 800, color: c.accent, margin: '0.4rem 0 0.75rem' }}>{pkg.price}</div>}
-                  {pkg.description && <p style={{ color: c.muted, fontSize: '0.9rem', lineHeight: 1.6 }}>{pkg.description}</p>}
+                  {pkg.description && <ServiceDescription id={`svc-more-pkg-${i}`} text={pkg.description} style={{ color: c.muted, fontSize: '0.9rem', lineHeight: 1.6 }} accentColor={c.accent} />}
+                  <div className="acg-svc-foot"><BookNowLink serviceName={pkg.name || pkg} phone={businessInfo.phone} style={{ color: c.accent, fontWeight: 700, fontSize: 13, textDecoration: 'none', fontFamily: font }} /></div>
                 </div>
               ))}
             </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: '24px' }}>
               {generatedCopy.servicesSection.items.map((svc, i) => (
-                <div key={i} style={cardStyle}>
+                <div key={i} className="acg-svc-card" style={cardStyle}>
                   <div style={{ width: '44px', height: '44px', background: `rgba(8,145,178,0.1)`, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px', fontSize: '1.4rem' }}>
                     {['🌊', '✨', '🚗', '🔵', '🛡️', '💎'][i % 6]}
                   </div>
                   <h3 style={{ fontFamily: font, fontSize: '1.15rem', fontWeight: 700, color: c.text, marginBottom: '10px' }}>{svc.name}</h3>
-                  <p style={{ color: c.muted, fontSize: '0.92rem', lineHeight: 1.65 }}>{svc.description}</p>
+                  <ServiceDescription id={`svc-more-ai-${i}`} text={svc.description} style={{ color: c.muted, fontSize: '0.92rem', lineHeight: 1.65 }} accentColor={c.accent} />
+                  <div className="acg-svc-foot"><BookNowLink serviceName={svc.name} phone={businessInfo.phone} style={{ color: c.accent, fontWeight: 700, fontSize: 13, textDecoration: 'none', fontFamily: font }} /></div>
                 </div>
               ))}
             </div>

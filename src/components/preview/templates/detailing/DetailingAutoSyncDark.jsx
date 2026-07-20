@@ -5,6 +5,7 @@ import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
+import { ServiceCardCss, ServiceDescription, BookNowLink } from '../ServiceCardParts.jsx';
 
 export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const fb = getFallbacks(businessInfo.businessType);
@@ -261,6 +262,7 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
 
       {/* SERVICES */}
       {!hidden('services') && <section id="services" style={{ ...s.servicesSection, order: getOrder('services') }}>
+        <ServiceCardCss />
         <div style={s.servicesHeader}>
           <div style={s.servicesHeaderLeft}>
             <div style={s.sectionLabel}>
@@ -279,25 +281,51 @@ export default function DetailingAutoSyncDark({ businessInfo, generatedCopy, tem
         {businessInfo.packages?.length > 0 ? (
           <div style={{ display: 'flex', gap: '1px', flexWrap: 'wrap', background: c.accent + '22' }}>
             {businessInfo.packages.map((pkg, i) => (
-              <div key={i} style={{
+              <div key={i} className="acg-svc-card" style={{
                 flex: '1 1 200px', background: mid,
                 borderTop: i === 1 ? '2px solid ' + c.accent : '2px solid transparent',
                 padding: '1.75rem',
               }}>
                 <div style={{ fontSize: '0.65rem', letterSpacing: '2.5px', textTransform: 'uppercase', color: c.accent, fontFamily: bodyFont, marginBottom: '0.5rem' }}>{pkg.name || pkg}</div>
                 {pkg.price && <div style={{ fontFamily: font, fontSize: '1.8rem', fontWeight: 300, color: c.accent, margin: '0.4rem 0 0.75rem' }}>{pkg.price}</div>}
-                {pkg.description && <p style={{ color: textDim, fontSize: '0.82rem', lineHeight: 1.65, marginTop: '0.5rem' }}>{pkg.description}</p>}
+                {pkg.description && (
+                  <ServiceDescription
+                    id={`svc-more-pkg-${i}`}
+                    text={pkg.description}
+                    style={{ color: textDim, fontSize: '0.82rem', lineHeight: 1.65 }}
+                    accentColor={c.accent}
+                  />
+                )}
+                <div className="acg-svc-foot">
+                  <BookNowLink
+                    serviceName={pkg.name || pkg}
+                    phone={businessInfo.phone}
+                    style={{ color: c.accent, fontWeight: 700, fontSize: 13, textDecoration: 'none', fontFamily: bodyFont, letterSpacing: '2px', textTransform: 'uppercase' }}
+                  />
+                </div>
               </div>
             ))}
           </div>
         ) : (
           <div style={{ ...s.servicesGrid, gridTemplateColumns: `repeat(${svcCols}, 1fr)` }}>
             {services.map((svc, i) => (
-              <div key={i} style={s.serviceCard}>
+              <div key={i} className="acg-svc-card" style={s.serviceCard}>
                 <div style={s.serviceNum}>{String(i + 1).padStart(2, '0')}</div>
                 <div style={s.serviceIcon}>{serviceIcons[i % serviceIcons.length]}</div>
                 <h3 style={s.serviceCardH3}>{svc.name}</h3>
-                <p style={s.serviceCardP}>{svc.description}</p>
+                <ServiceDescription
+                  id={`svc-more-ai-${i}`}
+                  text={svc.description}
+                  style={s.serviceCardP}
+                  accentColor={c.accent}
+                />
+                <div className="acg-svc-foot">
+                  <BookNowLink
+                    serviceName={svc.name}
+                    phone={businessInfo.phone}
+                    style={{ color: c.accent, fontWeight: 700, fontSize: 13, textDecoration: 'none', fontFamily: bodyFont, letterSpacing: '2px', textTransform: 'uppercase' }}
+                  />
+                </div>
               </div>
             ))}
           </div>

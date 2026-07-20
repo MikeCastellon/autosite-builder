@@ -5,6 +5,7 @@ import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
+import { ServiceCardCss, ServiceDescription, BookNowLink } from '../ServiceCardParts.jsx';
 
 // Template: Mechanic Industrial — Dark steel & yellow (#1c1c1c bg, #eab308 accent, #2c2c2c secondary)
 // Gear/wrench feel, shop hours section, certifications as yellow badges, warranty guarantee box,
@@ -172,6 +173,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
       {/* SERVICES */}
       {!hidden('services') && (
       <section id="services" style={{ padding: '80px 5%' , order: getOrder('services') }}>
+        <ServiceCardCss />
         <div style={{ maxWidth: 1200, margin: '0 auto'  }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
             <div style={{ width: 36, height: 4, background: c.accent, borderRadius: 2 }} />
@@ -183,7 +185,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
           )}
           <div className="tp-services-grid" style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, minmax(0, 1fr))`, gap: 2 }}>
             {services.length > 0 ? services.map((svc, i) => (
-              <div key={i} style={{
+              <div key={i} className="acg-svc-card" style={{
                 background: i % 2 === 0 ? c.secondary : '#232323',
                 padding: '28px 24px',
                 borderTop: `2px solid ${i === 0 || i === 1 ? c.accent : 'transparent'}`,
@@ -193,11 +195,17 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
                   <div style={{ width: 28, height: 28, background: `${c.accent}18`, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13 }}>🔧</div>
                   <h3 style={{ fontSize: 14, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, color: i < 2 ? c.accent : c.text, margin: 0 }}>{svc.name}</h3>
                 </div>
-                <p style={{ color: c.muted, fontSize: 14, lineHeight: 1.7, margin: 0 }}>{svc.description}</p>
+                <ServiceDescription id={`svc-more-ai-${i}`} text={svc.description} style={{ color: c.muted, fontSize: 14, lineHeight: 1.7 }} accentColor={c.accent} />
+                <div className="acg-svc-foot">
+                  <BookNowLink serviceName={svc.name} phone={biz.phone} style={{ color: c.accent, fontWeight: 700, fontSize: 13, textDecoration: 'none', textTransform: 'uppercase', letterSpacing: 1 }} />
+                </div>
               </div>
             )) : (biz.services || []).map((svc, i) => (
-              <div key={i} style={{ background: i % 2 === 0 ? c.secondary : '#232323', padding: '24px 22px', borderTop: `2px solid ${i < 2 ? c.accent : 'transparent'}` }}>
+              <div key={i} className="acg-svc-card" style={{ background: i % 2 === 0 ? c.secondary : '#232323', padding: '24px 22px', borderTop: `2px solid ${i < 2 ? c.accent : 'transparent'}` }}>
                 <h3 style={{ fontSize: 14, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, color: c.text, margin: 0 }}>{typeof svc === 'string' ? svc : svc.name}</h3>
+                <div className="acg-svc-foot">
+                  <BookNowLink serviceName={typeof svc === 'string' ? svc : svc.name} phone={biz.phone} style={{ color: c.accent, fontWeight: 700, fontSize: 13, textDecoration: 'none', textTransform: 'uppercase', letterSpacing: 1 }} />
+                </div>
               </div>
             ))}
           </div>

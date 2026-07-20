@@ -5,6 +5,7 @@ import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
+import { ServiceCardCss, ServiceDescription, BookNowLink } from '../ServiceCardParts.jsx';
 
 export default function DetailingSporty({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const fb = getFallbacks(businessInfo.businessType);
@@ -266,25 +267,32 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
       {/* SERVICES */}
       {!hidden('services') && (
       <section id="services" style={{ ...s.section, order: getOrder('services') }}>
+        <ServiceCardCss />
         <div style={s.sectionTag}>What We Do</div>
         <h2 style={s.sectionTitle}>Our Services</h2>
         <p style={s.sectionSub}>{generatedCopy.servicesSection?.intro}</p>
         {businessInfo.packages?.length > 0 ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1px', background: c.accent + '22' }}>
             {businessInfo.packages.map((pkg, i) => (
-              <div key={i} style={{ ...s.serviceCard, borderTop: `3px solid ${i === 1 ? c.accent : 'transparent'}` }}>
+              <div key={i} className="acg-svc-card" style={{ ...s.serviceCard, borderTop: `3px solid ${i === 1 ? c.accent : 'transparent'}` }}>
                 <div style={s.serviceName}>{pkg.name || pkg}</div>
                 {pkg.price && <div style={{ fontFamily: font, fontSize: '1.8rem', fontWeight: 900, color: c.accent, margin: '0.4rem 0 0.75rem' }}>{pkg.price}</div>}
-                <div style={s.serviceDesc}>{pkg.description}</div>
+                <ServiceDescription id={`svc-more-pkg-${i}`} text={pkg.description} style={s.serviceDesc} accentColor={c.accent} />
+                <div className="acg-svc-foot">
+                  <BookNowLink serviceName={pkg.name || pkg} phone={businessInfo.phone} style={{ color: c.accent, fontWeight: 700, fontSize: 13, textDecoration: 'none', fontFamily: bodyFont, textTransform: 'uppercase', letterSpacing: '0.08em' }} />
+                </div>
               </div>
             ))}
           </div>
         ) : (
           <div className="tp-3col" style={{ ...s.servicesGrid, gridTemplateColumns: `repeat(${svcCols}, minmax(0, 1fr))` }}>
             {(generatedCopy.servicesSection?.items || []).map((svc, i) => (
-              <div key={i} style={s.serviceCard}>
+              <div key={i} className="acg-svc-card" style={s.serviceCard}>
                 <div style={s.serviceName}>{svc.name}</div>
-                <div style={s.serviceDesc}>{svc.description}</div>
+                <ServiceDescription id={`svc-more-ai-${i}`} text={svc.description} style={s.serviceDesc} accentColor={c.accent} />
+                <div className="acg-svc-foot">
+                  <BookNowLink serviceName={svc.name} phone={businessInfo.phone} style={{ color: c.accent, fontWeight: 700, fontSize: 13, textDecoration: 'none', fontFamily: bodyFont, textTransform: 'uppercase', letterSpacing: '0.08em' }} />
+                </div>
               </div>
             ))}
           </div>

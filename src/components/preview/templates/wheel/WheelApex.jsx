@@ -6,6 +6,7 @@ import IconOrEmoji from '../IconOrEmoji.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
+import { ServiceCardCss, ServiceDescription, BookNowLink } from '../ServiceCardParts.jsx';
 
 // Template: Wheel Apex — Alloy & Bronze e-commerce style
 // Bebas Neue display + DM Sans body, brushed-alloy palette, bronze accents,
@@ -213,8 +214,13 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
       {/* SERVICES / PRODUCTS — product card grid */}
       {!hidden('products') && (() => {
         const products = copy?.products?.length > 0 ? copy.products : (packages.length > 0 ? packages : services.length > 0 ? services : fb.defaultProducts);
+        // Only real bookable lists (business packages or AI services) get a Book Now link —
+        // never copy.products or the hardcoded demo fallback products.
+        const usingCopyProducts = copy?.products?.length > 0;
+        const bookable = !usingCopyProducts && (packages.length > 0 || services.length > 0);
         return (
           <section id="services" style={{ order: getOrder('products'), padding: 'clamp(40px, 8cqi, 64px) clamp(16px, 6cqi, 48px)' }}>
+            <ServiceCardCss />
             <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 32 }}>
               <div>
@@ -226,7 +232,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
             </div>
             <div className="tp-3col" style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(products.length, 3)}, 1fr)`, gap: 16 }}>
               {products.map((item, i) => (
-                <div key={i} style={{ background: D.card, border: `1px solid ${D.border}`, overflow: 'hidden' }}>
+                <div key={i} className="acg-svc-card" style={{ background: D.card, border: `1px solid ${D.border}`, overflow: 'hidden' }}>
                   <div style={{ aspectRatio: '1 / 1', background: D.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: `1px solid ${D.border}`, position: 'relative', overflow: 'hidden' }}>
                     {(item.badge || (i === 0 && !copy?.products)) && (
                       <span style={{ position: 'absolute', top: 12, left: 12, fontSize: 10, fontWeight: 500, letterSpacing: 1.5, textTransform: 'uppercase', padding: '4px 9px', background: D.bronzeBg, color: D.bronze, zIndex: 1 }}>
@@ -241,8 +247,10 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
                   </div>
                   <div style={{ padding: '18px 20px' }}>
                     <div style={{ fontFamily: display, fontSize: 22, letterSpacing: 0.5, color: D.ink, marginBottom: 3 }}>{typeof item === 'string' ? item : (item.name || 'Product')}</div>
-                    <div style={{ fontSize: 12, color: D.muted, marginBottom: 16 }}>{item.description || ''}</div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    {typeof item !== 'string' && item.description ? (
+                      <ServiceDescription id={`svc-more-apex-${i}`} text={item.description} style={{ fontSize: 12, color: D.muted }} accentColor={D.bronze} />
+                    ) : null}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 }}>
                       {item.price && (
                         <div>
                           <div style={{ fontFamily: display, fontSize: 24, color: D.bronze, letterSpacing: 0.5 }}>{item.price}</div>
@@ -251,6 +259,11 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
                       <div style={{ width: 36, height: 36, background: D.bg, border: `1px solid ${D.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, color: D.alloyDark }}>→</div>
                     </div>
                   </div>
+                  {bookable && (
+                    <div className="acg-svc-foot" style={{ padding: '0 20px 18px' }}>
+                      <BookNowLink serviceName={typeof item === 'string' ? item : (item.name || 'Service')} phone={biz.phone} style={{ color: D.bronze, fontWeight: 700, fontSize: 13, letterSpacing: 1, textTransform: 'uppercase', textDecoration: 'none' }} />
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

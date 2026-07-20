@@ -5,6 +5,7 @@ import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
+import { ServiceCardCss, ServiceDescription, BookNowLink } from '../ServiceCardParts.jsx';
 
 // Template: Mobile Rugged — Dark green (#1a2318 bg, #8a9a4a accent, #f0ede0 text)
 // Repeating diagonal line texture in hero, "ANYWHERE · ANYTIME" subtext, service area, heavy uppercase
@@ -181,6 +182,7 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
       {/* SERVICES */}
       {!hidden('services') && (
       <section id="services" style={{ padding: '80px 5%' , order: getOrder('services') }}>
+        <ServiceCardCss />
         <div style={{ maxWidth: 1200, margin: '0 auto'  }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
             <div style={{ width: 42, height: 3, background: c.accent, borderRadius: 2 }} />
@@ -192,17 +194,23 @@ export default function MobileRugged({ businessInfo, generatedCopy, templateMeta
           )}
           <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 18 }}>
             {services.length > 0 ? services.map((svc, i) => (
-              <div key={i} style={{
+              <div key={i} className="acg-svc-card" style={{
                 background: c.secondary || '#232e20', border: `1px solid ${c.accent}33`,
                 borderRadius: 4, padding: '28px 24px',
                 borderTop: `3px solid ${c.accent}`,
               }}>
                 <h3 style={{ fontSize: 14, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12, color: c.accent }}>{svc.name}</h3>
-                <p style={{ color: c.muted, fontSize: 14, lineHeight: 1.7, margin: 0 }}>{svc.description}</p>
+                <ServiceDescription id={`svc-more-ai-${i}`} text={svc.description} style={{ color: c.muted, fontSize: 14, lineHeight: 1.7 }} accentColor={c.accent} />
+                <div className="acg-svc-foot">
+                  <BookNowLink serviceName={svc.name} phone={biz.phone} style={{ color: c.accent, fontWeight: 800, fontSize: 13, textDecoration: 'none', textTransform: 'uppercase', letterSpacing: 1 }} />
+                </div>
               </div>
             )) : (biz.services || []).map((svc, i) => (
-              <div key={i} style={{ background: c.secondary, border: `1px solid ${c.accent}33`, borderRadius: 4, padding: '24px 20px', borderTop: `3px solid ${c.accent}` }}>
+              <div key={i} className="acg-svc-card" style={{ background: c.secondary, border: `1px solid ${c.accent}33`, borderRadius: 4, padding: '24px 20px', borderTop: `3px solid ${c.accent}` }}>
                 <h3 style={{ fontSize: 14, fontWeight: 800, textTransform: 'uppercase', color: c.accent, margin: 0 }}>{typeof svc === 'string' ? svc : svc.name}</h3>
+                <div className="acg-svc-foot">
+                  <BookNowLink serviceName={typeof svc === 'string' ? svc : svc.name} phone={biz.phone} style={{ color: c.accent, fontWeight: 800, fontSize: 13, textDecoration: 'none', textTransform: 'uppercase', letterSpacing: 1 }} />
+                </div>
               </div>
             ))}
           </div>

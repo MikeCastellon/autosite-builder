@@ -5,6 +5,7 @@ import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
+import { ServiceCardCss, ServiceDescription, BookNowLink } from '../ServiceCardParts.jsx';
 
 // Template: Tint Sleek — Gray & teal (#1f2937 bg, #14b8a6 accent, #374151 secondary)
 // Modern precision, two-column hero, film brands as styled pills, warranty badge, teal left-border cards, social footer
@@ -218,6 +219,7 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
       {/* SERVICES — cards with teal left border */}
       {!hidden('services') && (
       <section id="services" style={{ padding: '80px 5%', order: getOrder('services') }}>
+        <ServiceCardCss />
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ marginBottom: 48 }}>
             <div style={{ color: c.accent, fontWeight: 700, letterSpacing: 3, fontSize: 11, textTransform: 'uppercase', marginBottom: 10 }}>SERVICES</div>
@@ -231,7 +233,7 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
               {packages.map((pkg, i) => {
                 const isFeature = i === Math.floor(packages.length / 2);
                 return (
-                  <div key={i} style={{
+                  <div key={i} className="acg-svc-card" style={{
                     background: isFeature ? c.accent : c.secondary,
                     borderRadius: 12, padding: '36px 28px', textAlign: 'center',
                     border: `1px solid ${isFeature ? 'transparent' : `${c.accent}33`}`,
@@ -244,8 +246,11 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
                       <div style={{ fontFamily: font, fontSize: '1.8rem', fontWeight: 800, color: isFeature ? '#fff' : c.accent, margin: '0.4rem 0 0.75rem' }}>{pkg.price}</div>
                     )}
                     {pkg.description && (
-                      <p style={{ color: isFeature ? 'rgba(255,255,255,0.85)' : c.muted, fontSize: 13, lineHeight: 1.6 }}>{pkg.description}</p>
+                      <ServiceDescription id={`svc-more-pkg-${i}`} text={pkg.description} style={{ color: isFeature ? 'rgba(255,255,255,0.85)' : c.muted, fontSize: 13, lineHeight: 1.6 }} accentColor={isFeature ? '#fff' : c.accent} />
                     )}
+                    <div className="acg-svc-foot">
+                      <BookNowLink serviceName={pkg.name || pkg} phone={biz.phone} style={{ color: isFeature ? '#fff' : c.accent, fontWeight: 700, fontSize: 13, textDecoration: 'none' }} />
+                    </div>
                   </div>
                 );
               })}
@@ -253,19 +258,25 @@ export default function TintSleek({ businessInfo, generatedCopy, templateMeta, i
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 18 }}>
               {services.length > 0 ? services.map((svc, i) => (
-                <div key={i} style={{
+                <div key={i} className="acg-svc-card" style={{
                   background: c.secondary, border: `1px solid ${c.accent}33`,
                   borderRadius: '0 10px 10px 0', padding: '26px 22px 26px 24px',
                   borderLeft: `4px solid ${c.accent}`,
                 }}>
                   <div style={{ color: c.accent, fontSize: 20, marginBottom: 14 }}>◈</div>
                   <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 10, color: c.text }}>{svc.name}</h3>
-                  <p style={{ color: c.muted, fontSize: 14, lineHeight: 1.7, margin: 0 }}>{svc.description}</p>
+                  <ServiceDescription id={`svc-more-ai-${i}`} text={svc.description} style={{ color: c.muted, fontSize: 14, lineHeight: 1.7 }} accentColor={c.accent} />
+                  <div className="acg-svc-foot">
+                    <BookNowLink serviceName={svc.name} phone={biz.phone} style={{ color: c.accent, fontWeight: 700, fontSize: 13, textDecoration: 'none' }} />
+                  </div>
                 </div>
               )) : (biz.services || []).map((svc, i) => (
-                <div key={i} style={{ background: c.secondary, border: `1px solid ${c.accent}33`, borderRadius: '0 10px 10px 0', padding: '22px 20px 22px 22px', borderLeft: `4px solid ${c.accent}` }}>
+                <div key={i} className="acg-svc-card" style={{ background: c.secondary, border: `1px solid ${c.accent}33`, borderRadius: '0 10px 10px 0', padding: '22px 20px 22px 22px', borderLeft: `4px solid ${c.accent}` }}>
                   <div style={{ color: c.accent, fontSize: 18, marginBottom: 10 }}>◈</div>
                   <h3 style={{ fontSize: 15, fontWeight: 700, color: c.text, margin: 0 }}>{typeof svc === 'string' ? svc : svc.name}</h3>
+                  <div className="acg-svc-foot">
+                    <BookNowLink serviceName={typeof svc === 'string' ? svc : svc.name} phone={biz.phone} style={{ color: c.accent, fontWeight: 700, fontSize: 13, textDecoration: 'none' }} />
+                  </div>
                 </div>
               ))}
             </div>

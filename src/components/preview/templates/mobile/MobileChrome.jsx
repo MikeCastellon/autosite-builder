@@ -5,6 +5,7 @@ import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
+import { ServiceCardCss, ServiceDescription, BookNowLink } from '../ServiceCardParts.jsx';
 
 export default function MobileChrome({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
@@ -242,6 +243,7 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
       {/* SERVICES */}
       {!hidden('services') && (
       <section id="services" style={{ ...sectionStyle(), order: getOrder('services') }}>
+        <ServiceCardCss />
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg, transparent, rgba(148,163,184,0.08), transparent)' }} />
         <div style={{ maxWidth: '1200px', margin: '0 auto'  }}>
           <div style={{ textAlign: 'center', marginBottom: '64px' }}>
@@ -252,7 +254,7 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
           {businessInfo.packages?.length > 0 ? (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', justifyContent: 'center' }}>
               {businessInfo.packages.map((pkg, i) => (
-                <div key={i} style={pricingTierStyle(i === 1)}>
+                <div key={i} className="acg-svc-card" style={pricingTierStyle(i === 1)}>
                   {i === 1 && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: chromeGradient }} />}
                   {i === 1 && (
                     <div style={{ position: 'absolute', top: '16px', right: '16px', border: `1px solid rgba(148,163,184,0.4)`, color: c.muted, fontSize: '0.62rem', fontWeight: 600, padding: '3px 8px', letterSpacing: '2px', textTransform: 'uppercase' }}>FEATURED</div>
@@ -262,20 +264,46 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
                   {pkg.price && (
                     <div style={{ fontFamily: font, fontSize: '2rem', fontWeight: 300, background: chromeGradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: '0.4rem 0 0.75rem' }}>{pkg.price}</div>
                   )}
-                  {pkg.description && <p style={{ color: c.muted, fontSize: '0.85rem', lineHeight: 1.7, fontWeight: 300 }}>{pkg.description}</p>}
+                  {pkg.description && (
+                    <ServiceDescription
+                      id={`svc-more-pkg-${i}`}
+                      text={pkg.description}
+                      style={{ color: c.muted, fontSize: '0.85rem', lineHeight: 1.7, fontWeight: 300 }}
+                      accentColor={c.accent}
+                    />
+                  )}
+                  <div className="acg-svc-foot">
+                    <BookNowLink
+                      serviceName={pkg.name || pkg}
+                      phone={businessInfo.phone}
+                      style={{ color: c.accent, fontWeight: 700, fontSize: 13, textDecoration: 'none', fontFamily: font, letterSpacing: '2px', textTransform: 'uppercase' }}
+                    />
+                  </div>
                 </div>
               ))}
             </div>
           ) : (
             <div className="tp-3col" style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, minmax(0, 1fr))`, gap: '20px' }}>
               {generatedCopy.servicesSection.items.map((svc, i) => (
-                <div key={i} style={cardStyle}>
+                <div key={i} className="acg-svc-card" style={cardStyle}>
                   <div style={cardAccentTop} />
                   <div style={{ fontFamily: font, fontSize: '0.68rem', letterSpacing: '3px', textTransform: 'uppercase', background: chromeGradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '14px' }}>
                     {String(i + 1).padStart(2, '0')}
                   </div>
                   <h3 style={{ fontFamily: font, fontSize: '1.05rem', fontWeight: 500, color: c.text, marginBottom: '12px', letterSpacing: '0.5px' }}>{svc.name}</h3>
-                  <p style={{ color: c.muted, fontSize: '0.88rem', lineHeight: 1.7, fontWeight: 300 }}>{svc.description}</p>
+                  <ServiceDescription
+                    id={`svc-more-ai-${i}`}
+                    text={svc.description}
+                    style={{ color: c.muted, fontSize: '0.88rem', lineHeight: 1.7, fontWeight: 300 }}
+                    accentColor={c.accent}
+                  />
+                  <div className="acg-svc-foot">
+                    <BookNowLink
+                      serviceName={svc.name}
+                      phone={businessInfo.phone}
+                      style={{ color: c.accent, fontWeight: 700, fontSize: 13, textDecoration: 'none', fontFamily: font, letterSpacing: '2px', textTransform: 'uppercase' }}
+                    />
+                  </div>
                 </div>
               ))}
             </div>

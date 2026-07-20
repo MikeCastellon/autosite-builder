@@ -5,6 +5,7 @@ import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
+import { ServiceCardCss, ServiceDescription, BookNowLink } from '../ServiceCardParts.jsx';
 
 // Template: Mobile Modern — Blue & white (#ffffff bg, #2563eb accent, #eff6ff secondary)
 // Split hero layout, info cards, clean card-based services, professional badge row, stats grid
@@ -224,6 +225,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
       {/* SERVICES — clean card grid */}
       {!hidden('services') && (
       <section id="services" style={{ padding: '80px 5%', background: c.bg , order: getOrder('services') }}>
+        <ServiceCardCss />
         <div style={{ maxWidth: 1200, margin: '0 auto'  }}>
           <div style={{ marginBottom: 48 }}>
             <span style={{ display: 'inline-block', background: `${c.accent}12`, color: c.accent, fontSize: 12, fontWeight: 700, padding: '5px 14px', borderRadius: 20, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 12 }}>Services</span>
@@ -237,7 +239,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
               {packages.map((pkg, i) => {
                 const isFeature = i === Math.floor(packages.length / 2);
                 return (
-                  <div key={i} style={{
+                  <div key={i} className="acg-svc-card" style={{
                     background: isFeature ? c.accent : '#fff',
                     borderRadius: 16, padding: '36px 28px', textAlign: 'center',
                     border: `2px solid ${isFeature ? c.accent : '#e5e7eb'}`,
@@ -250,8 +252,11 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
                       <div style={{ fontFamily: font, fontSize: '1.8rem', fontWeight: 800, color: isFeature ? '#fff' : c.accent, margin: '0.4rem 0 0.75rem' }}>{pkg.price}</div>
                     )}
                     {pkg.description && (
-                      <p style={{ color: isFeature ? 'rgba(255,255,255,0.85)' : c.muted, fontSize: 14, lineHeight: 1.6 }}>{pkg.description}</p>
+                      <ServiceDescription id={`svc-more-pkg-${i}`} text={pkg.description} style={{ color: isFeature ? 'rgba(255,255,255,0.85)' : c.muted, fontSize: 14, lineHeight: 1.6 }} accentColor={isFeature ? '#fff' : c.accent} />
                     )}
+                    <div className="acg-svc-foot">
+                      <BookNowLink serviceName={pkg.name || pkg} phone={biz.phone} style={{ color: isFeature ? '#fff' : c.accent, fontWeight: 700, fontSize: 13, textDecoration: 'none' }} />
+                    </div>
                   </div>
                 );
               })}
@@ -259,7 +264,7 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 20 }}>
               {services.length > 0 ? services.map((svc, i) => (
-                <div key={i} style={{
+                <div key={i} className="acg-svc-card" style={{
                   background: c.secondary || '#eff6ff', border: '1px solid #dbeafe',
                   borderRadius: 14, padding: '28px 24px',
                   borderTop: `3px solid ${c.accent}`,
@@ -270,11 +275,17 @@ export default function MobileModern({ businessInfo, generatedCopy, templateMeta
                     color: c.accent, fontWeight: 900, fontSize: 16, marginBottom: 14,
                   }}>✓</div>
                   <h3 style={{ fontSize: 16, fontWeight: 700, color: c.text, marginBottom: 10 }}>{svc.name}</h3>
-                  <p style={{ color: c.muted, fontSize: 14, lineHeight: 1.7, margin: 0 }}>{svc.description}</p>
+                  <ServiceDescription id={`svc-more-ai-${i}`} text={svc.description} style={{ color: c.muted, fontSize: 14, lineHeight: 1.7 }} accentColor={c.accent} />
+                  <div className="acg-svc-foot">
+                    <BookNowLink serviceName={svc.name} phone={biz.phone} style={{ color: c.accent, fontWeight: 700, fontSize: 13, textDecoration: 'none' }} />
+                  </div>
                 </div>
               )) : (biz.services || []).map((svc, i) => (
-                <div key={i} style={{ background: c.secondary, border: '1px solid #dbeafe', borderRadius: 14, padding: '24px 20px', borderTop: `3px solid ${c.accent}` }}>
+                <div key={i} className="acg-svc-card" style={{ background: c.secondary, border: '1px solid #dbeafe', borderRadius: 14, padding: '24px 20px', borderTop: `3px solid ${c.accent}` }}>
                   <h3 style={{ fontSize: 15, fontWeight: 700, color: c.text, margin: 0 }}>{typeof svc === 'string' ? svc : svc.name}</h3>
+                  <div className="acg-svc-foot">
+                    <BookNowLink serviceName={typeof svc === 'string' ? svc : svc.name} phone={biz.phone} style={{ color: c.accent, fontWeight: 700, fontSize: 13, textDecoration: 'none' }} />
+                  </div>
                 </div>
               ))}
             </div>

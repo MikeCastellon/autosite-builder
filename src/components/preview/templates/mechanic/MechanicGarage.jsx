@@ -5,6 +5,7 @@ import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
+import { ServiceCardCss, ServiceDescription, BookNowLink } from '../ServiceCardParts.jsx';
 
 export default function MechanicGarage({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const [scrolled, setScrolled] = useState(false);
@@ -242,6 +243,7 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
       {/* SERVICES */}
       {!hidden('services') && (
       <section id="services" style={{ ...sectionStyle(), order: getOrder('services') }}>
+        <ServiceCardCss />
         <div style={{ maxWidth: '1200px', margin: '0 auto'  }}>
           <div style={{ marginBottom: '56px' }}>
             <div style={{ color: c.accent, fontWeight: 800, fontSize: '0.78rem', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '10px' }}>What We Do</div>
@@ -250,10 +252,11 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
           </div>
           <div className="tp-3col" style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, minmax(0, 1fr))`, gap: '20px' }}>
             {generatedCopy.servicesSection.items.map((svc, i) => (
-              <div key={i} style={cardStyle}>
+              <div key={i} className="acg-svc-card" style={cardStyle}>
                 <div style={{ color: c.accent, fontSize: '0.75rem', fontWeight: 800, letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '10px' }}>0{i + 1}</div>
                 <h3 style={{ fontFamily: font, fontSize: '1.1rem', fontWeight: 800, color: c.text, marginBottom: '10px', textTransform: 'uppercase' }}>{svc.name}</h3>
-                <p style={{ color: c.muted, fontSize: '0.9rem', lineHeight: 1.65 }}>{svc.description}</p>
+                <ServiceDescription id={`svc-more-ai-${i}`} text={svc.description} style={{ color: c.muted, fontSize: '0.9rem', lineHeight: 1.65 }} accentColor={c.accent} />
+                <div className="acg-svc-foot"><BookNowLink serviceName={svc.name} phone={businessInfo.phone} style={{ color: c.accent, fontWeight: 800, fontSize: 13, textDecoration: 'none', letterSpacing: '1px', textTransform: 'uppercase' }} /></div>
               </div>
             ))}
           </div>
@@ -283,13 +286,15 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
       {!hidden('services') && businessInfo.packages && businessInfo.packages.length > 0 && (
         <section id="packages" style={{ ...sectionStyle(), order: getOrder('services') }}>
           <div style={{ maxWidth: '1100px', margin: '0 auto'  }}>
+            <ServiceCardCss />
             <h2 style={{ fontFamily: font, fontSize: '2.2rem', fontWeight: 900, color: c.text, textTransform: 'uppercase', marginBottom: '48px' }}>Service Packages</h2>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
               {businessInfo.packages.map((pkg, i) => (
-                <div key={i} style={{ ...cardStyle, border: i === 1 ? `2px solid ${c.accent}` : `none`, borderLeft: `4px solid ${c.accent}`, flex: '1 1 240px' }}>
+                <div key={i} className="acg-svc-card" style={{ ...cardStyle, border: i === 1 ? `2px solid ${c.accent}` : `none`, borderLeft: `4px solid ${c.accent}`, flex: '1 1 240px' }}>
                   <div style={{ fontFamily: font, fontSize: '1.15rem', fontWeight: 900, color: c.text, textTransform: 'uppercase', marginBottom: '8px' }}>{pkg.name || pkg}</div>
                   {pkg.price && <div style={{ fontSize: '1.6rem', fontWeight: 900, color: c.accent, marginBottom: '10px', fontFamily: font }}>{pkg.price}</div>}
-                  {pkg.description && <p style={{ color: c.muted, fontSize: '0.88rem', lineHeight: 1.6 }}>{pkg.description}</p>}
+                  {pkg.description && <ServiceDescription id={`svc-more-pkg-${i}`} text={pkg.description} style={{ color: c.muted, fontSize: '0.88rem', lineHeight: 1.6 }} accentColor={c.accent} />}
+                  <div className="acg-svc-foot"><BookNowLink serviceName={pkg.name || pkg} phone={businessInfo.phone} style={{ color: c.accent, fontWeight: 800, fontSize: 13, textDecoration: 'none', letterSpacing: '1px', textTransform: 'uppercase' }} /></div>
                 </div>
               ))}
             </div>

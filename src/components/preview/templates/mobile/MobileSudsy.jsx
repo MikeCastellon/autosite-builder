@@ -6,6 +6,7 @@ import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import IconOrEmoji from '../IconOrEmoji.jsx';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
+import { ServiceCardCss, ServiceDescription, BookNowLink } from '../ServiceCardParts.jsx';
 
 // Template: Mobile Sudsy
 // Warm amber/cream bg, bubbly neo-brutalist mobile detailing aesthetic.
@@ -294,6 +295,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
       {/* SERVICES */}
       {!hidden('services') && (
       <section id='services' style={{ padding: '100px 5%', background: c.bg, position: 'relative', order: getOrder('services') }}>
+        <ServiceCardCss />
         <div style={{ maxWidth: 1200, margin: '0 auto'  }}>
           <div style={{ textAlign: 'center', marginBottom: 64 }}>
             <div style={sectionTagStyle('1deg')}>{String.fromCodePoint(0x1FAA7)} Our Services</div>
@@ -307,11 +309,12 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
               {packages.map((pkg, i) => {
                 const isFeatured = i === Math.floor(packages.length / 2);
                 return (
-                  <div key={i} style={{ background: isFeatured ? c.text : cardBgs[i % cardBgs.length], ...neoBorder, borderRadius: 24, padding: '36px 28px', textAlign: 'center', position: 'relative' }}>
+                  <div key={i} className="acg-svc-card" style={{ background: isFeatured ? c.text : cardBgs[i % cardBgs.length], ...neoBorder, borderRadius: 24, padding: '36px 28px', textAlign: 'center', position: 'relative' }}>
                     {isFeatured && (<div style={{ position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', background: c.accent, color: c.text, fontWeight: 900, fontSize: 11, letterSpacing: 2, padding: '4px 16px', borderRadius: 980, whiteSpace: 'nowrap', border: `2px solid ${c.text}` }}>MOST POPULAR</div>)}
                     <div style={{ fontFamily: font, fontSize: 22, marginBottom: 8, color: isFeatured ? c.accent : c.text }}>{pkg.name || pkg}</div>
                     {pkg.price && (<div style={{ fontFamily: font, fontSize: '1.8rem', color: isFeatured ? '#fff' : c.text, margin: '0.4rem 0 0.75rem' }}>{pkg.price}</div>)}
-                    {pkg.description && (<p style={{ fontSize: 14, lineHeight: 1.6, color: isFeatured ? 'rgba(255,255,255,0.75)' : '#666', fontWeight: 600 }}>{pkg.description}</p>)}
+                    {pkg.description && (<ServiceDescription id={`svc-more-pkg-${i}`} text={pkg.description} style={{ fontSize: 14, lineHeight: 1.6, color: isFeatured ? 'rgba(255,255,255,0.75)' : '#666', fontWeight: 600 }} accentColor={c.accent} />)}
+                    <div className="acg-svc-foot"><BookNowLink serviceName={pkg.name || pkg} phone={biz.phone} style={{ color: c.accent, fontWeight: 700, fontSize: 13, textDecoration: 'none', fontFamily: bodyFont }} /></div>
                   </div>
                 );
               })}
@@ -320,16 +323,18 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
             <div className="tp-3col" style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, minmax(0, 1fr))`, gap: 24 }}>
               {services.length > 0
                 ? services.map((s, i) => (
-                    <div key={i} style={{ background: cardBgs[i % cardBgs.length], ...neoBorder, borderRadius: 24, padding: '36px 32px' }}>
+                    <div key={i} className="acg-svc-card" style={{ background: cardBgs[i % cardBgs.length], ...neoBorder, borderRadius: 24, padding: '36px 32px' }}>
                       <span style={{ fontSize: 48, marginBottom: 14, display: 'block' }}>{cardEmojis[i % cardEmojis.length]}</span>
                       <h3 style={{ fontFamily: font, fontSize: 26, color: c.text, marginBottom: 10 }}>{s.name}</h3>
-                      <p style={{ fontSize: 14, color: '#555', lineHeight: 1.65, fontWeight: 600, margin: 0 }}>{s.description}</p>
+                      <ServiceDescription id={`svc-more-ai-${i}`} text={s.description} style={{ fontSize: 14, color: '#555', lineHeight: 1.65, fontWeight: 600 }} accentColor={c.accent} />
+                      <div className="acg-svc-foot"><BookNowLink serviceName={s.name} phone={biz.phone} style={{ color: c.accent, fontWeight: 700, fontSize: 13, textDecoration: 'none', fontFamily: bodyFont }} /></div>
                     </div>
                   ))
                 : bizServices.map((s, i) => (
-                    <div key={i} style={{ background: cardBgs[i % cardBgs.length], ...neoBorder, borderRadius: 24, padding: '32px 28px' }}>
+                    <div key={i} className="acg-svc-card" style={{ background: cardBgs[i % cardBgs.length], ...neoBorder, borderRadius: 24, padding: '32px 28px' }}>
                       <span style={{ fontSize: 40, marginBottom: 12, display: 'block' }}>{cardEmojis[i % cardEmojis.length]}</span>
                       <h3 style={{ fontFamily: font, fontSize: 24, color: c.text, margin: 0 }}>{s}</h3>
+                      <div className="acg-svc-foot"><BookNowLink serviceName={s} phone={biz.phone} style={{ color: c.accent, fontWeight: 700, fontSize: 13, textDecoration: 'none', fontFamily: bodyFont }} /></div>
                     </div>
                   ))
               }

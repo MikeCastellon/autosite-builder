@@ -5,6 +5,7 @@ import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
+import { ServiceCardCss, ServiceDescription, BookNowLink } from '../ServiceCardParts.jsx';
 
 // Template: Wheel Clean — White & gunmetal (#f8f9fa bg, #374151 accent)
 // Professional clean, services list with left border accent, brands as styled text
@@ -206,6 +207,7 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
       {/* SERVICES */}
       {!hidden('services') && (
       <section id="services" style={{ order: getOrder('services'), padding: '80px 5%', background: c.bg }}>
+        <ServiceCardCss />
         <div className="tp-2col" style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 60, alignItems: 'start' }}>
           <div>
             <div style={{ position: 'sticky', top: 88 }}>
@@ -225,27 +227,30 @@ export default function WheelClean({ businessInfo, generatedCopy, templateMeta, 
           {packages.length > 0 ? (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1px', background: `${c.accent}22` }}>
               {packages.map((pkg, i) => (
-                <div key={i} style={{ background: '#fff', padding: '32px 28px', borderTop: `3px solid ${i === 1 ? c.accent : 'transparent'}` }}>
+                <div key={i} className="acg-svc-card" style={{ background: '#fff', padding: '32px 28px', borderTop: `3px solid ${i === 1 ? c.accent : 'transparent'}` }}>
                   <h3 style={{ fontSize: 16, fontWeight: 700, color: c.text, marginBottom: 8 }}>{pkg.name || pkg}</h3>
                   {pkg.price && <div style={{ fontFamily: font, fontSize: '1.8rem', fontWeight: 800, color: c.accent, margin: '0.4rem 0 0.75rem' }}>{pkg.price}</div>}
-                  {pkg.description && <p style={{ color: c.muted, fontSize: 14, lineHeight: 1.7, margin: 0 }}>{pkg.description}</p>}
+                  {pkg.description && <ServiceDescription id={`svc-more-pkg-${i}`} text={pkg.description} style={{ color: c.muted, fontSize: 14, lineHeight: 1.7 }} accentColor={c.accent} />}
+                  <div className="acg-svc-foot"><BookNowLink serviceName={pkg.name || pkg} phone={biz.phone} style={{ color: c.accent, fontWeight: 700, fontSize: 13, textDecoration: 'none' }} /></div>
                 </div>
               ))}
             </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 0 }}>
               {services.length > 0 ? services.map((svc, i) => (
-                <div key={i} style={{
+                <div key={i} className="acg-svc-card" style={{
                   borderLeft: `4px solid ${i % 3 === 0 ? c.accent : i % 3 === 1 ? '#9ca3af' : '#d1d5db'}`,
                   paddingLeft: 24, paddingTop: 24, paddingBottom: 24,
                   borderBottom: '1px solid #f3f4f6',
                 }}>
                   <h3 style={{ fontSize: 16, fontWeight: 700, color: c.text, marginBottom: 8 }}>{svc.name}</h3>
-                  <p style={{ color: c.muted, fontSize: 14, lineHeight: 1.7, margin: 0 }}>{svc.description}</p>
+                  <ServiceDescription id={`svc-more-ai-${i}`} text={svc.description} style={{ color: c.muted, fontSize: 14, lineHeight: 1.7 }} accentColor={c.accent} />
+                  <div className="acg-svc-foot"><BookNowLink serviceName={svc.name} phone={biz.phone} style={{ color: c.accent, fontWeight: 700, fontSize: 13, textDecoration: 'none' }} /></div>
                 </div>
               )) : (biz.services || []).map((svc, i) => (
-                <div key={i} style={{ borderLeft: `4px solid ${c.accent}`, paddingLeft: 24, paddingTop: 20, paddingBottom: 20, borderBottom: '1px solid #f3f4f6' }}>
+                <div key={i} className="acg-svc-card" style={{ borderLeft: `4px solid ${c.accent}`, paddingLeft: 24, paddingTop: 20, paddingBottom: 20, borderBottom: '1px solid #f3f4f6' }}>
                   <h3 style={{ fontSize: 15, fontWeight: 700, color: c.text, margin: 0 }}>{typeof svc === 'string' ? svc : svc.name}</h3>
+                  <div className="acg-svc-foot"><BookNowLink serviceName={typeof svc === 'string' ? svc : svc.name} phone={biz.phone} style={{ color: c.accent, fontWeight: 700, fontSize: 13, textDecoration: 'none' }} /></div>
                 </div>
               ))}
             </div>

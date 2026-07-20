@@ -5,6 +5,7 @@ import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
+import { ServiceCardCss, ServiceDescription, BookNowLink } from '../ServiceCardParts.jsx';
 
 // Template: Obsidian Studio -- Ultra-dark void (#050507 bg, #7C3AED accent, #06B6D4 cyan)
 // Syne + Outfit fonts, process steps, testimonials, gallery
@@ -231,6 +232,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
       {!hidden('services') && (
       <section id="services" style={{ padding: '100px 5%' , order: getOrder('services') }}>
         <div style={{ maxWidth: 1280, margin: '0 auto'  }}>
+          <ServiceCardCss />
           <div style={{ marginBottom: 64 }}>
             <div style={labelTagStyle}>
               <span style={{ width: 24, height: 1, background: c.accent, flexShrink: 0 }} />
@@ -246,7 +248,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
           {packages.length > 0 ? (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
               {packages.map((pkg, i) => (
-                <div key={i} style={{
+                <div key={i} className="acg-svc-card" style={{
                   background: panelBg, border: `1px solid ${c.accent}25`,
                   borderRadius: 10, padding: '28px 22px', position: 'relative', overflow: 'hidden',
                 }}>
@@ -258,8 +260,11 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
                     <div style={{ fontSize: 24, fontWeight: 800, color: c.accent, marginBottom: 10 }}>{pkg.price}</div>
                   )}
                   {typeof pkg === 'object' && pkg.description && (
-                    <p style={{ color: c.muted, fontSize: 13, lineHeight: 1.6, margin: 0 }}>{pkg.description}</p>
+                    <ServiceDescription id={`svc-more-pkg-${i}`} text={pkg.description} style={{ color: c.muted, fontSize: 13, lineHeight: 1.6 }} accentColor={c.accent} />
                   )}
+                  <div className="acg-svc-foot">
+                    <BookNowLink serviceName={typeof pkg === 'object' ? pkg.name : pkg} phone={biz.phone} style={{ color: c.accent, fontWeight: 700, fontSize: 13, textDecoration: 'none' }} />
+                  </div>
                 </div>
               ))}
             </div>
@@ -267,19 +272,25 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
             <div className="tp-3col" style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, minmax(0, 1fr))`, gap: 16 }}>
               {services.length > 0
                 ? services.map((svc, i) => (
-                  <div key={i} style={{
+                  <div key={i} className="acg-svc-card" style={{
                     background: panelBg, border: `1px solid ${c.accent}18`,
                     borderRadius: 10, padding: '32px 26px', position: 'relative', overflow: 'hidden',
                   }}>
                     <div style={{ width: 3, height: 36, background: `linear-gradient(180deg, ${c.accent}, ${cCyan})`, marginBottom: 18, borderRadius: 2 }} />
                     <h3 style={{ fontFamily: font, fontSize: 17, fontWeight: 700, marginBottom: 12, color: c.text }}>{svc.name}</h3>
-                    <p style={{ color: c.muted, fontSize: 14, lineHeight: 1.75, margin: 0 }}>{svc.description}</p>
+                    <ServiceDescription id={`svc-more-ai-${i}`} text={svc.description} style={{ color: c.muted, fontSize: 14, lineHeight: 1.75 }} accentColor={c.accent} />
+                    <div className="acg-svc-foot">
+                      <BookNowLink serviceName={svc.name} phone={biz.phone} style={{ color: c.accent, fontWeight: 700, fontSize: 13, textDecoration: 'none' }} />
+                    </div>
                   </div>
                 ))
                 : (biz.services || []).map((svc, i) => (
-                  <div key={i} style={{ background: panelBg, border: `1px solid ${c.accent}18`, borderRadius: 10, padding: '26px 22px' }}>
+                  <div key={i} className="acg-svc-card" style={{ background: panelBg, border: `1px solid ${c.accent}18`, borderRadius: 10, padding: '26px 22px' }}>
                     <div style={{ width: 3, height: 28, background: `linear-gradient(180deg, ${c.accent}, ${cCyan})`, marginBottom: 14, borderRadius: 2 }} />
                     <h3 style={{ fontFamily: font, fontSize: 16, fontWeight: 700, color: c.text, margin: 0 }}>{typeof svc === 'string' ? svc : svc.name}</h3>
+                    <div className="acg-svc-foot">
+                      <BookNowLink serviceName={typeof svc === 'string' ? svc : svc.name} phone={biz.phone} style={{ color: c.accent, fontWeight: 700, fontSize: 13, textDecoration: 'none' }} />
+                    </div>
                   </div>
                 ))
               }

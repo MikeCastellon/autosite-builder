@@ -5,6 +5,7 @@ import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
+import { ServiceCardCss, ServiceDescription, BookNowLink } from '../ServiceCardParts.jsx';
 
 // Template: Tint Dark — Black & purple (#080808 bg, #7c3aed accent, #111111 secondary)
 // Radial gradient glow hero, film brands section, shield warranty callout, packages, fade/gradient elements
@@ -179,6 +180,7 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
       {/* SERVICES */}
       {!hidden('services') && (
       <section id="services" style={{ padding: '80px 5%', order: getOrder('services') }}>
+        <ServiceCardCss />
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ marginBottom: 48 }}>
             <div style={{ color: c.accent, fontWeight: 700, letterSpacing: 3, fontSize: 11, textTransform: 'uppercase', marginBottom: 10 }}>WHAT WE DO</div>
@@ -192,7 +194,7 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
               {packages.map((pkg, i) => {
                 const isFeature = i === Math.floor(packages.length / 2);
                 return (
-                  <div key={i} style={{
+                  <div key={i} className="acg-svc-card" style={{
                     background: isFeature ? `linear-gradient(135deg, ${c.accent}, #a855f7)` : c.secondary || '#111',
                     border: `1px solid ${isFeature ? 'transparent' : `${c.accent}33`}`,
                     borderRadius: 12, padding: '36px 28px', textAlign: 'center',
@@ -205,8 +207,11 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
                       <div style={{ fontFamily: font, fontSize: '1.8rem', fontWeight: 800, color: isFeature ? '#fff' : c.accent, margin: '0.4rem 0 0.75rem' }}>{pkg.price}</div>
                     )}
                     {pkg.description && (
-                      <p style={{ color: isFeature ? 'rgba(255,255,255,0.85)' : c.muted, fontSize: 14, lineHeight: 1.6 }}>{pkg.description}</p>
+                      <ServiceDescription id={`svc-more-pkg-${i}`} text={pkg.description} style={{ color: isFeature ? 'rgba(255,255,255,0.85)' : c.muted, fontSize: 14, lineHeight: 1.6 }} accentColor={isFeature ? '#fff' : c.accent} />
                     )}
+                    <div className="acg-svc-foot">
+                      <BookNowLink serviceName={pkg.name || pkg} phone={biz.phone} style={{ color: isFeature ? '#fff' : c.accent, fontWeight: 700, fontSize: 13, textDecoration: 'none' }} />
+                    </div>
                   </div>
                 );
               })}
@@ -214,7 +219,7 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 18 }}>
               {services.length > 0 ? services.map((svc, i) => (
-                <div key={i} style={{
+                <div key={i} className="acg-svc-card" style={{
                   background: c.secondary || '#111',
                   border: `1px solid ${c.accent}22`,
                   borderRadius: 10, padding: '28px 24px',
@@ -226,12 +231,18 @@ export default function TintDark({ businessInfo, generatedCopy, templateMeta, im
                   }} />
                   <div style={{ width: 3, height: 32, background: `linear-gradient(180deg, ${c.accent}, transparent)`, marginBottom: 16, borderRadius: 2 }} />
                   <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 10, color: c.text }}>{svc.name}</h3>
-                  <p style={{ color: c.muted, fontSize: 14, lineHeight: 1.7, margin: 0 }}>{svc.description}</p>
+                  <ServiceDescription id={`svc-more-ai-${i}`} text={svc.description} style={{ color: c.muted, fontSize: 14, lineHeight: 1.7 }} accentColor={c.accent} />
+                  <div className="acg-svc-foot">
+                    <BookNowLink serviceName={svc.name} phone={biz.phone} style={{ color: c.accent, fontWeight: 700, fontSize: 13, textDecoration: 'none' }} />
+                  </div>
                 </div>
               )) : (biz.services || []).map((svc, i) => (
-                <div key={i} style={{ background: c.secondary, border: `1px solid ${c.accent}22`, borderRadius: 10, padding: '24px 20px' }}>
+                <div key={i} className="acg-svc-card" style={{ background: c.secondary, border: `1px solid ${c.accent}22`, borderRadius: 10, padding: '24px 20px' }}>
                   <div style={{ width: 3, height: 28, background: c.accent, marginBottom: 12, borderRadius: 2 }} />
                   <h3 style={{ fontSize: 15, fontWeight: 700, color: c.text, margin: 0 }}>{typeof svc === 'string' ? svc : svc.name}</h3>
+                  <div className="acg-svc-foot">
+                    <BookNowLink serviceName={typeof svc === 'string' ? svc : svc.name} phone={biz.phone} style={{ color: c.accent, fontWeight: 700, fontSize: 13, textDecoration: 'none' }} />
+                  </div>
                 </div>
               ))}
             </div>

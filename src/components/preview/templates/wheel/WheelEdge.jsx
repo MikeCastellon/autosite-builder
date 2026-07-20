@@ -5,6 +5,7 @@ import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
+import { ServiceCardCss, ServiceDescription, BookNowLink } from '../ServiceCardParts.jsx';
 
 // Template: Wheel Edge — Dark chrome & electric blue (#0d0d0d bg, #00b4d8 accent, #1a1a2e secondary)
 // Circular ring decorative element in hero, product-catalog service grid, brands section, no emoji in nav
@@ -186,6 +187,7 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
       {/* SERVICES — product-catalog grid */}
       {!hidden('services') && (
       <section id="services" style={{ order: getOrder('services'), padding: '80px 5%' }}>
+        <ServiceCardCss />
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ marginBottom: 48 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
@@ -200,7 +202,7 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
           {biz.packages?.length > 0 ? (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 2 }}>
               {biz.packages.map((pkg, i) => (
-                <div key={i} style={{
+                <div key={i} className="acg-svc-card" style={{
                   background: i % 2 === 0 ? c.secondary : '#0f0f1e',
                   padding: '32px 26px',
                   borderTop: `2px solid ${i === 1 ? c.accent : 'transparent'}`,
@@ -214,14 +216,15 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
                   }} />
                   <h3 style={{ fontSize: 15, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, color: c.text }}>{pkg.name || pkg}</h3>
                   {pkg.price && <div style={{ fontFamily: font, fontSize: '1.8rem', fontWeight: 900, color: c.accent, margin: '0.4rem 0 0.75rem' }}>{pkg.price}</div>}
-                  {pkg.description && <p style={{ color: c.muted, fontSize: 13, lineHeight: 1.7, margin: 0 }}>{pkg.description}</p>}
+                  {pkg.description && <ServiceDescription id={`svc-more-pkg-${i}`} text={pkg.description} style={{ color: c.muted, fontSize: 13, lineHeight: 1.7 }} accentColor={c.accent} />}
+                  <div className="acg-svc-foot"><BookNowLink serviceName={pkg.name || pkg} phone={biz.phone} style={{ color: c.accent, fontWeight: 700, fontSize: 13, textDecoration: 'none', textTransform: 'uppercase', letterSpacing: 1.5 }} /></div>
                 </div>
               ))}
             </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 2 }}>
               {services.length > 0 ? services.map((svc, i) => (
-                <div key={i} style={{
+                <div key={i} className="acg-svc-card" style={{
                   background: i % 2 === 0 ? c.secondary : '#0f0f1e',
                   padding: '32px 26px',
                   borderTop: `2px solid ${i < 2 ? c.accent : 'transparent'}`,
@@ -239,11 +242,13 @@ export default function WheelEdge({ businessInfo, generatedCopy, templateMeta, i
                     {String(i + 1).padStart(2, '0')}
                   </div>
                   <h3 style={{ fontSize: 15, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10, color: c.text }}>{svc.name}</h3>
-                  <p style={{ color: c.muted, fontSize: 13, lineHeight: 1.7, margin: 0 }}>{svc.description}</p>
+                  <ServiceDescription id={`svc-more-ai-${i}`} text={svc.description} style={{ color: c.muted, fontSize: 13, lineHeight: 1.7 }} accentColor={c.accent} />
+                  <div className="acg-svc-foot"><BookNowLink serviceName={svc.name} phone={biz.phone} style={{ color: c.accent, fontWeight: 700, fontSize: 13, textDecoration: 'none', textTransform: 'uppercase', letterSpacing: 1.5 }} /></div>
                 </div>
               )) : (biz.services || []).map((svc, i) => (
-                <div key={i} style={{ background: i % 2 === 0 ? c.secondary : '#0f0f1e', padding: '28px 24px', borderTop: `2px solid ${i < 2 ? c.accent : 'transparent'}` }}>
+                <div key={i} className="acg-svc-card" style={{ background: i % 2 === 0 ? c.secondary : '#0f0f1e', padding: '28px 24px', borderTop: `2px solid ${i < 2 ? c.accent : 'transparent'}` }}>
                   <h3 style={{ fontSize: 15, fontWeight: 800, textTransform: 'uppercase', color: c.text, margin: 0 }}>{typeof svc === 'string' ? svc : svc.name}</h3>
+                  <div className="acg-svc-foot"><BookNowLink serviceName={typeof svc === 'string' ? svc : svc.name} phone={biz.phone} style={{ color: c.accent, fontWeight: 700, fontSize: 13, textDecoration: 'none', textTransform: 'uppercase', letterSpacing: 1.5 }} /></div>
                 </div>
               ))}
             </div>

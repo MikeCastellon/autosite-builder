@@ -5,6 +5,7 @@ import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
+import { ServiceCardCss, ServiceDescription, BookNowLink } from '../ServiceCardParts.jsx';
 
 export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const fb = getFallbacks(businessInfo.businessType);
@@ -236,6 +237,7 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
       {/* SERVICES BENTO */}
       {!hidden('services') && (
       <section id="services" style={{ ...s.sectionWhite, order: getOrder('services') }}>
+        <ServiceCardCss />
         <div style={s.servicesIntro}>
           <span style={s.eyebrow}>Services</span>
           <h2 style={s.sectionTitle}>
@@ -251,11 +253,14 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
         {businessInfo.packages?.length > 0 ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
             {businessInfo.packages.map((pkg, i) => (
-              <div key={i} style={{ ...s.tileBase, borderTop: `3px solid ${i === 0 ? blue : 'transparent'}` }}>
+              <div key={i} className="acg-svc-card" style={{ ...s.tileBase, borderTop: `3px solid ${i === 0 ? blue : 'transparent'}` }}>
                 <div style={s.tileGlow} />
                 <h3 style={s.tileH3}>{pkg.name || pkg}</h3>
                 {pkg.price && <div style={{ fontFamily: dmSerif, fontSize: '1.8rem', fontWeight: 700, color: blue, margin: '0.4rem 0 0.75rem' }}>{pkg.price}</div>}
-                <p style={s.tileP}>{pkg.description}</p>
+                <ServiceDescription id={`svc-more-pkg-${i}`} text={pkg.description} style={{ fontSize: '14px', color: text3, lineHeight: 1.65 }} accentColor={blue} />
+                <div className="acg-svc-foot">
+                  <BookNowLink serviceName={pkg.name || pkg} phone={businessInfo.phone} style={{ color: blue, fontWeight: 700, fontSize: 13, textDecoration: 'none', fontFamily: dmSans, letterSpacing: '-0.1px' }} />
+                </div>
               </div>
             ))}
           </div>
@@ -264,14 +269,17 @@ export default function DetailingAutoSyncWhite({ businessInfo, generatedCopy, te
             {services.map((svc, i) => {
               const featured = i === 0;
               return (
-                <div key={i} style={featured ? s.tileFeatured : s.tileBase}>
+                <div key={i} className="acg-svc-card" style={featured ? s.tileFeatured : s.tileBase}>
                   <div style={featured ? s.tileGlowFeatured : s.tileGlow} />
                   {featured && <div style={s.tileBadge}>Most Popular</div>}
                   <div style={featured ? s.tileIconFeatured : s.tileIcon}>
                     {tileIcons[i % tileIcons.length]}
                   </div>
                   <h3 style={featured ? s.tileH3Featured : s.tileH3}>{svc.name}</h3>
-                  <p style={featured ? s.tilePFeatured : s.tileP}>{svc.description}</p>
+                  <ServiceDescription id={`svc-more-ai-${i}`} text={svc.description} style={featured ? s.tilePFeatured : s.tileP} accentColor={featured ? white : blue} />
+                  <div className="acg-svc-foot">
+                    <BookNowLink serviceName={svc.name} phone={businessInfo.phone} style={{ color: featured ? white : blue, fontWeight: 700, fontSize: 13, textDecoration: 'none', fontFamily: dmSans, letterSpacing: '-0.1px' }} />
+                  </div>
                 </div>
               );
             })}

@@ -5,6 +5,7 @@ import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
+import { ServiceCardCss, ServiceDescription, BookNowLink } from '../ServiceCardParts.jsx';
 
 // Template: Mobile Bold — Orange & dark (#1a1a1a bg, #f97316 accent)
 // Aggressive diagonal slashes, "WE COME TO YOU" badge, truck emoji nav, service area banner, packages pricing
@@ -160,6 +161,7 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
       {/* SERVICES */}
       {!hidden('services') && (
       <section id="services" style={{ padding: '80px 5%' , order: getOrder('services') }}>
+        <ServiceCardCss />
         <div style={{ maxWidth: 1200, margin: '0 auto'  }}>
           <div style={{ marginBottom: 48 }}>
             <div style={{ color: c.accent, fontWeight: 900, letterSpacing: 3, fontSize: 11, textTransform: 'uppercase', marginBottom: 8 }}>WHAT WE DO</div>
@@ -173,7 +175,7 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
               {packages.map((pkg, i) => {
                 const isFeature = i === Math.floor(packages.length / 2);
                 return (
-                  <div key={i} style={{
+                  <div key={i} className="acg-svc-card" style={{
                     background: isFeature ? c.accent : c.secondary || '#2a2a2a',
                     border: `3px solid ${isFeature ? c.accent : '#444'}`,
                     padding: '36px 28px', textAlign: 'center',
@@ -194,8 +196,20 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
                       <div style={{ fontFamily: font, fontSize: '1.8rem', fontWeight: 900, color: isFeature ? '#fff' : c.accent, margin: '0.4rem 0 0.75rem' }}>{pkg.price}</div>
                     )}
                     {pkg.description && (
-                      <p style={{ color: isFeature ? 'rgba(255,255,255,0.85)' : '#aaa', fontSize: 14, lineHeight: 1.6 }}>{pkg.description}</p>
+                      <ServiceDescription
+                        id={`svc-more-pkg-${i}`}
+                        text={pkg.description}
+                        style={{ color: isFeature ? 'rgba(255,255,255,0.85)' : '#aaa', fontSize: 14, lineHeight: 1.6 }}
+                        accentColor={isFeature ? '#fff' : c.accent}
+                      />
                     )}
+                    <div className="acg-svc-foot">
+                      <BookNowLink
+                        serviceName={pkg.name || pkg}
+                        phone={biz.phone}
+                        style={{ color: isFeature ? '#fff' : c.accent, fontWeight: 900, fontSize: 13, letterSpacing: 1, textTransform: 'uppercase', textDecoration: 'none' }}
+                      />
+                    </div>
                   </div>
                 );
               })}
@@ -203,18 +217,37 @@ export default function MobileBold({ businessInfo, generatedCopy, templateMeta, 
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: `repeat(${svcCols}, 1fr)`, gap: 16 }}>
               {services.length > 0 ? services.map((s, i) => (
-                <div key={i} style={{
+                <div key={i} className="acg-svc-card" style={{
                   background: c.secondary || '#2a2a2a',
                   borderLeft: `5px solid ${c.accent}`,
                   padding: '28px 24px',
                   clipPath: 'polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)',
                 }}>
                   <h3 style={{ fontWeight: 900, textTransform: 'uppercase', fontSize: 15, letterSpacing: 1, color: c.accent, margin: '0 0 10px' }}>{s.name}</h3>
-                  <p style={{ color: '#aaa', lineHeight: 1.7, margin: 0, fontSize: 14 }}>{s.description}</p>
+                  <ServiceDescription
+                    id={`svc-more-ai-${i}`}
+                    text={s.description}
+                    style={{ color: '#aaa', lineHeight: 1.7, fontSize: 14 }}
+                    accentColor={c.accent}
+                  />
+                  <div className="acg-svc-foot">
+                    <BookNowLink
+                      serviceName={s.name}
+                      phone={biz.phone}
+                      style={{ color: c.accent, fontWeight: 900, fontSize: 13, letterSpacing: 1, textTransform: 'uppercase', textDecoration: 'none' }}
+                    />
+                  </div>
                 </div>
               )) : (biz.services || []).map((s, i) => (
-                <div key={i} style={{ background: c.secondary || '#2a2a2a', borderLeft: `5px solid ${c.accent}`, padding: '24px 22px' }}>
+                <div key={i} className="acg-svc-card" style={{ background: c.secondary || '#2a2a2a', borderLeft: `5px solid ${c.accent}`, padding: '24px 22px' }}>
                   <h3 style={{ fontWeight: 900, textTransform: 'uppercase', fontSize: 15, color: c.accent, margin: 0 }}>{typeof s === 'string' ? s : s.name}</h3>
+                  <div className="acg-svc-foot">
+                    <BookNowLink
+                      serviceName={typeof s === 'string' ? s : s.name}
+                      phone={biz.phone}
+                      style={{ color: c.accent, fontWeight: 900, fontSize: 13, letterSpacing: 1, textTransform: 'uppercase', textDecoration: 'none' }}
+                    />
+                  </div>
                 </div>
               ))}
             </div>

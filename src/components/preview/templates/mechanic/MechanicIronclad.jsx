@@ -5,6 +5,7 @@ import { HeroImage, AboutImage, GallerySection } from '../ImageLayers.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
+import { ServiceCardCss, ServiceDescription, BookNowLink } from '../ServiceCardParts.jsx';
 
 // Template: Mechanic Ironclad
 // Industrial dark aesthetic with rust-red accent (#111111 bg, #C0392B accent, #ffffff text)
@@ -352,6 +353,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
       ═══════════════════════════════════════════════════════════ */}
       {!hidden('services') && (
       <section id="services" style={{ padding: 'clamp(72px, 10cqi, 120px) 5%', background: '#141414', position: 'relative' , order: getOrder('services') }}>
+        <ServiceCardCss />
         {/* Top dashed rust stripe */}
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, backgroundImage: dashedRust }} />
         <div style={{ maxWidth: 1200, margin: '0 auto'  }}>
@@ -373,6 +375,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
             {(services.length > 0 ? services : []).map((svc, i) => (
               <div
                 key={i}
+                className="acg-svc-card"
                 style={{ background: '#1C1C1C', padding: 'clamp(28px, 4cqi, 44px) clamp(20px, 3cqi, 36px)', position: 'relative', overflow: 'hidden', borderTop: '3px solid transparent', transition: 'background 0.25s, border-color 0.25s' }}
                 onMouseEnter={(e) => { e.currentTarget.style.background = '#202020'; e.currentTarget.style.borderTopColor = c.accent; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = '#1C1C1C'; e.currentTarget.style.borderTopColor = 'transparent'; }}
@@ -384,7 +387,19 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
                 <h3 style={{ fontFamily: condensed, fontSize: 22, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: c.text, margin: '0 0 12px' }}>
                   {svc.name}
                 </h3>
-                <p style={{ fontSize: 14, color: '#6B6560', lineHeight: 1.7, margin: 0 }}>{svc.description}</p>
+                <ServiceDescription
+                  id={`svc-more-ai-${i}`}
+                  text={svc.description}
+                  style={{ fontSize: 14, color: '#6B6560', lineHeight: 1.7 }}
+                  accentColor={c.accent}
+                />
+                <div className="acg-svc-foot">
+                  <BookNowLink
+                    serviceName={svc.name}
+                    phone={biz.phone}
+                    style={{ fontFamily: condensed, color: c.accent, fontWeight: 800, fontSize: 13, letterSpacing: 2, textTransform: 'uppercase', textDecoration: 'none' }}
+                  />
+                </div>
               </div>
             ))}
           </div>
