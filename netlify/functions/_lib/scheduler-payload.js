@@ -10,6 +10,18 @@ function formatCents(cents) {
 
 const TEMPLATE_FALLBACK_COLORS = { default: '#1a1a1a' };
 
+// Public payload discipline: nested per-vehicle maps only carry keys for
+// vehicle types the owner currently offers (see vehicle-pricing.js for the
+// map semantics). Keys are filtered, values pass through verbatim — an
+// enabled:false variant or a null add-on price is meaningful widget data.
+function pickVehicleKeys(map, ids) {
+  const out = {};
+  for (const k of Object.keys(map)) {
+    if (ids.has(k)) out[k] = map[k];
+  }
+  return out;
+}
+
 // Pure builder: takes a `sites` row, returns the public widget payload.
 // No DB / network — unit testable.
 export function buildSchedulerPayload(site) {
@@ -23,6 +35,8 @@ export function buildSchedulerPayload(site) {
 
   const cfg = site.scheduler_config || {};
   const appearance = normalizeAppearance(cfg.appearance);
+  const vehicleTypes = enabledVehicleTypes(cfg.vehicle_types);
+  const vehicleTypeIds = new Set(vehicleTypes.map((t) => t.id));
   const enabledServices = (cfg.services || []).filter((s) => s.enabled !== false);
   const siteLogo = site.generated_content?._images?.logo || null;
   const logoUrl = appearance.logo_url || cfg.logo_url || siteLogo || null;
@@ -43,7 +57,7 @@ export function buildSchedulerPayload(site) {
     slot_granularity_minutes: cfg.slot_granularity_minutes ?? 30,
     cta_selector: cfg.cta_selector || '',
     cancellation_policy: cfg.cancellation_policy || '',
-    vehicle_types: enabledVehicleTypes(cfg.vehicle_types).map((t) => ({ id: t.id, name: t.name })),
+    vehicle_types: vehicleTypes.map((t) => ({ id: t.id, name: t.name })),
     services: enabledServices.map((s) => {
       const cents = servicePriceCents(s);
       const enabledAddons = Array.isArray(s.addons)
@@ -53,7 +67,12 @@ export function buildSchedulerPayload(site) {
               id: a.id,
               name: a.name,
               price_cents: typeof a.price_cents === 'number' && a.price_cents > 0 ? a.price_cents : 0,
-              ...(a.prices && typeof a.prices === 'object' ? { prices: a.prices } : {}),
+              ...(a.prices && typeof a.prices === 'object' && !Array.isArray(a.prices)
+                ? (() => {
+                    const filtered = pickVehicleKeys(a.prices, vehicleTypeIds);
+                    return Object.keys(filtered).length > 0 ? { prices: filtered } : {};
+                  })()
+                : {}),
             }))
         : [];
       return {
@@ -63,7 +82,12 @@ export function buildSchedulerPayload(site) {
         price: s.price ?? (cents != null ? formatCents(cents) : ''),
         price_cents: cents,
         description: s.description ?? '',
-        ...(s.variants && typeof s.variants === 'object' ? { variants: s.variants } : {}),
+        ...(s.variants && typeof s.variants === 'object' && !Array.isArray(s.variants)
+          ? (() => {
+              const filtered = pickVehicleKeys(s.variants, vehicleTypeIds);
+              return Object.keys(filtered).length > 0 ? { variants: filtered } : {};
+            })()
+          : {}),
         addons: enabledAddons,
       };
     }),
