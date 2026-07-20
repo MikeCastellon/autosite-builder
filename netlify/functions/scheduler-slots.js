@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { computeSlots } from './_lib/slot-math.js';
 import { isEffectiveSchedulerActive } from './_lib/subscription-gating.js';
+import { resolveVariant } from './_lib/vehicle-pricing.js';
 
 // Public widget endpoint — called from scheduler.js injected on every
 // customer's published site (each on a different domain). Wide-open
@@ -21,7 +22,7 @@ export const handler = async (event) => {
     return { statusCode: 405, headers: CORS, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
-  const { siteId, date, serviceId } = event.queryStringParameters || {};
+  const { siteId, date, serviceId, vehicleTypeId } = event.queryStringParameters || {};
   if (!siteId || !date) {
     return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Missing siteId or date' }) };
   }
@@ -57,10 +58,11 @@ export const handler = async (event) => {
   const leadMs = (cfg.lead_time_hours ?? 24) * 3600 * 1000;
   const granularityMin = cfg.slot_granularity_minutes ?? 30;
 
-  const service = (cfg.services || []).find((s) => s.id === serviceId && s.enabled !== false);
-  const durationMin = service?.duration_minutes
-    ?? (cfg.services || []).find((s) => s.enabled !== false)?.duration_minutes
-    ?? 60;
+  const service = (cfg.services || []).find((s) => s.id === serviceId && s.enabled !== false)
+    ?? (cfg.services || []).find((s) => s.enabled !== false)
+    ?? null;
+  const variant = resolveVariant(service, vehicleTypeId);
+  const durationMin = variant?.duration_minutes ?? 60;
 
   const weekday = WEEKDAY_KEYS[new Date(`${date}T00:00:00.000Z`).getUTCDay()];
   const availability = (cfg.availability || {})[weekday] || [];
@@ -69,7 +71,7 @@ export const handler = async (event) => {
   const dayEnd = `${date}T23:59:59.999Z`;
   const { data: confirmed } = await supabase
     .from('bookings')
-    .select('preferred_at, service_id')
+    .select('preferred_at, service_id, duration_minutes')
     .eq('site_id', siteId)
     .eq('status', 'confirmed')
     .gte('preferred_at', dayStart)
@@ -79,7 +81,7 @@ export const handler = async (event) => {
     const bookedSvc = (cfg.services || []).find((s) => s.id === b.service_id);
     return {
       start: b.preferred_at,
-      durationMin: bookedSvc?.duration_minutes ?? 60,
+      durationMin: b.duration_minutes ?? bookedSvc?.duration_minutes ?? 60,
     };
   });
 
