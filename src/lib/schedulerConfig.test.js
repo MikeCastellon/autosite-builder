@@ -116,4 +116,12 @@ describe('normalizeService with vehicle types', () => {
     expect(s.price_cents).toBe(9900);
     expect(s.variants).toBeUndefined();
   });
+
+  it('rejects a negative base duration when materializing variants', () => {
+    const s = normalizeService(
+      { id: 'svc_1', name: 'Detail', price_cents: 14900, duration_minutes: -30 },
+      types
+    );
+    expect(s.variants.vt_a.duration_minutes).toBe(60);
+  });
 });

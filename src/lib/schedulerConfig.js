@@ -180,7 +180,7 @@ export function normalizeService(service, vehicleTypes) {
         duration_minutes:
           v && typeof v.duration_minutes === 'number' && v.duration_minutes > 0
             ? v.duration_minutes
-            : (Number(out.duration_minutes) || 60),
+            : (typeof out.duration_minutes === 'number' && out.duration_minutes > 0 ? out.duration_minutes : 60),
       };
     }
     out.variants = variants;
