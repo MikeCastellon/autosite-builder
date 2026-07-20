@@ -6,9 +6,14 @@ import { isEffectiveSchedulerActive } from './_lib/subscription-gating.js';
 import { getStripe } from './_lib/stripe.js';
 import {
   computeDepositCents,
-  servicePriceCents,
   computeTotalCents,
 } from './_lib/deposit-math.js';
+import {
+  resolveVariant,
+  addonPriceForVehicle,
+  vehicleSizeFromTypeName,
+  enabledVehicleTypes,
+} from './_lib/vehicle-pricing.js';
 import { checkAndRecordRateLimit } from './_shared/rateLimit.js';
 import { PUBLIC_CORS, PUBLIC_CORS_JSON } from './_shared/cors.js';
 
@@ -89,6 +94,21 @@ export const handler = async (event) => {
     chosenService = enabledServices[0];
   }
 
+  // Per-vehicle pricing (Feature 2). vehicle_type_id is optional so cached
+  // legacy widgets keep working; when present it must match an enabled type.
+  const vehicleTypesCfg = enabledVehicleTypes(cfg.vehicle_types);
+  let chosenVehicleType = null;
+  if (payload.vehicle_type_id) {
+    chosenVehicleType = vehicleTypesCfg.find((t) => t.id === payload.vehicle_type_id) || null;
+    if (!chosenVehicleType) {
+      return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Unknown vehicle type' }) };
+    }
+  }
+  const variant = chosenService ? resolveVariant(chosenService, chosenVehicleType?.id) : null;
+  if (chosenService && chosenVehicleType && !variant) {
+    return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'That service is not offered for the selected vehicle type' }) };
+  }
+
   // Resolve + validate add-ons. The widget sends `addon_ids: [...]`.
   // We snapshot full add-on rows onto the booking so subsequent edits to
   // the owner's menu don't rewrite history. Unknown / disabled IDs are
@@ -102,18 +122,16 @@ export const handler = async (event) => {
     const available = Array.isArray(chosenService.addons) ? chosenService.addons : [];
     for (const id of requestedAddonIds) {
       const match = available.find((a) => a.id === id && a.enabled !== false);
-      if (!match) {
+      const addonPrice = match ? addonPriceForVehicle(match, chosenVehicleType?.id) : null;
+      if (!match || addonPrice == null) {
         return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Unknown or disabled add-on' }) };
       }
-      resolvedAddons.push({
-        id: match.id,
-        name: match.name,
-        price_cents: typeof match.price_cents === 'number' && match.price_cents > 0 ? match.price_cents : 0,
-      });
+      resolvedAddons.push({ id: match.id, name: match.name, price_cents: addonPrice });
     }
   }
 
-  const servicePriceCentsValue = chosenService ? servicePriceCents(chosenService) : null;
+  const servicePriceCentsValue = variant ? variant.price_cents : null;
+  const bookedDurationMin = variant?.duration_minutes ?? null;
   const totalCents = computeTotalCents(servicePriceCentsValue, resolvedAddons);
 
   const when = new Date(payload.preferred_at);
@@ -133,11 +151,11 @@ export const handler = async (event) => {
     }
 
     const granularityMin = cfg.slot_granularity_minutes ?? 30;
-    const durationMin = chosenService?.duration_minutes ?? 60;
+    const durationMin = bookedDurationMin ?? 60;
 
     const { data: confirmed } = await supabase
       .from('bookings')
-      .select('preferred_at, service_id')
+      .select('preferred_at, service_id, duration_minutes')
       .eq('site_id', site.id)
       .eq('status', 'confirmed')
       .gte('preferred_at', `${dateISO}T00:00:00.000Z`)
@@ -145,7 +163,7 @@ export const handler = async (event) => {
 
     const confirmedBookings = (confirmed || []).map((b) => {
       const s = services.find((sv) => sv.id === b.service_id);
-      return { start: b.preferred_at, durationMin: s?.duration_minutes ?? 60 };
+      return { start: b.preferred_at, durationMin: b.duration_minutes ?? s?.duration_minutes ?? 60 };
     });
 
     const validSlots = computeSlots({
@@ -174,12 +192,15 @@ export const handler = async (event) => {
       vehicle_make: payload.vehicle_make,
       vehicle_model: payload.vehicle_model,
       vehicle_year: payload.vehicle_year,
-      vehicle_size: payload.vehicle_size,
+      vehicle_size: chosenVehicleType ? vehicleSizeFromTypeName(chosenVehicleType.name) : payload.vehicle_size,
       service_address: payload.service_address || null,
       notes: payload.notes || null,
       referral_source: payload.referral_source || null,
       service_id: chosenService?.id || null,
       service_name: chosenService?.name || null,
+      vehicle_type_id: chosenVehicleType?.id || null,
+      vehicle_type_name: chosenVehicleType?.name || null,
+      duration_minutes: chosenService ? bookedDurationMin : null,
       service_price_cents: servicePriceCentsValue,
       addons: resolvedAddons.length > 0 ? resolvedAddons : null,
       total_cents: totalCents,
