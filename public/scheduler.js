@@ -9,11 +9,19 @@
   var siteId = script && script.getAttribute('data-site-id');
   var previewMode = script && script.getAttribute('data-preview-mode') === 'true';
   var autoOpen = script && script.getAttribute('data-auto-open') === 'true';
-  // Hash-based auto-open: a shop owner can share `yoursite.com#book` as a
-  // standalone scheduler link. Lands on the site with the booking modal
-  // already open — no click required.
-  if (!autoOpen && typeof window !== 'undefined' && window.location && window.location.hash === '#book') {
-    autoOpen = true;
+  // Hash-based auto-open: '#book' opens the booking modal on load;
+  // '#book=<service name or id>' also pre-selects that service.
+  // Deliberately does NOT set autoOpen — autoOpen is the dashboard-preview
+  // flag that fakes submissions, and share-link customers are real.
+  var hashOpen = false;
+  var hashPreselect = null;
+  var pageHash = (typeof window !== 'undefined' && window.location && window.location.hash) || '';
+  if (pageHash === '#book') {
+    hashOpen = true;
+  } else if (pageHash.indexOf('#book=') === 0) {
+    hashOpen = true;
+    try { hashPreselect = decodeURIComponent(pageHash.slice(6)); }
+    catch (e) { hashPreselect = pageHash.slice(6); }
   }
   var fullPage = script && script.getAttribute('data-full-page') === 'true';
   var noTrack = script && script.getAttribute('data-no-track') === 'true';
@@ -51,6 +59,7 @@
       if (fullPage) renderFullPage(cfg);
       else if (previewMode) openModal(cfg, { inline: true });
       else if (autoOpen) openModal(cfg, { inline: false });
+      else if (hashOpen) { mountButton(cfg); openModal(cfg, { inline: false, preselect: hashPreselect }); }
       else mountButton(cfg);
     });
 
@@ -118,7 +127,7 @@
     wrap.appendChild(host);
     document.body.appendChild(wrap);
 
-    openModal(cfg, { inline: true });
+    openModal(cfg, { inline: true, preselect: hashPreselect });
   }
 
   function mountButton(cfg) {
@@ -179,7 +188,10 @@
   function attachOpen(el, cfg) {
     if (el.hasAttribute('data-scheduler-bound')) return;
     el.setAttribute('data-scheduler-bound', 'true');
-    el.addEventListener('click', function (e) { e.preventDefault(); openModal(cfg, { inline: false }); });
+    el.addEventListener('click', function (e) {
+      e.preventDefault();
+      openModal(cfg, { inline: false, preselect: el.getAttribute('data-scheduler-service') || undefined });
+    });
   }
 
   // Modal theme presets. Owner picks in Booking Settings; default 'light'.
@@ -332,6 +344,23 @@
     },
   };
 
+  // Resolve a '#book=<x>' / data-scheduler-service value against the
+  // payload's services: exact id match first, then trimmed
+  // case-insensitive name match. Null when nothing matches.
+  function findPreselectedService(services, wanted) {
+    if (!wanted) return null;
+    var raw = String(wanted).trim();
+    var lower = raw.toLowerCase();
+    var list = services || [];
+    for (var i = 0; i < list.length; i++) {
+      var s = list[i];
+      if (!s || s.enabled === false) continue;
+      if (s.id === raw) return s;
+      if (typeof s.name === 'string' && s.name.trim().toLowerCase() === lower) return s;
+    }
+    return null;
+  }
+
   function openModal(cfg, opts) {
     if (document.getElementById('acg-scheduler-modal')) return;
     var themeKey = cfg.modal_theme && THEMES[cfg.modal_theme] ? cfg.modal_theme : 'light';
@@ -389,6 +418,10 @@
       // it because there are none). Reset when service changes.
       addonsConfirmed: false,
     };
+    // Deep-link / Book Now preselect: seed the payload's service object so
+    // render() flows into vehicle/add-on steps exactly as if it was clicked.
+    var pre = findPreselectedService(cfg.services, opts && opts.preselect);
+    if (pre) state.service = pre;
 
     function serviceAddons(s) {
       return (s && Array.isArray(s.addons)) ? s.addons : [];
@@ -582,11 +615,18 @@
 
     function renderSimpleForm(services) {
       var firstService = services && services.length > 0 ? services[0] : null;
-      state.service = firstService;
+      // Keep a valid preselect (deep link / Book Now card); otherwise
+      // default to the first bookable service.
+      if (!state.service || !(services || []).some(function (s) { return s.id === state.service.id; })) {
+        state.service = firstService;
+      }
       var serviceOptionsHtml = '';
       if (services && services.length > 1) {
+        // NOTE: this local `opts` shadows openModal's `opts` param — the
+        // preselect already lives in state.service, so that's fine here.
         var opts = services.map(function (s) {
-          return '<option value="' + esc(s.id) + '">' + esc(s.name) + (s.price ? ' · ' + esc(s.price) : '') + '</option>';
+          var sel = state.service && state.service.id === s.id ? ' selected' : '';
+          return '<option value="' + esc(s.id) + '"' + sel + '>' + esc(s.name) + (s.price ? ' · ' + esc(s.price) : '') + '</option>';
         }).join('');
         serviceOptionsHtml =
           '<label style="' + labelStyle() + '">Service <span style="color:' + brand + '">*</span>' +
