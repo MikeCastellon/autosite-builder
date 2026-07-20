@@ -70,6 +70,7 @@ export function defaultSchedulerConfig() {
     cta_selector: '',
     cancellation_policy: '',
     services: [],
+    vehicle_types: defaultVehicleTypes(),
     appearance: defaultAppearance(),
     availability: {
       mon: [...DEFAULT_HOURS], tue: [...DEFAULT_HOURS], wed: [...DEFAULT_HOURS],
@@ -84,6 +85,31 @@ function newServiceId() {
 
 export function newAddonId() {
   return 'add_' + (crypto.randomUUID ? crypto.randomUUID().replace(/-/g, '').slice(0, 12) : Math.random().toString(36).slice(2, 14));
+}
+
+// Mirror of netlify/functions/_lib/vehicle-pricing.js (dashboard copy —
+// same reason parseDollarsToCents is mirrored). One deliberate difference:
+// the editor seeds the default list when the config has none, while the
+// server-side normalizeVehicleTypes returns [] so the public widget never
+// sees vehicle types the owner hasn't saved.
+export const DEFAULT_VEHICLE_TYPE_NAMES = [
+  'Sedan', 'SUV/Crossover', 'Truck', 'Van/Minivan', 'Motorcycle', 'Other',
+];
+
+export function newVehicleTypeId() {
+  return 'vt_' + (crypto.randomUUID ? crypto.randomUUID().replace(/-/g, '').slice(0, 12) : Math.random().toString(36).slice(2, 14));
+}
+
+export function defaultVehicleTypes() {
+  return DEFAULT_VEHICLE_TYPE_NAMES.map((name) => ({ id: newVehicleTypeId(), name, enabled: true }));
+}
+
+export function normalizeVehicleTypes(input) {
+  if (!Array.isArray(input) || input.length === 0) return defaultVehicleTypes();
+  const cleaned = input
+    .filter((t) => t && typeof t.id === 'string' && t.id.trim() !== '' && typeof t.name === 'string' && t.name.trim() !== '')
+    .map((t) => ({ id: t.id, name: t.name.trim(), enabled: t.enabled !== false }));
+  return cleaned.length > 0 ? cleaned : defaultVehicleTypes();
 }
 
 export function seedServicesFromBusinessInfo(bizServices) {
@@ -106,23 +132,59 @@ export function seedServicesFromBusinessInfo(bizServices) {
 }
 
 // Bring an existing service forward into the new shape — fills price_cents
-// from the legacy text and guarantees an addons[] array. Idempotent.
-export function normalizeService(service) {
+// from the legacy text and guarantees an addons[] array. When vehicleTypes
+// is provided (the editor), also materializes a variant per vehicle type and
+// a per-vehicle price map per add-on so every editor cell has a value.
+// Explicit nulls in addon prices mean "not offered" and are preserved.
+// Idempotent.
+export function normalizeService(service, vehicleTypes) {
   if (!service || typeof service !== 'object') return service;
   const out = { ...service };
   if (typeof out.price_cents !== 'number' || out.price_cents <= 0) {
     const parsed = parseDollarsToCents(out.price);
     if (parsed != null) out.price_cents = parsed;
   }
+  const hasTypes = Array.isArray(vehicleTypes) && vehicleTypes.length > 0;
   if (!Array.isArray(out.addons)) out.addons = [];
   out.addons = out.addons
     .filter((a) => a && typeof a.name === 'string')
-    .map((a) => ({
-      id: a.id || newAddonId(),
-      name: String(a.name),
-      price_cents: typeof a.price_cents === 'number' && a.price_cents > 0 ? a.price_cents : 0,
-      enabled: a.enabled !== false,
-    }));
+    .map((a) => {
+      const addon = {
+        id: a.id || newAddonId(),
+        name: String(a.name),
+        price_cents: typeof a.price_cents === 'number' && a.price_cents > 0 ? a.price_cents : 0,
+        enabled: a.enabled !== false,
+      };
+      if (hasTypes) {
+        const prices = {};
+        for (const t of vehicleTypes) {
+          const existing = a.prices && typeof a.prices === 'object' ? a.prices[t.id] : undefined;
+          prices[t.id] = existing !== undefined ? existing : addon.price_cents;
+        }
+        addon.prices = prices;
+      } else if (a.prices && typeof a.prices === 'object') {
+        addon.prices = { ...a.prices };
+      }
+      return addon;
+    });
+  if (hasTypes) {
+    const variants = {};
+    for (const t of vehicleTypes) {
+      const v = (out.variants && typeof out.variants === 'object' && out.variants[t.id]) || null;
+      variants[t.id] = {
+        enabled: v ? v.enabled !== false : true,
+        price_cents:
+          v && typeof v.price_cents === 'number' && v.price_cents > 0
+            ? v.price_cents
+            : (typeof out.price_cents === 'number' && out.price_cents > 0 ? out.price_cents : null),
+        duration_minutes:
+          v && typeof v.duration_minutes === 'number' && v.duration_minutes > 0
+            ? v.duration_minutes
+            : (Number(out.duration_minutes) || 60),
+      };
+    }
+    out.variants = variants;
+  }
   return out;
 }
 
