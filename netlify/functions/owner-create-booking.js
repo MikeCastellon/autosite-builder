@@ -10,7 +10,13 @@ import { createClient } from '@supabase/supabase-js';
 import { bookingReceivedToCustomer } from './_lib/postmark.js';
 import { isEffectiveSchedulerActive } from './_lib/subscription-gating.js';
 import { corsHeaders, jsonHeaders } from './_shared/cors.js';
-import { servicePriceCents, computeTotalCents } from './_lib/deposit-math.js';
+import { computeTotalCents } from './_lib/deposit-math.js';
+import {
+  resolveVariant,
+  addonPriceForVehicle,
+  vehicleSizeFromTypeName,
+  enabledVehicleTypes,
+} from './_lib/vehicle-pricing.js';
 
 export const handler = async (event) => {
   const cors = corsHeaders(event.headers);
@@ -39,6 +45,7 @@ export const handler = async (event) => {
     vehicle_model,
     vehicle_year,
     vehicle_size,
+    vehicle_type_id,
     service_id,
     service_name,
     addon_ids,
@@ -70,25 +77,32 @@ export const handler = async (event) => {
     .maybeSingle();
   if (!isEffectiveSchedulerActive(profile)) return fail(403, { error: 'Pro subscription required' });
 
-  // Resolve add-ons against the chosen service so totals stay honest even
-  // when an owner books on a customer's behalf.
+  // Resolve service + vehicle type so totals stay honest even when an owner
+  // books on a customer's behalf. Owner path is lenient: a vehicle type the
+  // service is disabled for still books at the base price (owner knows best),
+  // and unknown/not-offered add-ons are skipped rather than rejected.
   const services = (site.scheduler_config?.services) || [];
   const chosenService = service_id ? services.find((s) => s.id === service_id) : null;
-  const requestedAddonIds = Array.isArray(addon_ids) ? addon_ids : [];
+  const vehicleTypesCfg = enabledVehicleTypes(site.scheduler_config?.vehicle_types);
+  const chosenVehicleType = vehicle_type_id
+    ? vehicleTypesCfg.find((t) => t.id === vehicle_type_id) || null
+    : null;
+  const variant = chosenService
+    ? (resolveVariant(chosenService, chosenVehicleType?.id) || resolveVariant(chosenService, null))
+    : null;
+
+  const requestedAddonIds = [...new Set(Array.isArray(addon_ids) ? addon_ids : [])];
   let resolvedAddons = [];
   if (requestedAddonIds.length > 0 && chosenService && Array.isArray(chosenService.addons)) {
     for (const id of requestedAddonIds) {
       const match = chosenService.addons.find((a) => a.id === id && a.enabled !== false);
-      if (match) {
-        resolvedAddons.push({
-          id: match.id,
-          name: match.name,
-          price_cents: typeof match.price_cents === 'number' && match.price_cents > 0 ? match.price_cents : 0,
-        });
-      }
+      if (!match) continue;
+      const addonPrice = addonPriceForVehicle(match, chosenVehicleType?.id);
+      if (addonPrice == null) continue;
+      resolvedAddons.push({ id: match.id, name: match.name, price_cents: addonPrice });
     }
   }
-  const servicePriceCentsValue = chosenService ? servicePriceCents(chosenService) : null;
+  const servicePriceCentsValue = variant ? variant.price_cents : null;
   const totalCents = computeTotalCents(servicePriceCentsValue, resolvedAddons);
 
   const { data: inserted, error: insErr } = await supabase
@@ -104,12 +118,15 @@ export const handler = async (event) => {
       vehicle_make: vehicle_make || '',
       vehicle_model: vehicle_model || '',
       vehicle_year: vehicle_year ? Number(vehicle_year) : null,
-      vehicle_size: vehicle_size || 'other',
+      vehicle_size: chosenVehicleType ? vehicleSizeFromTypeName(chosenVehicleType.name) : (vehicle_size || 'other'),
       service_address: null,
       notes: notes || null,
       referral_source: 'owner-dashboard',
       service_id: service_id || null,
       service_name: service_name || null,
+      vehicle_type_id: chosenVehicleType?.id || null,
+      vehicle_type_name: chosenVehicleType?.name || null,
+      duration_minutes: variant?.duration_minutes ?? null,
       service_price_cents: servicePriceCentsValue,
       addons: resolvedAddons.length > 0 ? resolvedAddons : null,
       total_cents: totalCents,
