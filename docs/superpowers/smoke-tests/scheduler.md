@@ -105,3 +105,25 @@ Run after any change to scheduler code. Checkbox each step.
 ### HMAC safety
 - [ ] `curl -X POST .../shopify-subscription-webhook -d '{"x":1}'` (no HMAC header) returns 401.
 - [ ] Bad HMAC returns 401.
+
+## Per-vehicle service options (Feature 2)
+
+1. Booking Settings → Services: "Vehicle types" card lists the site's types (defaults seed as Sedan / SUV/Crossover / Truck / Van/Minivan / Motorcycle / Other on legacy sites); rename, reorder, add, remove all work.
+2. Edit a service: per-vehicle table shows a price + duration row per enabled type; untick "Offer" for one type; set another type's price higher. Add an add-on priced only for one vehicle type (blank cells elsewhere). Save, reload — everything persists.
+3. Preview as customer: service card shows "from $<lowest>"; picking the service shows the vehicle step with per-vehicle prices; the not-offered type is absent; add-ons filter and re-price per vehicle; date/time slots reflect the vehicle's duration; details form has no Size dropdown; breakdown line reads "Service — Vehicle".
+4. Submit a real booking on the published site: bookings row has vehicle_type_id, vehicle_type_name, duration_minutes, correct total_cents, and a sensible vehicle_size bucket. Owner + customer emails show the vehicle type name.
+5. Legacy check: a site that has never saved the new Services tab still books with the old flow (Size dropdown, base prices).
+6. Admin side: Customers → Book: vehicle type select appears (required), resolved price line updates per vehicle, created booking snapshots the type.
+
+## Per-service Book Now links + deep links
+
+1. Republish a site — each service card shows a Book Now link; clicking it opens the booking widget with that service pre-selected (then vehicle step → add-ons → …).
+2. `site.com#book=Exact%20Service%20Name` opens pre-selected; case-differing name works; unknown name falls back to the picker; bare `#book` opens the picker.
+3. CRITICAL regression check: submit a real booking through a `#book` / `#book=` link — it must create a REAL booking (this used to fake-submit as "preview only"). Dashboard "Preview as customer" must still show "Preview only" on submit.
+4. Booking disabled → card links fall back to tel:/contact; no floating pill; no dead ends.
+
+## Service card layout (equal height + Read more)
+
+1. On a republished site: cards in a row are equal height with bottom-aligned Book Now; long descriptions clamp at 6 lines with "Read more" expanding in place ("Show less" collapses); short descriptions show no toggle.
+2. Works with JS disabled (CSS-only toggle) and on mobile (<768px single-column flatten).
+3. Editor preview matches the published page, including the toggle.
