@@ -1,17 +1,14 @@
-import { Fragment, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import {
   saveSchedulerConfig,
   normalizeService,
+  normalizeVehicleTypes,
   newAddonId,
   parseDollarsToCents,
   formatCentsAsDisplay,
 } from '../../../lib/schedulerConfig.js';
 import { useAlert } from '../../ui/AlertProvider.jsx';
-
-// Dismissable hint shown to owners who haven't tried add-ons yet. Once
-// X'd it stays gone — they can always re-read the same content in the
-// dashboard "What's New" banner or under Profile → What's New.
-const ADDONS_HINT_KEY = 'gw.servicesTab.addonsHintDismissed';
+import VehicleTypesEditor from './VehicleTypesEditor.jsx';
 
 function newService() {
   const id = 'svc_' + (crypto.randomUUID ? crypto.randomUUID().replace(/-/g, '').slice(0, 12) : Math.random().toString(36).slice(2, 14));
@@ -27,49 +24,86 @@ function newService() {
   };
 }
 
-function blankAddon() {
-  return { id: newAddonId(), name: '', price_cents: 0, enabled: true };
+function blankAddon(vehicleTypes) {
+  const prices = {};
+  for (const t of vehicleTypes) prices[t.id] = 0;
+  return { id: newAddonId(), name: '', price_cents: 0, enabled: true, prices };
+}
+
+// "from $X" summary across enabled variants for the table's Price column.
+function priceSummary(service, vehicleTypes) {
+  let min = null;
+  let max = null;
+  for (const t of vehicleTypes.filter((t) => t.enabled !== false)) {
+    const v = (service.variants || {})[t.id];
+    if (!v || v.enabled === false) continue;
+    if (typeof v.price_cents === 'number' && v.price_cents > 0) {
+      if (min == null || v.price_cents < min) min = v.price_cents;
+      if (max == null || v.price_cents > max) max = v.price_cents;
+    }
+  }
+  if (min == null) return null;
+  return min === max ? formatCentsAsDisplay(min) : `from ${formatCentsAsDisplay(min)}`;
 }
 
 export default function ServicesTab({ siteId, config, onSaved }) {
   const { confirm: confirmDialog } = useAlert();
-  const [services, setServices] = useState(
-    (config?.services || []).map((s) => normalizeService(s))
-  );
+  // Normalize ONCE and share: normalizeVehicleTypes mints fresh ids when it
+  // seeds defaults, so calling it twice would key the services' variants to
+  // ids the vehicle-types state doesn't have.
+  const initial = useMemo(() => {
+    const types = normalizeVehicleTypes(config?.vehicle_types);
+    return {
+      types,
+      services: (config?.services || []).map((s) => normalizeService(s, types)),
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const [vehicleTypes, setVehicleTypes] = useState(initial.types);
+  const [services, setServices] = useState(initial.services);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
   const [editingId, setEditingId] = useState(null);
-  const [expandedAddonsId, setExpandedAddonsId] = useState(null);
-  const [addonsHintDismissed, setAddonsHintDismissed] = useState(() => {
-    try { return localStorage.getItem(ADDONS_HINT_KEY) === '1'; } catch { return false; }
-  });
 
-  const hasEligibleService = services.some((s) => typeof s.price_cents === 'number' && s.price_cents > 0);
-  const hasAnyAddon = services.some((s) => Array.isArray(s.addons) && s.addons.length > 0);
-  const showAddonsHint = !addonsHintDismissed && hasEligibleService && !hasAnyAddon;
+  const enabledTypes = vehicleTypes.filter((t) => t.enabled !== false);
 
-  function dismissAddonsHint() {
-    try { localStorage.setItem(ADDONS_HINT_KEY, '1'); } catch { /* ignore */ }
-    setAddonsHintDismissed(true);
+  function onVehicleTypesChange(nextTypes) {
+    setVehicleTypes(nextTypes);
+    // Re-normalize so every service gets a variant + addon price cell for a
+    // newly added type; prune data for removed types.
+    const keep = new Set(nextTypes.map((t) => t.id));
+    setServices((prev) =>
+      prev.map((s) => {
+        const pruned = {
+          ...s,
+          variants: Object.fromEntries(Object.entries(s.variants || {}).filter(([id]) => keep.has(id))),
+          addons: (s.addons || []).map((a) => ({
+            ...a,
+            prices: Object.fromEntries(Object.entries(a.prices || {}).filter(([id]) => keep.has(id))),
+          })),
+        };
+        return normalizeService(pruned, nextTypes);
+      })
+    );
   }
 
   function patch(id, fields) {
     setServices((prev) => prev.map((s) => (s.id === id ? { ...s, ...fields } : s)));
   }
 
-  function patchPrice(id, raw) {
-    const cents = parseDollarsToCents(raw);
+  function patchVariant(serviceId, typeId, fields) {
     setServices((prev) =>
       prev.map((s) =>
-        s.id === id
-          ? {
-              ...s,
-              price: raw,
-              price_cents: cents,
-            }
+        s.id === serviceId
+          ? { ...s, variants: { ...s.variants, [typeId]: { ...(s.variants || {})[typeId], ...fields } } }
           : s
       )
     );
+  }
+
+  function patchVariantPrice(serviceId, typeId, raw) {
+    const cents = parseDollarsToCents(raw);
+    patchVariant(serviceId, typeId, { price_cents: cents, _price_input: raw });
   }
 
   function patchAddon(serviceId, addonId, fields) {
@@ -82,16 +116,32 @@ export default function ServicesTab({ siteId, config, onSaved }) {
     );
   }
 
-  function patchAddonPrice(serviceId, addonId, raw) {
-    const cents = parseDollarsToCents(raw) ?? 0;
-    patchAddon(serviceId, addonId, { price_cents: cents, _price_input: raw });
+  // Add-on price cell: blank = not offered for that vehicle (null).
+  function patchAddonPrice(serviceId, addonId, typeId, raw) {
+    const cents = raw.trim() === '' ? null : (parseDollarsToCents(raw) ?? 0);
+    setServices((prev) =>
+      prev.map((s) =>
+        s.id === serviceId
+          ? {
+              ...s,
+              addons: (s.addons || []).map((a) =>
+                a.id === addonId
+                  ? {
+                      ...a,
+                      prices: { ...a.prices, [typeId]: cents },
+                      _priceInputs: { ...(a._priceInputs || {}), [typeId]: raw },
+                    }
+                  : a
+              ),
+            }
+          : s
+      )
+    );
   }
 
   function addAddon(serviceId) {
     setServices((prev) =>
-      prev.map((s) =>
-        s.id === serviceId ? { ...s, addons: [...(s.addons || []), blankAddon()] } : s
-      )
+      prev.map((s) => (s.id === serviceId ? { ...s, addons: [...(s.addons || []), blankAddon(vehicleTypes)] } : s))
     );
   }
 
@@ -114,38 +164,69 @@ export default function ServicesTab({ siteId, config, onSaved }) {
   }
 
   function add() {
-    const s = newService();
+    const s = normalizeService(newService(), vehicleTypes);
     setServices((prev) => [...prev, s]);
     setEditingId(s.id);
   }
 
   async function save() {
+    const cleanedTypes = vehicleTypes
+      .filter((t) => t.name.trim() !== '')
+      .map((t) => ({ id: t.id, name: t.name.trim(), enabled: t.enabled !== false }));
+
     const cleaned = services
       .filter((s) => s.name.trim() !== '')
       .map((s) => {
-        const cents = typeof s.price_cents === 'number' && s.price_cents > 0 ? s.price_cents : null;
-        const display = cents != null ? formatCentsAsDisplay(cents) : (s.price || '');
+        const variants = {};
+        for (const t of cleanedTypes) {
+          const v = (s.variants || {})[t.id] || {};
+          variants[t.id] = {
+            enabled: v.enabled !== false,
+            price_cents: typeof v.price_cents === 'number' && v.price_cents > 0 ? v.price_cents : null,
+            duration_minutes: Math.max(15, Number(v.duration_minutes) || 60),
+          };
+        }
+        // Legacy base fields mirror the first enabled vehicle's variant so old
+        // cached widgets and any code reading price_cents stay sensible.
+        const firstOffered = cleanedTypes.find((t) => t.enabled && variants[t.id].enabled && variants[t.id].price_cents != null);
+        const baseCents = firstOffered ? variants[firstOffered.id].price_cents : (typeof s.price_cents === 'number' && s.price_cents > 0 ? s.price_cents : null);
+        const baseDuration = firstOffered ? variants[firstOffered.id].duration_minutes : Math.max(15, Number(s.duration_minutes) || 60);
         const addons = (s.addons || [])
           .filter((a) => a.name && a.name.trim() !== '')
-          .map((a) => ({
-            id: a.id,
-            name: a.name.trim(),
-            price_cents: Math.max(0, Math.round(Number(a.price_cents) || 0)),
-            enabled: a.enabled !== false,
-          }));
+          .map((a) => {
+            const prices = {};
+            for (const t of cleanedTypes) {
+              const p = (a.prices || {})[t.id];
+              prices[t.id] = typeof p === 'number' && p >= 0 ? p : null;
+            }
+            const firstAddonPrice = cleanedTypes.map((t) => prices[t.id]).find((p) => p != null);
+            return {
+              id: a.id,
+              name: a.name.trim(),
+              price_cents: firstAddonPrice ?? 0,
+              enabled: a.enabled !== false,
+              prices,
+            };
+          });
         return {
-          ...s,
-          duration_minutes: Math.max(15, Number(s.duration_minutes) || 60),
-          price: display,
-          price_cents: cents,
+          id: s.id,
+          name: s.name,
+          description: s.description ?? '',
+          enabled: s.enabled !== false,
+          duration_minutes: baseDuration,
+          price: baseCents != null ? formatCentsAsDisplay(baseCents) : (s.price || ''),
+          price_cents: baseCents,
+          variants,
           addons,
         };
       });
+
     setBusy(true); setErr(null);
     try {
-      const updated = await saveSchedulerConfig(siteId, { services: cleaned });
+      const updated = await saveSchedulerConfig(siteId, { services: cleaned, vehicle_types: cleanedTypes });
       onSaved && onSaved(updated);
-      setServices(cleaned);
+      setVehicleTypes(cleanedTypes);
+      setServices(cleaned.map((s) => normalizeService(s, cleanedTypes)));
       setEditingId(null);
     } catch (e) { setErr(e.message); }
     finally { setBusy(false); }
@@ -153,31 +234,12 @@ export default function ServicesTab({ siteId, config, onSaved }) {
 
   return (
     <div>
+      <VehicleTypesEditor vehicleTypes={vehicleTypes} onChange={onVehicleTypesChange} />
+
       <div className="flex items-center justify-between mb-4">
-        <p className="text-sm text-gray-600">Customers pick one of these when booking. Add-ons (optional extras) appear right after the customer picks a service — the total they pay reflects everything they select.</p>
+        <p className="text-sm text-gray-600">Customers pick a service, then their vehicle type — the price, time, and add-ons they see come from the vehicle row you set here.</p>
         <button onClick={add} className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#1a1a1a] text-white hover:bg-[#cc0000]">+ Add service</button>
       </div>
-
-      {showAddonsHint && (
-        <div className="relative bg-[#fff8eb] border border-[#f5d78b] rounded-xl p-4 sm:p-5 mb-4">
-          <button
-            onClick={dismissAddonsHint}
-            aria-label="Dismiss tip"
-            className="absolute top-2.5 right-2.5 w-6 h-6 rounded-full text-[#a16207] hover:text-[#78350f] hover:bg-black/5 flex items-center justify-center transition-colors"
-          >
-            <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-              <path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-          </button>
-          <p className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#a16207] mb-1.5">New · Add-ons</p>
-          <h4 className="text-sm font-bold text-[#1a1a1a] mb-1.5 leading-tight pr-8">
-            Charge for the extras you already do
-          </h4>
-          <p className="text-[13px] text-[#52525b] leading-snug">
-            Click the <strong className="font-semibold">Add-ons</strong> column on any service to offer optional extras like "Pet hair removal +$25". Customers see them right after they pick that service, and the total they pay (and deposit) updates automatically.
-          </p>
-        </div>
-      )}
 
       <div className="bg-white border border-black/[0.07] rounded-xl overflow-hidden">
         <table className="w-full text-sm">
@@ -185,17 +247,15 @@ export default function ServicesTab({ siteId, config, onSaved }) {
             <tr>
               <th className="px-4 py-3 w-16">On</th>
               <th className="px-4 py-3">Name</th>
-              <th className="px-4 py-3 w-28">Duration</th>
-              <th className="px-4 py-3 w-28">Price</th>
-              <th className="px-4 py-3 w-32">Add-ons</th>
+              <th className="px-4 py-3 w-32">Price</th>
+              <th className="px-4 py-3 w-28">Add-ons</th>
               <th className="px-4 py-3 w-20" />
             </tr>
           </thead>
           <tbody>
             {services.map((s) => {
               const editing = editingId === s.id;
-              const expanded = expandedAddonsId === s.id;
-              const hasNumericPrice = typeof s.price_cents === 'number' && s.price_cents > 0;
+              const summary = priceSummary(s, vehicleTypes);
               const addonCount = (s.addons || []).length;
               return (
                 <Fragment key={s.id}>
@@ -204,54 +264,23 @@ export default function ServicesTab({ siteId, config, onSaved }) {
                       <input type="checkbox" checked={s.enabled !== false} onChange={(e) => patch(s.id, { enabled: e.target.checked })} />
                     </td>
                     <td className="px-4 py-3">
-                      {editing
-                        ? <input value={s.name} onChange={(e) => patch(s.id, { name: e.target.value })} className="w-full border border-gray-200 rounded px-2 py-1 text-sm" autoFocus />
-                        : <span className="font-semibold text-gray-900">{s.name || <em className="text-gray-400">untitled</em>}</span>}
+                      <span className="font-semibold text-gray-900">{s.name || <em className="text-gray-400">untitled</em>}</span>
+                      {s.description ? <span className="block text-xs text-gray-400 truncate max-w-[280px]">{s.description}</span> : null}
                     </td>
                     <td className="px-4 py-3">
-                      {editing
-                        ? <input type="number" min="15" step="15" value={s.duration_minutes} onChange={(e) => patch(s.id, { duration_minutes: Number(e.target.value) })} className="w-20 border border-gray-200 rounded px-2 py-1 text-sm" />
-                        : <span className="text-gray-700">{s.duration_minutes} min</span>}
+                      <span className={summary ? 'text-gray-700' : 'text-amber-600'}>
+                        {summary || (s.price ? `${s.price} (text only)` : '—')}
+                      </span>
                     </td>
-                    <td className="px-4 py-3">
-                      {editing ? (
-                        <input
-                          value={s.price || ''}
-                          onChange={(e) => patchPrice(s.id, e.target.value)}
-                          onBlur={() => {
-                            if (hasNumericPrice) patch(s.id, { price: formatCentsAsDisplay(s.price_cents) });
-                          }}
-                          className="w-24 border border-gray-200 rounded px-2 py-1 text-sm"
-                          placeholder="$149"
-                          inputMode="decimal"
-                        />
-                      ) : (
-                        <span className={hasNumericPrice ? 'text-gray-700' : 'text-amber-600'}>
-                          {hasNumericPrice
-                            ? formatCentsAsDisplay(s.price_cents)
-                            : (s.price ? `${s.price} (text only)` : '—')}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      {hasNumericPrice ? (
-                        <button
-                          type="button"
-                          onClick={() => setExpandedAddonsId(expanded ? null : s.id)}
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-gray-700 hover:text-[#cc0000] transition-colors"
-                        >
-                          {expanded ? '▾' : '▸'} {addonCount === 0 ? 'Add add-ons' : `${addonCount} add-on${addonCount === 1 ? '' : 's'}`}
-                        </button>
-                      ) : (
-                        <span className="text-xs text-gray-400" title="Set a numeric price to enable add-ons">Set price first</span>
-                      )}
+                    <td className="px-4 py-3 text-xs text-gray-600">
+                      {addonCount === 0 ? '—' : `${addonCount} add-on${addonCount === 1 ? '' : 's'}`}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="inline-flex items-center gap-1">
                         <button
                           onClick={() => setEditingId(editing ? null : s.id)}
                           aria-label={editing ? 'Done editing' : 'Edit service'}
-                          title={editing ? 'Done' : 'Edit'}
+                          title={editing ? 'Done' : 'Edit pricing & add-ons'}
                           className="p-1.5 rounded hover:bg-black/[0.05] text-gray-600 hover:text-[#1a1a1a] transition-colors"
                         >
                           {editing ? (
@@ -272,58 +301,129 @@ export default function ServicesTab({ siteId, config, onSaved }) {
                     </td>
                   </tr>
 
-                  {expanded && hasNumericPrice && (
+                  {editing && (
                     <tr className="bg-gray-50">
-                      <td colSpan={6} className="px-4 py-3">
+                      <td colSpan={5} className="px-4 py-4">
+                        {/* Name + description */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                          <label className="block text-xs font-semibold text-gray-600">
+                            Service name
+                            <input value={s.name} onChange={(e) => patch(s.id, { name: e.target.value })} className="mt-1 w-full border border-gray-200 rounded px-2 py-1.5 text-sm bg-white font-normal" autoFocus />
+                          </label>
+                          <label className="block text-xs font-semibold text-gray-600">
+                            Description
+                            <input value={s.description || ''} onChange={(e) => patch(s.id, { description: e.target.value })} className="mt-1 w-full border border-gray-200 rounded px-2 py-1.5 text-sm bg-white font-normal" />
+                          </label>
+                        </div>
+
+                        {/* Per-vehicle pricing */}
+                        <div className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Price & time per vehicle</div>
+                        <div className="overflow-x-auto bg-white border border-gray-200 rounded-lg mb-4">
+                          <table className="w-full text-sm">
+                            <thead className="text-xs text-gray-500 text-left">
+                              <tr className="border-b border-gray-100">
+                                <th className="px-3 py-2">Vehicle</th>
+                                <th className="px-3 py-2 w-20">Offer</th>
+                                <th className="px-3 py-2 w-28">Price</th>
+                                <th className="px-3 py-2 w-32">Duration (min)</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {enabledTypes.map((t) => {
+                                const v = (s.variants || {})[t.id] || {};
+                                const offered = v.enabled !== false;
+                                return (
+                                  <tr key={t.id} className="border-b border-gray-50 last:border-0">
+                                    <td className="px-3 py-2 font-medium text-gray-800">{t.name || <em className="text-gray-400">unnamed</em>}</td>
+                                    <td className="px-3 py-2">
+                                      <input type="checkbox" checked={offered} onChange={(e) => patchVariant(s.id, t.id, { enabled: e.target.checked })} title="Offer this service for this vehicle type" />
+                                    </td>
+                                    <td className="px-3 py-2">
+                                      <input
+                                        value={v._price_input != null ? v._price_input : (typeof v.price_cents === 'number' && v.price_cents > 0 ? formatCentsAsDisplay(v.price_cents) : '')}
+                                        onChange={(e) => patchVariantPrice(s.id, t.id, e.target.value)}
+                                        onBlur={() => { if (typeof v.price_cents === 'number' && v.price_cents > 0) patchVariant(s.id, t.id, { _price_input: formatCentsAsDisplay(v.price_cents) }); }}
+                                        disabled={!offered}
+                                        placeholder="$149"
+                                        inputMode="decimal"
+                                        className="w-24 border border-gray-200 rounded px-2 py-1 text-sm disabled:opacity-40 disabled:bg-gray-50"
+                                      />
+                                    </td>
+                                    <td className="px-3 py-2">
+                                      <input
+                                        type="number" min="15" step="15"
+                                        value={v.duration_minutes ?? 60}
+                                        onChange={(e) => patchVariant(s.id, t.id, { duration_minutes: Number(e.target.value) })}
+                                        disabled={!offered}
+                                        className="w-20 border border-gray-200 rounded px-2 py-1 text-sm disabled:opacity-40 disabled:bg-gray-50"
+                                      />
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        {/* Add-on matrix */}
                         <div className="flex items-center justify-between mb-2">
-                          <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Add-ons for {s.name || 'this service'}</div>
-                          <button
-                            type="button"
-                            onClick={() => addAddon(s.id)}
-                            className="px-2 py-1 rounded-lg text-xs font-semibold bg-white border border-gray-300 hover:bg-gray-100 text-gray-700"
-                          >
-                            + Add an add-on
-                          </button>
+                          <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Add-ons <span className="normal-case font-normal">(price per vehicle — leave blank to not offer for that vehicle)</span></div>
+                          <button type="button" onClick={() => addAddon(s.id)} className="px-2 py-1 rounded-lg text-xs font-semibold bg-white border border-gray-300 hover:bg-gray-100 text-gray-700">+ Add an add-on</button>
                         </div>
                         {(s.addons || []).length === 0 ? (
-                          <div className="text-xs text-gray-500 italic py-2">No add-ons yet. Add optional extras like "Pet hair removal" or "Engine bay clean" — customers see them right after they pick this service.</div>
+                          <div className="text-xs text-gray-500 italic py-2">No add-ons yet. Add optional extras like "Pet hair removal" — customers see them after picking their vehicle.</div>
                         ) : (
-                          <div className="space-y-2">
-                            {s.addons.map((a) => (
-                              <div key={a.id} className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2">
-                                <input
-                                  type="checkbox"
-                                  checked={a.enabled !== false}
-                                  onChange={(e) => patchAddon(s.id, a.id, { enabled: e.target.checked })}
-                                  title="Show this add-on to customers"
-                                />
-                                <input
-                                  value={a.name}
-                                  onChange={(e) => patchAddon(s.id, a.id, { name: e.target.value })}
-                                  placeholder="Add-on name (e.g. Pet hair removal)"
-                                  className="flex-1 border border-gray-200 rounded px-2 py-1 text-sm"
-                                />
-                                <input
-                                  value={a._price_input != null ? a._price_input : (a.price_cents > 0 ? formatCentsAsDisplay(a.price_cents) : '')}
-                                  onChange={(e) => patchAddonPrice(s.id, a.id, e.target.value)}
-                                  onBlur={() => {
-                                    if (a.price_cents > 0) patchAddon(s.id, a.id, { _price_input: formatCentsAsDisplay(a.price_cents) });
-                                  }}
-                                  placeholder="$25"
-                                  className="w-24 border border-gray-200 rounded px-2 py-1 text-sm"
-                                  inputMode="decimal"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => removeAddon(s.id, a.id)}
-                                  aria-label="Remove add-on"
-                                  title="Remove"
-                                  className="p-1.5 rounded hover:bg-red-50 text-gray-500 hover:text-red-600 transition-colors"
-                                >
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
-                                </button>
-                              </div>
-                            ))}
+                          <div className="overflow-x-auto bg-white border border-gray-200 rounded-lg">
+                            <table className="w-full text-sm">
+                              <thead className="text-xs text-gray-500 text-left">
+                                <tr className="border-b border-gray-100">
+                                  <th className="px-3 py-2 w-10">On</th>
+                                  <th className="px-3 py-2 min-w-[160px]">Add-on</th>
+                                  {enabledTypes.map((t) => (
+                                    <th key={t.id} className="px-3 py-2 w-24">{t.name}</th>
+                                  ))}
+                                  <th className="px-3 py-2 w-12" />
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {s.addons.map((a) => (
+                                  <tr key={a.id} className="border-b border-gray-50 last:border-0">
+                                    <td className="px-3 py-2">
+                                      <input type="checkbox" checked={a.enabled !== false} onChange={(e) => patchAddon(s.id, a.id, { enabled: e.target.checked })} title="Show this add-on to customers" />
+                                    </td>
+                                    <td className="px-3 py-2">
+                                      <input
+                                        value={a.name}
+                                        onChange={(e) => patchAddon(s.id, a.id, { name: e.target.value })}
+                                        placeholder="Add-on name"
+                                        className="w-full border border-gray-200 rounded px-2 py-1 text-sm"
+                                      />
+                                    </td>
+                                    {enabledTypes.map((t) => {
+                                      const raw = a._priceInputs && a._priceInputs[t.id] != null
+                                        ? a._priceInputs[t.id]
+                                        : ((a.prices || {})[t.id] != null ? ((a.prices)[t.id] > 0 ? formatCentsAsDisplay(a.prices[t.id]) : '$0') : '');
+                                      return (
+                                        <td key={t.id} className="px-3 py-2">
+                                          <input
+                                            value={raw}
+                                            onChange={(e) => patchAddonPrice(s.id, a.id, t.id, e.target.value)}
+                                            placeholder="—"
+                                            inputMode="decimal"
+                                            className="w-20 border border-gray-200 rounded px-2 py-1 text-sm"
+                                          />
+                                        </td>
+                                      );
+                                    })}
+                                    <td className="px-3 py-2">
+                                      <button type="button" onClick={() => removeAddon(s.id, a.id)} aria-label="Remove add-on" className="p-1.5 rounded hover:bg-red-50 text-gray-500 hover:text-red-600 transition-colors">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                                      </button>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
                           </div>
                         )}
                       </td>
@@ -333,7 +433,7 @@ export default function ServicesTab({ siteId, config, onSaved }) {
               );
             })}
             {services.length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-500">No services yet — click "+ Add service" or "Re-sync from site".</td></tr>
+              <tr><td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-500">No services yet — click "+ Add service" or "Re-sync from site".</td></tr>
             )}
           </tbody>
         </table>
