@@ -272,16 +272,19 @@ export default function ServicesTab({ siteId, config, onSaved }) {
                     <td className="px-4 py-3">
                       <input type="checkbox" checked={s.enabled !== false} onChange={(e) => patch(s.id, { enabled: e.target.checked })} />
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 cursor-pointer" onClick={() => setEditingId(editing ? null : s.id)} title={editing ? 'Close editor' : 'Edit pricing & add-ons'}>
                       <span className="font-semibold text-gray-900">{s.name || <em className="text-gray-400">untitled</em>}</span>
                       {s.description ? <span className="block text-xs text-gray-400 truncate max-w-[280px]">{s.description}</span> : null}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 cursor-pointer" onClick={() => setEditingId(editing ? null : s.id)} title={editing ? 'Close editor' : 'Edit pricing & add-ons'}>
                       <span className={summary ? 'text-gray-700' : 'text-amber-600'}>
                         {summary || (s.price ? `${s.price} (text only)` : '—')}
                       </span>
+                      {!editing && (
+                        <span className="block text-[11px] font-semibold text-[#cc0000] mt-0.5">Set price per vehicle ▸</span>
+                      )}
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-600">
+                    <td className="px-4 py-3 text-xs text-gray-600 cursor-pointer" onClick={() => setEditingId(editing ? null : s.id)} title={editing ? 'Close editor' : 'Edit pricing & add-ons'}>
                       {addonCount === 0 ? '—' : `${addonCount} add-on${addonCount === 1 ? '' : 's'}`}
                     </td>
                     <td className="px-4 py-3 text-right">
