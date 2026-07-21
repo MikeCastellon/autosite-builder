@@ -486,6 +486,14 @@
       if (min == null) return s.price || '';
       return min === max ? formatCents(min) : 'from ' + formatCents(min);
     }
+    // Simple-mode dropdown label: "Service · $price" resolved for the
+    // currently selected vehicle type (base price when vtId is null).
+    function simpleServiceLabel(s, vtId) {
+      var v = variantFor(s, vtId);
+      var cents = v ? v.price_cents : null;
+      var priceLabel = cents != null ? formatCents(cents) : (s.price || '');
+      return s.name + (priceLabel ? ' · ' + priceLabel : '');
+    }
     function selectedAddons() {
       return offeredAddons().filter(function (a) { return state.addonSelections[a.id]; });
     }
@@ -620,13 +628,16 @@
       if (!state.service || !(services || []).some(function (s) { return s.id === state.service.id; })) {
         state.service = firstService;
       }
+      // Initially selected vehicle type: the vehicle select below preselects
+      // the first enabled type, so option labels start priced for it.
+      var currentVtId = vehicleTypes().length > 0 ? vehicleTypes()[0].id : null;
       var serviceOptionsHtml = '';
       if (services && services.length > 1) {
         // NOTE: this local `opts` shadows openModal's `opts` param — the
         // preselect already lives in state.service, so that's fine here.
         var opts = services.map(function (s) {
           var sel = state.service && state.service.id === s.id ? ' selected' : '';
-          return '<option value="' + esc(s.id) + '"' + sel + '>' + esc(s.name) + (s.price ? ' · ' + esc(s.price) : '') + '</option>';
+          return '<option value="' + esc(s.id) + '"' + sel + '>' + esc(simpleServiceLabel(s, currentVtId)) + '</option>';
         }).join('');
         serviceOptionsHtml =
           '<label style="' + labelStyle() + '">Service <span style="color:' + brand + '">*</span>' +
@@ -656,7 +667,7 @@
       // vehicle row when there's only one service. Filled by
       // updateSimplePrice() below.
       var priceHint = hasVehicleTypes
-        ? '<div id="acg-simple-price" style="font-size:12px;font-weight:700;color:' + brand + ';margin:-4px 0 12px;"></div>'
+        ? '<div id="acg-simple-price" style="font-size:14px;font-weight:800;color:' + brand + ';margin:-4px 0 12px;"></div>'
         : '';
 
       card.innerHTML = brandBar() + brandHeader() +
@@ -721,9 +732,27 @@
         }
         hintEl.textContent = label;
       }
+      // Re-price every service option for the selected vehicle type so the
+      // dropdown itself reflects per-vehicle pricing (not just the hint).
+      function relabelServiceOptions() {
+        if (!svcSelect || !vtSelect) return;
+        var vtId = vtSelect.value || null;
+        for (var oi = 0; oi < svcSelect.options.length; oi++) {
+          var opt = svcSelect.options[oi];
+          for (var si = 0; si < services.length; si++) {
+            if (services[si].id === opt.value) {
+              opt.textContent = simpleServiceLabel(services[si], vtId);
+              break;
+            }
+          }
+        }
+      }
       if (hasVehicleTypes) {
         if (svcSelect) svcSelect.addEventListener('change', updateSimplePrice);
-        if (vtSelect) vtSelect.addEventListener('change', updateSimplePrice);
+        if (vtSelect) vtSelect.addEventListener('change', function () {
+          relabelServiceOptions();
+          updateSimplePrice();
+        });
         updateSimplePrice();
       }
       card.querySelector('#acg-booking-form').addEventListener('submit', function (e) { e.preventDefault(); submitSimple(services); });
