@@ -136,7 +136,12 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
   const isPro = isEffectiveSchedulerActive(profile);
   // Block site creation while impersonating — admin shouldn't be able to
   // spawn a new site under the customer's account.
-  const canCreateSite = !isImpersonationTab && (isAdmin || sites.length < MAX_SITES);
+  // Caps are per site_type (mirroring the sites INSERT RLS policy): one
+  // website and one standalone booking page per non-admin account.
+  const websiteCount = sites.filter((s) => s.site_type !== 'booking_only').length;
+  const hasBookingPage = sites.some((s) => s.site_type === 'booking_only');
+  const canCreateSite = !isImpersonationTab && (isAdmin || websiteCount < MAX_SITES);
+  const canCreateBookingPage = !isImpersonationTab && (isAdmin || !hasBookingPage);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -323,19 +328,6 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
         isPro,
       });
       toast(`${site.business_info?.businessName || 'Site'} republished successfully`, 'success');
-
-      if (site.scheduler_enabled && site.slug) {
-        try {
-          await publishBookingPage({
-            siteId: site.id,
-            businessName: site.business_info?.businessName || 'Book an appointment',
-            slug: site.slug,
-            asSubpath: true,
-          });
-        } catch (bookErr) {
-          toast(`Site published, but the booking page failed: ${bookErr.message}`, 'error');
-        }
-      }
     } catch (err) {
       toast(`Republish failed: ${err.message}`, 'error');
     }
@@ -419,7 +411,7 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
                 + New Site
               </button>
             )}
-            {onNewBookingPage && sites.length > 0 && (
+            {onNewBookingPage && sites.length > 0 && canCreateBookingPage && (
               <button
                 type="button"
                 onClick={onNewBookingPage}

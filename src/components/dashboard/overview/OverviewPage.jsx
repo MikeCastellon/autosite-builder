@@ -70,7 +70,10 @@ export default function OverviewPage({ onNewSite, onNewBookingPage }) {
       .then(({ data }) => {
         const list = data || [];
         setSiteCount(list.length);
-        setSite(list.find((s) => s.site_type === 'booking_only' || s.scheduler_enabled) || list[0] || null);
+        // Share card target: the standalone booking page wins; else a
+        // website with booking enabled (its /book page). Never fall back
+        // to a plain website — that link wouldn't be a booking page.
+        setSite(list.find((s) => s.site_type === 'booking_only') || list.find((s) => s.scheduler_enabled) || null);
       });
   }, []);
 

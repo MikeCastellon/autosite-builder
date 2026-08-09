@@ -15,13 +15,23 @@ export async function publishSite({ siteId, businessInfo, generatedCopy, templat
   const token = sessionData?.session?.access_token;
   if (!token) throw new Error('Sign in required to publish.');
 
+  // Publish the standalone /book page in the same request whenever the
+  // site takes bookings — otherwise the shared booking link has no page
+  // behind it and falls through to the website.
+  let bookingPageHtml;
+  const { data: siteRow } = await supabase
+    .from('sites').select('scheduler_enabled').eq('id', siteId).single();
+  if (siteRow?.scheduler_enabled) {
+    bookingPageHtml = buildBookingPageHtml({ siteId, businessName: businessInfo.businessName });
+  }
+
   const res = await fetch('/.netlify/functions/publish-site', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ siteId, htmlContent, slug }),
+    body: JSON.stringify(bookingPageHtml ? { siteId, htmlContent, slug, bookingPageHtml } : { siteId, htmlContent, slug }),
   });
 
   if (!res.ok) {

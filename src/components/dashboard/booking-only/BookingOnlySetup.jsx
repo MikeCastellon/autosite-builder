@@ -49,7 +49,11 @@ export default function BookingOnlySetup({ onDone, onCancel }) {
         })
         .select()
         .single();
-      if (insErr) throw insErr;
+      if (insErr) {
+        throw new Error(insErr.code === '42501'
+          ? 'You already have a booking page — manage it from the Sites tab.'
+          : insErr.message);
+      }
 
       const { bookingUrl } = await publishBookingPage({
         siteId: site.id, businessName, slug: finalSlug, asSubpath: false,
