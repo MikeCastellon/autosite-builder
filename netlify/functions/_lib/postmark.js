@@ -109,7 +109,7 @@ function businessInfoHtmlBlock(site) {
 // (confirm-signup, reset-password) so every Postmark email looks like
 // it came out of the same system. Accepts a block of inner HTML for the
 // content area — keep it simple paragraphs + optional cards.
-function renderEmailShell({ icon = '✉', eyebrow = 'Genius Websites', title, intro, cta, body }) {
+function renderEmailShell({ icon = '✉', eyebrow = 'Websites', title, intro, cta, body }) {
   const ctaHtml = cta
     ? `<table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding-bottom:28px;">
          <a href="${esc(cta.href)}" style="display:inline-block;background:linear-gradient(135deg,#cc0000,#8a0000);color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:14px 36px;border-radius:12px;letter-spacing:0.01em;">${esc(cta.label)}</a>
@@ -128,8 +128,8 @@ function renderEmailShell({ icon = '✉', eyebrow = 'Genius Websites', title, in
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#fafafa;padding:40px 16px;"><tr><td align="center">
 <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
   <tr><td align="center" style="padding-bottom:32px;">
-    <img src="https://www.autocaregenius.com/cdn/shop/files/v11_1.svg?v=1760731533&width=200" alt="Auto Care Genius" width="160" style="display:block;margin:0 auto 12px;height:auto;" />
-    <p style="margin:0;font-size:11px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:#a1a1aa;">${esc(eyebrow)}</p>
+    <img src="https://www.autocaregenius.com/cdn/shop/files/v11_1.svg?v=1760731533&width=400" alt="Auto Care Genius" width="130" style="display:block;width:130px;max-width:80%;height:auto;margin:0 auto 14px;border:0;outline:none;text-decoration:none;">
+    <div style="font-family:'Lucida Sans','Lucida Sans Unicode','Lucida Grande',Verdana,Helvetica,sans-serif;font-size:14px;font-weight:700;color:#999999;letter-spacing:1.5px;text-transform:uppercase;line-height:1;margin:0;">${esc(eyebrow)}</div>
   </td></tr>
   <tr><td style="background:#ffffff;border-radius:20px;border:1px solid #e4e4e7;padding:40px 36px;box-shadow:0 1px 3px rgba(0,0,0,0.04),0 8px 32px rgba(0,0,0,0.04);">
     ${iconHtml}
