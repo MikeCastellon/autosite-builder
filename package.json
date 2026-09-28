@@ -9,7 +9,9 @@
     "preview": "vite preview",
     "lint": "eslint src",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "theme:check": "vitest run src/components/preview/templates src/lib/fontCatalog.test.js",
+    "theme:render": "vitest run --config vitest.render.config.js"
   },
   "dependencies": {
     "@stripe/connect-js": "^3.3.38",
