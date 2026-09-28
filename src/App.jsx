@@ -7,7 +7,6 @@ import StepGenerating from './components/wizard/StepGenerating.jsx';
 import WebsitePreview from './components/preview/WebsitePreview.jsx';
 import StepExport from './components/wizard/StepExport.jsx';
 import StepSocialFeeds from './components/wizard/StepSocialFeeds.jsx';
-import { TEMPLATES } from './data/templates.js';
 import { DEMO_BUSINESS_INFO, DEMO_GENERATED_COPY } from './data/demoData.js';
 import { useAuth } from './lib/AuthContext.jsx';
 import LoginPage from './components/auth/LoginPage.jsx';
@@ -29,6 +28,7 @@ import HelpChrome from './components/help/HelpChrome.jsx';
 import AppShell from './components/ui/AppShell.jsx';
 import { saveSite } from './lib/saveSite.js';
 import { publishSite } from './lib/publishSite.js';
+import { buildTemplateMeta, unpackGeneratedContent, withWidgetKeys } from './lib/siteRender.js';
 import { supabase } from './lib/supabase.js';
 import { useAlert } from './components/ui/AlertProvider.jsx';
 import { isEffectiveSchedulerActive } from './lib/subscriptionGating.js';
@@ -153,13 +153,14 @@ export default function App() {
     }, 1500);
   }, [session, siteId, businessInfo, editedCopy, selectedTemplate, images, selectedWidgetIds, customColors, customFonts]);
 
+  // Latest autoSave and siteId, for async work that finishes after later
+  // renders. Calling the autoSave captured when that work started would
+  // save the state from back then (e.g. an empty dashboard state).
+  const latestRef = useRef({});
+  latestRef.current = { autoSave, siteId };
+
   const templateMeta = selectedTemplate
-    ? {
-        ...TEMPLATES[selectedTemplate],
-        colors: { ...TEMPLATES[selectedTemplate].colors, ...customColors },
-        font: customFonts.font ?? TEMPLATES[selectedTemplate].font,
-        bodyFont: customFonts.bodyFont ?? TEMPLATES[selectedTemplate].bodyFont,
-      }
+    ? buildTemplateMeta(selectedTemplate, customColors, customFonts)
     : null;
 
   const goTo = (s) => setStep(s);
@@ -223,7 +224,7 @@ export default function App() {
     setSiteId(newSiteId);
     goTo(5);
     // Auto-save after generation
-    autoSave({ siteId: newSiteId, editedCopy: copy });
+    autoSave({ siteId: newSiteId, editedCopy: merged });
   };
 
   const handleGenerateError = (msg) => {
@@ -399,31 +400,13 @@ export default function App() {
         .from('sites').select('generated_content').eq('id', site.id).single();
       fullGenerated = data?.generated_content;
     }
-    const copy = fullGenerated || {};
-    const siteImages = copy._images || {};
-    const savedCustomColors = copy._customColors || {};
-    const savedCustomFonts = copy._customFonts || {};
-    delete copy._images;
-    delete copy._customColors;
-    delete copy._customFonts;
-
-    // Fetch latest widget keys from Supabase if not already in copy
-    if (session?.user?.id && (!copy.instagramWidgetKey || !copy.googleWidgetKey)) {
-      try {
-        const { data: widgets } = await supabase
-          .from('widget_configs')
-          .select('type, widget_key')
-          .eq('user_id', session.user.id)
-          .in('type', ['instagram-feed', 'google-reviews'])
-          .order('created_at', { ascending: false });
-        if (widgets) {
-          const igWidget = widgets.find(w => w.type === 'instagram-feed');
-          const grWidget = widgets.find(w => w.type === 'google-reviews');
-          if (igWidget && !copy.instagramWidgetKey) copy.instagramWidgetKey = igWidget.widget_key;
-          if (grWidget && !copy.googleWidgetKey) copy.googleWidgetKey = grWidget.widget_key;
-        }
-      } catch (e) { /* ignore */ }
-    }
+    const {
+      copy: storedCopy,
+      images: siteImages,
+      customColors: savedCustomColors,
+      customFonts: savedCustomFonts,
+    } = unpackGeneratedContent(fullGenerated);
+    const copy = await withWidgetKeys(storedCopy, session?.user?.id, supabase);
 
     setGeneratedCopy(copy);
     setEditedCopy(structuredClone(copy));
@@ -443,9 +426,11 @@ export default function App() {
       try {
         const { migrateLegacyImages } = await import('./lib/imageUpload.js');
         const { migrated, images: fixed } = await migrateLegacyImages(siteImages, site.id);
-        if (migrated) {
+        // Uploads take a while: only apply the result if this site is still
+        // the one open, and save through the latest state.
+        if (migrated && latestRef.current.siteId === site.id) {
           setImages(fixed);
-          autoSave({ siteId: site.id, images: fixed });
+          latestRef.current.autoSave({ siteId: site.id, images: fixed });
         }
       } catch { /* leave base64 in place; retry next open */ }
     })();

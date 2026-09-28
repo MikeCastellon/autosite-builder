@@ -15,3 +15,26 @@ export function isValidSlug(slug) {
   if (slug.length === 0 || slug.length > 63) return false;
   return SLUG_RE.test(slug);
 }
+
+// Subdomains of the publish domain that are ours, never a customer's.
+const RESERVED_SLUGS = new Set([
+  'www', 'app', 'api', 'admin', 'mail', 'book', 'booking', 'dashboard',
+  'sitebuilder', 'support', 'help', 'status', 'cdn', 'assets', 'static',
+]);
+
+export function isReservedSlug(slug) {
+  return RESERVED_SLUGS.has(slug);
+}
+
+// Slugs to try, in order, for a site's first publish: the requested slug,
+// then `-2`, `-3`, … The base is trimmed so every candidate stays within
+// the 63-char DNS label limit.
+export function slugCandidates(base, max = 20) {
+  const out = [];
+  for (let i = 1; i <= max; i++) {
+    const suffix = i === 1 ? '' : `-${i}`;
+    const trimmed = base.slice(0, 63 - suffix.length).replace(/-+$/, '');
+    out.push(`${trimmed}${suffix}`);
+  }
+  return out;
+}

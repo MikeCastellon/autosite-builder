@@ -20,7 +20,10 @@ export default function BookingOnlySetup({ onDone, onCancel }) {
   const [pageStyle, setPageStyle] = useState('branded');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [result, setResult] = useState(null); // { bookingUrl, siteId }
+  const [result, setResult] = useState(null); // { bookingUrl, siteId, takenSlug }
+  // Row created by an earlier attempt whose publish failed; retries reuse it
+  // (a second insert would hit the one-booking-page limit).
+  const [createdSiteId, setCreatedSiteId] = useState(null);
 
   function onName(v) {
     setBusinessName(v);
@@ -37,29 +40,40 @@ export default function BookingOnlySetup({ onDone, onCancel }) {
       const appearance = { ...defaultAppearance(), accent_color: accent, tagline, page_style: pageStyle };
       const scheduler_config = { ...defaultSchedulerConfig(), appearance };
 
-      const { data: site, error: insErr } = await supabase
-        .from('sites')
-        .insert({
-          user_id: session.user.id,
-          site_type: 'booking_only',
-          business_info: { businessName },
-          scheduler_enabled: true,
-          scheduler_config,
-          slug: finalSlug,
-        })
-        .select()
-        .single();
-      if (insErr) {
-        throw new Error(insErr.code === '42501'
-          ? 'You already have a booking page — manage it from the Sites tab.'
-          : insErr.message);
+      let siteId = createdSiteId;
+      if (!siteId) {
+        // No slug here: publish-site assigns it, so a name another business
+        // already uses gets a free variant instead of taking over their page.
+        const { data: site, error: insErr } = await supabase
+          .from('sites')
+          .insert({
+            user_id: session.user.id,
+            site_type: 'booking_only',
+            business_info: { businessName },
+            scheduler_enabled: true,
+            scheduler_config,
+          })
+          .select()
+          .single();
+        if (insErr) {
+          throw new Error(insErr.code === '42501'
+            ? 'You already have a booking page — manage it from the Sites tab.'
+            : insErr.message);
+        }
+        siteId = site.id;
+        setCreatedSiteId(siteId);
+      } else {
+        await supabase.from('sites')
+          .update({ business_info: { businessName }, scheduler_config })
+          .eq('id', siteId);
       }
 
-      const { bookingUrl } = await publishBookingPage({
-        siteId: site.id, businessName, slug: finalSlug, asSubpath: false,
+      const { bookingUrl, slug: assignedSlug } = await publishBookingPage({
+        siteId, businessName, slug: finalSlug, asSubpath: false,
       });
-      setResult({ bookingUrl, siteId: site.id });
-      onDone && onDone(site.id);
+      // Stay on the success screen so the owner sees (and can copy) the
+      // link that was actually assigned; its Done button leaves.
+      setResult({ bookingUrl, siteId, takenSlug: assignedSlug && assignedSlug !== finalSlug ? finalSlug : null });
     } catch (e) {
       setError(e.message || 'Could not create your booking page.');
     } finally { setBusy(false); }
@@ -70,7 +84,16 @@ export default function BookingOnlySetup({ onDone, onCancel }) {
       <div className="max-w-[560px] mx-auto py-8">
         <h2 className="text-[22px] font-bold text-[#1a1a1a] mb-1">Your booking page is live 🎉</h2>
         <p className="text-[14px] text-[#888] mb-5">Share this link anywhere — Instagram, text, business cards.</p>
+        {result.takenSlug && (
+          <p className="text-[13px] text-[#4a4a4a] bg-[#f4f3f0] rounded-xl px-3.5 py-2.5 mb-4">
+            “{result.takenSlug}” is already in use, so your link uses the address below.
+          </p>
+        )}
         <ShareBookingCard bookingUrl={result.bookingUrl} />
+        <button type="button" onClick={() => onDone && onDone(result.siteId)}
+          className="mt-5 w-full rounded-xl bg-[#1a1a1a] hover:bg-[#cc0000] text-white text-[14px] font-semibold py-3 transition-colors">
+          Done
+        </button>
       </div>
     );
   }

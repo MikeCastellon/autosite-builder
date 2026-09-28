@@ -8,6 +8,8 @@ import { buildBookingPageHtml } from './bookingPageHtml.js';
  * The Worker at *.autocaregeniushub.com serves it automatically.
  */
 export async function publishSite({ siteId, businessInfo, generatedCopy, templateId, templateMeta, images, selectedWidgetIds, isPro = false }) {
+  // Only a preference: publish-site keeps a site's existing slug and picks
+  // a free variant if another business already has this one.
   const slug = generateSlug(businessInfo.businessName);
   const htmlContent = await exportHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, selectedWidgetIds || [], siteId, isPro);
 
@@ -68,5 +70,5 @@ export async function publishBookingPage({ siteId, businessName, slug, asSubpath
     const err = await res.json();
     throw new Error(err.error || 'Publish failed');
   }
-  return res.json(); // { publishedUrl, bookingUrl }
+  return res.json(); // { publishedUrl, bookingUrl, slug }
 }

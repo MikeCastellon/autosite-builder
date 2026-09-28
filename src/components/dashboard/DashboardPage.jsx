@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { supabase, isImpersonationTab } from '../../lib/supabase.js';
 import { useAuth } from '../../lib/AuthContext.jsx';
 import { publishSite, publishBookingPage } from '../../lib/publishSite.js';
+import { resolveSiteRender, withWidgetKeys } from '../../lib/siteRender.js';
+import { generateSlug } from '../../lib/publishUtils.js';
 import { TEMPLATES } from '../../data/templates.js';
 import { CHANGELOG, formatChangelogDate } from '../../data/changelog.js';
 import { isEffectiveSchedulerActive } from '../../lib/subscriptionGating.js';
@@ -128,6 +130,7 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
   const [domainPanelInitial, setDomainPanelInitial] = useState(null);
   const [proDialogOpen, setProDialogOpen] = useState(false);
   const [editBizSite, setEditBizSite] = useState(null);
+  const [republishingId, setRepublishingId] = useState(null);
   const [showWelcome, setShowWelcome] = useState(false);
   const [customPromoOpen, setCustomPromoOpen] = useState(false);
   const [customBannerOpen, setCustomBannerOpen] = useState(false);
@@ -270,12 +273,13 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
     // Unpublish first so the auth-gated function can still verify
     // ownership. If we deleted the DB row first, the ownership check
     // would 404 and the published HTML would be orphaned forever.
+    let pageLeftUp = false;
     if (site?.slug) {
       try {
         const { data: sessionData } = await supabase.auth.getSession();
         const token = sessionData?.session?.access_token;
         if (token) {
-          await fetch('/.netlify/functions/unpublish-site', {
+          const res = await fetch('/.netlify/functions/unpublish-site', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -283,6 +287,9 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
             },
             body: JSON.stringify({ siteId: site.id }),
           });
+          // The web address is shared with another account (from before
+          // addresses were unique), so the live page wasn't removed.
+          if (res.ok) pageLeftUp = (await res.json().catch(() => ({}))).shared === true;
         }
       } catch { /* best-effort — proceed with DB delete either way */ }
     }
@@ -293,62 +300,83 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
       return;
     }
     setSites((prev) => prev.filter((s) => s.id !== id));
-    toast('Site deleted', 'success');
+    if (pageLeftUp) {
+      toast('Site deleted, but its web address is shared with another account, so the live page could not be taken down automatically. Contact support to remove it.', 'error');
+    } else {
+      toast('Site deleted', 'success');
+    }
   };
 
   const handleRepublish = async (site) => {
+    if (republishingId) return;
     const ok = await confirmDialog(`Republish ${site.business_info?.businessName || 'this site'} with the latest template updates?`, {
       title: 'Republish site?',
       confirmText: 'Republish',
     });
     if (!ok) return;
+    setRepublishingId(site.id);
     try {
       if (site.site_type === 'booking_only') {
         await publishBookingPage({
           siteId: site.id,
           businessName: site.business_info?.businessName || 'Book an appointment',
-          slug: site.slug,
+          // A row whose slug support cleared claims a fresh one.
+          slug: site.slug || generateSlug(site.business_info?.businessName || ''),
           asSubpath: false,
         });
         toast(`${site.business_info?.businessName || 'Site'} republished successfully`, 'success');
         return;
       }
 
-      const { TEMPLATES } = await import('../../data/templates.js');
-      const templateMeta = TEMPLATES[site.template_id];
+      // Same inputs the editor's Publish uses (owner images, colors,
+      // fonts). Stock template values here would strip the owner's
+      // branding from their live site.
       const generatedContent = await loadGeneratedContent(site.id);
-      await publishSite({
-        siteId: site.id,
-        businessInfo: site.business_info,
-        generatedCopy: generatedContent,
-        templateId: site.template_id,
-        templateMeta: { ...templateMeta, colors: templateMeta?.colors || {} },
-        images: {},
-        selectedWidgetIds: site.widget_config_ids || [],
-        isPro,
-      });
+      const render = resolveSiteRender(site, generatedContent);
+      if (!render.templateMeta) throw new Error('This site has no template yet. Open it in the editor first.');
+      const generatedCopy = await withWidgetKeys(render.generatedCopy, site.user_id, supabase);
+
+      // Legacy drafts can still hold inline base64 images, which push the
+      // published HTML past Netlify's payload limit. Upload them first,
+      // as the editor's Publish does, and keep the uploaded URLs.
+      let images = render.images;
+      try {
+        const { migrateLegacyImages } = await import('../../lib/imageUpload.js');
+        const { migrated, images: fixed } = await migrateLegacyImages(images, site.id);
+        if (migrated) {
+          images = fixed;
+          await saveMigratedImages(site.id, render.images, fixed);
+        }
+      } catch { /* publish whatever we have */ }
+
+      await publishSite({ ...render, generatedCopy, images, isPro });
       toast(`${site.business_info?.businessName || 'Site'} republished successfully`, 'success');
     } catch (err) {
       toast(`Republish failed: ${err.message}`, 'error');
+    } finally {
+      setRepublishingId(null);
     }
   };
 
-  const handleReExport = async (site) => {
-    // Download a saved site's HTML again
-    const { exportHtml } = await import('../../lib/exportHtml.js');
-    const { TEMPLATES } = await import('../../data/templates.js');
-    const templateMeta = TEMPLATES[site.template_id];
-    const generatedContent = await loadGeneratedContent(site.id);
-    await exportHtml(
-      site.template_id,
-      site.business_info,
-      generatedContent,
-      { ...templateMeta, colors: templateMeta?.colors || {} },
-      {},
-      site.widget_config_ids || [],
-      site.id
+  // Store uploaded URLs for images that were inline base64. Re-reads the
+  // row first and only swaps images still holding the old base64, so edits
+  // saved while the uploads ran (e.g. from the editor) are kept.
+  async function saveMigratedImages(siteId, before, after) {
+    const { data, error } = await supabase
+      .from('sites').select('generated_content').eq('id', siteId).single();
+    if (error || !data) return;
+    const latest = data.generated_content || {};
+    const latestImages = latest._images || {};
+    const swapped = Object.fromEntries(
+      Object.keys(after)
+        .filter((k) => after[k] !== before[k] && latestImages[k] === before[k])
+        .map((k) => [k, after[k]]),
     );
-  };
+    if (Object.keys(swapped).length === 0) return;
+    await supabase.from('sites')
+      .update({ generated_content: { ...latest, _images: { ...latestImages, ...swapped } } })
+      .eq('id', siteId);
+  }
 
   return (
     <>
@@ -521,7 +549,7 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
                     )}
                   </div>
                   <p className="text-[13px] text-[#888]">
-                    {site.template_id && <span className="text-[#555] font-medium">{TEMPLATES[site.template_id]?.name || site.template_id}</span>}
+                    {site.template_id && <span className="text-[#555] font-medium">{TEMPLATES[site.template_id]?.label || site.template_id}</span>}
                     {site.template_id && ' · '}
                     {site.business_info?.city}, {site.business_info?.state} · {new Date(site.created_at).toLocaleDateString()}
                   </p>
@@ -589,9 +617,10 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
                   {site.published_url && (
                     <button
                       onClick={() => handleRepublish(site)}
-                      className="px-4 py-2 text-[13px] font-medium border border-black/10 rounded-lg hover:border-[#cc0000]/30 hover:text-[#cc0000] transition-colors"
+                      disabled={!!republishingId}
+                      className="px-4 py-2 text-[13px] font-medium border border-black/10 rounded-lg hover:border-[#cc0000]/30 hover:text-[#cc0000] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Republish
+                      {republishingId === site.id ? 'Republishing…' : 'Republish'}
                     </button>
                   )}
                   {!isImpersonationTab && CUSTOM_DOMAIN_ENABLED && (

@@ -1,5 +1,6 @@
 import { requireSiteOwner, supabaseAdmin } from './_shared/auth.js';
 import { isValidSlug } from './_shared/slug.js';
+import { isSlugShared } from './_shared/slugClaim.js';
 import { corsHeaders, jsonHeaders } from './_shared/cors.js';
 
 const CF_TOKEN = process.env.CLOUDFLARE_API_TOKEN;
@@ -38,13 +39,24 @@ export const handler = async (event) => {
     return { statusCode: 400, headers: json, body: JSON.stringify({ error: 'Site has no valid slug to unpublish' }) };
   }
 
+  const admin = supabaseAdmin();
+
   try {
-    const r2Key = `${slug}/index.html`;
-    const r2Url = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/r2/buckets/${R2_BUCKET}/objects/${encodeURIComponent(r2Key)}`;
-    await fetch(r2Url, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${CF_TOKEN}` },
-    });
+    // A slug another row also holds (legacy duplicates) may be serving
+    // that other site's page. Leave the files alone; only this row is
+    // marked unpublished.
+    const shared = await isSlugShared(admin, site);
+    if (shared) {
+      console.warn(`unpublish: slug "${slug}" is shared with another site; leaving R2 content in place`);
+    } else {
+      for (const r2Key of [`${slug}/index.html`, `${slug}/book/index.html`]) {
+        const r2Url = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/r2/buckets/${R2_BUCKET}/objects/${encodeURIComponent(r2Key)}`;
+        await fetch(r2Url, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${CF_TOKEN}` },
+        });
+      }
+    }
 
     // Remove this site's Netlify domain aliases so traffic for the
     // customer's custom domain stops returning our content.
@@ -71,10 +83,10 @@ export const handler = async (event) => {
 
     // Also clear the published_url from the site row so the dashboard
     // reflects the unpublished state immediately.
-    const admin = supabaseAdmin();
     await admin.from('sites').update({ published_url: null }).eq('id', siteId);
 
-    return { statusCode: 200, headers: json, body: JSON.stringify({ deleted: true }) };
+    // shared: the page was left up because another row holds the slug.
+    return { statusCode: 200, headers: json, body: JSON.stringify({ deleted: !shared, shared }) };
   } catch (err) {
     return { statusCode: 500, headers: json, body: JSON.stringify({ error: err.message }) };
   }

@@ -1,5 +1,5 @@
 import { requireSiteOwner, supabaseAdmin } from './_shared/auth.js';
-import { isValidSlug } from './_shared/slug.js';
+import { resolvePublishSlug } from './_shared/slugClaim.js';
 import { corsHeaders, jsonHeaders } from './_shared/cors.js';
 
 const CF_TOKEN = process.env.CLOUDFLARE_API_TOKEN;
@@ -20,15 +20,11 @@ export const handler = async (event) => {
   try { body = JSON.parse(event.body || '{}'); }
   catch { return { statusCode: 400, headers: json, body: JSON.stringify({ error: 'Invalid JSON' }) }; }
 
-  const { siteId, htmlContent, slug, bookingPageHtml } = body;
-  if (!siteId || !slug || (!htmlContent && !bookingPageHtml)) {
-    return { statusCode: 400, headers: json, body: JSON.stringify({ error: 'Missing required fields (siteId, slug, and htmlContent or bookingPageHtml)' }) };
-  }
-
-  // Slug shape — used as a hostname label and as part of the R2 object
-  // key. Reject anything that could break out of either context.
-  if (!isValidSlug(slug)) {
-    return { statusCode: 400, headers: json, body: JSON.stringify({ error: 'Invalid slug' }) };
+  // `slug` is only the client's preference for a first publish; the
+  // server decides the slug actually written to (see slugClaim.js).
+  const { siteId, htmlContent, slug: requestedSlug, bookingPageHtml } = body;
+  if (!siteId || (!htmlContent && !bookingPageHtml)) {
+    return { statusCode: 400, headers: json, body: JSON.stringify({ error: 'Missing required fields (siteId, and htmlContent or bookingPageHtml)' }) };
   }
 
   let site;
@@ -38,14 +34,15 @@ export const handler = async (event) => {
     return { statusCode: err.status || 500, headers: json, body: JSON.stringify({ error: err.message }) };
   }
 
-  // Defense in depth: the slug going into R2 must match the site's
-  // existing slug (or be allowed as a first publish). Refuse to publish
-  // an arbitrary slug overriding another site's content.
-  if (site.slug && site.slug !== slug) {
-    return { statusCode: 409, headers: json, body: JSON.stringify({ error: 'This site is already published under a different slug. Use the existing slug.' }) };
-  }
-
   const supabase = supabaseAdmin();
+
+  // Never write under a slug another site holds: that overwrites their
+  // live page. Reuses the stored slug, or claims a free one on first publish.
+  const claim = await resolvePublishSlug(supabase, site, requestedSlug);
+  if (!claim.slug) {
+    return { statusCode: claim.status, headers: json, body: JSON.stringify({ error: claim.error }) };
+  }
+  const { slug } = claim;
 
   try {
     if (htmlContent) {
@@ -85,14 +82,13 @@ export const handler = async (event) => {
     const bookingUrl = bookingPageHtml ? `${publishedUrl}/book` : publishedUrl;
 
     await supabase.from('sites').update({
-      slug,
       published_url: publishedUrl,
     }).eq('id', siteId);
 
     return {
       statusCode: 200,
       headers: json,
-      body: JSON.stringify({ publishedUrl, bookingUrl }),
+      body: JSON.stringify({ publishedUrl, bookingUrl, slug }),
     };
 
   } catch (err) {

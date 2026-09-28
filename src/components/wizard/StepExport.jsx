@@ -83,7 +83,7 @@ export default function StepExport({ siteId: passedSiteId, businessInfo, generat
           {!published ? (
             <>
               <div className="border border-black/[0.07] rounded-xl p-5 mb-5 bg-white">
-                <p className="text-[11px] font-semibold text-[#cc0000] uppercase tracking-[1.5px] mb-3">Your site will be live at</p>
+                <p className="text-[11px] font-semibold text-[#cc0000] uppercase tracking-[1.5px] mb-3">Your requested web address</p>
                 <div className="flex items-center gap-2 bg-white border border-black/[0.10] rounded-lg px-4 py-3">
                   <span className="text-green-500 text-sm">🔒</span>
                   <span className="font-mono text-sm text-[#1a1a1a] break-all">https://{subdomain}</span>
@@ -103,6 +103,11 @@ export default function StepExport({ siteId: passedSiteId, businessInfo, generat
             <>
               <div className="border border-green-200 bg-green-50 rounded-xl p-5 mb-5">
                 <p className="font-semibold text-green-800 mb-2">🎉 Your site is live!</p>
+                {published.slug && published.slug !== slug && (
+                  <p className="text-sm text-green-800 mb-2">
+                    “{slug}” is already in use, so your site is at this address:
+                  </p>
+                )}
                 <a
                   href={published.publishedUrl}
                   target="_blank"
