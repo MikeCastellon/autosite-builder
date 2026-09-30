@@ -21,7 +21,17 @@ function writeCachedProfile(profile) {
   try {
     if (profile && profile.id) localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(profile));
     else localStorage.removeItem(PROFILE_CACHE_KEY);
-  } catch { /* quota — ignore */ }
+  } catch {
+    // Quota: photo_url can be an inline data URL of a few hundred KB. Cache
+    // the profile without it (the fetch fills it in) rather than leaving an
+    // older cached profile behind.
+    try {
+      if (!profile?.id) throw new Error('nothing to cache');
+      localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify({ ...profile, photo_url: null }));
+    } catch {
+      try { localStorage.removeItem(PROFILE_CACHE_KEY); } catch { /* ignore */ }
+    }
+  }
 }
 
 export function AuthProvider({ children }) {
@@ -70,7 +80,7 @@ export function AuthProvider({ children }) {
     if (!session?.user?.id) { setProfile(null); writeCachedProfile(null); return; }
     const { data } = await supabase
       .from('profiles')
-      .select('id, email, first_name, last_name, business_name, phone, is_super_admin, scheduler_enabled, subscription_status, subscription_ends_at, subscription_current_period_end, shopify_customer_id, stripe_customer_id, stripe_connect_account_id, stripe_connect_charges_enabled, stripe_connect_payouts_enabled, stripe_connect_details_submitted')
+      .select('id, email, first_name, last_name, business_name, phone, photo_url, is_super_admin, scheduler_enabled, subscription_status, subscription_ends_at, subscription_current_period_end, shopify_customer_id, stripe_customer_id, stripe_connect_account_id, stripe_connect_charges_enabled, stripe_connect_payouts_enabled, stripe_connect_details_submitted')
       .eq('id', session.user.id)
       .maybeSingle();
     setProfile(data || null);

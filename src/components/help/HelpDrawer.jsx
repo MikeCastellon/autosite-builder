@@ -55,7 +55,7 @@ function ArticleView({ article, onBack }) {
           {article.title}
           {article.isPro && <ProBadge />}
         </h1>
-        <div className="text-xs text-[#888] mt-1">{article.readTime}</div>
+        <div className="text-xs text-ink-tertiary mt-1">{article.readTime}</div>
       </div>
       <div className="p-6">
         {article.steps.map((step, i) => <ArticleStep key={i} step={step} />)}
@@ -94,7 +94,7 @@ function ArticleList({ articles, query, onQueryChange, onSelect }) {
       </div>
       <div className="p-4 pt-2 space-y-3">
         {filtered.length === 0 ? (
-          <div className="text-sm text-[#888] text-center py-8">
+          <div className="text-sm text-ink-tertiary text-center py-8">
             No articles match "{query}"
           </div>
         ) : (
@@ -111,8 +111,8 @@ function ArticleList({ articles, query, onQueryChange, onSelect }) {
                   {article.title}
                   {article.isPro && <ProBadge />}
                 </div>
-                <div className="text-sm text-[#888] mt-1">{article.description}</div>
-                <div className="text-xs text-[#888] mt-2">{article.readTime}</div>
+                <div className="text-sm text-ink-tertiary mt-1">{article.description}</div>
+                <div className="text-xs text-ink-tertiary mt-2">{article.readTime}</div>
               </div>
             </button>
           ))
@@ -168,7 +168,7 @@ export default function HelpDrawer({ open, onClose, profile, initialSlug }) {
             type="button"
             onClick={onClose}
             aria-label="Close help"
-            className="w-8 h-8 rounded-full hover:bg-black/5 flex items-center justify-center text-xl leading-none text-[#888]"
+            className="w-8 h-8 rounded-full hover:bg-black/5 flex items-center justify-center text-xl leading-none text-ink-tertiary"
           >
             ×
           </button>

@@ -4,6 +4,14 @@ import {
   addDays, addMonths, subMonths, isSameDay, isSameMonth, format,
 } from 'date-fns';
 import StatusPill from './StatusPill.jsx';
+import { formatBookingTime, bookingDayKey } from '../../../lib/bookings.js';
+
+// Appointment times are shop wall-clock time (see bookings.js), so they are
+// bucketed and labelled in UTC; date-fns format() would use the viewer's zone.
+// "9:00AM", as the old 'h:mma' label read.
+function slotLabel(iso) {
+  return formatBookingTime(iso, { hour: 'numeric', minute: '2-digit' }).replace(/\s/g, '');
+}
 
 const STATUS_COLOR = {
   pending:   'bg-amber-100 text-amber-800 border-amber-200',
@@ -27,7 +35,7 @@ export default function BookingsCalendar({ bookings, onSelect }) {
   const byDay = useMemo(() => {
     const map = new Map();
     for (const b of bookings) {
-      const key = format(new Date(b.preferred_at), 'yyyy-MM-dd');
+      const key = bookingDayKey(b.preferred_at);
       const arr = map.get(key) || [];
       arr.push(b);
       map.set(key, arr);
@@ -64,9 +72,9 @@ export default function BookingsCalendar({ bookings, onSelect }) {
                     key={b.id}
                     onClick={() => onSelect(b)}
                     className={`w-full text-left text-[11px] px-1.5 py-0.5 rounded border truncate ${STATUS_COLOR[b.status]}`}
-                    title={`${b.customer_name} — ${format(new Date(b.preferred_at), 'h:mma')}`}
+                    title={`${b.customer_name} — ${slotLabel(b.preferred_at)}`}
                   >
-                    {format(new Date(b.preferred_at), 'h:mma')} {b.customer_name}
+                    {slotLabel(b.preferred_at)} {b.customer_name}
                   </button>
                 ))}
                 {items.length > 3 && (

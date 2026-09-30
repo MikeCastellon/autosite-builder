@@ -1,5 +1,52 @@
 import { supabase } from './supabase.js';
 
+// ─── Appointment times ──────────────────────────────────────────────────
+//
+// bookings.preferred_at holds the shop's wall-clock time written as if it
+// were UTC: a 9:00 availability window yields "…T09:00:00.000Z"
+// (netlify/functions/_lib/slot-math.js), the booking widget shows slots with
+// timeZone 'UTC', and no shop time zone is stored anywhere. So it must be
+// read back in UTC too. Formatting it in the viewer's zone shifts every
+// appointment by their UTC offset (9:00 AM shows as 5:00 AM in New York).
+// Only preferred_at works this way: created_at, deposit_paid_at etc. are
+// real instants and stay in the viewer's local time.
+// Exception: rows with referral_source 'owner-dashboard' created before
+// wallTimeToBookingIso shipped hold a real instant (the old BookCustomerModal
+// sent new Date(local).toISOString()). They read hours late here and block
+// the wrong widget slot until a one-time backfill turns them into wall time:
+// (preferred_at at time zone '<owner zone>') at time zone 'UTC'.
+
+// "Mon, Oct 6, 2026, 9:00 AM" by default; pass Intl options to narrow it.
+export function formatBookingTime(iso, options) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleString('en-US', {
+    ...(options || {
+      weekday: 'short', month: 'short', day: 'numeric',
+      year: 'numeric', hour: 'numeric', minute: '2-digit',
+    }),
+    timeZone: 'UTC',
+  });
+}
+
+// "YYYY-MM-DD" of the appointment in shop time (calendar bucketing).
+export function bookingDayKey(iso) {
+  const d = new Date(iso);
+  if (!iso || Number.isNaN(d.getTime())) return '';
+  return d.toISOString().slice(0, 10);
+}
+
+// <input type="datetime-local"> value ("2026-10-06T09:00", seconds optional)
+// -> the preferred_at to store. The owner types shop time, so it is kept as
+// wall-clock time; new Date(value) would read it in the browser's zone.
+export function wallTimeToBookingIso(value) {
+  const m = /^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/.exec(String(value || ''));
+  if (!m) return null;
+  const iso = `${m[1]}T${m[2]}:${m[3]}:${m[4] || '00'}.000Z`;
+  return Number.isNaN(Date.parse(iso)) ? null : iso;
+}
+
 export async function listBookingsForOwner({ userId, statusIn, from, to, search }) {
   let q = supabase
     .from('bookings')
@@ -82,7 +129,7 @@ export function buildSmsReminderHref({ phone, message }) {
 export function defaultReminderMessage(booking, site) {
   const first = String(booking?.customer_name || '').split(/\s+/)[0] || 'there';
   const bizName = site?.business_info?.businessName || 'us';
-  const when = new Date(booking?.preferred_at).toLocaleString('en-US', {
+  const when = formatBookingTime(booking?.preferred_at, {
     weekday: 'short', month: 'short', day: 'numeric',
     hour: 'numeric', minute: '2-digit',
   });

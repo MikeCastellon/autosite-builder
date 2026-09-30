@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase.js';
 import SubscribeGate from '../bookings-page/SubscribeGate.jsx';
 import ChargeModal from './ChargeModal.jsx';
+import { loadChargeableServices } from '../../../lib/createCharge.js';
 
 function formatCents(cents) {
   if (cents == null) return '—';
@@ -43,6 +44,7 @@ export default function ChargesPage({
 }) {
   const [charges, setCharges] = useState([]);
   const [sites, setSites] = useState([]);
+  const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
 
@@ -61,38 +63,23 @@ export default function ChargesPage({
     setCharges(data || []);
   }
 
+  // Same service list as the customer profile's Charge button: see
+  // loadChargeableServices.
   async function fetchSites() {
-    // Order by most-recently-updated first so the site the owner is
-    // actively configuring wins the per-name dedupe below. Without this,
-    // an owner who just added an add-on to one site might see the older
-    // site's version of the same service (without the add-on).
-    const { data } = await supabase
-      .from('sites')
-      .select('id, scheduler_config, updated_at')
-      .eq('user_id', userId)
-      .not('published_url', 'is', null)
-      .order('updated_at', { ascending: false });
-    setSites(data || []);
+    try {
+      const { sites: rows, services: list } = await loadChargeableServices(userId);
+      setSites(rows);
+      setServices(list);
+    } catch {
+      setSites([]);
+      setServices([]);
+    }
   }
 
   useEffect(() => {
     if (!userId) return;
     Promise.all([fetchCharges(), fetchSites()]).finally(() => setLoading(false));
   }, [userId]);
-
-  // Flatten services across all the owner's sites, deduping by name. Each
-  // service carries its origin _site_id so the charge is created against
-  // the correct site (matters when add-ons differ across sites).
-  const services = [];
-  const seenNames = new Set();
-  for (const site of sites) {
-    for (const svc of (site.scheduler_config?.services || [])) {
-      if (svc.enabled !== false && !seenNames.has(svc.name)) {
-        seenNames.add(svc.name);
-        services.push({ ...svc, _site_id: site.id });
-      }
-    }
-  }
 
   return (
     <>

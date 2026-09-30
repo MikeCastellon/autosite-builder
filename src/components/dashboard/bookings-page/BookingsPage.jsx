@@ -3,6 +3,7 @@ import { supabase } from '../../../lib/supabase.js';
 import BookingsView from '../bookings/BookingsView.jsx';
 import SchedulerSettings from '../booking-settings/SchedulerSettings.jsx';
 import SubscribeGate from './SubscribeGate.jsx';
+import { bookingShareUrl } from '../../../lib/bookingUrl.js';
 
 export default function BookingsPage({ userId, profile }) {
   const [tab, setTab] = useState('schedule');
@@ -16,7 +17,7 @@ export default function BookingsPage({ userId, profile }) {
     async function fetchSites() {
       const { data, error } = await supabase
         .from('sites')
-        .select('id, business_info, scheduler_enabled, created_at, published_url, custom_domain, custom_domain_status, slug')
+        .select('id, business_info, scheduler_enabled, created_at, published_url, custom_domain, custom_domain_status, slug, site_type')
         .eq('user_id', userId)
         .order('created_at', { ascending: true });
       if (error) { setErr(error.message); setLoading(false); return; }
@@ -34,6 +35,22 @@ export default function BookingsPage({ userId, profile }) {
     }
     if (userId) fetchSites();
   }, [userId]);
+
+  // Coming back from the Settings tab: bookings may have been switched on
+  // (or the site published) there, which decides the Booking Link below.
+  useEffect(() => {
+    if (tab !== 'schedule' || !userId || loading) return undefined;
+    let cancelled = false;
+    supabase
+      .from('sites')
+      .select('id, scheduler_enabled, published_url, custom_domain, custom_domain_status, site_type')
+      .eq('user_id', userId)
+      .then(({ data }) => {
+        if (cancelled || !data) return;
+        setSites((prev) => prev.map((s) => ({ ...s, ...(data.find((d) => d.id === s.id) || {}) })));
+      });
+    return () => { cancelled = true; };
+  }, [tab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) {
     return (
@@ -85,8 +102,10 @@ export default function BookingsPage({ userId, profile }) {
 
         {tab === 'schedule' && (() => {
           const site = sites.find(s => s.id === activeSiteId) || sites[0];
-          const isCustomLive = site?.custom_domain && site?.custom_domain_status === 'active_ssl';
-          const bookingUrl = site?.published_url ? (isCustomLive ? `https://www.${site.custom_domain}` : site.published_url) : null;
+          // The booking page itself (/book on a website), the same link the
+          // Settings tab shares; it used to open the homepage. None while
+          // the site doesn't take bookings.
+          const bookingUrl = site?.scheduler_enabled ? (bookingShareUrl(site) || null) : null;
           return <BookingsView userId={userId} bookingUrl={bookingUrl} />;
         })()}
         {tab === 'settings' && activeSiteId && <SchedulerSettings key={activeSiteId} siteId={activeSiteId} />}

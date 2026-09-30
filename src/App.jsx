@@ -27,9 +27,10 @@ import OverviewPage from './components/dashboard/overview/OverviewPage.jsx';
 import HelpChrome from './components/help/HelpChrome.jsx';
 import AppShell from './components/ui/AppShell.jsx';
 import { saveSite } from './lib/saveSite.js';
+import { parkEditorState, demoEditorState, stateAfterDemo, DEMO_BACK_LABELS } from './lib/demoPreview.js';
 import { publishSite } from './lib/publishSite.js';
 import { buildTemplateMeta, unpackGeneratedContent, withWidgetKeys } from './lib/siteRender.js';
-import { supabase } from './lib/supabase.js';
+import { supabase, isImpersonationTab } from './lib/supabase.js';
 import { useAlert } from './components/ui/AlertProvider.jsx';
 import { isEffectiveSchedulerActive } from './lib/subscriptionGating.js';
 
@@ -132,9 +133,20 @@ export default function App() {
     })();
   }, [session?.user?.id, editedCopy?.googleWidgetKey]); // eslint-disable-line
 
+  // Demo preview: a template with placeholder data, no AI call needed. It
+  // borrows the editor's state slots, so entering it parks the real editor
+  // state in demoReturn (siteId included: a demo has no site to save to) and
+  // leaving it puts that state back. returnTo is where Back leads:
+  // 'dashboard' | 'editor' | 'templates'.
+  const [isDemoPreview, setIsDemoPreview] = useState(false);
+  const [demoReturn, setDemoReturn] = useState(null);
+
   // Auto-save site to Supabase (debounced)
   const autoSave = useCallback((overrides = {}) => {
     if (!session?.user?.id) return;
+    // Never save demo content. A save scheduled before the demo opened
+    // still runs: it carries the real site's state from back then.
+    if (isDemoPreview) return;
     const id = overrides.siteId || siteId;
     if (!id) return;
     clearTimeout(saveTimerRef.current);
@@ -151,7 +163,7 @@ export default function App() {
         customFonts: overrides.customFonts ?? customFonts,
       }).catch(err => console.error('Auto-save failed:', err));
     }, 1500);
-  }, [session, siteId, businessInfo, editedCopy, selectedTemplate, images, selectedWidgetIds, customColors, customFonts]);
+  }, [session, isDemoPreview, siteId, businessInfo, editedCopy, selectedTemplate, images, selectedWidgetIds, customColors, customFonts]);
 
   // Latest autoSave and siteId, for async work that finishes after later
   // renders. Calling the autoSave captured when that work started would
@@ -245,6 +257,7 @@ export default function App() {
     setCustomFonts({});
     setSelectedWidgetIds([]);
     setIsDemoPreview(false);
+    setDemoReturn(null);
     setSiteId(null);
     setEditingExistingSite(false);
     if (draftKey) {
@@ -252,13 +265,11 @@ export default function App() {
     }
   };
 
-  // Demo preview — shows a template with placeholder data, no AI call needed
-  const [isDemoPreview, setIsDemoPreview] = useState(false);
-
-  // Nav callback for the Payments tab. Must stay above any early-return
-  // guards below so hook count is stable across renders (React #310 bait).
-  // The tab itself is hidden on production until VITE_STRIPE_PUBLISHABLE_KEY
-  // is set — branch deploys ship it; production stays Shopify-only for now.
+  // Nav callbacks for the Payments and Charges tabs. Must stay above any
+  // early-return guards below so hook count is stable across renders
+  // (React #310 bait). Both tabs show only when VITE_STRIPE_PUBLISHABLE_KEY
+  // is set. Production sets it, so Stripe Connect payments and charges are
+  // live for real users; leave it unset in an environment without Stripe.
   const PAYMENTS_TAB_ENABLED = !!import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
   const goPaymentsConnect = useCallback(() => { setView('payments-connect'); }, []);
   const onOpenPaymentsConnectProp = PAYMENTS_TAB_ENABLED ? goPaymentsConnect : undefined;
@@ -285,7 +296,7 @@ export default function App() {
       <div className="min-h-screen flex items-center justify-center bg-[#faf9f7]">
         <div className="text-center">
           <p className="text-lg font-semibold text-[#1a1a1a] mb-2">Domain connected!</p>
-          <p className="text-sm text-[#888]">You can close this window and return to the app.</p>
+          <p className="text-sm text-ink-tertiary">You can close this window and return to the app.</p>
         </div>
       </div>
     );
@@ -332,7 +343,7 @@ export default function App() {
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
             </div>
-            <p className="text-[11px] font-semibold text-[#888] uppercase tracking-[2px] mb-2">Payment Cancelled</p>
+            <p className="text-[11px] font-semibold text-ink-tertiary uppercase tracking-[2px] mb-2">Payment Cancelled</p>
             <h1 className="text-2xl font-[900] text-[#1a1a1a] tracking-tight mb-2">No worries.</h1>
             <p className="text-sm text-[#666] leading-relaxed mb-6">
               Your deposit wasn't charged. Your booking request is still on file — the shop may follow up with you directly to confirm your appointment.
@@ -366,7 +377,9 @@ export default function App() {
   if (isRecovery) return <ResetPasswordPage onComplete={() => { clearRecovery(); window.history.replaceState({}, '', window.location.pathname); }} />;
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    // In an admin's "View as user" tab, end only that tab's session: the
+    // default global sign-out would also sign the customer out everywhere.
+    await supabase.auth.signOut(isImpersonationTab ? { scope: 'local' } : undefined);
   };
 
   // Single source of truth for header navigation, spread into <AppShell> so
@@ -415,6 +428,7 @@ export default function App() {
     setCustomColors(savedCustomColors);
     setCustomFonts(savedCustomFonts);
     setIsDemoPreview(false);
+    setDemoReturn(null);
     setEditingExistingSite(true);
     setStep(5);
     setView('wizard');
@@ -540,26 +554,51 @@ export default function App() {
     );
   }
 
+  // Setters for the editor state slots the demo borrows (see demoPreview.js).
+  const applyEditorState = (state) => {
+    const setters = {
+      siteId: setSiteId,
+      selectedTemplate: setSelectedTemplate,
+      generatedCopy: setGeneratedCopy,
+      editedCopy: setEditedCopy,
+      images: setImages,
+      customColors: setCustomColors,
+      customFonts: setCustomFonts,
+      editingExistingSite: setEditingExistingSite,
+      step: setStep,
+    };
+    for (const [key, value] of Object.entries(state)) setters[key]?.(value);
+  };
+
+  // Open the demo in the editor (step 5). Parks the real editor state first,
+  // unless a demo is already open (its snapshot is the real state).
+  const startDemo = (templateId, returnTo) => {
+    if (!isDemoPreview) {
+      setDemoReturn(parkEditorState({
+        siteId, selectedTemplate, generatedCopy, editedCopy, images,
+        customColors, customFonts, editingExistingSite, step,
+      }, returnTo));
+    }
+    applyEditorState(demoEditorState(templateId, DEMO_GENERATED_COPY));
+    setIsDemoPreview(true);
+  };
+
   // Admin-only: jump straight into the editor with stub data, skipping the
   // wizard. Useful for testing tour/editor changes and for showcasing the
   // editor to prospects without spinning up real data. Resets
   // editingExistingSite (so WebsitePreview's tour-suppression effect won't
   // fire) and clears the tour flag (so the tour actually shows).
-  const handleDashboardDemo = (templateId = 'detailing_sporty') => {
-    setSelectedTemplate(templateId);
-    setGeneratedCopy(DEMO_GENERATED_COPY);
-    setEditedCopy(structuredClone(DEMO_GENERATED_COPY));
-    setImages({});
-    setIsDemoPreview(true);
-    setEditingExistingSite(false);
+  // returnTo: 'dashboard' (Sites page button) or 'editor' (editor toolbar).
+  const handleDashboardDemo = (returnTo) => {
     try { localStorage.removeItem('editor_tour_done_v3'); } catch { /* ignore */ }
+    startDemo('detailing_sporty', returnTo);
     setView('wizard');
-    setStep(5);
   };
 
   // Flush any debounced autoSave and persist the latest edits synchronously.
   // Returns true on success so callers (Save Draft / Publish) can chain on it.
   const flushSaveSite = async () => {
+    if (isDemoPreview) return true; // demo content is never saved
     clearTimeout(saveTimerRef.current);
     if (!siteId || !session?.user?.id) return true;
     await saveSite({
@@ -646,6 +685,7 @@ export default function App() {
     return (
       <AppShell active="overview" nav={navHandlers} userEmail={session?.user?.email} profile={profile}>
         <OverviewPage
+          userId={session?.user?.id}
           onNewSite={() => { handleStartOver(); setView('wizard'); }}
           onNewBookingPage={() => setView('booking-only-setup')}
         />
@@ -662,26 +702,23 @@ export default function App() {
           onEditSite={handleEditSite}
           profile={profile}
           onOpenBookingSettings={(siteId) => { setSettingsSiteId(siteId); setView('booking-settings'); }}
-          onPreviewDemo={handleDashboardDemo}
+          onPreviewDemo={() => handleDashboardDemo('dashboard')}
         />
       </AppShell>
     );
   }
 
-  const handlePreviewDemo = (templateId) => {
-    setSelectedTemplate(templateId);
-    setGeneratedCopy(DEMO_GENERATED_COPY);
-    setEditedCopy(structuredClone(DEMO_GENERATED_COPY));
-    setImages({});
-    setIsDemoPreview(true);
-    goTo(5);
-  };
+  // Wizard step 3: "Preview" on a template card.
+  const handlePreviewDemo = (templateId) => startDemo(templateId, 'templates');
+
+  // Leave the demo: put the parked editor state back and return to where
+  // the demo was opened from.
   const handleBackFromDemo = () => {
-    setGeneratedCopy(null);
-    setEditedCopy(null);
-    setImages({});
+    const { state, view: nextView } = stateAfterDemo(demoReturn, selectedTemplate);
     setIsDemoPreview(false);
-    goTo(3);
+    setDemoReturn(null);
+    applyEditorState(state);
+    if (nextView) setView(nextView);
   };
 
 
@@ -723,7 +760,9 @@ export default function App() {
               ? () => setView('dashboard')
               : () => goTo(3)
         }
-        backLabel={editingExistingSite ? 'Back to Sites' : 'Back to Templates'}
+        backLabel={isDemoPreview
+          ? DEMO_BACK_LABELS[demoReturn?.returnTo] || 'Back to Templates'
+          : editingExistingSite ? 'Back to Sites' : 'Back to Templates'}
         onExport={isDemoPreview || editingExistingSite ? null : () => goTo(6)}
         onSaveDraft={!isDemoPreview && editingExistingSite ? handleSaveDraft : null}
         onPublish={!isDemoPreview && editingExistingSite ? handlePublishFromEditor : null}
@@ -736,7 +775,7 @@ export default function App() {
         }}
         isDemoPreview={isDemoPreview}
         editingExistingSite={editingExistingSite}
-        onPreviewDemo={handleDashboardDemo}
+        onPreviewDemo={() => handleDashboardDemo('editor')}
       />
       <HelpChrome profile={profile} />
       </>

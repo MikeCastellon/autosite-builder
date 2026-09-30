@@ -31,8 +31,9 @@ const families = (href) => new URL(href).searchParams.getAll('family').map((f) =
 
 describe('exportHtmlString', () => {
   it('keeps legacy templates on the old font list and phone grid override', async () => {
-    const meta = buildTemplateMeta('mechanic_ironclad', {}, { bodyFont: "'Roboto', sans-serif" });
-    const html = await exportHtmlString('mechanic_ironclad', full.businessInfo, full.generatedCopy, meta, full.images);
+    // detailing_coastal is hidden and stays on the legacy path.
+    const meta = buildTemplateMeta('detailing_coastal', {}, { bodyFont: "'Roboto', sans-serif" });
+    const html = await exportHtmlString('detailing_coastal', full.businessInfo, full.generatedCopy, meta, full.images);
     const fams = families(fontHref(html));
     for (const f of LEGACY_EXPORT_FAMILIES) expect(fams).toContain(f);
     // The owner's custom font now loads on the live site too.

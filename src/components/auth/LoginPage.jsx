@@ -170,7 +170,7 @@ export default function LoginPage({ initialMode = 'signin' }) {
                   </div>
                   <div>
                     <label className={labelBase}>
-                      Company name <span className="text-[#888] font-normal">(optional)</span>
+                      Company name <span className="text-ink-tertiary font-normal">(optional)</span>
                     </label>
                     <input
                       type="text"

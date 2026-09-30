@@ -4,9 +4,10 @@ import {
   setSchedulerEnabled,
   initializeSchedulerConfig,
   defaultSchedulerConfig,
-  mergeServicesFromBusinessInfo,
+  syncServicesFromBusinessInfo,
   saveSchedulerConfig,
 } from '../../../lib/schedulerConfig.js';
+import { publishBookingPage } from '../../../lib/publishSite.js';
 import GeneralTab from './GeneralTab.jsx';
 import AppearanceTab from './AppearanceTab.jsx';
 import ServicesTab from './ServicesTab.jsx';
@@ -18,29 +19,33 @@ export default function SchedulerSettings({ siteId, onExit }) {
   const [tab, setTab] = useState('general');
   const [site, setSite] = useState(null);
   const [err, setErr] = useState(null);
+  // null | 'publishing' | 'published' | 'failed' | 'republish': the /book
+  // page published when bookings are switched on (see toggleEnabled).
+  const [bookPage, setBookPage] = useState(null);
 
-  // Auto-sync: if the site's business_info.services has items the scheduler
-  // config doesn't yet know about, merge them in and persist silently.
-  async function autoSyncServices(siteRow) {
-    const cfg = siteRow.scheduler_config || {};
-    const existing = cfg.services || [];
-    const merged = mergeServicesFromBusinessInfo(existing, siteRow.business_info?.services);
-    if (merged.length === existing.length) return cfg;
-    return saveSchedulerConfig(siteId, { services: merged });
+  // Offer website services (business_info.services) to the booking menu,
+  // each one only once, so services the owner deleted or renamed here stay
+  // gone (see syncServicesFromBusinessInfo). `stored` is the config as saved
+  // (null if never saved), not the defaults shown for it.
+  async function autoSyncServices(stored, bizServices) {
+    const sync = syncServicesFromBusinessInfo(stored || {}, bizServices);
+    if (!sync.changed) return stored;
+    return saveSchedulerConfig(siteId, {
+      services: sync.services,
+      seeded_service_names: sync.seeded_service_names,
+    });
   }
 
   async function refresh() {
     try {
       const s = await loadSchedulerConfig(siteId);
       if (!s) { setErr('Site not found'); return; }
-      let cfg;
-      if (s.scheduler_enabled && (!s.scheduler_config || !s.scheduler_config.availability)) {
-        cfg = await initializeSchedulerConfig(siteId);
-      } else {
-        cfg = s.scheduler_config || defaultSchedulerConfig();
+      let stored = s.scheduler_config || null;
+      if (s.scheduler_enabled && (!stored || !stored.availability)) {
+        stored = await initializeSchedulerConfig(siteId);
       }
-      const synced = await autoSyncServices({ ...s, scheduler_config: cfg });
-      setSite({ ...s, scheduler_config: synced });
+      const synced = await autoSyncServices(stored, s.business_info?.services);
+      setSite({ ...s, scheduler_config: synced || defaultSchedulerConfig() });
     } catch (e) { setErr(e.message); }
   }
 
@@ -54,6 +59,30 @@ export default function SchedulerSettings({ siteId, onExit }) {
     await setSchedulerEnabled(siteId, next);
     if (next) await initializeSchedulerConfig(siteId);
     refresh();
+    if (next) publishBookPageOnEnable();
+    else setBookPage(null);
+  }
+
+  // A published website only gets its /book page when it is published with
+  // bookings on, so switching bookings on afterwards left the shared booking
+  // link with no page behind it. Publish just that page now (the homepage is
+  // left untouched). It needs the site's stored web address: without one the
+  // publish would claim a new address, so ask for a republish instead.
+  async function publishBookPageOnEnable() {
+    if (!site || site.site_type === 'booking_only' || !site.published_url) return;
+    if (!site.slug) { setBookPage('republish'); return; }
+    setBookPage('publishing');
+    try {
+      await publishBookingPage({
+        siteId,
+        businessName: site.business_info?.businessName || 'Book an appointment',
+        slug: site.slug,
+        asSubpath: true,
+      });
+      setBookPage('published');
+    } catch {
+      setBookPage('failed');
+    }
   }
 
   function openCustomerPreview() {
@@ -130,6 +159,16 @@ export default function SchedulerSettings({ siteId, onExit }) {
           </button>
         )}
       </div>
+
+      {isEnabled && bookPage && bookPage !== 'published' && (
+        <div className="bg-white rounded-2xl border border-black/[0.07] shadow-sm p-5 sm:p-6 mb-6" role="status">
+          <p className="text-[13px] text-[#555]">
+            {bookPage === 'publishing'
+              ? 'Publishing your booking page…'
+              : 'Your booking page isn\u2019t live yet. Republish your site from the dashboard to publish it.'}
+          </p>
+        </div>
+      )}
 
       {/* Prompt to publish the site if bookings are enabled but there's no URL yet */}
       {isEnabled && !bookingUrl && (

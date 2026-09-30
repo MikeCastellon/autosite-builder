@@ -23,7 +23,7 @@ export default function ProgressBar({ step, labels }) {
                     ? 'border-[#cc0000] text-white'
                     : active
                       ? 'bg-white border-[#cc0000] text-[#cc0000] shadow-sm'
-                      : 'bg-white border-black/[0.12] text-[#888]'}`}
+                      : 'bg-white border-black/[0.12] text-ink-tertiary'}`}
                 style={done ? { background: '#cc0000', borderColor: '#cc0000' } : {}}
               >
                 {done
@@ -31,7 +31,7 @@ export default function ProgressBar({ step, labels }) {
                   : num}
               </div>
               <span className={`mt-1.5 text-[10px] hidden sm:block font-medium transition-colors whitespace-nowrap tracking-wide
-                ${active ? 'text-[#1a1a1a]' : done ? 'text-[#cc0000]' : 'text-[#888]'}`}>
+                ${active ? 'text-[#1a1a1a]' : done ? 'text-[#cc0000]' : 'text-ink-tertiary'}`}>
                 {label}
               </span>
             </div>

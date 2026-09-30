@@ -71,7 +71,7 @@ function DashboardNewsBanner() {
       <button
         onClick={dismiss}
         aria-label="Dismiss"
-        className="absolute top-3 right-3 w-7 h-7 rounded-full text-[#888] hover:text-[#1a1a1a] hover:bg-black/5 flex items-center justify-center transition-colors"
+        className="absolute top-3 right-3 w-7 h-7 rounded-full text-ink-tertiary hover:text-[#1a1a1a] hover:bg-black/5 flex items-center justify-center transition-colors"
       >
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
           <path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -106,7 +106,7 @@ function DashboardNewsBanner() {
             <div className="mt-3 space-y-4">
               {older.map((entry) => (
                 <div key={entry.id} className="bg-white border border-[#e4e4e7] rounded-xl p-4">
-                  <p className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#888] mb-1">{formatChangelogDate(entry.date)}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-[1.5px] text-ink-tertiary mb-1">{formatChangelogDate(entry.date)}</p>
                   <h4 className="text-sm font-bold text-[#1a1a1a] mb-2 leading-tight">{entry.title}</h4>
                   <ChangelogBullets items={entry.items} />
                 </div>
@@ -387,7 +387,7 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
             <div className="px-8 py-7">
               <button
                 onClick={() => setShowWelcome(false)}
-                className="absolute top-4 right-5 text-[#aaa] hover:text-[#1a1a1a] text-xl leading-none transition-colors"
+                className="absolute top-4 right-5 text-ink-tertiary hover:text-[#1a1a1a] text-xl leading-none transition-colors"
                 aria-label="Dismiss"
               >
                 ×
@@ -406,7 +406,7 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
                     <span className="mt-0.5 text-[#cc0000] font-black text-base leading-none">✓</span>
                     <span>
                       <span className="block text-sm font-[800] text-[#1a1a1a]">{title}</span>
-                      <span className="block text-xs text-[#888]">{desc}</span>
+                      <span className="block text-xs text-ink-tertiary">{desc}</span>
                     </span>
                   </li>
                 ))}
@@ -452,7 +452,7 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
               <button
                 type="button"
                 onClick={() => setProDialogOpen(true)}
-                className="text-xs text-[#888] bg-black/5 hover:bg-black/10 px-4 py-2 rounded-lg transition-colors"
+                className="text-xs text-ink-tertiary bg-black/5 hover:bg-black/10 px-4 py-2 rounded-lg transition-colors"
               >
                 Free plan
               </button>
@@ -461,14 +461,14 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
         </div>
 
         {loading ? (
-          <p className="text-[#888] text-sm">Loading...</p>
+          <p className="text-ink-tertiary text-sm">Loading...</p>
         ) : fetchError ? (
           <div className="border border-[#cc0000]/20 rounded-xl p-4 text-sm text-[#cc0000] bg-[#cc0000]/5">
             {fetchError}
           </div>
         ) : sites.length === 0 ? (
           <div className="text-center py-20 border border-black/[0.07] rounded-2xl bg-white">
-            <p className="text-[#888] mb-4">No sites yet.</p>
+            <p className="text-ink-tertiary mb-4">No sites yet.</p>
             {!isImpersonationTab && (
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                 <button
@@ -503,9 +503,11 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
                 >
                   {site.published_url ? (
                     <iframe
-                      src={site.custom_domain && site.custom_domain_status === 'active_ssl'
+                      // #acg-no-track: the live page's scheduler.js must not
+                      // count the owner's own thumbnail as a website view.
+                      src={`${site.custom_domain && site.custom_domain_status === 'active_ssl'
                         ? `https://www.${site.custom_domain}`
-                        : site.published_url}
+                        : site.published_url}#acg-no-track`}
                       title={`${site.business_info?.businessName || 'Site'} preview`}
                       loading="lazy"
                       sandbox="allow-same-origin allow-scripts"
@@ -525,8 +527,8 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
                         <path d="M3 5a2 2 0 012-2h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5z" stroke="currentColor" strokeWidth="1.5"/>
                         <path d="M3 9h18M8 14h8M8 17h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                       </svg>
-                      <p className="text-[12px] font-semibold text-[#888] uppercase tracking-wider">Not published</p>
-                      <p className="text-[12px] text-[#aaa] mt-1 leading-tight">Publish to see live preview</p>
+                      <p className="text-[12px] font-semibold text-ink-tertiary uppercase tracking-wider">Not published</p>
+                      <p className="text-[12px] text-ink-tertiary mt-1 leading-tight">Publish to see live preview</p>
                     </div>
                   )}
                 </div>
@@ -548,7 +550,7 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
                       </span>
                     )}
                   </div>
-                  <p className="text-[13px] text-[#888]">
+                  <p className="text-[13px] text-ink-tertiary">
                     {site.template_id && <span className="text-[#555] font-medium">{TEMPLATES[site.template_id]?.label || site.template_id}</span>}
                     {site.template_id && ' · '}
                     {site.business_info?.city}, {site.business_info?.state} · {new Date(site.created_at).toLocaleDateString()}
@@ -638,7 +640,7 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
                       ) : (
                         <button
                           onClick={() => toast('Publish your site first, then you can connect a custom domain.', 'info')}
-                          className="px-4 py-2 text-[13px] font-medium border border-black/10 rounded-lg text-[#888] hover:border-black/20 transition-colors"
+                          className="px-4 py-2 text-[13px] font-medium border border-black/10 rounded-lg text-ink-tertiary hover:border-black/20 transition-colors"
                           title="Publish your site first"
                         >
                           Add Domain
@@ -661,7 +663,7 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
                   {!isImpersonationTab && (
                     <button
                       onClick={() => handleDelete(site.id)}
-                      className="px-4 py-2 text-[13px] font-medium text-[#888] hover:text-[#cc0000] transition-colors"
+                      className="px-4 py-2 text-[13px] font-medium text-ink-tertiary hover:text-[#cc0000] transition-colors"
                     >
                       Delete
                     </button>
@@ -704,7 +706,7 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
             <span className="block text-[13px] font-bold text-[#1a1a1a] leading-snug">
               Custom website — $499
             </span>
-            <span className="block text-[11px] text-[#888] mt-0.5">
+            <span className="block text-[11px] text-ink-tertiary mt-0.5">
               Designed and built for you
             </span>
           </button>
@@ -712,7 +714,7 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
             type="button"
             onClick={handleBannerDismiss}
             aria-label="Dismiss for 30 days"
-            className="absolute top-2 right-2 w-7 h-7 rounded-full text-[#888] hover:text-[#1a1a1a] hover:bg-black/[0.05] flex items-center justify-center transition-colors z-10"
+            className="absolute top-2 right-2 w-7 h-7 rounded-full text-ink-tertiary hover:text-[#1a1a1a] hover:bg-black/[0.05] flex items-center justify-center transition-colors z-10"
           >
             <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
@@ -733,9 +735,9 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
             <div className="flex items-center justify-between mb-5">
               <div>
                 <p className="text-[18px] font-bold text-[#1a1a1a]">Custom Domain</p>
-                <p className="text-[12px] text-[#888] mt-0.5">Connect a domain you already own.</p>
+                <p className="text-[12px] text-ink-tertiary mt-0.5">Connect a domain you already own.</p>
               </div>
-              <button onClick={() => setDomainPanelSiteId(null)} className="text-[#888] hover:text-[#cc0000] text-xl leading-none">✕</button>
+              <button onClick={() => setDomainPanelSiteId(null)} className="text-ink-tertiary hover:text-[#cc0000] text-xl leading-none">✕</button>
             </div>
             <CustomDomainPanel
               siteId={domainPanelSiteId}

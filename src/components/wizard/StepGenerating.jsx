@@ -1,5 +1,10 @@
 import { useEffect, useState, useRef } from 'react';
-import { generateWebsite } from '../../lib/generateWebsite.js';
+import {
+  generateWebsite,
+  generateWithRetry,
+  generationErrorMessage,
+  MAX_GENERATION_ATTEMPTS,
+} from '../../lib/generateWebsite.js';
 
 const STATUS_MESSAGES = [
   'Analyzing your business...',
@@ -11,7 +16,9 @@ const STATUS_MESSAGES = [
   'Almost ready...',
 ];
 
-const MAX_ATTEMPTS = 3;
+// Only network errors and 5xx are retried, with backoff (generateWithRetry):
+// a 4xx fails the same way again and would burn the owner's daily quota.
+const MAX_ATTEMPTS = MAX_GENERATION_ATTEMPTS;
 
 export default function StepGenerating({ businessInfo, templateMeta, onSuccess, onError }) {
   const [statusIndex, setStatusIndex] = useState(0);
@@ -31,30 +38,25 @@ export default function StepGenerating({ businessInfo, templateMeta, onSuccess, 
     called.current = true;
 
     async function run() {
-      for (let i = 1; i <= MAX_ATTEMPTS; i++) {
-        try {
-          if (i > 1) {
-            setRetrying(true);
-            setAttempt(i);
-            // Short delay before retry so the UI updates
-            await new Promise((res) => setTimeout(res, 1500));
-          }
-          const copy = await generateWebsite(businessInfo, templateMeta);
-          setRetrying(false);
-          onSuccess(copy);
-          return;
-        } catch (err) {
-          const msg = err?.message || 'Unknown error';
-          console.error(
+      let copy;
+      try {
+        copy = await generateWithRetry(() => generateWebsite(businessInfo, templateMeta), {
+          onFailure: (i, err) => console.error(
             `[generate-website] attempt ${i}/${MAX_ATTEMPTS} failed for "${businessInfo?.businessName}"`,
-            { attempt: i, error: msg, businessInfo }
-          );
-          if (i === MAX_ATTEMPTS) {
-            setRetrying(false);
-            onError(msg || 'Something went wrong generating your site. Please try again.');
-          }
-        }
+            { attempt: i, status: err?.status, error: err?.message || 'Unknown error', businessInfo }
+          ),
+          onRetry: (next) => {
+            setRetrying(true);
+            setAttempt(next);
+          },
+        });
+      } catch (err) {
+        setRetrying(false);
+        onError(generationErrorMessage(err));
+        return;
       }
+      setRetrying(false);
+      onSuccess(copy);
     }
 
     run();
@@ -86,7 +88,7 @@ export default function StepGenerating({ businessInfo, templateMeta, onSuccess, 
         {retrying ? 'Hang tight, starting fresh…' : STATUS_MESSAGES[statusIndex]}
       </p>
 
-      <p className="text-[#888] text-sm mt-3">
+      <p className="text-ink-tertiary text-sm mt-3">
         Writing custom copy for <span className="font-semibold text-[#1a1a1a]">{businessInfo.businessName}</span>
       </p>
 

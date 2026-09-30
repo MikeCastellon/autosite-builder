@@ -8,7 +8,7 @@ function BrowserChrome({ url, children }) {
         <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
         <span className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
         <span className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
-        <div className="flex-1 ml-2 bg-white border border-black/[0.06] rounded-md px-3 py-0.5 text-[10px] text-[#888] font-mono truncate">
+        <div className="flex-1 ml-2 bg-white border border-black/[0.06] rounded-md px-3 py-0.5 text-[10px] text-ink-tertiary font-mono truncate">
           {url}
         </div>
       </div>
@@ -63,7 +63,7 @@ function BookingMockup() {
         </div>
         <p className="text-[10px] font-semibold uppercase tracking-wider opacity-70 mb-2">Pick a date and time</p>
         <div className="bg-white rounded-md p-2">
-          <div className="grid grid-cols-7 gap-0.5 text-[8px] text-center text-[#999] mb-1">
+          <div className="grid grid-cols-7 gap-0.5 text-[8px] text-center text-ink-tertiary mb-1">
             {['S','M','T','W','T','F','S'].map((d, i) => <div key={i}>{d}</div>)}
           </div>
           <div className="grid grid-cols-7 gap-0.5">
@@ -106,12 +106,12 @@ function DomainMockup() {
           <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
           <span className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
           <span className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
-          <div className="flex-1 ml-2 bg-white border border-black/[0.06] rounded-md px-3 py-1 text-[11px] text-[#888] font-mono truncate flex items-center gap-1.5">
+          <div className="flex-1 ml-2 bg-white border border-black/[0.06] rounded-md px-3 py-1 text-[11px] text-ink-tertiary font-mono truncate flex items-center gap-1.5">
             <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="5" width="8" height="6" rx="1"/><path d="M4 5V3.5a2 2 0 014 0V5"/></svg>
             yourshop.autocaregeniushub.com
           </div>
         </div>
-        <div className="px-3 py-2 text-[10px] text-[#888]">Free subdomain</div>
+        <div className="px-3 py-2 text-[10px] text-ink-tertiary">Free subdomain</div>
       </div>
       <div className="text-center text-[20px] font-bold text-[#cc0000]">↓</div>
       <div className="rounded-xl border-2 border-[#cc0000]/30 bg-white shadow-md overflow-hidden">
@@ -153,7 +153,7 @@ function ChatMockup() {
         </div>
       </div>
       <div className="px-4 py-2.5 border-t border-black/[0.06] flex items-center gap-2">
-        <div className="flex-1 text-[10px] text-[#aaa]">Type a message...</div>
+        <div className="flex-1 text-[10px] text-ink-tertiary">Type a message...</div>
         <div className="w-7 h-7 rounded-full bg-[#cc0000] flex items-center justify-center">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="white"><path d="M11 6L1 1l2 5-2 5z"/></svg>
         </div>
@@ -178,7 +178,7 @@ function BrandingMockup() {
             <span className="font-bold text-[#1a1a1a]">Auto Care Genius</span>
           </div>
         </div>
-        <div className="px-3 py-2 text-[10px] text-[#888]">Free — branded footer always visible</div>
+        <div className="px-3 py-2 text-[10px] text-ink-tertiary">Free — branded footer always visible</div>
       </div>
       <div className="text-center text-[20px] font-bold text-[#cc0000]">↓</div>
       <div className="relative rounded-xl border-2 border-[#cc0000]/30 bg-white shadow-md overflow-hidden">

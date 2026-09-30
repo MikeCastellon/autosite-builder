@@ -5,7 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 import { getStripe } from './_lib/stripe.js';
 import { isEffectiveSchedulerActive } from './_lib/subscription-gating.js';
 import { corsHeaders, jsonHeaders } from './_shared/cors.js';
-import { servicePriceCents, computeTotalCents } from './_lib/deposit-math.js';
+import { quoteCharge } from './_lib/charge-pricing.js';
 
 export const handler = async (event) => {
   const cors = corsHeaders(event.headers);
@@ -46,17 +46,17 @@ export const handler = async (event) => {
     customer_phone,
     site_id,
     service_id,
+    vehicle_type_id,
     addon_ids,
   } = payload;
 
-  // Add-on path: when the client picks a service + add-ons, we resolve them
-  // server-side against the site's scheduler_config so prices can't be
-  // tampered with. The client-supplied amount_cents is ignored in this case.
-  let resolvedService = null;
-  let resolvedAddons = [];
+  // Service path: the price is resolved here from the site's
+  // scheduler_config for the customer's vehicle type (charge-pricing.js),
+  // so it can't be tampered with. The client-supplied amount_cents is
+  // ignored in this case.
+  let quote = null;
   let finalServiceName = service_name || null;
   let finalAmountCents = null;
-  const requestedAddonIds = Array.isArray(addon_ids) ? addon_ids : [];
 
   if (service_id && site_id) {
     const { data: site } = await db
@@ -68,26 +68,16 @@ export const handler = async (event) => {
     if (site.user_id !== user.id) return fail(403, { error: 'Forbidden' });
 
     const services = (site.scheduler_config?.services) || [];
-    resolvedService = services.find((s) => s.id === service_id) || null;
-    if (!resolvedService) return fail(400, { error: 'Unknown service' });
-
-    const available = Array.isArray(resolvedService.addons) ? resolvedService.addons : [];
-    for (const id of requestedAddonIds) {
-      const match = available.find((a) => a.id === id && a.enabled !== false);
-      if (!match) return fail(400, { error: 'Unknown or disabled add-on' });
-      resolvedAddons.push({
-        id: match.id,
-        name: match.name,
-        price_cents: typeof match.price_cents === 'number' && match.price_cents > 0 ? match.price_cents : 0,
-      });
-    }
-
-    const basePriceCents = servicePriceCents(resolvedService);
-    if (basePriceCents == null) return fail(400, { error: 'Service has no chargeable price' });
-    finalAmountCents = computeTotalCents(basePriceCents, resolvedAddons);
-    finalServiceName = resolvedAddons.length > 0
-      ? `${resolvedService.name} + ${resolvedAddons.length} add-on${resolvedAddons.length === 1 ? '' : 's'}`
-      : resolvedService.name;
+    const service = services.find((s) => s.id === service_id) || null;
+    quote = quoteCharge({
+      service,
+      vehicleTypes: site.scheduler_config?.vehicle_types,
+      vehicleTypeId: typeof vehicle_type_id === 'string' && vehicle_type_id ? vehicle_type_id : null,
+      addonIds: addon_ids,
+    });
+    if (!quote.ok) return fail(quote.status, { error: quote.error });
+    finalAmountCents = quote.totalCents;
+    finalServiceName = quote.serviceName;
   } else {
     // Legacy path: client-supplied amount + free-text service name (custom
     // amount, or service picked without an id like the old flow).
@@ -122,17 +112,17 @@ export const handler = async (event) => {
   // Build itemized line items so the Stripe Checkout receipt shows the
   // service + each add-on on its own row. Falls back to a single row for
   // the legacy custom-amount path.
-  const lineItems = resolvedService
+  const lineItems = quote
     ? [
         {
           price_data: {
             currency: 'usd',
-            unit_amount: servicePriceCents(resolvedService),
-            product_data: { name: resolvedService.name },
+            unit_amount: quote.basePriceCents,
+            product_data: { name: quote.lineName },
           },
           quantity: 1,
         },
-        ...resolvedAddons.map((a) => ({
+        ...quote.addons.map((a) => ({
           price_data: {
             currency: 'usd',
             unit_amount: a.price_cents,
@@ -174,7 +164,7 @@ export const handler = async (event) => {
       stripe_checkout_session_id: session.id,
     }).eq('id', charge.id);
 
-    return ok({ charge_id: charge.id, checkout_url: session.url });
+    return ok({ charge_id: charge.id, checkout_url: session.url, amount_cents: finalAmountCents });
   } catch (err) {
     console.error('[create-charge] Stripe error:', err?.message || err);
     // Clean up the pending row so it doesn't litter the charges list

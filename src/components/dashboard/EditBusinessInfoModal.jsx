@@ -44,7 +44,7 @@ export default function EditBusinessInfoModal({ site, onClose, onSaved }) {
         <div className="flex items-center justify-between px-6 py-4 border-b border-black/[0.06] shrink-0">
           <div className="min-w-0">
             <p className="text-[15px] font-bold text-[#1a1a1a]">Edit Business Info</p>
-            <p className="text-[11px] text-[#888] mt-0.5 truncate">
+            <p className="text-[11px] text-ink-tertiary mt-0.5 truncate">
               Same questions as the signup form. Save then Republish to push changes live.
             </p>
           </div>
@@ -52,7 +52,7 @@ export default function EditBusinessInfoModal({ site, onClose, onSaved }) {
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="text-[#888] hover:text-[#cc0000] transition-colors text-xl leading-none"
+            className="text-ink-tertiary hover:text-[#cc0000] transition-colors text-xl leading-none"
           >
             ✕
           </button>

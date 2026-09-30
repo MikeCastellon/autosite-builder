@@ -102,7 +102,7 @@ export default function UpgradeProPanel({ heading = 'Unlock the full toolkit', s
         >
           {busy ? 'Loading...' : '⭐ Upgrade to Pro — $19.99/month'}
         </button>
-        <p className="text-[11px] text-[#888] text-center mt-2.5">
+        <p className="text-[11px] text-ink-tertiary text-center mt-2.5">
           $19.99/month · Cancel anytime · No contract.
         </p>
       </div>
