@@ -72,6 +72,8 @@ const CSS = `
 .ob-center .ob-tag::after{content:'';flex:none;width:28px;height:1px;background:var(--ob-grad)}
 .ob-section{position:relative;isolation:isolate;overflow:clip;padding:clamp(88px,10cqi,132px) 0;background:var(--ob-bg);border-top:1px solid var(--ob-border2);scroll-margin-top:72px}
 .ob-deep{background:var(--ob-deep)}
+.ob-off{padding:28px 0;background:var(--ob-deep);border-top:1px solid var(--ob-border2)}
+.ob-off .ob-hint{margin-top:0}
 .ob-panel{background:var(--ob-surface)}
 .ob-orb{position:absolute;z-index:-1;width:min(680px,90cqi);aspect-ratio:1;border-radius:50%;pointer-events:none;background:radial-gradient(circle,var(--ob-glow-soft),transparent 68%)}
 .ob-orb-tr{top:-240px;right:-220px}
@@ -87,6 +89,8 @@ html[data-acg-scrolled] .ob-nav{box-shadow:0 18px 40px -24px var(--ob-shadow)}
 .ob-mark{display:block;width:32px;height:32px;background:var(--ob-grad);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
 .ob-brand-txt{display:block;min-width:0}
 .ob-name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere;max-width:340px;font-family:var(--ob-head);font-size:16px;font-weight:800;line-height:1.15;letter-spacing:.14em;text-transform:uppercase}
+.ob-name-long{max-width:400px;font-size:14px;letter-spacing:.08em}
+.ob-name-xl{max-width:440px;font-size:12.5px;letter-spacing:.06em}
 .ob-sub{display:block;margin-top:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--ob-mono);font-size:9.5px;line-height:1.2;letter-spacing:.3em;text-transform:uppercase;color:var(--ob-accent-text)}
 .ob-links{flex:none;display:flex;align-items:center;gap:clamp(18px,2.4cqi,34px)}
 .ob-link{position:relative;padding:12px 0;font-family:var(--ob-head);font-size:11.5px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--ob-muted);text-decoration:none}
@@ -407,10 +411,17 @@ html[data-acg-scrolled] .ob-nav{box-shadow:0 18px 40px -24px var(--ob-shadow)}
 @keyframes ob-wave{from{transform:translateX(0)}to{transform:translateX(40px)}}
 }
 
-@container (max-width:1400px){
+/* The bar keeps the main links only. The wrap stops growing at 1280px, so
+   Films, Process and Reviews (still in the phone menu and footer) would
+   squeeze the business name to "AUTOSIT / E DEMO..." on wide screens. */
 .ob-link-x{display:none}
-}
 @container (max-width:1100px){
+.ob-name{font-size:14px;letter-spacing:.08em;-webkit-line-clamp:3}
+.ob-name-xl{font-size:12.5px;letter-spacing:.06em}
+.ob-nav .ob-name-xl{-webkit-line-clamp:4}
+.ob-nav .ob-name-xl+.ob-sub{display:none}
+.ob-links{gap:clamp(14px,2cqi,22px)}
+.ob-link{letter-spacing:.14em}
 .ob-steps{grid-template-columns:repeat(2,minmax(0,1fr))}
 .ob-foot-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 .ob-foot-brand{grid-column:1 / -1}
@@ -426,6 +437,8 @@ html[data-acg-scrolled] .ob-nav{box-shadow:0 18px 40px -24px var(--ob-shadow)}
 .ob-wave{min-height:180px}
 }
 @container (max-width:760px){
+.ob-links{gap:16px}
+.ob-link{letter-spacing:.12em}
 .ob-head,.ob-about,.ob-contact-grid,.ob-contact>[data-acg-inquiry]{grid-template-columns:minmax(0,1fr)}
 .ob-g4{grid-template-columns:repeat(2,minmax(0,1fr))}
 .ob-films{grid-template-columns:minmax(0,1fr)}
@@ -437,6 +450,7 @@ html[data-acg-scrolled] .ob-nav{box-shadow:0 18px 40px -24px var(--ob-shadow)}
 .ob-links,.ob-nav-cta{display:none}
 .ob-nav-in{min-height:64px;gap:12px}
 .ob-name{font-size:14px;letter-spacing:.08em}
+.ob-name-xl{font-size:12.5px;letter-spacing:.06em}
 .ob-sub{font-size:8.5px;letter-spacing:.24em}
 .ob-mark{width:26px;height:26px}
 .ob-hero{min-height:0;padding:60px 0 44px}
@@ -863,11 +877,19 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
   const wideFirst = services.length === 1 || services.length >= 3;
   const spanLast = wideFirst && services.length > 1 && (services.length - 1) % 2 === 1;
 
-  // Shade guide: the owner's shades (Edit > Shades), else the starting set
-  // the editor's Shades tab shows as on by default. The owner turns it off
-  // there (Show Shade Guide) or in Sections; the editor hint below says so
-  // plainly when the business is not a tint shop.
+  // Shade guide: the owner's shades (Edit > Shades), else a starting set,
+  // but the starting set only for a business that does window tint: a tint
+  // shop, a service of the owner's named for tint or window film, or an
+  // answer to the tint-shop wizard's "Film Brands Used". Anywhere else a VLT
+  // guide would advertise a service the owner never said they sell (live
+  // detailing sites on this template never had one), so it stays off until
+  // the owner saves a shade or switches it on in Edit > Shades. Show Shade
+  // Guide off, or hiding it in Sections, removes it either way.
   const tintShop = /tint/i.test(txt(biz.businessType));
+  const tintService = [...list(biz.packages), ...list(biz.services)]
+    .some((s) => /\btint(s|ed|ing)?\b|window film/i.test(typeof s === 'string' ? s : txt(s?.name)));
+  const filmBrandsAnswer = list(biz.filmBrands).some((b) => txt(b));
+  const sellsTint = tintShop || tintService || filmBrandsAnswer;
   const ownShades = list(copy.shadeGuide).filter((s) => s && (txt(s.vlt) || txt(s.name)));
   const shades = (ownShades.length > 0 ? ownShades : DEFAULT_SHADES).map((s, i) => ({
     vlt: vltNumber(s.vlt),
@@ -875,7 +897,10 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
     legal: ownShades.length > 0 ? txt(s.legal) : '',
     photo: images[`shade${i}`] || null,
   }));
-  const showShades = show('shadeGuide') && copy.showShadeGuide !== false;
+  const shadesOn = show('shadeGuide') && copy.showShadeGuide !== false;
+  const showShades = shadesOn && (ownShades.length > 0 || sellsTint || copy.showShadeGuide === true);
+  // Where the guide would sit, the editor explains why it is off.
+  const shadesOffHint = editor && shadesOn && !showShades;
 
   const steps = Array.isArray(copy.howSteps)
     ? copy.howSteps.map((s) => ({ emoji: txt(s?.emoji), title: txt(s?.title), body: txt(s?.desc) })).filter((s) => s.title || s.body)
@@ -998,7 +1023,10 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
     <>
       <span className="ob-mark-wrap" aria-hidden="true"><span className="ob-mark" /></span>
       <span className="ob-brand-txt">
-        <span className="ob-name">{name}</span>
+        {/* Syne 800 is wide: a long name gets a smaller, wider setting (the
+            CSS uses the smaller size at <= 1100px anyway) so it shows in
+            full instead of ending in "…". */}
+        <span className={`ob-name${name.length > 36 ? ' ob-name-long ob-name-xl' : name.length > 26 ? ' ob-name-long' : ''}`}>{name}</span>
         <span className="ob-sub">{[fb.navSubtitle, city].filter(Boolean).join(' · ')}</span>
       </span>
     </>
@@ -1156,13 +1184,22 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
               <p className="ob-note"><b>{'// '}</b>Tint laws vary by state. Ask us which shades are legal on your vehicle.</p>
               {ownShades.length === 0 && (
                 <EditorHint>
-                  {tintShop
+                  {tintShop || copy.showShadeGuide === true
                     ? 'These are starter shades. Set your own shades, legal notes and photos in Edit > Shades.'
-                    : "These are starter window-tint shades and they will be published. If you don't offer tint, turn off Show Shade Guide in Edit > Shades or hide this section in Sections."}
+                    : `These starter window-tint shades will be published because ${tintService ? 'one of your services is window tint' : 'Business Info lists the film brands you use'}. If you don't offer tint, turn off Show Shade Guide in Edit > Shades or hide this section in Sections.`}
                 </EditorHint>
               )}
             </div>
           </section>
+        )}
+        {shadesOffHint && (
+          <EditorOnly>
+            <section data-section="shadeGuide" data-acg-editor-only="" className="ob-off" style={{ order: order('shadeGuide') }}>
+              <div className="ob-wrap">
+                <p className="ob-hint">The shade guide is off and won&apos;t be published, because neither your business type nor your services mention window tint. To show it, add or edit a shade in Edit &gt; Shades.</p>
+              </div>
+            </section>
+          </EditorOnly>
         )}
 
         {show('services') && (services.length > 0 || editor) && (

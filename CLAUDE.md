@@ -72,6 +72,10 @@ export const extraFonts = ["'Barlow Condensed', sans-serif"];  // stacks used be
 - Any element that shows awards carries `data-acg-awards` and renders only when there is at least one award.
 - Exported from the module file itself: exportHtml reads `themeReady` (drops the legacy font list and the
   legacy `@media (max-width:768px)` grid override) and `extraFonts` (adds them to the font URL).
+- A theme-ready module may also export `headingFields` (Edit > Headings: which `copy.sectionTitles` fields each
+  section id uses; `titleFrom` / `introFrom` name the copy key that owns the text). Editor controls are gated by
+  `editorCapabilities.js`: `CAPABILITY_KEYS` (copy keys) and `SOURCE_CAPABILITIES` (source regexes), both checked
+  against the template sources by `editorCapabilities.test.js`.
 
 ### The kit (`src/components/preview/templates/kit/`)
 

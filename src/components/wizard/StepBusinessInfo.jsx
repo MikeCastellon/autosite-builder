@@ -6,6 +6,7 @@ import { supabase } from '../../lib/supabase.js';
 import { formatPrice } from '../../lib/formatPrice.js';
 import { formatPhone } from '../../lib/formatPhone.js';
 import { HOURS_DAYS, parseRange, rangeToString, expandHoursToDays } from '../../lib/businessHours.js';
+import { searchPlaces, placeFromResult } from '../../lib/googlePlaces.js';
 
 const SOCIALFEEDS_URL = import.meta.env.VITE_SOCIALFEEDS_URL || 'https://social-feeds-app.netlify.app';
 
@@ -152,18 +153,22 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
   const [placeResults, setPlaceResults] = useState([]);
   const [placeLoading, setPlaceLoading] = useState(false);
   const debounceRef = useRef(null);
+  // The query the box holds now: a slower answer to an older query must not
+  // replace the results (or the spinner) of the newer one.
+  const latestPlaceQueryRef = useRef('');
 
   useEffect(() => {
-    if (!placeQuery.trim() || placeQuery.length < 3) { setPlaceResults([]); return; }
+    latestPlaceQueryRef.current = placeQuery;
+    if (!placeQuery.trim() || placeQuery.length < 3) { setPlaceResults([]); setPlaceLoading(false); return; }
     clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(async () => {
+    debounceRef.current = setTimeout(() => {
       setPlaceLoading(true);
-      try {
-        const res = await fetch(`https://social-feeds-app.netlify.app/.netlify/functions/places-search?q=${encodeURIComponent(placeQuery)}`);
-        const data = await res.json();
-        setPlaceResults(data.results || []);
-      } catch { setPlaceResults([]); }
-      setPlaceLoading(false);
+      const isCurrent = () => latestPlaceQueryRef.current === placeQuery;
+      // Shared with the editor's Google Rating panel (lib/googlePlaces.js).
+      searchPlaces(placeQuery)
+        .then((results) => { if (isCurrent()) setPlaceResults(results); })
+        .catch(() => { if (isCurrent()) setPlaceResults([]); })
+        .finally(() => { if (isCurrent()) setPlaceLoading(false); });
     }, 400);
     return () => clearTimeout(debounceRef.current);
   }, [placeQuery]);
@@ -679,14 +684,11 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
                   {placeResults.length > 0 && (
                     <div className="absolute z-10 left-0 right-0 mt-1 bg-white border border-black/[0.12] rounded-xl shadow-lg max-h-60 overflow-y-auto">
                       {placeResults.map((place) => (
-                        <button key={place.place_id} type="button"
+                        <button key={place.placeId} type="button"
                           onClick={() => {
-                            handleChange('googlePlace', {
-                              placeId: place.place_id,
-                              placeName: place.name,
-                              rating: place.rating,
-                              reviewCount: place.review_count,
-                            });
+                            // Dated snapshot ({ placeId, placeName, rating?, reviewCount?, address?, fetchedAt }),
+                            // the same one the editor's Google Rating panel writes.
+                            handleChange('googlePlace', placeFromResult(place));
                             setPlaceResults([]);
                             setPlaceQuery('');
                           }}
@@ -695,7 +697,7 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
                           <div className="text-[11px] text-ink-tertiary">
                             {place.address}
                             {place.rating ? ` · ${place.rating}★` : ''}
-                            {place.review_count ? ` · ${place.review_count} reviews` : ''}
+                            {place.reviewCount ? ` · ${place.reviewCount} reviews` : ''}
                           </div>
                         </button>
                       ))}

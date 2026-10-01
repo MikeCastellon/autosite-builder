@@ -141,14 +141,26 @@ export default function App() {
   const [isDemoPreview, setIsDemoPreview] = useState(false);
   const [demoReturn, setDemoReturn] = useState(null);
 
+  // Overrides from autoSave calls made since the last render. One editor
+  // action can change two things (a service rename also updates
+  // copy.heroServices): each call cancels the previous timer, and the second
+  // call's closure still holds the state from before the first change, so
+  // without this queue the first change would never be saved. A render
+  // brings every change into state, so the queue starts over each render.
+  const queuedSaveRef = useRef({ id: null, overrides: {} });
+  queuedSaveRef.current = { id: null, overrides: {} };
+
   // Auto-save site to Supabase (debounced)
-  const autoSave = useCallback((overrides = {}) => {
+  const autoSave = useCallback((callOverrides = {}) => {
     if (!session?.user?.id) return;
     // Never save demo content. A save scheduled before the demo opened
     // still runs: it carries the real site's state from back then.
     if (isDemoPreview) return;
-    const id = overrides.siteId || siteId;
+    const id = callOverrides.siteId || siteId;
     if (!id) return;
+    const queued = queuedSaveRef.current.id === id ? queuedSaveRef.current.overrides : {};
+    const overrides = { ...queued, ...callOverrides };
+    queuedSaveRef.current = { id, overrides };
     clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
       saveSite({
@@ -170,6 +182,14 @@ export default function App() {
   // save the state from back then (e.g. an empty dashboard state).
   const latestRef = useRef({});
   latestRef.current = { autoSave, siteId };
+
+  // The latest businessInfo / images, also updated inside the change
+  // handlers. A package photo upload or a Google rating refresh finishes
+  // after later edits and calls the handler from the render it started in;
+  // its function update must apply to the current value, or it would undo
+  // whatever was typed meanwhile.
+  const liveEditsRef = useRef({});
+  liveEditsRef.current = { businessInfo, images };
 
   const templateMeta = selectedTemplate
     ? buildTemplateMeta(selectedTemplate, customColors, customFonts)
@@ -730,15 +750,21 @@ export default function App() {
         siteId={siteId}
         businessInfo={isDemoPreview ? DEMO_BUSINESS_INFO : { ...businessInfo, businessType: businessInfo?.businessType || businessType }}
         onBusinessInfoChange={isDemoPreview ? undefined : (next) => {
-          const resolved = typeof next === 'function' ? next(businessInfo) : next;
+          const resolved = typeof next === 'function' ? next(liveEditsRef.current.businessInfo) : next;
+          liveEditsRef.current = { ...liveEditsRef.current, businessInfo: resolved };
           setBusinessInfo(resolved);
-          autoSave({ businessInfo: resolved });
+          latestRef.current.autoSave({ businessInfo: resolved });
         }}
         generatedCopy={generatedCopy}
         editedCopy={editedCopy}
         onEditedCopyChange={(newCopy) => { setEditedCopy(newCopy); autoSave({ editedCopy: newCopy }); }}
         images={images}
-        onImagesChange={(newImages) => { const resolved = typeof newImages === 'function' ? newImages(images) : newImages; setImages(resolved); autoSave({ images: resolved }); }}
+        onImagesChange={(newImages) => {
+          const resolved = typeof newImages === 'function' ? newImages(liveEditsRef.current.images) : newImages;
+          liveEditsRef.current = { ...liveEditsRef.current, images: resolved };
+          setImages(resolved);
+          latestRef.current.autoSave({ images: resolved });
+        }}
         templateId={selectedTemplate}
         templateMeta={templateMeta}
         customColors={customColors}

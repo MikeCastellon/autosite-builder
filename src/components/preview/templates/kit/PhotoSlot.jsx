@@ -9,6 +9,9 @@ export const PHOTO_HINTS = {
   gallery: 'Add photos: Edit > Gallery',
   shade: 'Add a shade photo: Edit > Shades',
   product: 'Add a product photo: Edit > Products > Product Image',
+  service: 'Add a package photo: Edit > Services > Package details > Package Photo',
+  featured: 'Add a photo: Edit > Featured Service > Featured Photo',
+  cta: 'Add a background photo: Edit > Contact > CTA Background',
 };
 
 const DEFAULT_HINT = 'Add a photo from the Edit panel (Hero, About or Gallery tab)';
@@ -40,8 +43,9 @@ const placeholderStyle = {
 // nothing) on the published site.
 // `style` sizes the slot in both states (width/height/aspectRatio/radius);
 // `imgStyle` adds img-only styles (objectPosition, filter, ...).
-// `slot` ('hero' | 'about' | 'logo' | 'gallery' | 'shade' | 'product')
-// picks a PHOTO_HINTS entry when no `hint` is given.
+// `slot` ('hero' | 'about' | 'logo' | 'gallery' | 'shade' | 'product' |
+// 'service' | 'featured' | 'cta') picks a PHOTO_HINTS entry when no `hint`
+// is given.
 export function PhotoSlot({
   src,
   alt = '',

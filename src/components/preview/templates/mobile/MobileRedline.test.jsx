@@ -12,7 +12,8 @@ import { normalizeBusinessInfo } from '../../../../lib/normalizeBusinessInfo.js'
 import { normalizeCopy } from '../../../../lib/normalizeCopy.js';
 import { EditorModeProvider } from '../kit/EditorMode.jsx';
 import { FIXTURES } from '../__fixtures__/businesses.js';
-import { splitAccent, trailingWords, serviceAreasOf, formatTimeRange, phoneDisplay, serviceIncludes, bulletItems, trustItems, intentHref, bookingWorded } from '../kit/content.js';
+import { splitAccent, trailingWords, serviceAreasOf, formatTimeRange, phoneDisplay, serviceIncludes, bulletItems, trustItems, intentHref, bookingWorded, footerColumnsOf, FOOTER_COLUMN_TYPES } from '../kit/content.js';
+import { PHOTO_HINTS } from '../kit/PhotoSlot.jsx';
 import { GoogleRatingBadge, googleRatingOf, googlePlaceUrl, googleBadgePlacements, StarRow, GOOGLE_STAR_GOLD } from '../kit/GoogleRatingBadge.jsx';
 import { contrastRatio, isDark, hexToRgb, mix } from '../kit/theme.js';
 import { vehicleMakesFor, findVehicleMake, VEHICLE_MAKES } from '../kit/vehicleMakes.js';
@@ -270,7 +271,7 @@ describe('packages', () => {
     // keeps its buttons.
     const sparse = sectionHtml(render(FIXTURES.sparse), 'hero');
     expect(sparse).not.toContain('rl-quote');
-    expect(sparse).not.toContain('rl-has-quote');
+    expect(sparse).not.toContain('rl-has-card');
     expect(sparse).toContain('rl-hero-btns');
     const mixed = decode(sectionHtml(render(RICH, { biz: { services: [
       { name: 'Wash' }, { name: 'Detail', price: '$150' }, { name: 'Coat', price: '$500' },
@@ -295,7 +296,7 @@ describe('packages', () => {
     expect(css.indexOf('.rl-res-set>.rl-res{display:block;grid-area:1/1;visibility:hidden}')).toBeGreaterThan(wide);
     // The picked row inherits step 2's visibility: 'visible' would show it
     // through step 1.
-    expect(css).toContain('.rl-res-set>.rl-pk-2{visibility:inherit}');
+    expect(css).toContain('.rl-res-set>.rl-pk-3{visibility:inherit}');
     expect(css).not.toMatch(/\.rl-res-set>[^{]*\{visibility:visible/);
     // Below that, step 1 leaves the layout when step 2 shows.
     expect(css).toContain('.rl-quote:has(.rl-go:checked) .rl-s1{display:none}');
@@ -787,5 +788,424 @@ describe('vehicle make data', () => {
       // Every number has at most two decimals (only arc radii use two).
       expect(m.d.match(/\d*\.\d{3,}/), m.id).toBeNull();
     }
+  });
+});
+
+describe('hero card (copy.heroCard / copy.heroServices)', () => {
+  const hero = (html) => decode(sectionHtml(html, 'hero'));
+  const optNames = (html) => [...hero(html).matchAll(/<span class="rl-opt-name">([^<]*)<\/span>/g)].map((m) => m[1]);
+  const radios = (html) => count(hero(html), 'class="rl-sr rl-radio"');
+  const FIVE = [
+    { name: 'One', price: '$10' }, { name: 'Two', price: '$20' }, { name: 'Three', price: '$30' },
+    { name: 'Four', price: '$40' }, { name: 'Five', price: '$50' },
+  ];
+
+  it('renders the price card by default, exactly as heroCard "quote"', () => {
+    for (const fx of [RICH, FIXTURES.full]) {
+      const quote = render(fx, { copy: { heroCard: 'quote' } });
+      expect(render(fx)).toBe(quote);
+      expect(visibleText(render(fx))).toBe(visibleText(quote));
+      // Unknown modes and an empty pick list are the default too.
+      expect(render(fx, { copy: { heroCard: 'carousel', heroServices: [] } })).toBe(quote);
+      expect(render(fx, { copy: { heroServices: null } })).toBe(quote);
+      expect(sectionOpen(quote, 'hero')).toContain('rl-has-card');
+    }
+    // The first three priced packages, as before.
+    expect(optNames(render(RICH))).toEqual(['Refresh Detail', 'Signature Detail', 'Premium Detail']);
+    expect(optNames(render(FIXTURES.full))).toEqual(['Full Detail', 'Ceramic Coating', 'Paint Correction']);
+  });
+
+  it("offers the owner's picks in the owner's order, matched loosely by name", () => {
+    expect(optNames(render(RICH, { copy: { heroServices: ['Premium Detail', 'Refresh Detail'] } }))).toEqual(['Premium Detail', 'Refresh Detail']);
+    expect(optNames(render(RICH, { copy: { heroServices: ['premium-detail', 'REFRESH  DETAIL', 'Premium Detail'] } }))).toEqual(['Premium Detail', 'Refresh Detail']);
+    // Names no package has any more are skipped; none left -> automatic.
+    expect(optNames(render(RICH, { copy: { heroServices: ['Gone', 'Ceramic Coating'] } }))).toEqual(['Ceramic Coating']);
+    expect(optNames(render(RICH, { copy: { heroServices: ['Gone', 'Also Gone', 7, null] } }))).toEqual(['Refresh Detail', 'Signature Detail', 'Premium Detail']);
+    // At most four.
+    const five = render(RICH, { biz: { services: FIVE }, copy: { heroServices: ['Five', 'Four', 'Three', 'Two', 'One'] } });
+    expect(optNames(five)).toEqual(['Five', 'Four', 'Three', 'Two']);
+    expect(optNames(render(RICH, { biz: { services: FIVE } }))).toEqual(['One', 'Two', 'Three']);
+  });
+
+  it('skips an unpriced pick in the price card and lists it without a price', () => {
+    const services = [{ name: 'Wash' }, ...RICH.businessInfo.services];
+    const quote = render(RICH, { biz: { services }, copy: { heroServices: ['Wash', 'Premium Detail'] } });
+    expect(optNames(quote)).toEqual(['Premium Detail']);
+    const listed = hero(render(RICH, { biz: { services }, copy: { heroCard: 'list', heroServices: ['Wash', 'Premium Detail'] } }));
+    expect([...listed.matchAll(/<span class="rl-opt-name">([^<]*)<\/span>/g)].map((m) => m[1])).toEqual(['Wash', 'Premium Detail']);
+    expect(listed).toMatch(/<span class="rl-opt-name">Wash<\/span><\/span><\/li>/);
+    expect(listed).toContain('<span class="rl-opt-price">$260</span>');
+  });
+
+  it('tells the editor when the picked services have no price, and shows no card', () => {
+    const copy = { heroServices: ['Wash'] };
+    const biz = { services: [{ name: 'Wash' }, { name: 'Detail', price: '$150' }] };
+    const editor = hero(render(RICH, { biz, copy, editor: true }));
+    expect(visibleText(editor)).toContain('Your price card needs services with a price (Edit > Services).');
+    expect(editor).not.toContain('id="quote"');
+    const published = render(RICH, { biz, copy });
+    expect(hero(published)).not.toContain('id="quote"');
+    expect(published).not.toContain('data-acg-editor-only');
+    expect(sectionOpen(published, 'hero')).not.toContain('rl-has-card');
+  });
+
+  it('supports a fourth priced pick', () => {
+    const html = render(RICH, { copy: { heroServices: ['Refresh Detail', 'Signature Detail', 'Premium Detail', 'Ceramic Coating'] } });
+    const h = hero(html);
+    expect(radios(html)).toBe(4);
+    expect(h).toContain('id="rl-pkg-3"');
+    expect(h).toContain('class="rl-res rl-pk-3"');
+    expect(h).toContain('data-scheduler-service="Ceramic Coating"');
+    expect(count(h, 'class="rl-q-book rl-pk-')).toBe(4);
+    expect(h).toContain('d="M6 3h12l4 6-10 13L2 9Z"');
+    const css = html.match(/<style>\s*(\.rl-root[\s\S]*?)<\/style>/)[1];
+    expect(count(css, '#rl-pkg-3:checked')).toBe(3);
+    expect(css).toContain('.rl-quote:has(#rl-pkg-3:checked) .rl-res-set>.rl-pk-3{visibility:inherit}');
+  });
+
+  it('lists packages without choices in "list" mode', () => {
+    const html = render(RICH, { copy: { heroCard: 'list' } });
+    const h = hero(html);
+    expect(h).not.toMatch(/<input\b/);
+    expect(h).not.toContain('Step 1 of 3');
+    expect(count(h, 'id="quote"')).toBe(1);
+    expect(h).toContain('class="rl-quote rl-hlist" id="quote"');
+    expect(h).toContain('<h2 class="rl-q-h">Our Detail Packages</h2>');
+    const text = visibleText(h);
+    for (const s of ['Refresh Detail Inside-and-out refresh $120', 'Signature Detail $180', 'Premium Detail $260']) expect(text).toContain(s);
+    expect(h).toContain('<a class="rl-hl-cta" href="#services">See All Packages');
+    expect(h).not.toMatch(/<a class="rl-hl-cta"[^>]*data-scheduler-trigger/);
+    expect(h).toContain('<a class="rl-q-call" href="tel:4075550199">');
+    expect(sectionOpen(html, 'hero')).toContain('rl-has-card');
+    expect(sectionOpen(html, 'hero')).not.toContain('rl-card-off');
+    // The list offers no quote, so Button 2 calls by default; the owner's
+    // "Get a Quote" wording still lands on the card.
+    expect(h).toMatch(/<a class="rl-btn rl-btn-line" href="tel:4075550199">/);
+    expect(hero(render(RICH, { copy: { heroCard: 'list', ctaSecondary: 'Get a Quote' } }))).toMatch(/<a class="rl-btn rl-btn-line" href="#quote"/);
+    // Without the package cards the button books instead.
+    const noCards = hero(render(RICH, { copy: { heroCard: 'list', hiddenSections: ['services'] } }));
+    expect(noCards).toContain('<a class="rl-hl-cta" href="tel:4075550199" data-scheduler-trigger="">Book Now');
+    expect(noCards).not.toContain('See All Packages');
+    // Not a detailer: plain heading.
+    expect(hero(render(RICH, { biz: { businessType: 'wheel_shop' }, copy: { heroCard: 'list' } }))).toContain('<h2 class="rl-q-h">Our Packages</h2>');
+  });
+
+  it('drops the card and widens the copy in "off" mode, keeping the hero buttons', () => {
+    const html = render(RICH, { copy: { heroCard: 'off' } });
+    const h = hero(html);
+    expect(h).not.toContain('id="quote"');
+    expect(h).not.toContain('rl-quote');
+    expect(sectionOpen(html, 'hero')).toContain('rl-card-off');
+    expect(sectionOpen(html, 'hero')).not.toContain('rl-has-card');
+    expect(h).toContain('class="rl-hero-btns"');
+    // No card: Button 2 calls instead of offering a quote.
+    expect(h).toMatch(/<a class="rl-btn rl-btn-line" href="tel:4075550199">/);
+    expect(visibleText(h)).toContain('Call 407-555-0199');
+    expect(html).toContain('.rl-card-off .rl-hero-body{max-width:768px}');
+  });
+
+  it('publishes the list and off modes without editor markup or invented claims', () => {
+    for (const fx of [RICH, FIXTURES.full, FIXTURES.sparse]) {
+      for (const heroCard of ['list', 'off']) {
+        const html = render(fx, { copy: { heroCard } });
+        expect(html).not.toContain('data-acg-editor-only');
+        expect(decode(html)).not.toMatch(BANNED_CLAIMS);
+        expect(visibleText(html)).not.toMatch(BANNED_CLAIMS);
+      }
+    }
+  });
+});
+
+describe('footer columns (copy.footer)', () => {
+  const footerHtml = (html) => decode(html.slice(html.indexOf('<footer'), html.indexOf('</footer>') + 9));
+  // Each cell is a bare <div> opening on its title or the brand block.
+  const cells = (html) => [...footerHtml(html).matchAll(/<div><(?:h3 class="rl-foot-t">([^<]*)<\/h3>|div class="rl-foot-brand">)/g)].map((m) => m[1] ?? 'brand');
+  const fn = (html) => Number(footerHtml(html).match(/--rl-fn:(\d+)/)?.[1] ?? 0);
+  const cols = (...list) => ({ footer: { columns: list.map((c) => (typeof c === 'string' ? { type: c, show: true } : c)) } });
+
+  it('reads the column list like the editor does', () => {
+    const all = FOOTER_COLUMN_TYPES.map((type) => ({ type, title: '', show: true }));
+    expect(FOOTER_COLUMN_TYPES).toEqual(['brand', 'links', 'areas', 'contact', 'hours']);
+    for (const footer of [undefined, null, 'x', [], {}, { columns: 'brand' }, { ctaText: 'Hi' }]) expect(footerColumnsOf(footer)).toEqual(all);
+    expect(footerColumnsOf({ columns: [
+      { type: 'contact', title: ' Say Hi ' }, { type: 'nope' }, null, 'links', { type: 'contact', show: false },
+      { type: 'brand', show: false }, { type: 'hours', show: 0 },
+    ] })).toEqual([
+      { type: 'contact', title: 'Say Hi', show: true },
+      { type: 'brand', title: '', show: false },
+      { type: 'hours', title: '', show: true },
+      { type: 'links', title: '', show: false },
+      { type: 'areas', title: '', show: false },
+    ]);
+    expect(footerColumnsOf({ columns: [] }).every((c) => !c.show)).toBe(true);
+  });
+
+  it("keeps the design's footer without copy.footer", () => {
+    const html = render(RICH);
+    expect(cells(html)).toEqual(['brand', 'Explore', 'Service Areas', 'Get In Touch']);
+    expect(fn(html)).toBe(4);
+    const foot = footerHtml(html);
+    expect(count(foot, 'class="rl-foot-hours"')).toBe(1);
+    expect(foot).toContain('<b>Hours</b>');
+    expect(foot).toContain('<a class="rl-pillbtn" href="#contact" data-scheduler-trigger="">Request Appointment</a>');
+    expect(foot).toContain('<div>Orlando, FL · Fully Mobile · Insured</div>');
+    // The default column list (as the editor saves it) and empty values render the same.
+    const defaults = cols('brand', 'links', 'areas', 'contact', 'hours');
+    for (const fx of [RICH, FIXTURES.full, FIXTURES.sparse]) {
+      const base = footerHtml(render(fx));
+      expect(footerHtml(render(fx, { copy: defaults }))).toBe(base);
+      expect(footerHtml(render(fx, { copy: { footer: { ...defaults.footer, showCta: true, ctaText: ' ', ctaUrl: '', bottomText: '' } } }))).toBe(base);
+      expect(footerHtml(render(fx, { copy: { footer: null } }))).toBe(base);
+    }
+  });
+
+  it("renders the owner's columns in the owner's order", () => {
+    const html = render(RICH, { copy: cols('contact', 'brand', { type: 'links', show: false }, { type: 'areas', show: false }, { type: 'hours', show: false }) });
+    expect(cells(html)).toEqual(['Get In Touch', 'brand']);
+    expect(fn(html)).toBe(2);
+    const foot = footerHtml(html);
+    expect(foot).not.toContain('Service Areas');
+    expect(foot).not.toContain('Explore');
+    expect(foot).not.toContain('rl-foot-hours');
+    expect(foot).not.toContain('Mon–Fri');
+    // A missing type is hidden.
+    expect(cells(render(RICH, { copy: cols('areas') }))).toEqual(['Service Areas']);
+  });
+
+  it('prints hours under the contact list only right after it, else as their own column', () => {
+    const merged = render(RICH, { copy: cols('brand', 'contact', { type: 'links', show: false }, 'hours', 'areas') });
+    expect(cells(merged)).toEqual(['brand', 'Get In Touch', 'Service Areas']);
+    const contactCell = footerHtml(merged).split('<h3 class="rl-foot-t">Get In Touch</h3>')[1].split('<h3')[0];
+    expect(count(contactCell, 'class="rl-foot-hours"')).toBe(1);
+    const own = render(RICH, { copy: cols('hours', 'brand', 'links', 'areas', 'contact') });
+    expect(cells(own)).toEqual(['Hours', 'brand', 'Explore', 'Service Areas', 'Get In Touch']);
+    expect(fn(own)).toBe(5);
+    expect(footerHtml(own)).not.toContain('rl-foot-hours');
+    expect(visibleText(footerHtml(own))).toContain('Hours Mon–Fri: 8:00 AM – 6:00 PM');
+    // No hours: no Hours column.
+    expect(cells(render(RICH, { biz: { hours: null }, copy: cols('hours', 'brand') }))).toEqual(['brand']);
+  });
+
+  it('uses custom column titles', () => {
+    const html = render(RICH, { copy: cols({ type: 'brand' }, { type: 'links', title: 'Menu' }, { type: 'areas', title: 'Where We Go' }, { type: 'contact', title: 'Call Us' }, { type: 'hours', title: 'Open' }) });
+    expect(cells(html)).toEqual(['brand', 'Menu', 'Where We Go', 'Call Us']);
+    expect(footerHtml(html)).toContain('<b>Open</b>');
+    const own = render(RICH, { copy: cols('brand', { type: 'hours', title: 'When' }) });
+    expect(cells(own)).toEqual(['brand', 'When']);
+  });
+
+  it("follows the owner's button and bottom line", () => {
+    const off = footerHtml(render(RICH, { copy: { footer: { showCta: false } } }));
+    // Only the Explore link (a section link) still says it.
+    expect(count(off, 'Request Appointment')).toBe(1);
+    expect(off).not.toContain('rl-pillbtn');
+    const own = footerHtml(render(RICH, { copy: { footer: { ctaText: 'Text Us', ctaUrl: 'https://book.example.com/x' } } }));
+    expect(own).toContain('<a class="rl-pillbtn" href="https://book.example.com/x">Text Us</a>');
+    expect(own).not.toMatch(/rl-pillbtn[^>]*data-scheduler-trigger/);
+    // Its own link survives a hidden contact band; the default one doesn't.
+    expect(footerHtml(render(RICH, { copy: { hiddenSections: ['cta'], footer: { ctaUrl: 'https://book.example.com/x' } } }))).toContain('href="https://book.example.com/x"');
+    expect(footerHtml(render(RICH, { copy: { hiddenSections: ['cta'] } }))).not.toContain('rl-pillbtn');
+    const label = footerHtml(render(RICH, { copy: { footer: { ctaText: 'Book A Detail' } } }));
+    expect(label).toContain('<a class="rl-pillbtn" href="#contact" data-scheduler-trigger="">Book A Detail</a>');
+    const bottom = footerHtml(render(RICH, { copy: { footer: { bottomText: 'Serving Central Florida' } } }));
+    expect(bottom).toContain('<div>Serving Central Florida</div>');
+    expect(bottom).not.toContain('Fully Mobile · Insured');
+  });
+
+  it('keeps the copyright the last <p>, no nav, and --rl-fn equal to the cells', () => {
+    const variants = [
+      {}, cols('contact', 'brand'), cols('hours', 'brand', 'links', 'areas', 'contact'),
+      { footer: { bottomText: 'Hello', columns: [{ type: 'brand', title: 'x' }, { type: 'contact' }] } },
+    ];
+    for (const copy of variants) {
+      const html = render(RICH, { copy: { ...copy, footerTagline: 'Detailing done right.' } });
+      const foot = footerHtml(html);
+      const ps = [...foot.matchAll(/<p\b[^>]*>([\s\S]*?)<\/p>/g)];
+      expect(ps.at(-1)[1]).toMatch(/^© <span data-acg-year="">\d{4}<\/span> Redline Test Detailing\. All rights reserved\.$/);
+      expect(foot).not.toMatch(/<nav\b/);
+      expect(fn(html)).toBe(cells(html).length);
+      expect(sectionOpen(html, 'hero')).toBeTruthy();
+      expect(html).toMatch(/<footer class="rl-foot" style="order:9999">/);
+    }
+  });
+
+  it('leaves out a contact column with nothing in it', () => {
+    const html = render(RICH, { biz: { phone: '', email: '', instagram: '', city: '', state: '', hours: null }, copy: { hiddenSections: ['cta'] } });
+    expect(cells(html)).not.toContain('Get In Touch');
+    expect(fn(html)).toBe(cells(html).length);
+  });
+});
+
+describe('headings manifest', () => {
+  it('names only this design\'s sections, the four heading fields and the owning copy keys', () => {
+    const ids = mod.sections.map((s) => s.id);
+    const OWNERS = ['headline', 'servicesSection.title', 'servicesSection.intro', 'ctaHeadline', 'ctaSubtext'];
+    expect(mod.headingFields && typeof mod.headingFields).toBe('object');
+    for (const [id, spec] of Object.entries(mod.headingFields)) {
+      expect(ids).toContain(id);
+      expect(spec.fields.length).toBeGreaterThan(0);
+      for (const f of spec.fields) expect(['eyebrow', 'title', 'accent', 'intro']).toContain(f);
+      if (spec.titleFrom) expect(OWNERS).toContain(spec.titleFrom);
+      if (spec.introFrom) expect(OWNERS).toContain(spec.introFrom);
+      for (const k of Object.keys(spec.placeholder || {})) expect(spec.fields).toContain(k);
+      for (const v of Object.values(spec)) expect(typeof v).not.toBe('function');
+    }
+    expect(mod.headingFields.awards).toBeUndefined();
+  });
+
+  it('renders each listed field where the manifest says', () => {
+    const sectionTitles = {};
+    for (const [id, spec] of Object.entries(mod.headingFields)) {
+      sectionTitles[id] = {};
+      if (spec.fields.includes('eyebrow')) sectionTitles[id].eyebrow = `Eye ${id}`;
+      if (spec.fields.includes('title') && !spec.titleFrom) sectionTitles[id].title = `Title ${id} Here`;
+      if (spec.fields.includes('intro') && !spec.introFrom) sectionTitles[id].intro = `Intro ${id}.`;
+    }
+    const html = render(RICH, { images: { gallery0: 'https://example.com/g.jpg' }, copy: { sectionTitles, servicesSection: { title: 'Svc Owner Title', intro: 'Svc owner intro.' }, ctaHeadline: 'Cta Owner Title', ctaSubtext: 'Cta owner intro.' } });
+    for (const [id, spec] of Object.entries(mod.headingFields)) {
+      const text = visibleText(sectionHtml(html, id));
+      if (sectionTitles[id].eyebrow) expect(text, id).toContain(`Eye ${id}`);
+      if (sectionTitles[id].title) expect(text, id).toContain(`Title ${id} Here`);
+      if (sectionTitles[id].intro) expect(text, id).toContain(`Intro ${id}.`);
+    }
+    const t = visibleText(html);
+    for (const s of ['Svc Owner Title', 'Svc owner intro.', 'Cta Owner Title', 'Cta owner intro.']) expect(t).toContain(s);
+  });
+});
+
+describe('editor photo placeholders', () => {
+  const hint = (key) => PHOTO_HINTS[key];
+
+  it('marks the featured photo, other package photos and the CTA background only in the editor', () => {
+    const imaged = { services: RICH.businessInfo.services.map((s, i) => (i === 0 ? { ...s, image: 'https://example.com/p0.jpg' } : s)) };
+    const editor = render(RICH, { biz: imaged, editor: true });
+    const published = render(RICH, { biz: imaged });
+    expect(visibleText(sectionHtml(editor, 'featured'))).toContain(hint('featured'));
+    // The editor shows the site's one-column band, with the hint as a line.
+    expect(sectionHtml(editor, 'featured')).toContain('rl-feat-grid rl-feat-solo');
+    expect(sectionHtml(editor, 'featured')).not.toContain('rl-feat-photo');
+    expect(count(visibleText(sectionHtml(editor, 'services')), hint('service'))).toBe(3);
+    expect(visibleText(sectionHtml(editor, 'cta'))).toContain(hint('cta'));
+    for (const key of ['featured', 'service', 'cta']) expect(visibleText(published)).not.toContain(hint(key));
+    expect(published).not.toContain('data-acg-editor-only');
+    expect(sectionHtml(published, 'featured')).toContain('rl-feat-grid rl-feat-solo');
+    expect(count(sectionHtml(published, 'services'), 'class="rl-card-photo"')).toBe(1);
+    // The other cards keep the photo's space on the site (rows stay level).
+    expect(count(sectionHtml(published, 'services'), 'class="rl-card-photo rl-card-well" aria-hidden="true"')).toBe(3);
+    expect(published).toContain('.rl-cards:not(.rl-cards-1) .rl-card-well{display:flex}');
+    expect(count(sectionHtml(render(RICH), 'services'), 'rl-card-well')).toBe(0);
+    // No package photo at all: no package placeholders.
+    expect(visibleText(render(RICH, { editor: true }))).not.toContain(hint('service'));
+    // With the photos in place, no hints.
+    const full = render(RICH, { biz: imaged, editor: true, images: { featured: 'https://example.com/f.jpg', cta: 'https://example.com/c.jpg' } });
+    expect(visibleText(full)).not.toContain(hint('featured'));
+    expect(visibleText(full)).not.toContain(hint('cta'));
+  });
+
+  it('points the featured band hints at Edit > Featured Service', () => {
+    const none = visibleText(sectionHtml(render(FIXTURES.sparse, { editor: true }), 'featured'));
+    expect(none).toContain('Pick a service to feature in Edit > Featured Service.');
+    const bare = render(FIXTURES.sparse, { editor: true, copy: { servicesSection: { items: [{ name: 'Ceramic Coating' }] } } });
+    expect(visibleText(sectionHtml(bare, 'featured'))).toContain('This band shows on your site once it has a photo, a price or a list of benefits (Edit > Featured Service).');
+  });
+});
+
+describe('by appointment', () => {
+  it('prints a per-day "By appointment" in the design\'s title case, in rows and summary, never as closed', () => {
+    for (const value of ['By appointment', 'by appointment only', 'BY APPOINTMENT.']) {
+      const html = render(RICH, { biz: { hours: { ...PER_DAY, Sun: value } } });
+      const text = visibleText(html);
+      expect(decode(sectionHtml(html, 'locations'))).toContain('<dt>Sunday</dt><dd>By Appointment</dd>');
+      expect(visibleText(footerOf(html))).toContain('Sun: By Appointment');
+      expect(text).not.toMatch(/\bclosed\b/i);
+    }
+    // Other text still prints as written.
+    expect(decode(sectionHtml(render(RICH, { biz: { hours: { ...PER_DAY, Sun: 'Appointments only, call ahead' } } }), 'locations'))).toContain('<dd>Appointments only, call ahead</dd>');
+  });
+});
+
+function footerOf(html) {
+  return html.slice(html.indexOf('<footer'), html.indexOf('</footer>') + 9);
+}
+
+describe('round r1 fixes', () => {
+  const hero = (html) => decode(sectionHtml(html, 'hero'));
+  const heroLinks2 = (html) => [...hero(html).matchAll(/<a class="rl-btn[^"]*" href="([^"]*)"/g)].map((m) => m[1]);
+
+  it('shows a connected review widget only when the owner picks Google Reviews (copy.reviewMode)', () => {
+    const quotesHtml = render(RICH, { copy: { googleWidgetKey: 'k-1' } });
+    expect(markup(quotesHtml)).not.toContain('rl-rev-widget');
+    expect(count(sectionHtml(quotesHtml, 'testimonials'), 'class="rl-rev"')).toBe(3);
+    const widget = render(RICH, { copy: { googleWidgetKey: 'k-1', reviewMode: 'google' } });
+    expect(markup(widget)).toContain('class="rl-rev-widget"');
+    // The Headings tab's intro line shows over the widget too.
+    expect(visibleText(sectionHtml(widget, 'testimonials'))).toContain('Straight from our customers.');
+    // Picked but no key: the quotes stay.
+    expect(markup(render(RICH, { copy: { reviewMode: 'google' } }))).not.toContain('rl-rev-widget');
+  });
+
+  it('renders every heading from headingDefaults (the Headings tab reads the same values)', () => {
+    for (const fx of [RICH, FIXTURES.full, FIXTURES.sparse, FIXTURES.custom]) {
+      const html = render(fx, { copy: { sectionTitles: null, servicesSection: { ...(fx.generatedCopy.servicesSection || {}), title: '' }, ctaHeadline: '' } });
+      const d = mod.headingDefaults(normalizeBusinessInfo(fx.businessInfo), { ...fx.generatedCopy, sectionTitles: null, servicesSection: { ...(fx.generatedCopy.servicesSection || {}), title: '' }, ctaHeadline: '' });
+      for (const id of ['about', 'gallery', 'services', 'testimonials', 'locations', 'cta']) {
+        const sec = sectionHtml(html, id);
+        if (!sec || !d[id].title) continue;
+        expect(visibleText(sec), id).toContain(d[id].title);
+        if (d[id].accent) expect(decode(sec), id).toContain(`<span class="rl-em">${d[id].accent}</span>`);
+      }
+      if (d.featured.title && sectionHtml(html, 'featured')) expect(visibleText(sectionHtml(html, 'featured'))).toContain(d.featured.title);
+      if (sectionHtml(html, 'hero')) expect(visibleText(sectionHtml(html, 'hero'))).toContain(d.hero.eyebrow.trim());
+    }
+    // An owner title: the default accent goes, except the packages heading's
+    // last two words.
+    const d = mod.headingDefaults(normalizeBusinessInfo(RICH.businessInfo), { sectionTitles: { about: { title: 'Our Story' } }, servicesSection: { title: 'Pick Your Detail Today' } });
+    expect(d.about).toEqual({ title: 'Why Redline Test Detailing Is The Right Choice For Your Car', accent: '' });
+    expect(d.services.accent).toBe('Detail Today');
+    expect(d.featured.title).toBe('Protect Your Vehicle With Ceramic Coating');
+  });
+
+  it('drops an owner in-page link whose block does not render, keeping the wording default', () => {
+    // "#quote" from an old site, with no card on the page.
+    const off = render(RICH, { copy: { heroCard: 'off', ctaSecondary: 'Get a Quote', ctaSecondaryUrl: '#quote' } });
+    expect(heroLinks2(off)).not.toContain('#quote');
+    expect(markup(off)).not.toContain('href="#quote"');
+    // With the card it stays; other pages and present blocks stay too.
+    expect(heroLinks2(render(RICH, { copy: { ctaSecondary: 'Get a Quote', ctaSecondaryUrl: '#quote' } }))[1]).toBe('#quote');
+    expect(heroLinks2(render(RICH, { copy: { heroCard: 'off', ctaSecondaryUrl: '#reviews' } }))[1]).toBe('#reviews');
+    expect(heroLinks2(render(RICH, { copy: { heroCard: 'off', ctaSecondaryUrl: 'https://book.example.com' } }))[1]).toBe('https://book.example.com');
+  });
+
+  it('lists the first three named packages in list mode when none has a price', () => {
+    const biz = { services: [{ name: 'Wash' }, { name: 'Wax', price: 'Call' }, { name: 'Interior' }, { name: 'Engine' }] };
+    const list = hero(render(RICH, { biz, copy: { heroCard: 'list' } }));
+    expect([...list.matchAll(/<span class="rl-opt-name">([^<]*)<\/span>/g)].map((m) => m[1])).toEqual(['Wash', 'Wax', 'Interior']);
+    // The price card still needs a price: no card, and an editor hint.
+    const quote = render(RICH, { biz, editor: true });
+    expect(hero(quote)).not.toContain('id="quote"');
+    expect(visibleText(hero(quote))).toContain('Your price card needs services with a price (Edit > Services).');
+  });
+
+  it('moves the footer rating to the bottom line when the logo column is hidden', () => {
+    const cols = ['links', 'areas', 'contact', 'hours'].map((type) => ({ type, show: true }));
+    const html = render(RICH, { biz: { googlePlace: PLACE }, copy: { footer: { columns: [{ type: 'brand', show: false }, ...cols] } } });
+    const foot = footerOf(html);
+    expect(foot).not.toContain('rl-foot-brand');
+    expect(foot).toContain('<div class="rl-foot-bar-g">');
+    expect(count(foot, 'acg-gbadge-inline')).toBe(1);
+    // In its column otherwise; off with the footer placement off.
+    expect(footerOf(render(RICH, { biz: { googlePlace: PLACE } }))).not.toContain('rl-foot-bar-g');
+    expect(footerOf(render(RICH, { biz: { googlePlace: PLACE }, copy: { googleBadge: { placements: ['hero'] }, footer: { columns: [{ type: 'brand', show: false }, ...cols] } } }))).not.toContain('acg-gbadge');
+  });
+
+  it('gives a five-column footer three columns until 1280px, and breaks a long email after the @', () => {
+    const five = render(RICH, { copy: { footer: { columns: ['brand', 'links', 'hours', 'areas', 'contact'].map((type) => ({ type, show: true })) } } });
+    expect(footerOf(five)).toContain('class="rl-wrap rl-foot-grid rl-foot-5"');
+    expect(five).toContain('.rl-foot-grid.rl-foot-5{grid-template-columns:repeat(3,minmax(0,1fr))}');
+    expect(five).toMatch(/@container \(min-width:1280px\)\{\s*\.rl-foot-grid\.rl-foot-5\{grid-template-columns:repeat\(5,minmax\(0,1fr\)\)\}\s*\}/);
+    expect(footerOf(render(RICH))).not.toContain('rl-foot-5');
+    expect(footerOf(render(RICH))).toContain('hello@<wbr/>example.com');
+    expect(footerOf(render(RICH))).toContain('href="mailto:hello@example.com"');
+    expect(render(RICH)).not.toContain('word-break:break-all');
   });
 });

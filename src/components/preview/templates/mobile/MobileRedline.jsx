@@ -21,15 +21,16 @@
 // Optional data this template reads beyond the common fields (all may be
 // absent): businessInfo.serviceAreas, .insured, .googlePlace, services[i]
 // .summary / .includes / .badge / .image; copy.sectionTitles,
-// .featuredService, .vehicleMakes, .googleBadge, testimonial .source /
-// .rating; images.featured, images.cta.
+// .featuredService, .vehicleMakes, .googleBadge, .heroCard, .heroServices,
+// .footer, .reviewMode, testimonial .source / .rating; images.featured,
+// images.cta.
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import { ServiceCardCss, ServiceDescription } from '../ServiceCardParts.jsx';
 import { socialUrl } from '../SocialIcons.jsx';
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 import { formatHours } from '../../../../lib/formatHours.js';
-import { HOURS_DAYS } from '../../../../lib/businessHours.js';
+import { HOURS_DAYS, isByAppointment } from '../../../../lib/businessHours.js';
 import { FONT_CATALOG, familiesFromStack, catalogFamily } from '../../../../lib/fontCatalog.js';
 import { deriveTheme, mix, alpha, ensureContrast, contrastRatio, hexToRgb, rgbToHex } from '../kit/theme.js';
 import { PhotoSlot, PHOTO_HINTS } from '../kit/PhotoSlot.jsx';
@@ -40,7 +41,7 @@ import { vehicleMakesFor } from '../kit/vehicleMakes.js';
 import {
   splitAccent, trailingWords, sectionTitle, serviceIncludes, bulletItems,
   serviceAreasOf, phoneDisplay, telHref, formatTimeRange, trustItems,
-  intentHref, bookingWorded, businessKindOf,
+  intentHref, bookingWorded, businessKindOf, footerColumnsOf,
 } from '../kit/content.js';
 
 export const themeReady = true;
@@ -64,6 +65,24 @@ export const sections = [
 // The wordmark, the price card's step titles and the footer column titles
 // are set in Oswald whatever heading font the owner picks.
 export const extraFonts = ["'Oswald', sans-serif"];
+
+// Edit > Headings: the copy.sectionTitles fields each section uses (any other
+// field is ignored by this design). titleFrom / introFrom name the copy key
+// that owns that text; the Headings tab edits it there. placeholder: this
+// design's fixed default for a field (others are derived from the business).
+// Awards has a fixed "Recognition" label and no entry. headingDefaults()
+// below gives the derived defaults.
+export const headingFields = {
+  hero: { fields: ['eyebrow', 'title', 'accent'], titleFrom: 'headline' },
+  about: { fields: ['title', 'accent'] },
+  gallery: { fields: ['title', 'accent'], placeholder: { title: 'Real Results, Every Detail Matters' } },
+  brands: { fields: ['eyebrow'] },
+  services: { fields: ['eyebrow', 'title', 'accent', 'intro'], titleFrom: 'servicesSection.title', introFrom: 'servicesSection.intro', placeholder: { eyebrow: 'Service Menu' } },
+  featured: { fields: ['eyebrow', 'title', 'accent', 'intro'] },
+  testimonials: { fields: ['eyebrow', 'title', 'accent', 'intro'], placeholder: { eyebrow: 'Testimonials' } },
+  locations: { fields: ['eyebrow', 'title', 'accent'], placeholder: { eyebrow: 'Service Area' } },
+  cta: { fields: ['title', 'accent', 'intro'], titleFrom: 'ctaHeadline', introFrom: 'ctaSubtext' },
+};
 
 // Lucide menu / x as CSS mask images: a mask only reads the strokes' alpha
 // (so their literal black never shows); the visible color is currentColor.
@@ -195,7 +214,7 @@ const CSS = `
 .rl-opt-price.rl-opt-price-t{flex:1 1 100%;min-width:0;padding-left:48px;font-size:14px;line-height:20px;overflow-wrap:break-word}
 .rl-radio:checked+.rl-opt{border-color:var(--rl-accent);box-shadow:var(--rl-glow)}
 .rl-radio:checked+.rl-opt .rl-opt-ico{border-color:var(--rl-accent)}
-.rl-q-cta{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:20px;padding:14px 32px;border-radius:6px;background:var(--rl-grad);box-shadow:var(--rl-ring),var(--rl-glow);color:var(--rl-on-accent);font-size:14px;line-height:20px;font-weight:800;text-transform:uppercase;cursor:pointer}
+.rl-q-cta,.rl-hl-cta{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:20px;padding:14px 32px;border-radius:6px;background:var(--rl-grad);box-shadow:var(--rl-ring),var(--rl-glow);color:var(--rl-on-accent);font-size:14px;line-height:20px;font-weight:800;text-transform:uppercase;cursor:pointer}
 @supports selector(:has(*)){.rl-quote:not(:has(.rl-radio:checked)) .rl-q-cta{opacity:.4;cursor:not-allowed;pointer-events:none}}
 .rl-q-title{margin-top:12px;font-family:'Oswald',sans-serif;font-size:36px;line-height:.95;font-weight:400;text-transform:uppercase;color:var(--rl-card-text)}
 .rl-q-title span{display:block;color:var(--rl-card-accent)}
@@ -213,9 +232,15 @@ const CSS = `
 .rl-res-set{display:grid;grid-template-columns:minmax(0,1fr)}
 @supports selector(:has(*)){
 .rl-quote:has(.rl-radio:checked) .rl-any.rl-any{display:none}
-.rl-quote:has(#rl-pkg-0:checked) .rl-res.rl-pk-0,.rl-quote:has(#rl-pkg-1:checked) .rl-res.rl-pk-1,.rl-quote:has(#rl-pkg-2:checked) .rl-res.rl-pk-2{display:block}
-.rl-quote:has(#rl-pkg-0:checked) .rl-q-book.rl-pk-0,.rl-quote:has(#rl-pkg-1:checked) .rl-q-book.rl-pk-1,.rl-quote:has(#rl-pkg-2:checked) .rl-q-book.rl-pk-2{display:inline-flex}
+.rl-quote:has(#rl-pkg-0:checked) .rl-res.rl-pk-0,.rl-quote:has(#rl-pkg-1:checked) .rl-res.rl-pk-1,.rl-quote:has(#rl-pkg-2:checked) .rl-res.rl-pk-2,.rl-quote:has(#rl-pkg-3:checked) .rl-res.rl-pk-3{display:block}
+.rl-quote:has(#rl-pkg-0:checked) .rl-q-book.rl-pk-0,.rl-quote:has(#rl-pkg-1:checked) .rl-q-book.rl-pk-1,.rl-quote:has(#rl-pkg-2:checked) .rl-q-book.rl-pk-2,.rl-quote:has(#rl-pkg-3:checked) .rl-q-book.rl-pk-3{display:inline-flex}
 }
+/* The list card (copy.heroCard 'list'): the owner's packages as plain rows
+   in the price card's look, with no picking; its button goes to the
+   package cards (or books). */
+.rl-hlist .rl-q-h{margin-top:0}
+.rl-hl{display:flex;flex-direction:column;gap:10px;margin-top:20px}
+.rl-hl>li{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:6px;border:1px solid var(--rl-line);background:var(--rl-bg)}
 
 .rl-about{border-top:1px solid var(--rl-line)}
 .rl-about-grid{display:grid;align-items:center;gap:48px}
@@ -281,7 +306,11 @@ const CSS = `
 .rl-badge{position:absolute;top:-12px;left:24px;max-width:calc(100% - 48px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:6px 16px;border-radius:4px;background:var(--rl-accent);box-shadow:var(--rl-ring);color:var(--rl-on-accent);font-size:12px;line-height:16px;font-weight:700;text-transform:uppercase}
 .rl-card-photo{overflow:hidden;margin-bottom:28px;border-radius:6px;background:var(--rl-bg)}
 .rl-card-photo img{aspect-ratio:4/3}
-.rl-card-feat:not(:has(.rl-card-photo)){padding-top:36px}
+/* A package without a photo next to ones with photos: an empty 4:3 well
+   keeps its name, price and Book button level with its neighbours where
+   cards share a row (shown from 768px, below that cards stack). */
+.rl-card-well{display:none;align-items:center;justify-content:center;aspect-ratio:4/3;color:var(--rl-line-strong)}
+.rl-card-feat:not(:has(.rl-card-photo:not(.rl-card-well))){padding-top:36px}
 .rl-card-name{text-align:center;font-family:var(--rl-head);font-size:24px;line-height:32px;font-weight:var(--rl-head-w2);text-transform:uppercase;color:var(--rl-soft-text);overflow-wrap:anywhere}
 .rl-card-desc{margin-top:12px;text-align:center;font-size:14px;line-height:22.75px;color:var(--rl-soft-muted)}
 .rl-card-desc .acg-svc-more{color:var(--rl-soft-accent)}
@@ -432,12 +461,16 @@ const CSS = `
 .rl-foot-list li{display:flex;align-items:center;gap:8px;min-width:0}
 .rl-foot-list a{display:inline-flex;align-items:center;gap:8px;min-width:0}
 .rl-foot-list svg{flex:none;color:var(--rl-accent-text)}
-.rl-mail{word-break:break-all}
+/* An address too long for its column breaks after the @ (a <wbr>), and
+   only if that is not enough anywhere else. */
+.rl-mail{overflow-wrap:anywhere}
 .rl-foot-hours{margin-top:20px;font-size:14px;line-height:20px;color:var(--rl-footer-muted)}
 .rl-foot-hours b{display:block;margin-bottom:4px;font-weight:600;color:var(--rl-footer-text)}
-.rl-pillbtn{display:inline-block;margin-top:20px;padding:10px 20px;border-radius:9999px;background:var(--rl-grad);box-shadow:var(--rl-ring);color:var(--rl-on-accent);font-size:14px;line-height:20px;font-weight:600}
+.rl-pillbtn{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:20px;padding:10px 20px;border-radius:9999px;background:var(--rl-grad);box-shadow:var(--rl-ring);color:var(--rl-on-accent);font-size:14px;line-height:20px;font-weight:600}
 .rl-foot-bar{border-top:1px solid var(--rl-line)}
 .rl-foot-bar-in{display:flex;flex-direction:column;gap:8px;padding-top:20px;padding-bottom:20px;font-size:12px;line-height:16px;color:var(--rl-footer-muted)}
+/* The footer rating, when the owner hid the logo column it normally sits in. */
+.rl-foot-bar-g{font-size:13px;line-height:18px}
 
 /* Phones: the nav's actions shrink 10000x faster than the brand, so a tight
    row first stacks "Call Now" on two lines (as the reference does at
@@ -516,6 +549,8 @@ const CSS = `
 .rl-cards{display:flex;flex-wrap:wrap;justify-content:center;max-width:calc(var(--rl-cn) * 440px);margin-left:auto;margin-right:auto}
 .rl-card{width:calc((100% - (var(--rl-cn) - 1) * 20px) / var(--rl-cn))}
 .rl-cards:not(.rl-cards-1) .rl-card:not(.rl-card-np) .rl-card-desc{min-height:112px}
+.rl-cards:not(.rl-cards-1) .rl-card-well{display:flex}
+.rl-cards:not(.rl-cards-1) .rl-card-feat:has(.rl-card-well){padding-top:28px}
 .rl-feat-grid.rl-duo{grid-template-columns:repeat(2,minmax(0,1fr));gap:56px}
 }
 /* The price card moves beside the copy only from 900px (the reference does
@@ -530,7 +565,8 @@ const CSS = `
 }
 @container (min-width:900px){
 .rl-hero-grid{display:grid;gap:24px;align-items:center;padding:80px 0}
-.rl-has-quote .rl-hero-grid{grid-template-columns:minmax(0,1fr) minmax(340px,420px)}
+.rl-has-card .rl-hero-grid{grid-template-columns:minmax(0,1fr) minmax(340px,420px)}
+.rl-card-off .rl-hero-body{max-width:768px}
 .rl-hero-copy{position:static;padding:0}
 .rl-hero-media{inset:0}
 .rl-quote-slot{padding:0}
@@ -548,7 +584,7 @@ const CSS = `
 .rl-quote .rl-go:checked~.rl-s2{visibility:visible}
 .rl-quote:has(.rl-go:checked) .rl-s1{display:block;visibility:hidden}
 .rl-quote .rl-res-set>.rl-res{display:block;grid-area:1/1;visibility:hidden}
-.rl-quote:not(:has(.rl-radio:checked)) .rl-res-set>.rl-any,.rl-quote:has(#rl-pkg-0:checked) .rl-res-set>.rl-pk-0,.rl-quote:has(#rl-pkg-1:checked) .rl-res-set>.rl-pk-1,.rl-quote:has(#rl-pkg-2:checked) .rl-res-set>.rl-pk-2{visibility:inherit}
+.rl-quote:not(:has(.rl-radio:checked)) .rl-res-set>.rl-any,.rl-quote:has(#rl-pkg-0:checked) .rl-res-set>.rl-pk-0,.rl-quote:has(#rl-pkg-1:checked) .rl-res-set>.rl-pk-1,.rl-quote:has(#rl-pkg-2:checked) .rl-res-set>.rl-pk-2,.rl-quote:has(#rl-pkg-3:checked) .rl-res-set>.rl-pk-3{visibility:inherit}
 }
 }
 @container (min-width:1024px){
@@ -556,10 +592,10 @@ const CSS = `
 .rl-sec.rl-flush{padding-top:0}
 .rl-gal-sec{padding-bottom:96px}
 .rl-hero-grid{gap:48px;padding:112px 0}
-.rl-has-quote .rl-hero-grid,.rl-has-photo .rl-hero-grid{min-height:690px;padding:64px 0}
+.rl-has-card .rl-hero-grid,.rl-has-photo .rl-hero-grid{min-height:690px;padding:64px 0}
 .rl-scrim{background:var(--rl-scrim-h)}
 .rl-hero-eyebrow{color:var(--rl-hero-eyebrow-lg)}
-.rl-has-quote .rl-hero-btns:not(.rl-btns-keep){display:none}
+.rl-has-card .rl-hero-btns:not(.rl-btns-keep){display:none}
 .rl-h1{font-size:59.2px}
 .rl-h1.rl-h1-l{font-size:48px}
 .rl-h1.rl-h1-xl{font-size:40px}
@@ -571,10 +607,16 @@ const CSS = `
 .rl-loc-grid.rl-duo{grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr)}
 .rl-cta-scrim{background:var(--rl-cta-scrim-h)}
 .rl-foot-grid{grid-template-columns:repeat(var(--rl-fn),minmax(0,1fr))}
+/* Five columns (Hours moved away from Get In Touch) are too narrow for the
+   wordmark, the email and the button below 1280px: three per row there. */
+.rl-foot-grid.rl-foot-5{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@container (min-width:1280px){
+.rl-foot-grid.rl-foot-5{grid-template-columns:repeat(5,minmax(0,1fr))}
 }
 
 @media (hover:hover){
-.rl-btn:hover,.rl-call:hover,.rl-q-book:hover,.rl-pillbtn:hover{filter:brightness(1.1)}
+.rl-btn:hover,.rl-call:hover,.rl-q-book:hover,.rl-hl-cta:hover,.rl-pillbtn:hover{filter:brightness(1.1)}
 .rl-btn-line:hover{border-color:var(--rl-hero-text)}
 .rl-nav .acg-menu>summary:hover{color:var(--rl-accent-text)}
 .rl-nav .acg-menu-panel a:not(.acg-menu-cta):hover{background:transparent;color:var(--rl-text)}
@@ -589,7 +631,7 @@ a.rl-rev-src:hover{color:var(--rl-rev-text)}
 .rl-track::scroll-button(*):hover{border-color:var(--rl-accent)}
 }
 @media (prefers-reduced-motion:no-preference){
-.rl-btn,.rl-call,.rl-opt,.rl-q-cta,.rl-q-book,.rl-back,.rl-q-call,.rl-rev-src,.rl-pillbtn,.rl-foot-list a,.rl-rev-more,.rl-nav .acg-menu>summary,.rl-nav .acg-menu-panel a{transition:color .15s cubic-bezier(.4,0,.2,1),background-color .15s cubic-bezier(.4,0,.2,1),border-color .15s cubic-bezier(.4,0,.2,1),box-shadow .15s cubic-bezier(.4,0,.2,1),filter .15s cubic-bezier(.4,0,.2,1)}
+.rl-btn,.rl-call,.rl-opt,.rl-q-cta,.rl-hl-cta,.rl-q-book,.rl-back,.rl-q-call,.rl-rev-src,.rl-pillbtn,.rl-foot-list a,.rl-rev-more,.rl-nav .acg-menu>summary,.rl-nav .acg-menu-panel a{transition:color .15s cubic-bezier(.4,0,.2,1),background-color .15s cubic-bezier(.4,0,.2,1),border-color .15s cubic-bezier(.4,0,.2,1),box-shadow .15s cubic-bezier(.4,0,.2,1),filter .15s cubic-bezier(.4,0,.2,1)}
 .rl-chev{transition:transform .2s cubic-bezier(.4,0,.2,1)}
 .rl-mq{overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent)}
 .rl-mq-track{justify-content:flex-start;width:max-content;animation:rl-scroll 55s linear infinite}
@@ -614,6 +656,100 @@ const num = (v) => {
 // card gives them their own line under the package name.
 const cardPriceLong = (p) => !/\d/.test(p) || p.length > 9 || p.includes('/');
 const optPriceLong = (p) => cardPriceLong(p) || p.length > 7 || /\s/.test(p);
+// A quote's text without the quote marks the AI sometimes wraps it in.
+const quoteText = (q) => txt(q?.text).replace(/^["“”]+|["“”]+$/g, '').trim();
+
+// Wordmark: "Northside Mobile Detailing" -> NORTHSIDE / MOBILE DETAILING
+// (a trailing business-type descriptor moves to the small second line).
+function shortNameOf(name, tagline) {
+  return tagline && name.toLowerCase().endsWith(` ${tagline.toLowerCase()}`)
+    ? name.slice(0, name.length - tagline.length).trim()
+    : name;
+}
+
+// The design's own heading text for each section, used while the owner has
+// typed none: { [sectionId]: { eyebrow?, title?, accent? } }. accent is what
+// the page highlights while the owner's Highlighted words field is empty,
+// given the heading the owner has now ('' = nothing). The template renders
+// from these values and Edit > Headings shows them (placeholders, and the
+// highlighted-words check runs against them), so the two never disagree.
+// businessInfo as the template receives it (normalizeBusinessInfo).
+export function headingDefaults(businessInfo, generatedCopy) {
+  const biz = businessInfo || {};
+  const copy = generatedCopy || {};
+  const titles = copy.sectionTitles;
+  const kind = businessKindOf(biz.businessType);
+  const fb = getFallbacks(kind);
+  const isDetail = /detail/.test(kind);
+  const name = txt(biz.businessName);
+  const tagline = txt(fb.navSubtitle);
+  const city = txt(biz.city);
+
+  // About: the business name goes into the heading only while it is short
+  // enough to read as one.
+  const short = shortNameOf(name, tagline);
+  const aboutName = short.length <= 24 ? short : '';
+  const aboutT = sectionTitle(titles, 'about');
+  const galT = sectionTitle(titles, 'gallery');
+
+  // Packages: the last two words of whatever heading shows.
+  const svcT = sectionTitle(titles, 'services');
+  const svcTitle = isDetail ? 'Choose Your Detail Package' : 'Choose Your Package';
+  const svcShown = txt(copy.servicesSection?.title) || svcT.title || svcTitle;
+
+  // Featured: the chosen name, else the first ceramic / coating package.
+  const fs = copy.featuredService && typeof copy.featuredService === 'object' ? copy.featuredService : {};
+  const aiItems = list(copy.servicesSection?.items).map((s) => (typeof s === 'string' ? { name: s } : s || {}));
+  const names = (list(biz.packages).length > 0 ? biz.packages : aiItems)
+    .map((s) => (typeof s === 'string' ? s : txt(s?.name)))
+    .map(txt);
+  const fName = txt(fs.serviceName) || names.find((n) => /ceramic|coating/i.test(n)) || '';
+  const ft = sectionTitle(titles, 'featured');
+  const protective = /ceramic|coating|protect|film|ppf|sealant|graphene|wax/i.test(fName);
+
+  // Reviews: "N Google Reviews" only over quotes that are all marked as
+  // Google reviews, with a rating to count from.
+  const rating = googleRatingOf(biz.googlePlace);
+  const quotes = list(copy.testimonialPlaceholders).filter((q) => quoteText(q));
+  const allGoogle = quotes.length > 0 && quotes.every((q) => q?.source === 'google');
+  const googleHeading = Boolean(rating) && allGoogle;
+  const revT = sectionTitle(titles, 'testimonials');
+
+  const areas = serviceAreasOf(biz);
+  const beyond = areas.some((a) => a.toLowerCase() !== city.toLowerCase());
+  const locT = sectionTitle(titles, 'locations');
+
+  // The shared fallbacks for tint shops and unknown types read "Get a Free
+  // Quote": an offer the owner never made, so this template says less.
+  const ctaT = sectionTitle(titles, 'cta');
+  const ctaTitle = /\bfree\b/i.test(fb.ctaHeadline) ? 'Book Your Appointment' : fb.ctaHeadline;
+  const ctaOwn = txt(copy.ctaHeadline) || ctaT.title;
+
+  return {
+    hero: { eyebrow: city ? `${city} ${tagline}` : fb.heroBadge, title: name, accent: '' },
+    about: {
+      title: aboutName ? `Why ${aboutName} Is The Right Choice For Your Car` : 'Why Choose Us',
+      accent: aboutT.title ? '' : aboutName ? 'Right Choice For Your Car' : 'Choose Us',
+    },
+    gallery: { title: 'Real Results, Every Detail Matters', accent: galT.title ? '' : 'Every Detail Matters' },
+    brands: { eyebrow: isDetail || kind === 'car_wash' ? 'We Detail All Vehicle Makes & Models' : 'All Makes & Models Welcome' },
+    services: { eyebrow: 'Service Menu', title: svcTitle, accent: trailingWords(svcShown, 2) },
+    featured: fName
+      ? { title: protective ? `Protect Your Vehicle With ${fName}` : `Ask About Our ${fName}`, accent: ft.title ? '' : fName }
+      : {},
+    testimonials: {
+      eyebrow: 'Testimonials',
+      title: googleHeading ? `${rating.countText} Google Reviews` : 'What Our Customers Say',
+      accent: revT.title ? '' : googleHeading ? 'Google Reviews' : 'Customers Say',
+    },
+    locations: {
+      eyebrow: 'Service Area',
+      title: city ? `Proudly Serving ${city}${beyond ? ' & Beyond' : ''}` : 'Where We Work',
+      accent: locT.title ? '' : city ? `${city}${beyond ? ' & Beyond' : ''}` : 'We Work',
+    },
+    cta: { title: ctaTitle, accent: ctaOwn ? '' : trailingWords(ctaTitle, 2) },
+  };
+}
 
 // Lucide icons (24px grid, stroke = currentColor).
 const ICONS = {
@@ -634,6 +770,7 @@ const ICONS = {
   sparkles: <><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" /><path d="M20 2v4" /><path d="M22 4h-4" /><circle cx="4" cy="20" r="2" /></>,
   crown: <><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z" /><path d="M5 21h14" /></>,
   award: <><path d="m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526" /><circle cx="12" cy="8" r="6" /></>,
+  gem: <><path d="M6 3h12l4 6-10 13L2 9Z" /><path d="M11 3 8 9l4 13 4-13-3-6" /><path d="M2 9h20" /></>,
 };
 // Trust Bar icon names (Edit > Trust Bar's picker) -> the lucide icons above.
 const TRUST_ICONS = {
@@ -642,7 +779,8 @@ const TRUST_ICONS = {
 };
 const CHEVRON_LEFT = 'm15 18-6-6 6-6';
 const CHEVRON_RIGHT = 'm9 18 6-6-6-6';
-const PICK_ICONS = ['car', 'sparkles', 'crown'];
+// One icon per hero card row, in order (the owner may pick up to four).
+const PICK_ICONS = ['car', 'sparkles', 'crown', 'gem'];
 
 function Icon({ name, size = 16, stroke = 2, className }) {
   return (
@@ -841,7 +979,8 @@ function redlineTokens(t, { photoHero, photoCta }) {
 
 // Hours. Only the per-day editor's shape (exactly the keys Mon..Sun, ''
 // meaning closed) may name a closed day; a per-day value that is not a time
-// range ("By Appointment") prints as written. Older free-text hours
+// range prints as written ("By appointment" in the design's title case).
+// Older free-text hours
 // ("Mon-Fri 8am-6pm, Sat" or { 'Mon-Fri': '8am-6pm' }) are shown exactly as
 // the owner wrote them, never expanded into days.
 const DAY_NAMES = { Mon: 'Monday', Tue: 'Tuesday', Wed: 'Wednesday', Thu: 'Thursday', Fri: 'Friday', Sat: 'Saturday', Sun: 'Sunday' };
@@ -857,7 +996,8 @@ function hoursOf(hours) {
   if (isPerDay(hours)) {
     const vals = HOURS_DAYS.map((d) => txt(hours[d]));
     if (!vals.some(Boolean)) return empty;
-    const show = (v) => (v ? formatTimeRange(v) : 'Closed');
+    // A by-appointment day reads like the design's other labels.
+    const show = (v) => (!v ? 'Closed' : isByAppointment(v) ? 'By Appointment' : formatTimeRange(v));
     const rows = HOURS_DAYS.map((d, i) => ({ day: DAY_NAMES[d], time: show(vals[i]) }));
     const summary = [];
     for (let i = 0; i < HOURS_DAYS.length;) {
@@ -935,12 +1075,12 @@ export default function MobileRedline({ businessInfo, generatedCopy, templateMet
   const badgeAt = googleBadgePlacements(copy.googleBadge, ['hero', 'footer']);
   const badgeIn = (spot) => Boolean(rating) && badgeAt.includes(spot);
 
-  // Wordmark: "Northside Mobile Detailing" -> NORTHSIDE / MOBILE DETAILING
-  // (a trailing business-type descriptor moves to the small second line).
+  // Wordmark: the business name, with a trailing business-type descriptor
+  // on the small second line (shortNameOf).
   const tagline = txt(fb.navSubtitle);
-  const shortName = tagline && name.toLowerCase().endsWith(` ${tagline.toLowerCase()}`)
-    ? name.slice(0, name.length - tagline.length).trim()
-    : name;
+  const shortName = shortNameOf(name, tagline);
+  // The design's heading defaults (shared with Edit > Headings).
+  const hd = headingDefaults(biz, copy);
 
   // ── Services: the owner's packages win over the AI list ───────────
   const aiItems = list(copy.servicesSection?.items).map((s) => (typeof s === 'string' ? { name: s } : s || {}));
@@ -963,14 +1103,38 @@ export default function MobileRedline({ businessInfo, generatedCopy, templateMet
       };
     })
     .filter((s) => s.name || s.description || s.price);
-  // The price card is about prices: it offers the first three named
-  // packages whose price holds a number ("Call for quote" stays on its
-  // package card). None priced -> no card (the hero keeps its buttons at
-  // every width), so "Your Price" never shows without a price.
-  const picks = services.filter((s) => s.name && /\d/.test(s.price)).slice(0, 3);
+  // The hero card (Edit > Hero > Services in the hero): 'quote' is the
+  // price card (the default), 'list' a plain list of packages, 'off' none.
+  const heroCard = ['quote', 'list', 'off'].includes(copy.heroCard) ? copy.heroCard : 'quote';
+  // Its packages: the owner's picks (copy.heroServices, up to four, matched
+  // by name to the package list, so a renamed or deleted package simply
+  // drops out), else the first three named packages whose price holds a
+  // number.
+  const ownPicks = [];
+  for (const n of list(copy.heroServices)) {
+    const key = nameKey(n);
+    const s = key ? services.find((x) => nameKey(x.name) === key) : null;
+    if (s && !ownPicks.includes(s)) ownPicks.push(s);
+    if (ownPicks.length === 4) break;
+  }
+  const priced = (s) => /\d/.test(s.price);
+  // The list card can show unpriced packages, so without a priced one it
+  // lists the first three named ones (heroServices.js defaultHeroPicks).
+  const autoPicks = services.filter((s) => s.name && priced(s)).slice(0, 3);
+  const heroPicks = ownPicks.length ? ownPicks
+    : autoPicks.length || heroCard !== 'list' ? autoPicks : services.filter((s) => s.name).slice(0, 3);
+  // The price card is about prices: it offers only picks whose price holds
+  // a number ("Call for quote" stays on its package card). None priced -> no
+  // card (the hero keeps its buttons at every width), so "Your Price" never
+  // shows without a price. The list card shows any named pick, its price
+  // only when set.
+  const picks = heroCard === 'quote' ? heroPicks.filter(priced).slice(0, 4) : [];
+  const listPicks = heroCard === 'list' ? heroPicks.filter((s) => s.name).slice(0, 4) : [];
+  const hasCard = picks.length > 0 || listPicks.length > 0;
+  const anyServicePhoto = services.some((s) => s.image);
   const svcTitles = sectionTitle(titles, 'services');
-  const servicesTitle = txt(copy.servicesSection?.title) || svcTitles.title || (isDetail ? 'Choose Your Detail Package' : 'Choose Your Package');
-  const servicesAccent = svcTitles.accent || trailingWords(servicesTitle, 2);
+  const servicesTitle = txt(copy.servicesSection?.title) || svcTitles.title || hd.services.title;
+  const servicesAccent = svcTitles.accent || hd.services.accent;
   const servicesIntro = txt(copy.servicesSection?.intro) || svcTitles.intro;
 
   // ── Featured service (a ceramic-coating style spotlight) ──────────
@@ -989,8 +1153,7 @@ export default function MobileRedline({ businessInfo, generatedCopy, templateMet
     // Without bullets the matched service's own summary / description
     // says what it is (an AI service item often has nothing else).
     const intro = ft.intro || (bullets.length ? '' : fsMatch?.summary || fsMatch?.description || '');
-    const protective = /ceramic|coating|protect|film|ppf|sealant|graphene|wax/i.test(fName);
-    const title = ft.title || (protective ? `Protect Your Vehicle With ${fName}` : `Ask About Our ${fName}`);
+    const title = ft.title || hd.featured.title;
     return {
       name: fName,
       priceFrom: txt(fs.priceFrom),
@@ -998,7 +1161,7 @@ export default function MobileRedline({ businessInfo, generatedCopy, templateMet
       bullets,
       eyebrow: ft.eyebrow,
       title,
-      accent: ft.accent || (ft.title ? '' : fName),
+      accent: ft.accent || hd.featured.accent,
       intro,
       buttonText: txt(fs.buttonText) || `Book ${fName}`,
       buttonUrl: txt(fs.buttonUrl),
@@ -1015,14 +1178,17 @@ export default function MobileRedline({ businessInfo, generatedCopy, templateMet
 
   const quotes = list(copy.testimonialPlaceholders)
     .map((q) => ({
-      text: txt(q?.text).replace(/^["“”]+|["“”]+$/g, '').trim(),
+      text: quoteText(q),
       name: txt(q?.name),
       meta: txt(q?.vehicle) || txt(q?.role),
       google: q?.source === 'google',
       stars: q?.source === 'google' && num(q?.rating) >= 1 && num(q?.rating) <= 5 ? num(q?.rating) : 0,
     }))
     .filter((q) => q.text);
-  const reviews = copy.googleWidgetKey ? 'google' : quotes.length > 0 ? 'quotes' : null;
+  // A connected review widget shows only when the owner picks it (Edit >
+  // Reviews > Review Source): App adds the owner's widget key to every site,
+  // and this design's own quote cards are the default.
+  const reviews = copy.googleWidgetKey && copy.reviewMode === 'google' ? 'google' : quotes.length > 0 ? 'quotes' : null;
   // "Google Reviews" wording and the Google link belong to quotes the owner
   // marked as Google reviews; AI-written quotes stay plain testimonials even
   // when the site has a connected Google place.
@@ -1105,7 +1271,7 @@ export default function MobileRedline({ businessInfo, generatedCopy, templateMet
   // ── Hero parts ─────────────────────────────────────────────────────
   const heroTitles = sectionTitle(titles, 'hero');
   const headline = txt(copy.headline) || name;
-  const heroEyebrow = heroTitles.eyebrow || (city ? `${city} ${tagline}` : fb.heroBadge);
+  const heroEyebrow = heroTitles.eyebrow || hd.hero.eyebrow;
   // Hero chips: the owner's Trust Bar items (Edit > Trust Bar) when there
   // are any, else only facts: "We Come to You" for a mobile business,
   // "Fully Insured" when Business Info says insured.
@@ -1127,57 +1293,62 @@ export default function MobileRedline({ businessInfo, generatedCopy, templateMet
   const svcLink = rendered.services && services.length > 0;
   const anchors = {
     tel,
-    quote: picks.length ? '#quote' : null,
+    quote: hasCard ? '#quote' : null,
     contact: rendered.cta ? '#contact' : tel || mailHref,
     services: svcLink ? '#services' : null,
     gallery: rendered.gallery && galleryImages.length > 0 ? '#gallery' : null,
     reviews: rendered.testimonials && reviews ? '#reviews' : null,
     areas: rendered.locations && hasLocations ? '#locations' : null,
   };
+  // An owner URL to a block of this page ("#quote" copied from an old
+  // site) counts only while that block renders; otherwise the button's
+  // wording decides, as without a URL (no dead in-page link).
+  const pageIds = new Set(['top', 'main', 'home', ...Object.keys(anchors).map((k) => anchors[k]).filter((h) => h && h.startsWith('#')).map((h) => h.slice(1)),
+    rendered.about && 'about', rendered.brands && 'makes', rendered.featured && featuredBody && 'featured', rendered.awards && awards.length > 0 && 'awards'].filter(Boolean));
+  const ownUrl = (v) => {
+    const u = txt(v);
+    return u.startsWith('#') && u.length > 1 && !pageIds.has(u.slice(1)) ? '' : u;
+  };
+  const heroPrimaryUrl = ownUrl(copy.ctaPrimaryUrl);
+  const heroSecondaryUrl = ownUrl(copy.ctaSecondaryUrl);
   const heroPrimaryLabel = txt(copy.ctaPrimary) || (svcLink ? 'View Packages' : 'Contact Us');
-  const heroPrimaryHref = txt(copy.ctaPrimaryUrl) || intentHref(heroPrimaryLabel, anchors, anchors.services || anchors.contact);
-  const heroSecondaryLabel = txt(copy.ctaSecondary) || (picks.length ? 'Get a Quote' : phone ? `Call ${phoneLabel}` : '');
-  const heroSecondaryHref = txt(copy.ctaSecondaryUrl) || intentHref(heroSecondaryLabel, anchors, tel || anchors.quote || anchors.contact);
+  const heroPrimaryHref = heroPrimaryUrl || intentHref(heroPrimaryLabel, anchors, anchors.services || anchors.contact);
+  // "Get a Quote" only offers the price card; next to the price list (or no
+  // card) Button 2 calls.
+  const heroSecondaryLabel = txt(copy.ctaSecondary) || (picks.length > 0 ? 'Get a Quote' : phone ? `Call ${phoneLabel}` : '');
+  const heroSecondaryHref = heroSecondaryUrl || intentHref(heroSecondaryLabel, anchors, tel || anchors.quote || anchors.contact);
   // A booking-worded button without its own URL also opens the booking
   // widget when the owner has it on.
-  const heroPrimaryBooks = !txt(copy.ctaPrimaryUrl) && bookingWorded(heroPrimaryLabel);
-  const heroSecondaryBooks = !txt(copy.ctaSecondaryUrl) && bookingWorded(heroSecondaryLabel);
+  const heroPrimaryBooks = !heroPrimaryUrl && bookingWorded(heroPrimaryLabel);
+  const heroSecondaryBooks = !heroSecondaryUrl && bookingWorded(heroSecondaryLabel);
   // Next to the price card the desktop hero drops its buttons (as the
   // reference does), unless the owner pointed one at another page.
   const offPage = (u) => Boolean(u) && !u.startsWith('#');
-  const keepHeroBtns = offPage(txt(copy.ctaPrimaryUrl)) || offPage(txt(copy.ctaSecondaryUrl));
+  const keepHeroBtns = offPage(heroPrimaryUrl) || offPage(heroSecondaryUrl);
   // Long AI headlines (60-100+ characters) step the type down a size or two.
   const h1Size = headline.length > 100 ? ' rl-h1-xl' : headline.length > 60 ? ' rl-h1-l' : '';
 
   // ── Section headings ───────────────────────────────────────────────
+  // Defaults (headingDefaults): the business name in About while it is
+  // short, "N Google Reviews" only over quotes that are all Google reviews
+  // (a mix keeps the neutral heading; each Google card is labeled), and no
+  // "Free Quote" offer in the contact band.
   const aboutT = sectionTitle(titles, 'about');
-  // The business name goes into the default heading only while it is short
-  // enough to read as a heading.
-  const aboutName = shortName.length <= 24 ? shortName : '';
-  const aboutTitle = aboutT.title || (aboutName ? `Why ${aboutName} Is The Right Choice For Your Car` : 'Why Choose Us');
-  const aboutAccent = aboutT.accent || (aboutT.title ? '' : aboutName ? 'Right Choice For Your Car' : 'Choose Us');
+  const aboutTitle = aboutT.title || hd.about.title;
+  const aboutAccent = aboutT.accent || hd.about.accent;
   const galT = sectionTitle(titles, 'gallery');
-  const galTitle = galT.title || 'Real Results, Every Detail Matters';
-  const galAccent = galT.accent || (galT.title ? '' : 'Every Detail Matters');
-  const makesEyebrow = sectionTitle(titles, 'brands').eyebrow
-    || (isDetail || kind === 'car_wash' ? 'We Detail All Vehicle Makes & Models' : 'All Makes & Models Welcome');
+  const galTitle = galT.title || hd.gallery.title;
+  const galAccent = galT.accent || hd.gallery.accent;
+  const makesEyebrow = sectionTitle(titles, 'brands').eyebrow || hd.brands.eyebrow;
   const revT = sectionTitle(titles, 'testimonials');
-  // The "N Google Reviews" heading only over quotes that are all Google
-  // reviews (a mix keeps the neutral heading; each Google card is labeled).
-  const googleHeading = Boolean(rating) && allGoogle;
-  const revDefault = googleHeading ? `${rating.countText} Google Reviews` : 'What Our Customers Say';
-  const revTitle = revT.title || revDefault;
-  const revAccent = revT.accent || (revT.title ? '' : googleHeading ? 'Google Reviews' : 'Customers Say');
+  const revTitle = revT.title || hd.testimonials.title;
+  const revAccent = revT.accent || hd.testimonials.accent;
   const locT = sectionTitle(titles, 'locations');
-  const beyond = areas.some((a) => a.toLowerCase() !== city.toLowerCase());
-  const locTitle = locT.title || (city ? `Proudly Serving ${city}${beyond ? ' & Beyond' : ''}` : 'Where We Work');
-  const locAccent = locT.accent || (locT.title ? '' : city ? `${city}${beyond ? ' & Beyond' : ''}` : 'We Work');
+  const locTitle = locT.title || hd.locations.title;
+  const locAccent = locT.accent || hd.locations.accent;
   const ctaT = sectionTitle(titles, 'cta');
-  // The shared fallbacks for tint shops and unknown types read "Get a Free
-  // Quote": an offer the owner never made, so this template says less.
-  const ctaFallback = /\bfree\b/i.test(fb.ctaHeadline) ? 'Book Your Appointment' : fb.ctaHeadline;
-  const ctaTitle = txt(copy.ctaHeadline) || ctaT.title || ctaFallback;
-  const ctaAccent = ctaT.accent || (txt(copy.ctaHeadline) || ctaT.title ? '' : trailingWords(ctaTitle, 2));
+  const ctaTitle = txt(copy.ctaHeadline) || ctaT.title || hd.cta.title;
+  const ctaAccent = ctaT.accent || hd.cta.accent;
   const ctaSub = txt(copy.ctaSubtext) || ctaT.intro;
   const ctaCallLabel = txt(copy.ctaSecondaryText) || (phone ? `Call ${phoneLabel}` : '');
   // Hero Button 2's URL doubles as this button's link only when the owner
@@ -1193,7 +1364,35 @@ export default function MobileRedline({ businessInfo, generatedCopy, templateMet
     !images.hideFacebook && txt(biz.facebook) && { icon: 'facebook', href: socialUrl('facebook', txt(biz.facebook)), label: 'Facebook' },
     !images.hideTiktok && txt(biz.tiktok) && { icon: 'tiktok', href: socialUrl('tiktok', txt(biz.tiktok)), label: 'TikTok' },
   ].filter((s) => s && s.href);
-  const footCols = 1 + (exploreLinks.length > 0 ? 1 : 0) + (areas.length > 0 ? 1 : 0) + 1;
+  // Footer (Edit > Footer): the owner's columns in the owner's order, or the
+  // design's own brand / Explore / Service Areas / Get In Touch + Hours.
+  // A column with nothing to list is left out.
+  const footer = copy.footer && typeof copy.footer === 'object' && !Array.isArray(copy.footer) ? copy.footer : null;
+  const footShown = footerColumnsOf(copy.footer).filter((c) => c.show);
+  // Hours right after the contact column (hidden columns don't count) print
+  // under the contact list, as the design's footer does; anywhere else they
+  // are a column of their own.
+  const hoursMerged = footShown.some((c, i) => c.type === 'contact' && footShown[i + 1]?.type === 'hours');
+  const footHoursTitle = footShown.find((c) => c.type === 'hours')?.title || 'Hours';
+  // The contact column's button: the owner's own link (no booking widget),
+  // else the contact band with the widget, only while the band renders.
+  const footCtaUrl = txt(footer?.ctaUrl);
+  const footCta = footer?.showCta !== false && (footCtaUrl || rendered.cta)
+    ? { href: footCtaUrl || '#contact', label: txt(footer?.ctaText) || 'Request Appointment', books: !footCtaUrl }
+    : null;
+  const contactItems = Boolean(tel || email || socials.length || place);
+  const footHasHours = hours.summary.length > 0;
+  const footCells = footShown.filter((c) => {
+    if (c.type === 'brand') return Boolean(images.logo || shortName || txt(copy.footerTagline) || badgeIn('footer'));
+    if (c.type === 'links') return exploreLinks.length > 0;
+    if (c.type === 'areas') return areas.length > 0;
+    if (c.type === 'contact') return contactItems || footCta || (hoursMerged && footHasHours);
+    return !hoursMerged && footHasHours;
+  });
+  const bottomText = txt(footer?.bottomText) || bottomLine;
+  // The footer rating sits in the logo column; with that column hidden it
+  // moves to the bottom line, so Edit > Google Rating > Footer still works.
+  const footBarBadge = badgeIn('footer') && !footCells.some((c) => c.type === 'brand');
   const makes = vehicleMakesFor(copy.vehicleMakes);
   // A short owner list is repeated inside each marquee copy so the moving
   // row always spans the band (repeats are .rl-mq-rep: hidden without motion).
@@ -1237,7 +1436,7 @@ export default function MobileRedline({ businessInfo, generatedCopy, templateMet
         {!show('hero') && <h1 className="rl-sr">{headline}</h1>}
 
         {show('hero') && (
-          <header id="home" data-section="hero" className={`rl-hero${picks.length ? ' rl-has-quote' : ''}${images.hero ? ' rl-has-photo' : ''}${images.hero && !t.isDark ? ' rl-lite' : ''}`} style={{ order: order('hero') }}>
+          <header id="home" data-section="hero" className={`rl-hero${hasCard ? ' rl-has-card' : ''}${heroCard === 'off' ? ' rl-card-off' : ''}${images.hero ? ' rl-has-photo' : ''}${images.hero && !t.isDark ? ' rl-lite' : ''}`} style={{ order: order('hero') }}>
             <div className="rl-wrap">
               <div className="rl-hero-grid">
                 <div className="rl-hero-copy">
@@ -1275,6 +1474,10 @@ export default function MobileRedline({ businessInfo, generatedCopy, templateMet
                       )}
                     </div>
                     {!images.hero && <EditorHint>{PHOTO_HINTS.hero}</EditorHint>}
+                    {/* Picked or not, no package has a price: say why there is no card. */}
+                    {heroCard === 'quote' && picks.length === 0 && services.some((s) => s.name) && (
+                      <EditorHint>Your price card needs services with a price (Edit &gt; Services).</EditorHint>
+                    )}
                   </div>
                 </div>
 
@@ -1345,6 +1548,35 @@ export default function MobileRedline({ businessInfo, generatedCopy, templateMet
                         </div>
                         {tel && <a className="rl-q-call" href={tel}><Icon name="phone" />Call {phoneLabel}</a>}
                       </div>
+                    </div>
+                  </div>
+                )}
+
+                {listPicks.length > 0 && (
+                  <div className="rl-quote-slot">
+                    {/* The list card sits where the price card would (#quote,
+                        so "Get a Quote" wording still lands on it). Rows are
+                        not choices: no inputs, no steps. */}
+                    <div className="rl-quote rl-hlist" id="quote">
+                      <h2 className="rl-q-h">{isDetail ? 'Our Detail Packages' : 'Our Packages'}</h2>
+                      <ul className="rl-hl">
+                        {listPicks.map((s, i) => (
+                          <li key={`${s.name}-${i}`} className={s.price && optPriceLong(s.price) ? 'rl-opt-l' : undefined}>
+                            <span className="rl-opt-ico" aria-hidden="true"><Icon name={PICK_ICONS[i]} size={20} /></span>
+                            <span className="rl-opt-txt">
+                              <span className="rl-opt-name">{s.name}</span>
+                              {s.summary && <span className="rl-opt-sum">{s.summary}</span>}
+                            </span>
+                            {s.price && <span className={`rl-opt-price${optPriceLong(s.price) ? ' rl-opt-price-t' : ''}`}>{s.price}</span>}
+                          </li>
+                        ))}
+                      </ul>
+                      {svcLink ? (
+                        <a className="rl-hl-cta" href="#services">See All Packages<Icon name="arrowRight" size={20} /></a>
+                      ) : (
+                        <a className="rl-hl-cta" href={bookHref} data-scheduler-trigger="">Book Now<Icon name="arrowRight" size={20} /></a>
+                      )}
+                      {tel && <a className="rl-q-call" href={tel}><Icon name="phone" />Call {phoneLabel}</a>}
                     </div>
                   </div>
                 )}
@@ -1457,11 +1689,21 @@ export default function MobileRedline({ businessInfo, generatedCopy, templateMet
                   {services.map((s, i) => (
                     <article key={`${s.name}-${i}`} className={`rl-card${s.badge ? ' rl-card-feat' : ''}${s.price ? '' : ' rl-card-np'}`}>
                       {s.badge && <span className="rl-badge">{s.badge}</span>}
-                      {s.image && (
+                      {s.image ? (
                         <div className="rl-card-photo">
                           <PhotoSlot src={s.image} alt={s.name} style={{ height: 'auto' }} />
                         </div>
-                      )}
+                      ) : anyServicePhoto && (editor ? (
+                        // Once one package has a photo, the editor marks the
+                        // others' empty photo wells.
+                        <div className="rl-card-photo">
+                          <PhotoSlot slot="service" style={{ aspectRatio: '4 / 3' }} />
+                        </div>
+                      ) : (
+                        // The site keeps the same space (rows stay level),
+                        // with a quiet car mark instead of a photo.
+                        <div className="rl-card-photo rl-card-well" aria-hidden="true"><Icon name="car" size={40} stroke={1.5} /></div>
+                      ))}
                       {s.name && <h3 className="rl-card-name">{s.name}</h3>}
                       {s.description && (
                         <div className="rl-card-desc">
@@ -1497,6 +1739,8 @@ export default function MobileRedline({ businessInfo, generatedCopy, templateMet
           <section data-section="featured" id="featured" className="rl-sec rl-feat" style={{ order: order('featured') }}>
             {featured ? (
               <div className={`rl-in rl-feat-grid${images.featured ? ' rl-duo' : ' rl-feat-solo'}`}>
+                {/* Without a photo the editor shows the site's one-column
+                    band too, with a line naming where the photo is added. */}
                 {images.featured && (
                   <div className="rl-feat-photo">
                     <PhotoSlot src={images.featured} alt={`${featured.name}${name ? ` by ${name}` : ''}`} style={{ height: 'auto', aspectRatio: '3 / 4' }} />
@@ -1506,8 +1750,9 @@ export default function MobileRedline({ businessInfo, generatedCopy, templateMet
                   {featured.eyebrow && <p className="rl-eyebrow">{featured.eyebrow}</p>}
                   <h2 className="rl-h2 rl-feat-h"><Accented title={featured.title} accent={featured.accent} /></h2>
                   {featured.intro && <p className="rl-feat-price">{featured.intro}</p>}
+                  {/* "Starting at" only before a number ("Call for quote" reads as written). */}
                   {featured.priceFrom ? (
-                    <p className="rl-feat-price">Starting at <strong>{featured.priceFrom}</strong></p>
+                    <p className="rl-feat-price">{/\d/.test(featured.priceFrom) && 'Starting at '}<strong>{featured.priceFrom}</strong></p>
                   ) : featured.price && <p className="rl-feat-price"><strong>{featured.price}</strong></p>}
                   {featured.bullets.length > 0 && (
                     <ul className="rl-feat-list">
@@ -1521,12 +1766,13 @@ export default function MobileRedline({ businessInfo, generatedCopy, templateMet
                   >
                     {featured.buttonText}<Icon name="arrowRight" />
                   </a>
-                  {!featuredBody && <EditorHint>{`This band shows on your site once ${featured.name} has a price, a description or a list of what's included (Edit > Services).`}</EditorHint>}
+                  {!featuredBody && <EditorHint>This band shows on your site once it has a photo, a price or a list of benefits (Edit &gt; Featured Service).</EditorHint>}
+                  {featuredBody && !images.featured && <EditorHint>{PHOTO_HINTS.featured}</EditorHint>}
                 </div>
               </div>
             ) : (
               <div className="rl-in rl-c">
-                <EditorHint>A featured service shows here when one of your services is a ceramic coating.</EditorHint>
+                <EditorHint>Pick a service to feature in Edit &gt; Featured Service.</EditorHint>
               </div>
             )}
           </section>
@@ -1537,6 +1783,7 @@ export default function MobileRedline({ businessInfo, generatedCopy, templateMet
             <div className="rl-in rl-c">
               {revT.eyebrow && <p className="rl-eyebrow">{revT.eyebrow}</p>}
               <h2 className="rl-h2 rl-rev-h"><Accented title={txt(copy.googleReviewsTitle) || revTitle} accent={txt(copy.googleReviewsTitle) ? revT.accent : revAccent} /></h2>
+              {revT.intro && <p className="rl-rev-intro">{revT.intro}</p>}
               <div className="rl-rev-widget"><GoogleReviewsWidget widgetKey={copy.googleWidgetKey} theme={copy.googleReviewsTheme} /></div>
             </div>
           </section>
@@ -1680,68 +1927,108 @@ export default function MobileRedline({ businessInfo, generatedCopy, templateMet
                 )}
                 <a className="rl-btn" href={ctaBookHref} {...(txt(copy.ctaUrl) ? {} : { 'data-scheduler-trigger': '' })}>{ctaBookLabel}<Icon name="arrowRight" /></a>
               </div>
+              {!images.cta && <EditorHint>{PHOTO_HINTS.cta}</EditorHint>}
             </div>
           </section>
         )}
       </main>
 
       <footer className="rl-foot" style={{ order: 9999 }}>
-        <div className="rl-wrap rl-foot-grid" style={{ '--rl-fn': footCols }}>
-          <div>
-            <div className="rl-foot-brand">
-              {logo(44)}
-              {shortName && <span className="rl-foot-word">{shortName}</span>}
-            </div>
-            {txt(copy.footerTagline) && <p className="rl-foot-blurb">{txt(copy.footerTagline)}</p>}
-            {badgeIn('footer') && (
-              <div className="rl-foot-g">
-                <GoogleRatingBadge place={biz.googlePlace} variant="inline" starColor={t.accent} starSize={16} />
-              </div>
-            )}
+        {footCells.length > 0 && (
+          <div className={`rl-wrap rl-foot-grid${footCells.length >= 5 ? ' rl-foot-5' : ''}`} style={{ '--rl-fn': footCells.length }}>
+            {footCells.map((c) => {
+              if (c.type === 'brand') {
+                return (
+                  <div key="brand">
+                    <div className="rl-foot-brand">
+                      {logo(44)}
+                      {shortName && <span className="rl-foot-word">{shortName}</span>}
+                    </div>
+                    {txt(copy.footerTagline) && <p className="rl-foot-blurb">{txt(copy.footerTagline)}</p>}
+                    {badgeIn('footer') && (
+                      <div className="rl-foot-g">
+                        <GoogleRatingBadge place={biz.googlePlace} variant="inline" starColor={t.accent} starSize={16} />
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+              if (c.type === 'links') {
+                return (
+                  <div key="links">
+                    <h3 className="rl-foot-t">{c.title || 'Explore'}</h3>
+                    <ul className="rl-foot-list">
+                      {exploreLinks.map((l) => (
+                        <li key={l.label}><a href={l.href} {...(l.book ? { 'data-scheduler-trigger': '' } : {})}>{l.label}</a></li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              }
+              if (c.type === 'areas') {
+                return (
+                  <div key="areas">
+                    <h3 className="rl-foot-t">{c.title || 'Service Areas'}</h3>
+                    <ul className="rl-foot-list">
+                      {areas.map((a) => <li key={a}><Icon name="pin" size={14} />{a}</li>)}
+                    </ul>
+                  </div>
+                );
+              }
+              if (c.type === 'contact') {
+                return (
+                  <div key="contact">
+                    <h3 className="rl-foot-t">{c.title || 'Get In Touch'}</h3>
+                    <ul className="rl-foot-list rl-touch">
+                      {tel && <li><a href={tel}><Icon name="phone" />{phoneLabel}</a></li>}
+                      {email && (
+                        <li>
+                          <a href={`mailto:${email}`} className="rl-mail">
+                            <Icon name="mail" />
+                            <span>{email.includes('@') ? <>{email.slice(0, email.indexOf('@') + 1)}<wbr />{email.slice(email.indexOf('@') + 1)}</> : email}</span>
+                          </a>
+                        </li>
+                      )}
+                      {socials.map((s) => (
+                        <li key={s.icon}><a href={s.href} target="_blank" rel="noopener noreferrer"><Icon name={s.icon} />{s.label}</a></li>
+                      ))}
+                      {!tel && !email && place && <li><Icon name="pin" />{place}</li>}
+                    </ul>
+                    {hoursMerged && footHasHours && (
+                      <div className="rl-foot-hours">
+                        <b>{footHoursTitle}</b>
+                        {hours.summary.map((line) => <div key={line}>{line}</div>)}
+                      </div>
+                    )}
+                    {footCta && (
+                      <a className="rl-pillbtn" href={footCta.href} {...(footCta.books ? { 'data-scheduler-trigger': '' } : {})}>{footCta.label}</a>
+                    )}
+                  </div>
+                );
+              }
+              return (
+                <div key="hours">
+                  <h3 className="rl-foot-t">{c.title || 'Hours'}</h3>
+                  <div className="rl-foot-list">
+                    {hours.summary.map((line) => <div key={line}>{line}</div>)}
+                  </div>
+                </div>
+              );
+            })}
           </div>
-          {exploreLinks.length > 0 && (
-            <div>
-              <h3 className="rl-foot-t">Explore</h3>
-              <ul className="rl-foot-list">
-                {exploreLinks.map((l) => (
-                  <li key={l.label}><a href={l.href} {...(l.book ? { 'data-scheduler-trigger': '' } : {})}>{l.label}</a></li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {areas.length > 0 && (
-            <div>
-              <h3 className="rl-foot-t">Service Areas</h3>
-              <ul className="rl-foot-list">
-                {areas.map((a) => <li key={a}><Icon name="pin" size={14} />{a}</li>)}
-              </ul>
-            </div>
-          )}
-          <div>
-            <h3 className="rl-foot-t">Get In Touch</h3>
-            <ul className="rl-foot-list rl-touch">
-              {tel && <li><a href={tel}><Icon name="phone" />{phoneLabel}</a></li>}
-              {email && <li><a href={`mailto:${email}`} className="rl-mail"><Icon name="mail" />{email}</a></li>}
-              {socials.map((s) => (
-                <li key={s.icon}><a href={s.href} target="_blank" rel="noopener noreferrer"><Icon name={s.icon} />{s.label}</a></li>
-              ))}
-              {!tel && !email && place && <li><Icon name="pin" />{place}</li>}
-            </ul>
-            {hours.summary.length > 0 && (
-              <div className="rl-foot-hours">
-                <b>Hours</b>
-                {hours.summary.map((line) => <div key={line}>{line}</div>)}
-              </div>
-            )}
-            {rendered.cta && <a className="rl-pillbtn" href="#contact" data-scheduler-trigger="">Request Appointment</a>}
-          </div>
-        </div>
+        )}
         <div className="rl-foot-bar">
           <div className="rl-wrap rl-foot-bar-in">
             {/* exportHtml's owner-link script appends " · Site owner" to the
-                LAST <p> of the last <footer>: the copyright stays that <p>. */}
+                LAST <p> of the last <footer>: the copyright stays that <p>
+                (the bottom line is a <div>). */}
             <p>© <span data-acg-year="">{new Date().getFullYear()}</span> {name}. All rights reserved.</p>
-            {bottomLine && <div>{bottomLine}</div>}
+            {footBarBadge && (
+              <div className="rl-foot-bar-g">
+                <GoogleRatingBadge place={biz.googlePlace} variant="inline" starColor={t.accent} starSize={14} />
+              </div>
+            )}
+            {bottomText && <div>{bottomText}</div>}
           </div>
         </div>
       </footer>

@@ -55,6 +55,18 @@ const CSS = `
 .ss-skip:not(:focus){width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
 .ss-root a:focus-visible,.ss-root summary:focus-visible,.ss-root label:focus-visible,.ss-track:focus-visible{outline:3px solid var(--ss-focus);outline-offset:3px}
 .ss-why a:focus-visible,.ss-foot a:focus-visible,.ss-has-media a:focus-visible{outline-color:var(--ss-focus-inv)}
+/* Rings drawn on a colored band take that band's own text color (the page
+   focus color can match the accent nav on dark palettes), and the kit's
+   menu / action-bar rings (the accent, on the accent nav or on paper) are
+   redrawn in colors that read there. */
+.ss-nav a:focus-visible,.ss-skip:focus-visible,.ss-nav .acg-menu>summary:focus-visible{outline:3px solid var(--ss-nav-text);outline-offset:3px}
+.ss-cta a.ss-info-card:focus-visible{outline-color:var(--ss-cta-text)}
+.ss-nav .acg-menu-panel a:focus-visible{outline:3px solid var(--ss-card-text);outline-offset:-3px}
+.ss-nav .acg-menu-panel a.acg-menu-cta:focus-visible{outline-color:var(--ss-on-accent)}
+.ss-root .acg-actionbar a:focus-visible{outline:3px solid var(--ss-card-text);outline-offset:2px}
+/* The phone menu button: a paper chip like the brand bubble, so its bars
+   read on any accent. */
+.ss-nav .acg-menu>summary{width:46px;height:46px;border:2.5px solid var(--ss-ink);border-radius:14px;background:var(--ss-card-bg);color:var(--ss-card-text);box-shadow:2px 2px 0 var(--ss-ink)}
 .ss-hint{display:flex;align-items:center;gap:10px;width:fit-content;max-width:100%;margin-top:22px;padding:10px 14px;border:1.5px dashed rgba(128,128,128,.6);border-radius:12px;font-size:13px;font-weight:600;line-height:1.45;color:inherit;opacity:.85}
 .ss-emo{display:inline-block;line-height:1}
 
@@ -83,10 +95,18 @@ html[data-acg-scrolled] .ss-nav{box-shadow:0 4px 0 var(--ss-ink),0 24px 40px -24
 .ss-nav-cta{display:inline-flex;align-items:center;gap:8px;min-height:46px;margin-left:12px;padding:0 22px;border:2.5px solid var(--ss-ink);border-radius:999px;background:var(--ss-navcta-bg);color:var(--ss-navcta-text);font-family:var(--ss-head);font-weight:var(--ss-head-w);font-size:19px;line-height:1;text-decoration:none;white-space:nowrap;box-shadow:3px 3px 0 var(--ss-shade)}
 
 .ss-hero-wrap{position:relative;z-index:2}
-.ss-hero{position:relative;isolation:isolate;overflow:clip;padding:clamp(64px,8cqi,112px) 0 clamp(84px,9cqi,128px);background:var(--ss-hero-bg);color:var(--ss-hero-text)}
+.ss-hero{position:relative;isolation:isolate;overflow:clip;padding:clamp(56px,min(7cqi,11svh),104px) 0 clamp(84px,9cqi,128px);background:var(--ss-hero-bg);color:var(--ss-hero-text)}
 .ss-hero-grid{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);align-items:center;gap:clamp(32px,5cqi,72px)}
+.ss-longer .ss-hero-grid{grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr)}
 .ss-badge{display:inline-flex;align-items:center;gap:8px;max-width:100%;padding:8px 18px;border:3px solid var(--ss-ink);border-radius:999px;background:var(--ss-accent);color:var(--ss-on-accent);box-shadow:3px 3px 0 var(--ss-ink);font-size:14px;font-weight:800;line-height:1.3;rotate:-2deg}
-.ss-h1{margin-top:28px;font-family:var(--ss-head);font-weight:var(--ss-head-w);font-size:clamp(48px,7cqi,94px);line-height:1;letter-spacing:.005em;text-wrap:balance}
+/* The display size follows the narrower of the container and the screen
+   height, and above 780px steps down for longer headlines (--ss-h1-k,
+   from the headline's length): AI headlines run 45-60
+   characters, which at 94px wrap to four lines and push the hero buttons
+   below a laptop's fold. */
+.ss-h1{margin-top:28px;font-family:var(--ss-head);font-weight:var(--ss-head-w);font-size:clamp(44px,calc(var(--ss-h1-k,1) * min(7cqi,12.5svh)),calc(var(--ss-h1-k,1) * 94px));line-height:1;letter-spacing:.005em;text-wrap:balance}
+.ss-long{--ss-h1-k:.86}
+.ss-longer{--ss-h1-k:.74}
 .ss-hl{position:relative;z-index:0;display:inline-block;color:var(--ss-hero-em)}
 .ss-hl::after{content:'';position:absolute;z-index:-1;left:-.06em;right:-.06em;bottom:.04em;height:.24em;border-radius:.08em;background:var(--ss-accent);transform:skewX(-8deg)}
 .ss-lead{margin-top:24px;max-width:540px;font-size:clamp(17px,1.7cqi,20px);font-weight:600;line-height:1.65;color:var(--ss-hero-muted);text-wrap:pretty}
@@ -109,8 +129,8 @@ html[data-acg-scrolled] .ss-nav{box-shadow:0 4px 0 var(--ss-ink),0 24px 40px -24
 .ss-has-media .ss-lead{color:var(--ss-on-hero-muted)}
 .ss-teeth{position:relative;z-index:3;height:16px;margin-bottom:-16px;background:conic-gradient(from -45deg at 50% 100%,var(--ss-hero-bg) 90deg,transparent 0) 0 0/32px 100% repeat-x;pointer-events:none}
 .ss-split{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);min-height:clamp(560px,calc(100vh - 74px),880px);background:var(--ss-hero-bg);color:var(--ss-hero-text)}
-.ss-split-text{position:relative;isolation:isolate;overflow:clip;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;padding:clamp(64px,8cqi,112px) clamp(24px,5cqi,72px) clamp(80px,8cqi,120px) max(var(--ss-gutter),calc((100cqi - 1240px) / 2 + var(--ss-gutter)))}
-.ss-split .ss-h1{font-size:clamp(46px,6cqi,84px)}
+.ss-split-text{position:relative;isolation:isolate;overflow:clip;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;padding:clamp(56px,min(7cqi,11svh),104px) clamp(24px,5cqi,72px) clamp(80px,8cqi,120px) max(var(--ss-gutter),calc((100cqi - 1240px) / 2 + var(--ss-gutter)))}
+.ss-split .ss-h1{font-size:clamp(42px,calc(var(--ss-h1-k,1) * min(6cqi,11.5svh)),calc(var(--ss-h1-k,1) * 84px))}
 .ss-split-photo{position:relative;min-height:440px;overflow:clip;border-left:4px solid var(--ss-ink);background:var(--ss-tint-2)}
 .ss-art-panel{position:absolute;inset:0;display:grid;place-items:center;padding:32px}
 
@@ -314,7 +334,8 @@ a.ss-info-card:hover{translate:-2px -2px;box-shadow:6px 6px 0 var(--ss-ink)}
 .ss-track{--ss-gc:var(--ss-gc-md)}
 }
 @container (max-width:780px){
-.ss-hero-grid,.ss-about,.ss-cta-grid{grid-template-columns:minmax(0,1fr)}
+.ss-hero-grid,.ss-longer .ss-hero-grid,.ss-about,.ss-cta-grid{grid-template-columns:minmax(0,1fr)}
+.ss-long,.ss-longer{--ss-h1-k:1}
 .ss-art{width:100%;max-width:460px;min-height:0;margin:8px auto 0;padding:36px 0 8px}
 .ss-frame{margin:0 auto}
 .ss-split{grid-template-columns:minmax(0,1fr);min-height:0}
@@ -724,6 +745,17 @@ function defaultWhy(type, fb) {
   return [lead, second, booking, talk];
 }
 
+// The same defaults for the editor's How It Works / Why Us panels, so the
+// panel seeds what the preview shows (and an edit never saves an older,
+// different list as the owner's own), given the site's raw businessType.
+export function defaultHowSteps(businessType) {
+  return defaultSteps(businessKind(businessType)).map((s) => ({ ...s }));
+}
+export function defaultWhyCards(businessType) {
+  const type = businessKind(businessType);
+  return defaultWhy(type, getFallbacks(type)).map((c) => ({ ...c }));
+}
+
 // ---- Decorative pieces -----------------------------------------------------
 // Resting spots clear of the headline and buttons on wide screens (they
 // drift up through the copy only while animating). `w`: wide screens only,
@@ -975,6 +1007,9 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
   const headline = txt(copy.headline) || name || 'Your Car Deserves Better.';
   const words = headline.split(/\s+/);
   const lastWord = words.pop();
+  // Steps the display size down for longer headlines (see .ss-h1): live AI
+  // headlines are 49-57 characters.
+  const headlineSize = headline.length > 38 ? ' ss-longer' : headline.length > 24 ? ' ss-long' : '';
   const badge = `${isMobile ? 'We Come To YOU' : fb.heroBadge}${city ? ` · ${city}` : ''}`;
   // Same fallback as before the kit rewrite: the business type's plain
   // one-line description, so a sparse hero never loses its lead line.
@@ -1093,7 +1128,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
         {!show('hero') && <h1 className="ss-sr">{brandName}</h1>}
 
         {show('hero') && (
-          <div data-section="hero" className="ss-hero-wrap" style={{ order: order('hero') }}>
+          <div data-section="hero" className={`ss-hero-wrap${headlineSize}`} style={{ order: order('hero') }}>
             {splitHero ? (
               <header className="ss-split">
                 <div className="ss-split-text">

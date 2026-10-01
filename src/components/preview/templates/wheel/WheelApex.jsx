@@ -78,6 +78,8 @@ html[data-acg-scrolled] .wa-nav{box-shadow:0 12px 32px -20px var(--wa-shadow)}
 .wa-brand{flex:1 1 auto;display:inline-flex;align-items:center;min-width:0;color:var(--wa-text);text-decoration:none}
 .wa-word{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--wa-head);font-size:calc(28px * var(--wa-word-scale));font-weight:var(--wa-h-weight);line-height:1.1;letter-spacing:.1em;text-transform:uppercase}
 .wa-word span{color:var(--wa-accent-lg)}
+.wa-nav .wa-word{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;white-space:normal;overflow-wrap:break-word}
+.wa-nav .wa-word-long{font-size:calc(24px * var(--wa-word-scale));line-height:1.15}
 .wa-links{flex:none;display:flex;align-items:center;gap:clamp(18px,2.4cqi,32px)}
 .wa-link{position:relative;padding:12px 0;color:var(--wa-ink2);font-size:12px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;text-decoration:none}
 .wa-link::after{content:'';position:absolute;left:0;right:0;bottom:6px;height:1px;background:var(--wa-accent-text);transform:scaleX(0);transform-origin:left center}
@@ -163,16 +165,15 @@ html[data-acg-scrolled] .wa-nav{box-shadow:0 12px 32px -20px var(--wa-shadow)}
 .wa-badge{position:absolute;z-index:1;top:14px;left:14px;padding:5px 10px;background:var(--wa-soft-bg);color:var(--wa-soft-accent);font-size:10.5px;font-weight:600;line-height:1.4;letter-spacing:.16em;text-transform:uppercase}
 .wa-badge-inline{position:static;align-self:flex-start;margin-bottom:14px}
 .wa-card-body{flex:1;display:flex;flex-direction:column;padding:clamp(22px,2.4cqi,30px)}
-.wa-card-top{display:flex;align-items:baseline;justify-content:space-between;gap:16px}
-.wa-svc .wa-card-top{align-items:flex-end;min-height:calc(clamp(26px,2.4cqi,32px) * var(--wa-h-scale-sm))}
-.wa-idx{font-size:12px;font-weight:600;letter-spacing:.2em;color:var(--wa-accent-text)}
+.wa-idx{display:block;font-size:12px;font-weight:600;line-height:1.4;letter-spacing:.2em;color:var(--wa-accent-text)}
 .wa-card-title{font-size:calc(clamp(26px,2.4cqi,30px) * var(--wa-h-scale-sm));color:var(--wa-text);overflow-wrap:break-word}
 .wa-svc .wa-card-title{margin-top:18px}
-.wa-price{flex:none;font-family:var(--wa-head);font-size:calc(clamp(26px,2.4cqi,32px) * var(--wa-h-scale-sm));font-weight:var(--wa-h-weight);line-height:1;letter-spacing:.01em;color:var(--wa-accent-lg);white-space:nowrap}
+.wa-price{font-family:var(--wa-head);font-size:calc(clamp(26px,2.4cqi,32px) * var(--wa-h-scale-sm));font-weight:var(--wa-h-weight);line-height:1.05;letter-spacing:.01em;color:var(--wa-accent-lg);overflow-wrap:break-word}
+.wa-price-long{font-size:calc(clamp(20px,1.8cqi,23px) * var(--wa-h-scale-sm));line-height:1.2;color:var(--wa-accent-text)}
 .wa-card .acg-svc-foot{padding-top:24px}
 .wa-card .acg-svc-more{min-height:32px;padding-top:6px;letter-spacing:.04em}
 .wa-foot-row{padding-top:14px;border-top:1px solid var(--wa-border)}
-.wa-price-foot{margin-bottom:16px;white-space:normal}
+.wa-price-foot{margin-bottom:16px}
 .wa-card .acg-svc-book,.wa-more{display:inline-flex;align-items:center;gap:14px;min-height:44px;color:var(--wa-text);font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;text-decoration:none}
 .wa-arrow{display:grid;place-items:center;width:36px;height:36px;border:1px solid var(--wa-border-strong);background:var(--wa-bg);color:var(--wa-ink2)}
 .wa-card-foot{margin-top:auto;padding-top:22px}
@@ -327,8 +328,7 @@ html[data-acg-scrolled] .wa-nav{box-shadow:0 12px 32px -20px var(--wa-shadow)}
 @container (max-width:600px){
 .wa-links,.wa-nav-cta{display:none}
 .wa-nav-in{min-height:64px;gap:12px}
-.wa-word{font-size:calc(22px * var(--wa-word-scale));letter-spacing:.08em}
-.wa-nav .wa-word{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;white-space:normal}
+.wa-word,.wa-nav .wa-word-long{font-size:calc(22px * var(--wa-word-scale));letter-spacing:.08em}
 .wa-hero-text{padding:52px var(--wa-gutter) 48px}
 .wa-h1{font-size:calc(clamp(46px,14cqi,64px) * var(--wa-h-scale))}
 .wa-h1-long{font-size:calc(clamp(38px,11cqi,52px) * var(--wa-h-scale))}
@@ -376,16 +376,21 @@ function telHref(phone) {
 // Button URLs owners type into the editor. A live Forge site saved a bare
 // phone number ("262-646-0587") as a button URL, which the old template
 // output as a broken relative link: bare numbers become tel:, bare domains
-// get https://, bare emails mailto:. Anchors and full URLs pass through.
+// get https://, bare emails mailto:. Anchors and full URLs pass through;
+// script URLs never do.
 function linkHref(value) {
   const s = txt(value);
-  if (!s) return null;
+  if (!s || /^(javascript|data|vbscript):/i.test(s)) return null;
   if (/^(https?:|mailto:|tel:|sms:|#|\/)/i.test(s)) return s;
   if (/^\+?[\d\s().-]+$/.test(s) && s.replace(/\D/g, '').length >= 7) return `tel:${s.replace(/[^\d+]/g, '')}`;
   if (/^[^\s@/]+@[^\s@/]+\.[a-z]{2,}$/i.test(s)) return `mailto:${s}`;
   if (/^[\w-]+(\.[\w-]+)*\.[a-z]{2,}(\/\S*)?$/i.test(s)) return `https://${s}`;
   return s;
 }
+
+// Owners may type the editor's section ids as anchors; they map to the
+// element ids this template renders.
+const ANCHOR_ALIAS = { '#hero': '#top', '#products': '#services', '#testimonials': '#reviews', '#cta': '#contact' };
 
 // Hours as display rows { days, time }. Only the per-day editor's shape
 // (exactly the seven HOURS_DAYS keys, '' = closed) may say a day is
@@ -513,10 +518,16 @@ const onBoth = (fg, a, b, min) => ensureContrast(ensureContrast(fg, a, min), b, 
 // palette. Default: ink buttons and ticker, white cards on an alloy-gray
 // page, a bronze-tinted contact band; a dark palette gets a deeper band
 // and a light metal rim.
+//
+// The soft tint (contact band, awards box, icon tiles) mixes the accent
+// into a light surface only. On a dark surface an RGB mix with the accent
+// turns muddy (amber into navy gives warm gray, red into green gives
+// brown), so a dark palette lifts the surface in its own hue and keeps the
+// accent to the lines and icons.
 function forgeTokens(t) {
   const band = t.isDark ? mix(t.bg, '#000000', 0.45) : t.text;
   const bandFg = readableOn(band);
-  const soft = mix(t.accent, t.surface, t.isDark ? 0.82 : 0.9);
+  const soft = t.isDark ? mix(t.surface, t.text, 0.07) : mix(t.accent, t.surface, 0.9);
   const [lite, deep] = luminance(t.surface) >= luminance(t.text) ? [t.surface, t.text] : [t.text, t.surface];
   const alloyLo = mix(lite, deep, 0.5);
   const tire = t.isDark ? mix(t.bg, '#000000', 0.55) : mix(t.text, '#000000', 0.2);
@@ -537,7 +548,7 @@ function forgeTokens(t) {
     '--wa-rim-shadow': alpha('#000000', t.isDark ? 0.5 : 0.22),
     '--wa-stage-glow': alpha(t.surface, t.isDark ? 0.35 : 0.95),
     '--wa-soft-bg': soft,
-    '--wa-soft-line': mix(t.accent, t.surface, t.isDark ? 0.6 : 0.7),
+    '--wa-soft-line': t.isDark ? alpha(t.accent, 0.45) : mix(t.accent, t.surface, 0.7),
     '--wa-soft-text': ensureContrast(t.text, soft, 4.5),
     '--wa-soft-muted': ensureContrast(t.textMuted, soft, 4.5),
     '--wa-soft-accent': ensureContrast(t.accentText, soft, 4.5),
@@ -723,6 +734,11 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
     .map((p) => ({ name: txt(p.name), price: txt(p.price), description: txt(p.description), badge: txt(p.badge), image: txt(p.image) }))
     .filter((p) => p.name || p.price || p.description || p.image);
   const productMedia = products.some((p) => p.image);
+  // A sentence-like price ("$150 - $300 depending on vehicle size") is set
+  // smaller, for the whole grid so prices in a row still match.
+  const longPrice = (items) => items.some((x) => x.price.length > 16);
+  const productPriceLong = longPrice(products);
+  const servicePriceLong = longPrice(services);
   const offerCount = products.length + services.length;
   // Owners type package details as lines ("- Foam hand wash\n- Vacuum");
   // keep their line breaks.
@@ -810,9 +826,20 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
     rendered.cta && { href: '#contact', label: 'Contact' },
   ].filter(Boolean);
 
-  const heroPrimaryHref = linkHref(copy.ctaPrimaryUrl) || tel || (rendered.cta ? '#contact' : null);
+  // A button URL that is an anchor must land on a section the published
+  // page renders ("#gallery" with no gallery photos would go nowhere);
+  // otherwise it counts as empty and the button's default applies.
+  const liveAnchors = new Set(['#top', '#main', ...navLinks.map((l) => l.href)]);
+  const ownerHref = (value) => {
+    const href = linkHref(value);
+    if (!href || href[0] !== '#') return href;
+    const anchor = ANCHOR_ALIAS[href.toLowerCase()] || href;
+    return liveAnchors.has(anchor) ? anchor : null;
+  };
+
+  const heroPrimaryHref = ownerHref(copy.ctaPrimaryUrl) || tel || (rendered.cta ? '#contact' : null);
   const heroPrimaryLabel = txt(copy.ctaPrimary) || fb.ctaHeadline || 'Get a Quote';
-  const heroSecondaryHref = linkHref(copy.ctaSecondaryUrl) || (rendered.products ? '#services' : rendered.cta ? '#contact' : null);
+  const heroSecondaryHref = ownerHref(copy.ctaSecondaryUrl) || (rendered.products ? '#services' : rendered.cta ? '#contact' : null);
   const heroSecondaryLabel = txt(copy.ctaSecondary)
     || (!rendered.products ? 'Get in Touch' : services.length > 0 ? 'View Services' : 'View Products');
   const splitHero = copy.heroLayout === 'split';
@@ -851,9 +878,12 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
   // Logo if uploaded, else the two-tone wordmark: first word in ink, the
   // rest in bronze (a one-word name stays one tone; the old template
   // borrowed words from a stock shop name to fill the second half).
+  // A long name ("Estrella HandWash & Detailing") is set smaller and may
+  // wrap to two lines in the nav, at every width, instead of losing its
+  // end to an ellipsis beside the links.
   const words = name.split(/\s+/).filter(Boolean);
   const wordmark = (
-    <span className="wa-word">
+    <span className={`wa-word${name.length > 20 ? ' wa-word-long' : ''}`}>
       {words[0] || ''}
       {words.length > 1 && <span>{` ${words.slice(1).join(' ')}`}</span>}
     </span>
@@ -901,10 +931,17 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
   ].filter(Boolean);
 
   const contactHeadline = txt(copy.ctaHeadline) || 'Ready to upgrade?';
-  const contactPrimaryHref = linkHref(copy.ctaUrl) || tel || (email ? `mailto:${email}` : null);
+  const contactOwnHref = ownerHref(copy.ctaUrl);
+  const contactPrimaryHref = contactOwnHref || tel || (email ? `mailto:${email}` : null);
   const contactPrimaryLabel = txt(copy.ctaButtonText) || txt(copy.ctaPrimary) || phone || 'Contact Us';
-  const contactSecondaryHref = linkHref(copy.ctaSecondaryUrl) || tel;
-  const contactSecondaryLabel = txt(copy.ctaSecondaryText) || (phone ? `Call ${phone}` : '');
+  // The phone button's URL key (ctaSecondaryUrl) is also hero Button 2's,
+  // so it only leaves tel: when the owner gave this button its own text;
+  // the default "Call (555) ..." label always dials the number it shows.
+  // A label that is itself a phone number dials that number.
+  const callText = txt(copy.ctaSecondaryText);
+  const contactSecondaryHref = (callText && (ownerHref(copy.ctaSecondaryUrl)
+    || (/^\+?[\d\s().-]{7,}$/.test(callText) ? linkHref(callText) : null))) || tel;
+  const contactSecondaryLabel = callText || (phone ? `Call ${phone}` : '');
   const showContactSecondary = contactSecondaryHref && contactSecondaryLabel && contactSecondaryHref !== contactPrimaryHref;
   const mapsHref = address
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([address, place].filter(Boolean).join(', '))}`
@@ -1073,7 +1110,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
                                 the name, so a long name is not squeezed. */}
                             {(p.price || (p.name && enquireHref)) && (
                               <div className="wa-card-foot">
-                                {p.price && <p className="wa-price wa-price-foot">{p.price}</p>}
+                                {p.price && <p className={`wa-price wa-price-foot${productPriceLong ? ' wa-price-long' : ''}`}>{p.price}</p>}
                                 {p.name && enquireHref && (
                                   <div className="wa-foot-row">
                                     <a className="wa-more" href={enquireHref} aria-label={`Ask about ${p.name}`}>
@@ -1101,10 +1138,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
                     <div key={`s${i}`} className="wa-cell" data-acg-reveal="" style={{ '--acg-delay': `${(i % 3) * 90}ms` }}>
                       <article className="acg-svc-card wa-card wa-svc">
                         <div className="wa-card-body">
-                          <div className="wa-card-top">
-                            <span className="wa-idx">{pad2(i + 1)}</span>
-                            {s.price && <span className="wa-price">{s.price}</span>}
-                          </div>
+                          <span className="wa-idx">{pad2(i + 1)}</span>
                           {s.name && <h3 className="wa-card-title wa-display">{s.name}</h3>}
                           <ServiceDescription
                             id={`svc-more-apex-${fromPackages ? 'pkg' : 'ai'}-${i}`}
@@ -1112,7 +1146,11 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
                             style={{ ...descStyle, marginTop: 12 }}
                             accentColor={t.accentText}
                           />
+                          {/* Price in the foot, as on the product cards: owners
+                              type prices like "$150 - $300 depending on
+                              vehicle size", which never fit beside the index. */}
                           <div className="acg-svc-foot">
+                            {s.price && <p className={`wa-price wa-price-foot${servicePriceLong ? ' wa-price-long' : ''}`}>{s.price}</p>}
                             <div className="wa-foot-row">
                               <BookNowLink
                                 serviceName={s.name}
@@ -1318,7 +1356,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
                 {(contactPrimaryHref || showContactSecondary) && (
                   <div className="wa-actions">
                     {contactPrimaryHref && (
-                      <a className="wa-btn" href={contactPrimaryHref} {...(copy.ctaUrl ? {} : { 'data-scheduler-trigger': '' })}>
+                      <a className="wa-btn" href={contactPrimaryHref} {...(contactOwnHref ? {} : { 'data-scheduler-trigger': '' })}>
                         {contactPrimaryLabel}
                       </a>
                     )}

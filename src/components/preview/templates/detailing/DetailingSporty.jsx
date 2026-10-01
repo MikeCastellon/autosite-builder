@@ -49,17 +49,32 @@ const CSS = `
 .ds-skip{position:absolute;left:12px;top:12px;z-index:300;padding:12px 18px;background:var(--ds-accent);color:var(--ds-on-accent);font-weight:700;text-decoration:none}
 .ds-skip:not(:focus){width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .ds-root a:focus-visible,.ds-root summary:focus-visible,.ds-root label:focus-visible,.ds-track:focus-visible{outline:2px solid var(--ds-focus);outline-offset:3px}
+/* The ring sits on whatever is behind the link, so each colored surface
+   hands it its own ink: the accent-red ring vanishes on the red panel, and
+   a light palette's accent is too dark for the (always dark) footer. */
+.ds-has-media{--ds-focus:var(--ds-on-hero)}
+.ds-band{--ds-focus:var(--ds-band-text)}
+.ds-foot{--ds-focus:var(--ds-footer-text)}
 .ds-hint{display:flex;align-items:center;gap:10px;width:fit-content;max-width:100%;margin-top:20px;padding:10px 14px;border:1.5px dashed rgba(128,128,128,.55);border-radius:6px;font-size:13px;font-weight:500;line-height:1.45;color:inherit;opacity:.85}
 .ds-eyebrow{display:inline-flex;align-items:center;gap:12px;font-size:12px;font-weight:700;line-height:1.35;letter-spacing:.22em;text-transform:uppercase;color:var(--ds-accent-text)}
 .ds-eyebrow::before{content:'';flex:none;width:26px;height:6px;background:var(--ds-brand);transform:skewX(-24deg)}
-.ds-h2{margin-top:18px;font-family:var(--ds-head);font-size:clamp(34px,5cqi,66px);font-weight:var(--ds-head-w);line-height:.96;letter-spacing:-.015em;text-transform:uppercase;color:var(--ds-text);text-wrap:balance;overflow-wrap:break-word}
+/* Owner words in heavy caps never break mid-word ("About primeluxe_detail",
+   "Decontamination"): a .ds-fit box is a size container whose font-size is
+   the design size, and the heading inside takes min(1em, box width /
+   --ds-lw), --ds-lw being its longest word's width in em (fitLw). A .ds-fit
+   box holds the heading alone: an inline sibling (the eyebrow) would get a
+   line box as tall as the design size, and an @container-styled one would
+   query the box instead of the root. */
+.ds-fit{container-type:inline-size}
+.ds-fit-h2{font-size:clamp(34px,5cqi,66px)}
+.ds-h2{margin-top:18px;font-family:var(--ds-head);font-size:min(1em,calc(100cqi / var(--ds-lw,1)));font-weight:var(--ds-head-w);line-height:.96;letter-spacing:-.015em;text-transform:uppercase;color:var(--ds-text);text-wrap:balance;overflow-wrap:break-word}
 .ds-intro{max-width:560px;font-size:17px;line-height:1.75;color:var(--ds-muted);text-wrap:pretty}
 /* Text tokens follow the surface they sit on: an owner's card color can be
    far lighter or darker than the page (olive page, navy cards), and no one
    text color reads on both. --ds-sf-* are repaired for the surface, --ds-pg-*
    restore the page set for page-colored boxes inside a surface section. */
-.ds-alt,.ds-card,.ds-tile,.ds-details,.ds-mono{--ds-text:var(--ds-sf-text);--ds-muted:var(--ds-sf-muted);--ds-accent-text:var(--ds-sf-accent);--ds-border:var(--ds-sf-border);--ds-border-strong:var(--ds-sf-border-strong);color:var(--ds-text)}
-.ds-alt .ds-card,.ds-quote,.ds-statpanel .ds-tile,.ds-alt .ds-mono{--ds-text:var(--ds-pg-text);--ds-muted:var(--ds-pg-muted);--ds-accent-text:var(--ds-pg-accent);--ds-border:var(--ds-pg-border);--ds-border-strong:var(--ds-pg-border-strong)}
+.ds-alt,.ds-card,.ds-tile,.ds-details,.ds-mono{--ds-text:var(--ds-sf-text);--ds-muted:var(--ds-sf-muted);--ds-accent-text:var(--ds-sf-accent);--ds-focus:var(--ds-sf-accent);--ds-border:var(--ds-sf-border);--ds-border-strong:var(--ds-sf-border-strong);color:var(--ds-text)}
+.ds-alt .ds-card,.ds-quote,.ds-statpanel .ds-tile,.ds-alt .ds-mono{--ds-text:var(--ds-pg-text);--ds-muted:var(--ds-pg-muted);--ds-accent-text:var(--ds-pg-accent);--ds-focus:var(--ds-pg-accent);--ds-border:var(--ds-pg-border);--ds-border-strong:var(--ds-pg-border-strong)}
 .ds-label{display:block;font-size:11.5px;font-weight:700;line-height:1.4;letter-spacing:.2em;text-transform:uppercase;color:var(--ds-muted)}
 
 .ds-nav{position:sticky;top:0;z-index:100;background:var(--ds-bg);border-bottom:3px solid var(--ds-brand)}
@@ -106,7 +121,7 @@ html[data-acg-scrolled] .ds-nav{box-shadow:0 14px 34px -18px var(--ds-shadow)}
 .ds-tag{position:relative;isolation:isolate;display:inline-flex;align-items:center;gap:10px;max-width:100%;padding:8px 18px;font-size:12px;font-weight:700;line-height:1.35;letter-spacing:.18em;text-transform:uppercase;color:var(--ds-on-accent);text-shadow:none}
 .ds-tag::before{content:'';position:absolute;inset:0;z-index:-1;background:var(--ds-accent);transform:skewX(-12deg)}
 .ds-tag svg{flex:none}
-.ds-h1{--ds-h1:clamp(44px,8cqi,112px);--ds-col:min(940px,min(100cqi,1280px) - 2 * var(--ds-gutter));margin-top:28px;font-family:var(--ds-head);font-size:min(var(--ds-h1),calc(var(--ds-col) / var(--ds-lw,8)));font-weight:var(--ds-head-w);line-height:.93;letter-spacing:-.025em;text-transform:uppercase;text-wrap:balance;overflow-wrap:break-word}
+.ds-h1{--ds-h1:clamp(44px,8cqi,112px);--ds-col:min(940px,min(100cqi,1280px) - 2 * var(--ds-gutter));margin-top:28px;font-family:var(--ds-head);font-size:min(calc(var(--ds-h1) / var(--ds-wd,1)),calc(var(--ds-col) / var(--ds-lw,8)));font-weight:var(--ds-head-w);line-height:.93;letter-spacing:-.025em;text-transform:uppercase;text-wrap:balance;overflow-wrap:break-word}
 .ds-h1-mid{--ds-h1:clamp(42px,6.6cqi,92px)}
 .ds-h1-long{--ds-h1:clamp(40px,5.6cqi,78px)}
 .ds-em{color:var(--ds-accent-text)}
@@ -156,7 +171,8 @@ html[data-acg-scrolled] .ds-nav{box-shadow:0 14px 34px -18px var(--ds-shadow)}
 .ds-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--ds-brand)}
 .ds-card{--ds-num:clamp(50px,4.6cqi,72px)}
 .ds-card-num{position:absolute;top:10px;right:16px;font-family:var(--ds-head);font-size:var(--ds-num);font-weight:var(--ds-head-w);line-height:1;letter-spacing:-.04em;color:transparent;-webkit-text-stroke:1.5px var(--ds-border-strong);pointer-events:none;user-select:none}
-.ds-card-title{position:relative;padding-right:calc(var(--ds-num) * 1.3);font-family:var(--ds-head);font-size:clamp(20px,1.9cqi,24px);font-weight:var(--ds-head-w2);line-height:1.15;text-transform:uppercase;color:var(--ds-text);overflow-wrap:break-word}
+.ds-card-head{position:relative;padding-right:calc(var(--ds-num) * 1.3);font-size:clamp(20px,1.9cqi,24px)}
+.ds-card-title{font-family:var(--ds-head);font-size:min(1em,calc(100cqi / var(--ds-lw,1)));font-weight:var(--ds-head-w2);line-height:1.15;text-transform:uppercase;color:var(--ds-text);overflow-wrap:break-word}
 .ds-price{position:relative;margin-top:14px;font-family:var(--ds-head);font-size:clamp(28px,2.6cqi,36px);font-weight:var(--ds-head-w);line-height:1.05;letter-spacing:-.02em;color:var(--ds-accent-text)}
 .ds-card .acg-svc-foot{padding-top:24px}
 .ds-card .acg-svc-more{min-height:32px;padding-top:6px;letter-spacing:.04em}
@@ -216,7 +232,8 @@ html[data-acg-scrolled] .ds-nav{box-shadow:0 14px 34px -18px var(--ds-shadow)}
 .ds-band::after{right:26%;width:5%}
 .ds-band .ds-eyebrow{color:var(--ds-band-text)}
 .ds-band .ds-eyebrow::before{background:var(--ds-band-text)}
-.ds-band-h{margin-top:18px;font-family:var(--ds-head);font-size:clamp(36px,4.8cqi,66px);font-weight:var(--ds-head-w);line-height:.95;letter-spacing:-.015em;text-transform:uppercase;text-wrap:balance;overflow-wrap:break-word}
+.ds-fit-band{font-size:clamp(36px,4.8cqi,66px)}
+.ds-band-h{margin-top:18px;font-family:var(--ds-head);font-size:min(1em,calc(100cqi / var(--ds-lw,1)));font-weight:var(--ds-head-w);line-height:.95;letter-spacing:-.015em;text-transform:uppercase;text-wrap:balance;overflow-wrap:break-word}
 .ds-band-lead{margin-top:22px;max-width:500px;font-size:17px;line-height:1.7;color:var(--ds-band-muted);text-wrap:pretty}
 .ds-band-phone{display:inline-flex;align-items:center;gap:14px;width:fit-content;max-width:100%;margin-top:34px;font-family:var(--ds-head);font-size:clamp(28px,3.4cqi,44px);font-weight:var(--ds-head-w);line-height:1.1;letter-spacing:-.01em;color:var(--ds-band-text);text-decoration:none;overflow-wrap:anywhere}
 .ds-band-phone svg{flex:none}
@@ -299,9 +316,13 @@ html[data-acg-scrolled] .ds-nav{box-shadow:0 14px 34px -18px var(--ds-shadow)}
 @keyframes ds-slash-in{from{opacity:0;translate:18% 0}}
 }
 
+/* Nav: the call button stays until the phone action bar takes over (600px);
+   on tablets the text links fold into the kit's menu instead of vanishing. */
 @container (max-width:1100px){.ds-link-x{display:none}}
 @container (max-width:900px){
-.ds-nav-cta{display:none}
+.ds-nav-in{gap:16px}
+.ds-link{display:none}
+.ds-nav .acg-menu{display:block}
 .ds-c3{grid-template-columns:repeat(2,minmax(0,1fr))}
 .ds-n4{grid-template-columns:repeat(2,minmax(0,1fr))}
 .ds-foot-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -341,7 +362,7 @@ html[data-acg-scrolled] .ds-nav{box-shadow:0 14px 34px -18px var(--ds-shadow)}
 .ds-facts .ds-tile-value{min-width:0;text-align:right;font-size:16px;line-height:1.35}
 .ds-facts .ds-tile-hot::after{width:22%;right:-6%}
 .ds-section{padding:72px 0}
-.ds-h2{font-size:clamp(32px,9.5cqi,44px)}
+.ds-fit-h2{font-size:clamp(32px,9.5cqi,44px)}
 .ds-c1,.ds-c2,.ds-c3{grid-template-columns:minmax(0,1fr)}
 .ds-frame{margin:0 14px 14px 0}
 .ds-frame::before{top:16px;left:16px;right:-14px;bottom:-14px}
@@ -403,6 +424,11 @@ function hoursFact(rows) {
   return open.length > 0 && open.length <= 2 ? open.map((r) => `${r.days} ${r.time}`).join('\n') : null;
 }
 
+// Syne's 800 is a far wider cut than its 700 (1.09em vs 0.74em per
+// capital): set heavy and uppercase it broke words on phones and ran the
+// hero headline to six lines on desktop. 700 keeps Syne's character.
+const HEAD_WEIGHT_CAP = { Syne: 700 };
+
 // The heaviest weight the published page actually loads for a font stack,
 // at most `want` (a single-weight face like Bebas Neue gets 400, so the
 // browser never fakes a bold). System stacks keep `want`.
@@ -411,8 +437,27 @@ function loadedWeight(stack, want) {
   if (!fam) return want;
   const ws = FONT_CATALOG[fam].weights;
   if (ws.length === 0) return 400;
-  const below = ws.filter((w) => w <= want);
+  const top = Math.min(want, HEAD_WEIGHT_CAP[fam] ?? want);
+  const below = ws.filter((w) => w <= top);
   return below.length ? Math.max(...below) : Math.min(...ws);
+}
+
+// Width of a capital in em for each heading font the editor offers, at the
+// weight this template sets it, with ~17% headroom for wide letters (M, W).
+// Measured in Chrome from the Google Fonts files (2026-09): Inter 900
+// averages 0.63em, hence the 0.74 default for Inter and system stacks.
+const CAPS_EM = {
+  Inter: 0.74, Montserrat: 0.79, Poppins: 0.74, 'Playfair Display': 0.76,
+  'DM Serif Display': 0.64, 'Cormorant Garamond': 0.69, 'Bebas Neue': 0.4,
+  Oswald: 0.56, Syne: 0.86, Righteous: 0.68, Boogaloo: 0.51,
+};
+const capsEm = (stack) => CAPS_EM[catalogFamily(familiesFromStack(stack)[0])] || 0.74;
+
+// --ds-lw for a .ds-fit heading: its longest unbreakable run in em (the
+// browser may still break after a hyphen or slash), at least 6 characters.
+function fitLw(text, em) {
+  const runs = txt(text).replace(/([-–—/])/g, '$1 ').split(/\s+/);
+  return (Math.max(6, ...runs.map((w) => w.length)) * em).toFixed(2);
 }
 
 // Headline emphasis: the second half of a two-part headline ("Clean Cars,
@@ -613,6 +658,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
       description: txt(s.description) || (fromPackages ? aiDesc.get(nameKey(s.name)) || '' : ''),
     }))
     .filter((s) => s.name || s.description || s.price);
+  const servicesTitle = txt(copy.servicesSection?.title) || 'Our Services';
   const svcCols = services.length === 1 ? 'ds-c1' : services.length === 2 || services.length === 4 ? 'ds-c2' : 'ds-c3';
 
   // Stats only from what the owner entered: About > Stats Box values, else
@@ -650,7 +696,8 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
     show('about') && { href: '#about', label: 'About' },
     show('gallery') && galleryImages.length > 0 && { href: '#gallery', label: 'Work', extra: true },
     show('testimonials') && reviews && { href: '#reviews', label: 'Reviews' },
-    show('cta') && { href: '#contact', label: 'Contact', extra: true },
+    // Folds away at 1100px only when the nav's call button takes its place.
+    show('cta') && { href: '#contact', label: 'Contact', extra: Boolean(tel) },
   ].filter(Boolean);
 
   const heroPrimaryHref = txt(copy.ctaPrimaryUrl) || (show('services') && services.length > 0 ? '#services' : '#contact');
@@ -663,9 +710,15 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
   const [headLead, headEm] = splitHeadline(headline);
   // AI headlines run 20-65 characters: step the size down for long ones,
   // and cap it so the longest word (uppercase, heavy) fits the column
-  // instead of breaking mid-word (--ds-lw ~ its width in em).
+  // instead of breaking mid-word (--ds-lw ~ its width in em). A face wider
+  // than Inter also gets a proportionally smaller design size (--ds-wd), so
+  // it keeps Inter's line count and the buttons stay on the first screen.
+  const capEm = capsEm(font);
   const h1Size = headline.length > 60 ? ' ds-h1-long' : headline.length > 44 ? ' ds-h1-mid' : '';
-  const h1Fit = (Math.max(6, ...headline.split(/\s+/).map((w) => w.length)) * 0.74).toFixed(2);
+  const h1Fit = fitLw(headline, capEm);
+  // The same fit for every other heading that can print owner words;
+  // card titles are untracked, so a capital runs ~0.03em wider there.
+  const fit = (text, extra = 0) => ({ '--ds-lw': fitLw(text, capEm + extra) });
 
   const vars = {
     '--ds-bg': t.bg,
@@ -684,6 +737,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
     '--ds-body': body,
     '--ds-head-w': loadedWeight(font, 900),
     '--ds-head-w2': loadedWeight(font, 800),
+    '--ds-wd': Math.max(1, capEm / 0.74).toFixed(3),
     '--ds-gutter': 'clamp(20px, 5cqi, 48px)',
     ...tokens,
   };
@@ -742,6 +796,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
   const aboutTitle = taglineFits ? tagline : name ? `About ${name}` : 'About Us';
   const aboutTagLine = tagline && !taglineFits ? tagline : '';
 
+  const ctaTitle = txt(copy.ctaHeadline) || fb.ctaHeadline;
   const contactPrimaryLabel = txt(copy.ctaButtonText) || txt(copy.ctaPrimary) || 'Get a Quote';
   const contactPrimaryHref = txt(copy.ctaUrl) || tel;
   // The editor's Contact > "Phone / Secondary Button" (text + URL, default
@@ -853,7 +908,9 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
               <div className={`ds-head${txt(copy.servicesSection?.intro) ? '' : ' ds-head-solo'}`} data-acg-reveal="">
                 <div>
                   <p className="ds-eyebrow">What We Do</p>
-                  <h2 id="ds-services-h" className="ds-h2">{txt(copy.servicesSection?.title) || 'Our Services'}</h2>
+                  <div className="ds-fit ds-fit-h2">
+                    <h2 id="ds-services-h" className="ds-h2" style={fit(servicesTitle)}>{servicesTitle}</h2>
+                  </div>
                 </div>
                 {txt(copy.servicesSection?.intro) && <p className="ds-intro">{copy.servicesSection.intro}</p>}
               </div>
@@ -862,7 +919,11 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
                   <div key={`${s.name}-${i}`} className="ds-cell" data-acg-reveal="" style={{ '--acg-delay': `${(i % 3) * 90}ms` }}>
                     <article className="acg-svc-card ds-card">
                       <span className="ds-card-num" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
-                      {s.name && <h3 className="ds-card-title">{s.name}</h3>}
+                      {s.name && (
+                        <div className="ds-fit ds-card-head">
+                          <h3 className="ds-card-title" style={fit(s.name, 0.03)}>{s.name}</h3>
+                        </div>
+                      )}
                       {s.price && <p className="ds-price">{s.price}</p>}
                       <ServiceDescription
                         id={`svc-more-${fromPackages ? 'pkg' : 'ai'}-${i}`}
@@ -910,7 +971,9 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
               </div>
               <div data-acg-reveal="" style={{ '--acg-delay': '120ms' }}>
                 <p className="ds-eyebrow">About Us</p>
-                <h2 id="ds-about-h" className="ds-h2" style={{ marginBottom: 28 }}>{aboutTitle}</h2>
+                <div className="ds-fit ds-fit-h2" style={{ marginBottom: 28 }}>
+                  <h2 id="ds-about-h" className="ds-h2" style={fit(aboutTitle)}>{aboutTitle}</h2>
+                </div>
                 {aboutTagLine && <p className="ds-pull">{aboutTagLine}</p>}
                 {aboutParas.length > 0 && (
                   <div className="ds-prose">
@@ -938,7 +1001,9 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
               <div className="ds-head ds-head-solo" data-acg-reveal="">
                 <div>
                   <p className="ds-eyebrow">Gallery</p>
-                  <h2 id="ds-gallery-h" className="ds-h2">Our Work</h2>
+                  <div className="ds-fit ds-fit-h2">
+                    <h2 id="ds-gallery-h" className="ds-h2">Our Work</h2>
+                  </div>
                 </div>
               </div>
               {galleryImages.length === 0 ? (
@@ -974,7 +1039,9 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
                 <div className="ds-head ds-head-solo">
                   <div>
                     <p className="ds-eyebrow">Reviews</p>
-                    <h2 className="ds-h2">{copy.googleReviewsTitle}</h2>
+                    <div className="ds-fit ds-fit-h2">
+                      <h2 className="ds-h2" style={fit(copy.googleReviewsTitle)}>{copy.googleReviewsTitle}</h2>
+                    </div>
                   </div>
                 </div>
               )}
@@ -991,7 +1058,9 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
               <div className="ds-head ds-head-solo" data-acg-reveal="">
                 <div>
                   <p className="ds-eyebrow">Testimonials</p>
-                  <h2 id="ds-reviews-h" className="ds-h2">What Clients Say</h2>
+                  <div className="ds-fit ds-fit-h2">
+                    <h2 id="ds-reviews-h" className="ds-h2">What Clients Say</h2>
+                  </div>
                 </div>
               </div>
               <div className={`ds-grid ${testimonials.length === 1 ? 'ds-c1' : testimonials.length === 2 || testimonials.length === 4 ? 'ds-c2' : 'ds-c3'}`}>
@@ -1024,7 +1093,9 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
               <div className="ds-band">
                 <div data-acg-reveal="">
                   <p className="ds-eyebrow">Contact</p>
-                  <h2 id="ds-contact-h" className="ds-band-h">{txt(copy.ctaHeadline) || fb.ctaHeadline}</h2>
+                  <div className="ds-fit ds-fit-band">
+                    <h2 id="ds-contact-h" className="ds-band-h" style={fit(ctaTitle)}>{ctaTitle}</h2>
+                  </div>
                   <p className="ds-band-lead">{txt(copy.ctaSubtext) || 'Get in touch to schedule a service or ask a question.'}</p>
                   {tel && (
                     <a className="ds-band-phone" href={tel}><Icon d={ICONS.phone} size={30} stroke={2} />{phone}</a>

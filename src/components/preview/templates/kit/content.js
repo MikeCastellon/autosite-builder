@@ -118,6 +118,41 @@ export function serviceAreasOf(biz) {
   return [area];
 }
 
+// Footer columns a template can build from copy.footer (Edit > Footer):
+// the brand block, the Explore links, the service areas, the contact list
+// and the hours. The whole shape, as the editor writes it:
+//   copy.footer = { columns?: [{ type, title?, show? }], showCta?: boolean
+//   (absent = true; false removes the footer button), ctaText?, ctaUrl?,
+//   bottomText? } | null.
+// There is no footer showGoogle key: the footer's Google rating line is the
+// 'footer' entry of copy.googleBadge.placements (Edit > Google Rating), so
+// one switch decides it.
+export const FOOTER_COLUMN_TYPES = ['brand', 'links', 'areas', 'contact', 'hours'];
+
+// copy.footer.columns -> [{ type, title, show }] for every type. Without a
+// columns array (no footer saved, or an old / broken value) the design's own
+// footer: every type in the default order, shown, untitled. With one: the
+// known types in the owner's order (the first entry of a type wins, show
+// unless show === false), then any type the array lacks, hidden. The editor's
+// Footer panel (editor/footerBuilder.js) reads the same way; keep the two in
+// step.
+export function footerColumnsOf(footer) {
+  const cols = footer && typeof footer === 'object' && !Array.isArray(footer) && Array.isArray(footer.columns)
+    ? footer.columns
+    : null;
+  if (!cols) return FOOTER_COLUMN_TYPES.map((type) => ({ type, title: '', show: true }));
+  const out = [];
+  const seen = new Set();
+  for (const c of cols) {
+    const type = c && typeof c === 'object' ? c.type : null;
+    if (!FOOTER_COLUMN_TYPES.includes(type) || seen.has(type)) continue;
+    seen.add(type);
+    out.push({ type, title: str(c.title), show: c.show !== false });
+  }
+  for (const type of FOOTER_COLUMN_TYPES) if (!seen.has(type)) out.push({ type, title: '', show: false });
+  return out;
+}
+
 // Where a button goes when the owner gave it no URL: its wording decides
 // (the owner's text or the AI draft's: "Call Now", "Get a Quote", "Book
 // Today", "View Our Services"), else `fallback`. `map` holds the targets the
