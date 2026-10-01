@@ -67,17 +67,19 @@ describe('defaultReminderMessage', () => {
 describe('bookingShareUrl', () => {
   const site = { published_url: 'https://joes.autocaregeniushub.com', site_type: 'website' };
 
-  it('links a website to its /book page', () => {
-    expect(bookingShareUrl(site)).toBe('https://joes.autocaregeniushub.com/book');
+  // #book: sites without a /book page yet serve their homepage there, and
+  // scheduler.js opens the booking form for that hash.
+  it('links a website to its /book page, with #book for homepage fallbacks', () => {
+    expect(bookingShareUrl(site)).toBe('https://joes.autocaregeniushub.com/book#book');
     expect(bookingShareUrl({ ...site, site_type: 'booking_only' })).toBe('https://joes.autocaregeniushub.com');
   });
 
   it('uses the custom domain (www host) only once HTTPS is live', () => {
     expect(bookingShareUrl({ ...site, custom_domain: 'joes.com', custom_domain_status: 'active_ssl' }))
-      .toBe('https://www.joes.com/book');
+      .toBe('https://www.joes.com/book#book');
     for (const status of ['pending_dns', 'active_dns', 'disconnected', null]) {
       expect(bookingShareUrl({ ...site, custom_domain: 'joes.com', custom_domain_status: status }))
-        .toBe('https://joes.autocaregeniushub.com/book');
+        .toBe('https://joes.autocaregeniushub.com/book#book');
     }
   });
 

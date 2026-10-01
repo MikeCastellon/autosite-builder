@@ -19,8 +19,8 @@ export default function SchedulerSettings({ siteId, onExit }) {
   const [tab, setTab] = useState('general');
   const [site, setSite] = useState(null);
   const [err, setErr] = useState(null);
-  // null | 'publishing' | 'published' | 'failed' | 'republish': the /book
-  // page published when bookings are switched on (see toggleEnabled).
+  // The website's /book page (see publishBookPage): null | 'offer' |
+  // 'publishing' | 'published' | 'failed' | 'republish'.
   const [bookPage, setBookPage] = useState(null);
 
   // Offer website services (business_info.services) to the booking menu,
@@ -46,6 +46,16 @@ export default function SchedulerSettings({ siteId, onExit }) {
       }
       const synced = await autoSyncServices(stored, s.business_info?.services);
       setSite({ ...s, scheduler_config: synced || defaultSchedulerConfig() });
+      // Sites that took bookings before Booking Settings published the /book
+      // page may not have one (their /book serves the homepage), and their
+      // owners won't flip the switch again. Nothing tells us from here
+      // whether the page exists, so offer it until it has been published
+      // from this screen once (book_page_published_at). Never overrides a
+      // state set meanwhile, e.g. 'publishing' from toggleEnabled.
+      if (s.scheduler_enabled && s.site_type !== 'booking_only' && s.published_url
+          && !synced?.book_page_published_at) {
+        setBookPage((prev) => prev || (s.slug ? 'offer' : 'republish'));
+      }
     } catch (e) { setErr(e.message); }
   }
 
@@ -58,17 +68,21 @@ export default function SchedulerSettings({ siteId, onExit }) {
   async function toggleEnabled(next) {
     await setSchedulerEnabled(siteId, next);
     if (next) await initializeSchedulerConfig(siteId);
-    refresh();
-    if (next) publishBookPageOnEnable();
-    else setBookPage(null);
+    if (!next) setBookPage(null);
+    // Let refresh's config writes (service sync) land before publishBookPage
+    // saves its marker: saveSchedulerConfig is read-merge-write, so the two
+    // running at once could drop one of them.
+    await refresh();
+    if (next) publishBookPage();
   }
 
   // A published website only gets its /book page when it is published with
   // bookings on, so switching bookings on afterwards left the shared booking
-  // link with no page behind it. Publish just that page now (the homepage is
-  // left untouched). It needs the site's stored web address: without one the
+  // link with no page behind it. Publish just that page (the homepage is
+  // left untouched): when bookings are switched on, or from the offer
+  // refresh shows. It needs the site's stored web address: without one the
   // publish would claim a new address, so ask for a republish instead.
-  async function publishBookPageOnEnable() {
+  async function publishBookPage() {
     if (!site || site.site_type === 'booking_only' || !site.published_url) return;
     if (!site.slug) { setBookPage('republish'); return; }
     setBookPage('publishing');
@@ -79,10 +93,16 @@ export default function SchedulerSettings({ siteId, onExit }) {
         slug: site.slug,
         asSubpath: true,
       });
-      setBookPage('published');
     } catch {
       setBookPage('failed');
+      return;
     }
+    setBookPage('published');
+    // Remember it so the offer doesn't come back. If this save fails the
+    // page is still live; the owner is just offered it again next time.
+    try {
+      await saveSchedulerConfig(siteId, { book_page_published_at: new Date().toISOString() });
+    } catch { /* see above */ }
   }
 
   function openCustomerPreview() {
@@ -160,13 +180,24 @@ export default function SchedulerSettings({ siteId, onExit }) {
         )}
       </div>
 
-      {isEnabled && bookPage && bookPage !== 'published' && (
-        <div className="bg-white rounded-2xl border border-black/[0.07] shadow-sm p-5 sm:p-6 mb-6" role="status">
-          <p className="text-[13px] text-[#555]">
-            {bookPage === 'publishing'
-              ? 'Publishing your booking page…'
-              : 'Your booking page isn\u2019t live yet. Republish your site from the dashboard to publish it.'}
+      {isEnabled && bookPage && (
+        <div className="bg-white rounded-2xl border border-black/[0.07] shadow-sm p-5 sm:p-6 mb-6 flex flex-wrap items-center gap-4" role="status">
+          <p className="text-[13px] text-[#555] flex-1 min-w-[220px]">
+            {bookPage === 'offer' && 'Publish your booking page so your booking link opens straight to the booking form. Your website stays as it is.'}
+            {bookPage === 'publishing' && 'Publishing your booking page…'}
+            {bookPage === 'published' && 'Your booking page is live.'}
+            {bookPage === 'failed' && 'Your booking page couldn\u2019t be published. Try again, or republish your site from the dashboard.'}
+            {bookPage === 'republish' && 'Your booking page isn\u2019t live yet. Republish your site from the dashboard to publish it.'}
           </p>
+          {(bookPage === 'offer' || bookPage === 'failed') && (
+            <button
+              type="button"
+              onClick={publishBookPage}
+              className="inline-flex items-center text-[13px] font-semibold px-4 py-2 rounded-lg bg-[#cc0000] text-white hover:bg-[#b30000] transition-colors shrink-0"
+            >
+              {bookPage === 'failed' ? 'Try again' : 'Publish booking page'}
+            </button>
+          )}
         </div>
       )}
 

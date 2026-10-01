@@ -61,9 +61,8 @@ export default function AppHeader({
     <>
       <header className="border-b border-black/[0.07] bg-white px-4 sm:px-8 flex items-center justify-between h-16 sticky top-0 z-50">
         <a
-          href="https://www.autocaregenius.com"
-          target="_blank"
-          rel="noopener noreferrer"
+          href="https://hq.autocaregenius.com"
+          aria-label="Back to Genius HQ"
           className="flex items-center gap-2.5"
         >
           <img src={ACG_LOGO} alt="Auto Care Genius" className="h-7" />

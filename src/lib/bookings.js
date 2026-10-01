@@ -14,7 +14,9 @@ import { supabase } from './supabase.js';
 // wallTimeToBookingIso shipped hold a real instant (the old BookCustomerModal
 // sent new Date(local).toISOString()). They read hours late here and block
 // the wrong widget slot until a one-time backfill turns them into wall time:
-// (preferred_at at time zone '<owner zone>') at time zone 'UTC'.
+// (preferred_at at time zone '<owner zone>') at time zone 'UTC', for rows
+// created before the deploy (created_at < deploy time), run right after it.
+// Run before the deploy, the old dashboard would show them hours early.
 
 // "Mon, Oct 6, 2026, 9:00 AM" by default; pass Intl options to narrow it.
 export function formatBookingTime(iso, options) {
