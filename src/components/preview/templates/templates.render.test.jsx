@@ -54,6 +54,8 @@ const SAVED_SECTION_IDS = {
   mobile_sudsy: ['hero', 'services', 'process', 'whyUs', 'about', 'gallery', 'testimonials', 'cta'],
   wheel_apex: ['hero', 'trustBar', 'ticker', 'products', 'brands', 'about', 'gallery', 'testimonials', 'cta'],
   carwash_bubble: ['hero', 'services', 'process', 'about', 'gallery', 'testimonials', 'cta'],
+  // New template (no saved sites yet): its own ids, frozen from here on.
+  mobile_redline: ['hero', 'about', 'gallery', 'brands', 'services', 'featured', 'testimonials', 'awards', 'locations', 'cta'],
   __kit_sample__: DEFAULT_IDS,
 };
 

@@ -748,9 +748,11 @@ export default function ContentEditor({ isOpen, onClose, topOffset = 0, siteId, 
             // normalize layer mirrors services -> packages for template rendering.
             // Fall back to businessInfo.packages (legacy) and finally to
             // copy.servicesSection.items so the editor never opens blank.
+            // Object items keep their other keys (includes, badge, summary, image, ...):
+            // some templates read them, and saving this tab must not wipe them.
             const toObj = (p) => typeof p === 'string'
               ? { name: p, price: '', description: '' }
-              : { name: p?.name || '', price: p?.price || '', description: p?.description || '' };
+              : { ...p, name: p?.name || '', price: p?.price || '', description: p?.description || '' };
             const rawServices = Array.isArray(businessInfo?.services) ? businessInfo.services.map(toObj) : [];
             const rawPackages = Array.isArray(businessInfo?.packages) ? businessInfo.packages.map(toObj) : [];
             const seedFromCopy = (copy.servicesSection?.items || []).map((item) => ({
