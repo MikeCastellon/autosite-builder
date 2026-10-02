@@ -2,11 +2,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { customSiteAdmin } from '../../lib/customSites.js';
 import { STAGES, isEmail } from '../../lib/customSiteForm.js';
 import { useAlert } from '../ui/AlertProvider.jsx';
-import CustomSiteDrawer, { StageBadge, copyText, formatDateTime, timeAgo } from './CustomSiteDrawer.jsx';
+import CustomSiteProjectPage from './CustomSiteProjectPage.jsx';
+import { StageBadge, copyText, duration, formatDateTime, timeAgo } from './customSiteUi.jsx';
 
-// Admin > Custom websites: add a customer, email them the intake form link
-// and track the build from "Form sent" to "Live". The customer's side is
-// /custom-site?t=<token> (CustomSiteFormPage).
+// Custom websites (header nav, and a tab of the Admin page): add a customer,
+// email them the intake form link and track the build from "Form sent" to
+// "Live". A project opens as a full page (CustomSiteProjectPage). The
+// customer's side is /custom-site?t=<token> (CustomSiteFormPage).
 
 function formStatus(p) {
   if (p.form_submitted_at) return { text: `Received ${formatDateTime(p.form_submitted_at)}`, tone: 'text-emerald-700 font-semibold' };
@@ -58,10 +60,22 @@ export default function AdminCustomSitesTab({ initialProjectId }) {
     });
   }, [projects, search, filter]);
 
-  // Keeps the list row in step with what the drawer saved.
+  // Keeps the list row in step with the project page.
   const patchRow = useCallback((next) => {
     setProjects((prev) => prev.map((p) => (p.id === next.id ? { ...p, ...next } : p)));
   }, []);
+
+  if (openId) {
+    return (
+      <CustomSiteProjectPage
+        key={openId}
+        projectId={openId}
+        onBack={() => { setOpenId(null); refresh(); }}
+        onChanged={patchRow}
+        onDeleted={(id) => { setOpenId(null); setProjects((prev) => prev.filter((p) => p.id !== id)); }}
+      />
+    );
+  }
 
   return (
     <div>
@@ -180,7 +194,10 @@ export default function AdminCustomSitesTab({ initialProjectId }) {
                         {p.business_name ? `${p.client_name} · ` : ''}{p.client_email}
                       </p>
                     </td>
-                    <td className="px-4 py-3"><StageBadge stage={p.stage} /></td>
+                    <td className="px-4 py-3">
+                      <StageBadge stage={p.stage} />
+                      {p.stageSince && <p className="mt-1 text-[11px] text-ink-tertiary whitespace-nowrap">for {duration(p.stageSince)}</p>}
+                    </td>
                     <td className={`px-4 py-3 text-[12px] whitespace-nowrap ${fs.tone}`}>{fs.text}</td>
                     <td className="px-4 py-3 text-[12px] text-[#555]">{p.fileCount || <span className="text-ink-tertiary">—</span>}</td>
                     <td className="px-4 py-3">
@@ -210,15 +227,6 @@ export default function AdminCustomSitesTab({ initialProjectId }) {
         />
       )}
 
-      {openId && (
-        <CustomSiteDrawer
-          key={openId}
-          projectId={openId}
-          onClose={() => setOpenId(null)}
-          onChanged={patchRow}
-          onDeleted={(id) => { setOpenId(null); setProjects((prev) => prev.filter((p) => p.id !== id)); }}
-        />
-      )}
     </div>
   );
 }

@@ -20,6 +20,8 @@ vi.mock('../../netlify/functions/_lib/postmark.js', async (importOriginal) => {
   return {
     ...real,
     customSiteWelcome: vi.fn(async () => ({ MessageID: 'm1' })),
+    customSiteDraft: vi.fn(async () => ({ MessageID: 'm4' })),
+    customSiteLive: vi.fn(async () => ({ MessageID: 'm5' })),
     customSiteFormToAdmin: vi.fn(async () => ({ MessageID: 'm2' })),
     customSiteReceivedToCustomer: vi.fn(async () => ({ MessageID: 'm3' })),
   };
@@ -351,6 +353,55 @@ describe('custom-site-admin', () => {
     expect(json(ok).project.site_url).toBe('https://topchoice.autocaregeniushub.com/');
   });
 
+  it('emails the draft link and moves the project to "Draft with customer"', async () => {
+    h.db = fakeDb({ profiles: [adminProfile], projects: [project({ stage: 'designing', site_url: 'https://draft.test/' })] });
+    h.user = { id: 'admin-1' };
+    const res = await adminHandler(post({ action: 'email-customer', id: PROJECT_ID, template: 'draft' }));
+    expect(res.statusCode).toBe(200);
+    expect(json(res).project.stage).toBe('in_review');
+    expect(postmark.customSiteDraft).toHaveBeenCalledWith(expect.objectContaining({
+      to: 'mike@shop.test', firstName: 'Mike', siteUrl: 'https://draft.test/', replyTo: 'admin@acg.test',
+    }));
+    expect(h.db.state.events.map((e) => [e.type, e.data.template || e.data.to])).toEqual([['email', 'draft'], ['stage', 'in_review']]);
+  });
+
+  it('"you\'re live" marks the project live; nothing is sent without a site link', async () => {
+    h.db = fakeDb({ profiles: [adminProfile], projects: [project({ stage: 'revisions', site_url: null })] });
+    h.user = { id: 'admin-1' };
+    const blocked = await adminHandler(post({ action: 'email-customer', id: PROJECT_ID, template: 'live' }));
+    expect(blocked.statusCode).toBe(400);
+    expect(postmark.customSiteLive).not.toHaveBeenCalled();
+
+    h.db.state.projects[0].site_url = 'https://topchoice.test/';
+    const res = await adminHandler(post({ action: 'email-customer', id: PROJECT_ID, template: 'live' }));
+    expect(json(res).project.stage).toBe('live');
+    expect((await adminHandler(post({ action: 'email-customer', id: PROJECT_ID, template: 'party' }))).statusCode).toBe(400);
+  });
+
+  it('a failed customer email keeps the stage and is logged', async () => {
+    postmark.customSiteDraft.mockRejectedValueOnce(new Error('Postmark 406'));
+    h.db = fakeDb({ profiles: [adminProfile], projects: [project({ stage: 'designing', site_url: 'https://draft.test/' })] });
+    h.user = { id: 'admin-1' };
+    const res = await adminHandler(post({ action: 'email-customer', id: PROJECT_ID, template: 'draft' }));
+    expect(res.statusCode).toBe(502);
+    expect(h.db.state.projects[0].stage).toBe('designing');
+    expect(h.db.state.events.map((e) => e.type)).toEqual(['email_failed']);
+  });
+
+  it('says since when a project is in its stage', async () => {
+    h.db = fakeDb({ profiles: [adminProfile], projects: [project({ created_at: '2026-09-01T00:00:00Z' })] });
+    h.user = { id: 'admin-1' };
+    h.db.state.events.push(
+      { project_id: PROJECT_ID, type: 'email', data: {}, created_at: '2026-09-03T00:00:00Z' },
+      { project_id: PROJECT_ID, type: 'stage', data: { to: 'invited' }, created_at: '2026-09-02T00:00:00Z' },
+    );
+    const list = json(await adminHandler(post({ action: 'list' })));
+    expect(list.projects[0].stageSince).toBe('2026-09-02T00:00:00Z');
+    h.db.state.events.length = 0;
+    const one = json(await adminHandler(post({ action: 'get', id: PROJECT_ID })));
+    expect(one.project.stageSince).toBe('2026-09-01T00:00:00Z');
+  });
+
   it('replacing the link changes the token', async () => {
     h.db = fakeDb({ profiles: [adminProfile], projects: [project()] });
     h.user = { id: 'admin-1' };
@@ -427,6 +478,21 @@ describe('custom website emails', () => {
     expect(html).toContain('main one');
     expect(text).toContain('Services and prices:\nWash: $80\nDetail: $250');
     expect(text).toContain('Logo: logo.ai https://files.test/logo?token=1 ("main one")');
+  });
+
+  it('draft and live emails link to the site and greet by first name', () => {
+    const draft = postmark.customSiteDraftEmail({ firstName: 'Mike', businessName: 'A&B', siteUrl: 'https://draft.test/', note: 'First pass!' });
+    expect(draft.subject).toBe('Your A&B website draft is ready');
+    expect(draft.html).toContain('Your draft is ready, Mike!');
+    expect(draft.html).toContain('href="https://draft.test/"');
+    expect(draft.html).toContain('the A&amp;B website');
+    expect(draft.html).toContain('First pass!');
+    expect(draft.text).toContain('https://draft.test/');
+    const live = postmark.customSiteLiveEmail({ firstName: '', businessName: '', siteUrl: 'https://live.test/' });
+    expect(live.subject).toBe('Your new website is live!');
+    expect(live.html).toContain('You\'re live!');
+    expect(live.html).toContain('href="https://live.test/"');
+    expect(live.html + live.text).not.toMatch(/undefined|null/);
   });
 
   it('team email lists files and what is still missing', () => {

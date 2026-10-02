@@ -200,5 +200,6 @@ describe('answerText / describeEvent', () => {
   it('describes activity in plain words', () => {
     expect(describeEvent({ type: 'stage', data: { to: 'designing' } })).toBe('Moved to Designing');
     expect(describeEvent({ type: 'email', data: { template: 'welcome', to: 'a@b.co' } })).toBe('Welcome email sent to a@b.co');
+    expect(describeEvent({ type: 'email', data: { template: 'draft', to: 'a@b.co' } })).toBe('Draft link emailed to a@b.co');
   });
 });

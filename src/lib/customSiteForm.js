@@ -416,7 +416,13 @@ export function describeEvent(evt) {
   const d = evt?.data || {};
   switch (evt?.type) {
     case 'created': return 'Customer added';
-    case 'email': return d.template === 'welcome' ? `Welcome email sent to ${d.to || 'the customer'}` : `Email sent to ${d.to || 'the customer'}`;
+    case 'email': {
+      const to = d.to || 'the customer';
+      if (d.template === 'welcome') return `Welcome email sent to ${to}`;
+      if (d.template === 'draft') return `Draft link emailed to ${to}`;
+      if (d.template === 'live') return `"You're live" email sent to ${to}`;
+      return `Email sent to ${to}`;
+    }
     case 'email_failed': return `Email to ${d.to || 'the customer'} failed to send`;
     case 'stage': return `Moved to ${stageLabel(d.to)}`;
     case 'form_started': return 'Customer started the form';

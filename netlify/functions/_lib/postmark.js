@@ -786,6 +786,85 @@ export function customSiteFormToAdminEmail({ project, form, assets, adminUrl, re
   return { subject, html, text };
 }
 
+function noteCard(note) {
+  if (!note) return '';
+  return `<table width="100%" cellpadding="0" cellspacing="0" style="background:#fff5f5;border-left:3px solid #cc0000;border-radius:0 12px 12px 0;margin-bottom:16px;"><tr><td style="padding:14px 18px;">
+      <p style="margin:0 0 6px;font-size:11px;font-weight:700;color:#cc0000;letter-spacing:1px;text-transform:uppercase;">A note from our team</p>
+      <p style="margin:0;font-size:14px;color:#3f3f46;line-height:1.6;">${esc(note).replace(/\n/g, '<br/>')}</p>
+    </td></tr></table>`;
+}
+
+function tipList(heading, items) {
+  const rows = items.map((item) =>
+    `<tr><td width="18" valign="top" style="padding:3px 0;font-size:13px;color:#cc0000;font-weight:700;">&#10003;</td><td style="padding:3px 0;font-size:13px;color:#52525b;line-height:1.5;">${esc(item)}</td></tr>`).join('');
+  return infoCard(`${cardHeading(heading)}<table width="100%" cellpadding="0" cellspacing="0">${rows}</table>`, 0);
+}
+
+const DRAFT_TIPS = [
+  'Look at it on your phone too: most of your customers will.',
+  'Say which section you mean and what to change.',
+  'Screenshots with notes are perfect.',
+  'Send all your notes in one reply so nothing gets missed.',
+];
+
+// "Your draft is ready": links to the draft; feedback comes back as a reply.
+export function customSiteDraftEmail({ firstName: givenName, businessName, siteUrl, note }) {
+  const first = String(givenName || '').trim();
+  const whose = businessName ? `the ${esc(businessName)} website` : 'your new website';
+  const html = renderEmailShell({
+    icon: null,
+    eyebrow: 'Custom Websites',
+    title: first ? `Your draft is ready, ${esc(first)}!` : 'Your draft is ready!',
+    intro: `Take a look at the first version of ${whose}. Tell us what you'd like changed: just reply to this email with your notes.`,
+    cta: { label: 'View my draft', href: siteUrl },
+    body: `${noteCard(note)}${tipList('Giving feedback', DRAFT_TIPS)}${linkFallback(siteUrl)}`,
+  });
+  const text = [
+    first ? `Your draft is ready, ${first}!` : 'Your draft is ready!',
+    '',
+    `Take a look at the first version of ${businessName ? `the ${businessName} website` : 'your new website'}: ${siteUrl}`,
+    'Tell us what you\'d like changed: just reply to this email with your notes.',
+    ...(note ? ['', 'A note from our team:', note] : []),
+    '',
+    'Giving feedback:',
+    ...DRAFT_TIPS.map((t) => `- ${t}`),
+  ].join('\n');
+  return { subject: businessName ? `Your ${businessName} website draft is ready` : 'Your website draft is ready', html, text };
+}
+
+const LIVE_TIPS = [
+  'Add the link to your Google Business Profile.',
+  'Put it in your Instagram and Facebook bios.',
+  'Send it to a few regular customers.',
+];
+
+// "You're live": the site is launched.
+export function customSiteLiveEmail({ firstName: givenName, businessName, siteUrl, note }) {
+  const first = String(givenName || '').trim();
+  const whose = businessName ? `The ${esc(businessName)} website` : 'Your new website';
+  const html = renderEmailShell({
+    icon: null,
+    eyebrow: 'Custom Websites',
+    title: first ? `You're live, ${esc(first)}!` : 'You\'re live!',
+    intro: `${whose} is up and running. Thanks for building it with us.`,
+    cta: { label: 'Visit my website', href: siteUrl },
+    body: `${noteCard(note)}${tipList('Spread the word', LIVE_TIPS)}${linkFallback(siteUrl)}
+      <p style="margin:12px 0 0;font-size:12px;color:#a1a1aa;text-align:center;">Need a change? Just reply to this email.</p>`,
+  });
+  const text = [
+    first ? `You're live, ${first}!` : 'You\'re live!',
+    '',
+    `${businessName ? `The ${businessName} website` : 'Your new website'} is up and running: ${siteUrl}`,
+    ...(note ? ['', 'A note from our team:', note] : []),
+    '',
+    'Spread the word:',
+    ...LIVE_TIPS.map((t) => `- ${t}`),
+    '',
+    'Need a change? Just reply to this email.',
+  ].join('\n');
+  return { subject: businessName ? `The ${businessName} website is live!` : 'Your new website is live!', html, text };
+}
+
 // Unlike the booking emails, a missing Postmark key is an error here: the
 // admin pressed "send" and must see that nothing went out.
 async function sendCustomSiteEmail(where, { to, replyTo, subject, html, text }) {
@@ -822,6 +901,22 @@ export function customSiteReceivedToCustomer({ to, replyTo, ...message }) {
     to,
     replyTo: replyTo || CUSTOM_SITES_REPLY_TO,
     ...customSiteReceivedEmail(message),
+  });
+}
+
+export function customSiteDraft({ to, replyTo, ...message }) {
+  return sendCustomSiteEmail('customSiteDraft', {
+    to,
+    replyTo: replyTo || CUSTOM_SITES_REPLY_TO,
+    ...customSiteDraftEmail(message),
+  });
+}
+
+export function customSiteLive({ to, replyTo, ...message }) {
+  return sendCustomSiteEmail('customSiteLive', {
+    to,
+    replyTo: replyTo || CUSTOM_SITES_REPLY_TO,
+    ...customSiteLiveEmail(message),
   });
 }
 
