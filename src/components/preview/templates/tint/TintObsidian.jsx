@@ -88,9 +88,21 @@ html[data-acg-scrolled] .ob-nav{box-shadow:0 18px 40px -24px var(--ob-shadow)}
 .ob-mark-wrap{flex:none;display:block;filter:drop-shadow(0 0 12px var(--ob-glow))}
 .ob-mark{display:block;width:32px;height:32px;background:var(--ob-grad);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
 .ob-brand-txt{display:block;min-width:0}
-.ob-name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere;max-width:340px;font-family:var(--ob-head);font-size:16px;font-weight:800;line-height:1.15;letter-spacing:.14em;text-transform:uppercase}
-.ob-name-long{max-width:400px;font-size:14px;letter-spacing:.08em}
-.ob-name-xl{max-width:440px;font-size:12.5px;letter-spacing:.06em}
+/* 460px: an 18-character name in the wide .14em setting stays on one line
+   on desktop (340px wrapped it with free space beside it). */
+.ob-name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere;max-width:460px;font-family:var(--ob-head);font-size:16px;font-weight:800;line-height:1.15;letter-spacing:.14em;text-transform:uppercase}
+.ob-name-long{font-size:14px;letter-spacing:.08em}
+.ob-name-xl{max-width:500px;font-size:12.5px;letter-spacing:.06em}
+/* A very long nav name may take a third line, and a fourth (without the
+   small line under it) while the links leave it under ~460px. */
+.ob-nav .ob-name-xl{-webkit-line-clamp:3}
+@container (max-width:1240px){.ob-nav .ob-name-xl{-webkit-line-clamp:4}.ob-nav .ob-name-xl+.ob-sub{display:none}}
+/* Just above phone width the links would leave a long name ~170px: the
+   menu takes them over from 760px (ob-nav-long: a long name, no logo). */
+@container (max-width:760px){.ob-nav-long .ob-links{display:none}.ob-nav-long .acg-menu{display:block}}
+/* A very long one (ob-nav-xl) hands them over until 980px: from 901px the
+   Book button is back and would leave its 4 lines too narrow. */
+@container (max-width:980px){.ob-nav-xl .ob-links{display:none}.ob-nav-xl .acg-menu{display:block}}
 .ob-sub{display:block;margin-top:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--ob-mono);font-size:9.5px;line-height:1.2;letter-spacing:.3em;text-transform:uppercase;color:var(--ob-accent-text)}
 .ob-links{flex:none;display:flex;align-items:center;gap:clamp(18px,2.4cqi,34px)}
 .ob-link{position:relative;padding:12px 0;font-family:var(--ob-head);font-size:11.5px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--ob-muted);text-decoration:none}
@@ -418,8 +430,6 @@ html[data-acg-scrolled] .ob-nav{box-shadow:0 18px 40px -24px var(--ob-shadow)}
 @container (max-width:1100px){
 .ob-name{font-size:14px;letter-spacing:.08em;-webkit-line-clamp:3}
 .ob-name-xl{font-size:12.5px;letter-spacing:.06em}
-.ob-nav .ob-name-xl{-webkit-line-clamp:4}
-.ob-nav .ob-name-xl+.ob-sub{display:none}
 .ob-links{gap:clamp(14px,2cqi,22px)}
 .ob-link{letter-spacing:.14em}
 .ob-steps{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -1071,7 +1081,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
       <style>{CSS}</style>
       <a className="ob-skip" href="#main">Skip to content</a>
 
-      <nav className="ob-nav" aria-label="Main" style={{ order: -1 }}>
+      <nav className={`ob-nav${!images.logo && name.length > 26 ? ' ob-nav-long' : ''}${!images.logo && name.length > 36 ? ' ob-nav-xl' : ''}`} aria-label="Main" style={{ order: -1 }}>
         <div className="ob-wrap ob-nav-in">
           <a className="ob-brand" href="#top" aria-label={`${name}, back to top`}>
             {brand({ height: 40, width: 'auto', maxWidth: 180 }, 'eager')}

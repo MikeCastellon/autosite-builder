@@ -837,7 +837,12 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
     return liveAnchors.has(anchor) ? anchor : null;
   };
 
-  const heroPrimaryHref = ownerHref(copy.ctaPrimaryUrl) || tel || (rendered.cta ? '#contact' : null);
+  // Hero Button 1 (and the nav button, which shares it) opens the booking
+  // widget when booking is on, unless the owner gave it its own URL; its
+  // href is where it goes without.
+  const heroPrimaryOwn = ownerHref(copy.ctaPrimaryUrl);
+  const heroPrimaryHref = heroPrimaryOwn || tel || (rendered.cta ? '#contact' : null);
+  const heroPrimaryBooks = heroPrimaryOwn ? {} : { 'data-scheduler-trigger': '' };
   const heroPrimaryLabel = txt(copy.ctaPrimary) || fb.ctaHeadline || 'Get a Quote';
   const heroSecondaryHref = ownerHref(copy.ctaSecondaryUrl) || (rendered.products ? '#services' : rendered.cta ? '#contact' : null);
   const heroSecondaryLabel = txt(copy.ctaSecondary)
@@ -902,7 +907,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
       {subheadline && <p className="wa-lead">{subheadline}</p>}
       {(heroPrimaryHref || heroSecondaryHref) && (
         <div className="wa-actions">
-          {heroPrimaryHref && <a className="wa-btn" href={heroPrimaryHref}>{heroPrimaryLabel}</a>}
+          {heroPrimaryHref && <a className="wa-btn" href={heroPrimaryHref} {...heroPrimaryBooks}>{heroPrimaryLabel}</a>}
           {heroSecondaryHref && (
             <a className="wa-btn-line" href={heroSecondaryHref}>{heroSecondaryLabel}<Icon d={ICONS.arrow} size={16} /></a>
           )}
@@ -969,7 +974,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
                 <a key={l.href} className={`wa-link${l.extra ? ' wa-link-x' : ''}`} href={l.href}>{l.label}</a>
               ))}
               {heroPrimaryHref && (
-                <a className="wa-btn wa-btn-sm wa-nav-cta" href={heroPrimaryHref}>{txt(copy.ctaPrimary) || 'Get a Quote'}</a>
+                <a className="wa-btn wa-btn-sm wa-nav-cta" href={heroPrimaryHref} {...heroPrimaryBooks}>{txt(copy.ctaPrimary) || 'Get a Quote'}</a>
               )}
             </div>
           )}

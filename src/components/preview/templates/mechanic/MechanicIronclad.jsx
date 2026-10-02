@@ -94,6 +94,8 @@ html[data-acg-scrolled] .ic-nav{box-shadow:0 14px 34px -18px var(--ic-shadow)}
 .ic-brand-text{display:flex;flex-direction:column;min-width:0}
 .ic-brand-name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere;font-family:var(--ic-head);font-weight:var(--ic-hw);font-size:calc(24px * var(--ic-hs2));line-height:1.02;letter-spacing:var(--ic-bls);text-transform:uppercase;text-wrap:balance}
 .ic-brand-long{font-size:calc(20px * var(--ic-hs2))}
+/* A long nav name (ic-nav-long) may take a third line, a size down. */
+.ic-nav-long .ic-brand-name{-webkit-line-clamp:3;font-size:calc(18px * var(--ic-hs2))}
 .ic-brand-sub{margin-top:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--ic-label);font-size:10px;font-weight:800;line-height:1.2;letter-spacing:.3em;text-transform:uppercase;color:var(--ic-accent-text)}
 .ic-links{flex:none;display:flex;align-items:center;gap:clamp(18px,2.4cqi,32px)}
 .ic-link{position:relative;padding:12px 0;font-family:var(--ic-label);font-size:13px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;white-space:nowrap;color:var(--ic-muted);text-decoration:none}
@@ -395,9 +397,30 @@ a.ic-detail:hover{background:var(--ic-plate)}
 @container (max-width:1400px){.ic-dense .ic-link-x{display:none}}
 @container (max-width:1100px){.ic-link-y{display:none}}
 @container (max-width:1240px){.ic-dense .ic-link-y{display:none}}
+/* A long name in the nav (ic-nav-long, always dense too) keeps the 1240px
+   layout at any width: on a wide screen the wrap stops growing, so with
+   every link back its name would be cut off again. Keyed on the nav, not
+   the root's ic-long: a logo replaces the name and keeps every link. */
+.ic-nav-long .ic-link-x,.ic-nav-long .ic-link-y{display:none}
 .ic-links{margin-left:auto}
+/* The menu shows whenever a link has stepped aside (ic-has-x / ic-has-y:
+   the nav has such links), so every section stays reachable from the nav. */
+@container (max-width:1240px){.ic-has-x .acg-menu{display:block}}
+@container (max-width:1400px){.ic-dense .ic-has-x .acg-menu{display:block}}
+@container (max-width:1100px){.ic-has-y .acg-menu{display:block}}
+@container (max-width:1240px){.ic-dense .ic-has-y .acg-menu{display:block}}
+.ic-nav-long.ic-has-x .acg-menu,.ic-nav-long.ic-has-y .acg-menu{display:block}
+/* In a dense nav the menu then takes the phone's place (the menu has its
+   own Call button), so a shop name keeps at least the room it had before
+   the menu was there: a wide heading face otherwise cut 16-24 character
+   names at 1025-1400px. A logo has a fixed width and keeps the phone. */
+@container (max-width:1400px){.ic-dense .ic-nav-name.ic-has-x .ic-nav-phone{display:none}}
+@container (max-width:1240px){.ic-dense .ic-nav-name.ic-has-y .ic-nav-phone{display:none}}
 @container (max-width:900px){.ic-link,.ic-nav-phone{display:none}.ic-nav .acg-menu{display:block}.ic-nav-in{gap:14px}}
 @container (max-width:1024px){.ic-dense .ic-link,.ic-dense .ic-nav-phone{display:none}.ic-dense .ic-nav .acg-menu{display:block}.ic-dense .ic-nav-in{gap:14px}}
+/* A long name at tablet width: the menu (which has its own call button)
+   replaces the Book button too, so the name keeps the room. */
+@container (max-width:900px){.ic-nav-long .ic-btn-sm{display:none}}
 @container (max-width:1100px){
 .ic-c4{grid-template-columns:repeat(2,minmax(0,1fr))}
 .ic-foot-grid{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
@@ -425,6 +448,7 @@ a.ic-detail:hover{background:var(--ic-plate)}
 .ic-brand{gap:11px}
 .ic-brand-name{font-size:calc(20px * var(--ic-hs2))}
 .ic-brand-long{font-size:calc(17px * var(--ic-hs2))}
+.ic-nav-long .ic-brand-name{font-size:calc(16px * var(--ic-hs2))}
 .ic-brand-sub{font-size:9px;letter-spacing:.24em}
 .ic-hero{min-height:0;padding:72px 0 60px}
 .ic-hero.ic-has-media{min-height:clamp(560px,86vh,760px)}
@@ -881,6 +905,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
     show('testimonials') && reviews && { href: '#testimonials', label: 'Reviews', step: 'y' },
     show('cta') && { href: '#contact', label: 'Contact' },
   ].filter(Boolean);
+  const navSteps = [...new Set(navLinks.map((l) => l.step).filter(Boolean))];
 
   // Hero buttons: the editor's labels and URLs (Edit > Hero) always win.
   // Button 1 books (the scheduler opens from it when booking is on, else it
@@ -897,6 +922,11 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
   // nav room, so the nav links step aside at wider widths (ic-dense).
   const navCtaLabel = txt(copy.ctaPrimary) || 'Book Service';
   const navDense = labelFont !== LABEL_FONT || displayName.length > 20 || navCtaLabel.length > 16;
+  // The nav shows the shop name (ic-nav-name) unless a logo replaces it, and
+  // a long one (ic-nav-long) gets the long-name layout. A logo site keeps
+  // every link on a wide screen whatever the name's length.
+  const navName = !images.logo;
+  const navLong = navName && displayName.length > 24;
   const kicker = [fb.navSubtitle, place].filter(Boolean).join(' · ');
 
   // Contact / CTA band buttons (Edit > Contact).
@@ -1029,7 +1059,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
       <style>{CSS}</style>
       <a className="ic-skip" href="#main">Skip to content</a>
 
-      <nav className="ic-nav" aria-label="Main" style={{ order: -1 }}>
+      <nav className={`ic-nav${navSteps.map((s) => ` ic-has-${s}`).join('')}${navName ? ' ic-nav-name' : ''}${navLong ? ' ic-nav-long' : ''}`} aria-label="Main" style={{ order: -1 }}>
         <div className="ic-wrap ic-nav-in">
           <a className="ic-brand" href="#top" aria-label={name ? `${name}, back to top` : 'Back to top'}>
             {brand({ height: 44, width: 'auto', maxWidth: 190 }, 'eager')}

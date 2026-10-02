@@ -88,6 +88,9 @@ html[data-acg-scrolled] .te-nav::after{opacity:1}
 .te-wm-long .te-wordmark,.te-wm-xl .te-wordmark{font-size:18px}
 .te-wm-xl .te-wordmark{-webkit-line-clamp:3}
 .te-wm-xl .te-link-x{display:none}
+/* Links that step aside stay in the menu, which shows from then on
+   (te-nav-x: the nav has such links). */
+.te-wm-xl.te-nav-x .acg-menu{display:block}
 .te-links{flex:none;display:flex;align-items:center;gap:clamp(18px,2.6cqi,36px)}
 .te-link{position:relative;padding:12px 0;color:var(--te-muted);font-size:12px;font-weight:500;letter-spacing:.22em;text-transform:uppercase;text-decoration:none}
 .te-link::after{content:'';position:absolute;left:0;right:.22em;bottom:6px;height:1px;background:var(--te-accent-text);transform:scaleX(0)}
@@ -309,7 +312,10 @@ html[data-acg-scrolled] .te-nav::after{opacity:1}
 @keyframes te-rule-in{from{scale:0 1}to{scale:1 1}}
 }
 
-@container (max-width:1200px){.te-link-x{display:none}}
+@container (max-width:1200px){.te-link-x{display:none}.te-nav-x .acg-menu{display:block}}
+/* With the menu next to them, the links would leave a long name ~210px just
+   above phone width: the menu takes them over from 760px. */
+@container (max-width:760px){.te-wm-long .te-links,.te-wm-xl .te-links{display:none}.te-wm-long .acg-menu,.te-wm-xl .acg-menu{display:block}}
 @container (max-width:900px){
 .te-nav-cta{display:none}
 .te-c3{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -647,10 +653,15 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
 
   // Warranty: owner text only (the old block invented "Lifetime Warranty
   // Available" and a craftsmanship promise when a field was empty).
+  // warranty is the tint wizard's field (and the coating warranty detailing
+  // data carries), warrantyOffered the mechanic "Parts & Labor Warranty"; a
+  // site with both (its type changed) leads with the one its type uses.
   const warrantyOffered = txt(biz.warrantyOffered);
   const warrantyText = txt(biz.warranty);
-  const warrantyTitle = warrantyOffered || warrantyText;
-  const warrantyNote = warrantyOffered && warrantyText && warrantyText !== warrantyOffered ? warrantyText : '';
+  const [warrantyTitle, warrantyOther] = /tint|detail/i.test(txt(biz.businessType))
+    ? [warrantyText || warrantyOffered, warrantyText ? warrantyOffered : '']
+    : [warrantyOffered || warrantyText, warrantyOffered ? warrantyText : ''];
+  const warrantyNote = warrantyOther && warrantyOther !== warrantyTitle ? warrantyOther : '';
 
   // Services: the owner's Services tab (businessInfo.services, mirrored to
   // packages by normalizeBusinessInfo) wins over the AI list; a service the
@@ -833,7 +844,7 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
       <style>{CSS}</style>
       <a className="te-skip" href="#main">Skip to content</a>
 
-      <nav className={`te-nav${wordmarkTier}`} aria-label="Main" style={{ order: -1 }}>
+      <nav className={`te-nav${wordmarkTier}${navLinks.some((l) => l.extra) ? ' te-nav-x' : ''}`} aria-label="Main" style={{ order: -1 }}>
         <div className="te-wrap te-nav-in">
           <a className="te-brand" href="#top" aria-label={name ? `${name}, back to top` : 'Back to top'}>
             {brand({ height: 40, width: 'auto', maxWidth: 180 }, 'eager')}

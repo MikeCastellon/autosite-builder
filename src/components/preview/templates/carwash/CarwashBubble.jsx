@@ -88,6 +88,11 @@ html[data-acg-scrolled] .cb-nav{box-shadow:0 8px 30px -14px var(--cb-shadow-stro
 .cb-orb::after{content:'';position:absolute;top:17%;left:21%;width:28%;height:19%;border-radius:50%;background:rgba(255,255,255,.75);transform:rotate(-30deg)}
 .cb-brand-txt{display:block;min-width:0}
 .cb-name{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--cb-head);font-size:20px;font-weight:var(--cb-head-w);line-height:1.2}
+/* The nav name takes up to two lines (three for a very long one), a size
+   smaller as it grows, instead of one line cut off with an ellipsis. */
+.cb-nav .cb-name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;white-space:normal;overflow-wrap:anywhere;line-height:1.12;text-wrap:balance}
+.cb-nav-long .cb-name{font-size:17px}
+.cb-nav-xl .cb-name{font-size:15px;-webkit-line-clamp:3}
 .cb-tag{display:block;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9.5px;font-weight:800;line-height:1.3;letter-spacing:.24em;text-transform:uppercase;color:var(--cb-muted)}
 .cb-links{flex:none;display:flex;align-items:center;gap:2px}
 .cb-link{padding:9px 15px;border-radius:999px;font-size:14px;font-weight:700;color:var(--cb-text);text-decoration:none}
@@ -184,6 +189,9 @@ html[data-acg-scrolled] .cb-nav{box-shadow:0 8px 30px -14px var(--cb-shadow-stro
 .cb-price-icon{display:grid;place-items:center;width:58px;height:58px;border-radius:50%;background:var(--cb-chip-bg);border:1.5px solid var(--cb-border);color:var(--cb-accent-text)}
 .cb-price-name{margin-top:22px;font-family:var(--cb-head);font-size:clamp(22px,2.2cqi,27px);font-weight:var(--cb-head-w);line-height:1.2;color:var(--cb-card-text);overflow-wrap:anywhere}
 .cb-amt{display:block;width:fit-content;max-width:100%;margin-top:14px;font-family:var(--cb-head);font-size:clamp(40px,4.4cqi,54px);font-weight:var(--cb-head-w);line-height:1.05;letter-spacing:-.02em;overflow-wrap:anywhere}
+/* A worded price ("Starting at $149.99/hr") at about 60% of the display size,
+   so it reads as one or two lines instead of three huge ones. */
+.cb-amt-long{font-size:clamp(24px,2.64cqi,32px);line-height:1.15;letter-spacing:-.01em}
 .cb-perks{display:grid;gap:11px;margin-top:24px}
 .cb-perk{display:flex;align-items:flex-start;gap:11px;font-size:15px;font-weight:600;line-height:1.45;color:var(--cb-card-text)}
 .cb-check{flex:none;display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--cb-chip-bg);border:1.5px solid var(--cb-border);color:var(--cb-accent-text)}
@@ -394,8 +402,13 @@ html[data-acg-scrolled] .cb-nav{box-shadow:0 8px 30px -14px var(--cb-shadow-stro
 @keyframes cb-breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
 }
 
+/* Links that step aside stay in the menu, which shows from then on. A long
+   name gets the room sooner: the extra links step aside from 1240px for a
+   very long one, and every link from 760px for any long one. */
+@container (max-width:1240px){.cb-nav-xl .cb-link-x{display:none}.cb-nav-xl.cb-nav-x .acg-menu{display:block}}
 @container (max-width:1100px){
 .cb-link-x{display:none}
+.cb-nav-x .acg-menu{display:block}
 .cb-s4{grid-template-columns:repeat(2,minmax(0,1fr))}
 .cb-s4::before{display:none}
 .cb-foot-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -412,11 +425,18 @@ html[data-acg-scrolled] .cb-nav{box-shadow:0 8px 30px -14px var(--cb-shadow-stro
 .cb-about-media,.cb-about-long .cb-about-media{position:relative;top:auto;max-width:620px}
 .cb-blob-3{display:none}
 }
+@container (max-width:760px){.cb-nav-long .cb-links{display:none}.cb-nav-long .acg-menu{display:block}}
+/* Just above phone width the menu button beside three links left a
+   19-22 character name in a wide face (Syne) ~140px, too little for two
+   lines: with the menu showing anyway (cb-nav-x), it takes the links. */
+@container (max-width:680px){.cb-nav-x .cb-links{display:none}}
 @container (max-width:600px){
 .cb-links,.cb-nav-cta{display:none}
 .cb-nav-in{min-height:64px;gap:12px}
 .cb-orb{width:34px;height:34px}
 .cb-name{font-size:17px}
+.cb-nav-long .cb-name{font-size:15px}
+.cb-nav-xl .cb-name{font-size:14px}
 .cb-tag{font-size:8.5px;letter-spacing:.2em}
 .cb-hero{min-height:0;padding:48px 0 96px}
 .cb-hero.cb-has-media{min-height:clamp(560px,86vh,760px)}
@@ -1075,6 +1095,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
   const afterHero = flow[flow.indexOf('hero') + 1];
   const waveFill = { services: 'panel', process: 'panel', about: 'panel', gallery: 'bg', testimonials: 'bg' }[afterHero];
 
+  const navNameTier = images.logo ? '' : name.length > 40 ? ' cb-nav-long cb-nav-xl' : name.length > 22 ? ' cb-nav-long' : '';
   const navLinks = [
     has.services && { href: '#packages', label: 'Packages' },
     has.process && { href: '#how', label: 'How It Works', extra: true },
@@ -1119,8 +1140,13 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
   const contactPrimaryLabel = txt(copy.ctaButtonText) || (has.services ? 'See Packages' : phone ? `Call ${phone}` : 'Get in Touch');
   const contactPrimaryHref = txt(copy.ctaUrl) || intentHref(contactPrimaryLabel, { ...anchors, contact: tel || '#contact' }, anchors.services || tel || '#contact');
   const contactBooks = booksBy(contactPrimaryLabel, copy.ctaUrl);
+  // The phone button's URL key (ctaSecondaryUrl) is also hero Button 2's,
+  // so it only leaves tel: when the owner gave this button its own text (or
+  // the URL itself dials or texts): the default "Call (555) ..." label must
+  // never open the Instagram link the owner set for the hero button.
+  const secondaryUrl = txt(copy.ctaSecondaryUrl);
   const contactSecondaryLabel = txt(copy.ctaSecondaryText) || (phone ? `Call ${phone}` : '');
-  const contactSecondaryHref = txt(copy.ctaSecondaryUrl) || tel;
+  const contactSecondaryHref = (secondaryUrl && (txt(copy.ctaSecondaryText) || /^(tel|sms):/i.test(secondaryUrl))) ? secondaryUrl : tel;
   const showContactSecondary = contactSecondaryLabel && contactSecondaryHref
     && (contactSecondaryHref !== contactPrimaryHref || !!txt(copy.ctaSecondaryText));
   const mapsHref = address
@@ -1215,7 +1241,9 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
       <style>{CSS}</style>
       <a className="cb-skip" href="#main">Skip to content</a>
 
-      <nav className="cb-nav" aria-label="Main" style={{ order: -1 }}>
+      {/* cb-nav-x: some links step aside (cb-link-x), so the menu shows
+          from then on. cb-nav-long / -xl: the shop name (no logo) is long. */}
+      <nav className={`cb-nav${navLinks.some((l) => l.extra) ? ' cb-nav-x' : ''}${navNameTier}`} aria-label="Main" style={{ order: -1 }}>
         <div className="cb-wrap cb-nav-in">
           <a className="cb-brand" href="#top" aria-label={`${name}, back to top`}>
             {brand({ height: 42, width: 'auto', maxWidth: 180 }, 'eager')}
@@ -1328,7 +1356,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
                             {i % CARD_ICONS.length === 1 ? <BubbleGlyph size={28} /> : <Icon d={ICONS[CARD_ICONS[i % CARD_ICONS.length]]} size={26} />}
                           </span>
                           {s.name && <h3 className="cb-price-name">{s.name}</h3>}
-                          {s.price && <p className="cb-amt">{s.price}</p>}
+                          {s.price && <p className={`cb-amt${s.price.length > 10 ? ' cb-amt-long' : ''}`}>{s.price}</p>}
                           {perks ? (
                             <ul className="cb-perks">
                               {perks.map((p, k) => (
