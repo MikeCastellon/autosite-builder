@@ -59,7 +59,7 @@ const CSS = `
 .cb-root a:focus-visible,.cb-root summary:focus-visible,.cb-root label:focus-visible,.cb-track:focus-visible{outline:3px solid var(--cb-focus);outline-offset:3px}
 .cb-hint{display:flex;align-items:center;gap:10px;width:fit-content;max-width:100%;margin:20px auto 0;padding:10px 14px;border:1.5px dashed rgba(128,128,128,.55);border-radius:10px;font-family:var(--cb-body);font-size:13px;font-weight:600;line-height:1.45;letter-spacing:0;text-transform:none;text-shadow:none;color:inherit;opacity:.85}
 
-.cb-eyebrow{display:inline-flex;align-items:center;gap:8px;max-width:100%;padding:7px 18px;border-radius:999px;background:var(--cb-chip-bg);border:1.5px solid var(--cb-border);font-size:11.5px;font-weight:800;line-height:1.4;letter-spacing:.16em;text-transform:uppercase;color:var(--cb-accent-text)}
+.cb-eyebrow{display:inline-flex;align-items:center;gap:8px;max-width:100%;padding:7px 18px;border-radius:999px;background:var(--cb-chip-bg);border:1.5px solid var(--cb-border);font-size:11.5px;font-weight:800;line-height:1.4;letter-spacing:.16em;text-transform:uppercase;color:var(--cb-chip-text)}
 .cb-eyebrow svg{flex:none}
 .cb-h2{margin-top:18px;font-family:var(--cb-head);font-size:clamp(34px,4.6cqi,58px);font-weight:var(--cb-head-w);line-height:1.06;letter-spacing:-.01em;color:var(--cb-text);text-wrap:balance}
 .cb-sub{margin-top:16px;max-width:560px;font-size:17px;font-weight:600;line-height:1.65;color:var(--cb-muted);text-wrap:pretty}
@@ -97,7 +97,7 @@ html[data-acg-scrolled] .cb-nav{box-shadow:0 8px 30px -14px var(--cb-shadow-stro
 .cb-btn:active{transform:translateY(1px)}
 .cb-btn svg{flex:none}
 .cb-btn-soap{color:var(--cb-btn-text);background-color:var(--cb-btn-bg);background-image:var(--cb-btn);box-shadow:0 10px 28px -10px var(--cb-glow),inset 0 1px 0 rgba(255,255,255,.25)}
-.cb-btn-outline{color:var(--cb-accent-text);background:var(--cb-glass);border-color:var(--cb-border-strong);box-shadow:0 4px 18px -8px var(--cb-shadow)}
+.cb-btn-outline{color:var(--cb-glass-text);background:var(--cb-glass);border-color:var(--cb-border-strong);box-shadow:0 4px 18px -8px var(--cb-shadow)}
 .cb-btn-sm{min-height:44px;padding:0 22px;font-size:14px}
 
 .cb-hero{position:relative;isolation:isolate;display:flex;align-items:center;min-height:clamp(640px,calc(100vh - 72px),940px);padding:clamp(64px,8cqi,104px) 0 clamp(120px,12cqi,168px);overflow:clip;background:var(--cb-bg);color:var(--cb-text);text-align:center}
@@ -112,7 +112,7 @@ html[data-acg-scrolled] .cb-nav{box-shadow:0 8px 30px -14px var(--cb-shadow-stro
 .cb-bub{position:absolute;z-index:-2;border-radius:50%;background:var(--cb-bubble);border:1.5px solid var(--cb-bubble-edge);box-shadow:inset 0 0 14px rgba(255,255,255,.45);pointer-events:none}
 .cb-hero-in{position:relative}
 .cb-hero-body{position:relative;max-width:900px;margin:0 auto}
-.cb-pill{display:inline-flex;align-items:center;gap:10px;max-width:100%;padding:8px 20px;border-radius:999px;background:var(--cb-glass);border:1.5px solid var(--cb-border);box-shadow:0 2px 14px -6px var(--cb-shadow);font-size:13px;font-weight:800;line-height:1.4;letter-spacing:.02em;color:var(--cb-accent-text)}
+.cb-pill{display:inline-flex;align-items:center;gap:10px;max-width:100%;padding:8px 20px;border-radius:999px;background:var(--cb-glass);border:1.5px solid var(--cb-border);box-shadow:0 2px 14px -6px var(--cb-shadow);font-size:13px;font-weight:800;line-height:1.4;letter-spacing:.02em;color:var(--cb-glass-text)}
 .cb-dot{flex:none;width:8px;height:8px;border-radius:50%;background:var(--cb-btn)}
 .cb-ghost{display:block;margin-top:24px;overflow:hidden;font-family:var(--cb-head);font-size:min(clamp(54px,10cqi,128px),calc(min(100cqi - 2 * var(--cb-gutter),900px) / (var(--cb-ghost-n,12) * .68)));font-weight:var(--cb-head-w);line-height:.95;letter-spacing:-.01em;text-transform:uppercase;white-space:nowrap;color:transparent;-webkit-text-stroke:2.5px var(--cb-stroke);opacity:.2;user-select:none;pointer-events:none}
 .cb-h1{margin-top:22px;font-family:var(--cb-head);font-size:clamp(46px,7cqi,96px);font-weight:var(--cb-head-w);line-height:1;letter-spacing:-.015em;color:inherit;text-wrap:balance}
@@ -189,7 +189,7 @@ html[data-acg-scrolled] .cb-nav{box-shadow:0 8px 30px -14px var(--cb-shadow-stro
 .cb-check{flex:none;display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--cb-chip-bg);border:1.5px solid var(--cb-border);color:var(--cb-accent-text)}
 .cb-price .acg-svc-foot{padding-top:30px}
 .cb-price .acg-svc-more{letter-spacing:.02em}
-.cb-price .acg-svc-book{display:flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:0 18px;border-radius:14px;background:var(--cb-chip-bg);border:1.5px solid var(--cb-border-strong);color:var(--cb-accent-text);font-size:15px;font-weight:800;text-decoration:none}
+.cb-price .acg-svc-book{display:flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:0 18px;border-radius:14px;background:var(--cb-chip-bg);border:1.5px solid var(--cb-border-strong);color:var(--cb-chip-text);font-size:15px;font-weight:800;text-decoration:none}
 .cb-featured{background:var(--cb-ink-bg);border-color:transparent;box-shadow:0 22px 60px -22px var(--cb-shadow-strong)}
 .cb-featured .cb-price-name,.cb-featured .cb-perk{color:var(--cb-ink-text)}
 .cb-featured .cb-amt{color:var(--cb-ink-text)}
@@ -317,8 +317,12 @@ html[data-acg-scrolled] .cb-nav{box-shadow:0 8px 30px -14px var(--cb-shadow-stro
 .cb-foot{position:relative;isolation:isolate;overflow:clip;padding:clamp(64px,8cqi,88px) 0 32px;background:var(--cb-footer-bg);color:var(--cb-footer-muted);font-size:15px;line-height:1.7}
 .cb-foot::before{content:'';position:absolute;inset:0;z-index:-1;background:var(--cb-foot-glow);pointer-events:none}
 .cb-foot-grid{display:grid;grid-template-columns:minmax(0,1.8fr) repeat(3,minmax(0,1fr));gap:40px clamp(32px,5cqi,64px)}
-.cb-foot .cb-brand{color:var(--cb-footer-text)}
-.cb-foot .cb-name{color:var(--cb-footer-text)}
+/* The nav's ellipsis relies on the brand being a shrinking flex item; in
+   the footer column it is a plain box as wide as the name, so a long name
+   ran over the next column (and off a phone screen). Here it is capped at
+   the column and the name wraps instead. */
+.cb-foot .cb-brand{display:flex;width:fit-content;max-width:100%;color:var(--cb-footer-text)}
+.cb-foot .cb-name{white-space:normal;text-overflow:clip;overflow-wrap:anywhere;text-wrap:balance;color:var(--cb-footer-text)}
 .cb-foot .cb-tag{color:var(--cb-footer-muted)}
 .cb-foot .cb-orb{box-shadow:0 0 0 2px rgba(255,255,255,.25)}
 .cb-foot-tag{margin-top:16px;max-width:320px;font-weight:600}
@@ -331,7 +335,7 @@ html[data-acg-scrolled] .cb-nav{box-shadow:0 8px 30px -14px var(--cb-shadow-stro
 .cb-foot-slogan{display:inline-flex;align-items:center;gap:8px;font-family:var(--cb-head);font-size:15px;font-weight:var(--cb-head-w);color:var(--cb-footer-accent)}
 
 @media (hover:hover){
-.cb-link:hover{background:var(--cb-chip-bg);color:var(--cb-accent-text)}
+.cb-link:hover{background:var(--cb-chip-bg);color:var(--cb-chip-text)}
 .cb-btn-soap:hover{transform:translateY(-3px);box-shadow:0 16px 40px -12px var(--cb-glow),inset 0 1px 0 rgba(255,255,255,.3)}
 .cb-btn-outline:hover{transform:translateY(-2px);border-color:var(--cb-accent-text);box-shadow:0 10px 28px -12px var(--cb-shadow)}
 .cb-has-media .cb-btn-outline:hover{border-color:var(--cb-on-hero);background:rgba(0,0,0,.34)}
@@ -345,7 +349,7 @@ html[data-acg-scrolled] .cb-nav{box-shadow:0 8px 30px -14px var(--cb-shadow-stro
 .cb-shot:hover img{transform:scale(1.05)}
 .cb-quote:hover{transform:translateY(-5px);box-shadow:0 22px 56px -24px var(--cb-shadow-strong)}
 .cb-cinfo:hover{transform:translateX(3px);border-color:var(--cb-border-strong);box-shadow:0 10px 26px -18px var(--cb-shadow-strong)}
-.cb-cval a:hover{color:var(--cb-accent-text);border-bottom-color:currentColor}
+.cb-cval a:hover{color:var(--cb-card-accent);border-bottom-color:currentColor}
 .cb-foot a:hover{color:var(--cb-footer-text)}
 .cb-social a:hover{border-color:var(--cb-footer-accent);background:rgba(255,255,255,.1)}
 .cb-marquee:hover .cb-mq-track{animation-play-state:paused}
@@ -550,6 +554,38 @@ function fromHsl(h, s, l) {
   return rgbToHex(ch(1 / 3) * 255, ch(0) * 255, ch(-1 / 3) * 255);
 }
 
+// fg blended toward white or black (whichever needs less change) just far
+// enough to reach 4.5:1 on every backdrop at once, like ensureContrast for
+// one. Repairing against each backdrop in turn can undo an earlier repair
+// on a mid-tone palette. If no blend reaches 4.5:1, the better extreme wins.
+const worstOn = (c, backs) => Math.min(...backs.map((b) => contrastRatio(c, b)));
+function readableOnAll(fg, backs) {
+  if (worstOn(fg, backs) >= 4.5) return fg;
+  const solve = (target) => {
+    if (worstOn(target, backs) < 4.5) return null;
+    let lo = 0;
+    let hi = 1;
+    for (let i = 0; i < 18; i += 1) {
+      const m = (lo + hi) / 2;
+      if (worstOn(mix(fg, target, m), backs) >= 4.5) hi = m;
+      else lo = m;
+    }
+    // 8-bit rounding can land a hair under: step on.
+    let k = hi;
+    let out = mix(fg, target, k);
+    while (worstOn(out, backs) < 4.5 && k < 1) {
+      k = Math.min(1, k + 0.01);
+      out = mix(fg, target, k);
+    }
+    return { k, out };
+  };
+  const up = solve('#ffffff');
+  const down = solve('#000000');
+  if (up && down) return up.k <= down.k ? up.out : down.out;
+  if (up || down) return (up || down).out;
+  return worstOn('#ffffff', backs) >= worstOn('#000000', backs) ? '#ffffff' : '#000000';
+}
+
 // Every --cb-* token beyond deriveTheme's, from the owner's five roles.
 // The default accent (#06b6d4) turned round the wheel gives the mockup's
 // sky, mint, lavender and pink; a custom accent gets its own set, and a
@@ -616,6 +652,29 @@ function bubbleTokens(t) {
 
   const cardBg = dark ? mix(t.surface, white, 0.035) : mix(t.bg, white, 0.8);
   const awardBg = mix(panel, amber, dark ? 0.14 : 0.1);
+
+  // deriveTheme repairs accentText against bg and surface only. Small
+  // accent text also sits on the tinted chip (eyebrows, each package's Book
+  // now, the nav hover: the chip's accent or lavender end over any section
+  // or card) and on the hero's frosted glass (pill, outline button) over
+  // the soap gradient; a mid-tone accent on a dark palette dropped to about
+  // 3:1 there. Each place gets a copy repaired against every backdrop it
+  // can land on.
+  const chipA = dark ? 0.16 : 0.1;
+  const chipL = dark ? 0.16 : 0.12;
+  const chipText = readableOnAll(
+    t.accentText,
+    [t.bg, panel, t.surface, cardBg, mix(t.surface, sky, dark ? 0 : 0.2)].flatMap((x) => [mix(x, t.accent, chipA), mix(x, lavDeep, chipL)]),
+  );
+  // The hero gradient's base stops, each also under its strongest glow.
+  const heroBases = dark ? [mix(t.bg, t.accent, 0.06), t.bg, panel] : [mix(t.surface, sky, 0.25), t.bg, panel, mix(t.bg, sky, 0.2)];
+  const heroGlows = dark ? [[sky, 0.16], [lav, 0.14], [mint, 0.1], [pink, 0.1]] : [[sky, 0.45], [lav, 0.4], [mint, 0.3], [pink, 0.28]];
+  const glassText = readableOnAll(
+    t.accentText,
+    heroBases
+      .flatMap((x) => [x, ...heroGlows.map(([c, a]) => mix(x, c, a))])
+      .map((x) => (dark ? mix(x, t.surface, 0.62) : mix(x, panel, 0.72))),
+  );
   const numStop = (c) => ensureContrast(c, white, 3);
   const avStop = (c) => ensureContrast(c, white, 4.5);
   const shadowBase = dark ? '#000000' : mix(t.accent, '#000000', 0.45);
@@ -635,8 +694,10 @@ function bubbleTokens(t) {
     '--cb-iri-strong': `conic-gradient(from 0deg, ${alpha(sky, 0.62)}, ${alpha(lav, 0.56)}, ${alpha(mint, 0.52)}, ${alpha(pink, 0.52)}, ${alpha(sky, 0.62)})`,
     '--cb-iri-soft': `conic-gradient(from 0deg, ${alpha(sky, dark ? 0.1 : 0.3)}, ${alpha(lav, dark ? 0.09 : 0.28)}, ${alpha(mint, dark ? 0.08 : 0.26)}, ${alpha(sky, dark ? 0.1 : 0.3)})`,
     '--cb-orb-ring': dark ? alpha(white, 0.22) : alpha(white, 0.85),
-    '--cb-chip-bg': `linear-gradient(135deg, ${alpha(t.accent, dark ? 0.16 : 0.1)}, ${alpha(lavDeep, dark ? 0.16 : 0.12)})`,
+    '--cb-chip-bg': `linear-gradient(135deg, ${alpha(t.accent, chipA)}, ${alpha(lavDeep, chipL)})`,
+    '--cb-chip-text': chipText,
     '--cb-glass': dark ? alpha(t.surface, 0.62) : alpha(panel, 0.72),
+    '--cb-glass-text': glassText,
     '--cb-glass-strong': dark ? alpha(t.surface, 0.78) : alpha(panel, 0.86),
     '--cb-glass-edge': dark ? alpha(t.text, 0.1) : alpha(white, 0.9),
     '--cb-nav-glass': alpha(panel, 0.82),
@@ -671,6 +732,7 @@ function bubbleTokens(t) {
     '--cb-card-bg': cardBg,
     '--cb-card-text': ensureContrast(t.text, cardBg, 4.5),
     '--cb-card-muted': ensureContrast(t.textMuted, cardBg, 4.5),
+    '--cb-card-accent': ensureContrast(t.accentText, cardBg, 4.5),
     '--cb-card-border': dark ? alpha(t.text, 0.1) : alpha(t.accent, 0.16),
     '--cb-award-bg': awardBg,
     '--cb-award-text': ensureContrast(dark ? mix(amber, white, 0.4) : mix(amber, '#000000', 0.5), awardBg, 4.5),
@@ -736,6 +798,20 @@ const DEFAULT_WHY = [
   { icon: 'icon:phone', title: 'Straight Answers', desc: 'Not sure which package fits? Ask and we will help you choose.' },
   { icon: 'icon:heart', title: 'Happy to Help', desc: 'Questions or special requests? Just ask.' },
 ];
+// No type yet (an older site) gets the car wash look, as before.
+const washSite = (businessType) => !businessType || businessType === 'car_wash';
+
+// The same starters for the editor's How It Works / Why Us panels
+// (useTemplateInfo.js), given the site's raw businessType. Editing one field
+// saves the whole list as the owner's own, so a panel seeded from the
+// generic templateFallbacks lists (three steps, other cards) silently
+// replaced everything else the site showed. Fresh copies, safe to edit.
+export function defaultHowSteps(businessType) {
+  return (washSite(businessType) ? WASH_STEPS : SERVICE_STEPS).map((s) => ({ ...s }));
+}
+export function defaultWhyCards() {
+  return DEFAULT_WHY.map((c) => ({ ...c }));
+}
 
 // A description that is really a list ("Foam wash, tire shine and
 // spot-free rinse") becomes the mockup's perk list; prose stays prose.
@@ -895,7 +971,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
   const font = templateMeta?.font;
   const body = templateMeta?.bodyFont;
   const fb = getFallbacks(biz.businessType);
-  const isWash = !biz.businessType || biz.businessType === 'car_wash';
+  const isWash = washSite(biz.businessType);
 
   const hiddenIds = list(copy.hiddenSections);
   const show = (id) => !hiddenIds.includes(id);
@@ -939,10 +1015,10 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
   const priced = services.filter((s) => priceValue(s.price) !== null);
   const cheapest = priced.length >= 2 ? priced.reduce((a, b) => (priceValue(b.price) < priceValue(a.price) ? b : a)) : null;
 
-  const howSteps = (Array.isArray(copy.howSteps) ? copy.howSteps : isWash ? WASH_STEPS : SERVICE_STEPS)
+  const howSteps = (Array.isArray(copy.howSteps) ? copy.howSteps : defaultHowSteps(biz.businessType))
     .map((s) => ({ icon: fixEmoji(txt(s?.emoji)), title: txt(s?.title), desc: txt(s?.desc) }))
     .filter((s) => s.title || s.desc);
-  const whyCards = (Array.isArray(copy.whyCards) ? copy.whyCards : DEFAULT_WHY)
+  const whyCards = (Array.isArray(copy.whyCards) ? copy.whyCards : defaultWhyCards(biz.businessType))
     .map((c) => ({ icon: fixEmoji(txt(c?.icon)), title: txt(c?.title), desc: txt(c?.desc) }))
     .filter((c) => c.title || c.desc);
 
@@ -1264,7 +1340,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
                               id={`svc-more-${fromPackages ? 'pkg' : 'ai'}-${i}`}
                               text={s.description}
                               style={{ marginTop: 16, color: featured ? 'var(--cb-ink-muted)' : 'var(--cb-card-muted)', fontSize: 15.5, fontWeight: 600, lineHeight: 1.65 }}
-                              accentColor={featured ? 'var(--cb-ink-accent)' : 'var(--cb-accent-text)'}
+                              accentColor={featured ? 'var(--cb-ink-accent)' : 'var(--cb-card-accent)'}
                             />
                           )}
                           <div className="acg-svc-foot">
