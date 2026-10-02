@@ -63,3 +63,88 @@ export const SITE_BASE_CSS = `@media screen and (prefers-reduced-motion: no-pref
   html.acg-js [data-acg-reveal="fade"] { transform: none; }
   html.acg-js [data-acg-reveal].acg-in { opacity: 1; transform: none; }
 }`;
+
+// Old-browser fallback for container queries, published pages only (the
+// editor runs on current browsers). Theme-ready templates lay out with
+// @container rules and cq units against their root (container-type:
+// inline-size) and clip sideways overflow with overflow:clip. iOS/Safari 15
+// and older, Chrome 104 and older and Firefox 109 and older drop all of it,
+// so a page lays out 500-1,560px wide on a phone, with the desktop nav
+// (docs/audits/2026-10-02-pr10-merge-impact.md, XB-1).
+//
+// CQ_REWRITE_FN is the pure CSS-text rewrite, kept as ES5 source text so the
+// page runs exactly the code siteRuntime.test.js compiles and tests (a real
+// function would go through the minifier, which may emit newer syntax):
+//   rewrite(css, cq, clip) -> css
+//   cq:   "@container [name] <query> {" -> "@media <query> {", and container
+//         units -> viewport units (cqw/cqi -> vw, cqh/cqb -> vh, cqmin ->
+//         vmin, cqmax -> vmax). On a published page the root spans the
+//         viewport, so its width is the viewport's (less a desktop
+//         scrollbar). "and" stays; a top-level "or" becomes a comma and
+//         "not (q)" becomes "not all and (q)", which mean the same to engines
+//         older than Media Queries 4. style() / scroll-state() queries have
+//         no media equivalent: those rules are left alone.
+//   clip: "overflow:clip" -> "overflow:hidden", the two-axis form only (one
+//         axis hidden turns the other axis into a scroller).
+// Strings, comments and url() are never touched, nor digits+cq inside
+// identifiers or escaped selectors (.w-\[5cqi\]).
+export const CQ_REWRITE_FN = String.raw`function(css,cq,clip){
+var U={cqw:'vw',cqi:'vw',cqh:'vh',cqb:'vh',cqmin:'vmin',cqmax:'vmax'};
+function query(q){
+q=q.replace(/^\s+|\s+$/g,'');
+if(/(style|scroll-state)\(/i.test(q))return null;
+var n=/^([^\s(]+)\s+/.exec(q),o='',b='',d=0,i,c;
+if(n&&!/^not$/i.test(n[1]))q=q.slice(n[0].length);
+q=q.replace(/(^|[^\w-])((?:min-|max-)?)inline-size(?![\w-])/gi,'$1$2width').replace(/(^|[^\w-])((?:min-|max-)?)block-size(?![\w-])/gi,'$1$2height');
+if(/^not[\s(]/i.test(q))return 'not all and '+q.replace(/^not\s*/i,'');
+for(i=0;i<q.length;i++){c=q.charAt(i);
+if(!d&&c!=='('){b+=c;continue;}
+if(!d){o+=/^\s*or\s*$/i.test(b)?', ':b;b='';}
+if(c==='(')d++;else if(c===')')d--;
+o+=c;}
+return o+b||'all';
+}
+var p=String(css).split(/("(?:[^"\\\n]|\\[\s\S])*"|'(?:[^'\\\n]|\\[\s\S])*'|\/\*[\s\S]*?\*\/|url\(\s*(?:"(?:[^"\\\n]|\\[\s\S])*"|'(?:[^'\\\n]|\\[\s\S])*'|[^)]*)\s*\))/i),i,s;
+for(i=0;i<p.length;i+=2){s=p[i];
+if(cq)s=s.replace(/@container(?![\w-])\s*([^{};]*)\{/gi,function(m,q){q=query(q);return q===null?m:'@media '+q+'{';})
+.replace(/(^|[^\w.\-\\\[])(-?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?)(cq(?:min|max|[iwhb]))(?![\w\-\\])/gi,function(m,a,n,u){return a+n+U[u.toLowerCase()];});
+if(clip)s=s.replace(/(^|[^\w\-\\])(overflow\s*:\s*)clip(?![\w\-\\])(?!\s+[\w-])/gi,'$1$2hidden');
+p[i]=s;}
+return p.join('');
+}`;
+
+// exportHtml.js puts this in <head>, before SITE_RUNTIME_JS. It does nothing
+// when CSS.supports says container queries and overflow:clip both work.
+// Otherwise it rewrites every <style> and style="" attribute that needs it
+// as the parser inserts them: the template's <style> sits in <body>, and a
+// MutationObserver callback runs before the browser paints what it just
+// parsed (the parser inserts nodes one at a time, each with its own record).
+// A <style> is rewritten once complete (some node follows it), never
+// half-parsed. One sweep at readyState 'interactive' catches anything else
+// (a subtree a script inserted), then the observer stops; widgets load later
+// and use no container queries.
+// Without overflow:clip, the rewrite to overflow:hidden keeps sections from
+// spilling sideways, and overflow-x:hidden on <body> clips anything else at
+// the viewport. <body> alone: on html AND body, body becomes a scroller and
+// the sticky nav and action bar stop sticking. The root keeps its
+// overflow-x:clip (dropped by these browsers) for the same reason.
+// Fails open: an error leaves the page (or that one element) as parsed.
+export const SITE_CQ_FALLBACK_JS = `(function(){
+var w=window,d=document,C,cq,clip,rw,st,pend=[],mo=null,ran=0;
+function ok(p,v){return !!(C&&C.supports&&C.supports(p,v));}
+function attr(el){try{var v=el.getAttribute('style');if(v&&/cq|clip/i.test(v)){var u=rw(v,cq,clip);if(u!==v)el.setAttribute('style',u);}}catch(e){}}
+function sheet(s){if(s.acgCq)return;s.acgCq=1;try{var t=s.textContent,u=rw(t,cq,clip);if(u!==t)s.textContent=u;}catch(e){}}
+function closed(n){for(;n;n=n.parentNode)if(n.nextSibling)return 1;return 0;}
+function flush(all){for(var i=0,k=[];i<pend.length;i++)if(all||closed(pend[i]))sheet(pend[i]);else k.push(pend[i]);pend=k;}
+function scan(r){var i,l=r.getElementsByTagName('style');for(i=0;i<l.length;i++)pend.push(l[i]);l=r.querySelectorAll('[style*="cq"],[style*="clip"]');for(i=0;i<l.length;i++)attr(l[i]);}
+function add(rs){for(var i=0;i<rs.length;i++)for(var a=rs[i].addedNodes,j=0;j<a.length;j++){var n=a[j];if(n.nodeType!==1)continue;if(/^style$/i.test(n.tagName))pend.push(n);else attr(n);}flush(0);}
+function done(){if(ran||d.readyState==='loading')return;ran=1;try{if(mo){add(mo.takeRecords());mo.disconnect();}scan(d);flush(1);}catch(e){}}
+try{
+C=w.CSS;cq=!ok('container-type','inline-size');clip=!ok('overflow-x','clip');
+if(!cq&&!clip)return;
+rw=${CQ_REWRITE_FN};
+if(clip){st=d.createElement('style');st.acgCq=1;st.textContent='body{overflow-x:hidden}';(d.head||d.documentElement).appendChild(st);}
+if(w.MutationObserver){mo=new w.MutationObserver(function(rs){try{add(rs);}catch(e){}});mo.observe(d.documentElement,{childList:true,subtree:true});}
+d.addEventListener('readystatechange',done);d.addEventListener('DOMContentLoaded',done);done();
+}catch(e){}
+})();`;

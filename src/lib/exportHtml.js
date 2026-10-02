@@ -4,7 +4,7 @@ import { normalizeBusinessInfo } from './normalizeBusinessInfo.js';
 import { TEMPLATE_COMPONENT_MAP } from '../data/templates.js';
 import { supabase } from './supabase.js';
 import { buildFontHref, LEGACY_EXPORT_FAMILIES } from './fontCatalog.js';
-import { SITE_BASE_CSS, SITE_RUNTIME_JS } from './siteRuntime.js';
+import { SITE_BASE_CSS, SITE_CQ_FALLBACK_JS, SITE_RUNTIME_JS } from './siteRuntime.js';
 
 const SCHEDULER_WIDGET_URL =
   (typeof window !== 'undefined' && window.location && window.location.origin
@@ -224,6 +224,8 @@ ${legacyLayout ? LEGACY_MOBILE_CSS : ''}
   <style>
 ${SITE_BASE_CSS}
   </style>
+  <!-- Container-query fallback for older browsers (no-op on current ones) -->
+  <script>${SITE_CQ_FALLBACK_JS}</script>
   <script>${SITE_RUNTIME_JS}</script>
 
   <!-- Local Business Schema -->

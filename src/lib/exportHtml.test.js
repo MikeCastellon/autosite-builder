@@ -18,9 +18,10 @@ vi.mock('../data/templates.js', async (importOriginal) => {
 
 const { exportHtmlString } = await import('./exportHtml.js');
 const { buildTemplateMeta } = await import('./siteRender.js');
-const { SITE_RUNTIME_JS } = await import('./siteRuntime.js');
+const { SITE_RUNTIME_JS, SITE_CQ_FALLBACK_JS, CQ_REWRITE_FN } = await import('./siteRuntime.js');
 const { LEGACY_EXPORT_FAMILIES } = await import('./fontCatalog.js');
-const { full, custom } = await import('../components/preview/templates/__fixtures__/businesses.js');
+const { TEMPLATE_COMPONENT_MAP } = await import('../data/templates.js');
+const { full, custom, FIXTURES } = await import('../components/preview/templates/__fixtures__/businesses.js');
 const { SAMPLE_META } = await import('../components/preview/templates/__fixtures__/KitSampleTemplate.jsx');
 
 const fontHref = (html) => {
@@ -82,5 +83,75 @@ describe('exportHtmlString', () => {
     const ld = head.slice(head.indexOf('application/ld+json'));
     expect(ld).not.toMatch(/<\/script><script>alert/);
     expect(JSON.parse(ld.slice(ld.indexOf('{'), ld.lastIndexOf('}') + 1)).description).toBe(copy.metaDescription);
+  });
+
+  it('puts the container-query fallback in <head>, once, ahead of the runtime', async () => {
+    for (const id of ['detailing_sporty', 'detailing_coastal']) {
+      const html = await exportHtmlString(id, full.businessInfo, full.generatedCopy, buildTemplateMeta(id), full.images);
+      const tag = `<script>${SITE_CQ_FALLBACK_JS}</script>`;
+      expect(html.split(tag), id).toHaveLength(2);
+      const at = html.indexOf(tag);
+      expect(at).toBeGreaterThan(html.indexOf('<head>'));
+      expect(at).toBeLessThan(html.indexOf(`<script>${SITE_RUNTIME_JS}</script>`));
+      expect(at).toBeLessThan(html.indexOf('</head>'));
+    }
+  });
+});
+
+// The fallback's rewrite, compiled from the shipped source text.
+const rewrite = new Function(`return (${CQ_REWRITE_FN});`)();
+const unescapeAttr = (s) => s.replace(/&quot;/g, '"').replace(/&#x27;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+// CSS without comments and string contents, for matching rules only.
+const code = (css) => css.replace(/\/\*[\s\S]*?\*\//g, '').replace(/"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'/g, '""');
+const count = (s, re) => (s.match(re) || []).length;
+const CONTAINER_RULE = /@container(?![\w-])\s*([^{};]*)\{/g;
+const CQ_UNIT = /(^|[^\w.\-\\[])-?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?cq(?:min|max|[iwhb])(?![\w\-\\])/i;
+const TWO_AXIS_CLIP = /(^|[^\w-])overflow\s*:\s*clip(?![\w-])(?!\s+[\w-])/i;
+// The phone-menu rule as the rewrite emits it. MobileMenu.jsx already ships
+// the same @media rule inside @supports not (container-type ...), so that
+// block is stripped before counting or it would match with no rewrite.
+const MENU_RULE = /@media \(max-width: ?600px\)\{\.acg-menu\{display:block\}\}/g;
+const SUPPORTS_NOT_CQ = /@supports not \(container-type[^)]*\)\{@media[^{]*\{[^{}]*\{[^}]*\}\}\}/g;
+const menuRules = (css) => count(css.replace(SUPPORTS_NOT_CQ, ''), MENU_RULE);
+// What engines without Media Queries 4 (range syntax, or, nesting) can read.
+const MQ3_WIDTH =/^\((?:min|max)-width:\s*\d+(?:\.\d+)?px\)(?:\s+and\s+\((?:min|max)-width:\s*\d+(?:\.\d+)?px\))*$/;
+
+describe('container-query fallback on real templates', () => {
+  it('turns every container rule and unit a template ships into ones old browsers read', async () => {
+    let rules = 0;
+    for (const id of Object.keys(TEMPLATE_COMPONENT_MAP)) {
+      const mod = await TEMPLATE_COMPONENT_MAP[id]();
+      for (const [name, fx] of Object.entries(FIXTURES)) {
+        const meta = id === '__kit_sample__'
+          ? { ...SAMPLE_META, colors: { ...SAMPLE_META.colors, ...fx.customColors } }
+          : buildTemplateMeta(id, fx.customColors, fx.customFonts);
+        const html = await exportHtmlString(id, fx.businessInfo, fx.generatedCopy, meta, fx.images);
+        const where = `${id} / ${name}`;
+        const sheets = [...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => m[1]);
+        let menuRule = 0;
+        for (const css of sheets) {
+          const before = code(css);
+          const preludes = [...before.matchAll(CONTAINER_RULE)].map((m) => m[1].trim());
+          // Range syntax, "or" or style() would not survive as a media query
+          // on the browsers this fallback is for: keep templates to min/max-width.
+          for (const p of preludes) expect(p, `${where}: @container ${p}`).toMatch(MQ3_WIDTH);
+          rules += preludes.length;
+          const after = code(rewrite(css, true, true));
+          expect(after, where).not.toMatch(/@container(?![\w-])/);
+          expect(after, where).not.toMatch(CQ_UNIT);
+          expect(after, where).not.toMatch(TWO_AXIS_CLIP);
+          expect(count(after, /@media/g) - count(before, /@media/g), where).toBe(preludes.length);
+          menuRule += menuRules(after) - menuRules(before);
+        }
+        for (const [, raw] of html.matchAll(/ style="([^"]*)"/g)) {
+          expect(code(rewrite(unescapeAttr(raw), true, true)), where).not.toMatch(CQ_UNIT);
+        }
+        // The rewrite turns MobileMenu's @container rule into exactly one more
+        // @media (max-width: 600px) rule, so the phone menu switches at a
+        // 600px viewport, like the templates' own rules.
+        if (mod.themeReady === true) expect(menuRule, `${where}: MobileMenu rule`).toBe(1);
+      }
+    }
+    expect(rules).toBeGreaterThan(100);
   });
 });
