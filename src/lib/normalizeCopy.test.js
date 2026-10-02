@@ -23,6 +23,8 @@ const fullCopy = {
   },
   ctaPrimary: 'Book Now',
   ctaSecondary: 'See Services',
+  ctaHeadline: 'Ready for a Cleaner Car?',
+  ctaSubtext: 'Call or book online in Austin.',
   testimonialPlaceholders: [{ text: 'Great work.', name: 'Sam P.' }],
   metaTitle: 'Shine Co | Austin',
   metaDescription: 'Shine Co in Austin.',
@@ -36,7 +38,8 @@ const fullCopy = {
 
 const KEYS = [
   'headline', 'subheadline', 'aboutText', 'servicesSection', 'ctaPrimary', 'ctaSecondary',
-  'testimonialPlaceholders', 'metaTitle', 'metaDescription', 'keywords', 'footerTagline',
+  'ctaHeadline', 'ctaSubtext', 'testimonialPlaceholders', 'metaTitle', 'metaDescription', 'keywords',
+  'footerTagline',
 ];
 
 describe('normalizeCopy', () => {
@@ -55,6 +58,8 @@ describe('normalizeCopy', () => {
       for (const key of KEYS) expect(out).toHaveProperty(key);
       expect(typeof out.headline).toBe('string');
       expect(typeof out.aboutText).toBe('string');
+      expect(typeof out.ctaHeadline).toBe('string');
+      expect(typeof out.ctaSubtext).toBe('string');
       expect(typeof out.servicesSection.intro).toBe('string');
       expect(Array.isArray(out.servicesSection.items)).toBe(true);
       expect(Array.isArray(out.testimonialPlaceholders)).toBe(true);
@@ -76,6 +81,9 @@ describe('normalizeCopy', () => {
     });
     expect(out.ctaPrimary).toBe('Contact Us');
     expect(out.ctaSecondary).toBe('View Services');
+    // Empty = the template's own contact heading and lead.
+    expect(out.ctaHeadline).toBe('');
+    expect(out.ctaSubtext).toBe('');
     expect(out.testimonialPlaceholders).toEqual([]); // never invented
     expect(out.metaTitle).toBe('Shine Co | Auto detailing in Austin, TX');
     expect(out.metaDescription).toBe('Shine Co offers Full Detail, Ceramic Coating in Austin, TX.');
@@ -141,6 +149,15 @@ describe('normalizeCopy', () => {
     expect(normalizeCopy({ keywords: ['a', 3, null, ' b '] }, biz).keywords).toEqual(['a', '3', 'b']);
   });
 
+  it('accepts old copy without the contact band keys and cleans wrongly typed ones', () => {
+    const old = { ...fullCopy };
+    delete old.ctaHeadline;
+    delete old.ctaSubtext;
+    const out = normalizeCopy(old, biz);
+    expect(out).toEqual({ ...old, ctaHeadline: '', ctaSubtext: '' });
+    expect(normalizeCopy({ ctaHeadline: ['x'], ctaSubtext: 12 }, biz)).toMatchObject({ ctaHeadline: '', ctaSubtext: '12' });
+  });
+
   it('does not mutate its input', () => {
     const input = { servicesSection: { items: ['Wash'] } };
     normalizeCopy(input, biz);
@@ -167,6 +184,26 @@ describe('parseCopyMessage', () => {
       expect(err).toBeInstanceOf(CopyResponseError);
       expect(err.code).toBe('max_tokens');
     }
+  });
+
+  it('joins a partial answer with the fallback model\'s continuation', () => {
+    const out = parseCopyMessage(msg([
+      { type: 'thinking', thinking: '' },
+      { type: 'text', text: '{"headline":"Hi",' },
+      { type: 'fallback', from: { model: 'claude-opus-5' }, to: { model: 'claude-opus-4-8' } },
+      { type: 'thinking', thinking: '' },
+      { type: 'text', text: '"aboutText":"About"}' },
+    ]));
+    expect(out).toEqual({ headline: 'Hi', aboutText: 'About' });
+  });
+
+  it('reads a complete answer after a fallback block when the parts do not join', () => {
+    const out = parseCopyMessage(msg([
+      { type: 'text', text: '{"headline":"Half' },
+      { type: 'fallback', from: { model: 'claude-opus-5' }, to: { model: 'claude-opus-4-8' } },
+      { type: 'text', text: '{"headline":"Whole"}' },
+    ]));
+    expect(out).toEqual({ headline: 'Whole' });
   });
 
   it('reports a refusal and a response without text', () => {

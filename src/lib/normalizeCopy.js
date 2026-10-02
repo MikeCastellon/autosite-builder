@@ -1,12 +1,16 @@
 // Generated copy is written by Claude, so its shape is not guaranteed: a
 // missing `servicesSection` or a string where an array belongs white-screens
-// the editor on every reopen (audit ai-3). normalizeCopy() guarantees the keys
-// templates and the editor read, with string/array types, and fills a missing
-// key with a default built only from what the owner entered (no invented
-// facts). It is pure and idempotent, and every key it does not know about
-// (googleWidgetKey, sectionOrder, heroLayout, ...) passes through untouched.
+// the editor on every reopen (audit ai-3). The current generator returns
+// schema-checked JSON (structured outputs), but the legacy route, older
+// deploys and hand-edited answers do not, so normalizeCopy() still guarantees
+// the keys templates and the editor read, with string/array types, and fills
+// a missing key with a default built only from what the owner entered (no
+// invented facts). It is pure and idempotent, and every key it does not know
+// about (googleWidgetKey, sectionOrder, heroLayout, ...) passes through
+// untouched.
 //
-// Used by netlify/functions/generate-website.js before it answers and by
+// Used by netlify/functions/_lib/copyGeneration.js (background job),
+// netlify/functions/generate-website.js (legacy route) and
 // src/lib/generateWebsite.js when the copy arrives in the browser.
 
 // Short service phrase per business type, for the default subheadline/title.
@@ -69,8 +73,8 @@ function normalizeKeywords(value) {
  * @param {object} copy          Parsed generator output or stored copy (anything is accepted).
  * @param {object} businessInfo  The wizard's business info; only used for defaults.
  * @returns {object} copy with headline, subheadline, aboutText, servicesSection.{intro,items[]},
- *   ctaPrimary, ctaSecondary, testimonialPlaceholders[], metaTitle, metaDescription,
- *   keywords[], footerTagline guaranteed.
+ *   ctaPrimary, ctaSecondary, ctaHeadline, ctaSubtext, testimonialPlaceholders[], metaTitle,
+ *   metaDescription, keywords[], footerTagline guaranteed.
  */
 export function normalizeCopy(copy, businessInfo) {
   const src = isPlainObject(copy) ? copy : {};
@@ -117,6 +121,11 @@ export function normalizeCopy(copy, businessInfo) {
     servicesSection: { ...section, intro: asText(section.intro), items },
     ctaPrimary: textOr(src.ctaPrimary, 'Contact Us'),
     ctaSecondary: textOr(src.ctaSecondary, 'View Services'),
+    // The contact band's heading and lead. Empty means "use the template's
+    // own fallback" (every template reads them as `text || fallback`), so a
+    // missing key is never filled with a guess here.
+    ctaHeadline: asText(src.ctaHeadline),
+    ctaSubtext: asText(src.ctaSubtext),
     testimonialPlaceholders: testimonials,
     metaTitle: textOr(src.metaTitle, titleDefault),
     metaDescription: textOr(src.metaDescription, descriptionDefault),
@@ -137,10 +146,15 @@ export class CopyResponseError extends Error {
 }
 
 /**
- * Reads the JSON object out of a Messages API response. Uses the first text
- * block (never content[0], which is a thinking block on models that think),
+ * Reads the JSON object out of a Messages API response. Reads text blocks by
+ * type (never content[0], which is a thinking block on models that think),
  * refuses truncated output, and tolerates markdown fences or prose around the
  * object.
+ *
+ * With refusal fallbacks, a stream that is declined part-way keeps the
+ * partial text, then a `fallback` block, then the fallback model's
+ * continuation of that text. So the joined text blocks are tried first, then
+ * the text after the last fallback block, then the first text block alone.
  */
 export function parseCopyMessage(message) {
   if (message?.stop_reason === 'max_tokens') {
@@ -149,11 +163,26 @@ export function parseCopyMessage(message) {
   if (message?.stop_reason === 'refusal') {
     throw new CopyResponseError('refusal', 'The model declined to write this copy.');
   }
-  const block = Array.isArray(message?.content)
-    ? message.content.find((b) => b?.type === 'text' && typeof b.text === 'string')
-    : null;
-  if (!block) throw new CopyResponseError('no_text', 'The model returned no text.');
-  return parseCopyText(block.text);
+  const content = Array.isArray(message?.content) ? message.content : [];
+  const isText = (b) => b?.type === 'text' && typeof b.text === 'string';
+  const texts = content.filter(isText).map((b) => b.text);
+  if (texts.length === 0) throw new CopyResponseError('no_text', 'The model returned no text.');
+
+  let lastFallback = -1;
+  content.forEach((b, i) => { if (b?.type === 'fallback') lastFallback = i; });
+  const afterFallback = content.slice(lastFallback + 1).filter(isText).map((b) => b.text).join('');
+
+  const candidates = [texts.join(''), afterFallback, texts[0]];
+  let lastError;
+  for (const candidate of new Set(candidates)) {
+    if (!candidate) continue;
+    try {
+      return parseCopyText(candidate);
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  throw lastError || new CopyResponseError('bad_json', 'The model did not return a JSON object.');
 }
 
 export function parseCopyText(text) {
