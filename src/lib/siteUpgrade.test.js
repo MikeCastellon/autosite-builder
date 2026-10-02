@@ -8,7 +8,7 @@ const {
   SITE_UPGRADE_RELEASE_DATE, PRODUCTION_APP_ORIGIN, NEW_DESIGN_BADGE_DAYS, checkUpgradedContent, eligibility,
   isUpgradedSite, nextStep, showNewDesignBadge, slugProblem, visibleText, widgetMounts, widgetScripts,
   NEW_DESIGN_TEMPLATES, isEmailAddress, upgradeEmailOwnerSkip, upgradeEmailSiteSkip, upgradeEmailSiteUrl,
-  upgradeEmailMarkerState, upgradeEmailPageSkip, backupReason, isNewDesignPage,
+  upgradeEmailMarkerState, upgradeEmailPageSkip, backupReason, isNewDesignPage, UPGRADE_MANUAL_SKIP,
 } = await import('./siteUpgrade.js');
 const { TEMPLATE_COMPONENT_MAP } = await import('../data/templates.js');
 const { isValidSlug, isReservedSlug } = await import('../../netlify/functions/_shared/slug.js');
@@ -413,6 +413,55 @@ describe('eligibility', () => {
     const check = { ...clean, regressions: [{ kind: 'phone', label: 'Phone number (520) 555-0142 is missing' }], intended: [{ kind: 'star-row', label: 'Star rating row' }] };
     const r = eligibility(siteRow(), live, check, owner, ctx());
     expect(r).toEqual({ status: 'flagged', reasons: [{ code: 'regression', text: 'Phone number (520) 555-0142 is missing' }] });
+  });
+});
+
+// The manual check list keeps the impact report's RISK, OWNER-SHOULD-REVIEW
+// and paying sites out of "Republish all"; a typo'd id would silently let
+// one through, so every entry must be a real-looking sites.id.
+describe('UPGRADE_MANUAL_SKIP', () => {
+  const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+
+  // Entries are removed as their fixes land, so every check here also holds
+  // for an empty list.
+  it('is a frozen list of frozen { siteId, reason } entries', () => {
+    expect(Object.isFrozen(UPGRADE_MANUAL_SKIP)).toBe(true);
+    for (const s of UPGRADE_MANUAL_SKIP) {
+      expect(Object.isFrozen(s), s.siteId).toBe(true);
+      expect(Object.keys(s).sort(), s.siteId).toEqual(['reason', 'siteId']);
+    }
+  });
+
+  it('gives every entry a uuid siteId and a one-line reason', () => {
+    for (const s of UPGRADE_MANUAL_SKIP) {
+      expect(s.siteId, JSON.stringify(s)).toMatch(UUID);
+      expect(typeof s.reason, s.siteId).toBe('string');
+      expect(s.reason.trim().length, s.siteId).toBeGreaterThan(0);
+      expect(s.reason, s.siteId).not.toMatch(/[\r\n]/);
+    }
+  });
+
+  // The reasons ship in the public app bundle next to ids every live page
+  // carries: no billing / payment status or remarks about the owner's data.
+  it('keeps every reason free of billing and owner remarks', () => {
+    for (const s of UPGRADE_MANUAL_SKIP) {
+      expect(s.reason, s.siteId).not.toMatch(/paying|paid|billing|past.?due|subscri|refund|residential|test data/i);
+    }
+  });
+
+  it('lists each site once', () => {
+    const ids = UPGRADE_MANUAL_SKIP.map((s) => s.siteId);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('is what eligibility checks when no manualSkip is passed', () => {
+    for (const s of UPGRADE_MANUAL_SKIP) {
+      const r = eligibility(siteRow({ id: s.siteId }), null, null, null, {});
+      expect(r.status, s.siteId).toBe('flagged');
+      expect(r.reasons, s.siteId).toContainEqual({ code: 'manual_skip', text: `On the manual check list: ${s.reason}` });
+    }
+    expect(UPGRADE_MANUAL_SKIP.map((s) => s.siteId)).not.toContain(siteRow().id);
+    expect(eligibility(siteRow(), null, null, null, {}).reasons.map((x) => x.code)).not.toContain('manual_skip');
   });
 });
 

@@ -21,7 +21,64 @@ export const PRODUCTION_APP_ORIGIN = 'https://sitebuilder.autocaregenius.com';
 
 // Sites an admin must handle by hand, from the impact analysis:
 // { siteId, reason }. Always flagged, never bulk-published.
-export const UPGRADE_MANUAL_SKIP = Object.freeze([]);
+// Source: docs/audits/2026-10-02-pr10-merge-impact.md sections 3, 4 and 7.3
+// (the IDs in each reason are that report's). Ids are sites.id, matched by
+// slug against production; the slug comment is for people only, since a
+// slug can be shared (malpica-detailing has two rows: only 714f4438 is the
+// served, at-risk one). Remove an entry once its fix is done and the owner
+// has seen the new design.
+// The reasons ship in the public app bundle, and every live page carries its
+// site id, so they say only the report ID and the admin's next step: never
+// billing or payment status, nor anything about the owner or their data
+// (siteUpgrade.test.js rejects a few such words). Comments don't ship.
+export const UPGRADE_MANUAL_SKIP = Object.freeze([
+  // RISK: a republish (today's code or the new one) loses owner content
+  // that exists only in the live page.
+  { siteId: '02841dfc-8801-429b-b4a0-ae14e11ac7c5', // central-auto-detailing
+    reason: 'RISK B2-1: 5 owner photos (hero, about, 3 gallery) exist only on the live page; restore them first' },
+  { siteId: 'a7e2cfe9-0a72-459e-9727-9e8738e1b3a7', // nxt-premium-detailing
+    reason: 'RISK RB4-1: 3 real customer reviews and edited wording exist only on the live page; restore them first' },
+  { siteId: '025d3f99-8feb-4fdf-b763-1275430fc833', // onthree-detailing
+    reason: 'RISK RP3-3: saved copy is empty, so a republish loses the live headline, about text and testimonials' },
+  { siteId: 'e0e70d63-5648-4c3d-ad03-9772fbb2e93c', // rhines-auto-detailing
+    reason: 'RISK RP3-4: the hero photo exists only on the live page; restore it first' },
+  { siteId: '714f4438-c755-4b8d-adf4-6e9d4eb39c1e', // malpica-detailing (served row)
+    reason: 'RISK RB4-3: the hero photo exists only on the live page; restore it and resolve the shared slug (CUS-4) first' },
+  { siteId: '4bbb77a5-38e7-4ada-a588-16acec2d807c', // estrella-handwash-detailing
+    reason: 'RISK RP1-3: logo and hero photo exist only on the live page and the design switches; owner re-uploads them first' },
+
+  // Paying customers (section 4): a personal note and an editor look first.
+  { siteId: '6c79cf20-f3cb-4fc2-9091-3c3f1945a21c', // og-detailing
+    reason: 'Section 7.3: send the owner a note and let them check the new design in the editor first' },
+  { siteId: 'b93a5d2e-cc15-4a72-bf40-c0e3934ce4da', // obsidian-auto-spa
+    reason: 'OWNER-SHOULD-REVIEW RP1-2: the saved HEIC gallery photo publishes broken; replace it with a JPG first' },
+  { siteId: '216f44df-0fd2-4d43-a64f-6e72bd7487f3', // zwitch-wash-car-wash-detailing
+    reason: 'OWNER-SHOULD-REVIEW B2-4/B2-5: the owner checks the Spanish packages and the new text color in the editor first (7.3)' },
+
+  // OWNER-SHOULD-REVIEW: a visible change the owner sees in the editor first.
+  { siteId: '110b2df9-9216-4671-ab27-286de46e2d8f', // dsean-sparkly-detailing
+    reason: 'OWNER-SHOULD-REVIEW RP3-2: puts never-live prices, hours, palette and 8 inline images live; owner checks first' },
+  { siteId: 'd2d604e7-11f0-41e9-98d2-a10f1a16df07', // fast-eddies-mobile-detailing
+    reason: 'OWNER-SHOULD-REVIEW B2-4: the owner\'s one-line descriptions and prices replace the AI paragraphs' },
+  { siteId: 'c07a203b-7e77-4e9b-a9e3-6b23e229155f', // juanito-detailing
+    reason: 'OWNER-SHOULD-REVIEW B2-2/B2-3: the live-only hero image drops and the street address shows with a Maps link' },
+  { siteId: 'd4e01d5c-01c2-4721-a8fc-cde28ac7fb1c', // junkelcarwash
+    reason: 'OWNER-SHOULD-REVIEW RP3-7: the hero Book button follows the owner\'s Instagram CTA link; Mon-Thu show Closed' },
+  { siteId: '28527242-d45c-4680-bf07-c485fe2a8926', // proppa-llc
+    reason: 'OWNER-SHOULD-REVIEW B2-3: ask the owner before their street address shows with a Maps link' },
+  { siteId: '1c49c886-c1f6-428e-8ff8-e462dbfa545a', // ss
+    reason: 'OWNER-SHOULD-REVIEW RB4-6: the whole design switches; confirm with the owner first' },
+  { siteId: '066870e1-6961-4642-ad22-85b25dccebfe', // the-spot-orlando
+    reason: 'OWNER-SHOULD-REVIEW RP3-1/RP3-5: the live teal brand color was never saved, so it turns orange; re-pick it first' },
+  { siteId: 'b55fe045-d1d6-4f57-a4e8-533243c0cb2e', // veylance-auto-spa
+    reason: 'OWNER-SHOULD-REVIEW RP3-6/RP3-8: saved hero differs from live, new colors and fonts, desktop buttons below the fold' },
+  { siteId: 'c64f6f23-7fac-4342-b59c-1d58ca881658', // walts-mobile-detailing
+    reason: 'OWNER-SHOULD-REVIEW RP1-4/RP1-1: hours change to the saved ones; 2 packages show placeholder descriptions' },
+
+  // SAFE, but the report says to tell the owner first (7.3, second group).
+  { siteId: '037d7b32-0fa2-46d0-997e-d22638456edf', // top-choice-mobile-detailing
+    reason: 'Section 7.3 (CUS-1): tell the owner before the republish that moves it off deploy-preview-10' },
+].map((s) => Object.freeze(s)));
 
 // Legacy templates whose live (pre-upgrade) version ignored the owner's
 // palette, so the colors heuristic in eligibility() can't apply to them.
