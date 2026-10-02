@@ -8,6 +8,9 @@
 //   send-welcome { id, note? }    → (re)send the welcome email with the form link
 //   update       { id, stage?, adminNotes?, siteUrl?, paid?,
 //                  firstName?, lastName?, clientEmail?, clientPhone?, businessName? }
+//   email-customer { id, template: 'draft' | 'live', note? }
+//                                 → emails the site link; moves the stage to
+//                                   "Draft with customer" / "Live"
 //   reset-link   { id }           → new form token; the old link stops working
 //   delete       { id }           → removes the project, its activity and its files
 //
@@ -16,7 +19,7 @@
 import crypto from 'node:crypto';
 import { requireUser, supabaseAdmin } from './_shared/auth.js';
 import { corsHeaders, jsonHeaders } from './_shared/cors.js';
-import { customSiteWelcome } from './_lib/postmark.js';
+import { customSiteDraft, customSiteLive, customSiteWelcome } from './_lib/postmark.js';
 import {
   ASSET_BUCKET, ASSET_KINDS, STAGE_IDS, fullName, isEmail, safeHref, sanitizeForm, stageAfterInvite,
 } from '../../src/lib/customSiteForm.js';
@@ -97,6 +100,13 @@ async function sendWelcome(db, project, note, actor) {
   return { project: data || project };
 }
 
+// When each project entered its current stage: its latest stage event, or
+// when it was added. `events` newest first.
+function stageSince(project, events) {
+  return events.find((e) => e.type === 'stage' && (!e.project_id || e.project_id === project.id))?.created_at
+    || project.created_at;
+}
+
 async function loadProject(db, id) {
   if (typeof id !== 'string' || !id) return null;
   const { data, error } = await db.from(TABLE).select('*').eq('id', id).maybeSingle();
@@ -160,9 +170,17 @@ export const handler = async (event) => {
           .order('updated_at', { ascending: false })
           .limit(1000);
         if (error) throw Object.assign(new Error('Could not load projects'), { status: 500 });
+        const { data: stageEvents } = await db.from(EVENTS)
+          .select('project_id, type, created_at')
+          .eq('type', 'stage')
+          .order('created_at', { ascending: false })
+          .limit(5000);
+        const since = new Map();
+        for (const e of stageEvents || []) if (!since.has(e.project_id)) since.set(e.project_id, e.created_at);
         const projects = (data || []).map(({ assets, ...p }) => ({
           ...forAdmin(p),
           fileCount: Array.isArray(assets) ? assets.length : 0,
+          stageSince: since.get(p.id) || p.created_at,
         }));
         return reply(200, { projects });
       }
@@ -171,11 +189,13 @@ export const handler = async (event) => {
         const project = await loadProject(db, body.id);
         if (!project) return reply(404, { error: 'Project not found' });
         const [{ data: events }, files] = await Promise.all([
+          // id breaks ties: one request can log several events in the same millisecond.
           db.from(EVENTS).select('id, type, data, actor, created_at').eq('project_id', project.id)
-            .order('created_at', { ascending: false }).limit(300),
+            .order('created_at', { ascending: false }).order('id', { ascending: false }).limit(300),
           withFileUrls(db, project.assets),
         ]);
-        return reply(200, { project: { ...forAdmin(project), files }, events: events || [] });
+        const list = events || [];
+        return reply(200, { project: { ...forAdmin(project), files, stageSince: stageSince(project, list) }, events: list });
       }
 
       case 'create': {
@@ -278,6 +298,37 @@ export const handler = async (event) => {
           return reply(500, { error: 'Could not save' });
         }
         for (const [type, data_] of events) await logEvent(db, current.id, type, data_, actor);
+        return reply(200, { project: forAdmin(data) });
+      }
+
+      case 'email-customer': {
+        const current = await loadProject(db, body.id);
+        if (!current) return reply(404, { error: 'Project not found' });
+        const template = body.template;
+        if (template !== 'draft' && template !== 'live') return reply(400, { error: 'Unknown email' });
+        if (!current.site_url) return reply(400, { error: 'Add the site link under Build first' });
+        const to = current.client_email;
+        try {
+          await (template === 'draft' ? customSiteDraft : customSiteLive)({
+            to,
+            replyTo: isEmail(actor) ? actor : undefined,
+            firstName: current.client_first_name,
+            businessName: current.business_name,
+            siteUrl: current.site_url,
+            note: clean(body.note, 2000),
+          });
+        } catch (e) {
+          const message = e?.message || 'Email failed to send';
+          await logEvent(db, current.id, 'email_failed', { template, to, error: message.slice(0, 200) }, actor);
+          return reply(502, { error: message });
+        }
+        await logEvent(db, current.id, 'email', { template, to }, actor);
+        // Sending the draft puts it with the customer; "you're live" means live.
+        const nextStage = template === 'draft' ? 'in_review' : 'live';
+        if (current.stage === nextStage) return reply(200, { project: forAdmin(current) });
+        const { data, error } = await db.from(TABLE).update({ stage: nextStage }).eq('id', current.id).select('*').single();
+        if (error) return reply(200, { project: forAdmin(current) });
+        await logEvent(db, current.id, 'stage', { from: current.stage, to: nextStage }, actor);
         return reply(200, { project: forAdmin(data) });
       }
 
