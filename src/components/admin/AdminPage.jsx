@@ -1,21 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import AdminAccountsTab from './AdminAccountsTab.jsx';
 import AdminAllBookingsTab from './AdminAllBookingsTab.jsx';
-import AdminCustomSitesTab from './AdminCustomSitesTab.jsx';
 import { useAuth } from '../../lib/AuthContext.jsx';
 
 export default function AdminPage({ onExit }) {
   const { profile } = useAuth();
-  // Deep link from the custom website emails: /?admin=custom-sites&project=<id>
-  const [deepLink] = useState(() => {
-    const params = new URLSearchParams(window.location.search);
-    return params.get('admin') ? { tab: params.get('admin'), project: params.get('project') } : null;
-  });
-  const [tab, setTab] = useState(deepLink?.tab === 'custom-sites' ? 'custom-sites' : 'accounts');
-
-  useEffect(() => {
-    if (deepLink) window.history.replaceState({}, '', window.location.pathname);
-  }, [deepLink]);
+  const [tab, setTab] = useState('accounts');
 
   if (!profile) return <div className="p-10 text-gray-500">Loading…</div>;
   if (!profile.is_super_admin) {
@@ -35,11 +25,8 @@ export default function AdminPage({ onExit }) {
       <div className="flex gap-1 mb-6 border-b border-gray-200">
         <TabBtn on={tab === 'accounts'} onClick={() => setTab('accounts')}>Accounts</TabBtn>
         <TabBtn on={tab === 'bookings'} onClick={() => setTab('bookings')}>All bookings</TabBtn>
-        <TabBtn on={tab === 'custom-sites'} onClick={() => setTab('custom-sites')}>Custom websites</TabBtn>
       </div>
-      {tab === 'accounts' && <AdminAccountsTab />}
-      {tab === 'bookings' && <AdminAllBookingsTab />}
-      {tab === 'custom-sites' && <AdminCustomSitesTab initialProjectId={deepLink?.project || null} />}
+      {tab === 'accounts' ? <AdminAccountsTab /> : <AdminAllBookingsTab />}
     </main>
   );
 }

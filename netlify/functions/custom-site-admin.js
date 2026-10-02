@@ -13,16 +13,28 @@
 //                                   "Draft with customer" / "Live"
 //   reset-link   { id }           → new form token; the old link stops working
 //   delete       { id }           → removes the project, its activity and its files
+//   design-save  { id, design }   → the Design step's inputs (customSiteDesign.js)
+//   design-generate { id }        → claims a copy-writing run; the browser then
+//                                   calls custom-site-design-background
+//   design-release { id, startedAt, error } → gives a claimed run up when the
+//                                   browser could not start it
+//   handover-check { id }         → the customer's account, if they have one
+//   handover     { id, compPro, sendEmail } → moves the site to the customer's
+//                                   account (created if needed) and emails them
+//   handover-email { id }         → sends the access email again
 //
 // The tables have RLS on with no policies (see the migration), so this
 // function, with the service role, is the only way in.
 import crypto from 'node:crypto';
-import { requireUser, supabaseAdmin } from './_shared/auth.js';
+import { supabaseAdmin } from './_shared/auth.js';
 import { corsHeaders, jsonHeaders } from './_shared/cors.js';
-import { customSiteDraft, customSiteLive, customSiteWelcome } from './_lib/postmark.js';
+import { requireSuperAdmin } from './_lib/custom-site-auth.js';
+import { accessLink, findCustomerAccount, handOverSite } from './_lib/custom-site-handover.js';
+import { customSiteDraft, customSiteHandover, customSiteLive, customSiteWelcome } from './_lib/postmark.js';
 import {
   ASSET_BUCKET, ASSET_KINDS, STAGE_IDS, fullName, isEmail, safeHref, sanitizeForm, stageAfterInvite,
 } from '../../src/lib/customSiteForm.js';
+import { designProblems, isRunStale, sanitizeDesign } from '../../src/lib/customSiteDesign.js';
 
 const TABLE = 'custom_site_projects';
 const EVENTS = 'custom_site_project_events';
@@ -51,15 +63,60 @@ async function logEvent(db, projectId, type, data, actor) {
   if (error) console.error(`[custom-site-admin] event ${type} not logged:`, error.message);
 }
 
-async function requireSuperAdmin(event, db) {
-  const user = await requireUser(event);
-  const { data: profile } = await db.from('profiles').select('email, is_super_admin').eq('id', user.id).maybeSingle();
-  if (!profile?.is_super_admin) {
-    const err = new Error('Admins only');
-    err.status = 403;
-    throw err;
+// Public URL prefix of the site-images bucket: images a design uses must be
+// copied there first (the customer's uploads are private, links expire).
+function siteImagesPrefix() {
+  return `${String(process.env.VITE_SUPABASE_URL || '').replace(/\/$/, '')}/storage/v1/object/public/site-images/`;
+}
+
+// A run that is generating and not stale is still working.
+const runLive = (p) => p.design_status === 'generating' && !isRunStale(p);
+
+// The project's site, as the project page shows it.
+async function siteSummary(db, siteId) {
+  if (!siteId) return null;
+  const { data: site } = await db.from('sites')
+    .select('id, user_id, slug, published_url, template_id, scheduler_enabled, site_type, updated_at, business_info')
+    .eq('id', siteId).maybeSingle();
+  if (!site) return null;
+  const { data: owner } = await db.from('profiles').select('email, is_super_admin').eq('id', site.user_id).maybeSingle();
+  return {
+    id: site.id,
+    userId: site.user_id,
+    ownerEmail: owner?.email || null,
+    ownerIsAdmin: !!owner?.is_super_admin,
+    slug: site.slug,
+    publishedUrl: site.published_url,
+    templateId: site.template_id,
+    schedulerEnabled: !!site.scheduler_enabled,
+    siteType: site.site_type || 'website',
+    name: site.business_info?.businessName || '',
+    updatedAt: site.updated_at,
+  };
+}
+
+// Sends the hand-over (access) email and logs it.
+async function sendAccessEmail(db, project, { newAccount, site, actor }) {
+  const email = String(project.client_email || '').trim().toLowerCase();
+  try {
+    const actionUrl = await accessLink(db, { email, newAccount, appUrl: APP_URL });
+    await customSiteHandover({
+      to: email,
+      replyTo: isEmail(actor) ? actor : undefined,
+      firstName: project.client_first_name,
+      businessName: project.business_name,
+      siteUrl: site?.publishedUrl || project.site_url || null,
+      actionUrl,
+      newAccount,
+      email,
+    });
+    await logEvent(db, project.id, 'email', { template: newAccount ? 'handover_new' : 'handover', to: email }, actor);
+    return null;
+  } catch (e) {
+    const message = e?.message || 'Email failed to send';
+    await logEvent(db, project.id, 'email_failed', { template: 'handover', to: email, error: message.slice(0, 200) }, actor);
+    return message;
   }
-  return { user, actor: profile.email || user.email || 'admin' };
 }
 
 // Sends the welcome email and records it. A failed send is returned as
@@ -166,7 +223,7 @@ export const handler = async (event) => {
     switch (body.action) {
       case 'list': {
         const { data, error } = await db.from(TABLE)
-          .select('id, token, client_first_name, client_last_name, client_name, client_email, client_phone, business_name, stage, site_url, paid_at, invite_sent_at, invite_count, form_started_at, form_saved_at, form_submitted_at, assets, created_at, updated_at')
+          .select('id, token, client_first_name, client_last_name, client_name, client_email, client_phone, business_name, stage, site_url, paid_at, invite_sent_at, invite_count, form_started_at, form_saved_at, form_submitted_at, assets, created_at, updated_at, site_id, design_status, handed_over_at')
           .order('updated_at', { ascending: false })
           .limit(1000);
         if (error) throw Object.assign(new Error('Could not load projects'), { status: 500 });
@@ -188,6 +245,13 @@ export const handler = async (event) => {
       case 'get': {
         const project = await loadProject(db, body.id);
         if (!project) return reply(404, { error: 'Project not found' });
+        // A run that died (timeout, lost request) shows as failed, with a retry.
+        if (isRunStale(project)) {
+          const stale = { design_status: 'failed', design_error: 'Writing the site didn\'t finish (it may have timed out). Try again.', design_finished_at: new Date().toISOString() };
+          await db.from(TABLE).update(stale).eq('id', project.id).eq('design_status', 'generating');
+          Object.assign(project, stale);
+          await logEvent(db, project.id, 'design_failed', { error: 'timed out' }, 'system');
+        }
         const [{ data: events }, files] = await Promise.all([
           // id breaks ties: one request can log several events in the same millisecond.
           db.from(EVENTS).select('id, type, data, actor, created_at').eq('project_id', project.id)
@@ -195,7 +259,14 @@ export const handler = async (event) => {
           withFileUrls(db, project.assets),
         ]);
         const list = events || [];
-        return reply(200, { project: { ...forAdmin(project), files, stageSince: stageSince(project, list) }, events: list });
+        const site = await siteSummary(db, project.site_id);
+        // Once the site is published, its address is the draft link (unless
+        // the admin set another one).
+        if (site?.publishedUrl && !project.site_url) {
+          await db.from(TABLE).update({ site_url: site.publishedUrl }).eq('id', project.id);
+          project.site_url = site.publishedUrl;
+        }
+        return reply(200, { project: { ...forAdmin(project), files, stageSince: stageSince(project, list), site }, events: list });
       }
 
       case 'create': {
@@ -330,6 +401,95 @@ export const handler = async (event) => {
         if (error) return reply(200, { project: forAdmin(current) });
         await logEvent(db, current.id, 'stage', { from: current.stage, to: nextStage }, actor);
         return reply(200, { project: forAdmin(data) });
+      }
+
+      case 'design-save': {
+        const current = await loadProject(db, body.id);
+        if (!current) return reply(404, { error: 'Project not found' });
+        if (runLive(current)) return reply(409, { error: 'Wait for the copy to finish first' });
+        const design = sanitizeDesign(body.design, { imageUrlPrefix: siteImagesPrefix() });
+        // A site, once created, keeps its id.
+        if (current.site_id) design.siteId = current.site_id;
+        const { data, error } = await db.from(TABLE).update({ design }).eq('id', current.id).select('*').single();
+        if (error) return reply(500, { error: 'Could not save the design' });
+        return reply(200, { project: forAdmin(data) });
+      }
+
+      case 'design-generate': {
+        const current = await loadProject(db, body.id);
+        if (!current) return reply(404, { error: 'Project not found' });
+        if (current.handed_over_at) return reply(409, { error: 'This site was already handed over to the customer' });
+        const problems = designProblems(current.design || {});
+        if (problems.length) return reply(400, { error: `Fill in before generating: ${problems.join(', ')}`, problems });
+        if (runLive(current)) return reply(409, { error: 'The copy is already being written' });
+        const startedAt = new Date().toISOString();
+        // Writing the site means design has started.
+        const toDesigning = ['new', 'invited', 'form_started', 'form_received'].includes(current.stage);
+        const { data, error } = await db.from(TABLE).update({
+          design_status: 'generating', design_error: null, design_started_at: startedAt, design_finished_at: null,
+          ...(toDesigning ? { stage: 'designing' } : {}),
+        }).eq('id', current.id).select('*').single();
+        if (error) return reply(500, { error: 'Could not start' });
+        await logEvent(db, current.id, 'design_started', {}, actor);
+        if (toDesigning) await logEvent(db, current.id, 'stage', { from: current.stage, to: 'designing' }, actor);
+        return reply(200, { project: forAdmin(data), startedAt });
+      }
+
+      case 'design-release': {
+        const current = await loadProject(db, body.id);
+        if (!current) return reply(404, { error: 'Project not found' });
+        const sameRun = Date.parse(current.design_started_at || '') === Date.parse(body.startedAt || '');
+        if (current.design_status === 'generating' && sameRun) {
+          const message = `Couldn't start writing the site: ${clean(body.error, 200) || 'unknown error'}`;
+          await db.from(TABLE).update({ design_status: 'failed', design_error: message, design_finished_at: new Date().toISOString() }).eq('id', current.id);
+          await logEvent(db, current.id, 'design_failed', { error: message.slice(0, 200) }, actor);
+        }
+        return reply(200, { ok: true });
+      }
+
+      case 'handover-check': {
+        const current = await loadProject(db, body.id);
+        if (!current) return reply(404, { error: 'Project not found' });
+        const account = await findCustomerAccount(db, current.client_email);
+        return reply(200, { account });
+      }
+
+      case 'handover': {
+        const current = await loadProject(db, body.id);
+        if (!current) return reply(404, { error: 'Project not found' });
+        if (runLive(current)) return reply(409, { error: 'Wait for the copy to finish first' });
+        let result;
+        try {
+          result = await handOverSite({ db, project: current, compPro: !!body.compPro });
+        } catch (e) {
+          return reply(e.status || 500, { error: e.message || 'Could not hand over the site' });
+        }
+        const { data } = await db.from(TABLE).update({
+          customer_user_id: result.userId, handed_over_at: new Date().toISOString(),
+        }).eq('id', current.id).select('*').single();
+        await logEvent(db, current.id, 'handover', {
+          to: current.client_email, newAccount: result.newAccount, compPro: !!body.compPro, moved: result.moved,
+        }, actor);
+        const project = data || current;
+        const site = await siteSummary(db, project.site_id);
+        const emailError = body.sendEmail === false ? null : await sendAccessEmail(db, project, { newAccount: result.newAccount, site, actor });
+        return reply(200, { project: forAdmin(project), newAccount: result.newAccount, emailError });
+      }
+
+      case 'handover-email': {
+        const current = await loadProject(db, body.id);
+        if (!current) return reply(404, { error: 'Project not found' });
+        if (!current.handed_over_at) return reply(400, { error: 'Hand the site over first' });
+        // A new account's first email held a set-password link; resending
+        // makes a fresh one if the customer never signed in.
+        const { data: authUser } = current.customer_user_id
+          ? await db.auth.admin.getUserById(current.customer_user_id)
+          : { data: null };
+        const neverSignedIn = !authUser?.user?.last_sign_in_at;
+        const site = await siteSummary(db, current.site_id);
+        const emailError = await sendAccessEmail(db, current, { newAccount: neverSignedIn, site, actor });
+        if (emailError) return reply(502, { error: emailError });
+        return reply(200, { ok: true });
       }
 
       case 'reset-link': {

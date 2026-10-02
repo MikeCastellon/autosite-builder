@@ -334,7 +334,11 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
       const generatedContent = await loadGeneratedContent(site.id);
       const render = resolveSiteRender(site, generatedContent);
       if (!render.templateMeta) throw new Error('This site has no template yet. Open it in the editor first.');
-      const generatedCopy = await withWidgetKeys(render.generatedCopy, site.user_id, supabase);
+      // A site built for a custom-website project and still in the admin's
+      // account must not take the admin's own review widgets.
+      const generatedCopy = site.business_info?.customProjectId
+        ? render.generatedCopy
+        : await withWidgetKeys(render.generatedCopy, site.user_id, supabase);
 
       // Legacy drafts can still hold inline base64 images, which push the
       // published HTML past Netlify's payload limit. Upload them first,

@@ -62,6 +62,10 @@ export default function App() {
     return admin === 'custom-sites' ? 'custom-sites' : admin ? 'admin' : 'overview';
   }); // 'wizard' | 'overview' | 'dashboard' | 'admin' | 'bookings-page' | 'customers' | 'customer-detail' | 'booking-settings' | 'profile' | 'payments-connect' | 'charges'
   const [settingsSiteId, setSettingsSiteId] = useState(null);
+  // A custom-website project's site opened in the editor or its booking
+  // settings: Back returns to that project (Custom websites page).
+  const [returnToProject, setReturnToProject] = useState(null);
+  const [customSitesProjectId, setCustomSitesProjectId] = useState(null);
   const [selectedCustomerKey, setSelectedCustomerKey] = useState(null);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [selectedWidgetIds, setSelectedWidgetIds] = useState([]);
@@ -117,10 +121,13 @@ export default function App() {
     } catch { /* quota exceeded — ignore */ }
   }, [draftKey, draftRestored, businessType, businessInfo, selectedTemplate, step, siteId]);
 
-  // Ensure Google Reviews widget key is in editedCopy when user is signed in
+  // Ensure Google Reviews widget key is in editedCopy when user is signed in.
+  // Not on a site built for a custom-website project: the signed-in admin's
+  // own reviews widget would end up on the customer's site.
   useEffect(() => {
     if (!session?.user?.id || !editedCopy) return;
     if (editedCopy.googleWidgetKey) return;
+    if (businessInfo?.customProjectId) return;
     (async () => {
       try {
         const { data: widgets } = await supabase
@@ -138,7 +145,7 @@ export default function App() {
         }
       } catch (e) { /* ignore */ }
     })();
-  }, [session?.user?.id, editedCopy?.googleWidgetKey]); // eslint-disable-line
+  }, [session?.user?.id, editedCopy?.googleWidgetKey, businessInfo?.customProjectId]); // eslint-disable-line
 
   // Auto-save site to Supabase (debounced)
   const autoSave = useCallback((overrides = {}) => {
@@ -395,12 +402,14 @@ export default function App() {
     onCharge: onChargeProp,
     onOpenPaymentsConnect: onOpenPaymentsConnectProp,
     onOpenAdmin: () => setView('admin'),
-    onOpenCustomSites: () => setView('custom-sites'),
+    onOpenCustomSites: () => { setCustomSitesProjectId(null); setView('custom-sites'); },
     onOpenProfile: () => setView('profile'),
     onSignOut: handleSignOut,
   };
 
-  const handleEditSite = async (site) => {
+  // `returnTo`: a custom-website project id when opened from that project.
+  const handleEditSite = async (site, { returnTo = null } = {}) => {
+    setReturnToProject(returnTo);
     setSiteId(site.id);
     setBusinessType(site.business_info?.businessType || null);
     setBusinessInfo(site.business_info || {});
@@ -420,7 +429,11 @@ export default function App() {
       customColors: savedCustomColors,
       customFonts: savedCustomFonts,
     } = unpackGeneratedContent(fullGenerated);
-    const copy = await withWidgetKeys(storedCopy, session?.user?.id, supabase);
+    // Sites built for a custom-website project never take the signed-in
+    // admin's widget keys (see the effect above).
+    const copy = site.business_info?.customProjectId
+      ? storedCopy
+      : await withWidgetKeys(storedCopy, session?.user?.id, supabase);
 
     setGeneratedCopy(copy);
     setEditedCopy(structuredClone(copy));
@@ -504,10 +517,31 @@ export default function App() {
 
   if (view === 'booking-settings' && settingsSiteId) {
     return (
-      <AppShell active="bookings" nav={navHandlers} userEmail={session?.user?.email} profile={profile}>
+      <AppShell active={returnToProject ? 'custom-sites' : 'bookings'} nav={navHandlers} userEmail={session?.user?.email} profile={profile}>
+        {returnToProject && (
+          <div className="max-w-5xl mx-auto px-4 pt-6">
+            <button
+              type="button"
+              onClick={() => { setSettingsSiteId(null); setCustomSitesProjectId(returnToProject); setReturnToProject(null); setView('custom-sites'); }}
+              className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink-tertiary hover:text-[#1a1a1a]"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6" /></svg>
+              Back to project
+            </button>
+          </div>
+        )}
         <BookingSettingsPage
           siteId={settingsSiteId}
-          onExit={() => { setSettingsSiteId(null); setView('dashboard'); }}
+          onExit={() => {
+            setSettingsSiteId(null);
+            if (returnToProject) {
+              setCustomSitesProjectId(returnToProject);
+              setReturnToProject(null);
+              setView('custom-sites');
+            } else {
+              setView('dashboard');
+            }
+          }}
         />
       </AppShell>
     );
@@ -516,7 +550,27 @@ export default function App() {
   if (view === 'custom-sites') {
     return (
       <AppShell active="custom-sites" nav={navHandlers} userEmail={session?.user?.email} profile={profile}>
-        <CustomSitesPage onExit={() => setView('dashboard')} />
+        <CustomSitesPage
+          key={customSitesProjectId || 'list'}
+          projectId={customSitesProjectId}
+          onExit={() => setView('dashboard')}
+          onOpenSiteEditor={async (siteId, projectId) => {
+            const { data: site, error: siteError } = await supabase.from('sites').select('*').eq('id', siteId).maybeSingle();
+            if (siteError || !site) { toast('Could not open the site', 'error'); return; }
+            // Saving from this session would make the signed-in admin the
+            // site's owner: someone else's site is edited as them (View as user).
+            if (site.user_id !== session?.user?.id) {
+              toast('This site is in the customer\'s account. Edit it with Admin › Accounts › View as user.', 'error');
+              return;
+            }
+            await handleEditSite(site, { returnTo: projectId });
+          }}
+          onOpenBookingSettings={(siteId, projectId) => {
+            setReturnToProject(projectId);
+            setSettingsSiteId(siteId);
+            setView('booking-settings');
+          }}
+        />
       </AppShell>
     );
   }
@@ -683,7 +737,7 @@ export default function App() {
           onNewBookingPage={() => setView('booking-only-setup')}
           onEditSite={handleEditSite}
           profile={profile}
-          onOpenBookingSettings={(siteId) => { setSettingsSiteId(siteId); setView('booking-settings'); }}
+          onOpenBookingSettings={(siteId) => { setReturnToProject(null); setSettingsSiteId(siteId); setView('booking-settings'); }}
           onPreviewDemo={handleDashboardDemo}
         />
       </AppShell>
@@ -741,11 +795,13 @@ export default function App() {
         onBack={
           isDemoPreview
             ? handleBackFromDemo
-            : editingExistingSite
-              ? () => setView('dashboard')
-              : () => goTo(3)
+            : editingExistingSite && returnToProject
+              ? () => { setCustomSitesProjectId(returnToProject); setReturnToProject(null); setView('custom-sites'); }
+              : editingExistingSite
+                ? () => setView('dashboard')
+                : () => goTo(3)
         }
-        backLabel={editingExistingSite ? 'Back to Sites' : 'Back to Templates'}
+        backLabel={editingExistingSite && returnToProject ? 'Back to project' : editingExistingSite ? 'Back to Sites' : 'Back to Templates'}
         onExport={isDemoPreview || editingExistingSite ? null : () => goTo(6)}
         onSaveDraft={!isDemoPreview && editingExistingSite ? handleSaveDraft : null}
         onPublish={!isDemoPreview && editingExistingSite ? handlePublishFromEditor : null}
