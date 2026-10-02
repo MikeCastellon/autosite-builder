@@ -145,7 +145,7 @@ describe('section manifests', () => {
     const info = await loadTemplateInfo('mobile_sudsy');
     expect(typeof info.defaultHowSteps).toBe('function');
     expect(typeof info.defaultWhyCards).toBe('function');
-    expect((await loadTemplateInfo('carwash_bubble')).defaultWhyCards).toBe(null);
+    expect((await loadTemplateInfo('mechanic_garage')).defaultWhyCards).toBe(null);
     const missing = await loadTemplateInfo('no_such_template', {});
     expect(missing.themeReady).toBe(false);
     expect(missing.sections.length).toBeGreaterThan(0);
