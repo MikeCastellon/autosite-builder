@@ -149,3 +149,83 @@ const GENERIC_FALLBACK = {
 export function getFallbacks(businessType) {
   return FALLBACK_MAP[businessType] || GENERIC_FALLBACK;
 }
+
+// ---- How It Works steps / Why Us cards, per business type -----------------
+// What the editor's How It Works and Why Us panels (ContentEditor.jsx) start
+// from when the owner has not saved their own (copy.howSteps /
+// copy.whyCards). They used to seed six mobile-detailing cards for every
+// type, so one edit wrote "We come to your door" onto mechanic and car-wash
+// sites (audit arch-5). Plain descriptions of how working with the business
+// goes: no speed promises, guarantees, product brands or eco claims the
+// owner never made. The six known types match MobileSudsy's own defaults
+// word for word (templateFallbacks.test.js keeps them in sync).
+// Shapes: steps { emoji, title, desc }, cards { icon, title, desc }.
+
+const BUBBLES = '\u{1FAE7}';
+const CLEANING_TYPES = ['mobile_detailing', 'detailing_shop', 'car_wash'];
+const KNOWN_TYPES = [...CLEANING_TYPES, 'tint_shop', 'wheel_shop', 'mechanic_shop'];
+
+// Older sites store free-form types ("detailing"): map them onto the
+// wizard's ids so they still get fitting defaults.
+export function businessKind(value) {
+  const raw = typeof value === 'string' ? value.trim() : '';
+  if (!raw || KNOWN_TYPES.includes(raw)) return raw;
+  if (/mobile/i.test(raw)) return 'mobile_detailing';
+  if (/wash/i.test(raw)) return 'car_wash';
+  if (/detail/i.test(raw)) return 'detailing_shop';
+  if (/tint|film/i.test(raw)) return 'tint_shop';
+  if (/wheel|tire|rim/i.test(raw)) return 'wheel_shop';
+  if (/mechanic|repair/i.test(raw)) return 'mechanic_shop';
+  return raw;
+}
+
+const STEP_BOOK = { emoji: '📱', title: 'You Book', desc: 'Call, text or tap Book and pick a time that works for you.' };
+const STEP_DROP_OFF = { emoji: '🚗', title: 'Drop It Off', desc: 'Bring your car to us at your appointment time.' };
+const STEP_LOVE = { emoji: '😍', title: 'You Love It', desc: 'Drive off in a car that looks and feels its best.' };
+const stepWork = (desc) => ({ emoji: '✨', title: 'We Get To Work', desc });
+
+const HOW_STEPS = {
+  mobile_detailing: [
+    STEP_BOOK,
+    { emoji: '🚐', title: 'We Show Up', desc: 'We come to your driveway, parking lot or office.' },
+    { emoji: BUBBLES, title: 'We Clean', desc: 'We get to work while you get on with your day.' },
+    { ...STEP_LOVE, desc: 'Hop back into a car that looks and feels fresh.' },
+  ],
+  car_wash: [
+    { emoji: '🚗', title: 'Pull In', desc: 'Swing by and pick the wash that suits your car.' },
+    { emoji: BUBBLES, title: 'We Wash', desc: 'Soap, rinse and a careful dry, inside and out.' },
+    { emoji: '✨', title: 'You Shine', desc: 'Drive off clean and ready for the road.' },
+  ],
+  detailing_shop: [STEP_BOOK, STEP_DROP_OFF, stepWork('We clean, correct and protect every surface with care.'), STEP_LOVE],
+  tint_shop: [STEP_BOOK, STEP_DROP_OFF, stepWork('We prep the glass and install your film with care.'), STEP_LOVE],
+  wheel_shop: [STEP_BOOK, STEP_DROP_OFF, stepWork('We mount, balance and fit everything properly.'), STEP_LOVE],
+  mechanic_shop: [STEP_BOOK, STEP_DROP_OFF, stepWork('We diagnose, explain what we find and get it fixed.'), STEP_LOVE],
+};
+const GENERIC_HOW_STEPS = [STEP_BOOK, STEP_DROP_OFF, stepWork('We take care of the work carefully, one step at a time.'), STEP_LOVE];
+
+const CARD_BOOKING = { icon: '📅', title: 'Easy Booking', desc: 'Call or message us and pick a time that suits you.' };
+const CARD_TALK = { icon: '💬', title: 'Straight Talk', desc: 'We tell you what your car needs, and what it doesn’t, before we start.' };
+const CARD_OBSESSED = { icon: '🧽', title: 'Detail-Obsessed', desc: 'Every panel, seat and crevice gets real attention, not a quick once-over.' };
+const CARD_DONE_RIGHT = { icon: '🧰', title: 'Done Right', desc: 'Careful work on exactly what your car needs, nothing more.' };
+
+const WHY_LEAD = {
+  mobile_detailing: { icon: '🏠', title: 'We Come To You', desc: 'Home, work or wherever your car is parked: we bring the detail to you.' },
+  detailing_shop: { icon: '✨', title: 'Careful Work', desc: 'Hands-on detailing for paint, glass and interior, done properly.' },
+  car_wash: { icon: BUBBLES, title: 'Spotless Results', desc: 'A thorough clean inside and out, with care for your paint.' },
+  tint_shop: { icon: '🕶️', title: 'Precision Installs', desc: 'Clean, careful film installs cut to fit your vehicle.' },
+  wheel_shop: { icon: '🛞', title: 'The Right Fit', desc: 'We help you choose wheels and tires that suit your car and your style.' },
+  mechanic_shop: { icon: '🔧', title: 'Honest Diagnosis', desc: 'We explain what we find and what it costs before any work starts.' },
+};
+const GENERIC_WHY_LEAD = { icon: '✨', title: GENERIC_FALLBACK.whyUsTitle, desc: 'Careful, hands-on work on every vehicle we see.' };
+
+// Fresh copies, safe to edit and save.
+export function defaultHowSteps(businessType) {
+  const type = businessKind(businessType);
+  return (HOW_STEPS[type] || GENERIC_HOW_STEPS).map((s) => ({ ...s }));
+}
+
+export function defaultWhyCards(businessType) {
+  const type = businessKind(businessType);
+  const second = CLEANING_TYPES.includes(type) ? CARD_OBSESSED : CARD_DONE_RIGHT;
+  return [WHY_LEAD[type] || GENERIC_WHY_LEAD, second, CARD_BOOKING, CARD_TALK].map((c) => ({ ...c }));
+}

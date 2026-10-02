@@ -140,6 +140,28 @@ export function resolveVariant(service, vehicleTypeId) {
   };
 }
 
+// Mirror of netlify/functions/_lib/vehicle-pricing.js addonPriceForVehicle.
+// Cents (>= 0) when the add-on is offered for that vehicle, else null.
+export function addonPriceForVehicle(addon, vehicleTypeId) {
+  if (!addon) return null;
+  const legacy = typeof addon.price_cents === 'number' && addon.price_cents > 0 ? addon.price_cents : 0;
+  if (!vehicleTypeId || !addon.prices || typeof addon.prices !== 'object') return legacy;
+  const p = addon.prices[vehicleTypeId];
+  if (p == null) return null;
+  return typeof p === 'number' && p > 0 ? p : 0;
+}
+
+// Mirror of the server's enabledVehicleTypes: the vehicle types the owner
+// saved and left on. Unlike normalizeVehicleTypes it never seeds defaults,
+// because prices can only be looked up for ids the config really has.
+export function savedVehicleTypes(input) {
+  if (!Array.isArray(input)) return [];
+  return input
+    .filter((t) => t && t.enabled !== false && typeof t.id === 'string' && t.id.trim() !== ''
+      && typeof t.name === 'string' && t.name.trim() !== '')
+    .map((t) => ({ id: t.id, name: t.name.trim(), enabled: true }));
+}
+
 export function seedServicesFromBusinessInfo(bizServices) {
   if (!Array.isArray(bizServices)) return [];
   return bizServices
@@ -216,20 +238,63 @@ export function normalizeService(service, vehicleTypes) {
   return out;
 }
 
-export function mergeServicesFromBusinessInfo(existing, bizServices) {
-  const existingByName = new Map((existing || []).map((s) => [s.name, s]));
-  const newlySeeded = seedServicesFromBusinessInfo(bizServices);
-  const result = [...(existing || [])];
-  for (const s of newlySeeded) {
-    if (!existingByName.has(s.name)) result.push(s);
+function businessServiceNames(bizServices) {
+  if (!Array.isArray(bizServices)) return [];
+  const names = bizServices
+    .filter((s) => s && typeof s.name === 'string' && s.name.trim() !== '')
+    .map((s) => s.name.trim());
+  return [...new Set(names)];
+}
+
+const serviceKey = (name) => String(name || '').trim().toLowerCase();
+
+// Offers each website service (business_info.services) to the booking
+// menu once. `seeded_service_names` records every website service name
+// already offered, so one the owner deleted or renamed in Booking settings
+// stays gone; the old merge re-added it, enabled and bookable, on every load.
+// A service added to the website later is still offered once.
+//
+// Set-up configs (availability and a services list) saved before this
+// marker existed went through that every-load merge, so each current
+// website service was offered already: any of them missing from the menu
+// was removed by the owner. They are recorded without re-adding anything.
+// A config that was never set up has nothing to protect and is offered
+// everything. Pass the STORED config (or {}), never defaultSchedulerConfig(),
+// whose availability would make an unsaved config look set up.
+//
+// Returns { services, seeded_service_names, changed }.
+export function syncServicesFromBusinessInfo(config, bizServices) {
+  const cfg = config || {};
+  const existing = Array.isArray(cfg.services) ? cfg.services : [];
+  const names = businessServiceNames(bizServices);
+  let prior = Array.isArray(cfg.seeded_service_names) ? cfg.seeded_service_names : null;
+
+  if (!prior && cfg.availability && Array.isArray(cfg.services)) {
+    return { services: existing, seeded_service_names: names, changed: true };
   }
-  return result;
+  if (!prior) prior = [];
+
+  const offered = new Set(prior.map(serviceKey));
+  const onMenu = new Set(existing.map((s) => serviceKey(s && s.name)));
+  const fresh = names.filter((n) => !offered.has(serviceKey(n)));
+  if (fresh.length === 0) {
+    return { services: existing, seeded_service_names: prior, changed: false };
+  }
+  const added = seedServicesFromBusinessInfo(
+    fresh.filter((n) => !onMenu.has(serviceKey(n)))
+      .map((n) => bizServices.find((s) => s && typeof s.name === 'string' && s.name.trim() === n)),
+  );
+  return {
+    services: [...existing, ...added],
+    seeded_service_names: [...prior, ...fresh],
+    changed: true,
+  };
 }
 
 export async function loadSchedulerConfig(siteId) {
   const { data, error } = await supabase
     .from('sites')
-    .select('scheduler_enabled, scheduler_config, business_info, published_url, site_type, custom_domain, custom_domain_status')
+    .select('scheduler_enabled, scheduler_config, business_info, published_url, site_type, slug, custom_domain, custom_domain_status')
     .eq('id', siteId)
     .maybeSingle();
   if (error) throw error;
@@ -260,9 +325,19 @@ export async function initializeSchedulerConfig(siteId) {
     .from('sites').select('scheduler_config, business_info').eq('id', siteId).maybeSingle();
   const existing = site?.scheduler_config || {};
   if (existing.availability && existing.services) return existing;
+  // Booking settings work while bookings are off, so keep what the owner
+  // already saved there (menu, vehicle types the prices are keyed to,
+  // appearance, ...) and fill the rest with defaults; this used to reset it
+  // all. The website's services join the menu once (see
+  // syncServicesFromBusinessInfo), so ones deleted before switching bookings
+  // on stay deleted.
+  const sync = syncServicesFromBusinessInfo(existing, site?.business_info?.services);
+  const saved = Object.fromEntries(Object.entries(existing).filter(([, v]) => v != null));
   const config = {
     ...defaultSchedulerConfig(),
-    services: seedServicesFromBusinessInfo(site?.business_info?.services),
+    ...saved,
+    services: sync.services,
+    seeded_service_names: sync.seeded_service_names,
   };
   return saveSchedulerConfig(siteId, config);
 }

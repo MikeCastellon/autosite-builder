@@ -44,7 +44,7 @@ export default function CustomWebsitePromoModal({ open, onClose }) {
               type="button"
               onClick={onClose}
               aria-label="Close"
-              className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full text-[#888] hover:text-[#1a1a1a] hover:bg-black/[0.05] flex items-center justify-center transition-colors"
+              className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full text-ink-tertiary hover:text-[#1a1a1a] hover:bg-black/[0.05] flex items-center justify-center transition-colors"
             >
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                 <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
@@ -72,7 +72,7 @@ export default function CustomWebsitePromoModal({ open, onClose }) {
             <div className="px-7 py-6">
               <div className="flex items-baseline gap-2 mb-4">
                 <span className="text-[42px] font-[900] text-[#1a1a1a] leading-none tracking-tight">$499</span>
-                <span className="text-[12px] text-[#888]">one-time</span>
+                <span className="text-[12px] text-ink-tertiary">one-time</span>
               </div>
 
               <ul className="space-y-2 mb-6">
@@ -122,7 +122,7 @@ export default function CustomWebsitePromoModal({ open, onClose }) {
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full mt-2 px-4 py-2 text-[12px] font-semibold text-[#888] hover:text-[#1a1a1a] transition-colors"
+                className="w-full mt-2 px-4 py-2 text-[12px] font-semibold text-ink-tertiary hover:text-[#1a1a1a] transition-colors"
               >
                 Maybe later
               </button>

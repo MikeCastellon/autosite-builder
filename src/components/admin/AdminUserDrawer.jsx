@@ -21,8 +21,8 @@ function SubBadge({ bucket }) {
 function Field({ label, value, mono }) {
   return (
     <div className="flex items-baseline gap-3 py-1.5">
-      <p className="w-32 shrink-0 text-[11px] font-semibold text-[#888] uppercase tracking-wider">{label}</p>
-      <p className={`text-[13px] text-[#1a1a1a] ${mono ? 'font-mono' : ''} truncate`}>{value || <span className="text-[#aaa]">—</span>}</p>
+      <p className="w-32 shrink-0 text-[11px] font-semibold text-ink-tertiary uppercase tracking-wider">{label}</p>
+      <p className={`text-[13px] text-[#1a1a1a] ${mono ? 'font-mono' : ''} truncate`}>{value || <span className="text-ink-tertiary">—</span>}</p>
     </div>
   );
 }
@@ -133,6 +133,15 @@ export default function AdminUserDrawer({ user, allTags, onClose, onRefresh }) {
   // — the new tab's session lives only in that tab, so the admin's main
   // session in this browser stays intact.
   const [impersonating, setImpersonating] = useState(false);
+  // Set when the browser blocked the new tab: the drawer then shows the
+  // session link to click instead. The handoff is single-use and expires
+  // after 60 seconds, so the link goes away with it.
+  const [blockedLink, setBlockedLink] = useState(null);
+  useEffect(() => {
+    if (!blockedLink) return undefined;
+    const t = setTimeout(() => setBlockedLink(null), 60_000);
+    return () => clearTimeout(t);
+  }, [blockedLink]);
 
   async function handleViewAsUser() {
     if (impersonating) return;
@@ -148,6 +157,7 @@ export default function AdminUserDrawer({ user, allTags, onClose, onRefresh }) {
       return;
     }
     setImpersonating(true);
+    setBlockedLink(null);
     try {
       const { data: sessData } = await supabase.auth.getSession();
       const token = sessData?.session?.access_token;
@@ -163,8 +173,16 @@ export default function AdminUserDrawer({ user, allTags, onClose, onRefresh }) {
       // Open a brand new tab to /?impersonate=<handoff_id>. The
       // ImpersonationBanner mounted at the top of that tab will claim the
       // handoff, set the session, and strip the param from the URL.
+      // window.open runs after awaits here, so popup blockers may refuse it.
+      // It returns null then; 'noopener' would make it return null always,
+      // so the opener is cut by hand instead.
       const url = `${window.location.origin}/?impersonate=${encodeURIComponent(body.handoff_id)}`;
-      window.open(url, '_blank', 'noopener,noreferrer');
+      const tab = window.open(url, '_blank');
+      if (tab) {
+        try { tab.opener = null; } catch { /* ignore */ }
+      } else {
+        setBlockedLink(url);
+      }
     } catch (e) {
       toast(e.message || 'Could not start impersonation', 'error');
     } finally {
@@ -201,14 +219,14 @@ export default function AdminUserDrawer({ user, allTags, onClose, onRefresh }) {
             </div>
             <div className="min-w-0">
               <p className="text-[15px] font-bold text-[#1a1a1a] truncate">{fullName}</p>
-              <p className="text-[11px] text-[#888] truncate">{user.email}</p>
+              <p className="text-[11px] text-ink-tertiary truncate">{user.email}</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="w-8 h-8 rounded-full hover:bg-black/[0.05] flex items-center justify-center text-[#888] shrink-0"
+            className="w-8 h-8 rounded-full hover:bg-black/[0.05] flex items-center justify-center text-ink-tertiary shrink-0"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
@@ -229,7 +247,7 @@ export default function AdminUserDrawer({ user, allTags, onClose, onRefresh }) {
                 Shopify
               </span>
             )}
-            <span className="text-[11px] text-[#888] ml-auto">Joined {formatDate(user.created_at)}</span>
+            <span className="text-[11px] text-ink-tertiary ml-auto">Joined {formatDate(user.created_at)}</span>
           </div>
 
           <Section title="Account">
@@ -260,7 +278,7 @@ export default function AdminUserDrawer({ user, allTags, onClose, onRefresh }) {
 
           <Section title={`Sites (${user.siteCount})`}>
             {user.sites.length === 0 ? (
-              <p className="text-sm text-[#aaa]">No sites yet.</p>
+              <p className="text-sm text-ink-tertiary">No sites yet.</p>
             ) : (
               <div className="space-y-2">
                 {user.sites.map((s) => {
@@ -270,7 +288,7 @@ export default function AdminUserDrawer({ user, allTags, onClose, onRefresh }) {
                   return (
                     <div key={s.id} className="border border-black/[0.07] rounded-lg p-3">
                       <p className="text-[13px] font-semibold text-[#1a1a1a] truncate">
-                        {s.business_info?.businessName || <span className="text-[#aaa]">(unnamed)</span>}
+                        {s.business_info?.businessName || <span className="text-ink-tertiary">(unnamed)</span>}
                       </p>
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
                         {liveUrl ? (
@@ -278,7 +296,7 @@ export default function AdminUserDrawer({ user, allTags, onClose, onRefresh }) {
                             {liveUrl.replace(/^https?:\/\//, '')}
                           </a>
                         ) : (
-                          <span className="text-[12px] text-[#aaa]">Unpublished</span>
+                          <span className="text-[12px] text-ink-tertiary">Unpublished</span>
                         )}
                         {s.custom_domain && (
                           <span className={`text-[10px] font-semibold uppercase tracking-wider ${
@@ -299,15 +317,15 @@ export default function AdminUserDrawer({ user, allTags, onClose, onRefresh }) {
             <div className="grid grid-cols-3 gap-3">
               <div className="rounded-lg bg-[#faf9f7] border border-black/[0.07] p-3 text-center">
                 <p className="text-[20px] font-bold text-[#1a1a1a]">{activity.bookings ?? '…'}</p>
-                <p className="text-[10px] text-[#888] uppercase tracking-wider">Bookings</p>
+                <p className="text-[10px] text-ink-tertiary uppercase tracking-wider">Bookings</p>
               </div>
               <div className="rounded-lg bg-[#faf9f7] border border-black/[0.07] p-3 text-center">
                 <p className="text-[20px] font-bold text-[#1a1a1a]">{activity.customers ?? '…'}</p>
-                <p className="text-[10px] text-[#888] uppercase tracking-wider">Customers</p>
+                <p className="text-[10px] text-ink-tertiary uppercase tracking-wider">Customers</p>
               </div>
               <div className="rounded-lg bg-[#faf9f7] border border-black/[0.07] p-3 text-center">
                 <p className="text-[20px] font-bold text-[#1a1a1a]">{activity.charges ?? '…'}</p>
-                <p className="text-[10px] text-[#888] uppercase tracking-wider">Charges</p>
+                <p className="text-[10px] text-ink-tertiary uppercase tracking-wider">Charges</p>
               </div>
             </div>
           </Section>
@@ -329,7 +347,7 @@ export default function AdminUserDrawer({ user, allTags, onClose, onRefresh }) {
                   </button>
                 </span>
               ))}
-              {tags.length === 0 && <span className="text-[11px] text-[#aaa]">No tags yet</span>}
+              {tags.length === 0 && <span className="text-[11px] text-ink-tertiary">No tags yet</span>}
             </div>
             <div className="relative">
               <input
@@ -360,7 +378,7 @@ export default function AdminUserDrawer({ user, allTags, onClose, onRefresh }) {
                 </div>
               )}
             </div>
-            {savingTags && <p className="text-[10px] text-[#aaa] mt-1.5">Saving…</p>}
+            {savingTags && <p className="text-[10px] text-ink-tertiary mt-1.5">Saving…</p>}
           </Section>
 
           <Section title="Notes">
@@ -371,7 +389,7 @@ export default function AdminUserDrawer({ user, allTags, onClose, onRefresh }) {
               placeholder="Internal notes — only visible to admins. Things like onboarding context, support history, payment quirks, etc."
               className="w-full px-3 py-2 rounded-lg border border-black/[0.10] text-sm focus:outline-none focus:border-[#cc0000] font-mono leading-relaxed"
             />
-            <p className="text-[10px] text-[#aaa] mt-1.5">{savingNotes ? 'Saving…' : 'Auto-saves as you type'}</p>
+            <p className="text-[10px] text-ink-tertiary mt-1.5">{savingNotes ? 'Saving…' : 'Auto-saves as you type'}</p>
           </Section>
 
           <Section title="Quick actions">
@@ -387,6 +405,23 @@ export default function AdminUserDrawer({ user, allTags, onClose, onRefresh }) {
                 </svg>
                 {impersonating ? 'Opening…' : 'View as user'}
               </button>
+              {blockedLink && (
+                <div role="status" className="basis-full rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-[12px] text-amber-900">
+                  <p className="font-semibold">Your browser blocked the new tab.</p>
+                  <p className="mt-0.5">
+                    <a
+                      href={blockedLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setBlockedLink(null)}
+                      className="font-bold text-[#cc0000] underline underline-offset-2"
+                    >
+                      Open the session for {user.email}
+                    </a>
+                    {' '}(works once, within 60 seconds).
+                  </p>
+                </div>
+              )}
               <a
                 href={`mailto:${user.email}`}
                 className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-black/[0.10] text-[12px] font-semibold text-[#1a1a1a] hover:border-[#cc0000]/40 transition-colors"

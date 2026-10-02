@@ -94,7 +94,7 @@ export default function StepExport({ siteId: passedSiteId, businessInfo, generat
                 onClick={handlePublish}
                 disabled={publishing}
                 className={`w-full py-3.5 px-6 rounded-xl font-semibold text-[15px] transition-all mb-4
-                  ${publishing ? 'bg-[#f2f0ec] text-[#888] cursor-not-allowed' : 'bg-[#cc0000] hover:bg-[#aa0000] text-white'}`}
+                  ${publishing ? 'bg-[#f2f0ec] text-ink-tertiary cursor-not-allowed' : 'bg-[#cc0000] hover:bg-[#aa0000] text-white'}`}
               >
                 {publishing ? 'Publishing...' : '🚀 Publish Website'}
               </button>
@@ -162,7 +162,7 @@ export default function StepExport({ siteId: passedSiteId, businessInfo, generat
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-black/[0.07] px-4 sm:px-8 py-5 flex items-center justify-center gap-2 text-xs text-[#888] bg-white">
+      <footer className="border-t border-black/[0.07] px-4 sm:px-8 py-5 flex items-center justify-center gap-2 text-xs text-ink-tertiary bg-white">
         <span>Powered by</span>
         <a
           href="https://www.autocaregenius.com"

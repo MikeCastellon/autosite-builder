@@ -131,10 +131,10 @@ export default function StepSocialFeeds({ selectedWidgetIds, onWidgetIdsChange, 
   return (
     <div className="max-w-lg mx-auto">
       <h2 className="text-2xl font-black text-[#1a1a1a] mb-1 tracking-tight">Add Social Feeds</h2>
-      <p className="text-[#888] text-sm mb-6">Optional — embed live Instagram posts or Google Reviews on your site.</p>
+      <p className="text-ink-tertiary text-sm mb-6">Optional — embed live Instagram posts or Google Reviews on your site.</p>
 
       {loading ? (
-        <p className="text-sm text-[#888]">Loading...</p>
+        <p className="text-sm text-ink-tertiary">Loading...</p>
       ) : (
         <>
           {/* Instagram section */}
@@ -155,7 +155,7 @@ export default function StepSocialFeeds({ selectedWidgetIds, onWidgetIdsChange, 
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-[#888] mb-3">No Instagram accounts connected yet.</p>
+              <p className="text-xs text-ink-tertiary mb-3">No Instagram accounts connected yet.</p>
             )}
             <button
               onClick={handleConnectInstagram}
@@ -209,7 +209,7 @@ export default function StepSocialFeeds({ selectedWidgetIds, onWidgetIdsChange, 
                     className="w-full text-left px-3 py-2.5 hover:bg-[#faf9f7] transition-colors"
                   >
                     <p className="text-sm font-medium text-[#1a1a1a]">{r.name}</p>
-                    <p className="text-xs text-[#888]">{r.address}</p>
+                    <p className="text-xs text-ink-tertiary">{r.address}</p>
                   </button>
                 ))}
               </div>

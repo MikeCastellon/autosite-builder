@@ -19,6 +19,8 @@
 // tokens into the URL bar of the new tab, where they'd be in browser history.
 // The handoff_id in the URL is harmless on its own — it's single-use, expires
 // in 60 seconds, and is consumed by the claim endpoint immediately on tab load.
+// The stored tokens don't outlive the handoff: the claim blanks them, and
+// each new handoff blanks any that expired unclaimed (scrubExpiredHandoffs).
 import { createClient } from '@supabase/supabase-js';
 
 const CORS = {
@@ -27,6 +29,23 @@ const CORS = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Content-Type': 'application/json',
 };
+
+// Blank the stored tokens of every handoff past its expiry, claimed or not,
+// so no usable session sits in the table at rest. '' rather than null: both
+// columns are NOT NULL. Best effort: a failed sweep never blocks a new
+// session. `db` is the service-role client; exported for tests.
+export async function scrubExpiredHandoffs(db, now = new Date()) {
+  try {
+    const { error } = await db
+      .from('impersonation_handoffs')
+      .update({ access_token: '', refresh_token: '' })
+      .lt('expires_at', now.toISOString())
+      .neq('access_token', '');
+    if (error) console.warn('[admin-impersonate-session] handoff sweep failed', error.message);
+  } catch (e) {
+    console.warn('[admin-impersonate-session] handoff sweep failed', e?.message);
+  }
+}
 
 export const handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: CORS };
@@ -130,6 +149,11 @@ export const handler = async (event) => {
     console.error('[admin-impersonate-session] no refresh_token in session');
     return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: 'Session did not include refresh_token' }) };
   }
+
+  // Blank the tokens of older handoffs that expired unclaimed (the tab was
+  // blocked and the fallback link never opened). impersonate-claim.js blanks
+  // them on claim; this catches the rest.
+  await scrubExpiredHandoffs(supabaseAdmin);
 
   // Step 3: store the tokens in a short-lived handoff record (service role).
   const expiresAt = new Date(Date.now() + 60_000).toISOString(); // 60s TTL

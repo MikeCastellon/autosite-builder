@@ -10,6 +10,31 @@
 
 export const CHANGELOG = [
   {
+    id: '2026-10-site-upgrade',
+    // Placeholder: set to the release day when PR #10 merges (and keep
+    // SITE_UPGRADE_RELEASE_DATE in src/lib/siteUpgrade.js the same).
+    date: '2026-10-02',
+    title: 'New designs for every website',
+    items: [
+      {
+        strong: 'A fresh design for every template',
+        text: '— cleaner layouts and sharper type, with your photos, services, prices and contact details carried over.',
+      },
+      {
+        strong: 'Built for phones',
+        text: '— a real mobile menu, a Call / Book bar that stays in reach, and a booking calendar that fits small screens.',
+      },
+      {
+        strong: 'Your colors and fonts everywhere',
+        text: '— the colors and fonts you pick in the editor now apply to every section of your site.',
+      },
+      {
+        strong: 'Most sites switch over on their own',
+        text: '— over the next few days we\'re republishing live websites with the new design, and your site card shows "New design live" once yours is done. Some sites need a quick check first; if yours does, we\'ll get in touch. You can also switch any time: open your site, look it over, and click Republish.',
+      },
+    ],
+  },
+  {
     id: '2026-05-18-booking-addons',
     date: '2026-05-18',
     title: 'Offer add-ons on your services',

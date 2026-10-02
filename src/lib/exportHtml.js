@@ -3,6 +3,8 @@ import { createElement } from 'react';
 import { normalizeBusinessInfo } from './normalizeBusinessInfo.js';
 import { TEMPLATE_COMPONENT_MAP } from '../data/templates.js';
 import { supabase } from './supabase.js';
+import { buildFontHref, LEGACY_EXPORT_FAMILIES } from './fontCatalog.js';
+import { SITE_BASE_CSS, SITE_RUNTIME_JS } from './siteRuntime.js';
 
 const SCHEDULER_WIDGET_URL =
   (typeof window !== 'undefined' && window.location && window.location.origin
@@ -47,8 +49,14 @@ function buildFaviconDataUrl(businessInfo, images, templateMeta) {
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
 
+// Ampersands first, or the entities produced for the other characters
+// would be double-escaped.
 function escapeAttr(str) {
-  return String(str).replace(/"/g, '&quot;').replace(/&/g, '&amp;');
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 function escapeText(str) {
@@ -58,7 +66,21 @@ function escapeText(str) {
     .replace(/>/g, '&gt;');
 }
 
-function buildSeoHead(businessInfo, generatedCopy, siteId, images, templateMeta) {
+// Legacy templates only: forces inline grids to one column on phones. Theme-
+// ready templates own their layout with @container rules (this hack also
+// collapses the booking widget's 7-column calendar).
+const LEGACY_MOBILE_CSS = `
+    @media (max-width: 768px) {
+      div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
+      div[style*="1fr 1fr"] { grid-template-columns: 1fr !important; }
+      div[style*="2fr 1fr"] { grid-template-columns: 1fr !important; }
+      .tp-nav-links a[href^="#"] { display: none !important; }
+      .tp-nav-links { gap: 12px !important; }
+      .tp-2col { grid-template-columns: 1fr !important; }
+      .tp-4col { grid-template-columns: 1fr 1fr !important; }
+    }`;
+
+function buildSeoHead(businessInfo, generatedCopy, siteId, images, templateMeta, { fontHref = null, legacyLayout = true } = {}) {
   const biz = businessInfo;
   const copy = generatedCopy;
   const keywords = [
@@ -91,33 +113,33 @@ function buildSeoHead(businessInfo, generatedCopy, siteId, images, templateMeta)
   return `
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${copy.metaTitle || `${biz.businessName} | Auto Service in ${biz.city}, ${biz.state}`}</title>
-  <meta name="description" content="${copy.metaDescription || ''}" />
-  <meta name="keywords" content="${keywords}" />
+  <title>${escapeText(copy.metaTitle || `${biz.businessName} | Auto Service in ${biz.city}, ${biz.state}`)}</title>
+  <meta name="description" content="${escapeAttr(copy.metaDescription || '')}" />
+  <meta name="keywords" content="${escapeAttr(keywords)}" />
   <meta name="robots" content="index, follow" />
 
   <!-- Favicon -->
-  <link rel="icon" type="image/svg+xml" href="${faviconUrl}" />
+  <link rel="icon" type="image/svg+xml" href="${escapeAttr(faviconUrl)}" />
 
   <!-- Open Graph -->
-  <meta property="og:title" content="${biz.businessName}" />
-  <meta property="og:description" content="${copy.metaDescription || ''}" />
+  <meta property="og:title" content="${escapeAttr(biz.businessName || '')}" />
+  <meta property="og:description" content="${escapeAttr(copy.metaDescription || '')}" />
   <meta property="og:type" content="local.business" />
   <meta property="og:locale" content="en_US" />
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@700;800&family=Outfit:wght@400;500;600;700;800;900&family=Syne:wght@400;500;600;700;800&family=Barlow+Condensed:wght@400;500;600;700&family=Barlow:wght@400;500;600;700&family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&family=Bebas+Neue&family=Righteous&family=Boogaloo&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  ${fontHref ? `<link href="${escapeAttr(fontHref)}" rel="stylesheet" />` : ''}
 
   <!-- Tailwind CSS CDN (for utility classes in templates) -->
   <script src="https://cdn.tailwindcss.com"></script>
 
   <!-- Scheduler widget (visible only if owner has scheduler enabled) -->
-  ${siteId ? `<script src="${SCHEDULER_WIDGET_URL}" data-site-id="${siteId}" defer></script>` : ''}
+  ${siteId ? `<script src="${SCHEDULER_WIDGET_URL}" data-site-id="${escapeAttr(siteId)}" defer></script>` : ''}
 
   <!-- Contact / inquiry form widget (free for all published sites) -->
-  ${siteId ? `<script src="${CONTACT_WIDGET_URL}" data-site-id="${siteId}" data-accent="${escapeAttr(templateMeta?.colors?.primary || templateMeta?.colors?.accent || '#cc0000')}" defer></script>` : ''}
+  ${siteId ? `<script src="${CONTACT_WIDGET_URL}" data-site-id="${escapeAttr(siteId)}" data-accent="${escapeAttr(templateMeta?.colors?.primary || templateMeta?.colors?.accent || '#cc0000')}" defer></script>` : ''}
 
   <style>
     *, *::before, *::after { box-sizing: border-box; }
@@ -171,15 +193,7 @@ function buildSeoHead(businessInfo, generatedCopy, siteId, images, templateMeta)
       text-decoration: none;
     }
     #acg-powered-by .acg-wordmark .acg-accent { color: #cc0000; }
-    @media (max-width: 768px) {
-      div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
-      div[style*="1fr 1fr"] { grid-template-columns: 1fr !important; }
-      div[style*="2fr 1fr"] { grid-template-columns: 1fr !important; }
-      .tp-nav-links a[href^="#"] { display: none !important; }
-      .tp-nav-links { gap: 12px !important; }
-      .tp-2col { grid-template-columns: 1fr !important; }
-      .tp-4col { grid-template-columns: 1fr 1fr !important; }
-    }
+${legacyLayout ? LEGACY_MOBILE_CSS : ''}
     @media (max-width: 600px) {
       [data-widget="google-reviews"] .sf-gr-carousel { overflow: visible !important; padding: 0 !important; }
       [data-widget="google-reviews"] .sf-gr-carousel > * {
@@ -207,23 +221,40 @@ function buildSeoHead(businessInfo, generatedCopy, siteId, images, templateMeta)
       [data-widget="google-reviews"] [class*="dots"] { display: none !important; }
     }
   </style>
+  <style>
+${SITE_BASE_CSS}
+  </style>
+  <script>${SITE_RUNTIME_JS}</script>
 
   <!-- Local Business Schema -->
   <script type="application/ld+json">
-  ${JSON.stringify(schemaOrg, null, 2)}
+  ${JSON.stringify(schemaOrg, null, 2).replace(/</g, '\\u003c')}
   </script>`;
 }
 
 async function buildHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, widgetConfigIds = [], siteId = null, isPro = false) {
   const mod = await TEMPLATE_COMPONENT_MAP[templateId]();
   const TemplateComponent = mod.default;
+  // Theme-ready modules (see CLAUDE.md) declare the fonts they use and own
+  // their phone layout; legacy ones keep the old font list and grid hack.
+  const themeReady = mod.themeReady === true;
+  const fontHref = buildFontHref([
+    templateMeta?.font,
+    templateMeta?.bodyFont,
+    Array.isArray(mod.extraFonts) ? mod.extraFonts : [],
+    themeReady ? [] : LEGACY_EXPORT_FAMILIES,
+    // Page chrome outside the template: the body default (widgets section)
+    // is Inter and the free-tier "Powered by" bar uses Outfit + Inter.
+    'Inter',
+    isPro ? [] : ['Outfit'],
+  ]);
 
   const normalizedInfo = normalizeBusinessInfo(businessInfo);
   const bodyHtml = renderToStaticMarkup(
     createElement(TemplateComponent, { businessInfo: normalizedInfo, generatedCopy, templateMeta, images: images || {} })
   );
 
-  const seoHead = buildSeoHead(businessInfo, generatedCopy, siteId, images, templateMeta);
+  const seoHead = buildSeoHead(businessInfo, generatedCopy, siteId, images, templateMeta, { fontHref, legacyLayout: !themeReady });
 
   // Inject widget script (template already renders the widget divs, just need the JS)
   let widgetsHtml = '';

@@ -74,7 +74,7 @@ export default function BusinessTypeCard({ type, onClick }) {
       {/* Text */}
       <div className="flex-1 min-w-0">
         <p className="font-bold text-[#1a1a1a] text-[15px] leading-tight">{type.label}</p>
-        <p className="text-[#888] text-[13px] mt-0.5 leading-snug">{type.description}</p>
+        <p className="text-ink-tertiary text-[13px] mt-0.5 leading-snug">{type.description}</p>
       </div>
 
       {/* Arrow */}

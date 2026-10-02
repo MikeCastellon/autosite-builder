@@ -141,10 +141,10 @@ export default function ProfilePage() {
                   <input type="file" accept="image/*" className="hidden" onChange={handlePhotoSelected} disabled={photoBusy} />
                 </label>
                 {photoUrl && !photoBusy && (
-                  <button type="button" onClick={handlePhotoRemove} className="text-xs text-[#888] hover:text-[#cc0000]">Remove</button>
+                  <button type="button" onClick={handlePhotoRemove} className="text-xs text-ink-tertiary hover:text-[#cc0000]">Remove</button>
                 )}
               </div>
-              <p className="text-[11px] text-[#888] mt-1.5">JPG or PNG, up to 500 KB.</p>
+              <p className="text-[11px] text-ink-tertiary mt-1.5">JPG or PNG, up to 500 KB.</p>
             </div>
           </div>
 
@@ -171,7 +171,7 @@ export default function ProfilePage() {
 
           <div>
             <label className={labelBase}>
-              Company name <span className="text-[#888] font-normal">(optional)</span>
+              Company name <span className="text-ink-tertiary font-normal">(optional)</span>
             </label>
             <input
               type="text"
@@ -198,9 +198,9 @@ export default function ProfilePage() {
               value={userEmail || ''}
               readOnly
               disabled
-              className={`${inputBase} bg-[#faf9f7] text-[#888] cursor-not-allowed`}
+              className={`${inputBase} bg-[#faf9f7] text-ink-tertiary cursor-not-allowed`}
             />
-            <p className="text-[11px] text-[#888] mt-1">Email is your sign-in identifier and can't be changed here.</p>
+            <p className="text-[11px] text-ink-tertiary mt-1">Email is your sign-in identifier and can't be changed here.</p>
           </div>
 
           <div className="pt-1">
@@ -221,7 +221,7 @@ export default function ProfilePage() {
         >
           <div>
             <h3 className="text-[15px] font-bold text-[#1a1a1a]">Change password</h3>
-            <p className="text-[12px] text-[#888] mt-0.5">Use at least 6 characters.</p>
+            <p className="text-[12px] text-ink-tertiary mt-0.5">Use at least 6 characters.</p>
           </div>
 
           <div>
@@ -263,7 +263,7 @@ export default function ProfilePage() {
         <section className="bg-white border border-black/[0.07] rounded-2xl p-6 sm:p-7 mt-6">
           <div className="mb-5">
             <h3 className="text-[15px] font-bold text-[#1a1a1a]">What's New</h3>
-            <p className="text-[12px] text-[#888] mt-0.5">Recent updates to Genius Websites — newest first.</p>
+            <p className="text-[12px] text-ink-tertiary mt-0.5">Recent updates to Genius Websites — newest first.</p>
           </div>
           <div className="space-y-5">
             {CHANGELOG.map((entry) => (

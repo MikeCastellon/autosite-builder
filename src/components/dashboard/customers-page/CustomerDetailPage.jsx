@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../../../lib/supabase.js';
-import { listBookingsForOwner } from '../../../lib/bookings.js';
+import { listBookingsForOwner, formatBookingTime } from '../../../lib/bookings.js';
 import { getCustomerMetadata, saveCustomerMetadata } from '../../../lib/customers.js';
 import { groupBookingsIntoCustomers, pickPrimarySiteId, makeCustomerLikeFromProfile } from '../../../lib/customerIdentity.js';
 import { getCustomerProfileByIdentityKey, upsertCustomerPhoto } from '../../../lib/customerProfiles.js';
@@ -9,16 +9,18 @@ import { useAlert } from '../../ui/AlertProvider.jsx';
 import EmailComposerModal from './EmailComposerModal.jsx';
 import BookCustomerModal from './BookCustomerModal.jsx';
 import ChargeModal from '../charges/ChargeModal.jsx';
+import { loadChargeableServices } from '../../../lib/createCharge.js';
 
 function formatDate(iso) {
   if (!iso) return '—';
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
-function formatDateTime(iso) {
+// Appointment times (preferred_at) are shop wall-clock time: see bookings.js.
+function formatAppointment(iso, withTime = true) {
   if (!iso) return '—';
-  return new Date(iso).toLocaleString('en-US', {
-    month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit',
-  });
+  return formatBookingTime(iso, withTime
+    ? { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }
+    : { month: 'short', day: 'numeric', year: 'numeric' });
 }
 function statusClass(status) {
   switch (status) {
@@ -128,7 +130,19 @@ export default function CustomerDetailPage({
   const hasMultipleSites = sites.length > 1;
   const primarySiteId = customer ? pickPrimarySiteId(customer) : null;
 
-  // Load charges + services — depends on `customer` so must come AFTER the useMemo above
+  // The Charge button's services: the same list (ids, sites, per-vehicle
+  // prices) as the Charges page. This used to filter on a `published`
+  // column sites don't have, so the query failed and no service was listed.
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    loadChargeableServices(userId)
+      .then(({ services: list }) => { if (!cancelled) setServices(list); })
+      .catch(() => { if (!cancelled) setServices([]); });
+    return () => { cancelled = true; };
+  }, [userId]);
+
+  // Load charges — depends on `customer` so must come AFTER the useMemo above
   useEffect(() => {
     if (!userId || !customer?.phone) return;
     const normalized = customer.phone.replace(/\D/g, '');
@@ -149,25 +163,6 @@ export default function CustomerDetailPage({
             return n && n === normalized;
           });
           setCharges(matched);
-        }
-
-        const { data: sitesData } = await supabase
-          .from('sites')
-          .select('id, scheduler_config')
-          .eq('user_id', userId)
-          .eq('published', true);
-        if (!cancelled && sitesData) {
-          const seen = new Set();
-          const svcs = [];
-          for (const s of sitesData) {
-            for (const svc of (s.scheduler_config?.services || [])) {
-              if (svc.enabled !== false && svc.name && !seen.has(svc.name)) {
-                seen.add(svc.name);
-                svcs.push({ name: svc.name, price: svc.price });
-              }
-            }
-          }
-          setServices(svcs);
         }
       } finally {
         if (!cancelled) setChargesLoading(false);
@@ -302,6 +297,8 @@ export default function CustomerDetailPage({
     (a, b) => new Date(b.preferred_at || b.created_at) - new Date(a.preferred_at || a.created_at),
   );
   const topService = [...customer.services.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || '—';
+  // Preselects the vehicle in the Charge dialog (the price depends on it).
+  const lastVehicleTypeId = sortedBookings.find((b) => b.vehicle_type_id)?.vehicle_type_id || null;
 
   return (
     <>
@@ -345,7 +342,7 @@ export default function CustomerDetailPage({
                   </h1>
                   {customer.nextUpcomingAt && (
                     <div className="mt-2 inline-flex items-center text-[11px] font-semibold text-green-700 bg-green-50 border border-green-200 rounded-full px-2.5 py-0.5">
-                      Upcoming · {formatDate(customer.nextUpcomingAt)}
+                      Upcoming · {formatAppointment(customer.nextUpcomingAt, false)}
                     </div>
                   )}
                   {customer.photoUrl && (
@@ -519,7 +516,7 @@ export default function CustomerDetailPage({
               <tbody>
                 {sortedBookings.map((b) => (
                   <tr key={b.id} className="border-t border-gray-100">
-                    <td className="px-6 py-3 text-[13px] text-gray-800">{formatDateTime(b.preferred_at)}</td>
+                    <td className="px-6 py-3 text-[13px] text-gray-800">{formatAppointment(b.preferred_at)}</td>
                     <td className="px-3 py-3 text-[13px] text-gray-700">{b.service_name || '—'}</td>
                     <td className="px-3 py-3 text-[12px] text-gray-600">
                       {[b.vehicle_year, b.vehicle_make, b.vehicle_model].filter(Boolean).join(' ') || '—'}
@@ -633,6 +630,7 @@ export default function CustomerDetailPage({
           services={services}
           prefillName={customer?.name || ''}
           prefillPhone={customer?.phone || ''}
+          prefillVehicleTypeId={lastVehicleTypeId}
           siteId={primarySiteId}
           onClose={() => {
             setShowChargeModal(false);

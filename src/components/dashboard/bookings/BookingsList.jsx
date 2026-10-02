@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react';
 import BookingFilters from './BookingFilters.jsx';
 import StatusPill from './StatusPill.jsx';
+import { formatBookingTime } from '../../../lib/bookings.js';
 
+const SHORT = { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' };
+
+// created_at is a real instant: the viewer's local time.
 function fmt(iso) {
-  return new Date(iso).toLocaleString('en-US', {
-    month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
-  });
+  return new Date(iso).toLocaleString('en-US', SHORT);
 }
 
 function depositPill(booking) {
@@ -70,7 +72,7 @@ export default function BookingsList({ bookings, onSelect }) {
                       {depositPill(b)}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-gray-800">{fmt(b.preferred_at)}</td>
+                  <td className="px-4 py-3 text-gray-800">{formatBookingTime(b.preferred_at, SHORT)}</td>
                   <td className="px-4 py-3">
                     <div className="font-semibold text-gray-900">{b.customer_name}</div>
                     <div className="text-xs text-gray-500">{b.customer_phone}</div>

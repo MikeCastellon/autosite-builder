@@ -24,11 +24,26 @@ function esc(s) {
   }[c]));
 }
 
-function formatWhen(iso) {
-  const d = new Date(iso);
-  return d.toLocaleString('en-US', {
-    weekday: 'short', month: 'short', day: 'numeric',
-    year: 'numeric', hour: 'numeric', minute: '2-digit',
+const WHEN_FORMAT = {
+  weekday: 'short', month: 'short', day: 'numeric',
+  year: 'numeric', hour: 'numeric', minute: '2-digit',
+};
+
+// Booking times. preferred_at is the shop's wall-clock time stored as UTC
+// (slot-math.js; no shop time zone is stored), so read it in UTC
+// explicitly: Lambda happens to run in UTC, `netlify dev` on a laptop does
+// not. Same rule as the dashboard's formatBookingTime (src/lib/bookings.js).
+export function formatWhen(iso) {
+  return new Date(iso).toLocaleString('en-US', { ...WHEN_FORMAT, timeZone: 'UTC' });
+}
+
+// Support-call times. scheduled_at is a real instant (support-slots.js
+// converts from SUPPORT_TIMEZONE), and the emails label it "ET", so show it
+// in that zone; formatWhen would print the UTC clock time.
+export function formatSupportWhen(iso) {
+  return new Date(iso).toLocaleString('en-US', {
+    ...WHEN_FORMAT,
+    timeZone: process.env.SUPPORT_TIMEZONE || 'America/New_York',
   });
 }
 
@@ -484,7 +499,7 @@ export async function supportBookingToCustomer({ booking }) {
 
   const detailCard = `
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#fafafa;border:1px solid #f4f4f5;border-radius:12px;padding:16px 18px;margin-bottom:16px;"><tr><td>
-      <p style="margin:0 0 6px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">When:</strong> ${esc(formatWhen(b.scheduled_at))} ET</p>
+      <p style="margin:0 0 6px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">When:</strong> ${esc(formatSupportWhen(b.scheduled_at))} ET</p>
       <p style="margin:0 0 6px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Duration:</strong> 30 minutes</p>
       ${b.topic ? `<p style="margin:0;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Topic:</strong> ${esc(b.topic)}</p>` : ''}
     </td></tr></table>
@@ -495,17 +510,17 @@ export async function supportBookingToCustomer({ booking }) {
     icon: null,
     eyebrow: SUPPORT_HOST_NAME,
     title: 'Your support call is confirmed',
-    intro: `We'll see you on Zoom at <strong style="color:#18181b;">${esc(formatWhen(b.scheduled_at))} ET</strong>.`,
+    intro: `We'll see you on Zoom at <strong style="color:#18181b;">${esc(formatSupportWhen(b.scheduled_at))} ET</strong>.`,
     cta: { label: 'Join Zoom call', href: b.zoom_join_url },
     body: detailCard,
   });
-  const text = `Your support call is confirmed.\n\nWhen: ${formatWhen(b.scheduled_at)} ET (30 min)\nJoin: ${b.zoom_join_url}\n${b.zoom_password ? `Passcode (if asked): ${b.zoom_password}\n` : ''}${b.topic ? `Topic: ${b.topic}\n` : ''}\nA calendar invite is attached. Reply to this email to reschedule.`;
+  const text = `Your support call is confirmed.\n\nWhen: ${formatSupportWhen(b.scheduled_at)} ET (30 min)\nJoin: ${b.zoom_join_url}\n${b.zoom_password ? `Passcode (if asked): ${b.zoom_password}\n` : ''}${b.topic ? `Topic: ${b.topic}\n` : ''}\nA calendar invite is attached. Reply to this email to reschedule.`;
 
   try {
     const res = await client.sendEmail({
       From: FROM,
       To: b.customer_email,
-      Subject: `Zoom call with ${SUPPORT_HOST_NAME} — ${formatWhen(b.scheduled_at)}`,
+      Subject: `Zoom call with ${SUPPORT_HOST_NAME} — ${formatSupportWhen(b.scheduled_at)}`,
       HtmlBody: html,
       TextBody: text,
       Attachments: [ics],
@@ -537,7 +552,7 @@ export async function supportBookingToHost({ booking, hostEmail }) {
 
   const detailCard = `
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#fafafa;border:1px solid #f4f4f5;border-radius:12px;padding:16px 18px;margin-bottom:8px;"><tr><td>
-      <p style="margin:0 0 6px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">When:</strong> ${esc(formatWhen(b.scheduled_at))} ET (30 min)</p>
+      <p style="margin:0 0 6px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">When:</strong> ${esc(formatSupportWhen(b.scheduled_at))} ET (30 min)</p>
       <p style="margin:0 0 6px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Customer:</strong> ${esc(b.customer_name)}</p>
       <p style="margin:0 0 6px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Email:</strong> <a href="mailto:${esc(b.customer_email)}" style="color:#cc0000;text-decoration:none;">${esc(b.customer_email)}</a></p>
       ${b.customer_phone ? `<p style="margin:0 0 6px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">Phone:</strong> <a href="tel:${esc(b.customer_phone)}" style="color:#cc0000;text-decoration:none;">${esc(b.customer_phone)}</a></p>` : ''}
@@ -548,17 +563,17 @@ export async function supportBookingToHost({ booking, hostEmail }) {
     icon: null,
     eyebrow: 'Support booking',
     title: `${esc(b.customer_name)} booked a Zoom`,
-    intro: `<strong style="color:#18181b;">${esc(formatWhen(b.scheduled_at))} ET</strong> — calendar invite attached.`,
+    intro: `<strong style="color:#18181b;">${esc(formatSupportWhen(b.scheduled_at))} ET</strong> — calendar invite attached.`,
     cta: { label: 'Start meeting (host link)', href: b.zoom_start_url || b.zoom_join_url },
     body: detailCard,
   });
-  const text = `New support call booked.\n\nWhen: ${formatWhen(b.scheduled_at)} ET (30 min)\nCustomer: ${b.customer_name} (${b.customer_email}${b.customer_phone ? ', ' + b.customer_phone : ''})\n${b.topic ? `Topic: ${b.topic}\n` : ''}\nHost link: ${b.zoom_start_url}\nJoin link: ${b.zoom_join_url}`;
+  const text = `New support call booked.\n\nWhen: ${formatSupportWhen(b.scheduled_at)} ET (30 min)\nCustomer: ${b.customer_name} (${b.customer_email}${b.customer_phone ? ', ' + b.customer_phone : ''})\n${b.topic ? `Topic: ${b.topic}\n` : ''}\nHost link: ${b.zoom_start_url}\nJoin link: ${b.zoom_join_url}`;
 
   try {
     const res = await client.sendEmail({
       From: FROM,
       To: hostEmail,
-      Subject: `Support call — ${b.customer_name} — ${formatWhen(b.scheduled_at)}`,
+      Subject: `Support call — ${b.customer_name} — ${formatSupportWhen(b.scheduled_at)}`,
       HtmlBody: html,
       TextBody: text,
       Attachments: [ics],

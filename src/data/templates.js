@@ -272,6 +272,21 @@ export const TEMPLATES = {
     mood: 'fun, playful, cheerful, family-friendly, bright',
     tier: 'premium',
   },
+
+  // ─── Mobile Detailing (Redline) ────────────────────────────────
+  mobile_redline: {
+    id: 'mobile_redline',
+    businessType: 'mobile_detailing',
+    label: 'Redline',
+    description: 'Near-black & signal red with an instant-price hero card, vehicle-makes band and package menus.',
+    previewColors: ['#0a0909', '#ee3533', '#1a1818'],
+    colors: { bg: '#0a0909', accent: '#ee3533', text: '#f8f8f8', secondary: '#1a1818', muted: '#a7a3a4' },
+    font: "'Inter', sans-serif",
+    bodyFont: "'Inter', sans-serif",
+    mood: 'bold, trustworthy, local, premium mobile service, dark with red accents',
+    tier: 'premium',
+    hidden: true,
+  },
 };
 
 export const TEMPLATE_COMPONENT_MAP = {
@@ -296,4 +311,5 @@ export const TEMPLATE_COMPONENT_MAP = {
   detailing_autosync_dark:  () => import('../components/preview/templates/detailing/DetailingAutoSyncDark.jsx'),
   detailing_autosync_white: () => import('../components/preview/templates/detailing/DetailingAutoSyncWhite.jsx'),
   carwash_bubble:       () => import('../components/preview/templates/carwash/CarwashBubble.jsx'),
+  mobile_redline:       () => import('../components/preview/templates/mobile/MobileRedline.jsx'),
 };

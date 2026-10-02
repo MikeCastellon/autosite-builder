@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useId, useRef } from 'react';
 
 const AlertContext = createContext(null);
 
@@ -27,13 +27,20 @@ export default function AlertProvider({ children }) {
 
   const confirm = useCallback((message, options = {}) => {
     return new Promise((resolve) => {
-      setConfirmState({
+      const next = {
+        id: ++idCounter,
         message,
         title: options.title || 'Confirm',
         confirmText: options.confirmText || 'Confirm',
         cancelText: options.cancelText || 'Cancel',
         danger: !!options.danger,
         resolve,
+      };
+      setConfirmState((prev) => {
+        // A newer confirm replaces an open one: the older one counts as
+        // cancelled, so its caller isn't left waiting forever.
+        if (prev && prev !== next) prev.resolve(false);
+        return next;
       });
     });
   }, []);
@@ -44,14 +51,6 @@ export default function AlertProvider({ children }) {
       setConfirmState(null);
     }
   };
-
-  // Close modal on Escape
-  useEffect(() => {
-    if (!confirmState) return;
-    const onKey = (e) => { if (e.key === 'Escape') handleConfirm(false); };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [confirmState]); // eslint-disable-line
 
   return (
     <AlertContext.Provider value={{ toast, confirm }}>
@@ -68,41 +67,119 @@ export default function AlertProvider({ children }) {
 
       {/* Confirm modal */}
       {confirmState && (
-        <div
-          className="fixed inset-0 z-[10001] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
-          onClick={() => handleConfirm(false)}
-        >
-          <div
-            className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 pointer-events-auto"
-            onClick={(e) => e.stopPropagation()}
-            role="alertdialog"
-            aria-modal="true"
-          >
-            <h3 className="text-[17px] font-bold text-[#1a1a1a] mb-2">{confirmState.title}</h3>
-            <p className="text-[14px] text-[#555] leading-relaxed mb-6">{confirmState.message}</p>
-            <div className="flex gap-2 justify-end">
-              <button
-                onClick={() => handleConfirm(false)}
-                className="px-4 py-2 rounded-lg border border-black/10 hover:border-black/30 text-[13px] font-medium text-[#555] hover:text-[#1a1a1a] transition-colors"
-              >
-                {confirmState.cancelText}
-              </button>
-              <button
-                onClick={() => handleConfirm(true)}
-                className={`px-4 py-2 rounded-lg text-[13px] font-semibold text-white transition-colors ${
-                  confirmState.danger
-                    ? 'bg-[#cc0000] hover:bg-[#aa0000]'
-                    : 'bg-[#1a1a1a] hover:bg-[#cc0000]'
-                }`}
-                autoFocus
-              >
-                {confirmState.confirmText}
-              </button>
-            </div>
-          </div>
-        </div>
+        <ConfirmDialog key={confirmState.id} state={confirmState} onResult={handleConfirm} />
       )}
     </AlertContext.Provider>
+  );
+}
+
+const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+// Which button a confirm dialog focuses first. A destructive (danger) dialog
+// focuses Cancel, so a stray Enter or Space can't delete a site.
+export function initialFocus(danger) {
+  return danger ? 'cancel' : 'confirm';
+}
+
+// Where Tab should move focus to keep it inside the dialog, or null to let
+// the browser move it. items: the dialog's focusable elements in order;
+// inside: whether focus is in the dialog now (the panel itself counts).
+export function trapFocusTarget({ items, active, inside, shiftKey }) {
+  if (items.length === 0) return null;
+  const first = items[0];
+  const last = items[items.length - 1];
+  if (shiftKey) {
+    const atStart = !inside || active === first || !items.includes(active);
+    return atStart ? last : null;
+  }
+  return !inside || active === last ? first : null;
+}
+
+// Modal confirm. Opens with focus per initialFocus; other dialogs focus the
+// confirm button. Tab stays inside the dialog, Escape or a backdrop click
+// cancels, and focus goes back to whatever opened it.
+export function ConfirmDialog({ state, onResult }) {
+  const panelRef = useRef(null);
+  const cancelRef = useRef(null);
+  const confirmRef = useRef(null);
+  const titleId = useId();
+  const messageId = useId();
+  const resultRef = useRef(onResult);
+  resultRef.current = onResult;
+
+  useEffect(() => {
+    const opener = document.activeElement;
+    (initialFocus(state.danger) === 'cancel' ? cancelRef : confirmRef).current?.focus();
+
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        resultRef.current(false);
+        return;
+      }
+      if (e.key !== 'Tab' || !panelRef.current) return;
+      const target = trapFocusTarget({
+        items: [...panelRef.current.querySelectorAll(FOCUSABLE)],
+        active: document.activeElement,
+        inside: panelRef.current.contains(document.activeElement),
+        shiftKey: e.shiftKey,
+      });
+      if (target) {
+        e.preventDefault();
+        target.focus();
+      }
+    };
+    // Capture phase, so page-level Escape/Tab handlers underneath don't
+    // act while the dialog is open.
+    document.addEventListener('keydown', onKey, true);
+    return () => {
+      document.removeEventListener('keydown', onKey, true);
+      if (opener && typeof opener.focus === 'function' && document.contains(opener)) opener.focus();
+    };
+  }, [state.danger]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[10001] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+      onClick={() => onResult(false)}
+    >
+      <div
+        ref={panelRef}
+        tabIndex={-1}
+        className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 pointer-events-auto outline-none"
+        onClick={(e) => e.stopPropagation()}
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={messageId}
+      >
+        <h3 id={titleId} className="text-[17px] font-bold text-[#1a1a1a] mb-2">{state.title}</h3>
+        <p id={messageId} className="text-[14px] text-[#555] leading-relaxed mb-6">{state.message}</p>
+        <div className="flex gap-2 justify-end">
+          <button
+            ref={cancelRef}
+            type="button"
+            onClick={() => onResult(false)}
+            className="px-4 py-2 rounded-lg border border-black/10 hover:border-black/30 text-[13px] font-medium text-[#555] hover:text-[#1a1a1a] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a1a1a] focus-visible:ring-offset-2"
+          >
+            {state.cancelText}
+          </button>
+          <button
+            ref={confirmRef}
+            type="button"
+            onClick={() => onResult(true)}
+            className={`px-4 py-2 rounded-lg text-[13px] font-semibold text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+              state.danger
+                ? 'bg-[#cc0000] hover:bg-[#aa0000] focus-visible:ring-[#cc0000]'
+                : 'bg-[#1a1a1a] hover:bg-[#cc0000] focus-visible:ring-[#1a1a1a]'
+            }`}
+          >
+            {state.confirmText}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 

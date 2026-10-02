@@ -11,7 +11,7 @@ export default {
           DEFAULT: '#1a1a1a',
           primary: '#1a1a1a',
           secondary: '#4a4a4a',
-          tertiary: '#888888',
+          tertiary: '#6b6b6b', // AA for small text; mirrors design-tokens.js
         },
         surface: {
           DEFAULT: '#ffffff',

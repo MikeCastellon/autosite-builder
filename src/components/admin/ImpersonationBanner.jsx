@@ -76,8 +76,11 @@ export default function ImpersonationBanner() {
   }, []);
 
   async function handleExit() {
+    // scope 'local' ends only this tab's impersonation session. The default
+    // ('global') revokes every session the customer has, signing them out
+    // on all their own devices.
     try {
-      await supabase.auth.signOut();
+      await supabase.auth.signOut({ scope: 'local' });
     } catch { /* ignore */ }
     try {
       window.sessionStorage.removeItem('genius:impersonating');

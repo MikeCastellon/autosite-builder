@@ -116,7 +116,7 @@ export default function AdminAccountsTab() {
         <button onClick={refresh} className="text-xs text-gray-500 hover:text-[#1a1a1a]">
           {loading ? 'Loading…' : 'Refresh'}
         </button>
-        <span className="text-xs text-[#888] ml-auto">{filtered.length} of {users.length}</span>
+        <span className="text-xs text-ink-tertiary ml-auto">{filtered.length} of {users.length}</span>
       </div>
 
       <div className="flex flex-wrap gap-1.5 mb-4">
@@ -131,7 +131,7 @@ export default function AdminAccountsTab() {
                 : 'bg-white text-[#555] border-black/[0.10] hover:border-[#cc0000]/40'
             }`}
           >
-            {f.label} <span className={`ml-1 ${activeFilter === f.id ? 'opacity-70' : 'text-[#aaa]'}`}>{counts[f.id]}</span>
+            {f.label} <span className={`ml-1 ${activeFilter === f.id ? 'opacity-70' : 'text-ink-tertiary'}`}>{counts[f.id]}</span>
           </button>
         ))}
       </div>
@@ -139,13 +139,13 @@ export default function AdminAccountsTab() {
       {err ? (
         <p className="text-sm text-[#cc0000]">{err}</p>
       ) : loading ? (
-        <p className="text-sm text-[#888]">Loading…</p>
+        <p className="text-sm text-ink-tertiary">Loading…</p>
       ) : filtered.length === 0 ? (
-        <p className="text-sm text-[#888] text-center py-10">No users match.</p>
+        <p className="text-sm text-ink-tertiary text-center py-10">No users match.</p>
       ) : (
         <div className="bg-white border border-black/[0.07] rounded-xl overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-[#faf9f7] text-left text-[10px] text-[#888] uppercase tracking-wider">
+            <thead className="bg-[#faf9f7] text-left text-[10px] text-ink-tertiary uppercase tracking-wider">
               <tr>
                 <th className="px-4 py-3">User</th>
                 <th className="px-4 py-3">Business</th>
@@ -173,12 +173,12 @@ export default function AdminAccountsTab() {
                         </div>
                         <div className="min-w-0">
                           <p className="font-semibold text-[#1a1a1a] truncate">{fullName || u.email}</p>
-                          {fullName && <p className="text-[11px] text-[#888] truncate">{u.email}</p>}
+                          {fullName && <p className="text-[11px] text-ink-tertiary truncate">{u.email}</p>}
                         </div>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-[#555] truncate max-w-[160px]">
-                      {u.business_name || u.firstSiteName || <span className="text-[#aaa]">—</span>}
+                      {u.business_name || u.firstSiteName || <span className="text-ink-tertiary">—</span>}
                     </td>
                     <td className="px-4 py-3">
                       <SubBadge bucket={subStatusBucket(u)} />
@@ -195,9 +195,9 @@ export default function AdminAccountsTab() {
                           {u.firstPublishedUrl.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]}
                         </a>
                       ) : u.siteCount > 0 ? (
-                        <span className="text-[12px] text-[#888]">{u.siteCount} draft</span>
+                        <span className="text-[12px] text-ink-tertiary">{u.siteCount} draft</span>
                       ) : (
-                        <span className="text-[#aaa] text-[12px]">—</span>
+                        <span className="text-ink-tertiary text-[12px]">—</span>
                       )}
                     </td>
                     <td className="px-4 py-3">
@@ -206,12 +206,12 @@ export default function AdminAccountsTab() {
                           <span key={t} className="bg-[#cc0000]/[0.08] text-[#cc0000] rounded-full px-2 py-0.5 text-[10px] font-semibold">{t}</span>
                         ))}
                         {(u.adminTags || []).length > 3 && (
-                          <span className="text-[10px] text-[#888] self-center">+{u.adminTags.length - 3}</span>
+                          <span className="text-[10px] text-ink-tertiary self-center">+{u.adminTags.length - 3}</span>
                         )}
-                        {(u.adminTags || []).length === 0 && <span className="text-[#aaa] text-[12px]">—</span>}
+                        {(u.adminTags || []).length === 0 && <span className="text-ink-tertiary text-[12px]">—</span>}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-[#888] text-[12px] whitespace-nowrap">{formatDate(u.created_at)}</td>
+                    <td className="px-4 py-3 text-ink-tertiary text-[12px] whitespace-nowrap">{formatDate(u.created_at)}</td>
                     <td className="px-4 py-3 text-right">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="9 18 15 12 9 6" />

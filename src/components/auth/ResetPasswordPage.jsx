@@ -31,7 +31,7 @@ export default function ResetPasswordPage({ onComplete }) {
       <div className="w-full max-w-sm">
         <div className="mb-6">
           <h1 className="text-2xl font-black text-[#1a1a1a] tracking-tight">Set New Password</h1>
-          <p className="text-[#888] text-sm mt-1">Choose a new password for your account</p>
+          <p className="text-ink-tertiary text-sm mt-1">Choose a new password for your account</p>
         </div>
 
         {success ? (

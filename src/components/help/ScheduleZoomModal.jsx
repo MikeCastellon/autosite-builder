@@ -215,7 +215,7 @@ export default function ScheduleZoomModal({ onClose }) {
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-black/[0.05] transition-colors text-[#888]"
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-black/[0.05] transition-colors text-ink-tertiary"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
@@ -232,7 +232,7 @@ export default function ScheduleZoomModal({ onClose }) {
                 </div>
               ) : slots.length === 0 ? (
                 <div className="text-center py-10">
-                  <p className="text-sm text-[#888]">No open slots in the next two weeks. Try emailing <a href="mailto:support@autocaregenius.com" className="text-[#cc0000] font-semibold">support@autocaregenius.com</a> instead.</p>
+                  <p className="text-sm text-ink-tertiary">No open slots in the next two weeks. Try emailing <a href="mailto:support@autocaregenius.com" className="text-[#cc0000] font-semibold">support@autocaregenius.com</a> instead.</p>
                 </div>
               ) : (
                 <div className="grid sm:grid-cols-[1fr_180px] gap-4">
@@ -264,7 +264,7 @@ export default function ScheduleZoomModal({ onClose }) {
 
                     <div className="grid grid-cols-7 gap-0.5 mb-1">
                       {WEEKDAY_HEADERS.map((d) => (
-                        <div key={d} className="text-center text-[10px] font-bold uppercase tracking-wider text-[#888] py-1">
+                        <div key={d} className="text-center text-[10px] font-bold uppercase tracking-wider text-ink-tertiary py-1">
                           {d}
                         </div>
                       ))}
@@ -307,14 +307,14 @@ export default function ScheduleZoomModal({ onClose }) {
                       })}
                     </div>
 
-                    <p className="text-[11px] text-[#888] mt-3 text-center">
+                    <p className="text-[11px] text-ink-tertiary mt-3 text-center">
                       All times shown in <span className="font-semibold text-[#1a1a1a]">{timezone.replace('America/', '').replace('_', ' ')}</span>. Dots = available.
                     </p>
                   </div>
 
                   {/* Slot list */}
                   <div className="border-l-0 sm:border-l sm:pl-4 border-black/[0.07] sm:max-h-[340px] overflow-y-auto">
-                    <p className="text-xs font-bold uppercase tracking-wider text-[#888] mb-2">
+                    <p className="text-xs font-bold uppercase tracking-wider text-ink-tertiary mb-2">
                       {selectedDayKey
                         ? new Intl.DateTimeFormat('en-US', { timeZone: timezone, weekday: 'long', month: 'short', day: 'numeric' }).format(new Date(selectedDaySlots[0]?.startISO || `${selectedDayKey}T12:00:00Z`))
                         : 'Pick a day'}
@@ -338,10 +338,10 @@ export default function ScheduleZoomModal({ onClose }) {
                           ))}
                         </div>
                       ) : (
-                        <p className="text-sm text-[#888]">No times available on this day.</p>
+                        <p className="text-sm text-ink-tertiary">No times available on this day.</p>
                       )
                     ) : (
-                      <p className="text-sm text-[#aaa]">Select a date with a red dot.</p>
+                      <p className="text-sm text-ink-tertiary">Select a date with a red dot.</p>
                     )}
                   </div>
                 </div>
@@ -366,10 +366,10 @@ export default function ScheduleZoomModal({ onClose }) {
             <div className="space-y-4">
               <div className="rounded-xl bg-[#faf9f7] border border-black/[0.07] p-3 text-sm text-[#1a1a1a]">
                 <span className="font-semibold">📅 {formatLongDate(selectedSlot.startISO, timezone)}</span>
-                <span className="mx-2 text-[#aaa]">·</span>
+                <span className="mx-2 text-ink-tertiary">·</span>
                 <span className="font-semibold">{formatTime(selectedSlot.startISO, timezone)}</span>
-                <span className="mx-2 text-[#aaa]">·</span>
-                <span className="text-[#888]">30 min</span>
+                <span className="mx-2 text-ink-tertiary">·</span>
+                <span className="text-ink-tertiary">30 min</span>
               </div>
 
               <div>
@@ -386,7 +386,7 @@ export default function ScheduleZoomModal({ onClose }) {
 
               <div>
                 <label className="block text-xs font-semibold text-[#555] uppercase tracking-wide mb-1.5">
-                  Phone <span className="text-[#aaa] normal-case font-normal">(optional)</span>
+                  Phone <span className="text-ink-tertiary normal-case font-normal">(optional)</span>
                 </label>
                 <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(555) 000-0000"
                   className="w-full px-4 py-2.5 rounded-xl border border-black/[0.12] text-sm focus:outline-none focus:border-[#cc0000]" />
@@ -394,7 +394,7 @@ export default function ScheduleZoomModal({ onClose }) {
 
               <div>
                 <label className="block text-xs font-semibold text-[#555] uppercase tracking-wide mb-1.5">
-                  What do you want to talk about? <span className="text-[#aaa] normal-case font-normal">(optional)</span>
+                  What do you want to talk about? <span className="text-ink-tertiary normal-case font-normal">(optional)</span>
                 </label>
                 <textarea value={topic} onChange={(e) => setTopic(e.target.value)} rows={3} placeholder="e.g. help connecting my domain, walkthrough of the booking system…"
                   className="w-full px-4 py-2.5 rounded-xl border border-black/[0.12] text-sm focus:outline-none focus:border-[#cc0000]" />
@@ -433,18 +433,18 @@ export default function ScheduleZoomModal({ onClose }) {
                 </p>
               </div>
               <div className="rounded-xl border border-black/[0.07] bg-[#faf9f7] p-4 text-left">
-                <p className="text-xs font-semibold text-[#888] uppercase tracking-wider mb-2">Zoom link</p>
+                <p className="text-xs font-semibold text-ink-tertiary uppercase tracking-wider mb-2">Zoom link</p>
                 <a href={confirmation.zoom_join_url} target="_blank" rel="noreferrer"
                   className="block text-sm text-[#cc0000] font-semibold break-all hover:underline">
                   {confirmation.zoom_join_url}
                 </a>
                 {confirmation.zoom_password && (
-                  <p className="text-xs text-[#888] mt-2">
+                  <p className="text-xs text-ink-tertiary mt-2">
                     Passcode (if asked): <span className="font-mono font-semibold text-[#1a1a1a]">{confirmation.zoom_password}</span>
                   </p>
                 )}
               </div>
-              <p className="text-xs text-[#888] leading-relaxed">
+              <p className="text-xs text-ink-tertiary leading-relaxed">
                 A confirmation + calendar invite is on its way to <strong className="text-[#1a1a1a]">{email}</strong>. Need to reschedule? Just reply to that email.
               </p>
               <button type="button" onClick={onClose}

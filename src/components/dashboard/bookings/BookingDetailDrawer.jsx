@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import StatusPill from './StatusPill.jsx';
-import { updateBooking, saveOwnerNotes, sendBookingReminder, buildSmsReminderHref, defaultReminderMessage } from '../../../lib/bookings.js';
+import { updateBooking, saveOwnerNotes, sendBookingReminder, buildSmsReminderHref, defaultReminderMessage, formatBookingTime } from '../../../lib/bookings.js';
 import { supabase } from '../../../lib/supabase.js';
 
+// Real instants (created_at) in the viewer's time zone. The appointment
+// time itself goes through formatBookingTime (shop time, see bookings.js).
 function fmt(iso) {
   return new Date(iso).toLocaleString('en-US', {
     weekday: 'short', month: 'short', day: 'numeric',
@@ -117,7 +119,7 @@ export default function BookingDetailDrawer({ booking, onClose, onUpdated }) {
         </p>
 
         <dl className="text-sm space-y-2 mb-6">
-          <Row term="When"     def={fmt(b.preferred_at)} />
+          <Row term="When"     def={formatBookingTime(b.preferred_at)} />
           <Row term="Vehicle"  def={`${b.vehicle_year} ${b.vehicle_make} ${b.vehicle_model} (${b.vehicle_type_name || b.vehicle_size})`} />
           {b.service_name     && <Row term="Service" def={b.service_name} />}
           {b.service_address  && <Row term="Address" def={b.service_address} />}

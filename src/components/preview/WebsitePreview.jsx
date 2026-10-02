@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useMemo, useState } from 'react';
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import { TEMPLATE_COMPONENT_MAP } from '../../data/templates.js';
 import { normalizeBusinessInfo } from '../../lib/normalizeBusinessInfo.js';
 import PreviewToolbar from './PreviewToolbar.jsx';
@@ -8,6 +8,9 @@ import { useAuth } from '../../lib/AuthContext.jsx';
 import { isEffectiveSchedulerActive } from '../../lib/subscriptionGating.js';
 import { isImpersonationTab } from '../../lib/supabase.js';
 import { IMPERSONATION_BAR_HEIGHT } from '../admin/ImpersonationBanner.jsx';
+import { EditorModeProvider } from './templates/kit/EditorMode.jsx';
+import { SITE_BASE_CSS } from '../../lib/siteRuntime.js';
+import { buildFontHref } from '../../lib/fontCatalog.js';
 
 const ACG_LOGO = 'https://www.autocaregenius.com/cdn/shop/files/v11_1.svg?v=1760731533&width=160';
 
@@ -37,13 +40,82 @@ export default function WebsitePreview({ siteId, businessInfo, onBusinessInfoCha
     if ('scrollRestoration' in window.history) {
       window.history.scrollRestoration = 'manual';
     }
-    window.scrollTo(0, 0);
+    // 'instant': SITE_BASE_CSS turns on smooth scrolling for the page.
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
   }, [templateId]);
+
+  // Preview twin of the published runtime (siteRuntime.js): the scrolled
+  // flag templates style their nav with (html[data-acg-scrolled]), and the
+  // phone menu (details.acg-menu) closing on a link tap or outside click.
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const root = document.documentElement;
+    let last = null;
+    const onScroll = () => {
+      const scrolled = window.scrollY > 20;
+      if (scrolled === last) return;
+      last = scrolled;
+      if (scrolled) root.setAttribute('data-acg-scrolled', '');
+      else root.removeAttribute('data-acg-scrolled');
+    };
+    const onClick = (e) => {
+      const t = e.target;
+      if (!t || !t.closest) return;
+      const menu = t.closest('details.acg-menu');
+      if (menu && t.closest('a')) menu.removeAttribute('open');
+      document.querySelectorAll('details.acg-menu[open]').forEach((m) => {
+        if (m !== menu) m.removeAttribute('open');
+      });
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    document.addEventListener('click', onClick);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      document.removeEventListener('click', onClick);
+      root.removeAttribute('data-acg-scrolled');
+    };
+  }, []);
 
   const TemplateComponent = useMemo(
     () => lazy(TEMPLATE_COMPONENT_MAP[templateId]),
     [templateId]
   );
+
+  // Load the template's fonts from the same catalog the published page
+  // uses (exportHtml.js): heading + body font and the module's extraFonts.
+  // index.html only preloads a fixed subset. Links accumulate while the
+  // preview is mounted so switching fonts never flashes a fallback face.
+  const [extraFonts, setExtraFonts] = useState([]);
+  useEffect(() => {
+    let cancelled = false;
+    const load = TEMPLATE_COMPONENT_MAP[templateId];
+    if (!load) return undefined;
+    load()
+      .then((mod) => { if (!cancelled) setExtraFonts(Array.isArray(mod.extraFonts) ? mod.extraFonts : []); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [templateId]);
+  const fontHref = useMemo(
+    () => buildFontHref([templateMeta?.font, templateMeta?.bodyFont, extraFonts]),
+    [templateMeta?.font, templateMeta?.bodyFont, extraFonts]
+  );
+  const fontLinks = useRef(new Map());
+  useEffect(() => {
+    if (!fontHref || fontLinks.current.has(fontHref)) return;
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = fontHref;
+    document.head.appendChild(link);
+    fontLinks.current.set(fontHref, link);
+  }, [fontHref]);
+  useEffect(() => {
+    const links = fontLinks.current;
+    return () => {
+      links.forEach((link) => link.remove());
+      links.clear();
+    };
+  }, []);
 
   const containerStyle = viewMode === 'mobile'
     ? { maxWidth: 390, margin: '0 auto', boxShadow: '0 0 0 1px #374151, 0 20px 60px #000' }
@@ -92,7 +164,10 @@ export default function WebsitePreview({ siteId, businessInfo, onBusinessInfoCha
       {/* Preview frame */}
       {/* Inject CSS so sticky template navs sit below our fixed toolbar (52px,
           plus the impersonation bar when present) */}
-      <style>{`.preview-wrap nav { top: ${52 + bannerOffset}px !important; z-index: 10 !important; }`}</style>
+      <style>{`.preview-wrap nav { top: ${52 + bannerOffset}px !important; z-index: 10 !important; }${isPro ? '' : ' .preview-wrap .acg-actionbar { bottom: 48px; }'}`}</style>
+      {/* Same base CSS the published page gets. Reveal styles stay inert here
+          because the app never adds html.acg-js, so nothing is hidden. */}
+      <style>{SITE_BASE_CSS}</style>
       <div className="min-h-screen" style={{ position: 'relative', marginTop: 52, paddingBottom: isPro ? 0 : 48 }}>
         {/* Cover bar: hides template content that scrolls up behind toolbar */}
         <div style={{ position: 'fixed', top: bannerOffset, left: 0, right: 0, height: 52, background: '#fff', zIndex: 40 }} />
@@ -104,12 +179,14 @@ export default function WebsitePreview({ siteId, businessInfo, onBusinessInfoCha
                 </div>
               }
             >
-              <TemplateComponent
-                businessInfo={normalizedInfo}
-                generatedCopy={editedCopy}
-                templateMeta={templateMeta}
-                images={images}
-              />
+              <EditorModeProvider>
+                <TemplateComponent
+                  businessInfo={normalizedInfo}
+                  generatedCopy={editedCopy}
+                  templateMeta={templateMeta}
+                  images={images}
+                />
+              </EditorModeProvider>
             </Suspense>
         </div>
       </div>

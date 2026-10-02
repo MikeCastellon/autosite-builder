@@ -26,10 +26,16 @@
   ready(function () {
     if (document.querySelector('[data-acg-inquiry]')) return; // guard double-inject
 
-    var host = document.querySelector('#contact');
+    var host = document.querySelector('[data-section="contact"]') || document.querySelector('#contact');
     if (!host) {
       // Fallback: insert a new section before the last footer (or at body end).
+      // Templates lay their root out as a flex column ordered with CSS
+      // `order` (sections 0..n, footer 9999), so DOM position alone is not
+      // enough: with the default order 0 this section jumped up to sit right
+      // under the hero. 9998 keeps it just above the footer.
       host = document.createElement('section');
+      host.setAttribute('data-acg-inquiry-section', '');
+      host.style.cssText = 'order:9998;padding:0 0 48px;';
       var footers = document.querySelectorAll('footer');
       if (footers.length) {
         footers[footers.length - 1].parentNode.insertBefore(host, footers[footers.length - 1]);

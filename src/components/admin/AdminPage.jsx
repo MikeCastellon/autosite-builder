@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import AdminAccountsTab from './AdminAccountsTab.jsx';
 import AdminAllBookingsTab from './AdminAllBookingsTab.jsx';
+import SiteUpgradesTab from './SiteUpgradesTab.jsx';
 import { useAuth } from '../../lib/AuthContext.jsx';
 
 export default function AdminPage({ onExit }) {
@@ -25,8 +26,11 @@ export default function AdminPage({ onExit }) {
       <div className="flex gap-1 mb-6 border-b border-gray-200">
         <TabBtn on={tab === 'accounts'} onClick={() => setTab('accounts')}>Accounts</TabBtn>
         <TabBtn on={tab === 'bookings'} onClick={() => setTab('bookings')}>All bookings</TabBtn>
+        <TabBtn on={tab === 'site-upgrades'} onClick={() => setTab('site-upgrades')}>Site upgrades</TabBtn>
       </div>
-      {tab === 'accounts' ? <AdminAccountsTab /> : <AdminAllBookingsTab />}
+      {tab === 'accounts' && <AdminAccountsTab />}
+      {tab === 'bookings' && <AdminAllBookingsTab />}
+      {tab === 'site-upgrades' && <SiteUpgradesTab />}
     </main>
   );
 }
