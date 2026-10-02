@@ -7,6 +7,7 @@ import { generateSlug } from '../../lib/publishUtils.js';
 import { TEMPLATES } from '../../data/templates.js';
 import { CHANGELOG, formatChangelogDate } from '../../data/changelog.js';
 import { isEffectiveSchedulerActive } from '../../lib/subscriptionGating.js';
+import { showNewDesignBadge } from '../../lib/siteUpgrade.js';
 import { useAlert } from '../ui/AlertProvider.jsx';
 import CustomDomainPanel from '../CustomDomainPanel.jsx';
 import UpgradeProDialog from '../ui/UpgradeProDialog.jsx';
@@ -235,6 +236,22 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
     fetchSites();
   }, [userId]);
 
+  // When each site was last published, for the "New design live" badge.
+  // A separate query, never part of the list select above: published_at
+  // comes from migration 20261004_sites_published_at.sql, and until that
+  // runs this query fails while the Sites list keeps working.
+  const [publishedAtById, setPublishedAtById] = useState({});
+  async function loadPublishedAt() {
+    if (!userId) return;
+    try {
+      const { data, error } = await supabase
+        .from('sites').select('id, published_at').eq('user_id', userId);
+      if (error || !data) return;
+      setPublishedAtById(Object.fromEntries(data.map((r) => [r.id, r.published_at])));
+    } catch { /* no badge */ }
+  }
+  useEffect(() => { loadPublishedAt(); }, [userId]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Fetch the heavy generated_content for a single site only when needed
   // (republish / re-export), keeping it out of the dashboard list payload.
   async function loadGeneratedContent(siteId) {
@@ -351,6 +368,7 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
 
       await publishSite({ ...render, generatedCopy, images, isPro });
       toast(`${site.business_info?.businessName || 'Site'} republished successfully`, 'success');
+      loadPublishedAt();
     } catch (err) {
       toast(`Republish failed: ${err.message}`, 'error');
     } finally {
@@ -547,6 +565,17 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
                     ) : (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-gray-500 border border-gray-200">
                         Draft
+                      </span>
+                    )}
+                    {/* A site from before the new-design release that is now
+                        on it (republished by the owner or by an admin rolling
+                        the upgrade out); shown for a while after the release. */}
+                    {showNewDesignBadge({ ...site, published_at: publishedAtById[site.id] }) && (
+                      <span
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#cc0000]/[0.06] text-[#cc0000] border border-[#cc0000]/20"
+                        title="Your live site is on the new design"
+                      >
+                        New design live
                       </span>
                     )}
                   </div>

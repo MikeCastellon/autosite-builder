@@ -44,6 +44,9 @@ export function resolveSiteRender(site, generatedContent) {
   };
 }
 
+// The widget types withWidgetKeys reads.
+export const WIDGET_KEY_TYPES = ['instagram-feed', 'google-reviews'];
+
 // Fill in the Google Reviews / Instagram widget keys the copy is missing
 // from the owner's widget_configs, as the editor does when it opens a
 // site. Without this a publish can fall back to AI testimonials even
@@ -55,17 +58,26 @@ export async function withWidgetKeys(copy, userId, db) {
       .from('widget_configs')
       .select('type, widget_key')
       .eq('user_id', userId)
-      .in('type', ['instagram-feed', 'google-reviews'])
+      .in('type', WIDGET_KEY_TYPES)
       .order('created_at', { ascending: false });
-    if (!widgets) return copy;
-    const ig = widgets.find((w) => w.type === 'instagram-feed');
-    const gr = widgets.find((w) => w.type === 'google-reviews');
-    return {
-      ...copy,
-      ...(ig && !copy.instagramWidgetKey ? { instagramWidgetKey: ig.widget_key } : {}),
-      ...(gr && !copy.googleWidgetKey ? { googleWidgetKey: gr.widget_key } : {}),
-    };
+    return applyWidgetKeys(copy, widgets);
   } catch {
     return copy;
   }
+}
+
+// withWidgetKeys' merge, for widget rows loaded some other way (`widgets`
+// newest first, as withWidgetKeys orders them). Admin > Site upgrades gets
+// the owner's rows from admin-site-upgrade, because RLS only lets a user
+// read their own widget_configs: withWidgetKeys with an admin's client
+// would silently drop the owner's Google reviews / Instagram keys.
+export function applyWidgetKeys(copy, widgets) {
+  if (!Array.isArray(widgets)) return copy;
+  const ig = widgets.find((w) => w.type === 'instagram-feed');
+  const gr = widgets.find((w) => w.type === 'google-reviews');
+  return {
+    ...copy,
+    ...(ig && !copy.instagramWidgetKey ? { instagramWidgetKey: ig.widget_key } : {}),
+    ...(gr && !copy.googleWidgetKey ? { googleWidgetKey: gr.widget_key } : {}),
+  };
 }

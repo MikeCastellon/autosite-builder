@@ -1,10 +1,9 @@
 import { requireSiteOwner, supabaseAdmin } from './_shared/auth.js';
 import { resolvePublishSlug } from './_shared/slugClaim.js';
 import { corsHeaders, jsonHeaders } from './_shared/cors.js';
+import { backupLivePages, uploadSitePages, setPublishedAt } from './_shared/r2.js';
+import { isUpgradedSite } from '../../src/lib/siteUpgrade.js';
 
-const CF_TOKEN = process.env.CLOUDFLARE_API_TOKEN;
-const CF_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID;
-const R2_BUCKET = 'autosite-published';
 const PUBLISH_DOMAIN = process.env.PUBLISH_DOMAIN || 'autocaregeniushub.com';
 
 export const handler = async (event) => {
@@ -44,39 +43,28 @@ export const handler = async (event) => {
   }
   const { slug } = claim;
 
+  // Only a homepage write changes a website's design: a /book-only refresh
+  // (Booking Settings) and a booking-only account's shell never do.
+  const writesWebsiteHome = !!htmlContent && site.site_type !== 'booking_only';
+
+  // An owner's first publish on the new designs replaces a live page in
+  // the old design: save it first (same backups as Admin > Site upgrades),
+  // so an admin can put it back. Later publishes are already on the new
+  // designs and are not backed up. A failed backup never stops the
+  // owner's publish.
+  if (writesWebsiteHome && site.published_url && !isUpgradedSite(site)) {
+    try {
+      const backup = await backupLivePages({ slug, siteId: site.id, reason: 'owner' });
+      if (backup.backupId) console.log(`[publish-site] site=${site.id} slug=${slug} backup=${backup.backupId} files=${backup.files.join(',')}`);
+    } catch (e) {
+      console.error(`[publish-site] backup before the first new-design publish failed for site ${site.id}:`, e?.message || e);
+    }
+  }
+
   try {
-    if (htmlContent) {
-      const r2Key = `${slug}/index.html`;
-      const r2Url = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/r2/buckets/${R2_BUCKET}/objects/${encodeURIComponent(r2Key)}`;
-
-      const uploadRes = await fetch(r2Url, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${CF_TOKEN}`,
-          'Content-Type': 'text/html; charset=utf-8',
-        },
-        body: htmlContent,
-      });
-
-      if (!uploadRes.ok) {
-        const errText = await uploadRes.text();
-        throw new Error(`R2 upload failed (${uploadRes.status}): ${errText}`);
-      }
-    }
-
-    if (bookingPageHtml) {
-      const bookingKey = `${slug}/book/index.html`;
-      const bookingR2Url = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/r2/buckets/${R2_BUCKET}/objects/${encodeURIComponent(bookingKey)}`;
-      const bookingRes = await fetch(bookingR2Url, {
-        method: 'PUT',
-        headers: { 'Authorization': `Bearer ${CF_TOKEN}`, 'Content-Type': 'text/html; charset=utf-8' },
-        body: bookingPageHtml,
-      });
-      if (!bookingRes.ok) {
-        const t = await bookingRes.text();
-        throw new Error(`R2 booking-page upload failed (${bookingRes.status}): ${t}`);
-      }
-    }
+    // Homepage, then the /book page (same keys and content type as ever;
+    // shared with admin-site-upgrade).
+    await uploadSitePages(slug, { htmlContent, bookingPageHtml });
 
     const publishedUrl = `https://${slug}.${PUBLISH_DOMAIN}`;
     const bookingUrl = bookingPageHtml ? `${publishedUrl}/book` : publishedUrl;
@@ -84,6 +72,11 @@ export const handler = async (event) => {
     await supabase.from('sites').update({
       published_url: publishedUrl,
     }).eq('id', siteId);
+    // published_at drives the dashboard's "New design live" badge and the
+    // admin upgrade's "already done" list, so only a website homepage write
+    // sets it. A separate update: a failure here (or a missing column) must
+    // not fail a publish that is already live.
+    if (writesWebsiteHome) await setPublishedAt(supabase, siteId);
 
     return {
       statusCode: 200,
