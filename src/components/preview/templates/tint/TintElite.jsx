@@ -83,7 +83,11 @@ html[data-acg-scrolled] .te-nav::after{opacity:1}
 .te-nav-in{display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:78px}
 .te-brand{flex:1 1 auto;display:inline-flex;align-items:center;gap:14px;min-width:0;color:var(--te-text);text-decoration:none}
 .te-bar{flex:none;width:2px;height:30px;background:var(--te-gold-v)}
-.te-wordmark{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:.12em;font-size:21px;line-height:1.25;letter-spacing:.01em}
+.te-wordmark{min-width:0;overflow:hidden;text-overflow:ellipsis;padding-right:.12em;font-size:21px;line-height:1.25;letter-spacing:.01em}
+.te-nav .te-wordmark{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;text-wrap:balance}
+.te-wm-long .te-wordmark,.te-wm-xl .te-wordmark{font-size:18px}
+.te-wm-xl .te-wordmark{-webkit-line-clamp:3}
+.te-wm-xl .te-link-x{display:none}
 .te-links{flex:none;display:flex;align-items:center;gap:clamp(18px,2.6cqi,36px)}
 .te-link{position:relative;padding:12px 0;color:var(--te-muted);font-size:12px;font-weight:500;letter-spacing:.22em;text-transform:uppercase;text-decoration:none}
 .te-link::after{content:'';position:absolute;left:0;right:.22em;bottom:6px;height:1px;background:var(--te-accent-text);transform:scaleX(0)}
@@ -261,7 +265,7 @@ html[data-acg-scrolled] .te-nav::after{opacity:1}
 .te-foot::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:var(--te-line-h)}
 .te-foot-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) minmax(0,1fr);gap:40px clamp(32px,5cqi,80px)}
 .te-foot .te-brand{color:var(--te-footer-text)}
-.te-foot .te-wordmark{font-size:24px;white-space:normal}
+.te-foot .te-wordmark{font-size:24px}
 .te-foot-tag{margin-top:18px;max-width:360px}
 .te-foot-h{font-size:11px;font-weight:600;line-height:1.45;letter-spacing:.26em;text-transform:uppercase;color:var(--te-footer-text)}
 .te-foot-list{display:grid;gap:10px;margin-top:18px}
@@ -305,7 +309,7 @@ html[data-acg-scrolled] .te-nav::after{opacity:1}
 @keyframes te-rule-in{from{scale:0 1}to{scale:1 1}}
 }
 
-@container (max-width:1100px){.te-link-x{display:none}}
+@container (max-width:1200px){.te-link-x{display:none}}
 @container (max-width:900px){
 .te-nav-cta{display:none}
 .te-c3{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -324,7 +328,9 @@ html[data-acg-scrolled] .te-nav::after{opacity:1}
 @container (max-width:600px){
 .te-links,.te-nav-cta{display:none}
 .te-nav-in{min-height:64px;gap:12px}
-.te-wordmark{font-size:18px}
+.te-nav .te-wordmark{font-size:clamp(15px,4.6cqi,18px);line-height:1.3}
+.te-wm-long .te-wordmark{font-size:clamp(14px,4.2cqi,17px)}
+.te-wm-xl .te-wordmark{font-size:clamp(13px,3.9cqi,15px)}
 .te-bar{height:24px}
 .te-hero{min-height:0;padding:80px 0 68px}
 .te-hero.te-has-media{min-height:clamp(560px,86vh,760px)}
@@ -739,11 +745,17 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
   // Contact: Primary Button (ctaButtonText / ctaUrl) opens the booking
   // widget when there is no URL (it calls, or stays put, without booking);
   // Phone / Secondary Button (ctaSecondaryText / ctaSecondaryUrl) calls.
+  // The editor writes ctaSecondaryUrl from both Hero > Button 2 URL and
+  // Contact > Button URL, so a "Call (555) ..." button only follows it when
+  // it is itself a phone/text link or the owner also named the button;
+  // otherwise it keeps calling (an Instagram or #gallery link set for the
+  // hero must not hide behind a "Call" label).
   const contactPrimaryLabel = txt(copy.ctaButtonText) || txt(copy.ctaPrimary) || 'Get a Free Quote';
   const contactPrimaryHref = txt(copy.ctaUrl) || tel || '#contact';
   const contactBooks = !txt(copy.ctaUrl);
+  const secondaryUrl = txt(copy.ctaSecondaryUrl);
   const contactSecondaryLabel = txt(copy.ctaSecondaryText) || (phone ? `Call ${phone}` : '');
-  const contactSecondaryHref = txt(copy.ctaSecondaryUrl) || tel;
+  const contactSecondaryHref = (secondaryUrl && (txt(copy.ctaSecondaryText) || /^(tel|sms):/i.test(secondaryUrl))) ? secondaryUrl : tel;
   const showContactSecondary = !!(contactSecondaryHref && contactSecondaryLabel)
     && (contactSecondaryHref !== contactPrimaryHref || contactBooks || !!txt(copy.ctaSecondaryText));
   const contactLead = txt(copy.ctaSubtext)
@@ -780,6 +792,11 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
       <span className="te-wordmark te-title">{name}</span>
     </>
   ));
+  // The nav wordmark wraps to two lines before it ellipsizes. Longer names
+  // also step down a size (a 32-character name then stays on one line beside
+  // all six links), and past ~44 characters the three extra links give way,
+  // so even a 70-character name fits in two lines (three on a phone).
+  const wordmarkTier = images.logo ? '' : name.length > 44 ? ' te-wm-xl' : name.length > 26 ? ' te-wm-long' : '';
 
   const heroText = (
     <div className="te-hero-body">
@@ -816,7 +833,7 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
       <style>{CSS}</style>
       <a className="te-skip" href="#main">Skip to content</a>
 
-      <nav className="te-nav" aria-label="Main" style={{ order: -1 }}>
+      <nav className={`te-nav${wordmarkTier}`} aria-label="Main" style={{ order: -1 }}>
         <div className="te-wrap te-nav-in">
           <a className="te-brand" href="#top" aria-label={name ? `${name}, back to top` : 'Back to top'}>
             {brand({ height: 40, width: 'auto', maxWidth: 180 }, 'eager')}

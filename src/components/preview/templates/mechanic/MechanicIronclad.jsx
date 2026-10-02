@@ -87,6 +87,9 @@ html[data-acg-scrolled] .ic-nav{box-shadow:0 14px 34px -18px var(--ic-shadow)}
 @supports ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))){html[data-acg-scrolled] .ic-nav{background:var(--ic-glass);-webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%)}}
 .ic-nav-in{display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:72px}
 .ic-brand{flex:0 1 auto;display:inline-flex;align-items:center;gap:14px;min-width:0;max-width:100%;color:var(--ic-text);text-decoration:none}
+/* A floor for the shop name; the nav items step aside long before it
+   matters (see the staged rules after the 1100px block). */
+.ic-nav .ic-brand{min-width:min(34%,180px)}
 .ic-hex{flex:none;display:grid;place-items:center;width:44px;height:44px;background:var(--ic-accent);color:var(--ic-on-accent);clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);font-family:var(--ic-head);font-weight:var(--ic-hw);font-size:17px;line-height:1;letter-spacing:.04em}
 .ic-brand-text{display:flex;flex-direction:column;min-width:0}
 .ic-brand-name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere;font-family:var(--ic-head);font-weight:var(--ic-hw);font-size:calc(24px * var(--ic-hs2));line-height:1.02;letter-spacing:var(--ic-bls);text-transform:uppercase;text-wrap:balance}
@@ -114,7 +117,11 @@ html[data-acg-scrolled] .ic-nav{box-shadow:0 14px 34px -18px var(--ic-shadow)}
 .ic-nut{position:absolute;right:9%;top:50%;z-index:-2;width:clamp(240px,30cqi,420px);translate:0 -50%;color:var(--ic-nut);pointer-events:none}
 .ic-nut-core{stroke:var(--ic-accent);opacity:.45}
 .ic-hero-media{position:absolute;inset:0;z-index:-5}
-.ic-hero-scrim{position:absolute;inset:0;z-index:-4;background:var(--ic-scrim-left)}
+/* Darkest at the left edge, never lighter than the floor (--ic-ink-1)
+   across the text column (it ends at most 780px into the wrap), then it
+   opens up over the photo. --ic-hero-accent is repaired against that
+   floor over a white photo, so the rust line reads on any photo. */
+.ic-hero-scrim{position:absolute;inset:0;z-index:-4;--ic-col-end:calc(max(var(--ic-gutter), (100cqi - 1240px) / 2 + var(--ic-gutter)) + 780px);background:linear-gradient(90deg,var(--ic-ink-0) 0,var(--ic-ink-1) var(--ic-col-end),var(--ic-ink-2) calc(var(--ic-col-end) + 24cqi))}
 .ic-hero-stripe{position:absolute;left:0;right:0;bottom:0;height:4px;z-index:-1;background:repeating-linear-gradient(90deg,var(--ic-accent) 0 30px,transparent 30px 40px)}
 .ic-has-media{color:var(--ic-on-hero)}
 .ic-has-media .ic-hero-grid{opacity:.5}
@@ -180,22 +187,33 @@ html[data-acg-scrolled] .ic-nav{box-shadow:0 14px 34px -18px var(--ic-shadow)}
 .ic-tile{flex:none;display:grid;place-items:center;width:54px;height:54px;border:1px solid var(--ic-border-strong);background:var(--ic-bg);color:var(--ic-accent-text)}
 .ic-card-title{margin-top:28px;font-family:var(--ic-label);font-size:clamp(20px,1.9cqi,23px);font-weight:800;line-height:1.15;letter-spacing:.05em;text-transform:uppercase;color:var(--ic-text)}
 .ic-card .acg-svc-foot{padding-top:26px}
-.ic-price-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:18px;border-top:1px solid var(--ic-border)}
-.ic-price{font-family:var(--ic-head);font-weight:var(--ic-hw);font-size:calc(34px * var(--ic-hs2));line-height:1;letter-spacing:.02em;color:var(--ic-accent-text);white-space:nowrap}
-.ic-card .acg-svc-book{display:inline-flex;align-items:center;gap:10px;min-height:44px;color:var(--ic-text);font-family:var(--ic-label);font-size:13px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;text-decoration:none}
+/* Owners type free-text prices ("Starting at $149.99/hr", "$89 - $249 per
+   axle"): one that can't share the row moves onto its own line above the
+   link (wrap-reverse) and wraps inside the card instead of being clipped. */
+.ic-price-row{display:flex;flex-wrap:wrap-reverse;align-items:center;justify-content:space-between;gap:8px 16px;padding-top:18px;border-top:1px solid var(--ic-border)}
+.ic-price{min-width:0;max-width:100%;font-family:var(--ic-head);font-weight:var(--ic-hw);font-size:calc(34px * var(--ic-hs2));line-height:1.05;letter-spacing:.02em;color:var(--ic-accent-text);overflow-wrap:anywhere}
+.ic-price-long{font-size:calc(26px * var(--ic-hs2))}
+.ic-card .acg-svc-book{flex:none;display:inline-flex;align-items:center;gap:10px;min-height:44px;color:var(--ic-text);font-family:var(--ic-label);font-size:13px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;text-decoration:none;white-space:nowrap}
 .ic-card .acg-svc-book svg{color:var(--ic-accent-text)}
 .ic-card .acg-svc-more{min-height:32px;padding-top:6px;letter-spacing:.04em}
 
 .ic-about{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);background:var(--ic-bg);border-top:1px solid var(--ic-border)}
 .ic-about-visual{position:relative;overflow:hidden;min-height:clamp(520px,50cqi,680px);background:var(--ic-plate)}
-.ic-cap{position:absolute;left:0;right:0;bottom:0;padding:clamp(28px,4cqi,48px);background:linear-gradient(to top,rgba(0,0,0,.9),rgba(0,0,0,.55) 55%,transparent);color:var(--ic-on-hero)}
-.ic-cap-badge{display:inline-flex;align-items:center;gap:8px;max-width:100%;margin-bottom:14px;padding:8px 16px;border:1px solid var(--ic-hero-accent);font-family:var(--ic-label);font-size:12px;font-weight:800;line-height:1.3;letter-spacing:.2em;text-transform:uppercase;color:var(--ic-hero-accent)}
-.ic-cap-title{font-size:calc(clamp(32px,3.6cqi,48px) * var(--ic-hs));color:var(--ic-on-hero)}
+/* Over the owner's photo the caption's fade sits in the extra top padding,
+   so the badge and the name always sit on at least the hero's scrim floor
+   (the same --ic-ink-* tokens, so --ic-hero-accent holds here too). */
+.ic-cap{--ic-cap-pad:clamp(28px,4cqi,48px);position:absolute;left:0;right:0;bottom:0;padding:calc(var(--ic-cap-pad) + 56px) var(--ic-cap-pad) var(--ic-cap-pad);background:linear-gradient(to top,var(--ic-ink-0) 0,var(--ic-ink-1) calc(100% - 64px),transparent 100%);color:var(--ic-on-hero)}
+.ic-cap-badge{display:inline-flex;align-items:center;gap:8px;max-width:100%;margin-bottom:14px;padding:8px 16px;border:1px solid var(--ic-hero-accent);font-family:var(--ic-label);font-size:12px;font-weight:800;line-height:1.3;letter-spacing:.2em;text-transform:uppercase;color:var(--ic-on-hero)}
+.ic-cap-badge svg{flex:none;color:var(--ic-hero-accent)}
+/* Never under 24px: the place line is accent text held to the 3:1
+   large-text bar, and a wide face scales the clamp down. */
+.ic-cap-title{font-size:max(24px,calc(clamp(32px,3.6cqi,48px) * var(--ic-hs)));color:var(--ic-on-hero)}
 .ic-cap-title span{display:block;color:var(--ic-hero-accent)}
-.ic-cap-plain{background:linear-gradient(to top,var(--ic-bg) 8%,var(--ic-cap-fade) 58%,transparent);color:var(--ic-text)}
+.ic-cap-plain{padding:var(--ic-cap-pad);background:linear-gradient(to top,var(--ic-bg) 8%,var(--ic-cap-fade) 58%,transparent);color:var(--ic-text)}
 .ic-cap-plain .ic-cap-title{color:var(--ic-text)}
 .ic-cap-plain .ic-cap-title span{color:var(--ic-accent-text)}
-.ic-cap-plain .ic-cap-badge{border-color:var(--ic-accent);color:var(--ic-accent-text)}
+.ic-cap-plain .ic-cap-badge{border-color:var(--ic-accent);color:var(--ic-text)}
+.ic-cap-plain .ic-cap-badge svg{color:var(--ic-accent-text)}
 .ic-about-copy{display:flex;flex-direction:column;justify-content:center;padding:clamp(72px,8cqi,120px) max(var(--ic-gutter),calc((100cqi - 1240px) / 2 + var(--ic-gutter))) clamp(72px,8cqi,120px) clamp(32px,6cqi,88px)}
 .ic-about-copy .ic-h2{margin-bottom:26px}
 .ic-prose p{font-size:16.5px;line-height:1.85;color:var(--ic-muted);max-width:540px;white-space:pre-line;text-wrap:pretty}
@@ -368,14 +386,24 @@ a.ic-detail:hover{background:var(--ic-plate)}
 .ic-dup{display:none}
 }
 
+/* The shop name keeps its room: nav items step aside by priority as the
+   container narrows (Work, then Our Shop + Reviews, then the phone and
+   every link, when the menu takes over next to the Book button). A dense
+   nav (wide label face, long name or long button text) steps aside
+   sooner. Every link stays in the page, the menu and the footer. */
+@container (max-width:1240px){.ic-link-x{display:none}}
+@container (max-width:1400px){.ic-dense .ic-link-x{display:none}}
+@container (max-width:1100px){.ic-link-y{display:none}}
+@container (max-width:1240px){.ic-dense .ic-link-y{display:none}}
+.ic-links{margin-left:auto}
+@container (max-width:900px){.ic-link,.ic-nav-phone{display:none}.ic-nav .acg-menu{display:block}.ic-nav-in{gap:14px}}
+@container (max-width:1024px){.ic-dense .ic-link,.ic-dense .ic-nav-phone{display:none}.ic-dense .ic-nav .acg-menu{display:block}.ic-dense .ic-nav-in{gap:14px}}
 @container (max-width:1100px){
-.ic-link-x{display:none}
 .ic-c4{grid-template-columns:repeat(2,minmax(0,1fr))}
 .ic-foot-grid{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
 .ic-foot-brand{grid-column:1 / -1}
 }
 @container (max-width:900px){
-.ic-nav-phone{display:none}
 .ic-c3{grid-template-columns:repeat(2,minmax(0,1fr))}
 .ic-head,.ic-contact-grid{grid-template-columns:minmax(0,1fr)}
 .ic-about{grid-template-columns:minmax(0,1fr)}
@@ -400,7 +428,7 @@ a.ic-detail:hover{background:var(--ic-plate)}
 .ic-brand-sub{font-size:9px;letter-spacing:.24em}
 .ic-hero{min-height:0;padding:72px 0 60px}
 .ic-hero.ic-has-media{min-height:clamp(560px,86vh,760px)}
-.ic-hero-scrim{background:var(--ic-scrim-m)}
+.ic-hero-scrim{background:linear-gradient(180deg,var(--ic-ink-1) 0%,var(--ic-ink-m) 60%,var(--ic-ink-0) 100%)}
 .ic-slash{width:44%;opacity:.6}
 .ic-slash-edge{display:none}
 .ic-ghost,.ic-nut{display:none}
@@ -508,6 +536,10 @@ function headProfile(stack) {
   return { family, condensed: false, scale: 0.66, weight, lh: 1.02, ls: '-.01em' };
 }
 
+// Lowest scrim alpha under any text laid over an owner photo (hero, both
+// layouts, and the about caption).
+const SCRIM_FLOOR = 0.78;
+
 // Every color the steel look needs, derived from the owner's palette:
 // the default (#111111 / #C0392B) gives the mockup's black steel and rust;
 // a light palette gets light plates with a dark ink footer.
@@ -539,12 +571,19 @@ function ironTokens(t) {
     '--ic-shadow': alpha('#000000', t.isDark ? 0.6 : 0.2),
     '--ic-ticker-bg': t.accent,
     '--ic-ticker-text': t.onAccent,
-    // Text laid over photos (hero, about caption) sits on a near-black scrim.
-    '--ic-hero-accent': ensureContrast(mix(t.accent, '#ffffff', 0.1), heroInk, 4.5),
+    // Text over photos (hero, about caption) sits on heroInk scrims that
+    // never drop below SCRIM_FLOOR under the text, so the accent is
+    // repaired against the lightest thing it can land on: the floor over
+    // a white photo. 3:1 because every accent use there is large text
+    // (H1 line, stats, the caption's place line); small text is white.
+    '--ic-hero-accent': ensureContrast(mix(t.accent, '#ffffff', 0.1), mix('#ffffff', heroInk, SCRIM_FLOOR), 3),
     '--ic-on-hero-dim': alpha(t.onHero, 0.86),
-    // Phones stack the hero text over the whole photo, so the scrim is
-    // darker than the kit's even at the top, where the kicker sits.
-    '--ic-scrim-m': `linear-gradient(180deg, ${alpha('#000000', 0.66)} 0%, ${alpha('#000000', 0.74)} 55%, ${alpha('#000000', 0.9)} 100%)`,
+    '--ic-ink-0': alpha(heroInk, 0.92),
+    '--ic-ink-1': alpha(heroInk, SCRIM_FLOOR),
+    '--ic-ink-2': alpha(heroInk, 0.3),
+    // Phones stack the text over the whole photo: floor at the top, where
+    // the kicker sits, darker toward the buttons and stats.
+    '--ic-ink-m': alpha(heroInk, 0.82),
     '--ic-on-hero-line': alpha(t.onHero, 0.4),
     // About caption over the CSS garage (no photo): fades into the page.
     '--ic-cap-fade': alpha(t.bg, 0.82),
@@ -833,11 +872,13 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
     specialties && { svg: 'car', title: 'Specialties', text: specialties },
   ].filter(Boolean);
 
+  // step: which nav links step aside first as the container narrows
+  // (x = Work, then y = Our Shop + Reviews; see the staged nav CSS).
   const navLinks = [
     show('services') && services.length > 0 && { href: '#services', label: 'Services' },
-    show('about') && { href: '#about', label: 'Our Shop' },
-    show('gallery') && galleryImages.length > 0 && { href: '#gallery', label: 'Work', extra: true },
-    show('testimonials') && reviews && { href: '#testimonials', label: 'Reviews' },
+    show('about') && { href: '#about', label: 'Our Shop', step: 'y' },
+    show('gallery') && galleryImages.length > 0 && { href: '#gallery', label: 'Work', step: 'x' },
+    show('testimonials') && reviews && { href: '#testimonials', label: 'Reviews', step: 'y' },
     show('cta') && { href: '#contact', label: 'Contact' },
   ].filter(Boolean);
 
@@ -852,6 +893,10 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
   const heroSecondaryHref = linkHref(copy.ctaSecondaryUrl, heroSecondaryLabel)
     || (callish ? tel : show('services') && services.length > 0 ? '#services' : tel);
   const splitHero = copy.heroLayout === 'split';
+  // A wide label face, a long shop name or a long button label needs more
+  // nav room, so the nav links step aside at wider widths (ic-dense).
+  const navCtaLabel = txt(copy.ctaPrimary) || 'Book Service';
+  const navDense = labelFont !== LABEL_FONT || displayName.length > 20 || navCtaLabel.length > 16;
   const kicker = [fb.navSubtitle, place].filter(Boolean).join(' · ');
 
   // Contact / CTA band buttons (Edit > Contact).
@@ -905,8 +950,6 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
     '--ic-border': t.border,
     '--ic-border-strong': t.borderStrong,
     '--ic-focus': t.focus,
-    '--ic-scrim': t.heroScrim,
-    '--ic-scrim-left': t.heroScrimLeft,
     '--ic-on-hero': t.onHero,
     '--ic-head': font,
     '--ic-body': body,
@@ -980,7 +1023,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
   return (
     <div
       id="top"
-      className={`ic-root${labelFont === LABEL_FONT ? '' : ' ic-wide'}${displayName.length > 24 ? ' ic-long' : ''}`}
+      className={`ic-root${labelFont === LABEL_FONT ? '' : ' ic-wide'}${displayName.length > 24 ? ' ic-long' : ''}${navDense ? ' ic-dense' : ''}`}
       style={{ ...vars, containerType: 'inline-size', display: 'flex', flexDirection: 'column', minHeight: '100vh', overflowX: 'clip', background: t.bg, color: t.text, fontFamily: body, lineHeight: 1.6 }}
     >
       <style>{CSS}</style>
@@ -993,11 +1036,11 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
           </a>
           <div className="ic-links">
             {navLinks.map((l) => (
-              <a key={l.href} className={`ic-link${l.extra ? ' ic-link-x' : ''}`} href={l.href}>{l.label}</a>
+              <a key={l.href} className={`ic-link${l.step ? ` ic-link-${l.step}` : ''}`} href={l.href}>{l.label}</a>
             ))}
             {tel && <a className="ic-nav-phone" href={tel}><Icon d={ICONS.phone} size={16} />{phone}</a>}
             <a className="ic-btn ic-btn-primary ic-btn-sm" href={heroPrimaryHref} {...(heroPrimaryUrl ? {} : { 'data-scheduler-trigger': '' })}>
-              {txt(copy.ctaPrimary) || 'Book Service'}
+              {navCtaLabel}
             </a>
           </div>
           <MobileMenu
@@ -1200,7 +1243,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
                         <div className="acg-svc-foot">
                           <div className="ic-price-row">
                             <BookNowLink serviceName={s.name} phone={phone} label={<>Book now <Icon d={ICONS.arrow} size={16} stroke={2.2} /></>} />
-                            {s.price && <span className="ic-price">{s.price}</span>}
+                            {s.price && <span className={`ic-price${s.price.length > 12 ? ' ic-price-long' : ''}`}>{s.price}</span>}
                           </div>
                         </div>
                       </article>
