@@ -22,6 +22,7 @@ export default function AppHeader({
   onCharge,
   onOpenPaymentsConnect,
   onOpenAdmin,
+  onOpenCustomSites,
   onOpenProfile,
   onSignOut,
 }) {
@@ -54,6 +55,7 @@ export default function AppHeader({
     showBookingsNav && onOpenCustomers && { id: 'customers', label: 'Customers', onClick: onOpenCustomers },
     showBookingsNav && onOpenCharges && { id: 'charges', label: 'Charges', onClick: onOpenCharges },
     onOpenPaymentsConnect && { id: 'payments-connect', label: 'Payments', onClick: onOpenPaymentsConnect },
+    isAdmin && onOpenCustomSites && { id: 'custom-sites', label: 'Custom websites', onClick: onOpenCustomSites },
     isAdmin && onOpenAdmin && { id: 'admin', label: 'Admin', onClick: onOpenAdmin },
   ].filter(Boolean);
 
