@@ -70,16 +70,47 @@ export function holdKey(siteId) {
   return `${backupPrefix(siteId)}hold.json`;
 }
 
+// The owner's "your website got an upgrade" email for this site
+// (admin-site-upgrade emailSend): claimed (state "sending") before the
+// email goes to Postmark, then "sent" with Postmark's message id, or
+// "refused". A site with a "sending" or "sent" marker is never emailed
+// about again until an admin resolves it. Who, to whom and when are kept.
+// Beside the backups, like the hold.
+export function upgradeEmailKey(siteId) {
+  return `${backupPrefix(siteId)}upgrade-email.json`;
+}
+
+// The owner-email run in progress ({ runId, by, startedAt, expiresAt }):
+// one run at a time across admins and browser tabs. Not under a site's
+// folder (site ids are UUIDs, so it can't collide with one).
+export function upgradeEmailRunKey() {
+  return `${BACKUP_ROOT}/upgrade-email-run.json`;
+}
+
 export function newBackupId(reason, now = new Date()) {
   return `${now.toISOString().replace(/[:.]/g, '-')}-${reason}-${randomBytes(4).toString('hex')}`;
 }
 
-async function r2Put(key, body, contentType, label) {
-  const res = await fetch(r2ObjectUrl(key), {
-    method: 'PUT',
-    headers: { ...authHeader(), 'Content-Type': contentType },
-    body,
-  });
+// timeoutMs (optional): give up after this long, so a caller with a time
+// limit (the owner emails) is never held up by a slow R2. An aborted PUT
+// may still have been stored.
+function timeoutSignal(timeoutMs) {
+  return timeoutMs ? { signal: AbortSignal.timeout(timeoutMs) } : {};
+}
+
+async function r2Put(key, body, contentType, label, { timeoutMs } = {}) {
+  let res;
+  try {
+    res = await fetch(r2ObjectUrl(key), {
+      method: 'PUT',
+      headers: { ...authHeader(), 'Content-Type': contentType },
+      body,
+      ...timeoutSignal(timeoutMs),
+    });
+  } catch (e) {
+    if (!timeoutMs) throw e;
+    throw new Error(`${label} failed (no answer: ${e?.message || e})`);
+  }
   if (!res.ok) {
     const errText = await res.text();
     throw new Error(`${label} failed (${res.status}): ${errText}`);
@@ -91,15 +122,21 @@ export function r2PutHtml(key, body, label = 'R2 upload') {
   return r2Put(key, body, HTML_TYPE, label);
 }
 
-export function r2PutJson(key, value, label = 'R2 write') {
-  return r2Put(key, JSON.stringify(value), JSON_TYPE, label);
+export function r2PutJson(key, value, label = 'R2 write', opts = {}) {
+  return r2Put(key, JSON.stringify(value), JSON_TYPE, label, opts);
 }
 
 // GET an object as text. { found: false } when the key does not exist;
 // throws on any other failure, so a backup never mistakes an outage for
-// "nothing there".
-export async function r2GetText(key) {
-  const res = await fetch(r2ObjectUrl(key), { method: 'GET', headers: authHeader() });
+// "nothing there". opts.timeoutMs as for r2Put.
+export async function r2GetText(key, { timeoutMs } = {}) {
+  let res;
+  try {
+    res = await fetch(r2ObjectUrl(key), { method: 'GET', headers: authHeader(), ...timeoutSignal(timeoutMs) });
+  } catch (e) {
+    if (!timeoutMs) throw e;
+    throw new Error(`R2 read failed (no answer: ${e?.message || e})`);
+  }
   if (res.status === 404) return { found: false };
   if (!res.ok) {
     const errText = await res.text().catch(() => '');
@@ -111,8 +148,8 @@ export async function r2GetText(key) {
 
 // A JSON object, or null when it does not exist or is not JSON. Throws on
 // a failed read, like r2GetText.
-export async function r2GetJson(key) {
-  const r = await r2GetText(key);
+export async function r2GetJson(key, opts = {}) {
+  const r = await r2GetText(key, opts);
   if (!r.found) return null;
   try {
     const v = JSON.parse(r.body);

@@ -7,7 +7,10 @@ vi.mock('./supabase.js', () => ({ supabase: {}, isImpersonationTab: false }));
 const {
   SITE_UPGRADE_RELEASE_DATE, PRODUCTION_APP_ORIGIN, NEW_DESIGN_BADGE_DAYS, checkUpgradedContent, eligibility,
   isUpgradedSite, nextStep, showNewDesignBadge, slugProblem, visibleText, widgetMounts, widgetScripts,
+  NEW_DESIGN_TEMPLATES, isEmailAddress, upgradeEmailOwnerSkip, upgradeEmailSiteSkip, upgradeEmailSiteUrl,
+  upgradeEmailMarkerState, upgradeEmailPageSkip, backupReason, isNewDesignPage,
 } = await import('./siteUpgrade.js');
+const { TEMPLATE_COMPONENT_MAP } = await import('../data/templates.js');
 const { isValidSlug, isReservedSlug } = await import('../../netlify/functions/_shared/slug.js');
 const { exportHtmlString } = await import('./exportHtml.js');
 const { buildTemplateMeta } = await import('./siteRender.js');
@@ -462,5 +465,133 @@ describe('isUpgradedSite', () => {
     expect(isUpgradedSite({ published_at: null })).toBe(false);
     expect(isUpgradedSite({})).toBe(false);
     expect(isUpgradedSite(null)).toBe(false);
+  });
+});
+
+describe('owner emails', () => {
+  const release = Date.parse(`${SITE_UPGRADE_RELEASE_DATE}T00:00:00Z`);
+  const day = 24 * 60 * 60 * 1000;
+  const site = (extra = {}) => ({
+    id: SITE_ID, published_url: 'https://rivera-auto-care.autocaregeniushub.com', site_type: 'website',
+    template_id: 'mobile_chrome', created_at: '2025-06-01T00:00:00Z', published_at: new Date(release + day).toISOString(),
+    custom_domain: null, custom_domain_status: null, ...extra,
+  });
+
+  it('NEW_DESIGN_TEMPLATES lists exactly the theme-ready templates (what the email describes)', async () => {
+    const ready = [];
+    for (const [id, load] of Object.entries(TEMPLATE_COMPONENT_MAP)) {
+      if ((await load()).themeReady === true) ready.push(id);
+    }
+    expect([...NEW_DESIGN_TEMPLATES].sort()).toEqual(ready.sort());
+  });
+
+  it('emails a live website on the new design that was there before the release', () => {
+    expect(upgradeEmailSiteSkip(site())).toBeNull();
+  });
+
+  it.each([
+    ['not live', { published_url: null }, 'not_live'],
+    ['a booking-only page', { site_type: 'booking_only' }, 'not_website'],
+    ['published before the release', { published_at: new Date(release - 1000).toISOString() }, 'not_upgraded'],
+    ['never republished', { published_at: null }, 'not_upgraded'],
+    ['created after the release (never had the old design)', { created_at: new Date(release + 1000).toISOString() }, 'new_site'],
+    ['on a template without the new design', { template_id: 'detailing_premium' }, 'old_template'],
+    ['without an https address', { published_url: 'http://x.autocaregeniushub.com' }, 'no_address'],
+  ])('skips a site %s', (_, extra, code) => {
+    expect(upgradeEmailSiteSkip(site(extra))?.code).toBe(code);
+  });
+
+  it('skips a site on hold or already emailed', () => {
+    expect(upgradeEmailSiteSkip(site(), { hold: { held: true } })?.code).toBe('on_hold');
+    expect(upgradeEmailSiteSkip(site(), { hold: { held: false } })).toBeNull();
+    const skip = upgradeEmailSiteSkip(site(), { marker: { state: 'sent', at: '2026-10-03T10:00:00Z', to: 'a@b.com' } });
+    expect(skip).toMatchObject({ code: 'already_emailed' });
+    expect(skip.text).toContain('2026-10-03');
+    // A marker from before the claim (no state) was written after the send.
+    expect(upgradeEmailSiteSkip(site(), { marker: { at: '2026-10-03T10:00:00Z', messageId: 'x' } })?.code).toBe('already_emailed');
+  });
+
+  it('blocks a site whose email may have gone out, and frees one that surely did not', () => {
+    for (const marker of [{ state: 'sending' }, { unreadable: true }, { state: 'something-new' }]) {
+      expect(upgradeEmailSiteSkip(site(), { marker })).toMatchObject({ code: 'unconfirmed', text: expect.stringMatching(/Postmark/) });
+    }
+    for (const marker of [{ state: 'refused' }, { state: 'cleared' }, null]) {
+      expect(upgradeEmailSiteSkip(site(), { marker })).toBeNull();
+    }
+    expect([null, {}, { unreadable: true }, { state: 'sending' }, { state: 'refused' }].map(upgradeEmailMarkerState))
+      .toEqual([null, 'sent', 'unreadable', 'sending', 'refused']);
+  });
+
+  describe('upgradeEmailPageSkip', () => {
+    const freshPage = (id = SITE_ID) => `<!DOCTYPE html><html><head><script>(function(){h.setAttribute('data-acg-scrolled','')})()</script>
+      <script src="https://sitebuilder.autocaregenius.com/scheduler.js" data-site-id="${id}" defer></script>
+      <script src="https://sitebuilder.autocaregenius.com/contact-form.js" data-site-id="${id}" defer></script></head><body></body></html>`;
+    const oldPage = `<!DOCTYPE html><html><head><script src="https://sitebuilder.autocaregenius.com/scheduler.js" data-site-id="${SITE_ID}" defer></script></head></html>`;
+    const UPGRADE = '2026-10-02T15-30-12-345Z-publish-1a2b3c4d';
+    const OWNER = '2026-10-03T08-00-00-000Z-owner-0a0b0c0d';
+    const MANUAL = '2026-10-01T08-00-00-000Z-manual-0a0b0c0d';
+    const RESTORE = '2026-10-01T09-00-00-000Z-restore-0a0b0c0d';
+
+    it('passes a site whose old page was replaced by its new-design page', () => {
+      expect(upgradeEmailPageSkip({ backupIds: [UPGRADE], liveHtml: freshPage(), siteId: SITE_ID })).toBeNull();
+      expect(upgradeEmailPageSkip({ backupIds: [MANUAL, OWNER], liveHtml: freshPage(), siteId: SITE_ID })).toBeNull();
+    });
+
+    it.each([
+      ['never replaced an old page (no upgrade backup)', [], 'never_replaced'],
+      ['only has backups made by hand or before a restore', [MANUAL, RESTORE], 'never_replaced'],
+    ])('skips a site that %s', (_, backupIds, code) => {
+      expect(upgradeEmailPageSkip({ backupIds, liveHtml: freshPage(), siteId: SITE_ID })?.code).toBe(code);
+    });
+
+    it('skips a site whose live page is missing, old, or another site\'s', () => {
+      expect(upgradeEmailPageSkip({ backupIds: [OWNER], liveHtml: null, siteId: SITE_ID })?.code).toBe('live_missing');
+      expect(upgradeEmailPageSkip({ backupIds: [OWNER], liveHtml: oldPage, siteId: SITE_ID })?.code).toBe('live_not_new');
+      expect(upgradeEmailPageSkip({ backupIds: [OWNER], liveHtml: freshPage('other-site'), siteId: SITE_ID })?.code).toBe('live_other_site');
+    });
+
+    it('reads the reason out of a backup id', () => {
+      expect([UPGRADE, OWNER, MANUAL, RESTORE, 'junk', null].map(backupReason)).toEqual(['publish', 'owner', 'manual', 'restore', null, null]);
+      expect(isNewDesignPage(freshPage())).toBe(true);
+      expect(isNewDesignPage(oldPage)).toBe(false);
+    });
+
+    it('knows a real new-design export from a legacy live page', async () => {
+      const html = await newDesignPage('mobile_chrome');
+      expect(isNewDesignPage(html)).toBe(true);
+      expect(upgradeEmailPageSkip({ backupIds: [UPGRADE], liveHtml: html, siteId: SITE_ID })).toBeNull();
+      expect(isNewDesignPage(legacyLivePage({ origin: NODE_APP }))).toBe(false);
+    });
+  });
+
+  it.each([
+    ['an unknown owner', null, 'owner_unknown'],
+    ['a super admin', { email: 'boss@gmail.com', isSuperAdmin: true }, 'admin_owner'],
+    ['an owner without an address', { email: '' }, 'no_email'],
+    ['an owner with a broken address', { email: 'mike at gmail' }, 'no_email'],
+    ['a team account', { email: 'staff@autocaregenius.com' }, 'test_owner'],
+    ['a team subdomain account', { email: 'x@mail.autocaregeniushub.com' }, 'test_owner'],
+    ['a dev account', { email: 'dev@639hz.com' }, 'test_owner'],
+    ['a reserved test domain', { email: 'owner@shop.test' }, 'test_owner'],
+    ['example.com', { email: 'owner@example.com' }, 'test_owner'],
+  ])('never emails %s', (_, owner, code) => {
+    expect(upgradeEmailOwnerSkip(owner)?.code).toBe(code);
+  });
+
+  it('emails a real owner (case and spaces in the address do not matter)', () => {
+    expect(upgradeEmailOwnerSkip({ email: ' Mike.Rivera+shop@Gmail.com ', isSuperAdmin: false })).toBeNull();
+    expect(upgradeEmailOwnerSkip({ email: 'owner@notautocaregenius.com' })).toBeNull();
+    expect(isEmailAddress('a@b.co')).toBe(true);
+    expect(isEmailAddress('a@b')).toBe(false);
+    expect(isEmailAddress('a b@c.com')).toBe(false);
+    expect(isEmailAddress('"x"<a@b.com>')).toBe(false);
+  });
+
+  it('links the owner\'s own domain once it serves the site over HTTPS', () => {
+    expect(upgradeEmailSiteUrl(site())).toBe('https://rivera-auto-care.autocaregeniushub.com');
+    expect(upgradeEmailSiteUrl(site({ custom_domain: 'riveraauto.com', custom_domain_status: 'active_ssl' }))).toBe('https://www.riveraauto.com');
+    expect(upgradeEmailSiteUrl(site({ custom_domain: 'riveraauto.com', custom_domain_status: 'pending_dns' }))).toBe('https://rivera-auto-care.autocaregeniushub.com');
+    expect(upgradeEmailSiteUrl(site({ custom_domain: 'bad domain"/>', custom_domain_status: 'active_ssl' }))).toBe('https://rivera-auto-care.autocaregeniushub.com');
+    expect(upgradeEmailSiteUrl(site({ published_url: 'javascript:alert(1)' }))).toBeNull();
   });
 });

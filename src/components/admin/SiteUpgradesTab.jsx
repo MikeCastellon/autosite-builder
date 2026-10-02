@@ -8,6 +8,7 @@ import { buildBookingPageHtml } from '../../lib/bookingPageHtml.js';
 import { isEffectiveSchedulerActive } from '../../lib/subscriptionGating.js';
 import {
   PRODUCTION_APP_ORIGIN, SITE_UPGRADE_RELEASE_DATE, checkUpgradedContent, eligibility, isUpgradedSite, nextStep,
+  upgradeEmailOwnerSkip, upgradeEmailSiteSkip, upgradeEmailSiteUrl,
 } from '../../lib/siteUpgrade.js';
 
 // Admin > Site upgrades. After the new template designs ship, admins
@@ -31,8 +32,33 @@ import {
 // A bulk run lives in this component: leaving the tab stops it after the
 // current site, and closing the browser tab asks first. Register the tab
 // in AdminPage like the others (`{tab === 'site-upgrades' && <SiteUpgradesTab />}`).
+//
+// Owner emails: once sites are on the new design, "Email N owners" tells
+// their owners (one email per owner, admin-site-upgrade emailSend). Like
+// republishing, it only runs on the production app and goes out a few
+// owners per call, all calls of one click under one runId (the function
+// lets one run at a time send); Preview and "Send test to me" (to the
+// signed-in admin only) work anywhere. The function re-checks every site,
+// owner and live page and skips anyone already emailed or unconfirmed, so
+// the list here is only a guide. An unconfirmed email (the send's outcome
+// is unknown) is settled here with "It was sent" / "It wasn't sent" after
+// checking Postmark's Activity.
 
 const FN = '/.netlify/functions/admin-site-upgrade';
+// Owners per emailSend call: each call stays far inside the function's
+// time limit, and one owner's sites never split across two calls (that
+// would send them two emails).
+const EMAIL_OWNERS_PER_CALL = 4;
+const STATUS_SITES_PER_CALL = 200;
+const SEND_WORD = 'SEND';
+
+// One id per "Email N owners" click, sent with each of its calls.
+function newRunId() {
+  try {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+  } catch { /* below */ }
+  return `run-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
+}
 
 const SITE_COLUMNS = 'id, user_id, business_info, template_id, slug, published_url, custom_domain, custom_domain_status, site_type, scheduler_enabled, widget_config_ids, created_at';
 // What isEffectiveSchedulerActive reads, plus names for the list.
@@ -163,6 +189,34 @@ function StatusChip({ summary, upgraded }) {
   );
 }
 
+// Whether a site's owner got the upgrade email: { status (emailStatus row:
+// { marker, to, greeting } or { error }, undefined until loaded), skip
+// ({ code, text } or null) }.
+function EmailChip({ status, skip }) {
+  const state = status?.marker?.state;
+  let label = 'Not loaded';
+  let cls = 'bg-gray-100 text-gray-600';
+  if (status?.error) [label, cls] = ['Status unknown', 'bg-[#cc0000]/15 text-[#cc0000]'];
+  else if (state === 'sent') [label, cls] = [`Emailed${status.marker.at ? ` ${formatDateTime(status.marker.at)}` : ''}`, 'bg-emerald-100 text-emerald-800'];
+  else if (state === 'sending' || state === 'unreadable') [label, cls] = ['Unconfirmed', 'bg-[#cc0000]/15 text-[#cc0000]'];
+  else if (status && skip) [label, cls] = ['Skipped', 'bg-gray-100 text-gray-600'];
+  else if (state === 'refused') [label, cls] = ['Refused, not sent', 'bg-amber-100 text-amber-800'];
+  else if (status) [label, cls] = ['Not emailed', 'bg-amber-100 text-amber-800'];
+  return <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ${cls}`}>{label}</span>;
+}
+
+function isUnconfirmed(status) {
+  return ['sending', 'unreadable'].includes(status?.marker?.state);
+}
+
+const EMAIL_RESULT = {
+  sent: ['Sent', 'text-emerald-700'],
+  skipped: ['Skipped', 'text-[#555]'],
+  failed: ['Failed', 'text-[#cc0000]'],
+  deferred: ['Not sent yet', 'text-amber-700'],
+  not_attempted: ['Not sent', 'text-amber-700'],
+};
+
 // A page rendered at a real phone or desktop width, scaled to its column.
 // sandbox="allow-scripts" without allow-same-origin: the page's scripts
 // (Tailwind CDN, site runtime, widgets) run in an opaque origin and cannot
@@ -237,6 +291,20 @@ export default function SiteUpgradesTab() {
   const [busy, setBusy] = useState(null); // 'check-all' | 'publish-all' | null
   const [log, setLog] = useState([]);
   const [backups, setBackups] = useState({}); // siteId → { loading, list, error, pick }
+  // Owner emails.
+  const [emailOpen, setEmailOpen] = useState(false);
+  const [emailStatus, setEmailStatus] = useState({}); // siteId → { marker, to, greeting } | { error }
+  // { ready, ownerReady, missing, invalid, ownerMissing, from, stream, streamSet, streamInfo }
+  const [emailConfig, setEmailConfig] = useState(null);
+  const [emailRun, setEmailRun] = useState(null); // another run in progress: { by, startedAt }
+  const [emailResolving, setEmailResolving] = useState(null); // site id
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [emailErr, setEmailErr] = useState('');
+  const [emailPreview, setEmailPreview] = useState(null); // { siteId, loading, data, error, view }
+  const [emailTesting, setEmailTesting] = useState(null); // site id
+  const [emailConfirm, setEmailConfirm] = useState('');
+  const [emailResults, setEmailResults] = useState(null); // { list, stopReason }
+  const [adminEmail, setAdminEmail] = useState('');
   // Built pages, kept out of React state (a few hundred KB each).
   const pages = useRef({});
   const stopRef = useRef(false);
@@ -306,6 +374,12 @@ export default function SiteUpgradesTab() {
   }, []);
 
   useEffect(() => { refresh(); }, [refresh]);
+  // "Send test to me" goes to the signed-in admin (the function checks it).
+  useEffect(() => {
+    let live = true;
+    supabase.auth.getSession().then(({ data }) => { if (live) setAdminEmail(data?.session?.user?.email || ''); }).catch(() => {});
+    return () => { live = false; };
+  }, []);
 
   const upgraded = useCallback((id) => isUpgradedSite({ published_at: publishedAt[id] }), [publishedAt]);
 
@@ -521,6 +595,178 @@ export default function SiteUpgradesTab() {
     setBusy(null);
   };
 
+  // ─── Owner emails ───────────────────────────────────────────────────
+
+  // Upgraded sites with what the tab knows about their email: the
+  // function decides for real (it also reads holds and the owner's
+  // sign-in address).
+  const emailRows = useMemo(() => sites.filter((s) => upgraded(s.id)).map((s) => {
+    const o = owners[s.user_id];
+    const status = emailStatus[s.id];
+    const skip = upgradeEmailSiteSkip({ ...s, published_at: publishedAt[s.id] }, { marker: status?.marker || null, hold: results[s.id]?.hold })
+      || upgradeEmailOwnerSkip(o ? { email: status?.to || o.email, isSuperAdmin: o.is_super_admin === true } : null);
+    return { site: s, owner: o, status, skip };
+  }), [sites, owners, emailStatus, publishedAt, results, upgraded]);
+  // Sites a send would take: status loaded, nothing to skip.
+  const emailTargets = useMemo(() => emailRows.filter((r) => r.status && !r.status.error && !r.skip), [emailRows]);
+  const emailOwnerCount = useMemo(() => new Set(emailTargets.map((r) => r.site.user_id)).size, [emailTargets]);
+  const emailLoaded = emailRows.length > 0 && emailRows.every((r) => r.status);
+
+  const loadEmailStatus = useCallback(async (ids) => {
+    if (!ids.length) return;
+    setEmailLoading(true);
+    setEmailErr('');
+    try {
+      for (let i = 0; i < ids.length; i += STATUS_SITES_PER_CALL) {
+        const out = await upgradeApi('emailStatus', { siteIds: ids.slice(i, i + STATUS_SITES_PER_CALL) });
+        setEmailStatus((prev) => ({ ...prev, ...out.sites }));
+        setEmailConfig(out.config || null);
+        setEmailRun(out.run || null);
+      }
+    } catch (e) {
+      setEmailErr(e.message || 'Could not load who was emailed');
+    } finally {
+      setEmailLoading(false);
+    }
+  }, []);
+
+  const toggleEmails = () => {
+    const next = !emailOpen;
+    setEmailOpen(next);
+    if (next) loadEmailStatus(emailRows.map((r) => r.site.id));
+  };
+
+  const previewEmail = async (site) => {
+    setEmailPreview({ siteId: site.id, loading: true, data: null, error: '', view: 'html' });
+    try {
+      const data = await upgradeApi('emailPreview', { siteId: site.id });
+      setEmailPreview((prev) => (prev?.siteId === site.id ? { ...prev, loading: false, data } : prev));
+    } catch (e) {
+      setEmailPreview((prev) => (prev?.siteId === site.id ? { ...prev, loading: false, error: e.message || 'Preview failed' } : prev));
+    }
+  };
+
+  const sendTestEmail = async (site) => {
+    const name = site.business_info?.businessName || site.slug;
+    if (!adminEmail) { toast('Your email address is not known; sign in again', 'error'); return; }
+    setEmailTesting(site.id);
+    // The owner's other sites a real send would put in the same email.
+    const siblings = emailTargets.filter((r) => r.site.user_id === site.user_id && r.site.id !== site.id).map((r) => r.site.id);
+    try {
+      const out = await upgradeApi('emailSend', { siteIds: [site.id, ...siblings], testTo: adminEmail });
+      addLog(`${name}: test email sent to ${out.to}`, 'ok');
+      toast(`Test email sent to ${out.to}`, 'success');
+    } catch (e) {
+      addLog(`${name}: test email ERROR ${e.message}`, 'error');
+      toast(`Test email failed: ${e.message}`, 'error');
+    } finally {
+      setEmailTesting(null);
+    }
+  };
+
+  // Emails every owner in emailTargets, a few owners per call, one call at
+  // a time, all under one runId. Stops at the first stop the function
+  // reports, a failed call, a call that got nowhere, or "Stop" / leaving
+  // the tab; whatever went out is shown and recorded. The function claims
+  // each site before sending, so an email whose outcome is unknown comes
+  // back as "unconfirmed" and is never sent again until it is settled.
+  const sendOwnerEmails = async () => {
+    if (!canPublish || emailConfirm !== SEND_WORD || busy) return;
+    const byOwner = new Map();
+    for (const r of emailTargets) {
+      if (!byOwner.has(r.site.user_id)) byOwner.set(r.site.user_id, []);
+      byOwner.get(r.site.user_id).push(r.site.id);
+    }
+    const queue = [...byOwner.values()]; // one entry per owner: their site ids
+    if (!queue.length) { toast('No owners to email', 'info'); return; }
+    const runId = newRunId();
+    stopRef.current = false;
+    setBusy('email');
+    setEmailResults(null);
+    addLog(`Emailing ${queue.length} owner${queue.length === 1 ? '' : 's'}…`);
+    const done = [];
+    let stopReason = null;
+    try {
+      while (queue.length) {
+        if (stopRef.current) { stopReason = 'Stopped.'; break; }
+        const batch = queue.splice(0, EMAIL_OWNERS_PER_CALL);
+        let out;
+        try {
+          out = await upgradeApi('emailSend', { siteIds: batch.flat(), confirm: SEND_WORD, runId });
+        } catch (e) {
+          // A refusal (4xx, 503 not set up) sent nothing. A call that died
+          // mid-way (timeout, network) may have sent to an owner whose
+          // site then shows as unconfirmed after Refresh.
+          queue.unshift(...batch);
+          const msg = String(e.message || 'The request failed').replace(/\.+$/, '');
+          const maybeSent = !e.status || (e.status >= 500 && e.status !== 503);
+          stopReason = maybeSent
+            ? `${msg}. Press Refresh: a site whose email may have gone out shows as Unconfirmed until you check Postmark's Activity and settle it.`
+            : `${msg}.`;
+          break;
+        }
+        const list = out.results || [];
+        // Deferred owners (the call ran out of time) go first in the next call.
+        const deferred = new Set(list.filter((r) => r.status === 'deferred').map((r) => r.siteId));
+        queue.unshift(...batch.filter((ids) => ids.some((id) => deferred.has(id))));
+        const finished = list.filter((r) => r.status !== 'deferred');
+        done.push(...finished);
+        setEmailStatus((prev) => {
+          const next = { ...prev };
+          for (const r of finished) {
+            if (r.marker !== undefined) next[r.siteId] = { ...(prev[r.siteId] || {}), error: undefined, marker: r.marker };
+          }
+          return next;
+        });
+        for (const r of finished) {
+          const s = sites.find((x) => x.id === r.siteId);
+          const name = s?.business_info?.businessName || s?.slug || r.siteId;
+          if (r.status === 'sent') addLog(`${name}: emailed ${r.to}${r.markerError ? ` (${r.markerError})` : ''}`, r.markerError ? 'error' : 'ok');
+          else if (r.status === 'failed') addLog(`${name}: email FAILED ${r.reason}${r.markerError ? ` (${r.markerError})` : ''}`, 'error');
+          else if (r.status === 'skipped') addLog(`${name}: skipped (${r.reason})`, 'warn');
+        }
+        if (out.stopped) { stopReason = out.stopReason || 'Stopped.'; break; }
+        // Never loop on a server that runs out of time before every send.
+        if (!finished.length) { stopReason = 'The server ran out of time before sending anything. Try again in a moment.'; break; }
+      }
+    } finally {
+      // Frees the run for other admins right away (it would lapse anyway).
+      upgradeApi('emailRelease', { runId }).catch(() => {});
+    }
+    const notSent = queue.flat().map((siteId) => ({ siteId, status: 'not_attempted', reason: 'Not sent: the run stopped first' }));
+    const sentOwners = new Set(done.filter((r) => r.status === 'sent').map((r) => sites.find((x) => x.id === r.siteId)?.user_id)).size;
+    addLog(`Owner emails ${stopReason ? 'stopped' : 'done'}: ${sentOwners} owner${sentOwners === 1 ? '' : 's'} emailed${stopReason ? `. ${stopReason}` : ''}`, stopReason ? 'warn' : 'ok');
+    setEmailResults({ list: [...done, ...notSent], stopReason });
+    setEmailConfirm('');
+    setBusy(null);
+  };
+
+  // An unconfirmed email, after checking Postmark's Activity (Tag
+  // site-upgrade): "sent" never emails the owner about it again,
+  // "not_sent" lets the next "Email N owners" include it.
+  const resolveEmail = async (site, outcome) => {
+    const name = site.business_info?.businessName || site.slug;
+    const to = emailStatus[site.id]?.marker?.to || emailStatus[site.id]?.to || 'the owner';
+    const ok = await confirmDialog(
+      outcome === 'sent'
+        ? `Mark the email to ${to} about ${name} as sent? Only do this if Postmark's Activity (Tag "site-upgrade") shows it. This owner is then never emailed about this site again.`
+        : `Mark the email to ${to} about ${name} as not sent? Only do this if Postmark's Activity (Tag "site-upgrade") has no email to ${to}. The next "Email owners" will email them.`,
+      { title: outcome === 'sent' ? 'It was sent?' : 'It was not sent?', confirmText: outcome === 'sent' ? 'Mark sent' : 'Mark not sent', danger: outcome !== 'sent' },
+    );
+    if (!ok) return;
+    setEmailResolving(site.id);
+    try {
+      const out = await upgradeApi('emailResolve', { siteId: site.id, outcome });
+      setEmailStatus((prev) => ({ ...prev, [site.id]: { ...(prev[site.id] || {}), error: undefined, marker: out.marker } }));
+      addLog(`${name}: email marked ${outcome === 'sent' ? 'sent' : 'not sent'}`, 'ok');
+    } catch (e) {
+      addLog(`${name}: could not settle the email (${e.message})`, 'error');
+      toast(`Could not settle it: ${e.message}`, 'error');
+    } finally {
+      setEmailResolving(null);
+    }
+  };
+
   const counts = useMemo(() => {
     const c = { all: sites.length, unchecked: 0, ready: 0, flagged: 0, error: 0, upgraded: 0 };
     for (const s of sites) {
@@ -586,7 +832,7 @@ export default function SiteUpgradesTab() {
                 onClick={() => { stopRef.current = true; }}
                 className="px-4 py-2 text-[13px] font-semibold border border-black/10 rounded-lg hover:border-[#cc0000]/30 hover:text-[#cc0000]"
               >
-                Stop after this site
+                {busy === 'email' ? 'Stop after this batch' : 'Stop after this site'}
               </button>
             </>
           ) : (
@@ -825,6 +1071,269 @@ export default function SiteUpgradesTab() {
           </div>
         </div>
       )}
+
+      <section className="mb-6 bg-white border border-black/[0.07] rounded-xl" aria-label="Owner emails">
+        <button
+          type="button"
+          onClick={toggleEmails}
+          aria-expanded={emailOpen}
+          className="w-full flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 text-left"
+        >
+          <span className="text-[11px] font-bold text-[#1a1a1a] uppercase tracking-[1.5px]">Owner emails</span>
+          <span className="text-[12px] text-ink-tertiary">
+            {emailRows.length} site{emailRows.length === 1 ? '' : 's'} on the new design
+            {emailLoaded ? ` · ${emailOwnerCount} owner${emailOwnerCount === 1 ? '' : 's'} to email` : ''}
+          </span>
+          <span className="ml-auto text-[12px] font-semibold text-[#cc0000]">{emailOpen ? 'Hide' : 'Show'}</span>
+        </button>
+
+        {emailOpen && (
+          <div className="px-4 pb-4 pt-3 border-t border-black/[0.05]">
+            <p className="text-[13px] text-[#555] max-w-3xl mb-3">
+              Tells owners their live website is on the new design: one email per owner, sent once per site. Only sites
+              republished on or after {SITE_UPGRADE_RELEASE_DATE} whose old live page was replaced by a new-design page count.
+              Super admins, internal and test accounts, sites on hold and owners already emailed are skipped. Preview an email
+              first, then send a test to yourself.
+            </p>
+            {emailConfig && !emailConfig.ready && (
+              <p className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[13px] text-amber-900">
+                Email is not set up on this server
+                ({[...(emailConfig.missing || []), ...(emailConfig.invalid || []).map((k) => `${k} is not valid`)].join(', ')}), so nothing can be sent.
+              </p>
+            )}
+            {emailConfig?.ready && !emailConfig.ownerReady && (
+              <p className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[13px] text-amber-900">
+                Owners can't be emailed until POSTMARK_UPGRADE_STREAM names the Postmark stream for this email: create a Broadcasts
+                stream in Postmark (it adds the unsubscribe link Postmark requires there), then set it in Netlify. Tests to yourself
+                go on "{emailConfig.stream}".
+              </p>
+            )}
+            {emailConfig?.ownerReady && emailConfig.streamInfo?.found === false && (
+              <p className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[13px] text-amber-900">
+                Postmark has no stream "{emailConfig.stream}" on this server: every email would be refused. Check POSTMARK_UPGRADE_STREAM.
+              </p>
+            )}
+            {emailConfig?.ownerReady && emailConfig.streamInfo?.found && emailConfig.streamInfo.type !== 'Broadcasts' && (
+              <p className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[13px] text-amber-900">
+                "{emailConfig.stream}" is a {emailConfig.streamInfo.type || 'non-broadcast'} stream. Postmark asks for one email to many
+                owners to go on a Broadcasts stream, so it does not affect the booking emails' delivery.
+              </p>
+            )}
+            {emailConfig?.ready && (
+              <p className="mb-3 text-[12px] text-ink-tertiary">
+                Sent from {emailConfig.from} on the Postmark stream "{emailConfig.stream}"
+                {emailConfig.streamInfo?.found ? ` (${emailConfig.streamInfo.type || 'type unknown'})` : emailConfig.streamInfo?.error ? ' (its type could not be checked)' : ''}.
+              </p>
+            )}
+            {emailRun && busy !== 'email' && (
+              <p className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[13px] text-amber-900">
+                {emailRun.by?.email || 'Another admin'} is sending owner emails (started {formatDateTime(emailRun.startedAt)}). Wait for that run
+                to finish, then Refresh.
+              </p>
+            )}
+            {!canPublish && (
+              <p className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[13px] text-amber-900">
+                Emails to owners are only sent from {PRODUCTION_APP_ORIGIN}. Previews and tests to yourself work here.
+              </p>
+            )}
+
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <input
+                value={emailConfirm}
+                onChange={(e) => setEmailConfirm(e.target.value.trim().toUpperCase() === SEND_WORD ? SEND_WORD : e.target.value)}
+                placeholder={`Type ${SEND_WORD} to confirm`}
+                aria-label={`Type ${SEND_WORD} to confirm sending`}
+                disabled={!canPublish || !!busy || emailRows.length === 0}
+                className="w-44 px-3 py-2 border border-black/[0.10] rounded-lg text-sm focus:outline-none focus:border-[#cc0000] disabled:opacity-50"
+              />
+              <button
+                type="button"
+                onClick={sendOwnerEmails}
+                disabled={!canPublish || !!busy || emailRows.length === 0 || !emailLoaded || emailOwnerCount === 0 || emailConfirm !== SEND_WORD || !emailConfig?.ownerReady}
+                title={!canPublish ? `Only on ${PRODUCTION_APP_ORIGIN}`
+                  : emailRows.length === 0 ? 'No site is on the new design yet'
+                    : emailConfig && !emailConfig.ownerReady ? 'Email to owners is not set up on this server' : undefined}
+                className="px-4 py-2 text-[13px] font-bold rounded-lg bg-[#cc0000] hover:bg-[#a80000] text-white shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {busy === 'email' ? 'Sending…' : `Email ${emailOwnerCount} owner${emailOwnerCount === 1 ? '' : 's'}`}
+              </button>
+              <button
+                type="button"
+                onClick={() => loadEmailStatus(emailRows.map((r) => r.site.id))}
+                disabled={emailLoading || !!busy || emailRows.length === 0}
+                className="text-xs text-gray-500 hover:text-[#1a1a1a] disabled:opacity-50"
+              >
+                {emailLoading ? 'Loading…' : 'Refresh'}
+              </button>
+            </div>
+            {emailErr && <p className="mb-3 text-[13px] text-[#cc0000]">{emailErr}</p>}
+
+            {emailResults && (
+              <div className="mb-4 rounded-xl border border-black/[0.07] p-3">
+                <p className="text-[11px] font-bold text-[#1a1a1a] uppercase tracking-[1.5px] mb-1.5">Last send</p>
+                {emailResults.stopReason && <p className="mb-2 text-[13px] text-amber-800">{emailResults.stopReason}</p>}
+                <ul className="text-[13px] space-y-1">
+                  {emailResults.list.map((r) => {
+                    const s = sites.find((x) => x.id === r.siteId);
+                    const [label, cls] = EMAIL_RESULT[r.status] || [r.status, 'text-[#555]'];
+                    return (
+                      <li key={r.siteId}>
+                        <span className={`font-semibold ${cls}`}>{label}</span>{' '}
+                        {s?.business_info?.businessName || s?.slug || r.siteId}
+                        {r.to && <span className="text-ink-tertiary"> · {r.to}</span>}
+                        {r.reason && <span className="text-[#555]"> · {r.reason}</span>}
+                        {r.markerError && <span className="block text-[#cc0000]">{r.markerError}</span>}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+
+            {emailPreview && (
+              <div className="mb-4 rounded-xl border border-black/[0.07] p-3">
+                <div className="flex flex-wrap items-start gap-2 mb-2">
+                  <div className="min-w-0 text-[12px] text-[#555] space-y-0.5">
+                    <p className="text-[11px] font-bold text-[#1a1a1a] uppercase tracking-[1.5px]">Preview</p>
+                    {emailPreview.data && (
+                      <>
+                        <p><strong className="font-semibold text-[#1a1a1a]">To:</strong> {emailPreview.data.to || 'no address'}</p>
+                        <p><strong className="font-semibold text-[#1a1a1a]">Subject:</strong> {emailPreview.data.subject}</p>
+                        <p><strong className="font-semibold text-[#1a1a1a]">Greeting:</strong> {emailPreview.data.firstName ? `Hi ${emailPreview.data.firstName}` : 'none (no usable first name)'}</p>
+                        <p>
+                          <strong className="font-semibold text-[#1a1a1a]">From:</strong> {emailPreview.data.from || 'not set'}
+                          {' · '}<strong className="font-semibold text-[#1a1a1a]">Replies to:</strong> {emailPreview.data.replyTo || emailPreview.data.from || 'not set'}
+                          {' · '}<strong className="font-semibold text-[#1a1a1a]">Stream:</strong> {emailPreview.data.stream}
+                        </p>
+                        {emailPreview.data.sites.length > 1 && (
+                          <p>One email for {emailPreview.data.sites.length} sites: {emailPreview.data.sites.map((x) => x.businessName || x.siteUrl).join(', ')}</p>
+                        )}
+                        {emailPreview.data.skip && <p className="text-amber-800">Not sent to this owner: {emailPreview.data.skip.text}</p>}
+                      </>
+                    )}
+                  </div>
+                  <div className="ml-auto flex items-center gap-1">
+                    {['html', 'text'].map((v) => (
+                      <button
+                        key={v}
+                        type="button"
+                        onClick={() => setEmailPreview((prev) => ({ ...prev, view: v }))}
+                        aria-pressed={emailPreview.view === v}
+                        className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-colors ${
+                          emailPreview.view === v ? 'bg-[#1a1a1a] text-white border-[#1a1a1a]' : 'bg-white text-[#555] border-black/[0.10] hover:border-[#cc0000]/40'
+                        }`}
+                      >
+                        {v === 'html' ? 'Email' : 'Plain text'}
+                      </button>
+                    ))}
+                    <button type="button" onClick={() => setEmailPreview(null)} className="ml-1 px-2 py-1 text-[12px] text-ink-tertiary hover:text-[#1a1a1a]">Close</button>
+                  </div>
+                </div>
+                {emailPreview.loading ? (
+                  <p className="text-[13px] text-ink-tertiary">Loading…</p>
+                ) : emailPreview.error ? (
+                  <p className="text-[13px] text-[#cc0000]">{emailPreview.error}</p>
+                ) : emailPreview.view === 'text' ? (
+                  <pre className="max-h-[640px] overflow-auto whitespace-pre-wrap rounded-lg bg-[#faf9f7] p-3 text-[12px] text-[#1a1a1a]">{emailPreview.data?.text}</pre>
+                ) : (
+                  // No scripts, no same-origin, no navigation: the email is
+                  // only looked at here.
+                  <iframe
+                    title="Owner email preview"
+                    srcDoc={emailPreview.data?.html || ''}
+                    sandbox=""
+                    className="w-full rounded-lg border border-black/[0.07] bg-white"
+                    style={{ height: 640 }}
+                  />
+                )}
+              </div>
+            )}
+
+            {emailRows.length === 0 ? (
+              <p className="text-[13px] text-ink-tertiary">No site is on the new design yet. Republish sites first.</p>
+            ) : (
+              <div className="overflow-x-auto rounded-xl border border-black/[0.07]">
+                <table className="w-full text-sm">
+                  <thead className="bg-[#faf9f7] text-left text-[10px] text-ink-tertiary uppercase tracking-wider">
+                    <tr>
+                      <th className="px-3 py-2">Site</th>
+                      <th className="px-3 py-2">Owner</th>
+                      <th className="px-3 py-2">Email</th>
+                      <th className="px-3 py-2" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {emailRows.map(({ site: s, owner: o, status, skip }) => (
+                      <tr key={s.id} className={`border-t border-black/[0.05] ${emailPreview?.siteId === s.id ? 'bg-[#faf9f7]' : ''}`}>
+                        <td className="px-3 py-2 max-w-[260px]">
+                          <p className="font-semibold text-[#1a1a1a] truncate">{s.business_info?.businessName || 'Untitled'}</p>
+                          <p className="text-[11px] text-ink-tertiary truncate">{upgradeEmailSiteUrl(s) || s.slug}</p>
+                        </td>
+                        <td className="px-3 py-2 text-[12px] text-[#555] max-w-[220px] truncate">
+                          {[o?.first_name, o?.last_name].filter(Boolean).join(' ') || '—'}
+                          <span className="block text-[11px] text-ink-tertiary truncate">{status?.to || o?.email || 'owner unknown'}</span>
+                          {status && !status.error && (
+                            <span className="block text-[11px] text-ink-tertiary truncate" title="How the email greets them">
+                              {status.greeting ? `"Hi ${status.greeting},"` : 'No greeting'}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-3 py-2">
+                          <EmailChip status={status} skip={skip} />
+                          {status?.marker?.to && <p className="text-[11px] text-ink-tertiary mt-1 truncate max-w-[220px]">to {status.marker.to}</p>}
+                          {status?.error && <p className="text-[11px] text-[#cc0000] mt-1 truncate max-w-[220px]" title={status.error}>{status.error}</p>}
+                          {status?.marker?.state === 'refused' && status.marker.error && (
+                            <p className="text-[11px] text-amber-800 mt-1 max-w-[220px] truncate" title={status.marker.error}>{status.marker.error}</p>
+                          )}
+                          {status && status.marker?.state !== 'sent' && !isUnconfirmed(status) && skip && <p className="text-[11px] text-ink-tertiary mt-1 max-w-[220px]">{skip.text}</p>}
+                          {isUnconfirmed(status) && (
+                            <div className="mt-1 max-w-[240px]">
+                              <p className="text-[11px] text-[#cc0000]">
+                                May have gone out{status.marker.at ? ` (${formatDateTime(status.marker.at)})` : ''}. Check Postmark's Activity (Tag "site-upgrade"), then:
+                              </p>
+                              <div className="mt-1 flex flex-wrap gap-1">
+                                {['sent', 'not_sent'].map((outcome) => (
+                                  <button
+                                    key={outcome}
+                                    type="button"
+                                    onClick={() => resolveEmail(s, outcome)}
+                                    disabled={!!busy || !!emailResolving}
+                                    className="px-2 py-1 text-[11px] font-semibold border border-black/10 rounded-md hover:border-[#cc0000]/30 hover:text-[#cc0000] disabled:opacity-50"
+                                  >
+                                    {emailResolving === s.id ? '…' : outcome === 'sent' ? 'It was sent' : 'It wasn\'t sent'}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-3 py-2 text-right whitespace-nowrap">
+                          <button
+                            type="button"
+                            onClick={() => previewEmail(s)}
+                            className="px-3 py-1.5 text-[12px] font-semibold border border-black/10 rounded-lg hover:border-[#cc0000]/30 hover:text-[#cc0000]"
+                          >
+                            Preview
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => sendTestEmail(s)}
+                            disabled={!adminEmail || !!busy || !!emailTesting || emailConfig?.ready === false}
+                            title={adminEmail ? `Sends this owner's email to ${adminEmail} only` : 'Your email address is not known'}
+                            className="ml-2 px-3 py-1.5 text-[12px] font-semibold border border-black/10 rounded-lg hover:border-[#cc0000]/30 hover:text-[#cc0000] disabled:opacity-50"
+                          >
+                            {emailTesting === s.id ? 'Sending…' : 'Send test to me'}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+      </section>
 
       <div className="flex flex-wrap items-center gap-2 mb-3">
         <input

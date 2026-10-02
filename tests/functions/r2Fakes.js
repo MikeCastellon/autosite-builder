@@ -1,12 +1,15 @@
 // Test doubles for the publish functions: an in-memory R2 bucket behind a
-// fake fetch (the Cloudflare v4 object and list endpoints), and a fake
-// Supabase client that understands the query chains publish-site,
-// admin-site-upgrade, slugClaim and adminAuth use.
+// fake fetch (the Cloudflare v4 object and list endpoints), an in-memory
+// Postmark (the owner emails), and a fake Supabase client that understands
+// the query chains publish-site, admin-site-upgrade, slugClaim and
+// adminAuth use.
 import { vi } from 'vitest';
 
 const OBJECT_PATH = /\/r2\/buckets\/autosite-published\/objects(?:\/([^/]+))?$/;
 
-// opts.failPut(key) / opts.failGet(key) → true makes that call fail.
+// opts.failPut(key, body) / opts.failGet(key) → true makes that call fail;
+// opts.hangPut(key, body) → true makes that PUT never answer (until its
+// AbortSignal fires, if it has one).
 export function fakeR2(objects = {}, opts = {}) {
   const store = new Map(Object.entries(objects));
   const calls = [];
@@ -25,7 +28,12 @@ export function fakeR2(objects = {}, opts = {}) {
     const key = decodeURIComponent(m[1]);
     calls.push([method, key, init.headers?.['Content-Type'] || null]);
     if (method === 'PUT') {
-      if (opts.failPut?.(key)) return new Response('boom', { status: 500 });
+      if (opts.failPut?.(key, init.body)) return new Response('boom', { status: 500 });
+      if (opts.hangPut?.(key, init.body)) {
+        return new Promise((_, reject) => {
+          init.signal?.addEventListener('abort', () => reject(init.signal.reason || new Error('aborted')));
+        });
+      }
       store.set(key, init.body);
       return new Response('{"success":true}', { status: 200 });
     }
@@ -40,12 +48,65 @@ export function fakeR2(objects = {}, opts = {}) {
   return { store, calls, fetch };
 }
 
-// tables: { sites: [...], profiles: [...], widget_configs: [...] }
+// Postmark's POST /email, answered in memory: `sent` holds every accepted
+// message (its JSON body, the token it came with and the MessageID given).
+// opts.reject(message) → { status, ErrorCode, Message } refuses that send
+// (a status of 500 or more is a Postmark server error);
+// opts.noAnswer(message) → true makes it fail like a network error;
+// opts.lostAnswer(message) → true accepts it, then fails like a network
+// error (Postmark has it, the caller never hears).
+// GET /message-streams/{id} answers from opts.streams ({ id: type }).
+export const POSTMARK_EMAIL_URL = 'https://api.postmarkapp.com/email';
+export const POSTMARK_STREAMS_URL = 'https://api.postmarkapp.com/message-streams/';
+export function fakePostmark(opts = {}) {
+  const sent = [];
+  const attempts = [];
+  const lookups = [];
+  const streams = opts.streams || { outbound: 'Transactional', broadcast: 'Broadcasts' };
+  let n = 0;
+  const handle = async (url, init = {}) => {
+    if (url.startsWith(POSTMARK_STREAMS_URL) && (init.method || 'GET') === 'GET') {
+      const id = decodeURIComponent(url.slice(POSTMARK_STREAMS_URL.length));
+      lookups.push({ id, token: init.headers?.['X-Postmark-Server-Token'] || null });
+      if (!streams[id]) return new Response(JSON.stringify({ ErrorCode: 1226, Message: 'The message stream for the provided \'ID\' was not found.' }), { status: 422 });
+      return new Response(JSON.stringify({ ID: id, Name: id, MessageStreamType: streams[id] }), { status: 200 });
+    }
+    if (url !== POSTMARK_EMAIL_URL || init.method !== 'POST') throw new Error(`unexpected Postmark call ${init.method} ${url}`);
+    const message = JSON.parse(init.body);
+    attempts.push(message);
+    if (opts.noAnswer?.(message)) throw new TypeError('fetch failed');
+    const refusal = opts.reject?.(message);
+    if (refusal) {
+      return new Response(JSON.stringify({ ErrorCode: refusal.ErrorCode, Message: refusal.Message }), { status: refusal.status || 422 });
+    }
+    n += 1;
+    const MessageID = `pm-msg-${n}`;
+    sent.push({ ...message, token: init.headers?.['X-Postmark-Server-Token'] || null, MessageID });
+    if (opts.lostAnswer?.(message)) throw new TypeError('fetch failed');
+    return new Response(JSON.stringify({ To: message.To, SubmittedAt: '2026-10-03T12:00:00Z', MessageID, ErrorCode: 0, Message: 'OK' }), { status: 200 });
+  };
+  return { sent, attempts, lookups, handle };
+}
+
+// One fetch for a test that talks to R2 and Postmark; anything else throws.
+export function routeFetch(r2, postmark) {
+  return vi.fn(async (url, init) => {
+    if (String(url).startsWith('https://api.postmarkapp.com/')) {
+      if (!postmark) throw new Error(`unexpected fetch ${url}`);
+      return postmark.handle(String(url), init);
+    }
+    return r2.fetch(url, init);
+  });
+}
+
+// tables: { sites: [...], profiles: [...], widget_configs: [...], users: [...] }
+// `users` are auth users ({ id, email, user_metadata }), read through
+// db.auth.admin.getUserById.
 // opts.publishedAtError: error object returned for an update that sets
 // published_at, or a select that names it (e.g. the column is missing);
 // opts.throwOnPublishedAt makes such an update throw.
 export function fakeDb(tables = {}, opts = {}) {
-  const state = { sites: [], profiles: [], widget_configs: [], ...structuredClone(tables) };
+  const state = { sites: [], profiles: [], widget_configs: [], users: [], ...structuredClone(tables) };
   const updates = [];
 
   function run(q) {
@@ -91,7 +152,18 @@ export function fakeDb(tables = {}, opts = {}) {
     return api;
   }
 
-  return { from, state, updates };
+  const auth = {
+    admin: {
+      getUserById: vi.fn(async (id) => {
+        const user = state.users.find((u) => u.id === id);
+        return user
+          ? { data: { user: structuredClone(user) }, error: null }
+          : { data: { user: null }, error: { message: 'User not found', status: 404 } };
+      }),
+    },
+  };
+
+  return { from, auth, state, updates };
 }
 
 export const post = (body, headers = {}) => ({

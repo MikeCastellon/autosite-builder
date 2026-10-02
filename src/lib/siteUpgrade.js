@@ -65,6 +65,147 @@ export function showNewDesignBadge(site, now = Date.now(), releaseDate = SITE_UP
   return now < release + NEW_DESIGN_BADGE_DAYS * 24 * 60 * 60 * 1000;
 }
 
+// ─── Owner emails ─────────────────────────────────────────────────────
+// Admin > Site upgrades > Owner emails tells owners their live site is on
+// the new design (netlify/functions/_lib/siteUpgradeEmail.js). The tab
+// and admin-site-upgrade decide who gets it with the helpers below; the
+// function decides for real.
+
+// The templates on the new designs: theme-ready modules, i.e. the phone
+// menu, the Call/Book bar and the owner's colors and fonts throughout,
+// which is what the email describes. A site on any other template is never
+// told it got them. siteUpgrade.test.js keeps this in step with the
+// modules exporting themeReady.
+export const NEW_DESIGN_TEMPLATES = Object.freeze([
+  'carwash_bubble', 'detailing_sporty', 'mechanic_garage', 'mechanic_industrial', 'mechanic_ironclad',
+  'mobile_chrome', 'mobile_redline', 'mobile_sudsy', 'tint_elite', 'tint_obsidian', 'wheel_apex',
+]);
+
+// Our own accounts (team, demo and test owners): never emailed, like super
+// admins. Subdomains count too.
+export const UPGRADE_EMAIL_INTERNAL_DOMAINS = Object.freeze(['autocaregenius.com', 'autocaregeniushub.com', '639hz.com']);
+// Reserved test names (RFC 2606 / 6761).
+const TEST_DOMAIN_RE = /(?:^|\.)(?:example\.(?:com|net|org)|example|test|invalid|localhost|local)$/;
+const EMAIL_ADDR_RE = /^[^\s@<>(),;:"\\[\]]+@[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,}$/i;
+
+export function isEmailAddress(s) {
+  return typeof s === 'string' && s.length <= 254 && EMAIL_ADDR_RE.test(s.trim());
+}
+
+// Why this owner is never sent the email, or null.
+// owner: { email, isSuperAdmin } (null when the account could not be read).
+export function upgradeEmailOwnerSkip(owner) {
+  if (!owner) return { code: 'owner_unknown', text: 'Owner account could not be read' };
+  if (owner.isSuperAdmin) return { code: 'admin_owner', text: 'Owned by a super admin' };
+  const email = String(owner.email || '').trim().toLowerCase();
+  if (!isEmailAddress(email)) return { code: 'no_email', text: 'Owner has no usable email address' };
+  const domain = email.split('@').pop();
+  if (TEST_DOMAIN_RE.test(domain) || UPGRADE_EMAIL_INTERNAL_DOMAINS.some((d) => domain === d || domain.endsWith(`.${d}`))) {
+    return { code: 'test_owner', text: `Internal or test account (${domain})` };
+  }
+  return null;
+}
+
+// The site's email marker (_backups/<site id>/upgrade-email.json, written
+// by admin-site-upgrade) as one state, or null when there is none:
+//   sending     claimed before the send and never confirmed: the email
+//               may have gone out (no answer from Postmark, or the
+//               function stopped mid-send). Blocks the site until an
+//               admin marks it sent or clears it.
+//   sent        Postmark accepted it (or an admin confirmed it was sent)
+//   refused     Postmark refused it: nothing went out
+//   cleared     an admin found it was not sent, or the claim was undone
+//               before sending: nothing went out
+//   unreadable  there, but not JSON: treated like `sending`
+// Markers from before the claim existed have no state and were only
+// written after Postmark accepted the email: sent.
+export const UPGRADE_EMAIL_MARKER_STATES = Object.freeze(['sending', 'sent', 'refused', 'cleared', 'unreadable']);
+export function upgradeEmailMarkerState(marker) {
+  if (!marker || typeof marker !== 'object') return null;
+  if (marker.unreadable === true) return 'unreadable';
+  if (marker.state == null) return 'sent';
+  return UPGRADE_EMAIL_MARKER_STATES.includes(marker.state) ? marker.state : 'unreadable';
+}
+
+// Why this site's owner is not told about it, or null when they can be.
+// `site` needs published_url, site_type, template_id, created_at and
+// published_at. ctx: { marker (its email marker: { state, at, to }), hold }.
+export function upgradeEmailSiteSkip(site, ctx = {}, releaseDate = SITE_UPGRADE_RELEASE_DATE) {
+  if (!site?.published_url) return { code: 'not_live', text: 'Not published' };
+  if (site.site_type && site.site_type !== 'website') return { code: 'not_website', text: 'Not a website' };
+  if (!upgradeEmailSiteUrl(site)) return { code: 'no_address', text: 'Has no https address to link to' };
+  if (!isUpgradedSite(site, releaseDate)) return { code: 'not_upgraded', text: 'Not on the new design yet' };
+  // A site made after the release never had the old design to replace.
+  const created = Date.parse(site.created_at || '');
+  if (Number.isFinite(created) && created >= Date.parse(`${releaseDate}T00:00:00Z`)) {
+    return { code: 'new_site', text: 'Created after the release, so it never had the old design' };
+  }
+  if (!NEW_DESIGN_TEMPLATES.includes(site.template_id)) {
+    return { code: 'old_template', text: 'Its template is not one of the new designs' };
+  }
+  if (ctx.hold?.held) return { code: 'on_hold', text: 'On hold' };
+  const state = upgradeEmailMarkerState(ctx.marker);
+  if (state === 'sent') {
+    const when = String(ctx.marker.at || '').slice(0, 10) || 'earlier';
+    return { code: 'already_emailed', text: `Owner already emailed about it (${when})` };
+  }
+  if (state === 'sending' || state === 'unreadable') {
+    return {
+      code: 'unconfirmed',
+      text: 'An email about it may have gone out already (never confirmed). Check Postmark\'s Activity, then mark it sent or clear it',
+    };
+  }
+  return null;
+}
+
+// Backups whose reason means "an old live page was replaced by a new-design
+// publish": an admin upgrade (publish) or an owner's first publish on the
+// new designs (owner; publish-site only makes it for a site that was
+// already live). Same reasons as BACKUP_ID_RE in _shared/r2.js.
+export const UPGRADE_BACKUP_REASONS = Object.freeze(['publish', 'owner']);
+export function backupReason(backupId) {
+  const m = /-(publish|restore|manual|owner)-[0-9a-f]{8}$/.exec(String(backupId || ''));
+  return m ? m[1] : null;
+}
+
+// A page exported with the new designs: only their site runtime
+// (siteRuntime.js, SITE_RUNTIME_JS) sets html[data-acg-scrolled]; a page
+// built by an editor tab opened before the release has none.
+export function isNewDesignPage(html) {
+  return /data-acg-scrolled/.test(String(html || ''));
+}
+
+// Why the live page does not show that the site was moved to the new
+// design, or null. published_at alone can't tell: a draft published for
+// the first time after the release, or a publish from an editor tab
+// opened before it, stamps it too.
+//   backupIds  the site's backup ids (listBackups)
+//   liveHtml   its live index.html (null when there is none)
+export function upgradeEmailPageSkip({ backupIds = [], liveHtml = null, siteId } = {}) {
+  if (!backupIds.some((id) => UPGRADE_BACKUP_REASONS.includes(backupReason(id)))) {
+    return { code: 'never_replaced', text: 'No old live page was replaced (no upgrade backup): it was first published after the release' };
+  }
+  if (!liveHtml) return { code: 'live_missing', text: 'No live page found' };
+  if (!isNewDesignPage(liveHtml)) {
+    return { code: 'live_not_new', text: 'The live page is not on the new design (published from an editor opened before the release?)' };
+  }
+  const ids = new Set(widgetScripts(liveHtml).map((s) => s.siteId));
+  if (siteId && (!ids.has(siteId) || ids.size > 1)) {
+    return { code: 'live_other_site', text: 'The live page is not this site\'s page' };
+  }
+  return null;
+}
+
+// The address the email links to: the owner's own domain once it serves
+// the site over HTTPS (as the dashboard does), else the hub address.
+export function upgradeEmailSiteUrl(site) {
+  const domain = String(site?.custom_domain || '').trim().toLowerCase();
+  if (domain && site.custom_domain_status === 'active_ssl' && /^[a-z0-9-]+(?:\.[a-z0-9-]+)+$/.test(domain)) {
+    return `https://www.${domain}`;
+  }
+  return /^https:\/\//i.test(site?.published_url || '') ? site.published_url : null;
+}
+
 // ─── HTML reading ─────────────────────────────────────────────────────
 
 const NAMED_ENTITIES = {
