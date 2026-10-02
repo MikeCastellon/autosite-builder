@@ -6,6 +6,7 @@ import {
 } from '../../lib/customSiteForm.js';
 import { useAlert } from '../ui/AlertProvider.jsx';
 import { StageBadge, copyText, duration, formatDateTime, timeAgo } from './customSiteUi.jsx';
+import { DesignCard, DesignSetup, HandoverCard } from './CustomSiteDesign.jsx';
 
 // One custom website project, full page (Admin > Custom websites > a
 // project): where the build is and what's next, the customer's answers and
@@ -60,13 +61,16 @@ function nextStep(p) {
       return { text: `${first} is filling out the form (last saved ${timeAgo(p.form_saved_at)}).`, act: [['resend', 'Resend welcome email']] };
     case 'form_received':
       return {
-        text: `${first} sent the form ${timeAgo(p.form_submitted_at)}. Look over their answers and files below, then start the design.`,
-        act: [['stage:designing', 'Start designing', true]],
+        text: `${first} sent the form ${timeAgo(p.form_submitted_at)}. Look over their answers and files below, then set up the design.`,
+        act: p.site && !p.handed_over_at ? [['editor', 'Open in editor', true]] : p.site ? [] : [['design', 'Set up the design', true]],
       };
     case 'designing':
+      if (p.design_status === 'generating') return { text: 'The copy is being written. This page updates when it\'s done.', act: [] };
+      if (!p.site) return { text: `Set up the design to build ${first}'s site.`, act: [['design', 'Set up the design', true]] };
+      if (p.handed_over_at) return hasLink ? { text: `Email ${first} the draft link when it's ready.`, act: [['draft', `Email draft to ${first}`, true]] } : { text: 'The site is in the customer\'s account; publish it from there (View as user).', act: [] };
       return hasLink
-        ? { text: `When the draft is ready, email ${first} the link. That moves the project to "Draft with customer".`, act: [['draft', `Email draft to ${first}`, true]] }
-        : { text: `Building the draft. Add its link under Build when it's ready, then email it to ${first}.`, act: [] };
+        ? { text: `When the draft is ready, email ${first} the link. That moves the project to "Draft with customer".`, act: [['draft', `Email draft to ${first}`, true], ['editor', 'Open in editor']] }
+        : { text: 'Polish the site in the editor, then press Publish there to get a draft link.', act: [['editor', 'Open in editor', true]] };
     case 'in_review':
       return {
         text: `Waiting on ${first}'s feedback on the draft. Their reply comes to your email.`,
@@ -91,7 +95,7 @@ function nextStep(p) {
   }
 }
 
-export default function CustomSiteProjectPage({ projectId, onBack, onChanged, onDeleted }) {
+export default function CustomSiteProjectPage({ projectId, onBack, onChanged, onDeleted, onOpenSiteEditor, onOpenBookingSettings }) {
   const { toast, confirm } = useAlert();
   const [project, setProject] = useState(null);
   const [events, setEvents] = useState([]);
@@ -104,16 +108,23 @@ export default function CustomSiteProjectPage({ projectId, onBack, onChanged, on
   const [editing, setEditing] = useState(false);
   const [details, setDetails] = useState({});
   const [siteUrl, setSiteUrl] = useState('');
+  const [setupOpen, setSetupOpen] = useState(false);
 
   // The list's row update, read through a ref so a new callback from the
   // parent never reloads the page.
   const onChangedRef = useRef(onChanged);
   onChangedRef.current = onChanged;
 
+  // The site link as last loaded: a refresh replaces the input only while
+  // it still shows that value (never text being typed).
+  const loadedSiteUrl = useRef('');
+
   const apply = useCallback((res) => {
     setProject(res.project);
     if (res.events) setEvents(res.events);
-    setSiteUrl(res.project.site_url || '');
+    const nextUrl = res.project.site_url || '';
+    setSiteUrl((current) => (current === loadedSiteUrl.current ? nextUrl : current));
+    loadedSiteUrl.current = nextUrl;
     setNotes((prev) => (prev === null ? res.project.admin_notes || '' : prev));
     onChangedRef.current?.(res.project);
   }, []);
@@ -128,6 +139,12 @@ export default function CustomSiteProjectPage({ projectId, onBack, onChanged, on
   }, [projectId, apply]);
 
   useEffect(() => { load(); }, [load]);
+
+  // Background refresh (while the copy is written): a failed poll is not an
+  // error screen.
+  const refresh = useCallback(async () => {
+    try { apply(await customSiteAdmin('get', { id: projectId })); } catch { /* next poll retries */ }
+  }, [projectId, apply]);
   useEffect(() => { window.scrollTo(0, 0); }, [projectId]);
 
   // After a change: show the saved project, then refresh the activity log.
@@ -206,7 +223,13 @@ export default function CustomSiteProjectPage({ projectId, onBack, onChanged, on
     }
   }
 
+  function openEditor(siteId = project?.site?.id) {
+    if (siteId) onOpenSiteEditor?.(siteId, projectId);
+  }
+
   function runAction(key) {
+    if (key === 'design') { setSetupOpen(true); window.scrollTo(0, 0); return null; }
+    if (key === 'editor') return openEditor();
     if (key === 'welcome' || key === 'resend') return sendWelcome();
     if (key === 'draft' || key === 'live') return emailCustomer(key);
     if (key.startsWith('stage:')) return update({ stage: key.slice(6) }, 'stage');
@@ -285,6 +308,16 @@ export default function CustomSiteProjectPage({ projectId, onBack, onChanged, on
     return <div>{back}<p className="py-16 text-center text-sm text-ink-tertiary">Loading…</p></div>;
   }
 
+  if (setupOpen) {
+    return (
+      <DesignSetup
+        project={project}
+        onBack={() => { setSetupOpen(false); load(); }}
+        onStarted={() => { setSetupOpen(false); load(); window.scrollTo(0, 0); }}
+      />
+    );
+  }
+
   const title = project.business_name || project.client_name;
   const step = nextStep(project);
   const sent = !!project.invite_sent_at;
@@ -338,11 +371,20 @@ export default function CustomSiteProjectPage({ projectId, onBack, onChanged, on
 
       <div className="mt-6 grid lg:grid-cols-[minmax(0,1fr)_360px] gap-6 items-start">
         <div className="space-y-6 min-w-0">
+          <DesignCard
+            project={project}
+            onReload={refresh}
+            onSetup={() => { setSetupOpen(true); window.scrollTo(0, 0); }}
+            onOpenEditor={openEditor}
+            onOpenBookingSettings={(siteId) => onOpenBookingSettings?.(siteId, projectId)}
+          />
           <Answers project={project} />
           <Files project={project} />
         </div>
 
         <div className="space-y-6">
+          <HandoverCard project={project} onDone={load} />
+
           <Card title="Form link">
             <div className="flex gap-2">
               <input

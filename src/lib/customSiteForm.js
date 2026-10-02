@@ -421,6 +421,7 @@ export function describeEvent(evt) {
       if (d.template === 'welcome') return `Welcome email sent to ${to}`;
       if (d.template === 'draft') return `Draft link emailed to ${to}`;
       if (d.template === 'live') return `"You're live" email sent to ${to}`;
+      if (d.template === 'handover' || d.template === 'handover_new') return `Access email sent to ${to}`;
       return `Email sent to ${to}`;
     }
     case 'email_failed': return `Email to ${d.to || 'the customer'} failed to send`;
@@ -432,6 +433,10 @@ export function describeEvent(evt) {
     case 'site_url': return d.url ? 'Site link updated' : 'Site link removed';
     case 'details': return 'Customer details edited';
     case 'link_reset': return 'Form link replaced (the old link stopped working)';
+    case 'design_started': return 'Started writing the site';
+    case 'design_ready': return d.regenerated ? 'Site rewritten' : 'Site written and created';
+    case 'design_failed': return `Writing the site failed${d.error ? `: ${d.error}` : ''}`;
+    case 'handover': return `Site handed over to ${d.to || 'the customer'}${d.newAccount ? ' (new account)' : ''}${d.compPro ? ', with Pro' : ''}`;
     default: return evt?.type || 'Update';
   }
 }

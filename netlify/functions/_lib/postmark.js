@@ -865,6 +865,51 @@ export function customSiteLiveEmail({ firstName: givenName, businessName, siteUr
   return { subject: businessName ? `The ${businessName} website is live!` : 'Your new website is live!', html, text };
 }
 
+const HANDOVER_TIPS = [
+  'Bookings, customers and messages from your site now show up in your dashboard.',
+  'Connect Stripe under Payments to take deposits and card payments.',
+  'Need a change? Just reply to this email.',
+];
+
+// Hand-over: the custom website now lives in the customer's own account.
+// newAccount: the link sets their password (first sign-in); otherwise it
+// opens the sign-in page.
+export function customSiteHandoverEmail({ firstName: givenName, businessName, siteUrl, actionUrl, newAccount, email }) {
+  const first = String(givenName || '').trim();
+  const whose = businessName ? `the ${esc(businessName)} website` : 'your new website';
+  const intro = newAccount
+    ? `We've set up your account so you can manage ${whose}: bookings, customers and more. Set a password to sign in for the first time.`
+    : `${businessName ? `The ${esc(businessName)} website` : 'Your new website'} is now in your account. Sign in to manage bookings, customers and more.`;
+  const site = siteUrl
+    ? `<p style="margin:0 0 16px;font-size:13px;color:#52525b;text-align:center;">Your site: <a href="${esc(siteUrl)}" style="color:#cc0000;text-decoration:none;font-weight:600;">${esc(siteUrl.replace(/^https?:\/\//, '').replace(/\/$/, ''))}</a></p>`
+    : '';
+  const html = renderEmailShell({
+    icon: null,
+    eyebrow: 'Custom Websites',
+    title: first ? `It's all yours, ${esc(first)}!` : 'It\'s all yours!',
+    intro,
+    cta: { label: newAccount ? 'Set my password' : 'Sign in', href: actionUrl },
+    body: `${site}${tipList('What you can do now', HANDOVER_TIPS)}
+      <p style="margin:16px 0 0;font-size:12px;color:#a1a1aa;text-align:center;line-height:1.6;">Your sign-in email is <strong style="color:#52525b;">${esc(email)}</strong>.${newAccount ? ' If the button has expired, use "Forgot password" on the sign-in page.' : ''}</p>
+      ${linkFallback(actionUrl)}`,
+  });
+  const text = [
+    first ? `It's all yours, ${first}!` : 'It\'s all yours!',
+    '',
+    newAccount
+      ? `We've set up your account so you can manage ${businessName ? `the ${businessName} website` : 'your new website'}. Set a password to sign in for the first time:`
+      : `${businessName ? `The ${businessName} website` : 'Your new website'} is now in your account. Sign in:`,
+    actionUrl,
+    ...(siteUrl ? ['', `Your site: ${siteUrl}`] : []),
+    '',
+    'What you can do now:',
+    ...HANDOVER_TIPS.map((t) => `- ${t}`),
+    '',
+    `Your sign-in email is ${email}.${newAccount ? ' If the link has expired, use "Forgot password" on the sign-in page.' : ''}`,
+  ].join('\n');
+  return { subject: businessName ? `The ${businessName} website is in your account` : 'Your new website is in your account', html, text };
+}
+
 // Unlike the booking emails, a missing Postmark key is an error here: the
 // admin pressed "send" and must see that nothing went out.
 async function sendCustomSiteEmail(where, { to, replyTo, subject, html, text }) {
@@ -920,6 +965,14 @@ export function customSiteLive({ to, replyTo, ...message }) {
   });
 }
 
+export function customSiteHandover({ to, replyTo, ...message }) {
+  return sendCustomSiteEmail('customSiteHandover', {
+    to,
+    replyTo: replyTo || CUSTOM_SITES_REPLY_TO,
+    ...customSiteHandoverEmail(message),
+  });
+}
+
 // `to`: the team addresses (custom-site-form decides who); replying goes
 // straight to the customer.
 export function customSiteFormToAdmin({ to, project, form, assets, adminUrl, resubmitted }) {
@@ -929,3 +982,7 @@ export function customSiteFormToAdmin({ to, project, form, assets, adminUrl, res
     ...customSiteFormToAdminEmail({ project, form, assets, adminUrl, resubmitted }),
   });
 }
+
+// Shared building blocks for other email builders (e.g. a site-upgrade
+// announcement in its own module), so every email uses the same shell.
+export { renderEmailShell, infoCard, cardHeading, linkFallback, noteCard, tipList };

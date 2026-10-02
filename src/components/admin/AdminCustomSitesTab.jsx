@@ -5,7 +5,7 @@ import { useAlert } from '../ui/AlertProvider.jsx';
 import CustomSiteProjectPage from './CustomSiteProjectPage.jsx';
 import { StageBadge, copyText, duration, formatDateTime, timeAgo } from './customSiteUi.jsx';
 
-// Custom websites (header nav, and a tab of the Admin page): add a customer,
+// Custom websites (header nav): add a customer,
 // email them the intake form link and track the build from "Form sent" to
 // "Live". A project opens as a full page (CustomSiteProjectPage). The
 // customer's side is /custom-site?t=<token> (CustomSiteFormPage).
@@ -17,7 +17,7 @@ function formStatus(p) {
   return { text: 'Link not sent', tone: 'text-ink-tertiary' };
 }
 
-export default function AdminCustomSitesTab({ initialProjectId }) {
+export default function AdminCustomSitesTab({ initialProjectId, onOpenSiteEditor, onOpenBookingSettings }) {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
@@ -73,6 +73,8 @@ export default function AdminCustomSitesTab({ initialProjectId }) {
         onBack={() => { setOpenId(null); refresh(); }}
         onChanged={patchRow}
         onDeleted={(id) => { setOpenId(null); setProjects((prev) => prev.filter((p) => p.id !== id)); }}
+        onOpenSiteEditor={onOpenSiteEditor}
+        onOpenBookingSettings={onOpenBookingSettings}
       />
     );
   }

@@ -5,9 +5,10 @@ import { useAuth } from '../../lib/AuthContext.jsx';
 // "Custom websites" in the header nav (super admins only): customers getting
 // a custom-built site, from their form link to launch. The links in the
 // custom website emails (/?admin=custom-sites&project=<id>) open a project.
-export default function CustomSitesPage({ onExit }) {
+// `projectId` opens that project (coming back from its site in the editor).
+export default function CustomSitesPage({ onExit, projectId: openProjectId, onOpenSiteEditor, onOpenBookingSettings }) {
   const { profile } = useAuth();
-  const [projectId] = useState(() => new URLSearchParams(window.location.search).get('project'));
+  const [projectId] = useState(() => openProjectId || new URLSearchParams(window.location.search).get('project'));
 
   useEffect(() => {
     if (new URLSearchParams(window.location.search).has('admin')) {
@@ -30,7 +31,11 @@ export default function CustomSitesPage({ onExit }) {
   return (
     <main className="max-w-7xl mx-auto px-3 py-10">
       <h1 className="text-3xl sm:text-4xl font-black text-[#1a1a1a] tracking-tight mb-3">Custom websites</h1>
-      <AdminCustomSitesTab initialProjectId={projectId} />
+      <AdminCustomSitesTab
+        initialProjectId={projectId}
+        onOpenSiteEditor={onOpenSiteEditor}
+        onOpenBookingSettings={onOpenBookingSettings}
+      />
     </main>
   );
 }
