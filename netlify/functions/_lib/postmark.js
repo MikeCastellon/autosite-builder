@@ -1,4 +1,7 @@
 import { ServerClient } from 'postmark';
+import {
+  ASSET_KINDS, FORM_SECTIONS, answerText, firstName, formatBytes, isFieldShown, missingRecommended, safeHref,
+} from '../../../src/lib/customSiteForm.js';
 
 const client = process.env.POSTMARK_API_KEY
   ? new ServerClient(process.env.POSTMARK_API_KEY)
@@ -567,4 +570,267 @@ export async function supportBookingToHost({ booking, hostEmail }) {
     logPostmarkFailure('supportBookingToHost', err);
     throw err;
   }
+}
+
+// ──────────────────────────────────────────────────────────────────────
+// Custom website emails (Admin > Custom websites, /custom-site form)
+// ──────────────────────────────────────────────────────────────────────
+
+// Where customer replies land when no admin address is known (the
+// functions pass the admin's own address as replyTo when they have it).
+const CUSTOM_SITES_REPLY_TO = (process.env.CUSTOM_SITES_EMAIL || '').split(',')[0].trim()
+  || process.env.SUPPORT_HOST_EMAIL || FROM;
+
+function infoCard(inner, marginBottom = 16) {
+  return `<table width="100%" cellpadding="0" cellspacing="0" style="background:#fafafa;border:1px solid #f4f4f5;border-radius:12px;margin-bottom:${marginBottom}px;"><tr><td style="padding:16px 18px;">${inner}</td></tr></table>`;
+}
+
+function cardHeading(text) {
+  return `<p style="margin:0 0 10px;font-size:11px;font-weight:700;color:#a1a1aa;letter-spacing:1px;text-transform:uppercase;">${esc(text)}</p>`;
+}
+
+function linkFallback(href) {
+  return `<p style="margin:20px 0 0;font-size:12px;color:#a1a1aa;text-align:center;line-height:1.6;">Button not working? Copy this link into your browser:<br/><a href="${esc(href)}" style="color:#cc0000;text-decoration:none;word-break:break-all;">${esc(href)}</a></p>`;
+}
+
+const HAVE_READY = [
+  'Your logo (the best file you have)',
+  'Your brand colors, if you have them',
+  'A few websites or designs you like',
+  'Photos of your work, shop or team',
+  'Your services and prices',
+];
+
+const HOW_IT_WORKS = [
+  ['Fill out the form', 'Tell us about your business and the look you want.'],
+  ['We design your site', 'Built around your brand, your services and your photos.'],
+  ['You review it', 'We fine-tune it with you until it feels right.'],
+  ['You go live', 'We launch it and your customers can find you.'],
+];
+
+// Welcome email for a new custom-website customer: links to their intake
+// form. Pure (returns the message) so it can be tested and previewed.
+export function customSiteWelcomeEmail({ firstName: givenName, clientName, businessName, formUrl, note }) {
+  const first = String(givenName || '').trim() || firstName(clientName);
+  const forBiz = businessName ? ` for <strong style="color:#18181b;">${esc(businessName)}</strong>` : '';
+  const subject = businessName
+    ? `Welcome! Let's build the ${businessName} website`
+    : 'Welcome! Let\'s build your new website';
+
+  const noteHtml = note
+    ? `<table width="100%" cellpadding="0" cellspacing="0" style="background:#fff5f5;border-left:3px solid #cc0000;border-radius:0 12px 12px 0;margin-bottom:16px;"><tr><td style="padding:14px 18px;">
+         <p style="margin:0 0 6px;font-size:11px;font-weight:700;color:#cc0000;letter-spacing:1px;text-transform:uppercase;">A note from our team</p>
+         <p style="margin:0;font-size:14px;color:#3f3f46;line-height:1.6;">${esc(note).replace(/\n/g, '<br/>')}</p>
+       </td></tr></table>`
+    : '';
+  const readyRows = HAVE_READY.map((item) =>
+    `<tr><td width="18" valign="top" style="padding:3px 0;font-size:13px;color:#cc0000;font-weight:700;">&#10003;</td><td style="padding:3px 0;font-size:13px;color:#52525b;line-height:1.5;">${esc(item)}</td></tr>`).join('');
+  const stepRows = HOW_IT_WORKS.map(([title, text], i) =>
+    `<tr><td width="34" valign="top" style="padding:4px 0;"><div style="width:22px;height:22px;border-radius:11px;background:#18181b;color:#ffffff;font-size:11px;font-weight:700;line-height:22px;text-align:center;">${i + 1}</div></td>
+       <td style="padding:4px 0 8px;"><p style="margin:0;font-size:13px;font-weight:700;color:#18181b;">${esc(title)}</p><p style="margin:2px 0 0;font-size:13px;color:#71717a;line-height:1.5;">${esc(text)}</p></td></tr>`).join('');
+
+  const body = `${noteHtml}
+    ${infoCard(`${cardHeading('Good to have handy')}<table width="100%" cellpadding="0" cellspacing="0">${readyRows}</table>
+      <p style="margin:10px 0 0;font-size:12px;color:#a1a1aa;line-height:1.5;">Don't have everything? Send what you have. You can add the rest later.</p>`)}
+    ${infoCard(`${cardHeading('How it works')}<table width="100%" cellpadding="0" cellspacing="0">${stepRows}</table>`, 0)}
+    ${linkFallback(formUrl)}
+    <p style="margin:12px 0 0;font-size:12px;color:#a1a1aa;text-align:center;line-height:1.6;">This link is just for you, so please don't share it.<br/>Questions? Just reply to this email.</p>`;
+
+  const html = renderEmailShell({
+    icon: null,
+    eyebrow: 'Custom Websites',
+    title: first ? `Welcome, ${esc(first)}!` : 'Welcome!',
+    intro: `Thanks for choosing a custom website${forBiz}. Step one is a short form about your business and your style. It saves as you go, so you can come back and finish it anytime.`,
+    cta: { label: 'Start my website form', href: formUrl },
+    body,
+  });
+
+  const text = [
+    first ? `Welcome, ${first}!` : 'Welcome!',
+    '',
+    `Thanks for choosing a custom website${businessName ? ` for ${businessName}` : ''}. Step one is a short form about your business and your style. It saves as you go, so you can come back and finish it anytime.`,
+    '',
+    `Start your website form: ${formUrl}`,
+    ...(note ? ['', 'A note from our team:', note] : []),
+    '',
+    'Good to have handy:',
+    ...HAVE_READY.map((i) => `- ${i}`),
+    'Don\'t have everything? Send what you have. You can add the rest later.',
+    '',
+    'How it works:',
+    ...HOW_IT_WORKS.map(([t, d], i) => `${i + 1}. ${t}: ${d}`),
+    '',
+    'This link is just for you, so please don\'t share it. Questions? Just reply to this email.',
+  ].join('\n');
+
+  return { subject, html, text };
+}
+
+// Sent to the customer after they submit the form.
+export function customSiteReceivedEmail({ firstName: givenName, clientName, businessName, formUrl }) {
+  const first = String(givenName || '').trim() || firstName(clientName);
+  const biz = businessName ? `<strong style="color:#18181b;">${esc(businessName)}</strong>` : 'your website';
+  const html = renderEmailShell({
+    icon: '&#10003;',
+    eyebrow: 'Custom Websites',
+    title: first ? `Thanks, ${esc(first)}! We've got it.` : 'Thanks! We\'ve got it.',
+    intro: `Your answers and files for ${biz} are in. We'll start on your design and reach out if we have any questions.`,
+    cta: { label: 'Review my answers', href: formUrl },
+    body: `<p style="margin:0;font-size:13px;color:#71717a;text-align:center;line-height:1.6;">Remembered something? Use the same link to add photos or change an answer anytime. Your changes come straight to us.</p>
+      ${linkFallback(formUrl)}
+      <p style="margin:12px 0 0;font-size:12px;color:#a1a1aa;text-align:center;">Questions? Just reply to this email.</p>`,
+  });
+  const text = `${first ? `Thanks, ${first}!` : 'Thanks!'} We've got it.\n\nYour answers and files${businessName ? ` for ${businessName}` : ''} are in. We'll start on your design and reach out if we have any questions.\n\nRemembered something? Use the same link to add photos or change an answer anytime:\n${formUrl}\n\nQuestions? Just reply to this email.`;
+  return { subject: 'We\'ve got your website details', html, text };
+}
+
+// One answer as email HTML: color swatches, linked sites, line breaks kept.
+function answerHtml(field, value) {
+  if (field.type === 'colors') {
+    return value.map((c) => `<span style="display:inline-block;margin:0 12px 4px 0;white-space:nowrap;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;border:1px solid #e4e4e7;background:${esc(c)};vertical-align:-2px;"></span> ${esc(c)}</span>`).join('');
+  }
+  if (field.type === 'sites') {
+    return value.map((r) => {
+      const href = safeHref(r.url);
+      const link = href ? `<a href="${esc(href)}" style="color:#cc0000;text-decoration:none;font-weight:600;">${esc(r.url)}</a>` : esc(r.url || '');
+      return `<div style="margin-bottom:6px;">${link}${r.note ? `<br/><span style="color:#52525b;">${esc(r.note)}</span>` : ''}</div>`;
+    }).join('');
+  }
+  const text = answerText(field, value);
+  const href = field.type === 'url' ? safeHref(value) : null;
+  if (href) return `<a href="${esc(href)}" style="color:#cc0000;text-decoration:none;">${esc(text)}</a>`;
+  return esc(text).replace(/\n/g, '<br/>');
+}
+
+function answeredFields(section, form) {
+  return section.fields.filter((f) => f.type !== 'files' && isFieldShown(f, form) && answerText(f, form[f.id]));
+}
+
+// Sent to the team when a customer submits (or resubmits) the form: every
+// answer, and links to their files (assets[].url, signed for a few days).
+export function customSiteFormToAdminEmail({ project, form, assets, adminUrl, resubmitted }) {
+  const who = project.business_name || form.businessName || project.client_name;
+  const counts = Object.entries(ASSET_KINDS)
+    .map(([kind, k]) => [k.label, assets.filter((a) => a.kind === kind).length])
+    .filter(([, n]) => n > 0);
+  const missing = missingRecommended(form, assets).map((m) => m.label);
+  const row = (label, value) => `<p style="margin:0 0 6px;font-size:13px;color:#52525b;"><strong style="color:#a1a1aa;font-weight:600;">${esc(label)}:</strong> ${value}</p>`;
+  const email = form.contactEmail || project.client_email;
+  const phone = form.contactPhone || project.client_phone;
+  const details = [
+    row('Customer', esc(form.contactName || project.client_name)),
+    row('Email', `<a href="mailto:${esc(email)}" style="color:#cc0000;text-decoration:none;">${esc(email)}</a>`),
+    phone ? row('Phone', `<a href="tel:${esc(phone)}" style="color:#cc0000;text-decoration:none;">${esc(phone)}</a>`) : '',
+    row('Files', counts.length ? esc(counts.map(([l, n]) => `${l}: ${n}`).join(' · ')) : 'None yet'),
+    missing.length ? row('Still missing', esc(missing.join(', '))) : '',
+  ].join('');
+
+  const answers = FORM_SECTIONS.map((s) => {
+    const rows = answeredFields(s, form).map((f) => `<tr>
+        <td valign="top" style="padding:7px 12px 7px 0;width:36%;border-top:1px solid #f4f4f5;font-size:12px;color:#a1a1aa;font-weight:600;line-height:1.4;">${esc(f.label)}</td>
+        <td valign="top" style="padding:7px 0;border-top:1px solid #f4f4f5;font-size:13px;color:#18181b;line-height:1.5;">${answerHtml(f, form[f.id])}</td>
+      </tr>`).join('');
+    return rows ? `${cardHeading(s.title)}<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:18px;">${rows}</table>` : '';
+  }).join('');
+
+  const fileGroups = Object.entries(ASSET_KINDS).map(([kind, k]) => {
+    const list = assets.filter((a) => a.kind === kind);
+    if (!list.length) return '';
+    const items = list.map((a) => {
+      const name = a.url ? `<a href="${esc(a.url)}" style="color:#cc0000;text-decoration:none;font-weight:600;">${esc(a.name)}</a>` : esc(a.name);
+      const size = formatBytes(a.size);
+      return `<p style="margin:0 0 6px;font-size:13px;color:#18181b;line-height:1.45;">${name}${size ? ` <span style="color:#a1a1aa;">· ${esc(size)}</span>` : ''}${a.note ? `<br/><span style="color:#52525b;">"${esc(a.note)}"</span>` : ''}</p>`;
+    }).join('');
+    return `<p style="margin:0 0 6px;font-size:12px;font-weight:700;color:#18181b;">${esc(k.label)} (${list.length})</p>${items}<div style="height:8px;"></div>`;
+  }).join('');
+  const filesHtml = fileGroups
+    ? `${cardHeading('Files')}${fileGroups}<p style="margin:4px 0 0;font-size:11px;color:#a1a1aa;">File links work for 7 days. The admin always has fresh ones.</p>`
+    : '';
+
+  const html = renderEmailShell({
+    icon: null,
+    eyebrow: 'Custom Websites',
+    title: resubmitted ? `${esc(who)} updated their form` : `${esc(who)} sent in their form`,
+    intro: resubmitted
+      ? 'They changed their answers or files after submitting. Here is everything as it stands now.'
+      : 'Here is everything they sent. Reply to this email to answer them directly.',
+    cta: { label: 'Open in admin', href: adminUrl },
+    body: `${infoCard(details, 20)}${answers}${filesHtml ? infoCard(filesHtml, 0) : ''}`,
+  });
+
+  const answerLines = FORM_SECTIONS.flatMap((s) => {
+    const rows = answeredFields(s, form);
+    if (!rows.length) return [];
+    return ['', s.title.toUpperCase(), ...rows.map((f) => {
+      const v = answerText(f, form[f.id]);
+      return v.includes('\n') ? `${f.label}:\n${v}` : `${f.label}: ${v}`;
+    })];
+  });
+  const fileLines = assets.length
+    ? ['', 'FILES (links work for 7 days)', ...assets.map((a) => `${ASSET_KINDS[a.kind]?.label || a.kind}: ${a.name}${a.url ? ` ${a.url}` : ''}${a.note ? ` ("${a.note}")` : ''}`)]
+    : [];
+  const text = [
+    resubmitted ? `${who} updated their custom website form.` : `${who} sent in their custom website form.`,
+    '',
+    `Customer: ${form.contactName || project.client_name}`,
+    `Email: ${email}`,
+    phone ? `Phone: ${phone}` : null,
+    `Files: ${counts.length ? counts.map(([l, n]) => `${l}: ${n}`).join(', ') : 'none yet'}`,
+    missing.length ? `Still missing: ${missing.join(', ')}` : null,
+    ...answerLines,
+    ...fileLines,
+    '',
+    `Open in admin: ${adminUrl}`,
+  ].filter((l) => l !== null).join('\n');
+  const subject = resubmitted ? `Updated: ${who}'s custom website form` : `Custom website form received: ${who}`;
+  return { subject, html, text };
+}
+
+// Unlike the booking emails, a missing Postmark key is an error here: the
+// admin pressed "send" and must see that nothing went out.
+async function sendCustomSiteEmail(where, { to, replyTo, subject, html, text }) {
+  if (!client) throw new Error('Email is not set up on this server (POSTMARK_API_KEY)');
+  try {
+    const res = await client.sendEmail({
+      From: FROM,
+      To: to,
+      ReplyTo: replyTo,
+      Subject: subject,
+      HtmlBody: html,
+      TextBody: text,
+      MessageStream: 'outbound',
+    });
+    console.log(`[postmark:${where}] to=${to} messageId=${res?.MessageID}`);
+    return res;
+  } catch (err) {
+    logPostmarkFailure(where, err);
+    throw err;
+  }
+}
+
+// replyTo: the admin who sent it, so the customer's answer reaches them.
+export function customSiteWelcome({ to, replyTo, ...message }) {
+  return sendCustomSiteEmail('customSiteWelcome', {
+    to,
+    replyTo: replyTo || CUSTOM_SITES_REPLY_TO,
+    ...customSiteWelcomeEmail(message),
+  });
+}
+
+export function customSiteReceivedToCustomer({ to, replyTo, ...message }) {
+  return sendCustomSiteEmail('customSiteReceivedToCustomer', {
+    to,
+    replyTo: replyTo || CUSTOM_SITES_REPLY_TO,
+    ...customSiteReceivedEmail(message),
+  });
+}
+
+// `to`: the team addresses (custom-site-form decides who); replying goes
+// straight to the customer.
+export function customSiteFormToAdmin({ to, project, form, assets, adminUrl, resubmitted }) {
+  return sendCustomSiteEmail('customSiteFormToAdmin', {
+    to,
+    replyTo: form.contactEmail || project.client_email,
+    ...customSiteFormToAdminEmail({ project, form, assets, adminUrl, resubmitted }),
+  });
 }

@@ -20,6 +20,7 @@ import InquiriesPage from './components/dashboard/inquiries-page/InquiriesPage.j
 import CustomersPage from './components/dashboard/customers-page/CustomersPage.jsx';
 import CustomerDetailPage from './components/dashboard/customers-page/CustomerDetailPage.jsx';
 import AdminPage from './components/admin/AdminPage.jsx';
+import CustomSiteFormPage from './components/customSite/CustomSiteFormPage.jsx';
 import ProfilePage from './components/profile/ProfilePage.jsx';
 import PaymentsConnectPage from './components/dashboard/payments-connect/PaymentsConnectPage.jsx';
 import ChargesPage from './components/dashboard/charges/ChargesPage.jsx';
@@ -52,7 +53,11 @@ export default function App() {
   // Default landing view for an authenticated user is the Overview dashboard so
   // returning users see how their booking page is performing. New users with zero
   // sites see a "Build My Site" empty-state CTA on the Overview instead.
-  const [view, setView] = useState('overview'); // 'wizard' | 'overview' | 'dashboard' | 'admin' | 'bookings-page' | 'customers' | 'customer-detail' | 'booking-settings' | 'profile' | 'payments-connect' | 'charges'
+  // ?admin=custom-sites (links in the custom website emails) opens the Admin
+  // page; AdminPage reads the rest of the link.
+  const [view, setView] = useState(() => (
+    typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('admin') ? 'admin' : 'overview'
+  )); // 'wizard' | 'overview' | 'dashboard' | 'admin' | 'bookings-page' | 'customers' | 'customer-detail' | 'booking-settings' | 'profile' | 'payments-connect' | 'charges'
   const [settingsSiteId, setSettingsSiteId] = useState(null);
   const [selectedCustomerKey, setSelectedCustomerKey] = useState(null);
   const [showResetPassword, setShowResetPassword] = useState(false);
@@ -289,6 +294,11 @@ export default function App() {
         </div>
       </div>
     );
+  }
+
+  // Custom website intake form: public, the token in the link is the key.
+  if (typeof window !== 'undefined' && window.location.pathname === '/custom-site') {
+    return <CustomSiteFormPage />;
   }
 
   // Booking deposit confirmation pages — public, no auth required.
