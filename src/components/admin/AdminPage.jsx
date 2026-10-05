@@ -2,11 +2,26 @@ import { useState } from 'react';
 import AdminAccountsTab from './AdminAccountsTab.jsx';
 import AdminAllBookingsTab from './AdminAllBookingsTab.jsx';
 import SiteUpgradesTab from './SiteUpgradesTab.jsx';
+import PipelineTab from './pipeline/PipelineTab.jsx';
+import LeadsTab from './leads/LeadsTab.jsx';
 import { useAuth } from '../../lib/AuthContext.jsx';
+
+const LINKABLE_TABS = ['pipeline', 'leads'];
+
+// ?admin=pipeline / ?admin=leads open those tabs directly (App.jsx sends
+// any ?admin= link to this page).
+function initialTab() {
+  if (typeof window === 'undefined') return 'accounts';
+  const t = new URLSearchParams(window.location.search).get('admin');
+  return LINKABLE_TABS.includes(t) ? t : 'accounts';
+}
 
 export default function AdminPage({ onExit }) {
   const { profile } = useAuth();
-  const [tab, setTab] = useState('accounts');
+  const [tab, setTab] = useState(initialTab);
+  // Held here rather than in the Pipeline tab, so "Open lead" on the Leads
+  // tab can switch tabs and open the lead in one go.
+  const [openLeadId, setOpenLeadId] = useState(null);
 
   if (!profile) return <div className="p-10 text-gray-500">Loading…</div>;
   if (!profile.is_super_admin) {
@@ -23,14 +38,20 @@ export default function AdminPage({ onExit }) {
   return (
     <main className="max-w-7xl mx-auto px-3 py-10">
       <h1 className="text-3xl sm:text-4xl font-black text-[#1a1a1a] tracking-tight mb-6">Admin</h1>
-      <div className="flex gap-1 mb-6 border-b border-gray-200">
+      <div className="flex gap-1 mb-6 border-b border-gray-200 overflow-x-auto">
         <TabBtn on={tab === 'accounts'} onClick={() => setTab('accounts')}>Accounts</TabBtn>
         <TabBtn on={tab === 'bookings'} onClick={() => setTab('bookings')}>All bookings</TabBtn>
         <TabBtn on={tab === 'site-upgrades'} onClick={() => setTab('site-upgrades')}>Site upgrades</TabBtn>
+        <TabBtn on={tab === 'pipeline'} onClick={() => setTab('pipeline')}>Pipeline</TabBtn>
+        <TabBtn on={tab === 'leads'} onClick={() => setTab('leads')}>Leads</TabBtn>
       </div>
       {tab === 'accounts' && <AdminAccountsTab />}
       {tab === 'bookings' && <AdminAllBookingsTab />}
       {tab === 'site-upgrades' && <SiteUpgradesTab />}
+      {tab === 'pipeline' && <PipelineTab userId={profile.id} openLeadId={openLeadId} onOpenLead={setOpenLeadId} />}
+      {tab === 'leads' && (
+        <LeadsTab userId={profile.id} onOpenLead={(id) => { setOpenLeadId(id); setTab('pipeline'); }} />
+      )}
     </main>
   );
 }
