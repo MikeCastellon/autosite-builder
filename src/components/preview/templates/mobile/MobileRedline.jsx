@@ -18,6 +18,10 @@
 //   - facts render only when the owner entered them (Google rating, review
 //     sources, insurance, stats, hours, areas, prices); editor hints go
 //     through PhotoSlot / EditorOnly and never reach the published page.
+// The feature markup and logic (price card, package details, featured band,
+// makes band, footer plan) live in the kit (HeroOffer, PackageDetails,
+// FeaturedBand, MakesBand, features.js) with ns="rl", so other themes share
+// them; this file keeps its own CSS for them.
 // Optional data this template reads beyond the common fields (all may be
 // absent): businessInfo.serviceAreas, .insured, .googlePlace, services[i]
 // .summary / .includes / .badge / .image; copy.sectionTitles,
@@ -39,10 +43,20 @@ import { EditorOnly, useEditorMode } from '../kit/EditorMode.jsx';
 import { GoogleRatingBadge, StarRow, GOOGLE_STAR_GOLD, googleRatingOf, googlePlaceUrl, googleBadgePlacements } from '../kit/GoogleRatingBadge.jsx';
 import { vehicleMakesFor } from '../kit/vehicleMakes.js';
 import {
-  splitAccent, trailingWords, sectionTitle, serviceIncludes, bulletItems,
+  trailingWords, sectionTitle, serviceIncludes, bulletItems,
   serviceAreasOf, phoneDisplay, telHref, formatTimeRange, trustItems,
-  intentHref, bookingWorded, businessKindOf, footerColumnsOf,
+  intentHref, bookingWorded, businessKindOf,
 } from '../kit/content.js';
+import { LucideIcon as Icon } from '../kit/icons.jsx';
+import { Accented as AccentedText } from '../kit/Accented.jsx';
+import {
+  nameKey, cardPriceLong, heroCardModeOf, heroOfferOf, featuredServiceOf, featuredHasBody,
+  featuredTitleDefaults, makesEyebrowDefault, reviewStars, footerPlan, bookingAttrs,
+} from '../kit/features.js';
+import { HeroOffer } from '../kit/HeroOffer.jsx';
+import { PackageBadge, PackagePhoto, PackageIncludes } from '../kit/PackageDetails.jsx';
+import { FeaturedBand } from '../kit/FeaturedBand.jsx';
+import { MakesBand } from '../kit/MakesBand.jsx';
 
 export const themeReady = true;
 
@@ -82,6 +96,17 @@ export const headingFields = {
   testimonials: { fields: ['eyebrow', 'title', 'accent', 'intro'], placeholder: { eyebrow: 'Testimonials' } },
   locations: { fields: ['eyebrow', 'title', 'accent'], placeholder: { eyebrow: 'Service Area' } },
   cta: { fields: ['title', 'accent', 'intro'], titleFrom: 'ctaHeadline', introFrom: 'ctaSubtext' },
+};
+
+// Edit > Footer (kit/features.js footerPlan): the design's own footer (logo
+// column, Explore, Service Areas, Get In Touch with the hours under it) and
+// its "Request Appointment" button, shown while the owner saved no choice.
+export const footerSpec = {
+  columns: ['brand', 'links', 'areas', 'contact', 'hours'].map((type) => ({ type, show: true })),
+  titles: { links: 'Explore', areas: 'Service Areas', contact: 'Get In Touch', hours: 'Hours' },
+  mergeHours: true,
+  cta: true,
+  ctaLabel: 'Request Appointment',
 };
 
 // Lucide menu / x as CSS mask images: a mask only reads the strokes' alpha
@@ -646,16 +671,6 @@ a.rl-rev-src:hover{color:var(--rl-rev-text)}
 
 const txt = (v) => (typeof v === 'string' ? v.trim() : typeof v === 'number' ? String(v) : '');
 const list = (v) => (Array.isArray(v) ? v : []);
-const nameKey = (s) => txt(s).toLowerCase().replace(/[^a-z0-9]+/g, '');
-const num = (v) => {
-  const n = typeof v === 'number' ? v : typeof v === 'string' && v.trim() ? Number(v) : NaN;
-  return Number.isFinite(n) ? n : NaN;
-};
-// Prices that are text or long ("Call for quote", "$150/$200/$250",
-// "Starting at $1,299"): the package card sets them smaller, the price
-// card gives them their own line under the package name.
-const cardPriceLong = (p) => !/\d/.test(p) || p.length > 9 || p.includes('/');
-const optPriceLong = (p) => cardPriceLong(p) || p.length > 7 || /\s/.test(p);
 // A quote's text without the quote marks the AI sometimes wraps it in.
 const quoteText = (q) => txt(q?.text).replace(/^["“”]+|["“”]+$/g, '').trim();
 
@@ -705,7 +720,6 @@ export function headingDefaults(businessInfo, generatedCopy) {
     .map(txt);
   const fName = txt(fs.serviceName) || names.find((n) => /ceramic|coating/i.test(n)) || '';
   const ft = sectionTitle(titles, 'featured');
-  const protective = /ceramic|coating|protect|film|ppf|sealant|graphene|wax/i.test(fName);
 
   // Reviews: "N Google Reviews" only over quotes that are all marked as
   // Google reviews, with a rating to count from.
@@ -732,11 +746,9 @@ export function headingDefaults(businessInfo, generatedCopy) {
       accent: aboutT.title ? '' : aboutName ? 'Right Choice For Your Car' : 'Choose Us',
     },
     gallery: { title: 'Real Results, Every Detail Matters', accent: galT.title ? '' : 'Every Detail Matters' },
-    brands: { eyebrow: isDetail || kind === 'car_wash' ? 'We Detail All Vehicle Makes & Models' : 'All Makes & Models Welcome' },
+    brands: { eyebrow: makesEyebrowDefault(kind) },
     services: { eyebrow: 'Service Menu', title: svcTitle, accent: trailingWords(svcShown, 2) },
-    featured: fName
-      ? { title: protective ? `Protect Your Vehicle With ${fName}` : `Ask About Our ${fName}`, accent: ft.title ? '' : fName }
-      : {},
+    featured: featuredTitleDefaults(fName, Boolean(ft.title)),
     testimonials: {
       eyebrow: 'Testimonials',
       title: googleHeading ? `${rating.countText} Google Reviews` : 'What Our Customers Say',
@@ -751,44 +763,13 @@ export function headingDefaults(businessInfo, generatedCopy) {
   };
 }
 
-// Lucide icons (24px grid, stroke = currentColor).
-const ICONS = {
-  phone: <path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384" />,
-  pin: <><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" /><circle cx="12" cy="10" r="3" /></>,
-  shield: <><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /><path d="m9 12 2 2 4-4" /></>,
-  arrowRight: <><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></>,
-  arrowUpRight: <><path d="M7 7h10v10" /><path d="M7 17 17 7" /></>,
-  arrowLeft: <><path d="m12 19-7-7 7-7" /><path d="M19 12H5" /></>,
-  check: <path d="M20 6 9 17l-5-5" />,
-  chevronUp: <path d="m18 15-6-6-6 6" />,
-  clock: <><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></>,
-  mail: <><path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7" /><rect x="2" y="4" width="20" height="16" rx="2" /></>,
-  instagram: <><rect width="20" height="20" x="2" y="2" rx="5" ry="5" /><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" /><line x1="17.5" x2="17.51" y1="6.5" y2="6.5" /></>,
-  facebook: <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />,
-  tiktok: <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />,
-  car: <><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" /><circle cx="7" cy="17" r="2" /><path d="M9 17h6" /><circle cx="17" cy="17" r="2" /></>,
-  sparkles: <><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" /><path d="M20 2v4" /><path d="M22 4h-4" /><circle cx="4" cy="20" r="2" /></>,
-  crown: <><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z" /><path d="M5 21h14" /></>,
-  award: <><path d="m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526" /><circle cx="12" cy="8" r="6" /></>,
-  gem: <><path d="M6 3h12l4 6-10 13L2 9Z" /><path d="M11 3 8 9l4 13 4-13-3-6" /><path d="M2 9h20" /></>,
-};
-// Trust Bar icon names (Edit > Trust Bar's picker) -> the lucide icons above.
+// Trust Bar icon names (Edit > Trust Bar's picker) -> kit/icons.jsx LUCIDE names.
 const TRUST_ICONS = {
   'icon:location': 'pin', 'icon:shield': 'shield', 'icon:check': 'check', 'icon:clock': 'clock',
   'icon:phone': 'phone', 'icon:mail': 'mail', 'icon:car': 'car', 'icon:award': 'award',
 };
 const CHEVRON_LEFT = 'm15 18-6-6 6-6';
 const CHEVRON_RIGHT = 'm9 18 6-6-6-6';
-// One icon per hero card row, in order (the owner may pick up to four).
-const PICK_ICONS = ['car', 'sparkles', 'crown', 'gem'];
-
-function Icon({ name, size = 16, stroke = 2, className }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-      {ICONS[name]}
-    </svg>
-  );
-}
 
 // The heaviest weight the page loads for a stack (Oswald tops out at 700,
 // single-weight faces get 400), so the browser never fakes a bold.
@@ -1020,16 +1001,8 @@ function hoursOf(hours) {
 }
 
 // Heading text with its accent phrase wrapped in <span class="rl-em">.
-function Accented({ title, accent }) {
-  const parts = splitAccent(title, accent);
-  if (!parts) return title;
-  return (
-    <>
-      {parts.before}
-      <span className="rl-em">{parts.match}</span>
-      {parts.after}
-    </>
-  );
+function Accented(props) {
+  return <AccentedText {...props} className="rl-em" />;
 }
 
 function EditorHint({ children }) {
@@ -1105,32 +1078,16 @@ export default function MobileRedline({ businessInfo, generatedCopy, templateMet
     .filter((s) => s.name || s.description || s.price);
   // The hero card (Edit > Hero > Services in the hero): 'quote' is the
   // price card (the default), 'list' a plain list of packages, 'off' none.
-  const heroCard = ['quote', 'list', 'off'].includes(copy.heroCard) ? copy.heroCard : 'quote';
-  // Its packages: the owner's picks (copy.heroServices, up to four, matched
-  // by name to the package list, so a renamed or deleted package simply
-  // drops out), else the first three named packages whose price holds a
-  // number.
-  const ownPicks = [];
-  for (const n of list(copy.heroServices)) {
-    const key = nameKey(n);
-    const s = key ? services.find((x) => nameKey(x.name) === key) : null;
-    if (s && !ownPicks.includes(s)) ownPicks.push(s);
-    if (ownPicks.length === 4) break;
-  }
-  const priced = (s) => /\d/.test(s.price);
-  // The list card can show unpriced packages, so without a priced one it
-  // lists the first three named ones (heroServices.js defaultHeroPicks).
-  const autoPicks = services.filter((s) => s.name && priced(s)).slice(0, 3);
-  const heroPicks = ownPicks.length ? ownPicks
-    : autoPicks.length || heroCard !== 'list' ? autoPicks : services.filter((s) => s.name).slice(0, 3);
-  // The price card is about prices: it offers only picks whose price holds
-  // a number ("Call for quote" stays on its package card). None priced -> no
-  // card (the hero keeps its buttons at every width), so "Your Price" never
-  // shows without a price. The list card shows any named pick, its price
-  // only when set.
-  const picks = heroCard === 'quote' ? heroPicks.filter(priced).slice(0, 4) : [];
-  const listPicks = heroCard === 'list' ? heroPicks.filter((s) => s.name).slice(0, 4) : [];
-  const hasCard = picks.length > 0 || listPicks.length > 0;
+  // Its packages (kit/features.js heroOfferOf): the owner's picks
+  // (copy.heroServices, up to four, matched by name to the package list, so
+  // a renamed or deleted package simply drops out), else the first three
+  // named packages whose price holds a number. The price card offers only
+  // priced picks ("Call for quote" stays on its package card; none priced ->
+  // no card, and the hero keeps its buttons at every width), so "Your Price"
+  // never shows without a price. The list card shows any named pick, its
+  // price only when set.
+  const heroCard = heroCardModeOf(copy.heroCard, 'quote');
+  const { picks, listPicks, hasCard } = heroOfferOf({ services, heroServices: copy.heroServices, mode: heroCard });
   const anyServicePhoto = services.some((s) => s.image);
   const svcTitles = sectionTitle(titles, 'services');
   const servicesTitle = txt(copy.servicesSection?.title) || svcTitles.title || hd.services.title;
@@ -1138,38 +1095,13 @@ export default function MobileRedline({ businessInfo, generatedCopy, templateMet
   const servicesIntro = txt(copy.servicesSection?.intro) || svcTitles.intro;
 
   // ── Featured service (a ceramic-coating style spotlight) ──────────
-  const fs = copy.featuredService && typeof copy.featuredService === 'object' ? copy.featuredService : {};
-  const fsName = txt(fs.serviceName);
-  const fsMatch = fsName
-    ? services.find((s) => nameKey(s.name) === nameKey(fsName))
-    : services.find((s) => /ceramic|coating/i.test(s.name));
-  const featured = fsName || fsMatch ? (() => {
-    const fName = fsName || fsMatch.name;
-    const ownBullets = list(fs.bullets).map(txt).filter(Boolean);
-    const bullets = ownBullets.length
-      ? ownBullets
-      : (fsMatch?.includes || []).filter((i) => !i.heading).map((i) => i.text);
-    const ft = sectionTitle(titles, 'featured');
-    // Without bullets the matched service's own summary / description
-    // says what it is (an AI service item often has nothing else).
-    const intro = ft.intro || (bullets.length ? '' : fsMatch?.summary || fsMatch?.description || '');
-    const title = ft.title || hd.featured.title;
-    return {
-      name: fName,
-      priceFrom: txt(fs.priceFrom),
-      price: fsMatch?.price || '',
-      bullets,
-      eyebrow: ft.eyebrow,
-      title,
-      accent: ft.accent || hd.featured.accent,
-      intro,
-      buttonText: txt(fs.buttonText) || `Book ${fName}`,
-      buttonUrl: txt(fs.buttonUrl),
-    };
-  })() : null;
+  // The owner's pick (copy.featuredService), else the first ceramic /
+  // coating package (automatic); bullets are the owner's own, else the
+  // package's included items (kit/features.js featuredServiceOf).
+  const featured = featuredServiceOf({ featuredService: copy.featuredService, services, sectionTitles: titles, defaults: hd.featured, automatic: true });
   // A band with only a heading and a button repeats the package grid: the
   // published page skips it (the editor keeps it, with a hint).
-  const featuredBody = Boolean(featured) && Boolean(images.featured || featured.priceFrom || featured.price || featured.bullets.length || featured.intro);
+  const featuredBody = featuredHasBody(featured, images.featured);
 
   const galleryImages = Object.keys(images || {})
     .filter((k) => /^gallery\d+$/.test(k) && images[k])
@@ -1182,7 +1114,7 @@ export default function MobileRedline({ businessInfo, generatedCopy, templateMet
       name: txt(q?.name),
       meta: txt(q?.vehicle) || txt(q?.role),
       google: q?.source === 'google',
-      stars: q?.source === 'google' && num(q?.rating) >= 1 && num(q?.rating) <= 5 ? num(q?.rating) : 0,
+      stars: reviewStars(q),
     }))
     .filter((q) => q.text);
   // A connected review widget shows only when the owner picks it (Edit >
@@ -1365,38 +1297,36 @@ export default function MobileRedline({ businessInfo, generatedCopy, templateMet
     !images.hideTiktok && txt(biz.tiktok) && { icon: 'tiktok', href: socialUrl('tiktok', txt(biz.tiktok)), label: 'TikTok' },
   ].filter((s) => s && s.href);
   // Footer (Edit > Footer): the owner's columns in the owner's order, or the
-  // design's own brand / Explore / Service Areas / Get In Touch + Hours.
-  // A column with nothing to list is left out.
-  const footer = copy.footer && typeof copy.footer === 'object' && !Array.isArray(copy.footer) ? copy.footer : null;
-  const footShown = footerColumnsOf(copy.footer).filter((c) => c.show);
-  // Hours right after the contact column (hidden columns don't count) print
-  // under the contact list, as the design's footer does; anywhere else they
-  // are a column of their own.
-  const hoursMerged = footShown.some((c, i) => c.type === 'contact' && footShown[i + 1]?.type === 'hours');
-  const footHoursTitle = footShown.find((c) => c.type === 'hours')?.title || 'Hours';
-  // The contact column's button: the owner's own link (no booking widget),
-  // else the contact band with the widget, only while the band renders.
-  const footCtaUrl = txt(footer?.ctaUrl);
-  const footCta = footer?.showCta !== false && (footCtaUrl || rendered.cta)
-    ? { href: footCtaUrl || '#contact', label: txt(footer?.ctaText) || 'Request Appointment', books: !footCtaUrl }
-    : null;
+  // design's own brand / Explore / Service Areas / Get In Touch + Hours
+  // (footerSpec; kit/features.js footerPlan reads copy.footer). A column with
+  // nothing to list is left out. Hours right after the contact column (hidden
+  // columns don't count) print under the contact list, as the design's footer
+  // does; anywhere else they are a column of their own. The contact column's
+  // button: the owner's own link (no booking widget), else the contact band
+  // with the widget, only while the band renders.
   const contactItems = Boolean(tel || email || socials.length || place);
   const footHasHours = hours.summary.length > 0;
-  const footCells = footShown.filter((c) => {
-    if (c.type === 'brand') return Boolean(images.logo || shortName || txt(copy.footerTagline) || badgeIn('footer'));
-    if (c.type === 'links') return exploreLinks.length > 0;
-    if (c.type === 'areas') return areas.length > 0;
-    if (c.type === 'contact') return contactItems || footCta || (hoursMerged && footHasHours);
-    return !hoursMerged && footHasHours;
+  const plan = footerPlan({
+    footer: copy.footer,
+    spec: footerSpec,
+    ctaFallback: rendered.cta ? '#contact' : null,
+    has: (type, { cta, hoursMerged: merged }) => ({
+      brand: Boolean(images.logo || shortName || txt(copy.footerTagline) || badgeIn('footer')),
+      links: exploreLinks.length > 0,
+      areas: areas.length > 0,
+      contact: contactItems || Boolean(cta) || (merged && footHasHours),
+      hours: !merged && footHasHours,
+    })[type],
   });
-  const bottomText = txt(footer?.bottomText) || bottomLine;
+  const footCells = plan.cells;
+  const hoursMerged = plan.hoursMerged;
+  const footHoursTitle = plan.hoursTitle;
+  const footCta = plan.cta;
+  const bottomText = plan.bottomText || bottomLine;
   // The footer rating sits in the logo column; with that column hidden it
   // moves to the bottom line, so Edit > Google Rating > Footer still works.
   const footBarBadge = badgeIn('footer') && !footCells.some((c) => c.type === 'brand');
   const makes = vehicleMakesFor(copy.vehicleMakes);
-  // A short owner list is repeated inside each marquee copy so the moving
-  // row always spans the band (repeats are .rl-mq-rep: hidden without motion).
-  const makesReps = Math.max(1, Math.ceil(16 / Math.max(1, makes.length)));
 
   return (
     <div
@@ -1481,103 +1411,23 @@ export default function MobileRedline({ businessInfo, generatedCopy, templateMet
                   </div>
                 </div>
 
-                {picks.length > 0 && (
+                {/* The price card ('quote') or the package list ('list'):
+                    kit/HeroOffer.jsx, with Redline's CSS above. */}
+                {hasCard && (
                   <div className="rl-quote-slot">
-                    {/* CSS-only steps. Package radios (name rl-pkg) sit right
-                        before their labels for the selected look; the
-                        "Get My Price" checkbox (.rl-go) sits between the two
-                        steps so its ~ rule can show step 2, and :has() hides
-                        step 1 and swaps in the picked package's price and
-                        Book link. defaultChecked is never set: nothing is
-                        picked until the visitor picks. Step 3 is the booking
-                        widget the Book link opens (data-scheduler-trigger). */}
-                    <div className="rl-quote" id="quote">
-                      <div className="rl-steps" aria-hidden="true">
-                        <span className="rl-dot rl-d1"><b>1</b><Icon name="check" /></span><i />
-                        <span className="rl-dot rl-d2"><b>2</b></span><i />
-                        <span className="rl-dot rl-d3"><b>3</b></span>
-                      </div>
-                      <fieldset className="rl-s1">
-                        <legend className="rl-sr">Choose a package</legend>
-                        <p className="rl-step-l" aria-hidden="true">Step 1 of 3</p>
-                        <h2 className="rl-q-h">What Package Do You Need?</h2>
-                        <p className="rl-q-p">{isDetail ? 'Choose the detail package that fits your ride.' : 'Choose the package that fits your ride.'}</p>
-                        <div className="rl-opts">
-                          {picks.map((s, i) => (
-                            <div key={`${s.name}-${i}`}>
-                              <input type="radio" name="rl-pkg" id={`rl-pkg-${i}`} className="rl-sr rl-radio" value={s.name} />
-                              <label htmlFor={`rl-pkg-${i}`} className={`rl-opt${optPriceLong(s.price) ? ' rl-opt-l' : ''}`}>
-                                <span className="rl-opt-ico" aria-hidden="true"><Icon name={PICK_ICONS[i]} size={20} /></span>
-                                <span className="rl-opt-txt">
-                                  <span className="rl-opt-name">{s.name}</span>
-                                  {s.summary && <span className="rl-opt-sum">{s.summary}</span>}
-                                </span>
-                                {s.price && <span className={`rl-opt-price${optPriceLong(s.price) ? ' rl-opt-price-t' : ''}`}>{s.price}</span>}
-                              </label>
-                            </div>
-                          ))}
-                        </div>
-                        <label htmlFor="rl-go" className="rl-q-cta rl-go-l">Get My Price<Icon name="arrowRight" size={20} /></label>
-                      </fieldset>
-                      <input type="checkbox" id="rl-go" className="rl-sr rl-go" aria-label="Get my price" />
-                      <div className="rl-s2" aria-live="polite">
-                        <p className="rl-step-l" aria-hidden="true">Step 2 of 3</p>
-                        <h2 className="rl-q-title">Your <span>Price</span></h2>
-                        <div className="rl-res-set">
-                          <div className="rl-res rl-any">
-                            <p className="rl-q-p">Pick a package to see its price.</p>
-                          </div>
-                          {picks.map((s, i) => (
-                            <div key={`${s.name}-${i}`} className={`rl-res rl-pk-${i}`}>
-                              <div className="rl-row">
-                                <span className="rl-row-l">Package</span>
-                                <span className="rl-row-v">{s.name}{s.price && <> <span>{s.price}</span></>}</span>
-                              </div>
-                              {s.summary && <p className="rl-q-p">{s.summary}</p>}
-                            </div>
-                          ))}
-                        </div>
-                        <div className="rl-q-acts">
-                          <label htmlFor="rl-go" className="rl-back rl-go-l"><Icon name="arrowLeft" size={20} />Back</label>
-                          <a className="rl-q-book rl-any" href={bookHref} data-scheduler-trigger="">Book Now<Icon name="arrowRight" size={20} /></a>
-                          {picks.map((s, i) => (
-                            <a key={`${s.name}-${i}`} className={`rl-q-book rl-pk-${i}`} href={bookHref} data-scheduler-trigger="" data-scheduler-service={s.name}>
-                              Book Now<Icon name="arrowRight" size={20} />
-                            </a>
-                          ))}
-                        </div>
-                        {tel && <a className="rl-q-call" href={tel}><Icon name="phone" />Call {phoneLabel}</a>}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {listPicks.length > 0 && (
-                  <div className="rl-quote-slot">
-                    {/* The list card sits where the price card would (#quote,
-                        so "Get a Quote" wording still lands on it). Rows are
-                        not choices: no inputs, no steps. */}
-                    <div className="rl-quote rl-hlist" id="quote">
-                      <h2 className="rl-q-h">{isDetail ? 'Our Detail Packages' : 'Our Packages'}</h2>
-                      <ul className="rl-hl">
-                        {listPicks.map((s, i) => (
-                          <li key={`${s.name}-${i}`} className={s.price && optPriceLong(s.price) ? 'rl-opt-l' : undefined}>
-                            <span className="rl-opt-ico" aria-hidden="true"><Icon name={PICK_ICONS[i]} size={20} /></span>
-                            <span className="rl-opt-txt">
-                              <span className="rl-opt-name">{s.name}</span>
-                              {s.summary && <span className="rl-opt-sum">{s.summary}</span>}
-                            </span>
-                            {s.price && <span className={`rl-opt-price${optPriceLong(s.price) ? ' rl-opt-price-t' : ''}`}>{s.price}</span>}
-                          </li>
-                        ))}
-                      </ul>
-                      {svcLink ? (
-                        <a className="rl-hl-cta" href="#services">See All Packages<Icon name="arrowRight" size={20} /></a>
-                      ) : (
-                        <a className="rl-hl-cta" href={bookHref} data-scheduler-trigger="">Book Now<Icon name="arrowRight" size={20} /></a>
-                      )}
-                      {tel && <a className="rl-q-call" href={tel}><Icon name="phone" />Call {phoneLabel}</a>}
-                    </div>
+                    <HeroOffer
+                      ns="rl"
+                      mode={picks.length ? 'quote' : 'list'}
+                      picks={picks.length ? picks : listPicks}
+                      bookHref={bookHref}
+                      tel={tel}
+                      phoneLabel={phoneLabel}
+                      listCta={svcLink ? { href: '#services', label: 'See All Packages' } : { href: bookHref, label: 'Book Now', books: true }}
+                      labels={{
+                        sub1: isDetail ? 'Choose the detail package that fits your ride.' : 'Choose the package that fits your ride.',
+                        listTitle: isDetail ? 'Our Detail Packages' : 'Our Packages',
+                      }}
+                    />
                   </div>
                 )}
               </div>
@@ -1641,36 +1491,7 @@ export default function MobileRedline({ businessInfo, generatedCopy, templateMet
 
         {rendered.brands && (
           <section data-section="brands" id="makes" className="rl-makes" aria-label="Vehicle makes" tabIndex={0} style={{ order: order('brands') }}>
-            <p className="rl-makes-eye">{makesEyebrow}</p>
-            {/* Each logo's path is written once, as a <symbol>; both copies of
-                the scrolling row point at it with <use>. */}
-            <svg className="rl-sprite" aria-hidden="true" focusable="false">
-              <defs>
-                {makes.filter((m) => m.d).map((m) => (
-                  <symbol key={m.id} id={`rl-mk-${m.id}`} viewBox="0 0 24 24"><path d={m.d} /></symbol>
-                ))}
-              </defs>
-            </svg>
-            <div className="rl-mq">
-              <div className="rl-mq-track">
-                {[0, 1].map((copyIdx) => (
-                  <ul key={copyIdx} className="rl-mq-set" {...(copyIdx ? { 'aria-hidden': 'true' } : {})}>
-                    {Array.from({ length: makesReps }, (_, rep) => makes.map((m) => (
-                      <li key={`${m.id}-${rep}`} className={`rl-mq-item${rep ? ' rl-mq-rep' : ''}`} {...(rep && !copyIdx ? { 'aria-hidden': 'true' } : {})}>
-                        {m.d ? (
-                          <>
-                            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href={`#rl-mk-${m.id}`} /></svg>
-                            <span className="rl-mq-l">{m.name}</span>
-                          </>
-                        ) : (
-                          <span className="rl-mq-t">{m.name}</span>
-                        )}
-                      </li>
-                    )))}
-                  </ul>
-                ))}
-              </div>
-            </div>
+            <MakesBand ns="rl" eyebrow={makesEyebrow} makes={makes} />
           </section>
         )}
 
@@ -1688,22 +1509,11 @@ export default function MobileRedline({ businessInfo, generatedCopy, templateMet
                 <div className={`rl-cards${services.length === 1 ? ' rl-cards-1' : ''}`} style={{ '--rl-cn': Math.min(3, services.length) }}>
                   {services.map((s, i) => (
                     <article key={`${s.name}-${i}`} className={`rl-card${s.badge ? ' rl-card-feat' : ''}${s.price ? '' : ' rl-card-np'}`}>
-                      {s.badge && <span className="rl-badge">{s.badge}</span>}
-                      {s.image ? (
-                        <div className="rl-card-photo">
-                          <PhotoSlot src={s.image} alt={s.name} style={{ height: 'auto' }} />
-                        </div>
-                      ) : anyServicePhoto && (editor ? (
-                        // Once one package has a photo, the editor marks the
-                        // others' empty photo wells.
-                        <div className="rl-card-photo">
-                          <PhotoSlot slot="service" style={{ aspectRatio: '4 / 3' }} />
-                        </div>
-                      ) : (
-                        // The site keeps the same space (rows stay level),
-                        // with a quiet car mark instead of a photo.
-                        <div className="rl-card-photo rl-card-well" aria-hidden="true"><Icon name="car" size={40} stroke={1.5} /></div>
-                      ))}
+                      {s.badge && <PackageBadge ns="rl" text={s.badge} />}
+                      {/* Once one package has a photo, the others keep the
+                          space: an upload slot in the editor, a quiet car
+                          mark on the site, so rows stay level. */}
+                      <PackagePhoto ns="rl" src={s.image} alt={s.name} anyPhoto={anyServicePhoto} editor={editor} />
                       {s.name && <h3 className="rl-card-name">{s.name}</h3>}
                       {s.description && (
                         <div className="rl-card-desc">
@@ -1712,21 +1522,7 @@ export default function MobileRedline({ businessInfo, generatedCopy, templateMet
                       )}
                       {s.price && <p className={`rl-card-price${cardPriceLong(s.price) ? ' rl-price-t' : ''}`}>{s.price}</p>}
                       <a className="rl-btn" href={bookHref} data-scheduler-trigger="" data-scheduler-service={s.name}>Book Now<Icon name="arrowRight" /></a>
-                      {s.includes.length > 0 && (
-                        <details className="rl-inc" open>
-                          <summary>{"See What's Included"}<Icon name="chevronUp" className="rl-chev" /></summary>
-                          <ul>
-                            {s.includes.map((it, k) => (it.heading ? (
-                              <li key={k} className="rl-inc-h">{it.text}</li>
-                            ) : (
-                              <li key={k} className="rl-inc-i">
-                                <Icon name="check" stroke={3} />
-                                <span className={it.highlight ? 'rl-inc-hl' : undefined}>{it.text}</span>
-                              </li>
-                            )))}
-                          </ul>
-                        </details>
-                      )}
+                      {s.includes.length > 0 && <PackageIncludes ns="rl" items={s.includes} />}
                     </article>
                   ))}
                 </div>
@@ -1738,38 +1534,38 @@ export default function MobileRedline({ businessInfo, generatedCopy, templateMet
         {rendered.featured && (
           <section data-section="featured" id="featured" className="rl-sec rl-feat" style={{ order: order('featured') }}>
             {featured ? (
-              <div className={`rl-in rl-feat-grid${images.featured ? ' rl-duo' : ' rl-feat-solo'}`}>
-                {/* Without a photo the editor shows the site's one-column
-                    band too, with a line naming where the photo is added. */}
-                {images.featured && (
-                  <div className="rl-feat-photo">
-                    <PhotoSlot src={images.featured} alt={`${featured.name}${name ? ` by ${name}` : ''}`} style={{ height: 'auto', aspectRatio: '3 / 4' }} />
-                  </div>
+              // Without a photo the editor shows the site's one-column
+              // band too, with a line naming where the photo is added.
+              <FeaturedBand
+                ns="rl"
+                image={images.featured}
+                alt={`${featured.name}${name ? ` by ${name}` : ''}`}
+                heading={(
+                  <>
+                    {featured.eyebrow && <p className="rl-eyebrow">{featured.eyebrow}</p>}
+                    <h2 className="rl-h2 rl-feat-h"><Accented title={featured.title} accent={featured.accent} /></h2>
+                  </>
                 )}
-                <div>
-                  {featured.eyebrow && <p className="rl-eyebrow">{featured.eyebrow}</p>}
-                  <h2 className="rl-h2 rl-feat-h"><Accented title={featured.title} accent={featured.accent} /></h2>
-                  {featured.intro && <p className="rl-feat-price">{featured.intro}</p>}
-                  {/* "Starting at" only before a number ("Call for quote" reads as written). */}
-                  {featured.priceFrom ? (
-                    <p className="rl-feat-price">{/\d/.test(featured.priceFrom) && 'Starting at '}<strong>{featured.priceFrom}</strong></p>
-                  ) : featured.price && <p className="rl-feat-price"><strong>{featured.price}</strong></p>}
-                  {featured.bullets.length > 0 && (
-                    <ul className="rl-feat-list">
-                      {featured.bullets.map((b, i) => <li key={i}><Icon name="check" size={20} />{b}</li>)}
-                    </ul>
-                  )}
+                intro={featured.intro}
+                priceFrom={featured.priceFrom}
+                price={featured.price}
+                bullets={featured.bullets}
+                button={(
                   <a
                     className="rl-btn"
                     href={featured.buttonUrl || bookHref}
-                    {...(featured.buttonUrl ? {} : { 'data-scheduler-trigger': '', 'data-scheduler-service': featured.name })}
+                    {...bookingAttrs(!featured.buttonUrl, featured.name)}
                   >
                     {featured.buttonText}<Icon name="arrowRight" />
                   </a>
-                  {!featuredBody && <EditorHint>This band shows on your site once it has a photo, a price or a list of benefits (Edit &gt; Featured Service).</EditorHint>}
-                  {featuredBody && !images.featured && <EditorHint>{PHOTO_HINTS.featured}</EditorHint>}
-                </div>
-              </div>
+                )}
+                hints={(
+                  <>
+                    {!featuredBody && <EditorHint>This band shows on your site once it has a photo, a price or a list of benefits (Edit &gt; Featured Service).</EditorHint>}
+                    {featuredBody && !images.featured && <EditorHint>{PHOTO_HINTS.featured}</EditorHint>}
+                  </>
+                )}
+              />
             ) : (
               <div className="rl-in rl-c">
                 <EditorHint>Pick a service to feature in Edit &gt; Featured Service.</EditorHint>
@@ -1956,7 +1752,7 @@ export default function MobileRedline({ businessInfo, generatedCopy, templateMet
               if (c.type === 'links') {
                 return (
                   <div key="links">
-                    <h3 className="rl-foot-t">{c.title || 'Explore'}</h3>
+                    <h3 className="rl-foot-t">{c.title}</h3>
                     <ul className="rl-foot-list">
                       {exploreLinks.map((l) => (
                         <li key={l.label}><a href={l.href} {...(l.book ? { 'data-scheduler-trigger': '' } : {})}>{l.label}</a></li>
@@ -1968,7 +1764,7 @@ export default function MobileRedline({ businessInfo, generatedCopy, templateMet
               if (c.type === 'areas') {
                 return (
                   <div key="areas">
-                    <h3 className="rl-foot-t">{c.title || 'Service Areas'}</h3>
+                    <h3 className="rl-foot-t">{c.title}</h3>
                     <ul className="rl-foot-list">
                       {areas.map((a) => <li key={a}><Icon name="pin" size={14} />{a}</li>)}
                     </ul>
@@ -1978,7 +1774,7 @@ export default function MobileRedline({ businessInfo, generatedCopy, templateMet
               if (c.type === 'contact') {
                 return (
                   <div key="contact">
-                    <h3 className="rl-foot-t">{c.title || 'Get In Touch'}</h3>
+                    <h3 className="rl-foot-t">{c.title}</h3>
                     <ul className="rl-foot-list rl-touch">
                       {tel && <li><a href={tel}><Icon name="phone" />{phoneLabel}</a></li>}
                       {email && (
@@ -2001,14 +1797,14 @@ export default function MobileRedline({ businessInfo, generatedCopy, templateMet
                       </div>
                     )}
                     {footCta && (
-                      <a className="rl-pillbtn" href={footCta.href} {...(footCta.books ? { 'data-scheduler-trigger': '' } : {})}>{footCta.label}</a>
+                      <a className="rl-pillbtn" href={footCta.href} {...bookingAttrs(footCta.books)}>{footCta.label}</a>
                     )}
                   </div>
                 );
               }
               return (
                 <div key="hours">
-                  <h3 className="rl-foot-t">{c.title || 'Hours'}</h3>
+                  <h3 className="rl-foot-t">{c.title}</h3>
                   <div className="rl-foot-list">
                     {hours.summary.map((line) => <div key={line}>{line}</div>)}
                   </div>

@@ -6,9 +6,14 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import FooterBuilderPanel from './FooterBuilderPanel.jsx';
 import {
-  FOOTER_TYPES, footerColumns, isDefaultColumns, withColumns, setColumn, moveColumn, setFooterField, hoursMerged, emptyColumns,
+  FOOTER_TYPES, footerColumns, isDefaultColumns, withColumns, setColumn, moveColumn, setFooterField, footerShowsCta, hoursMerged, emptyColumns,
 } from './footerBuilder.js';
 import * as kit from '../templates/kit/content.js';
+import * as features from '../templates/kit/features.js';
+import * as sporty from '../templates/detailing/DetailingSporty.jsx';
+import * as chrome from '../templates/mobile/MobileChrome.jsx';
+import * as sudsy from '../templates/mobile/MobileSudsy.jsx';
+import * as redline from '../templates/mobile/MobileRedline.jsx';
 
 const DEFAULT = FOOTER_TYPES.map((type) => ({ type, title: '', show: true }));
 const noop = () => {};
@@ -217,7 +222,10 @@ describe('FooterBuilderPanel', () => {
     const bare = html({ copy: {}, businessInfo: { businessName: 'X' } });
     expect(bare).toContain('No hours yet: add them in Edit &gt; Business Info.');
     expect(bare).toContain('Nothing to list yet: add your city or areas in Edit &gt; Business Info.');
-    expect(bare).toContain('Nothing to list yet: add a phone, email or social link in Edit &gt; Business Info.');
+    // Redline's footer button keeps the contact column on the page by itself.
+    expect(bare).not.toContain('add a phone, email or social link');
+    const noButton = html({ copy: { footer: setFooterField(null, 'showCta', false) }, businessInfo: { businessName: 'X' } });
+    expect(noButton).toContain('Nothing to list yet: add a phone, email or social link in Edit &gt; Business Info.');
     const filled = html({ copy: {}, businessInfo: { city: 'Orlando', phone: '1', hours: { Mon: '9am-5pm' } } });
     expect(filled).not.toContain('Nothing to list yet');
     expect(filled).not.toContain('No hours yet');
@@ -233,5 +241,115 @@ describe('FooterBuilderPanel', () => {
   it('offers the reset link only when a footer is saved', () => {
     expect(html({ copy: {} })).not.toContain('Use the design&#x27;s footer');
     expect(html({ copy: { footer: { bottomText: 'Licensed' } } })).toContain('Use the design&#x27;s footer');
+  });
+});
+
+// Each template declares its own footer (footerSpec: columns, titles, button
+// default). Themes with live sites keep today's footer while copy.footer is
+// unset, with extra columns off and the button off; the panel reads and
+// writes copy.footer against that spec, the way the kit renders it.
+describe('a template footerSpec', () => {
+  const SPECS = { sporty: sporty.footerSpec, chrome: chrome.footerSpec, sudsy: sudsy.footerSpec, redline: redline.footerSpec };
+  const SAMPLES = [
+    undefined, null, {}, { columns: [] }, { showCta: true }, { showCta: false, ctaUrl: 'https://x.test' },
+    { columns: [{ type: 'hours' }, { type: 'services', title: ' Menu ' }, { type: 'brand', show: false }] },
+    { columns: [{ type: 'contact', title: 'Reach Us' }, { type: 'areas' }, { type: 'nope' }, { type: 'links', show: false }] },
+  ];
+
+  it('reads every sample like the kit, and shows a button exactly when the page does', () => {
+    const trimmed = (cols) => cols.map((c) => ({ ...c, title: c.title.trim() }));
+    for (const [name, spec] of Object.entries(SPECS)) {
+      for (const footer of SAMPLES) {
+        expect({ name, footer, cols: trimmed(footerColumns(footer, spec)) }).toEqual({ name, footer, cols: kit.footerColumnsOf(footer, spec.columns) });
+        const plan = features.footerPlan({ footer, spec, ctaFallback: '#contact' });
+        expect({ name, footer, cta: footerShowsCta(footer, spec) }).toEqual({ name, footer, cta: Boolean(plan.cta) });
+      }
+    }
+  });
+
+  it("starts from the design's own columns, and stores nothing for them", () => {
+    const spec = SPECS.chrome;
+    const cols = footerColumns(null, spec);
+    expect(cols.map((c) => [c.type, c.show])).toEqual(spec.columns.map((c) => [c.type, c.show]));
+    expect(isDefaultColumns(cols, spec)).toBe(true);
+    expect(isDefaultColumns(cols)).toBe(false);
+    const on = setColumn(null, 'areas', { show: true }, spec);
+    expect(on.columns.find((c) => c.type === 'areas').show).toBe(true);
+    expect(setColumn(on, 'areas', { show: false }, spec)).toBeNull();
+    expect(footerColumns(null, SPECS.sudsy).map((c) => c.type)).toContain('services');
+    expect(footerColumns(null).map((c) => c.type)).not.toContain('services');
+  });
+
+  it('stores showCta only when it differs from the design default', () => {
+    const optIn = SPECS.sporty;
+    expect(optIn.cta).toBe(false);
+    expect(setFooterField(null, 'showCta', true, optIn)).toEqual({ showCta: true });
+    expect(setFooterField({ showCta: true }, 'showCta', false, optIn)).toBeNull();
+    expect(withColumns({ showCta: false }, footerColumns(null, optIn), optIn)).toBeNull();
+    // Redline (the default spec) keeps its old rule: only false is stored.
+    expect(setFooterField(null, 'showCta', false)).toEqual({ showCta: false });
+    expect(setFooterField({ showCta: false }, 'showCta', true)).toBeNull();
+    expect(setFooterField(null, 'showCta', false, SPECS.redline)).toEqual({ showCta: false });
+  });
+
+  it('never merges hours into the contact column unless the design does', () => {
+    const cols = footerColumns({ columns: [{ type: 'contact' }, { type: 'hours' }] }, SPECS.sporty);
+    expect(hoursMerged(cols, SPECS.sporty)).toBe(false);
+    expect(hoursMerged(footerColumns(null), SPECS.redline)).toBe(true);
+  });
+
+  it("the panel lists the design's columns, titles, notes and button default", () => {
+    const out = html({ copy: {}, spec: SPECS.sudsy });
+    expect(out).toContain('aria-label="Show Services list"');
+    expect(out.match(/role="switch"/g)).toHaveLength(SPECS.sudsy.columns.length + 1);
+    expect(out).toContain('placeholder="Title (default: Say Hi!)"');
+    expect(out).toContain(SPECS.sudsy.notes.services);
+    expect(out).not.toContain('Button text');
+    expect(out).toContain('placeholder="Leave empty for the design&#x27;s own bottom line"');
+    const on = html({ copy: { footer: { showCta: true } }, spec: SPECS.sporty });
+    expect(on).toContain('placeholder="Book Now"');
+    expect(on).toContain('Shown as its own column.');
+    expect(on).not.toContain('Shown under Get in touch');
+  });
+});
+
+describe('footer specs of the opt-in themes', () => {
+  const SPEC = {
+    columns: [{ type: 'brand', show: true }, { type: 'links', show: true }, { type: 'services', show: true }, { type: 'contact', show: true }, { type: 'hours', show: false }],
+    titles: { links: 'Explore', services: 'Services', contact: 'Say Hi!', hours: 'Hours' },
+    mergeHours: false,
+    cta: false,
+    ctaLabel: 'Book Now!',
+    contactFields: ['phone', 'email', 'address', 'city', 'state'],
+    socialWhenBrandOff: true,
+  };
+
+  it('counts only the contact facts the design lists, and social links while the logo column is off', () => {
+    const social = { instagram: '@shop', hours: 'Mon-Fri 9-5' };
+    expect(emptyColumns(social, SPEC).has('contact')).toBe(true);
+    const off = footerColumns(setColumn(null, 'brand', { show: false }, SPEC), SPEC);
+    expect(emptyColumns(social, SPEC, { cols: off }).has('contact')).toBe(false);
+    expect(emptyColumns({ phone: '1' }, SPEC).has('contact')).toBe(false);
+    // Without a spec (Redline), social links count as before.
+    expect(emptyColumns(social).has('contact')).toBe(false);
+  });
+
+  it('flags an empty services list, or one whose section is switched off', () => {
+    expect(emptyColumns({ phone: '1' }, SPEC, { copy: {} }).has('services')).toBe(true);
+    const biz = { phone: '1', services: [{ name: 'Wash', price: '$20' }] };
+    expect(emptyColumns(biz, SPEC, { copy: {} }).has('services')).toBe(false);
+    expect(emptyColumns(biz, SPEC, { copy: { hiddenSections: ['services'] } }).has('services')).toBe(true);
+    // Only where the design has a services column.
+    expect(emptyColumns({ phone: '1' }).has('services')).toBe(false);
+  });
+
+  it("names the contact column as the page does, and drops its warning while the button keeps it", () => {
+    const out = html({ copy: {}, spec: SPEC, businessInfo: { businessName: 'X', instagram: '@shop' } });
+    expect(out).toContain('aria-label="Show Say Hi!"');
+    expect(out).toContain('Nothing to list yet: add a phone or email in Edit &gt; Business Info.');
+    expect(out).toContain('Nothing to list yet: add services in Edit &gt; Services');
+    const withButton = html({ copy: { footer: setFooterField(null, 'showCta', true, SPEC) }, spec: SPEC, businessInfo: { businessName: 'X' } });
+    expect(withButton).not.toContain('add a phone or email');
+    expect(withButton).toContain('Sits in the Say Hi! column');
   });
 });

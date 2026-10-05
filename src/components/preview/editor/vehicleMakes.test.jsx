@@ -7,7 +7,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { VEHICLE_MAKES, vehicleMakesFor } from '../templates/kit/vehicleMakes.js';
 import {
   CUSTOM_MAX_LEN, MAKES_MAX,
-  currentMakes, effectiveNames, isPicked, toggleMake, addCustomMake, removeMake, customNames, clearKnownMakes, firstMakes,
+  currentMakes, effectiveNames, isPicked, toggleMake, addCustomMake, removeMake, customNames, clearKnownMakes, firstMakes, allMakes,
 } from './vehicleMakesEdit.js';
 import VehicleMakesPanel, { VehicleMakesPanel as Named } from './VehicleMakesPanel.jsx';
 
@@ -151,5 +151,48 @@ describe('Clear all', () => {
     expect(html({ vehicleMakes: ['BMW', 'Rivian'] })).toContain('>Clear all<');
     // Only custom names left: nothing in the grid to clear.
     expect(html({ vehicleMakes: ['Rivian'] })).not.toContain('>Clear all<');
+  });
+});
+
+// Themes whose band is opt-in (editorCapabilities VEHICLE_MAKES_DEFAULT_ALL
+// false, vehicleMakesFor(copy.vehicleMakes, [])): null means no band.
+describe('opt-in band (defaultAll: false)', () => {
+  const opt = { defaultAll: false };
+  const optHtml = (copy) => renderToStaticMarkup(createElement(VehicleMakesPanel, { copy, setCopy: () => {}, defaultAll: false }));
+
+  it('reads null as no makes, like the template', () => {
+    expect(effectiveNames(null, opt)).toEqual([]);
+    expect(vehicleMakesFor(null, [])).toEqual([]);
+    expect(isPicked(null, 'BMW', opt)).toBe(false);
+    expect(effectiveNames(['BMW'], opt)).toEqual(['BMW']);
+  });
+
+  it('the first tick starts a list of one; the last untick removes the band', () => {
+    expect(toggleMake(null, 'BMW', true, opt)).toEqual(['BMW']);
+    expect(toggleMake(['BMW'], 'BMW', false, opt)).toBeNull();
+    expect(toggleMake(null, 'BMW', false, opt)).toBeNull();
+    expect(addCustomMake(null, 'Rivian', opt)).toEqual({ names: ['Rivian'] });
+    expect(removeMake(['Rivian'], 'Rivian', opt)).toBeNull();
+    expect(allMakes()).toEqual(ALL);
+  });
+
+  it('the panel says there is no band yet and offers every make', () => {
+    const out = optHtml({});
+    expect(out).toContain('It shows once you tick at least one make.');
+    expect(out).toContain('No band yet.');
+    expect(out).toContain('>Show all makes<');
+    expect(out).not.toContain('>Clear all<');
+    expect(out).not.toContain('Showing all 30 makes');
+    for (const name of ALL) expect(ticked(out, name)).toBe(false);
+  });
+
+  it('with picks: the count and Clear all, which removes the band', () => {
+    const out = optHtml({ vehicleMakes: ['BMW', 'Rivian'] });
+    expect(out).toContain('2 makes picked.');
+    expect(out).toContain('>Clear all<');
+    expect(out).toContain('Clear all removes the band from your page.');
+    expect(out).not.toContain('>Show all makes<');
+    expect(ticked(out, 'BMW')).toBe(true);
+    expect(ticked(out, 'Audi')).toBe(false);
   });
 });

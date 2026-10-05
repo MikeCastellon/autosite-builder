@@ -239,3 +239,12 @@ describe('typing a what\'s-included list fast', () => {
     expect(insertIncludeAfter(['A', 'B'], 1, 2)).toBeNull();
   });
 });
+
+describe('ServiceDetailsFields summary help', () => {
+  it("takes the editor's wording when the hero shows no services", () => {
+    expect(html({ service: base })).toContain('One line under the name in the hero price card or list.');
+    const off = html({ service: base, summaryHelp: 'Your hero shows no services yet.' });
+    expect(off).toContain('Your hero shows no services yet.');
+    expect(off).not.toContain('One line under the name in the hero price card or list.');
+  });
+});

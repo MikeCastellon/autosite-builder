@@ -179,3 +179,42 @@ describe('services without prices', () => {
     expect(out).toMatch(/<span class="block text-\[13px\][^"]*">Call Us<\/span><span class="block text-\[12px\][^"]*">Call for quote<\/span>/);
   });
 });
+
+// Themes whose hero had no card before (editorCapabilities HERO_CARD_DEFAULTS
+// 'off'): unset copy.heroCard reads as None there.
+describe("a template whose default is no card ('off')", () => {
+  it('reads an unset or unknown mode as the fallback', () => {
+    expect(heroCardMode({}, 'off')).toBe('off');
+    expect(heroCardMode({ heroCard: 'cards' }, 'off')).toBe('off');
+    expect(heroCardMode({ heroCard: 'quote' }, 'off')).toBe('quote');
+    expect(heroCardMode({ heroCard: 'list' }, 'off')).toBe('list');
+  });
+
+  it('starts on None, with the template\'s own help and no rows', () => {
+    const out = html({ defaultMode: 'off', offHelp: 'No services in the hero: it keeps its usual look.' });
+    expect(out).toContain('No services in the hero: it keeps its usual look.');
+    expect(out).not.toContain('your headline uses the full width');
+    expect(out).not.toContain('aria-label="Show Refresh Detail in the hero"');
+  });
+
+  it('shows the picker once the owner picks a mode, with the same automatic picks', () => {
+    const out = html({ copy: { heroCard: 'quote' }, defaultMode: 'off' });
+    expect(out).toContain('aria-label="Show Refresh Detail in the hero"');
+    expect(heroSelection({ heroCard: 'list' }, SERVICES, 'off')).toEqual(heroSelection({ heroCard: 'list' }, SERVICES));
+    expect(toggleHeroService({ heroCard: 'quote' }, SERVICES, 'Premium Detail', false, 'off')).toEqual(['Refresh Detail', 'Signature Detail']);
+    expect(moveHeroService({ heroCard: 'quote' }, SERVICES, 0, 1, 'off')).toEqual(['Signature Detail', 'Refresh Detail', 'Premium Detail']);
+  });
+
+  it('keeps the shared None help without offHelp', () => {
+    expect(html({ copy: { heroCard: 'off' } })).toContain('your headline uses the full width');
+  });
+});
+
+describe('HeroServicesPanel in None mode', () => {
+  it('offers no Back to automatic for the hidden list', () => {
+    const picked = { heroServices: [SERVICES[0].name] };
+    expect(html({ copy: picked })).toContain('Back to automatic');
+    expect(html({ copy: { ...picked, heroCard: 'off' } })).not.toContain('Back to automatic');
+    expect(html({ copy: picked, defaultMode: 'off' })).not.toContain('Back to automatic');
+  });
+});

@@ -122,6 +122,80 @@ export function ensureContrast(fg, bg, min = 4.5) {
 
 const DEFAULTS = { bg: '#ffffff', accent: '#2563eb' };
 
+// Scrims keep white text readable over any photo: tinted with the page
+// color on dark themes so the hero blends into the page, near-black on
+// light themes. deriveTheme's heroScrim / heroScrimLeft use this base; a
+// template that paints its own scrim over a photo starts from it too.
+export function heroScrimBase(bg, dark = isDark(bg)) {
+  return dark ? mix(bg, '#000000', 0.35) : '#0b0c10';
+}
+
+// Text over an owner's photo under a scrim of `base` (e.g. the contact
+// section's background photo). minScrim is the scrim's lowest alpha where
+// text sits, so up to 1 - minScrim of the photo shows through: text and
+// muted are repaired to 4.5:1 against the plain base and against the scrim
+// over a mid-grey and over a near-white photo pixel (the lightest it sees).
+// Returns { lit, text, muted }; lit (the mid-grey mix) is the background
+// theme:check pairs the text with.
+export function overPhoto({ base, text, muted, minScrim = 0.8 }) {
+  const through = 1 - Math.max(0, Math.min(1, Number(minScrim) || 0));
+  const lit = mix(base, '#808080', through);
+  const bgs = [base, lit, mix(base, '#f2f2f2', through)];
+  const repair = (c) => {
+    let out = c;
+    for (let pass = 0; pass < 3; pass++) {
+      for (const b of bgs) out = ensureContrast(out, b, 4.5);
+      if (bgs.every((b) => contrastRatio(out, b) >= 4.5)) break;
+    }
+    return out;
+  };
+  return { lit, text: repair(text), muted: repair(muted) };
+}
+
+// Text over an owner's photo under a scrim of a colored band's own fill
+// (a contact band that keeps the brand color over its CTA Background),
+// where overPhoto's near-black base would lose that color. Up to
+// 1 - minScrim of the photo shows through, and any pixel can sit behind
+// the text: a white one lightens the scrim, a black one darkens it. On a
+// mid-tone fill no ink reads at 4.5:1 over both, so the fill is deepened
+// away from the text (toward black under light text, toward white under
+// dark text) just enough that the text reads on the scrim alone and over
+// either extreme; muted is blended toward the text until it does too. A
+// text color no scrim can carry goes to its extreme (white or black) first.
+// Returns { scrim, worst, text, muted }: paint `scrim` at minScrim..1
+// alpha; `worst` (the scrim over the photo pixel the text reads worst on)
+// is the background theme:check pairs the text with.
+export function fillOverPhoto({ fill, text, muted = text, minScrim = 0.85 }) {
+  const through = 1 - Math.max(0, Math.min(1, Number(minScrim) || 0));
+  const base = normalize(fill) || '#000000';
+  const ink0 = normalize(text) || readableOn(base);
+  const light = !isDark(ink0);
+  const away = light ? '#000000' : '#ffffff';
+  const reads = (c, s) => [s, mix(s, '#ffffff', through), mix(s, '#000000', through)]
+    .every((b) => contrastRatio(c, b) >= 4.5);
+  const deepen = (ink) => {
+    for (let i = 0; i <= 40; i++) {
+      const s = mix(base, away, i / 40);
+      if (reads(ink, s)) return s;
+    }
+    return null;
+  };
+  let ink = ink0;
+  let scrim = deepen(ink);
+  if (!scrim) {
+    ink = light ? '#ffffff' : '#000000';
+    scrim = deepen(ink) || away;
+  }
+  const m0 = normalize(muted) || ink;
+  let soft = ink;
+  for (let i = 0; i <= 20; i++) {
+    const c = mix(m0, ink, i / 20);
+    if (reads(c, scrim)) { soft = c; break; }
+  }
+  const worst = mix(scrim, light ? '#ffffff' : '#000000', through);
+  return { scrim, worst, text: ink, muted: soft };
+}
+
 // fg repaired to 4.5:1 on bg and, when that doesn't break bg, on the
 // surface too: cards and alternating sections sit on `surface` and
 // templates reuse the same text tokens there.
@@ -153,10 +227,7 @@ export function deriveTheme(colors) {
   const accent = normalize(src.accent) || DEFAULTS.accent;
   const accentText = readableOnBoth(accent, bg, surface);
 
-  // Scrims keep white text readable over any photo: tinted with the page
-  // color on dark themes so the hero blends into the page, near-black on
-  // light themes.
-  const scrimBase = dark ? mix(bg, '#000000', 0.35) : '#0b0c10';
+  const scrimBase = heroScrimBase(bg, dark);
 
   return {
     bg,

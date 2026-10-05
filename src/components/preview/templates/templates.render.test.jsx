@@ -18,6 +18,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { TEMPLATE_COMPONENT_MAP, TEMPLATES } from '../../../data/templates.js';
 import { buildTemplateMeta } from '../../../lib/siteRender.js';
+import { buildSectionOrder } from '../../../lib/sectionOrder.js';
 import { normalizeBusinessInfo } from '../../../lib/normalizeBusinessInfo.js';
 import { catalogFamily, familiesFromStack } from '../../../lib/fontCatalog.js';
 import { EditorModeProvider } from './kit/EditorMode.jsx';
@@ -30,17 +31,19 @@ import * as kitSample from './__fixtures__/KitSampleTemplate.jsx';
 // copy.hiddenSections: ContentEditor's TOGGLEABLE list for the template
 // (or _default) plus the ids its legacy buildSectionOrder call used
 // (snapshot 2026-09-28). A converted template's `sections` must only use
-// these, so no saved order or hidden flag is orphaned by a rename.
+// these, so no saved order or hidden flag is orphaned by a rename. Ids a
+// template adds later (its addedSections, ordered by buildSectionOrderAdded)
+// are appended to its row and frozen from then on.
 const DEFAULT_IDS = ['hero', 'statsBar', 'services', 'about', 'gallery', 'testimonials', 'cta', 'awards'];
 const SAVED_SECTION_IDS = {
-  detailing_sporty: DEFAULT_IDS,
+  detailing_sporty: [...DEFAULT_IDS, 'brands', 'featured'],
   detailing_coastal: DEFAULT_IDS,
   detailing_autosync_dark: DEFAULT_IDS,
   detailing_autosync_white: DEFAULT_IDS,
   mobile_bold: DEFAULT_IDS,
   mobile_modern: DEFAULT_IDS,
   mobile_rugged: DEFAULT_IDS,
-  mobile_chrome: DEFAULT_IDS,
+  mobile_chrome: [...DEFAULT_IDS, 'brands', 'featured'],
   mechanic_industrial: DEFAULT_IDS,
   mechanic_garage: DEFAULT_IDS,
   mechanic_friendly: [...DEFAULT_IDS, 'whyUs'],
@@ -51,7 +54,7 @@ const SAVED_SECTION_IDS = {
   tint_elite: ['hero', 'statsBar', 'services', 'brands', 'about', 'gallery', 'testimonials', 'cta'],
   mechanic_ironclad: ['hero', 'ticker', 'ctaBand', 'about', 'services', 'gallery', 'whyUs', 'testimonials', 'cta'],
   tint_obsidian: ['hero', 'shadeGuide', 'services', 'brands', 'process', 'about', 'gallery', 'testimonials', 'cta'],
-  mobile_sudsy: ['hero', 'services', 'process', 'whyUs', 'about', 'gallery', 'testimonials', 'cta'],
+  mobile_sudsy: ['hero', 'services', 'process', 'whyUs', 'about', 'gallery', 'testimonials', 'cta', 'brands', 'featured'],
   wheel_apex: ['hero', 'trustBar', 'ticker', 'products', 'brands', 'about', 'gallery', 'testimonials', 'cta'],
   carwash_bubble: ['hero', 'services', 'process', 'about', 'gallery', 'testimonials', 'cta'],
   // New template (no saved sites yet): its own ids, frozen from here on.
@@ -313,10 +316,15 @@ describe.each(themeReady.map((e) => [e.id, e]))('theme-ready contract: %s', (id,
     }
   });
 
+  // The features fixture also checks the root variables a theme adds only
+  // while a feature renders (hero card, CTA photo).
   it.each([
     ['default', FIXTURES.full],
     ['custom', FIXTURES.custom],
     ['low-contrast', { ...FIXTURES.full, customColors: LOW_CONTRAST_COLORS }],
+    ['features', FIXTURES.features],
+    ['features-custom', { ...FIXTURES.features, customColors: CUSTOM_COLORS, customFonts: CUSTOM_FONTS }],
+    ['features-low', { ...FIXTURES.features, customColors: LOW_CONTRAST_COLORS }],
   ])('exposes readable color tokens on the root (%s palette)', (_, fixture) => {
     // Convention (CLAUDE.md): --<p>-bg / -surface / -text / -muted on the
     // root; --<p>-<scope>-text|muted pairs with --<p>-<scope>-bg when that
@@ -352,22 +360,24 @@ describe.each(themeReady.map((e) => [e.id, e]))('theme-ready contract: %s', (id,
     }
   });
 
+  // FIXTURES.features: the opt-in sections (vehicle makes, featured band)
+  // only render with their data.
   it('tags every declared section in the default render', () => {
-    const html = render(entry, FIXTURES.full);
+    const html = render(entry, FIXTURES.features);
     for (const sid of ids) expect(openTag(html, sid), `missing data-section="${sid}"`).not.toBeNull();
   });
 
   it.each(ids)('hiding "%s" removes it', (sid) => {
-    const copy = { ...FIXTURES.full.generatedCopy, hiddenSections: [sid] };
-    const html = render(entry, FIXTURES.full, { copy });
+    const copy = { ...FIXTURES.features.generatedCopy, hiddenSections: [sid] };
+    const html = render(entry, FIXTURES.features, { copy });
     expect(openTag(html, sid)).toBeNull();
     for (const other of ids.filter((x) => x !== sid)) expect(openTag(html, other)).not.toBeNull();
   });
 
   it('orders sections by the saved sectionOrder', () => {
     const reversed = [...ids].reverse();
-    const copy = { ...FIXTURES.full.generatedCopy, sectionOrder: reversed };
-    const html = decode(render(entry, FIXTURES.full, { copy }));
+    const copy = { ...FIXTURES.features.generatedCopy, sectionOrder: reversed };
+    const html = decode(render(entry, FIXTURES.features, { copy }));
     reversed.forEach((sid, index) => {
       const tag = openTag(html, sid);
       const m = tag && tag.match(/[";]\s*order\s*:\s*(-?\d+)/);
@@ -385,11 +395,44 @@ describe.each(themeReady.map((e) => [e.id, e]))('theme-ready contract: %s', (id,
   });
 
   it.each(['full', 'split'])('never puts data-acg-reveal on or inside the hero (%s layout)', (layout) => {
-    const copy = { ...FIXTURES.full.generatedCopy, ...(layout === 'split' ? { heroLayout: 'split' } : {}) };
-    const hero = findNode(parseHtml(render(entry, FIXTURES.full, { copy })), (n) => attrOf(n, 'data-section') === 'hero');
+    const copy = { ...FIXTURES.features.generatedCopy, ...(layout === 'split' ? { heroLayout: 'split' } : {}) };
+    const hero = findNode(parseHtml(render(entry, FIXTURES.features, { copy })), (n) => attrOf(n, 'data-section') === 'hero');
     expect(hero, 'no data-section="hero"').not.toBeNull();
     expect(hasAttr(hero, 'data-acg-reveal')).toBe(false);
     expect(findNode(hero, (n) => hasAttr(n, 'data-acg-reveal'))).toBeNull();
+  });
+
+  // A template that added sections after sites were saved with it
+  // (addedSections) must leave every older section's order value exactly as
+  // it was: buildSectionOrder over the older ids, for the default order and
+  // for an owner's saved order.
+  it.runIf(Array.isArray(mod.addedSections))('keeps the old order values of its older sections', () => {
+    const legacyIds = ids.filter((sid) => !mod.addedSections.includes(sid));
+    for (const fixture of [FIXTURES.full, FIXTURES.custom, FIXTURES.features]) {
+      const copy = fixture.generatedCopy;
+      const html = decode(render(entry, fixture, { copy }));
+      const expected = buildSectionOrder(copy, legacyIds);
+      for (const sid of legacyIds) {
+        const tag = openTag(html, sid);
+        if (!tag) continue;
+        const m = tag.match(/[";]\s*order\s*:\s*(-?\d+)/);
+        expect({ sid, order: m ? Number(m[1]) : null }).toEqual({ sid, order: expected(sid) });
+      }
+    }
+  });
+
+  // An added band whose predecessor is missing from a saved order (a section
+  // the owner hid before saving, like the custom fixture's statsBar) goes
+  // with the nearest saved section before it, never to the page's end.
+  it.runIf(Array.isArray(mod.addedSections))('places an added band with the nearest saved section before it', () => {
+    const fx = FIXTURES.features;
+    const copy = { ...fx.generatedCopy, sectionOrder: FIXTURES.custom.generatedCopy.sectionOrder, hiddenSections: FIXTURES.custom.generatedCopy.hiddenSections };
+    const html = decode(render(entry, fx, { copy }));
+    const orderOfTag = (sid) => Number(((openTag(html, sid) || '').match(/[";]\s*order\s*:\s*(-?\d+)/) || [])[1]);
+    for (const added of mod.addedSections) {
+      if (!openTag(html, added)) continue;
+      expect({ added, order: orderOfTag(added) }).not.toEqual({ added, order: 999 });
+    }
   });
 
   it.each(Object.keys(FIXTURES))('has a container root with nav, footer, phone menu and action bar (%s)', (fixtureName) => {

@@ -35,7 +35,10 @@ function summaryLine(copy, row, d) {
   return d.title || DESIGN_HEADING;
 }
 
-function HeadingRow({ row, copy, setCopy, hidden, open, defaults, googleConnected }) {
+// absent: the Sections tab's "Not on your page yet" text for a section that
+// is switched on but shows nothing (e.g. an added band with no makes or
+// service yet), so its heading edits are not mistaken for broken.
+function HeadingRow({ row, copy, setCopy, hidden, open, defaults, googleConnected, absent = null }) {
   const ph = row.placeholder || {};
   // The design's own text for this section ({} when unknown).
   const d = (defaults && defaults[row.id]) || {};
@@ -89,6 +92,7 @@ function HeadingRow({ row, copy, setCopy, hidden, open, defaults, googleConnecte
           <span className="block text-[13px] font-medium text-gray-800">
             {row.label}
             {hidden && <span className="text-gray-400 font-normal"> · switched off</span>}
+            {!hidden && absent && <span className="text-gray-400 font-normal"> · not on your page yet</span>}
           </span>
           <span className="block text-[11px] text-gray-400 truncate">{summaryLine(copy, row, d)}</span>
         </span>
@@ -97,6 +101,7 @@ function HeadingRow({ row, copy, setCopy, hidden, open, defaults, googleConnecte
         </svg>
       </summary>
       <div className="px-3 pt-1">
+        {!hidden && absent && <Help className="mt-0 mb-3">{absent}</Help>}
         {fields}
         {typedCount && (
           <Help tone="warn" className="mt-0 mb-3">
@@ -108,7 +113,9 @@ function HeadingRow({ row, copy, setCopy, hidden, open, defaults, googleConnecte
   );
 }
 
-export function HeadingsFields({ copy, setCopy, sections, headingFields, hiddenSections = [], businessInfo, headingDefaults }) {
+// absentHints: { [sectionId]: text } for sections switched on that show
+// nothing yet (ContentEditor reads them off the preview).
+export function HeadingsFields({ copy, setCopy, sections, headingFields, hiddenSections = [], businessInfo, headingDefaults, absentHints = null }) {
   const rows = headingRows(sections, headingFields);
   const defaults = designDefaults(headingDefaults, businessInfo, copy);
   const hiddenIds = new Set(Array.isArray(hiddenSections) ? hiddenSections : []);
@@ -123,7 +130,7 @@ export function HeadingsFields({ copy, setCopy, sections, headingFields, hiddenS
         <Help className="mb-3">{Array.isArray(sections) && sections.length ? 'This design has no headings to set here.' : 'Loading sections…'}</Help>
       )}
       {rows.map((row, i) => (
-        <HeadingRow key={row.id} row={row} copy={copy} setCopy={setCopy} hidden={hiddenIds.has(row.id)} open={i === 0} defaults={defaults} googleConnected={Boolean(businessInfo?.googlePlace?.placeId)} />
+        <HeadingRow key={row.id} row={row} copy={copy} setCopy={setCopy} hidden={hiddenIds.has(row.id)} open={i === 0} defaults={defaults} googleConnected={Boolean(businessInfo?.googlePlace?.placeId)} absent={absentHints?.[row.id] || null} />
       ))}
     </>
   );

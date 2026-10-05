@@ -1,8 +1,10 @@
 // Edit > Featured Service: copy.featuredService = { serviceName, priceFrom,
 // bullets, buttonText, buttonUrl } (each optional; the band's heading lives
 // in copy.sectionTitles.featured). Pure helpers for FeaturedServicePanel;
-// the matching rule is MobileRedline's.
+// the matching rule is the kit's (kit/features.js featuredServiceOf).
 import { nameKey } from './serviceRefs.js';
+import { featuredServiceOf } from '../templates/kit/features.js';
+import { serviceIncludes, sectionTitle } from '../templates/kit/content.js';
 
 export const MAX_BULLETS = 8;
 
@@ -16,15 +18,32 @@ const featuredObj = (copy) => {
 // Which service the band features: { name, service, automatic }.
 // With a saved serviceName: that name and its service (null when no
 // service carries it: the band then features the name on its own).
-// Without one: the first ceramic / coating service, or nothing.
-export function featuredMatch(copy, services) {
+// Without one: the first ceramic / coating service, or nothing; with
+// `automatic: false` (editorCapabilities featuredAutomatic: themes whose
+// band is opt-in) always nothing.
+export function featuredMatch(copy, services, { automatic = true } = {}) {
   const list = Array.isArray(services) ? services : [];
   const own = typeof featuredObj(copy).serviceName === 'string' ? featuredObj(copy).serviceName.trim() : '';
   if (own) {
     return { name: own, service: list.find((s) => nameKey(s?.name) === nameKey(own)) || null, automatic: false };
   }
-  const service = list.find((s) => /ceramic|coating/i.test(String(s?.name ?? ''))) || null;
+  const service = automatic ? list.find((s) => /ceramic|coating/i.test(String(s?.name ?? ''))) || null : null;
   return { name: service ? service.name : '', service, automatic: true };
+}
+
+// The name of the service whose summary the Featured Service band shows as
+// its intro, or '' (kit featuredServiceOf, the template's own rule: the
+// band's service, while the band lists no benefits, neither the owner's
+// bullets nor that package's included items, and has no intro of its own
+// in Edit > Headings). `services`: the owner's items ({ name, includes }).
+// The summary need not be typed yet: this is where it would show.
+export function featuredSummaryService(copy, services, { automatic = true } = {}) {
+  const list = (Array.isArray(services) ? services : [])
+    .map((s) => ({ name: typeof s?.name === 'string' ? s.name.trim() : '', includes: serviceIncludes(s?.includes) }));
+  const f = featuredServiceOf({ featuredService: copy?.featuredService, services: list, sectionTitles: copy?.sectionTitles, automatic });
+  if (!f || f.bullets.length > 0 || sectionTitle(copy?.sectionTitles, 'featured').intro) return '';
+  const match = list.find((s) => s.name && nameKey(s.name) === nameKey(f.name));
+  return match ? match.name : '';
 }
 
 const isEmpty = (v) => v == null || (typeof v === 'string' && !v.trim()) || (Array.isArray(v) && v.length === 0);

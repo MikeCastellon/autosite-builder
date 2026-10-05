@@ -92,6 +92,9 @@ export function GoogleRatingPanel({
   defaultPlacements = ['hero', 'footer'],
   supportedPlacements = BADGE_SPOTS.map((s) => s.id),
   canEditBusiness = true,
+  // The template's footerSpec (useTemplateInfo), to read copy.footer's
+  // columns the way the page does.
+  footerSpec = null,
 }) {
   const place = businessInfo?.googlePlace || null;
   const status = placeStatus(place);
@@ -138,9 +141,12 @@ export function GoogleRatingPanel({
   const listingUrl = googlePlaceUrl(place);
   // The footer rating sits in the footer's logo column; with that column
   // switched off (Edit > Footer) the template shows it in the bottom line.
-  const footerBrandOff = Array.isArray(copy?.footer?.columns) && !footerColumns(copy.footer).some((c) => c.type === 'brand' && c.show);
+  const footerBrandOff = Array.isArray(copy?.footer?.columns) && !footerColumns(copy.footer, footerSpec).some((c) => c.type === 'brand' && c.show);
   const spots = BADGE_SPOTS.filter((s) => supportedPlacements.includes(s.id));
   const saved = copy?.googleBadge != null;
+  // A design that shows the badge nowhere by default (an opt-in feature):
+  // "back to the defaults" there means off everywhere.
+  const optIn = defaultPlacements.length === 0;
   const showSearch = canEditBusiness && (!status.connected || changing);
 
   return (
@@ -194,17 +200,26 @@ export function GoogleRatingPanel({
               label={s.label}
               on={placements.includes(s.id)}
               onChange={(on) => setCopy('googleBadge', togglePlacement(copy, defaultPlacements, s.id, on))}
-              help={s.id === 'footer' && footerBrandOff && placements.includes('footer') ? "Your footer's logo column is off (Edit > Footer), so the rating shows in the footer's bottom line." : undefined}
+              help={s.id === 'footer' && footerBrandOff && placements.includes('footer')
+                ? "Your footer's logo column is off (Edit > Footer), so the rating shows in the footer's bottom line."
+                : s.id === 'nav' && placements.includes('nav')
+                  ? 'Shows on wide screens only, and only while the menu bar has room for it beside your business name and links: your name is never shortened for it.'
+                  : undefined}
             />
           ))}
           {saved ? (
-            <button type="button" className={linkButtonClass} onClick={() => setCopy('googleBadge', null)}>
-              Use the design&apos;s default spots
-            </button>
+            // (Opt-in and already off everywhere: the warning below says so.)
+            !(optIn && placements.length === 0) && (
+              <button type="button" className={linkButtonClass} onClick={() => setCopy('googleBadge', null)}>
+                {optIn ? 'Turn the badge off everywhere' : <>Use the design&apos;s default spots</>}
+              </button>
+            )
+          ) : optIn ? (
+            <Help className="mt-0">Switch on where your badge shows: your design shows it nowhere until you do.</Help>
           ) : (
             <Help className="mt-0">These are the design&apos;s default spots.</Help>
           )}
-          {placements.length === 0 && <Help tone="warn">The badge is switched off everywhere.</Help>}
+          {placements.length === 0 && (saved || !optIn) && <Help tone="warn">The badge is switched off everywhere.</Help>}
         </div>
       )}
       {status.connected && !status.hasRating && (
