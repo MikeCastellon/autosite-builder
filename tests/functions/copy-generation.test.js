@@ -1,7 +1,9 @@
 // tests/functions/copy-generation.test.js
 // netlify/functions/_lib/copyGeneration.js with a fake Anthropic client: the
 // request sent to Claude Opus 5, the output schema, and every way an answer
-// can come back (copy, refusal, cut off, no text, fallback continuation).
+// can come back (copy, refusal, cut off, no text, fallback continuation);
+// the legacy request the job falls back to when the API rejects or keeps
+// rate limiting the Opus request, and the free Try again after a failed job.
 // No network and no SDK: the client is a plain object.
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import {
@@ -11,6 +13,14 @@ import {
   buildLegacyRequest,
   buildFacts,
   generateCopy,
+  generateLegacyCopy,
+  isRequestRejected,
+  isRateLimited,
+  legacyFallbackReason,
+  LEGACY_MIN_LEFT_MS,
+  claimFreeRetry,
+  retryKey,
+  FREE_RETRY_CODES,
   generationModel,
   describeFailure,
   isStreamedBusyError,
@@ -29,6 +39,8 @@ import {
   SCHEMA_TYPES,
   SYSTEM_PROMPT,
   LEGACY_KEYS,
+  LEGACY_MODEL,
+  LEGACY_MAX_TOKENS,
   DEFAULT_MODEL,
   FALLBACK_BETA,
   MAX_TOKENS,
@@ -292,7 +304,14 @@ describe('generateCopy', () => {
     expect(calls[0].params).toEqual(buildRequest(biz, meta));
     expect(calls[0].options).toEqual({ signal, timeout: 1000, maxRetries: 2 });
     expect(copy).toEqual(answer);
-    expect(info).toMatchObject({ model: 'claude-opus-5', stopReason: 'end_turn', fallback: false });
+    expect(info).toMatchObject({ path: 'primary', model: 'claude-opus-5', stopReason: 'end_turn', fallback: false });
+  });
+
+  it('also returns the answer as written, before normalizeCopy (for the smoke test)', async () => {
+    const { client } = fakeClient(textMessage('{"headline":"Hi"}'));
+    const { copy, raw } = await generateCopy(client, biz, meta);
+    expect(raw).toEqual({ headline: 'Hi' });
+    expect(copy.servicesSection.items).toHaveLength(2);
   });
 
   it('fills keys a partial answer lacks from the owner\'s data only', async () => {
@@ -530,6 +549,291 @@ describe('with the real SDK (fake fetch)', () => {
     const err = await generateCopy(client, biz, meta).catch((e) => e);
     expect(err.recommendedModel).toBe('claude-opus-4-8');
     expect(describeFailure(err, Anthropic)).toMatchObject({ code: 'fallback_busy', httpStatus: 503 });
+  });
+
+  // What the API sends back when it does not accept a request: JSON, not SSE.
+  async function rejectingClient(status, type) {
+    const { default: Anthropic } = await import('../../netlify/functions/node_modules/@anthropic-ai/sdk/index.mjs');
+    const calls = [];
+    const client = new Anthropic({
+      apiKey: 'test-key-not-real',
+      fetch: async (url, init) => {
+        calls.push({ url, init });
+        return new Response(JSON.stringify({ type: 'error', error: { type, message: `${type} from the test` } }), {
+          status, headers: { 'content-type': 'application/json', 'request-id': 'req_rejected' },
+        });
+      },
+    });
+    return { Anthropic, client, calls };
+  }
+
+  it('a 400, 403 or 404 on the Opus request is a rejection the job falls back on, after one HTTP attempt', async () => {
+    for (const [status, type] of [[400, 'invalid_request_error'], [403, 'permission_error'], [404, 'not_found_error']]) {
+      const { Anthropic, client, calls } = await rejectingClient(status, type);
+      const err = await generateCopy(client, biz, meta, { maxRetries: 2 }).catch((e) => e);
+      expect(calls).toHaveLength(1);
+      expect(String(calls[0].url)).toContain('/v1/messages?beta=true');
+      expect(err).toBeInstanceOf(Anthropic.APIError);
+      expect(err).toMatchObject({ status, type, requestID: 'req_rejected' });
+      expect(isRequestRejected(err, Anthropic)).toBe(true);
+    }
+  });
+
+  it('a 401 (bad key) or a 529 is not a rejection of the request', async () => {
+    for (const [status, type] of [[401, 'authentication_error'], [529, 'overloaded_error']]) {
+      const { Anthropic, client } = await rejectingClient(status, type);
+      const err = await generateCopy(client, biz, meta, { maxRetries: 0 }).catch((e) => e);
+      expect(err.status).toBe(status);
+      expect(isRequestRejected(err, Anthropic)).toBe(false);
+      expect(legacyFallbackReason(err, Anthropic)).toBeNull();
+    }
+  });
+
+  it('a 429 is the SDK\'s RateLimitError: rate_limited, not rejected', async () => {
+    const { Anthropic, client } = await rejectingClient(429, 'rate_limit_error');
+    const err = await generateCopy(client, biz, meta, { maxRetries: 0 }).catch((e) => e);
+    expect(err).toBeInstanceOf(Anthropic.RateLimitError);
+    expect(isRequestRejected(err, Anthropic)).toBe(false);
+    expect(isRateLimited(err, Anthropic)).toBe(true);
+    expect(legacyFallbackReason(err, Anthropic)).toBe('rate_limited');
+  });
+
+  it('the legacy request goes to /v1/messages without beta, and its answer is read', async () => {
+    const { default: Anthropic } = await import('../../netlify/functions/node_modules/@anthropic-ai/sdk/index.mjs');
+    const calls = [];
+    const client = new Anthropic({
+      apiKey: 'test-key-not-real',
+      fetch: async (url, init) => {
+        calls.push({ url: String(url), headers: new Headers(init.headers), body: JSON.parse(init.body) });
+        return new Response(JSON.stringify({
+          id: 'msg_2', type: 'message', role: 'assistant', model: 'claude-sonnet-4-6',
+          content: [{ type: 'text', text: '{"headline":"Legacy Hi"}' }],
+          stop_reason: 'end_turn', stop_sequence: null, usage: { input_tokens: 900, output_tokens: 20 },
+        }), { status: 200, headers: { 'content-type': 'application/json', 'request-id': 'req_legacy' } });
+      },
+    });
+    const { copy, meta: info } = await generateLegacyCopy(client, biz, meta, { timeout: 120_000, maxRetries: 2 });
+    expect(calls).toHaveLength(1);
+    expect(calls[0].url).toMatch(/\/v1\/messages$/);
+    expect(calls[0].headers.get('anthropic-beta')).toBeNull();
+    expect(calls[0].body).toEqual(buildLegacyRequest(biz, meta));
+    expect(copy.headline).toBe('Legacy Hi');
+    expect(info).toMatchObject({ path: 'legacy', model: 'claude-sonnet-4-6' });
+  });
+});
+
+// Same hierarchy as the SDK, shared by the fallback and free-retry tests.
+class FakeAPIError extends Error { constructor(status, type = null) { super(`status ${status}`); this.status = status; this.type = type; } }
+class FakeConnectionError extends FakeAPIError { constructor() { super(undefined); } }
+class FakeTimeoutError extends FakeConnectionError {}
+class FakeAbortError extends FakeAPIError { constructor() { super(undefined); } }
+const fakeSdk = { APIError: FakeAPIError, APIConnectionError: FakeConnectionError, APIConnectionTimeoutError: FakeTimeoutError, APIUserAbortError: FakeAbortError };
+
+describe('isRequestRejected (when the job switches to the legacy request)', () => {
+  it('is true when the API turns the request itself down: 400, 403, 404, 422', () => {
+    for (const status of [400, 403, 404, 422]) {
+      expect(isRequestRejected(new FakeAPIError(status, 'invalid_request_error'), fakeSdk)).toBe(true);
+    }
+  });
+
+  it('is true for the same errors sent inside an open stream (no status, only the type)', () => {
+    for (const type of ['invalid_request_error', 'permission_error', 'not_found_error']) {
+      expect(isRequestRejected(new FakeAPIError(undefined, type), fakeSdk)).toBe(true);
+    }
+  });
+
+  it('is false for capacity, timeouts, a bad key and anything that is not an API error', () => {
+    for (const status of [401, 409, 413, 429, 500, 529]) {
+      expect(isRequestRejected(new FakeAPIError(status, 'x'), fakeSdk)).toBe(false);
+    }
+    for (const err of [
+      new FakeAPIError(undefined, 'overloaded_error'),
+      new FakeAPIError(undefined, null),
+      new FakeConnectionError(),
+      new FakeTimeoutError(),
+      new FakeAbortError(),
+      new TypeError('x'),
+      new CopyResponseError('bad_json', 'x'),
+      null,
+    ]) {
+      expect(isRequestRejected(err, fakeSdk)).toBe(false);
+    }
+    expect(isRequestRejected(new FakeAPIError(400), undefined)).toBe(false);
+  });
+});
+
+describe('isRateLimited / legacyFallbackReason', () => {
+  it('a 429, or rate_limit_error sent inside the stream, is rate_limited', () => {
+    expect(isRateLimited(new FakeAPIError(429, 'rate_limit_error'), fakeSdk)).toBe(true);
+    expect(isRateLimited(new FakeAPIError(429), fakeSdk)).toBe(true);
+    expect(isRateLimited(new FakeAPIError(undefined, 'rate_limit_error'), fakeSdk)).toBe(true);
+    expect(legacyFallbackReason(new FakeAPIError(429, 'rate_limit_error'), fakeSdk)).toBe('rate_limited');
+    expect(legacyFallbackReason(new FakeAPIError(undefined, 'rate_limit_error'), fakeSdk)).toBe('rate_limited');
+  });
+
+  it('a rejection stays rejected', () => {
+    expect(legacyFallbackReason(new FakeAPIError(400, 'invalid_request_error'), fakeSdk)).toBe('rejected');
+    expect(legacyFallbackReason(new FakeAPIError(undefined, 'not_found_error'), fakeSdk)).toBe('rejected');
+  });
+
+  it('overloads, 5xx, a bad key, network errors, timeouts and non-API errors switch nothing', () => {
+    for (const err of [
+      new FakeAPIError(529, 'overloaded_error'),
+      new FakeAPIError(500, 'api_error'),
+      new FakeAPIError(401, 'authentication_error'),
+      new FakeAPIError(undefined, 'overloaded_error'),
+      new FakeAPIError(undefined, 'api_error'),
+      new FakeAPIError(500, 'rate_limit_error'),
+      new FakeConnectionError(),
+      new FakeTimeoutError(),
+      new FakeAbortError(),
+      new TypeError('x'),
+      new CopyResponseError('bad_json', 'x'),
+      null,
+    ]) {
+      expect(isRateLimited(err, fakeSdk)).toBe(false);
+      expect(legacyFallbackReason(err, fakeSdk)).toBeNull();
+    }
+    expect(legacyFallbackReason(new FakeAPIError(429), undefined)).toBeNull();
+  });
+
+  it('leaves the legacy request room inside the job deadline', () => {
+    expect(LEGACY_MIN_LEFT_MS).toBeGreaterThanOrEqual(54_000);
+    expect(LEGACY_MIN_LEFT_MS).toBeLessThan(MODEL_DEADLINE_MS / 2);
+  });
+});
+
+describe('generateLegacyCopy (the job\'s fallback request)', () => {
+  function legacyClient(message) {
+    const calls = [];
+    const client = {
+      messages: {
+        async create(params, options) {
+          calls.push({ params, options });
+          if (message instanceof Error) throw message;
+          return message;
+        },
+      },
+    };
+    return { client, calls };
+  }
+  const legacyAnswer = Object.fromEntries(LEGACY_KEYS.map((key) => [key, answer[key]]));
+
+  it('sends buildLegacyRequest through client.messages.create (no beta, no thinking) with the job\'s options', async () => {
+    const { client, calls } = legacyClient({ model: 'claude-sonnet-4-6', content: [{ type: 'text', text: JSON.stringify(legacyAnswer) }], stop_reason: 'end_turn', usage: { input_tokens: 900, output_tokens: 700 } });
+    const signal = new AbortController().signal;
+    const { copy, raw, meta: info } = await generateLegacyCopy(client, biz, meta, { signal, timeout: 1000, maxRetries: 2 });
+    expect(calls).toHaveLength(1);
+    expect(calls[0].params).toEqual(buildLegacyRequest(biz, meta));
+    expect(calls[0].params).toMatchObject({ model: LEGACY_MODEL, max_tokens: LEGACY_MAX_TOKENS });
+    expect(calls[0].options).toEqual({ signal, timeout: 1000, maxRetries: 2 });
+    expect(raw).toEqual(legacyAnswer);
+    // The two keys the legacy prompt does not ask for are filled as empty.
+    expect(copy).toEqual({ ...answer, ctaHeadline: '', ctaSubtext: '' });
+    expect(info).toMatchObject({ path: 'legacy', requestedModel: LEGACY_MODEL, model: 'claude-sonnet-4-6', stopReason: 'end_turn', fallback: false });
+    expect(info.billed).toMatchObject({ attempts: 1, inputTokens: 900, outputTokens: 700 });
+  });
+
+  it('reads JSON in fences, like the legacy route', async () => {
+    const { client } = legacyClient({ content: [{ type: 'text', text: '```json\n{"headline":"Hi"}\n```' }], stop_reason: 'end_turn' });
+    expect((await generateLegacyCopy(client, biz, meta)).copy.headline).toBe('Hi');
+  });
+
+  it('reports a cut-off as too long (no thinking: the answer filled the cap), like the legacy route\'s 422', async () => {
+    const { client } = legacyClient({ content: [{ type: 'text', text: '{"headline":"Hi","ab' }], stop_reason: 'max_tokens', usage: { output_tokens: 4000 } });
+    const err = await generateLegacyCopy(client, biz, meta).catch((e) => e);
+    expect(err).toBeInstanceOf(CopyResponseError);
+    expect(err.longAnswer).toBe(true);
+    expect(err.meta).toMatchObject({ path: 'legacy', stopReason: 'max_tokens' });
+    expect(describeFailure(err, fakeSdk)).toMatchObject({ code: 'too_long', httpStatus: 422 });
+  });
+
+  it('reports a refusal and an answer without JSON the way the job does', async () => {
+    const refused = legacyClient({ content: [], stop_reason: 'refusal', stop_details: { category: 'cyber' } });
+    const err = await generateLegacyCopy(refused.client, biz, meta).catch((e) => e);
+    expect(err).toMatchObject({ code: 'refusal', category: 'cyber', recommendedModel: null });
+    expect(describeFailure(err, fakeSdk)).toMatchObject({ code: 'refusal', httpStatus: 422 });
+
+    const prose = legacyClient({ content: [{ type: 'text', text: 'Sorry.' }], stop_reason: 'end_turn' });
+    expect(describeFailure(await generateLegacyCopy(prose.client, biz, meta).catch((e) => e), fakeSdk)).toMatchObject({ code: 'incomplete', httpStatus: 502 });
+  });
+
+  it('passes SDK errors through', async () => {
+    const boom = new FakeAPIError(529, 'overloaded_error');
+    const { client } = legacyClient(boom);
+    await expect(generateLegacyCopy(client, biz, meta)).rejects.toBe(boom);
+    expect(describeFailure(boom, fakeSdk)).toMatchObject({ code: 'busy', httpStatus: 503 });
+  });
+});
+
+describe('claimFreeRetry (Try again after a failed job)', () => {
+  const FAILED = '3b241101-e2bb-4255-8caf-4136c566a962';
+  const NEXT = '9b241101-e2bb-4255-8caf-4136c566a962';
+  const OTHER = '7b241101-e2bb-4255-8caf-4136c566a962';
+  const now = Date.parse('2026-10-02T12:00:00Z');
+  const hoursAgo = (h) => new Date(now - h * 60 * 60 * 1000).toISOString();
+
+  function store(entries = {}) {
+    const data = new Map(Object.entries(entries));
+    return {
+      data,
+      async setJSON(key, value, options = {}) {
+        if (options.onlyIfNew && data.has(key)) return { modified: false };
+        data.set(key, structuredClone(value));
+        return { modified: true };
+      },
+      async get(key) { return data.has(key) ? structuredClone(data.get(key)) : null; },
+    };
+  }
+  const failed = (code, extra = {}) => ({ status: 'error', code, httpStatus: 503, startedAt: hoursAgo(1), slotAt: hoursAgo(1), ...extra });
+
+  it('hands on the daily generation of a job that failed before a billed answer, once', async () => {
+    expect(FREE_RETRY_CODES).toEqual(['config', 'busy', 'fallback_busy']);
+    for (const code of FREE_RETRY_CODES) {
+      const s = store({ [`user-1/${FAILED}`]: failed(code) });
+      expect(await claimFreeRetry(s, 'user-1', FAILED, NEXT, 'c1', { now })).toBe(hoursAgo(1));
+      expect(s.data.get(retryKey('user-1', FAILED))).toMatchObject({ status: 'retried', by: NEXT, claim: 'c1' });
+      // A second Try again of the same failed job (or a parallel start) pays.
+      expect(await claimFreeRetry(s, 'user-1', FAILED, OTHER, 'c2', { now })).toBeNull();
+    }
+    expect(retryKey('user-1', FAILED.toUpperCase())).toBe(`user-1/${FAILED}/retry`);
+  });
+
+  it('keeps the first generation of a chain: a free retry passes on the original slotAt', async () => {
+    const s = store({ [`user-1/${FAILED}`]: failed('busy', { startedAt: hoursAgo(1), slotAt: hoursAgo(20) }) });
+    expect(await claimFreeRetry(s, 'user-1', FAILED, NEXT, 'c1', { now })).toBe(hoursAgo(20));
+  });
+
+  it('counts the new job when the failed one was paid for, is not a failure, or is too old', async () => {
+    for (const code of ['timeout', 'cut_off', 'too_long', 'refusal', 'incomplete', 'internal', 'daily_limit', 'bad_request']) {
+      expect(await claimFreeRetry(store({ [`user-1/${FAILED}`]: failed(code) }), 'user-1', FAILED, NEXT, 'c', { now })).toBeNull();
+    }
+    for (const record of [
+      { status: 'done', copy: {}, slotAt: hoursAgo(1) },
+      { status: 'running', startedAt: hoursAgo(1), slotAt: hoursAgo(1) },
+      failed('busy', { slotAt: undefined }),
+      failed('busy', { slotAt: hoursAgo(25) }),
+    ]) {
+      expect(await claimFreeRetry(store({ [`user-1/${FAILED}`]: record }), 'user-1', FAILED, NEXT, 'c', { now })).toBeNull();
+    }
+  });
+
+  it('reads only the caller\'s own jobs, and rejects odd ids', async () => {
+    const s = store({ [`user-1/${FAILED}`]: failed('busy') });
+    expect(await claimFreeRetry(s, 'user-2', FAILED, NEXT, 'c', { now })).toBeNull();
+    for (const bad of ['../user-1/x', '', null, 7]) expect(await claimFreeRetry(s, 'user-1', bad, NEXT, 'c', { now })).toBeNull();
+    expect(await claimFreeRetry(s, 'user-1', FAILED, FAILED.toUpperCase(), 'c', { now })).toBeNull();
+    expect(s.data.has(retryKey('user-1', FAILED))).toBe(false);
+  });
+
+  it('counts the job normally when storage fails or the marker is not stored', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const down = { get: async () => { throw new Error('blobs down'); }, setJSON: async () => ({ modified: true }) };
+    expect(await claimFreeRetry(down, 'user-1', FAILED, NEXT, 'c', { now })).toBeNull();
+    // A conditional write reported as done, with nothing stored (see claimJob).
+    const phantom = store({ [`user-1/${FAILED}`]: failed('busy') });
+    phantom.setJSON = async () => ({ modified: true });
+    expect(await claimFreeRetry(phantom, 'user-1', FAILED, NEXT, 'c', { now })).toBeNull();
   });
 });
 

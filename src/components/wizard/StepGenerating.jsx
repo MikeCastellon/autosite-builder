@@ -18,13 +18,16 @@ function waitingText(seconds) {
 export default function StepGenerating({ businessInfo, templateMeta, onSuccess, onError }) {
   // Each Try again is a new run: a new job, using one daily generation,
   // unless the last run lost the connection while its job was still on the
-  // server; then the run polls that job again (resumeRef).
+  // server; then the run polls that job again (resumeRef). A new job names
+  // the job that failed (retryRef), so the server can run it on that job's
+  // daily generation when the failed one was never billed.
   const [run, setRun] = useState(0);
   const [error, setError] = useState(null);
   const [startedAt, setStartedAt] = useState(() => Date.now());
   const [now, setNow] = useState(() => Date.now());
   const startedRun = useRef(null);
   const resumeRef = useRef(null);
+  const retryRef = useRef(null);
   const controllerRef = useRef(null);
   const mounted = useRef(false);
 
@@ -51,14 +54,16 @@ export default function StepGenerating({ businessInfo, templateMeta, onSuccess, 
     if (startedRun.current === run) return;
     startedRun.current = run;
     const jobId = resumeRef.current || undefined;
+    const retryOf = retryRef.current || undefined;
     resumeRef.current = null;
+    retryRef.current = null;
     const controller = new AbortController();
     controllerRef.current = controller;
     setError(null);
     setStartedAt(Date.now());
     setNow(Date.now());
 
-    generateWebsite(businessInfo, templateMeta, { signal: controller.signal, jobId })
+    generateWebsite(businessInfo, templateMeta, { signal: controller.signal, jobId, retryOf })
       .then((copy) => {
         if (controller.signal.aborted || !mounted.current) return;
         onSuccess(copy);
@@ -68,6 +73,7 @@ export default function StepGenerating({ businessInfo, templateMeta, onSuccess, 
         console.error(`[generate-website] failed for "${businessInfo?.businessName}"`,
           { status: err?.status, code: err?.code, resumable: Boolean(err?.resumeJobId), error: err?.message || 'Unknown error' });
         resumeRef.current = err?.resumeJobId || null;
+        retryRef.current = err?.failedJobId || null;
         setError(err);
       });
   }, [run]); // eslint-disable-line react-hooks/exhaustive-deps

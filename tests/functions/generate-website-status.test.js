@@ -115,13 +115,32 @@ describe('generate-website-status', () => {
     expect(state.stores.at(-1).kind).toBe('deploy');
   });
 
-  it('is never cached and answers 503 (keep polling) when storage fails', async () => {
+  it('is never cached and answers 503 (keep polling) when storage fails, naming the cause', async () => {
     let res = await poll(JOB);
     expect(res.headers.get('cache-control')).toBe('no-store');
     expect(res.headers.get('content-type')).toBe('application/json');
     state.failRead = true;
     res = await poll(JOB);
     expect(res.status).toBe(503);
+    // The wizard switches to the legacy route after repeated storage errors.
+    expect(res.body).toEqual({ error: 'Could not read the job status. Please try again.', code: 'storage_unavailable' });
+    expect(JSON.stringify(res.body)).not.toContain('blobs down');
+  });
+
+  it('never shows the job\'s internal fields (path, slot, rejected request)', async () => {
+    state.records.set(`user-1/${JOB}`, {
+      status: 'done', copy: { headline: 'Hi' }, path: 'legacy', model: 'claude-sonnet-4-6',
+      slotAt: 'x', retryOf: 'y', primaryRejected: { status: 400, type: 'invalid_request_error', requestId: 'req_1' }, claim: 'c',
+    });
+    expect((await poll(JOB)).body).toEqual({ status: 'done', copy: { headline: 'Hi' } });
+    state.records.set(`user-1/${JOB}`, { status: 'error', code: 'config', httpStatus: 500, error: 'No.', path: 'legacy', slotAt: 'x' });
+    expect((await poll(JOB)).body).toEqual({ status: 'error', code: 'config', httpStatus: 500, error: 'No.' });
+  });
+
+  it('cannot reach a retry marker: only uuid job ids are read', async () => {
+    state.records.set(`user-1/${JOB}/retry`, { status: 'retried', by: 'x' });
+    expect((await poll(`${JOB}/retry`)).status).toBe(400);
+    expect(state.reads).toEqual([]);
   });
 
   it('answers CORS preflight and rejects other methods', async () => {

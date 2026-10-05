@@ -6,6 +6,10 @@
 //   running -> done { copy } | error { code, httpStatus, error }
 // and the wizard polls generate-website-status for it. The return value is
 // ignored by Netlify, so every outcome the owner needs to see is a record.
+// Records also say which request wrote the copy (`path`: primary = Opus,
+// legacy = the Sonnet 4.6 request generate-website.js sends, used when the
+// API rejects the Opus request or keeps rate limiting it) and which daily
+// generation the job used.
 //
 // Netlify v2 function (default export) rather than the v1 handler the other
 // functions use: in Lambda compatibility mode (connectLambda) the Blobs
@@ -18,24 +22,30 @@ import { requireUser, supabaseAdmin } from './_shared/auth.js';
 import { checkAndRecordRateLimit } from './_shared/rateLimit.js';
 import {
   generateCopy,
+  generateLegacyCopy,
   generationModel,
   describeFailure,
   isStreamedBusyError,
+  legacyFallbackReason,
   attachWidgetKeys,
   hasRequiredBusinessInfo,
   overDailyLimit,
   isJobId,
   jobKey,
   claimJob,
+  claimFreeRetry,
   openJobStore,
   pruneOldJobs,
   RATE_LIMIT,
   MESSAGES,
   MODEL_DEADLINE_MS,
+  LEGACY_MIN_LEFT_MS,
 } from './_lib/copyGeneration.js';
 
-// Per HTTP attempt (until the stream's headers arrive); the SDK retries 429,
-// 5xx and overloaded twice with backoff, all inside MODEL_DEADLINE_MS.
+// Per HTTP attempt: until the stream's headers arrive for the Opus request,
+// the whole answer for the legacy one (not streamed; the sync route gets it
+// inside 54 s). The SDK retries 429, 5xx and overloaded twice with backoff,
+// all inside MODEL_DEADLINE_MS.
 const REQUEST_TIMEOUT_MS = 120_000;
 const MAX_RETRIES = 2;
 // An overload or rate limit sent inside the open stream is not retried by
@@ -75,15 +85,17 @@ export default async function generateWebsiteBackground(req, context) {
   const store = openJobStore(context, { getStore, getDeployStore });
   const key = jobKey(user.id, jobId);
   const startedAt = new Date().toISOString();
+  // Fields every later record keeps; the slot fields are added once known.
+  const base = { startedAt };
   const finish = async (record) => {
     try {
-      await store.setJSON(key, { ...record, startedAt, finishedAt: new Date().toISOString() });
+      await store.setJSON(key, { ...record, ...base, finishedAt: new Date().toISOString() });
     } catch (err) {
       log(`could not write the ${record.status} record for ${key}:`, err?.message || err);
     }
   };
 
-  const { businessInfo, templateMeta } = body;
+  const { businessInfo, templateMeta, retryOf } = body;
   // Validate before the rate limit records a slot, so a bad request does not
   // use up one of the owner's daily generations.
   if (!hasRequiredBusinessInfo(businessInfo)) {
@@ -101,8 +113,9 @@ export default async function generateWebsiteBackground(req, context) {
   // charged). A job whose record could not be stored does not run either:
   // its result could not be stored, and the wizard reports it as not started.
   const model = generationModel();
+  const claim = randomUUID();
   try {
-    const owned = await claimJob(store, key, { status: 'running', startedAt, model }, randomUUID());
+    const owned = await claimJob(store, key, { status: 'running', startedAt, model }, claim);
     if (!owned) {
       log(`job ${key} is not ours (already exists, or its record was not stored); not running it`);
       return;
@@ -112,46 +125,75 @@ export default async function generateWebsiteBackground(req, context) {
     return;
   }
 
+  let path = 'primary';
   try {
-    const db = supabaseAdmin();
-    const { limited } = await checkAndRecordRateLimit({ db, ip: user.id, ...RATE_LIMIT });
-    if (limited || await overDailyLimit(db, user.id)) {
-      if (!limited) log(`user ${user.id} passed the daily limit with parallel starts; ${key} not run`);
-      await finish({ status: 'error', code: 'daily_limit', httpStatus: 429, error: MESSAGES.dailyLimit });
-      return;
+    // Try again after a job that never got a billed answer runs on that
+    // job's daily generation (claimFreeRetry); anything else uses a new one.
+    const inheritedSlotAt = retryOf ? await claimFreeRetry(store, user.id, retryOf, jobId, claim) : null;
+    if (inheritedSlotAt) {
+      Object.assign(base, { slotAt: inheritedSlotAt, retryOf: String(retryOf).toLowerCase() });
+      log(`job ${key} retries failed job ${retryOf} on its daily generation`);
+    } else {
+      const db = supabaseAdmin();
+      const { limited } = await checkAndRecordRateLimit({ db, ip: user.id, ...RATE_LIMIT });
+      if (limited || await overDailyLimit(db, user.id)) {
+        if (!limited) log(`user ${user.id} passed the daily limit with parallel starts; ${key} not run`);
+        await finish({ status: 'error', code: 'daily_limit', httpStatus: 429, error: MESSAGES.dailyLimit });
+        return;
+      }
+      base.slotAt = startedAt;
     }
 
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
     const t0 = Date.now();
     const deadline = AbortSignal.timeout(MODEL_DEADLINE_MS);
-    const write = () => generateCopy(client, businessInfo, templateMeta, {
-      model,
-      signal: deadline,
-      timeout: REQUEST_TIMEOUT_MS,
-      maxRetries: MAX_RETRIES,
-    });
+    const options = { signal: deadline, timeout: REQUEST_TIMEOUT_MS, maxRetries: MAX_RETRIES };
+    const write = () => generateCopy(client, businessInfo, templateMeta, { model, ...options });
+    const writePrimary = async () => {
+      try {
+        return await write();
+      } catch (err) {
+        if (!isStreamedBusyError(err, Anthropic) || MODEL_DEADLINE_MS - (Date.now() - t0) < STREAM_RETRY_MIN_LEFT_MS) throw err;
+        log(`streamed ${err.type} for ${key}; trying once more`, { request_id: err.requestID });
+        await pause(STREAM_RETRY_DELAY_MS);
+        return write();
+      }
+    };
+
     let result;
     try {
-      result = await write();
+      result = await writePrimary();
     } catch (err) {
-      if (!isStreamedBusyError(err, Anthropic) || MODEL_DEADLINE_MS - (Date.now() - t0) < STREAM_RETRY_MIN_LEFT_MS) throw err;
-      log(`streamed ${err.type} for ${key}; trying once more`, { request_id: err.requestID });
-      await pause(STREAM_RETRY_DELAY_MS);
-      result = await write();
+      // The API turned the Opus request itself down (parameter, beta, model
+      // access) or is still rate limiting it after the retries: either can
+      // fail the same way on every Try again. Write the copy with the legacy
+      // request instead, in this job and on its daily generation, while the
+      // deadline leaves it room, and say so in the log and the record.
+      const reason = legacyFallbackReason(err, Anthropic);
+      if (!reason || MODEL_DEADLINE_MS - (Date.now() - t0) < LEGACY_MIN_LEFT_MS) throw err;
+      path = 'legacy';
+      base.primaryRejected = { reason, status: err.status ?? null, type: err.type ?? null, requestId: err.requestID ?? null };
+      log(`the API ${reason === 'rejected' ? 'rejected' : 'rate limited'} the ${model} request for ${key}; writing it with the legacy request`, {
+        ...base.primaryRejected,
+        message: err.message,
+      });
+      result = await generateLegacyCopy(client, businessInfo, templateMeta, options);
     }
     const { copy, meta } = result;
     console.log(`[generate-website-background] wrote copy for "${businessInfo.businessName}" in ${Math.round((Date.now() - t0) / 1000)} s`, {
+      path,
       model: meta.model,
       fallback: meta.fallback,
       ...meta.billed,
     });
 
     await attachWidgetKeys(copy, businessInfo);
-    await finish({ status: 'done', copy });
+    await finish({ status: 'done', copy, path, model: meta.model });
   } catch (err) {
     const failure = describeFailure(err, Anthropic);
     // Keep the raw API error (JSON, request ids) in the log, not on screen.
     log(`FAILED for "${businessInfo.businessName}" (${failure.code}):`, err?.message || err, {
+      path,
       status: err?.status,
       type: err?.type,
       request_id: err?.requestID,
@@ -160,7 +202,7 @@ export default async function generateWebsiteBackground(req, context) {
       stop_reason: err?.meta?.stopReason,
       ...err?.meta?.billed,
     });
-    await finish({ status: 'error', code: failure.code, httpStatus: failure.httpStatus, error: failure.message });
+    await finish({ status: 'error', code: failure.code, httpStatus: failure.httpStatus, error: failure.message, path });
   }
 
   await pruneOldJobs(store, user.id, { keep: key });

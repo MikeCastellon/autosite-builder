@@ -4,7 +4,15 @@
 //                                   Netlify background function (15 min).
 //   generate-website-status.js      reads the background job's result.
 //   generate-website.js             the legacy synchronous path, kept for app
-//                                   bundles loaded before this deploy.
+//                                   bundles loaded before this deploy and as
+//                                   the wizard's fallback when the background
+//                                   route is unavailable (generateWebsite.js).
+//
+// The Opus request has not run against the real API before this deploy, so
+// the background job falls back to the legacy request (generateLegacyCopy,
+// the same request generate-website.js sends) when the API turns the Opus
+// request down as invalid (isRequestRejected) or keeps rate limiting it
+// (isRateLimited), inside the same job (legacyFallbackReason).
 //
 // Everything here is plain data and functions. The Anthropic client and the
 // Blobs functions are passed in, so tests run without network or SDK mocks.
@@ -385,8 +393,18 @@ function answerTokens(message) {
   return Math.ceil(chars / 4);
 }
 
+function requestOptions({ signal, timeout, maxRetries } = {}) {
+  const options = {};
+  if (signal) options.signal = signal;
+  if (timeout != null) options.timeout = timeout;
+  if (maxRetries != null) options.maxRetries = maxRetries;
+  return options;
+}
+
 /**
- * Streams one generation and returns normalized copy.
+ * Streams one generation and returns { copy, raw, meta }: copy normalized,
+ * raw as the model wrote it (scripts/smoke-generate.mjs checks it against
+ * COPY_SCHEMA), meta for the log.
  *
  * `client` is an Anthropic SDK client (or a test double with
  * beta.messages.stream). `signal` / `timeout` / `maxRetries` are SDK request
@@ -397,15 +415,13 @@ export async function generateCopy(client, businessInfo, templateMeta, {
   model, effort, maxTokens, extraContext, signal, timeout, maxRetries,
 } = {}) {
   const params = buildRequest(businessInfo, templateMeta, { model, effort, maxTokens, extraContext });
-  const options = {};
-  if (signal) options.signal = signal;
-  if (timeout != null) options.timeout = timeout;
-  if (maxRetries != null) options.maxRetries = maxRetries;
+  const options = requestOptions({ signal, timeout, maxRetries });
 
   const stream = client.beta.messages.stream(params, options);
   const message = await stream.finalMessage();
 
   const meta = {
+    path: 'primary',
     requestedModel: params.model,
     model: message?.model,
     stopReason: message?.stop_reason,
@@ -438,7 +454,88 @@ export async function generateCopy(client, businessInfo, templateMeta, {
     }
     throw err;
   }
-  return { copy: normalizeCopy(parsed, businessInfo), meta };
+  return { copy: normalizeCopy(parsed, businessInfo), raw: parsed, meta };
+}
+
+/**
+ * The legacy request (buildLegacyRequest: Sonnet 4.6, no thinking, the JSON
+ * shape in the prompt), sent and read the way generate-website.js does, with
+ * the same { copy, raw, meta } result as generateCopy. The background job
+ * uses it when the API rejects or keeps rate limiting the Opus request
+ * (legacyFallbackReason).
+ *
+ * Without thinking, a max_tokens stop means the answer itself filled the cap:
+ * longAnswer is true, so describeFailure reports too_long (422), as the
+ * legacy route does. SDK errors pass through.
+ */
+export async function generateLegacyCopy(client, businessInfo, templateMeta, { signal, timeout, maxRetries } = {}) {
+  const params = buildLegacyRequest(businessInfo, templateMeta);
+  const message = await client.messages.create(params, requestOptions({ signal, timeout, maxRetries }));
+
+  const meta = {
+    path: 'legacy',
+    requestedModel: params.model,
+    model: message?.model,
+    stopReason: message?.stop_reason,
+    usage: message?.usage,
+    billed: billedUsage(message?.usage),
+    fallback: false,
+  };
+
+  let parsed;
+  try {
+    parsed = parseCopyMessage(message);
+  } catch (err) {
+    if (err instanceof CopyResponseError) {
+      err.meta = meta;
+      if (err.code === 'max_tokens') err.longAnswer = true;
+      if (err.code === 'refusal') {
+        err.category = message?.stop_details?.category ?? null;
+        err.recommendedModel = null;
+      }
+    }
+    throw err;
+  }
+  return { copy: normalizeCopy(parsed, businessInfo), raw: parsed, meta };
+}
+
+// An API answer that says "this request is not accepted", as opposed to "not
+// now" (429, 5xx, overloaded) or "not this key" (401): a bad parameter, a
+// beta header or model this key may not use, an unknown model id. The same
+// request fails the same way every time, so the job switches to the legacy
+// request instead of telling the owner to try again. An error sent inside an
+// open stream has no status, only its type.
+const REJECTED_STATUSES = new Set([400, 403, 404, 422]);
+const REJECTED_TYPES = new Set(['invalid_request_error', 'permission_error', 'not_found_error']);
+
+export function isRequestRejected(err, sdk) {
+  if (!sdk || !(err instanceof sdk.APIError)) return false;
+  if (err instanceof sdk.APIConnectionError || err instanceof sdk.APIUserAbortError) return false;
+  if (REJECTED_STATUSES.has(err.status)) return true;
+  return err.status == null && REJECTED_TYPES.has(err.type);
+}
+
+// A rate limit still standing after the SDK's retries (429), or sent inside
+// the stream after our one extra try (rate_limit_error, no status). It can
+// last: the Opus request reserves MAX_TOKENS of output per request, and an
+// organization's output limit for Opus may be below that, so every Try
+// again would hit it too. The legacy request runs on another model, with its
+// own limit and a quarter of the output, so the job switches to it as well.
+// Overloads (529, overloaded_error) are not included: they pass, and a Try
+// again after one is free (FREE_RETRY_CODES).
+export function isRateLimited(err, sdk) {
+  if (!sdk || !(err instanceof sdk.APIError)) return false;
+  if (err instanceof sdk.APIConnectionError || err instanceof sdk.APIUserAbortError) return false;
+  if (err.status === 429) return true;
+  return err.status == null && err.type === 'rate_limit_error';
+}
+
+// Why the background job writes the copy with the legacy request after the
+// Opus request failed: 'rejected', 'rate_limited', or null (it does not).
+export function legacyFallbackReason(err, sdk) {
+  if (isRequestRejected(err, sdk)) return 'rejected';
+  if (isRateLimited(err, sdk)) return 'rate_limited';
+  return null;
 }
 
 // ─── Failures, as the owner sees them ───────────────────────────────────────
@@ -480,8 +577,8 @@ export function describeFailure(err, sdk) {
       return { code: 'refusal', httpStatus: 422, message: MESSAGES.refusal };
     }
     if (err.code === 'max_tokens') {
-      // longAnswer is set by generateCopy; the legacy route (no thinking)
-      // does not come through here.
+      // longAnswer is set by generateCopy (false when the thinking used the
+      // cap) and by generateLegacyCopy (always true: no thinking).
       if (err.longAnswer === false) return { code: 'cut_off', httpStatus: 502, message: MESSAGES.incomplete };
       return { code: 'too_long', httpStatus: 422, message: MESSAGES.tooLong };
     }
@@ -500,6 +597,8 @@ export function describeFailure(err, sdk) {
       // 429 and 5xx (529 = overloaded) are left after the SDK's own retries.
       if (err.status === 429 || err.status >= 500) return { code: 'busy', httpStatus: 503, message: MESSAGES.busy };
       // Other 4xx: our request or our account (key, model id, beta access).
+      // The background job only gets here after the legacy request failed
+      // too, or for a 401 (bad key), which no other request would pass.
       return { code: 'config', httpStatus: 500, message: MESSAGES.generic };
     }
   }
@@ -552,6 +651,11 @@ export const JOB_STORE = 'copy-jobs';
 // deadline. The wizard stops polling a little later (generateWebsite.js
 // JOB_TIMEOUT_MS), so it reads the job's own timeout record.
 export const MODEL_DEADLINE_MS = 240_000;
+// The legacy request is sent after a failed Opus request only while this
+// much of that deadline is left: the sync route gives it 54 s. With less, the
+// Opus request's own error is recorded (a rate limit stays a free Try again
+// instead of becoming a timeout, which is not).
+export const LEGACY_MIN_LEFT_MS = 60_000;
 // A background function runs at most 15 minutes; a record still "running"
 // after that belongs to an invocation that died.
 export const JOB_STALE_MS = 16 * 60 * 1000;
@@ -596,6 +700,55 @@ export async function claimJob(store, key, record, claim) {
   await store.setJSON(key, { ...record, claim }, { onlyIfNew: true });
   const stored = await store.get(key, { type: 'json' });
   return Boolean(claim) && stored?.claim === claim;
+}
+
+// ─── Daily generations and Try again ────────────────────────────────────────
+// A job uses one daily generation (a request_log row) when it runs; the
+// re-sent start of the same job id, the in-stream retry and the legacy
+// fallback all run inside that one job. Try again in the wizard starts a new
+// job, which would use another one. When the failed job never got a billed
+// answer, the new job takes over its generation instead: the wizard sends
+// the failed job's id as `retryOf` (generateWebsite.js), and claimFreeRetry
+// decides. A chain of such failures holds the one generation of the job that
+// started it, for as long as that generation counts (RATE_LIMIT.windowMs).
+//
+// Only failures the owner cannot cause, which bill nothing or at most an
+// attempt cut short: the API turned the request down (config), or had no
+// capacity for it (busy, fallback_busy). A timeout, cut-off, refusal or
+// unusable answer was a whole paid call, so its Try again counts; otherwise
+// a crafted request could buy unlimited model calls with one generation.
+export const FREE_RETRY_CODES = ['config', 'busy', 'fallback_busy'];
+
+// Next to the failed job's record, so pruneOldJobs removes it with the rest.
+// The status function reads only `${userId}/${uuid}`, never this key.
+export function retryKey(userId, failedJobId) {
+  return `${jobKey(userId, failedJobId)}/retry`;
+}
+
+/**
+ * Whether job `jobId` may run on the daily generation of the user's failed
+ * job `failedJobId`. Returns the time that generation was used (`slotAt`,
+ * ISO) when it may, null otherwise. The failed record is read under the
+ * user's own key, so another user's job id gives nothing. Each failed job
+ * hands its generation on once: a marker at retryKey is claimed like a job
+ * (claimJob, with this invocation's `claim` token). Any storage error counts
+ * the new job normally.
+ */
+export async function claimFreeRetry(store, userId, failedJobId, jobId, claim, { now = Date.now() } = {}) {
+  if (!isJobId(failedJobId) || !isJobId(jobId) || failedJobId.toLowerCase() === jobId.toLowerCase()) return null;
+  try {
+    const failed = await store.get(jobKey(userId, failedJobId), { type: 'json' });
+    if (failed?.status !== 'error' || !FREE_RETRY_CODES.includes(failed.code)) return null;
+    // The generation being handed on must still count today.
+    const slotAt = Date.parse(failed.slotAt);
+    if (!Number.isFinite(slotAt) || now - slotAt > RATE_LIMIT.windowMs) return null;
+    const marker = { status: 'retried', by: jobId.toLowerCase(), startedAt: new Date(now).toISOString() };
+    if (!(await claimJob(store, retryKey(userId, failedJobId), marker, claim))) return null;
+    return failed.slotAt;
+  } catch (err) {
+    console.error('[copy-jobs] free retry check failed, counting the job:', err?.message || err);
+    return null;
+  }
 }
 
 /** What the status function returns for a stored record. */

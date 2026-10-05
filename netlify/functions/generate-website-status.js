@@ -4,6 +4,7 @@
 //       { status: 'error', code, httpStatus, error }
 //   404 while the job does not exist (yet): the background function may not
 //       have written its first record when the first poll arrives.
+//   503 { error, code: 'storage_unavailable' } when Blobs cannot be read.
 // The key is built from the signed-in user, never taken from the request, so
 // a job id alone cannot read someone else's copy.
 //
@@ -39,8 +40,10 @@ export default async function generateWebsiteStatus(req, context) {
     record = await store.get(jobKey(user.id, jobId), { type: 'json' });
   } catch (err) {
     console.error('[generate-website-status] read failed:', err?.message || err);
-    // 5xx: the wizard keeps polling through a brief storage hiccup.
-    return reply(503, { error: 'Could not read the job status. Please try again.' });
+    // 5xx: the wizard keeps polling through a brief storage hiccup. The code
+    // names the cause; after MAX_POLL_FAILURES of these in a row the wizard
+    // writes the copy with the legacy route instead (generateWebsite.js).
+    return reply(503, { error: 'Could not read the job status. Please try again.', code: 'storage_unavailable' });
   }
   if (!record) return reply(404, { error: 'Job not found' });
   return reply(200, publicJobState(record));

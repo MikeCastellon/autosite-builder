@@ -1,13 +1,18 @@
 // tests/functions/generate-website-background.test.js
 // The background job with Anthropic, Blobs, auth and the rate limiter
-// stubbed: who may start a job, what is recorded at each step, and that one
-// job id never runs (or is charged) twice. No network, no real model call.
+// stubbed: who may start a job, what is recorded at each step, that one job
+// id never runs (or is charged) twice, the switch to the legacy request when
+// the API rejects or keeps rate limiting the Opus request, and the free Try
+// again after a job that
+// failed before a billed answer. No network, no real model call.
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 const state = vi.hoisted(() => ({
   message: null,
   queue: null,
   streams: [],
+  legacy: null,
+  creates: [],
   blobs: 'normal',
   recount: 1,
   records: new Map(),
@@ -15,6 +20,7 @@ const state = vi.hoisted(() => ({
   stores: [],
   rateLimitCalls: 0,
   limited: false,
+  onStream: null,
 }));
 
 // Same class hierarchy as the SDK, for describeFailure.
@@ -43,6 +49,7 @@ vi.mock('../../netlify/functions/node_modules/@anthropic-ai/sdk/index.mjs', () =
         messages: {
           stream: (params, options) => {
             state.streams.push({ params, options });
+            state.onStream?.();
             const next = state.queue ? state.queue.shift() : state.message;
             return {
               finalMessage: async () => {
@@ -51,6 +58,14 @@ vi.mock('../../netlify/functions/node_modules/@anthropic-ai/sdk/index.mjs', () =
               },
             };
           },
+        },
+      };
+      // The legacy request (generateLegacyCopy) is not streamed.
+      this.messages = {
+        create: async (params, options) => {
+          state.creates.push({ params, options });
+          if (state.legacy instanceof Error) throw state.legacy;
+          return state.legacy;
         },
       };
     }
@@ -145,10 +160,18 @@ const answer = (extra = {}) => ({
   stop_reason: 'end_turn',
   usage: { input_tokens: 1000, output_tokens: 2000 },
 });
+const legacyAnswer = () => ({
+  model: 'claude-sonnet-4-6',
+  content: [{ type: 'text', text: '{"headline":"Austin Shine (legacy)"}' }],
+  stop_reason: 'end_turn',
+  usage: { input_tokens: 900, output_tokens: 600 },
+});
 
 beforeEach(() => {
   state.message = answer();
   state.queue = null;
+  state.legacy = legacyAnswer();
+  state.creates = [];
   state.blobs = 'normal';
   state.recount = 1;
   state.streams = [];
@@ -158,6 +181,7 @@ beforeEach(() => {
   state.rateLimitCalls = 0;
   state.rateLimitOpts = null;
   state.limited = false;
+  state.onStream = null;
   vi.spyOn(console, 'error').mockImplementation(() => {});
   vi.spyOn(console, 'log').mockImplementation(() => {});
 });
@@ -184,6 +208,10 @@ describe('generate-website-background', () => {
     expect(state.writes.map((w) => [w.status, w.onlyIfNew])).toEqual([['running', true], ['done', false]]);
     const record = state.records.get(KEY);
     expect(record.status).toBe('done');
+    // Which request wrote it, which model served it, which generation it used.
+    expect(record).toMatchObject({ path: 'primary', model: 'claude-opus-5', slotAt: record.startedAt });
+    expect(record).not.toHaveProperty('primaryRejected');
+    expect(state.creates).toEqual([]);
     expect(record.copy.headline).toBe('Austin Shine');
     expect(record.copy.ctaHeadline).toBe('Ready?');
     expect(record.copy.servicesSection.items).toEqual([{ name: 'Full Detail', description: '' }]);
@@ -274,15 +302,141 @@ describe('generate-website-background', () => {
     ['an answer without text', () => ({ content: [{ type: 'thinking', thinking: '' }], stop_reason: 'end_turn' }), { code: 'incomplete', httpStatus: 502 }],
     ['an overloaded API', () => new sdk.APIError(529), { code: 'busy', httpStatus: 503 }],
     ['the deadline', () => new sdk.APIUserAbortError(), { code: 'timeout', httpStatus: 504 }],
-    ['a bad request to the API', () => new sdk.APIError(400, '400 {"type":"invalid_request_error"}'), { code: 'config', httpStatus: 500 }],
+    ['a bad API key', () => new sdk.APIError(401, '401 {"type":"authentication_error"}', 'authentication_error'), { code: 'config', httpStatus: 500 }],
   ])('records %s as an error the wizard can explain', async (_, make, expected) => {
     state.message = make();
     await post({ jobId: JOB, businessInfo });
     const record = state.records.get(KEY);
-    expect(record).toMatchObject({ status: 'error', ...expected });
+    expect(record).toMatchObject({ status: 'error', path: 'primary', ...expected });
     expect(record.error).toEqual(expect.any(String));
-    expect(record.error).not.toMatch(/invalid_request_error|status \d/);
+    expect(record.error).not.toMatch(/invalid_request_error|authentication_error|status \d/);
     expect(record).not.toHaveProperty('copy');
+    // None of these is a rejected request: the legacy request is not sent.
+    expect(state.creates).toEqual([]);
+  });
+
+  describe('when the API rejects the Opus request', () => {
+    it.each([
+      ['a 400 (parameter or beta header)', () => new sdk.APIError(400, '400 {"type":"invalid_request_error"}', 'invalid_request_error'), 400, 'invalid_request_error'],
+      ['a 404 (model id)', () => new sdk.APIError(404, '404 {"type":"not_found_error"}', 'not_found_error'), 404, 'not_found_error'],
+      ['a 403 (model or beta not allowed for this key)', () => new sdk.APIError(403, '403 {"type":"permission_error"}', 'permission_error'), 403, 'permission_error'],
+      ['a 422', () => new sdk.APIError(422, '422 {"type":"invalid_request_error"}', 'invalid_request_error'), 422, 'invalid_request_error'],
+      ['an invalid_request_error sent inside the stream', () => new sdk.APIError(undefined, '{"type":"invalid_request_error"}', 'invalid_request_error'), null, 'invalid_request_error'],
+    ])('after %s, writes the copy with the legacy request in the same job and daily generation', async (_, make, status, type) => {
+      state.message = make();
+      await post({ jobId: JOB, businessInfo, templateMeta: { label: 'Sporty' } });
+      expect(state.streams).toHaveLength(1);
+      expect(state.creates).toHaveLength(1);
+      const { params, options } = state.creates[0];
+      expect(params).toMatchObject({ model: 'claude-sonnet-4-6', max_tokens: 4000 });
+      for (const key of ['thinking', 'output_config', 'betas', 'fallbacks']) expect(params).not.toHaveProperty(key);
+      // The job's own deadline and retry policy.
+      expect(options.signal).toBe(state.streams[0].options.signal);
+      expect(options).toMatchObject({ maxRetries: 2, timeout: state.streams[0].options.timeout });
+      expect(state.rateLimitCalls).toBe(1);
+
+      const record = state.records.get(KEY);
+      expect(record).toMatchObject({ status: 'done', path: 'legacy', model: 'claude-sonnet-4-6', primaryRejected: { status, type, requestId: 'req_1' } });
+      expect(record.copy.headline).toBe('Austin Shine (legacy)');
+      expect(record.copy.servicesSection.items).toEqual([{ name: 'Full Detail', description: '' }]);
+      const wrote = console.log.mock.calls.find((args) => String(args[0]).includes('wrote copy'));
+      expect(wrote[1]).toMatchObject({ path: 'legacy', model: 'claude-sonnet-4-6', inputTokens: 900 });
+      const switched = console.error.mock.calls.find((args) => String(args[1]).includes('rejected'));
+      expect(switched.at(-1)).toMatchObject({ status, type });
+    });
+
+    it('records the legacy request\'s own failure, still on one daily generation', async () => {
+      state.message = new sdk.APIError(400, '400 bad', 'invalid_request_error');
+      state.legacy = new sdk.APIError(400, '400 bad too', 'invalid_request_error');
+      await post({ jobId: JOB, businessInfo });
+      expect(state.streams).toHaveLength(1);
+      expect(state.creates).toHaveLength(1);
+      expect(state.rateLimitCalls).toBe(1);
+      expect(state.records.get(KEY)).toMatchObject({ status: 'error', code: 'config', httpStatus: 500, path: 'legacy' });
+
+      state.records.clear();
+      state.legacy = new sdk.APIError(529, '529 overloaded', 'overloaded_error');
+      await post({ jobId: JOB, businessInfo });
+      expect(state.records.get(KEY)).toMatchObject({ status: 'error', code: 'busy', httpStatus: 503, path: 'legacy' });
+
+      state.records.clear();
+      state.legacy = { content: [{ type: 'text', text: '{"headline":"x' }], stop_reason: 'max_tokens', usage: { output_tokens: 4000 } };
+      await post({ jobId: JOB, businessInfo });
+      expect(state.records.get(KEY)).toMatchObject({ status: 'error', code: 'too_long', httpStatus: 422, path: 'legacy' });
+    });
+
+    it('does not use the legacy request for overloads, network errors, timeouts or answers it did not like', async () => {
+      for (const make of [
+        () => new sdk.APIError(529, 'overloaded', 'overloaded_error'),
+        () => new sdk.APIError(500, 'api error', 'api_error'),
+        () => new sdk.APIConnectionError(),
+        () => new sdk.APIUserAbortError(),
+        () => ({ content: [], stop_reason: 'refusal', stop_details: { category: 'cyber' } }),
+        () => ({ content: [{ type: 'text', text: 'Sorry.' }], stop_reason: 'end_turn' }),
+      ]) {
+        state.records.clear();
+        state.message = make();
+        await post({ jobId: JOB, businessInfo });
+        expect(state.records.get(KEY).status).toBe('error');
+      }
+      expect(state.creates).toEqual([]);
+    });
+  });
+
+  describe('when the API keeps rate limiting the Opus request', () => {
+    // An organization output limit below the request's max_tokens answers
+    // every Opus request with 429, so Try again could never succeed.
+    it('after a 429 left by the SDK retries, writes the copy with the legacy request in the same job and daily generation', async () => {
+      state.message = new sdk.APIError(429, '429 {"type":"rate_limit_error"}', 'rate_limit_error');
+      await post({ jobId: JOB, businessInfo });
+      expect(state.streams).toHaveLength(1);
+      expect(state.creates).toHaveLength(1);
+      expect(state.creates[0].params).toMatchObject({ model: 'claude-sonnet-4-6', max_tokens: 4000 });
+      expect(state.creates[0].options.signal).toBe(state.streams[0].options.signal);
+      expect(state.rateLimitCalls).toBe(1);
+      const record = state.records.get(KEY);
+      expect(record).toMatchObject({
+        status: 'done',
+        path: 'legacy',
+        model: 'claude-sonnet-4-6',
+        primaryRejected: { reason: 'rate_limited', status: 429, type: 'rate_limit_error', requestId: 'req_1' },
+      });
+      const switched = console.error.mock.calls.find((args) => String(args[1]).includes('rate limited the claude-opus-5 request'));
+      expect(switched.at(-1)).toMatchObject({ reason: 'rate_limited', status: 429 });
+    });
+
+    it('after a rate_limit_error inside the stream outlasts the extra try, writes it with the legacy request', async () => {
+      vi.useFakeTimers({ toFake: ['setTimeout'] });
+      state.queue = [streamedError('overloaded_error'), streamedError('rate_limit_error')];
+      await settle(post({ jobId: JOB, businessInfo }));
+      expect(state.streams).toHaveLength(2);
+      expect(state.creates).toHaveLength(1);
+      expect(state.rateLimitCalls).toBe(1);
+      expect(state.records.get(KEY)).toMatchObject({
+        status: 'done',
+        path: 'legacy',
+        primaryRejected: { reason: 'rate_limited', status: null, type: 'rate_limit_error' },
+      });
+    });
+
+    it('records busy (a free Try again) when the legacy request is rate limited too', async () => {
+      state.message = new sdk.APIError(429, 'rate limited', 'rate_limit_error');
+      state.legacy = new sdk.APIError(429, 'rate limited too', 'rate_limit_error');
+      await post({ jobId: JOB, businessInfo });
+      expect(state.creates).toHaveLength(1);
+      expect(state.records.get(KEY)).toMatchObject({ status: 'error', code: 'busy', httpStatus: 503, path: 'legacy' });
+    });
+
+    it('keeps the Opus error (busy) when too little of the deadline is left for the legacy request', async () => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      state.message = new sdk.APIError(429, 'rate limited', 'rate_limit_error');
+      // The SDK's retries used 190 s of the 240 s deadline.
+      state.onStream = () => vi.setSystemTime(Date.now() + 190_000);
+      await post({ jobId: JOB, businessInfo });
+      expect(state.creates).toEqual([]);
+      expect(state.records.get(KEY)).toMatchObject({ status: 'error', code: 'busy', httpStatus: 503, path: 'primary' });
+      expect(state.records.get(KEY)).not.toHaveProperty('primaryRejected');
+    });
   });
 
   it('tries once more after an overload sent inside the stream, without another daily generation', async () => {
@@ -296,12 +450,13 @@ describe('generate-website-background', () => {
 
   it('records a second in-stream overload as busy (retryable), with its type in the log', async () => {
     vi.useFakeTimers({ toFake: ['setTimeout'] });
-    state.queue = [streamedError('overloaded_error'), streamedError('rate_limit_error')];
+    state.queue = [streamedError('overloaded_error'), streamedError('api_error')];
     await settle(post({ jobId: JOB, businessInfo }));
     expect(state.streams).toHaveLength(2);
+    expect(state.creates).toEqual([]);
     expect(state.records.get(KEY)).toMatchObject({ status: 'error', code: 'busy', httpStatus: 503 });
     const failed = console.error.mock.calls.find((args) => String(args[1]).startsWith('FAILED'));
-    expect(failed.at(-1)).toMatchObject({ type: 'rate_limit_error', request_id: 'req_1' });
+    expect(failed.at(-1)).toMatchObject({ type: 'api_error', request_id: 'req_1' });
   });
 
   it('does not retry an error with a status (the SDK already did)', async () => {
@@ -388,6 +543,64 @@ describe('generate-website-background', () => {
     state.records.set('user-2/old', { status: 'done', finishedAt: old });
     await post({ jobId: JOB, businessInfo });
     expect([...state.records.keys()].sort()).toEqual([KEY, 'user-2/old'].sort());
+  });
+
+  describe('Try again after a failed job (retryOf)', () => {
+    const NEXT = '9b241101-e2bb-4255-8caf-4136c566a962';
+    const THIRD = '7b241101-e2bb-4255-8caf-4136c566a962';
+
+    it('runs on the failed job\'s daily generation when that job got no billed answer, once', async () => {
+      state.message = new sdk.APIError(529, 'overloaded', 'overloaded_error');
+      await post({ jobId: JOB, businessInfo });
+      expect(state.records.get(KEY)).toMatchObject({ status: 'error', code: 'busy' });
+      expect(state.rateLimitCalls).toBe(1);
+
+      state.message = answer();
+      await post({ jobId: NEXT, businessInfo, retryOf: JOB });
+      expect(state.rateLimitCalls).toBe(1);
+      expect(state.records.get(`user-1/${NEXT}`)).toMatchObject({ status: 'done', retryOf: JOB, slotAt: state.records.get(KEY).slotAt });
+
+      // The same failed job cannot be handed on twice.
+      await post({ jobId: THIRD, businessInfo, retryOf: JOB });
+      expect(state.rateLimitCalls).toBe(2);
+      expect(state.records.get(`user-1/${THIRD}`)).toMatchObject({ status: 'done', slotAt: state.records.get(`user-1/${THIRD}`).startedAt });
+      expect(state.records.get(`user-1/${THIRD}`)).not.toHaveProperty('retryOf');
+    });
+
+    it('keeps one generation through a chain of failures', async () => {
+      state.message = new sdk.APIError(400, 'bad', 'invalid_request_error');
+      state.legacy = new sdk.APIError(400, 'bad', 'invalid_request_error');
+      await post({ jobId: JOB, businessInfo });
+      await post({ jobId: NEXT, businessInfo, retryOf: JOB });
+      state.message = answer();
+      await post({ jobId: THIRD, businessInfo, retryOf: NEXT });
+      expect(state.rateLimitCalls).toBe(1);
+      expect(state.records.get(`user-1/${NEXT}`)).toMatchObject({ status: 'error', code: 'config', retryOf: JOB });
+      expect(state.records.get(`user-1/${THIRD}`)).toMatchObject({ status: 'done', retryOf: NEXT, slotAt: state.records.get(KEY).slotAt });
+    });
+
+    it('uses a new daily generation after a failure that was paid for, or for someone else\'s job', async () => {
+      state.message = { ...answer(), stop_reason: 'max_tokens', usage: { output_tokens: 16000, output_tokens_details: { thinking_tokens: 15000 } } };
+      await post({ jobId: JOB, businessInfo });
+      expect(state.records.get(KEY)).toMatchObject({ code: 'cut_off' });
+      state.message = answer();
+      await post({ jobId: NEXT, businessInfo, retryOf: JOB });
+      expect(state.rateLimitCalls).toBe(2);
+
+      // user-2 names user-1's failed job: read under user-2's own key, nothing there.
+      state.records.set(KEY, { status: 'error', code: 'busy', startedAt: new Date().toISOString(), slotAt: new Date().toISOString() });
+      await post({ jobId: THIRD, businessInfo, retryOf: JOB }, { token: 'tok-2' });
+      expect(state.rateLimitCalls).toBe(3);
+      expect(state.records.has(`user-1/${JOB}/retry`)).toBe(false);
+    });
+
+    it('still applies the daily limit to a retry it cannot hand on', async () => {
+      state.limited = true;
+      await post({ jobId: NEXT, businessInfo, retryOf: JOB });
+      expect(state.records.get(`user-1/${NEXT}`)).toMatchObject({ status: 'error', code: 'daily_limit', httpStatus: 429 });
+      expect(state.records.get(`user-1/${NEXT}`)).not.toHaveProperty('slotAt');
+      expect(state.streams).toEqual([]);
+    });
   });
 
   it('never throws, so Netlify has nothing to retry', async () => {

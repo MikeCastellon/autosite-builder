@@ -6,6 +6,18 @@ import { normalizeCopy } from './normalizeCopy.js';
 // synchronous function may run. generateWebsite() starts the job with an id
 // it makes itself, then polls generate-website-status until the job is done,
 // failed, or out of time.
+//
+// That route needs two functions and Netlify Blobs. When it is unavailable
+// (the start gets no answer, a 404 or a 5xx; the job never appears; polling
+// keeps failing), the copy is written once by the legacy synchronous route
+// (generate-website, Sonnet 4.6, what production used before; that function
+// must stay, whatever its own header says, and a test checks it is there),
+// and the wizard never knows. Never for the owner's own errors (sign-in,
+// missing details, daily limit) or the job's answers: those would fail there
+// too.
+// The legacy route records its own daily generation. A job that never
+// appeared used none; a job whose status could not be read, or whose start
+// answers were all lost, may have run anyway, and then that one try uses two.
 
 // Errors carry the HTTP status (`err.status`) when the server answered, so
 // the caller can tell a retryable failure (network, 5xx) from one that will
@@ -13,7 +25,10 @@ import { normalizeCopy } from './normalizeCopy.js';
 // job's `err.code` when it has one. `err.resumeJobId` is set when the job may
 // still finish on the server (polling lost the connection): passing it back
 // as the `jobId` option polls that job again instead of starting, and paying
-// for, a new one.
+// for, a new one. `err.failedJobId` is set when the job itself failed:
+// passing it back as the `retryOf` option lets the server run the new job on
+// the failed job's daily generation when that job never got a billed answer
+// (claimFreeRetry in netlify/functions/_lib/copyGeneration.js).
 function generationError(message, status, code) {
   const err = new Error(message);
   if (status) err.status = status;
@@ -59,6 +74,21 @@ export const MAX_POLL_FAILURES = 5;
 
 const BACKGROUND_URL = '/.netlify/functions/generate-website-background';
 const STATUS_URL = '/.netlify/functions/generate-website-status';
+const LEGACY_URL = '/.netlify/functions/generate-website';
+
+// Starting the job failed because the route is not there or not working (no
+// answer, 404, 5xx), not because of the request (401, 400, 413, 429).
+export function isStartUnavailable(err) {
+  if (err?.name === 'AbortError') return false;
+  const status = err?.status;
+  return !status || status === 404 || status >= 500;
+}
+
+// Marks an error as "the background route is unavailable" for generateWebsite.
+function unavailable(err) {
+  err.routeUnavailable = true;
+  return err;
+}
 
 const wait = (ms, signal) => new Promise((resolve, reject) => {
   if (signal?.aborted) {
@@ -117,14 +147,16 @@ async function readJson(response) {
   }
 }
 
-async function startJob(jobId, businessInfo, templateMeta, signal) {
+async function startJob(jobId, businessInfo, templateMeta, signal, retryOf) {
   const token = await accessToken();
+  const body = { jobId, businessInfo, templateMeta };
+  if (typeof retryOf === 'string' && retryOf) body.retryOf = retryOf;
   let response;
   try {
     response = await fetch(BACKGROUND_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ jobId, businessInfo, templateMeta }),
+      body: JSON.stringify(body),
       signal,
     });
   } catch (networkErr) {
@@ -139,17 +171,83 @@ async function startJob(jobId, businessInfo, templateMeta, signal) {
 }
 
 /**
- * Starts the background job and resolves with normalized copy when it is
- * done. Rejects with an Error carrying `status` (and `code` from the job,
- * `resumeJobId` when the job may still finish); an AbortError when `signal`
- * aborts. With `jobId` it starts nothing and polls that job again.
+ * The legacy synchronous route: one request, one answer, the response
+ * contract production used before the background job ({ success, copy } or
+ * { error, code? } with the status). It records its own daily generation.
+ * `fallback` says why the background route was given up (the error's code,
+ * status or 'network'), so the server can tell a fallback from an app bundle
+ * loaded before the background route existed; generate-website ignores
+ * fields it does not read.
  */
-export async function generateWebsite(businessInfo, templateMeta, {
+async function writeWithLegacyRoute(businessInfo, templateMeta, signal, fallback) {
+  const token = await accessToken();
+  let response;
+  try {
+    response = await fetch(LEGACY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ businessInfo, templateMeta, fallback }),
+      signal,
+    });
+  } catch {
+    if (signal?.aborted) throw abortError();
+    throw generationError(NETWORK_MESSAGE);
+  }
+  const data = await readJson(response);
+  if (!response.ok) {
+    // Netlify's own 502/504 pages are HTML: status only, still retryable.
+    throw generationError(data?.error || `Generation failed (${response.status})`, response.status, data?.code);
+  }
+  if (!data?.copy || typeof data.copy !== 'object') {
+    throw generationError('No copy returned from generator — please try again.', 502);
+  }
+  return normalizeCopy(data.copy, businessInfo);
+}
+
+/**
+ * Starts the background job and resolves with normalized copy when it is
+ * done; when the background route is unavailable, writes the copy once with
+ * the legacy route instead. Rejects with an Error carrying `status` (and
+ * `code` from the job, `resumeJobId` when the job may still finish,
+ * `failedJobId` when the job failed); an AbortError when `signal` aborts.
+ * With `jobId` it starts nothing and polls that job again; `retryOf` is the
+ * `failedJobId` of the run this one retries.
+ */
+export async function generateWebsite(businessInfo, templateMeta, options = {}) {
+  try {
+    return await runBackgroundJob(businessInfo, templateMeta, options);
+  } catch (cause) {
+    if (!cause?.routeUnavailable || options.signal?.aborted) throw cause;
+    const reason = String(cause.code || cause.status || 'network');
+    console.warn('[generate-website] background route unavailable; writing the copy with the legacy route', {
+      reason,
+      error: cause.message,
+    });
+    try {
+      return await writeWithLegacyRoute(businessInfo, templateMeta, options.signal, reason);
+    } catch (err) {
+      if (err?.name === 'AbortError' || options.signal?.aborted) throw abortError();
+      // Neither route could write it. If the job may still finish (polling
+      // lost it), its error (with resumeJobId) is the one to show: Try again
+      // then reads that job, which already used a daily generation, instead
+      // of paying for another. The legacy route's answer says nothing about
+      // that job: its own daily limit, a list too long for its smaller cap
+      // or its 54 s are not the job's. Only a sign-in error (401) stands, as
+      // polling the job would fail the same way. Otherwise the legacy
+      // route's answer stands (a daily limit or a too-long list is final).
+      if (cause.resumeJobId && err?.status !== 401) throw cause;
+      throw err;
+    }
+  }
+}
+
+async function runBackgroundJob(businessInfo, templateMeta, {
   signal,
   sleep = wait,
   now = Date.now,
   newJobId = () => crypto.randomUUID(),
   jobId: resumeJobId,
+  retryOf,
   pollIntervalMs = POLL_INTERVAL_MS,
   timeoutMs = JOB_TIMEOUT_MS,
   startGraceMs = START_GRACE_MS,
@@ -159,9 +257,13 @@ export async function generateWebsite(businessInfo, templateMeta, {
   // A lost start (network error, 5xx) is re-sent with the same job id: the
   // background function runs an id only once, so this never doubles a job.
   if (!resumeJobId) {
-    await generateWithRetry(() => startJob(jobId, businessInfo, templateMeta, signal), {
-      sleep: (ms) => sleep(ms, signal),
-    });
+    try {
+      await generateWithRetry(() => startJob(jobId, businessInfo, templateMeta, signal, retryOf), {
+        sleep: (ms) => sleep(ms, signal),
+      });
+    } catch (err) {
+      throw isStartUnavailable(err) ? unavailable(err) : err;
+    }
   }
 
   const startedAt = now();
@@ -173,7 +275,7 @@ export async function generateWebsite(businessInfo, templateMeta, {
     if (failures < MAX_POLL_FAILURES) return;
     const err = generationError(message || NETWORK_MESSAGE, message ? 502 : undefined);
     err.resumeJobId = jobId;
-    throw err;
+    throw unavailable(err);
   };
 
   // The deadline is checked only after the job has answered: a phone that
@@ -197,8 +299,10 @@ export async function generateWebsite(businessInfo, templateMeta, {
     }
 
     if (response.status === 404) {
-      // Not written yet: the background function starts within seconds.
-      if (now() - startedAt > startGraceMs) throw generationError(NOT_STARTED_MESSAGE, 502, 'not_started');
+      // Not written yet: the background function starts within seconds. A
+      // job that never shows up was not stored (Blobs) or never ran: it used
+      // no daily generation, and the legacy route can still write the copy.
+      if (now() - startedAt > startGraceMs) throw unavailable(generationError(NOT_STARTED_MESSAGE, 502, 'not_started'));
       continue;
     }
     const data = await readJson(response);
@@ -221,7 +325,9 @@ export async function generateWebsite(businessInfo, templateMeta, {
       return normalizeCopy(data.copy, businessInfo);
     }
     if (data.status === 'error') {
-      throw generationError(data.error || 'Something went wrong generating your site. Please try again.', data.httpStatus || 500, data.code);
+      const err = generationError(data.error || 'Something went wrong generating your site. Please try again.', data.httpStatus || 500, data.code);
+      err.failedJobId = jobId;
+      throw err;
     }
     // 'running' past our deadline: the job has overrun its own model deadline
     // and missed its final write, so it is not coming back. Not resumable:

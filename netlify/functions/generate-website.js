@@ -1,11 +1,12 @@
-// LEGACY route. The wizard now starts generate-website-background (Claude
-// Opus 5, thinking, up to 15 minutes) and polls generate-website-status. This
-// synchronous endpoint stays, with the same request and response contract,
-// for app bundles that were loaded before that deploy and still call it. It
-// shares the prompt, parsing and widget handling (_lib/copyGeneration.js) but
-// keeps Sonnet 4.6 without thinking, which reliably answers inside the
-// synchronous limit. Remove it once no old bundle can be open (a few days
-// after the deploy).
+// LEGACY route, and the wizard's permanent fallback: keep it. The wizard
+// starts generate-website-background (Claude Opus 5, thinking, up to 15
+// minutes) and polls generate-website-status; when that route is unavailable
+// (no answer, 404/5xx, a job that never appears, storage errors) the wizard
+// calls this synchronous endpoint once instead (src/lib/generateWebsite.js,
+// body.fallback names why). App bundles loaded before that deploy also still
+// call it, with the same request and response contract. It shares the prompt,
+// parsing and widget handling (_lib/copyGeneration.js) but keeps Sonnet 4.6
+// without thinking, which reliably answers inside the synchronous limit.
 import Anthropic from '@anthropic-ai/sdk';
 import { requireUser, supabaseAdmin } from './_shared/auth.js';
 import { checkAndRecordRateLimit } from './_shared/rateLimit.js';
@@ -71,6 +72,9 @@ export const handler = async (event) => {
     return { statusCode: 400, headers: json, body: JSON.stringify({ error: 'Invalid request body' }) };
   }
   const { businessInfo, templateMeta } = body || {};
+  // The wizard landed here because the background route failed: log it, so a
+  // broken background route shows up in the function logs.
+  if (body?.fallback) console.log(`[generate-website] wizard fallback (${String(body.fallback).slice(0, 40)}) for ${user.id}`);
   if (!hasRequiredBusinessInfo(businessInfo)) {
     return { statusCode: 400, headers: json, body: JSON.stringify({ error: MESSAGES.missingInfo }) };
   }
