@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase.js';
 import { getStatusDisplay } from './customDomain/statusMachine.js';
 import { normalizeDomain, isValidDomain } from '../lib/domainUtils.js';
+import { useAlert } from './ui/AlertProvider.jsx';
 
 const POLL_INTERVAL_MS = 3000;
 
@@ -16,6 +17,7 @@ export default function CustomDomainPanel({ siteId, initialDomain = null, initia
   const [copiedKey, setCopiedKey] = useState(null);
   const pollingRef = useRef(null);
   const copyTimerRef = useRef(null);
+  const { confirm } = useAlert();
 
   const copyToClipboard = async (value, key) => {
     try {
@@ -72,7 +74,12 @@ export default function CustomDomainPanel({ siteId, initialDomain = null, initia
   };
 
   const handleDisconnect = async () => {
-    if (!confirm('Remove your custom domain? Your site will continue to serve on its subdomain.')) return;
+    const ok = await confirm('Your site will keep serving on its subdomain.', {
+      title: 'Remove your custom domain?',
+      confirmText: 'Remove domain',
+      danger: true,
+    });
+    if (!ok) return;
     setBusy(true);
     try {
       const res = await fetch('/.netlify/functions/disconnect-domain', {
@@ -130,11 +137,52 @@ export default function CustomDomainPanel({ siteId, initialDomain = null, initia
   // Clean up the copy-confirmation timer on unmount.
   useEffect(() => () => clearTimeout(copyTimerRef.current), []);
 
+  // Desktop table cell: the whole value is the copy button.
+  const renderCopyCell = (text, key, extraClass = '') => {
+    const isCopied = copiedKey === key;
+    return (
+      <button
+        type="button"
+        onClick={() => copyToClipboard(text, key)}
+        title={isCopied ? 'Copied!' : 'Click to copy'}
+        className={`group relative flex items-center gap-1.5 text-left font-mono text-[12px] text-[#1a1a1a] rounded px-1.5 py-0.5 -mx-1.5 -my-0.5 transition-colors ${isCopied ? 'bg-green-100 text-green-800' : 'hover:bg-[#faf9f7]'} ${extraClass}`}
+      >
+        <span className="break-all flex-1">{text}</span>
+        <span className={`shrink-0 text-[10px] font-sans font-semibold transition-opacity ${isCopied ? 'opacity-100 text-green-700' : 'opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 text-ink-tertiary'}`}>
+          {isCopied ? '✓ Copied' : 'Copy'}
+        </span>
+      </button>
+    );
+  };
+
+  // Phone card field: label, the full value, and an always-visible Copy button.
+  const renderStackedField = (label, text, key) => {
+    const isCopied = copiedKey === key;
+    return (
+      <div>
+        <p className="text-[10px] font-bold uppercase tracking-wider text-ink-tertiary mb-1">{label}</p>
+        <div className="flex items-start gap-2">
+          <code className="flex-1 min-w-0 break-all font-mono text-[13px] leading-snug text-[#1a1a1a] bg-[#faf9f7] border border-black/[0.07] rounded-md px-2 py-2">
+            {text}
+          </code>
+          <button
+            type="button"
+            onClick={() => copyToClipboard(text, key)}
+            aria-label={`Copy ${label}`}
+            className={`shrink-0 min-h-[38px] px-3 rounded-md border text-[12px] font-semibold transition-colors ${isCopied ? 'bg-green-100 border-green-200 text-green-800' : 'bg-white border-black/[0.12] text-[#1a1a1a] active:bg-[#faf9f7]'}`}
+          >
+            {isCopied ? '✓ Copied' : 'Copy'}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   if (!domain) {
     return (
       <div className="border border-black/[0.07] rounded-xl p-5">
         <p className="text-[14px] font-semibold text-[#1a1a1a] mb-1.5">Use your own domain</p>
-        <p className="text-[12px] text-[#888] mb-4">
+        <p className="text-[12px] text-ink-tertiary mb-4">
           Connect a domain you already own. Your site will be live at <span className="font-semibold text-[#1a1a1a]">www.yourdomain.com</span>.
         </p>
         <div className="flex gap-2">
@@ -148,7 +196,7 @@ export default function CustomDomainPanel({ siteId, initialDomain = null, initia
           <button
             onClick={handleConnect}
             disabled={busy || !input}
-            className={`px-4 py-2.5 rounded-lg font-semibold text-sm transition-colors ${busy || !input ? 'bg-[#f2f0ec] text-[#888] cursor-not-allowed' : 'bg-[#cc0000] hover:bg-[#aa0000] text-white'}`}
+            className={`px-4 py-2.5 rounded-lg font-semibold text-sm transition-colors ${busy || !input ? 'bg-[#f2f0ec] text-ink-tertiary cursor-not-allowed' : 'bg-[#cc0000] hover:bg-[#aa0000] text-white'}`}
           >
             {busy ? 'Connecting…' : 'Connect'}
           </button>
@@ -159,10 +207,10 @@ export default function CustomDomainPanel({ siteId, initialDomain = null, initia
   }
 
   return (
-    <div className="border border-black/[0.07] rounded-xl p-6">
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-[16px] font-bold text-[#1a1a1a]">{domain}</p>
-        <button onClick={handleDisconnect} disabled={busy} className="text-[12px] text-[#888] hover:text-[#cc0000] font-medium">
+    <div className="border border-black/[0.07] rounded-xl p-4 sm:p-6">
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <p className="text-[16px] font-bold text-[#1a1a1a] break-all">{domain}</p>
+        <button onClick={handleDisconnect} disabled={busy} className="text-[12px] text-ink-tertiary hover:text-[#cc0000] font-medium">
           Remove
         </button>
       </div>
@@ -221,44 +269,44 @@ export default function CustomDomainPanel({ siteId, initialDomain = null, initia
                 </div>
               )}
 
-              <div>
-                <div className="grid grid-cols-[70px_110px_1fr] gap-2 px-3 py-2 bg-[#faf9f7] border-b border-black/[0.07] text-[10px] font-bold uppercase tracking-wider text-[#888]">
+              {/* Phones (< 640px): one card per record, each value on its own
+                  full-width line with a visible Copy button. The three-column
+                  table below left the Value column ~14px wide at 375px. */}
+              <ul className="sm:hidden divide-y divide-black/[0.07]">
+                {cnameInstructions.map((r, i) => (
+                  <li key={i} className="px-3 py-3 space-y-2.5">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-ink-tertiary">
+                      Record {i + 1} · Type <span className="font-mono text-[12px] normal-case tracking-normal text-[#1a1a1a]">{r.type}</span>
+                    </p>
+                    {renderStackedField('Host / Name', r.host, `${i}-host`)}
+                    {renderStackedField('Value / Points to', r.value, `${i}-value`)}
+                  </li>
+                ))}
+              </ul>
+
+              <div className="hidden sm:block">
+                <div className="grid grid-cols-[70px_110px_1fr] gap-2 px-3 py-2 bg-[#faf9f7] border-b border-black/[0.07] text-[10px] font-bold uppercase tracking-wider text-ink-tertiary">
                   <div>Type</div>
                   <div>Host / Name</div>
                   <div>Value / Points to</div>
                 </div>
-                {cnameInstructions.map((r, i) => {
-                  const renderCopyCell = (text, key, extraClass = '') => {
-                    const isCopied = copiedKey === key;
-                    return (
-                      <button
-                        type="button"
-                        onClick={() => copyToClipboard(text, key)}
-                        title={isCopied ? 'Copied!' : 'Click to copy'}
-                        className={`group relative flex items-center gap-1.5 text-left font-mono text-[12px] text-[#1a1a1a] rounded px-1.5 py-0.5 -mx-1.5 -my-0.5 transition-colors ${isCopied ? 'bg-green-100 text-green-800' : 'hover:bg-[#faf9f7]'} ${extraClass}`}
-                      >
-                        <span className="break-all flex-1">{text}</span>
-                        <span className={`shrink-0 text-[10px] font-sans font-semibold transition-opacity ${isCopied ? 'opacity-100 text-green-700' : 'opacity-0 group-hover:opacity-100 text-[#888]'}`}>
-                          {isCopied ? '✓ Copied' : 'Copy'}
-                        </span>
-                      </button>
-                    );
-                  };
-                  return (
-                    <div
-                      key={i}
-                      className="grid grid-cols-[70px_110px_1fr] gap-2 px-3 py-2 border-b border-black/[0.05] last:border-b-0 items-center"
-                    >
-                      {renderCopyCell(r.type, `${i}-type`, 'font-semibold')}
-                      {renderCopyCell(r.host, `${i}-host`)}
-                      {renderCopyCell(r.value, `${i}-value`)}
-                    </div>
-                  );
-                })}
+                {cnameInstructions.map((r, i) => (
+                  <div
+                    key={i}
+                    className="grid grid-cols-[70px_110px_1fr] gap-2 px-3 py-2 border-b border-black/[0.05] last:border-b-0 items-center"
+                  >
+                    {renderCopyCell(r.type, `${i}-type`, 'font-semibold')}
+                    {renderCopyCell(r.host, `${i}-host`)}
+                    {renderCopyCell(r.value, `${i}-value`)}
+                  </div>
+                ))}
               </div>
-              <p className="text-[11px] text-[#888] mt-2">
-                Click any value to copy it. Status updates automatically every few seconds — no need to refresh.
+              <p className="text-[11px] text-ink-tertiary px-3 py-2.5 border-t border-black/[0.07]">
+                <span className="sm:hidden">Tap Copy to copy a value.</span>
+                <span className="hidden sm:inline">Click any value to copy it.</span>
+                {' '}Status updates automatically every few seconds — no need to refresh.
               </p>
+              <p className="sr-only" role="status">{copiedKey ? 'Copied to clipboard' : ''}</p>
             </div>
           )}
         </div>

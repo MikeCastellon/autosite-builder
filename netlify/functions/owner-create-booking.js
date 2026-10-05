@@ -18,6 +18,23 @@ import {
   enabledVehicleTypes,
 } from './_lib/vehicle-pricing.js';
 
+// bookings.preferred_at is the shop's wall-clock time written as UTC
+// (slot-math.js, src/lib/bookings.js). The Book Customer dialog before that
+// fix sent the browser's reading of the typed time as preferred_at instead
+// (new Date(local).toISOString(), a real instant). Both look the same once
+// stored, so a row from the old dialog would show hours late and block the
+// wrong widget slot, and nothing could find it afterwards.
+// So the current dialog sends the wall-clock time as shop_preferred_at, which
+// is what is stored. A request without it comes from a dashboard tab loaded
+// before the deploy (nothing reloads it) and is refused: the old dialog
+// shows body.error under its form.
+// The current dialog still sends the browser's reading as preferred_at,
+// ignored here. It is for a rollback: the previous deploy's function stores
+// preferred_at as sent and expects that reading, so a tab still running the
+// current dialog after a rollback books the right time there too.
+const STALE_DASHBOARD_ERROR =
+  'The dashboard was updated. Please reload the page, then create this booking again (it was not saved).';
+
 export const handler = async (event) => {
   const cors = corsHeaders(event.headers);
   const CORS = jsonHeaders(event.headers);
@@ -40,7 +57,8 @@ export const handler = async (event) => {
     customer_name,
     customer_email,
     customer_phone,
-    preferred_at,            // ISO string
+    shop_preferred_at,       // ISO string, shop wall-clock time as UTC: stored
+    preferred_at,            // the browser's reading (see above): not stored
     vehicle_make,
     vehicle_model,
     vehicle_year,
@@ -53,8 +71,11 @@ export const handler = async (event) => {
     send_email = true,
   } = payload;
 
-  if (!siteId || !customer_name || !preferred_at) {
+  if (!siteId || !customer_name || !(shop_preferred_at || preferred_at)) {
     return fail(400, { error: 'Missing required fields: siteId, customer_name, preferred_at' });
+  }
+  if (typeof shop_preferred_at !== 'string' || !shop_preferred_at) {
+    return fail(409, { error: STALE_DASHBOARD_ERROR, code: 'reload_required' });
   }
 
   const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
@@ -114,7 +135,7 @@ export const handler = async (event) => {
       customer_name,
       customer_email: customer_email || '',
       customer_phone: customer_phone || '',
-      preferred_at,
+      preferred_at: shop_preferred_at,
       vehicle_make: vehicle_make || '',
       vehicle_model: vehicle_model || '',
       vehicle_year: vehicle_year ? Number(vehicle_year) : null,

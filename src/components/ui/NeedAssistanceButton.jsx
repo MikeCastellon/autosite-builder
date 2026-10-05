@@ -73,7 +73,7 @@ export default function NeedAssistanceButton() {
               </span>
               <span className="min-w-0">
                 <span className="block text-[13px] font-bold text-[#1a1a1a]">Schedule a Zoom</span>
-                <span className="block text-[11px] text-[#888]">30-min call · Mon–Sat 11am–8pm ET</span>
+                <span className="block text-[11px] text-ink-tertiary">30-min call · Mon–Sat 11am–8pm ET</span>
               </span>
             </button>
           </div>

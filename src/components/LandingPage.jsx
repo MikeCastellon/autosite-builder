@@ -54,7 +54,7 @@ export default function LandingPage({ onSignIn, onSignUp }) {
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </a>
         </div>
-        <p className="text-[12px] text-[#888] mt-6">
+        <p className="text-[12px] text-ink-tertiary mt-6">
           No credit card · Publish on your own subdomain · Bring your own domain
         </p>
       </section>
@@ -146,7 +146,7 @@ export default function LandingPage({ onSignIn, onSignUp }) {
           <h2 className="text-[clamp(28px,4vw,40px)] font-[900] text-[#1a1a1a] tracking-[-1px] leading-[1.1] mb-3 text-center">
             Everything you need to get found & booked.
           </h2>
-          <p className="text-center text-[15px] text-[#888] mb-12">All of this ships the moment you publish. <span className="font-semibold text-[#1a1a1a]">You don't pay a cent until you're ready to upgrade.</span></p>
+          <p className="text-center text-[15px] text-ink-tertiary mb-12">All of this ships the moment you publish. <span className="font-semibold text-[#1a1a1a]">You don't pay a cent until you're ready to upgrade.</span></p>
           <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-4">
             {[
               'AI-written copy tailored to your services',
@@ -198,14 +198,14 @@ export default function LandingPage({ onSignIn, onSignUp }) {
           <div className="rounded-2xl border border-black/[0.07] bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <span className="font-[900] text-[#1a1a1a]">Customers</span>
-              <span className="text-[12px] text-[#888]">248 total</span>
+              <span className="text-[12px] text-ink-tertiary">248 total</span>
             </div>
             <div className="divide-y divide-black/[0.06]">
               {[{name:'Marcus Reyes',note:'VIP · Monthly detail',tag:'VIP'},{name:'Jordan Smith',note:'Booked 3 times',tag:'Repeat'},{name:'Sam Okafor',note:'Last: tint removal',tag:'New'},{name:'Lia Chen',note:'Needs follow-up',tag:'Flag'}].map((r) => (
                 <div key={r.name} className="py-3 flex items-center justify-between">
                   <div>
                     <div className="font-semibold text-[14px]">{r.name}</div>
-                    <div className="text-[12px] text-[#888]">{r.note}</div>
+                    <div className="text-[12px] text-ink-tertiary">{r.note}</div>
                   </div>
                   <span className="text-[11px] px-2 py-1 rounded-full bg-red-50 text-[#cc0000] font-semibold">{r.tag}</span>
                 </div>
@@ -220,7 +220,7 @@ export default function LandingPage({ onSignIn, onSignUp }) {
         <div className="max-w-5xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           <div className="rounded-2xl border border-black/[0.07] bg-white p-6 shadow-sm order-last md:order-first">
             <div className="flex items-center justify-between mb-4">
-              <span className="text-[11px] text-[#888] font-semibold uppercase tracking-wider">Tap to Pay</span>
+              <span className="text-[11px] text-ink-tertiary font-semibold uppercase tracking-wider">Tap to Pay</span>
               <span className="text-[12px] font-bold" style={{color:'#635bff'}}>Stripe</span>
             </div>
             <div className="rounded-xl bg-[#1a1a1a] text-white p-5">
@@ -229,7 +229,7 @@ export default function LandingPage({ onSignIn, onSignUp }) {
               <div className="text-[12px] text-white/40 mt-3">Full Detail · Marcus R.</div>
             </div>
             <button className="mt-4 w-full py-3 rounded-xl bg-[#cc0000] text-white text-[14px] font-semibold">Tap card to charge</button>
-            <p className="text-[11px] text-[#888] mt-3 text-center">Funds land in your bank — not an app wallet</p>
+            <p className="text-[11px] text-ink-tertiary mt-3 text-center">Funds land in your bank — not an app wallet</p>
           </div>
           <div>
             <p className="text-[12px] font-semibold text-[#cc0000] uppercase tracking-[2px] mb-3">Payments</p>
@@ -276,7 +276,7 @@ export default function LandingPage({ onSignIn, onSignUp }) {
             </ul>
           </div>
           <div className="rounded-2xl border border-black/[0.07] bg-white p-6 shadow-sm">
-            <div className="text-[11px] text-[#888] font-semibold uppercase tracking-wider mb-3">New Booking</div>
+            <div className="text-[11px] text-ink-tertiary font-semibold uppercase tracking-wider mb-3">New Booking</div>
             <div className="font-[900] text-[18px] tracking-[-0.5px]">Ceramic Coating — Full</div>
             <div className="text-[14px] text-[#555] mt-1">Sat, May 2 · 10:00 AM</div>
             <div className="mt-4 divide-y divide-black/[0.06] border-y border-black/[0.06]">
@@ -289,7 +289,7 @@ export default function LandingPage({ onSignIn, onSignUp }) {
                 <span className="font-[900] text-[#cc0000]">$100.00</span>
               </div>
             </div>
-            <p className="text-[11px] text-[#888] mt-3">Cancellation policy · Deposit applies to final bill</p>
+            <p className="text-[11px] text-ink-tertiary mt-3">Cancellation policy · Deposit applies to final bill</p>
           </div>
         </div>
       </section>
@@ -350,7 +350,7 @@ export default function LandingPage({ onSignIn, onSignUp }) {
                   </span>
                   <span>
                     <span className="text-[14px] font-[700] text-[#1a1a1a]">{title}</span>
-                    <span className="text-[12px] text-[#888] ml-1.5">{desc}</span>
+                    <span className="text-[12px] text-ink-tertiary ml-1.5">{desc}</span>
                   </span>
                 </li>
               ))}
@@ -365,7 +365,7 @@ export default function LandingPage({ onSignIn, onSignUp }) {
               >
                 ⭐ Upgrade to Pro — $19.99/month
               </button>
-              <p className="text-[11px] text-[#888] text-center mt-3">
+              <p className="text-[11px] text-ink-tertiary text-center mt-3">
                 Create your free account · then activate Pro inside the dashboard · cancel anytime.
               </p>
             </div>
@@ -376,8 +376,8 @@ export default function LandingPage({ onSignIn, onSignUp }) {
       {/* ──────────────────────── Footer ──────────────────────── */}
       <footer className="border-t border-black/[0.07] px-4 sm:px-8 py-6 bg-white">
         <div className="max-w-6xl mx-auto w-full flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-[12px] text-[#888]">© {new Date().getFullYear()} Genius Websites · All rights reserved</p>
-          <a href="https://www.autocaregenius.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-[12px] text-[#888] hover:text-[#1a1a1a] transition-colors">
+          <p className="text-[12px] text-ink-tertiary">© {new Date().getFullYear()} Genius Websites · All rights reserved</p>
+          <a href="https://www.autocaregenius.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-[12px] text-ink-tertiary hover:text-[#1a1a1a] transition-colors">
             <span>Powered by</span>
             <img src={ACG_LOGO} alt="Auto Care Genius" className="h-5" />
           </a>

@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase.js';
 import { resolveVariant } from '../../../lib/schedulerConfig.js';
+import { wallTimeToBookingIso } from '../../../lib/bookings.js';
 
 export default function BookCustomerModal({ customer, userId, onClose, onBooked }) {
   const [sites, setSites] = useState([]);
@@ -64,6 +65,16 @@ export default function BookCustomerModal({ customer, userId, onClose, onBooked 
 
   async function submit(e) {
     e.preventDefault();
+    // The owner types shop time. Store it as wall-clock time (what the
+    // booking widget, the emails and the Bookings page read back), not the
+    // browser's reading of it, which lands the booking hours off.
+    const shopTime = wallTimeToBookingIso(when);
+    if (!shopTime) { setErr('Pick a date and time.'); return; }
+    // The browser's reading of the same time (a real instant): what this
+    // dialog sent before that fix, and what the previous deploy's
+    // owner-create-booking stores. The current function ignores it.
+    const typed = new Date(when);
+    const browserInstant = Number.isNaN(typed.getTime()) ? shopTime : typed.toISOString();
     setBusy(true); setErr(null);
     try {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -78,7 +89,13 @@ export default function BookCustomerModal({ customer, userId, onClose, onBooked 
           customer_name: customer.name,
           customer_email: customer.email,
           customer_phone: customer.phone,
-          preferred_at: new Date(when).toISOString(),
+          // Both readings (owner-create-booking explains why). The current
+          // function stores shop_preferred_at and refuses a request without
+          // it: that comes from a tab still running the old dialog. After a
+          // rollback, the previous function stores preferred_at, so this tab
+          // still books the time that deploy expects.
+          shop_preferred_at: shopTime,
+          preferred_at: browserInstant,
           vehicle_make: vehicleMake,
           vehicle_model: vehicleModel,
           vehicle_year: vehicleYear ? Number(vehicleYear) : null,
@@ -194,7 +211,7 @@ export default function BookCustomerModal({ customer, userId, onClose, onBooked 
               onChange={(e) => setWhen(e.target.value)}
               className="w-full border border-black/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#cc0000]/30"
             />
-            <p className="text-[11px] text-[#bbb] mt-1">Owner override — skips availability and lead-time checks.</p>
+            <p className="text-[11px] text-[#bbb] mt-1">Your shop's local time. Owner override — skips availability and lead-time checks.</p>
           </div>
 
           <div className="pt-2">

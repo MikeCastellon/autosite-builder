@@ -20,7 +20,7 @@ function ColorSwatch({ label, colorKey, baseColor, customColors, onCustomColors 
       {customColors[colorKey] && (
         <button
           onClick={() => onCustomColors((prev) => { const n = { ...prev }; delete n[colorKey]; return n; })}
-          className="text-[10px] text-[#888] hover:text-[#cc0000] transition-colors"
+          className="text-[10px] text-ink-tertiary hover:text-[#cc0000] transition-colors"
           title="Reset to default"
         >
           reset
@@ -108,7 +108,7 @@ export default function StepTemplatePicker({ businessType, selected, onSelect, o
         className={`w-full font-semibold py-3.5 px-6 rounded-xl transition-all text-[15px]
           ${selected
             ? 'bg-[#1a1a1a] hover:bg-[#cc0000] text-white cursor-pointer'
-            : 'bg-[#f2f0ec] text-[#888] cursor-not-allowed'}`}
+            : 'bg-[#f2f0ec] text-ink-tertiary cursor-not-allowed'}`}
       >
         {selected ? 'Generate My Website' : 'Select a style to continue'}
       </button>

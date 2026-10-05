@@ -62,7 +62,7 @@ export default function WizardShell({ step, onBack, children, userEmail, onMySit
               </button>
               {dropdownOpen && (
                 <div className="absolute right-0 top-10 bg-white border border-black/[0.1] rounded-xl shadow-lg py-1.5 min-w-[200px] z-[100]">
-                  <div className="px-4 py-2 text-[11px] text-[#888] border-b border-black/[0.05] truncate">{userEmail}</div>
+                  <div className="px-4 py-2 text-[11px] text-ink-tertiary border-b border-black/[0.05] truncate">{userEmail}</div>
                   {onSignOut && (
                     <button
                       onClick={() => { setDropdownOpen(false); onSignOut(); }}
@@ -138,7 +138,7 @@ export default function WizardShell({ step, onBack, children, userEmail, onMySit
         <div className="px-4 sm:px-8 pt-5 max-w-2xl mx-auto w-full">
           <button
             onClick={onBack}
-            className="flex items-center gap-1.5 text-sm text-[#888] hover:text-[#1a1a1a] transition-colors font-medium"
+            className="flex items-center gap-1.5 text-sm text-ink-tertiary hover:text-[#1a1a1a] transition-colors font-medium"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M9 11L5 7l4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -154,7 +154,7 @@ export default function WizardShell({ step, onBack, children, userEmail, onMySit
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-black/[0.07] px-4 sm:px-8 py-5 flex items-center justify-center gap-2 text-xs text-[#888]">
+      <footer className="border-t border-black/[0.07] px-4 sm:px-8 py-5 flex items-center justify-center gap-2 text-xs text-ink-tertiary">
         <span>Powered by</span>
         <a href="https://www.autocaregenius.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
           <img src="https://www.autocaregenius.com/cdn/shop/files/v11_1.svg?v=1760731533&width=160" alt="Auto Care Genius" className="h-5" />

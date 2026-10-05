@@ -6,6 +6,7 @@ import { supabase } from '../../lib/supabase.js';
 import { formatPrice } from '../../lib/formatPrice.js';
 import { formatPhone } from '../../lib/formatPhone.js';
 import { HOURS_DAYS, parseRange, rangeToString, expandHoursToDays } from '../../lib/businessHours.js';
+import { searchPlaces, placeFromResult } from '../../lib/googlePlaces.js';
 
 const SOCIALFEEDS_URL = import.meta.env.VITE_SOCIALFEEDS_URL || 'https://social-feeds-app.netlify.app';
 
@@ -32,7 +33,7 @@ function WizardHoursEditor({ value, onChange }) {
           <div key={day} className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
             <span className="w-12 shrink-0 text-[12px] font-semibold text-[#1a1a1a]">{day}</span>
             {isClosed ? (
-              <span className="flex-1 text-[12px] text-[#aaa] italic px-3 py-1.5">Closed</span>
+              <span className="flex-1 text-[12px] text-ink-tertiary italic px-3 py-1.5">Closed</span>
             ) : (
               <div className="flex-1 flex items-center gap-1.5 min-w-0">
                 <input
@@ -42,7 +43,7 @@ function WizardHoursEditor({ value, onChange }) {
                   aria-label={`${day} open time`}
                   className="bg-white border border-black/[0.12] rounded-lg px-2 py-1.5 text-[13px] text-[#1a1a1a] focus:outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000] transition"
                 />
-                <span className="text-[11px] text-[#888]">to</span>
+                <span className="text-[11px] text-ink-tertiary">to</span>
                 <input
                   type="time"
                   value={close}
@@ -52,7 +53,7 @@ function WizardHoursEditor({ value, onChange }) {
                 />
               </div>
             )}
-            <label className="flex items-center gap-1 text-[11px] text-[#888] cursor-pointer select-none">
+            <label className="flex items-center gap-1 text-[11px] text-ink-tertiary cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={isClosed}
@@ -74,7 +75,7 @@ function WizardHoursEditor({ value, onChange }) {
           </div>
         );
       })}
-      <p className="text-[11px] text-[#888] mt-1">
+      <p className="text-[11px] text-ink-tertiary mt-1">
         Pick open & close times for each day, or check "Closed".
       </p>
     </div>
@@ -152,18 +153,22 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
   const [placeResults, setPlaceResults] = useState([]);
   const [placeLoading, setPlaceLoading] = useState(false);
   const debounceRef = useRef(null);
+  // The query the box holds now: a slower answer to an older query must not
+  // replace the results (or the spinner) of the newer one.
+  const latestPlaceQueryRef = useRef('');
 
   useEffect(() => {
-    if (!placeQuery.trim() || placeQuery.length < 3) { setPlaceResults([]); return; }
+    latestPlaceQueryRef.current = placeQuery;
+    if (!placeQuery.trim() || placeQuery.length < 3) { setPlaceResults([]); setPlaceLoading(false); return; }
     clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(async () => {
+    debounceRef.current = setTimeout(() => {
       setPlaceLoading(true);
-      try {
-        const res = await fetch(`https://social-feeds-app.netlify.app/.netlify/functions/places-search?q=${encodeURIComponent(placeQuery)}`);
-        const data = await res.json();
-        setPlaceResults(data.results || []);
-      } catch { setPlaceResults([]); }
-      setPlaceLoading(false);
+      const isCurrent = () => latestPlaceQueryRef.current === placeQuery;
+      // Shared with the editor's Google Rating panel (lib/googlePlaces.js).
+      searchPlaces(placeQuery)
+        .then((results) => { if (isCurrent()) setPlaceResults(results); })
+        .catch(() => { if (isCurrent()) setPlaceResults([]); })
+        .finally(() => { if (isCurrent()) setPlaceLoading(false); });
     }, 400);
     return () => clearTimeout(debounceRef.current);
   }, [placeQuery]);
@@ -447,7 +452,7 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
                     {/* Saved packages list */}
                     {pkgs.length > 0 && (
                       <div className="space-y-2">
-                        <p className="text-[11px] font-semibold text-[#888] uppercase tracking-[1px]">
+                        <p className="text-[11px] font-semibold text-ink-tertiary uppercase tracking-[1px]">
                           Saved ({pkgs.length})
                         </p>
                         {pkgs.map((pkg, i) => (
@@ -457,7 +462,7 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
                                 <span className="text-[13px] font-semibold text-[#1a1a1a]">{pkg.name}</span>
                                 {pkg.price && <span className="text-[13px] font-bold text-[#cc0000]">{formatPrice(pkg.price)}</span>}
                               </div>
-                              {pkg.description && <p className="text-[12px] text-[#888] mt-0.5 leading-snug">{pkg.description}</p>}
+                              {pkg.description && <p className="text-[12px] text-ink-tertiary mt-0.5 leading-snug">{pkg.description}</p>}
                             </div>
                             <button
                               type="button"
@@ -504,7 +509,7 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
                           className="col-span-1 bg-white border border-black/[0.12] rounded-lg px-3 py-2 text-[13px] text-[#1a1a1a] placeholder-[#aaa] focus:outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000] transition"
                         />
                         <div className="col-span-1 relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] font-medium text-[#888] pointer-events-none">$</span>
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] font-medium text-ink-tertiary pointer-events-none">$</span>
                           <input
                             type="text"
                             inputMode="decimal"
@@ -538,7 +543,7 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
                         className={`w-full py-2.5 text-[14px] font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${
                           canSave
                             ? 'bg-[#cc0000] hover:bg-[#aa0000] text-white shadow-sm'
-                            : 'bg-[#f2f0ec] text-[#aaa] cursor-not-allowed'
+                            : 'bg-[#f2f0ec] text-ink-tertiary cursor-not-allowed'
                         }`}
                       >
                         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
@@ -546,7 +551,7 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
                         </svg>
                         {canSave ? 'Save Package' : 'Save Package'}
                       </button>
-                      <p className="text-[11px] text-[#888] text-center leading-snug">
+                      <p className="text-[11px] text-ink-tertiary text-center leading-snug">
                         Tip: enter a name and price above, then click <span className="font-semibold text-[#cc0000]">Save Package</span> to add it to your list. Repeat to add more.
                       </p>
                     </div>
@@ -664,7 +669,7 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
                     </div>
                   </div>
                   <button type="button" onClick={() => { handleChange('googlePlace', null); setPlaceQuery(''); }}
-                    className="text-[12px] text-[#888] hover:text-[#cc0000] transition">Change</button>
+                    className="text-[12px] text-ink-tertiary hover:text-[#cc0000] transition">Change</button>
                 </div>
               ) : (
                 <div className="relative">
@@ -675,27 +680,24 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
                     placeholder="Search your business on Google..."
                     className="w-full bg-white border border-black/[0.12] rounded-xl px-4 py-2.5 text-[13px] text-[#1a1a1a] placeholder-[#aaa] focus:outline-none focus:ring-2 focus:ring-[#cc0000]/30 focus:border-[#cc0000] transition"
                   />
-                  {placeLoading && <div className="absolute right-3 top-3 text-[11px] text-[#aaa]">Searching...</div>}
+                  {placeLoading && <div className="absolute right-3 top-3 text-[11px] text-ink-tertiary">Searching...</div>}
                   {placeResults.length > 0 && (
                     <div className="absolute z-10 left-0 right-0 mt-1 bg-white border border-black/[0.12] rounded-xl shadow-lg max-h-60 overflow-y-auto">
                       {placeResults.map((place) => (
-                        <button key={place.place_id} type="button"
+                        <button key={place.placeId} type="button"
                           onClick={() => {
-                            handleChange('googlePlace', {
-                              placeId: place.place_id,
-                              placeName: place.name,
-                              rating: place.rating,
-                              reviewCount: place.review_count,
-                            });
+                            // Dated snapshot ({ placeId, placeName, rating?, reviewCount?, address?, fetchedAt }),
+                            // the same one the editor's Google Rating panel writes.
+                            handleChange('googlePlace', placeFromResult(place));
                             setPlaceResults([]);
                             setPlaceQuery('');
                           }}
                           className="w-full text-left px-4 py-3 hover:bg-[#faf9f7] border-b border-black/[0.06] last:border-0 transition">
                           <div className="text-[13px] font-semibold text-[#1a1a1a]">{place.name}</div>
-                          <div className="text-[11px] text-[#888]">
+                          <div className="text-[11px] text-ink-tertiary">
                             {place.address}
                             {place.rating ? ` · ${place.rating}★` : ''}
-                            {place.review_count ? ` · ${place.review_count} reviews` : ''}
+                            {place.reviewCount ? ` · ${place.reviewCount} reviews` : ''}
                           </div>
                         </button>
                       ))}
@@ -703,12 +705,29 @@ export default function StepBusinessInfo({ businessType, initialValues, onSubmit
                   )}
                 </div>
               )}
-              <p className="text-[11px] text-[#aaa] mt-2">Real Google reviews will appear on your website.</p>
+              {/* Say what will really appear (audit ai-1): Google reviews only
+                  once a listing is connected; otherwise AI-written samples. */}
+              {values.googlePlace ? (
+                <p className="text-[11px] text-ink-secondary mt-2">
+                  We'll connect this listing so your Google reviews show on your website. If the connection
+                  doesn't go through, your site shows AI-written sample testimonials instead. Replace them with
+                  real customer quotes or turn off the Reviews section before you publish.
+                </p>
+              ) : (
+                <p className="text-[11px] text-amber-800 mt-2">
+                  No Google listing connected yet. Search for your business above to show your Google reviews.
+                  Until then, your site shows AI-written sample testimonials, not real reviews. Replace them with
+                  real customer quotes or turn off the Reviews section before you publish.
+                </p>
+              )}
             </div>
           )}
 
           {reviewSource === 'testimonials' && (
-            <p className="text-[11px] text-[#aaa]">AI will generate realistic placeholder testimonials for your site.</p>
+            <p className="text-[11px] text-ink-secondary">
+              AI writes sample testimonials as placeholders. They are not from real customers, so replace them with
+              real customer quotes or turn off the Reviews section before you publish.
+            </p>
           )}
         </div>
 

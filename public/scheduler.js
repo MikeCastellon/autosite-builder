@@ -27,10 +27,20 @@
   var noTrack = script && script.getAttribute('data-no-track') === 'true';
   if (!siteId) return;
 
+  // The owner's own views never count: the dashboard's site thumbnails load
+  // the live page in an iframe with #acg-no-track, and no real visitor sees
+  // a published page inside a frame.
+  if (pageHash.indexOf('acg-no-track') !== -1) noTrack = true;
+  try { if (window.self !== window.top) noTrack = true; } catch (e) { noTrack = true; }
+
   var API = script.src.replace(/\/scheduler\.js.*$/, '');
 
   // Fire a one-shot page-view beacon (skips owner previews). Independent of
   // whether the scheduler is enabled, so website views count too.
+  // Sent as a CORS "simple" request: text/plain body, no credentials. The
+  // old application/json Blob via sendBeacon (always credentialed) needed a
+  // preflight that track-view's `Access-Control-Allow-Origin: *` can never
+  // satisfy, so browsers dropped almost every view.
   if (siteId && !previewMode && !noTrack) {
     try {
       var viewUrl = API + '/.netlify/functions/track-view';
@@ -39,10 +49,17 @@
         kind: fullPage ? 'booking' : 'site',
         referrer: (document && document.referrer) || ''
       });
-      if (navigator && navigator.sendBeacon) {
-        navigator.sendBeacon(viewUrl, new Blob([viewPayload], { type: 'application/json' }));
-      } else {
-        fetch(viewUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: viewPayload, keepalive: true });
+      if (typeof fetch === 'function') {
+        fetch(viewUrl, {
+          method: 'POST',
+          mode: 'cors',
+          credentials: 'omit',
+          keepalive: true,
+          headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+          body: viewPayload
+        }).catch(function () { /* tracking is best-effort */ });
+      } else if (navigator && navigator.sendBeacon) {
+        navigator.sendBeacon(viewUrl, new Blob([viewPayload], { type: 'text/plain;charset=UTF-8' }));
       }
     } catch (e) { /* never let tracking break the page */ }
   }
@@ -1042,7 +1059,11 @@
             '<button type="button" data-next aria-label="Next month" style="background:' + T.subtle + ';border:0;width:32px;height:32px;border-radius:8px;cursor:pointer;color:' + T.muted + ';font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;">›</button>' +
           '</div>' +
         '</div>' +
-        '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;font-size:12px;">' +
+        // !important inline: pages published before theme-ready templates carry
+        // `@media (max-width:768px){div[style*="grid-template-columns"]{grid-template-columns:1fr !important}}`
+        // (exportHtml LEGACY_MOBILE_CSS), which stacked the month into one
+        // column on phones. An inline !important declaration outranks it.
+        '<div data-acg-cal style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr)) !important;gap:3px;font-size:12px;">' +
           ['S','M','T','W','T','F','S'].map(function (d) { return '<div style="text-align:center;color:' + T.calHeadText + ';padding:4px 0;font-weight:600;letter-spacing:0.5px;">' + d + '</div>'; }).join('') +
           rows.map(function (day) {
             var iso = day.iso;

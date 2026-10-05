@@ -14,7 +14,10 @@ export const tokens = {
     ink: {
       primary: '#1a1a1a',
       secondary: '#4a4a4a',
-      tertiary: '#888888',
+      // #6b6b6b is 5.3:1 on white and 5.1:1 on surface.secondary (#faf9f7),
+      // enough for the small secondary text it is used for (WCAG AA 4.5:1).
+      // The old #888888 was 3.5:1.
+      tertiary: '#6b6b6b',
     },
     surface: {
       primary: '#ffffff',

@@ -2,7 +2,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { supabase } from '../../../lib/supabase.js';
-import { createCharge } from '../../../lib/createCharge.js';
+import { createCharge, chargeQuote, chargeVehicleOptions } from '../../../lib/createCharge.js';
+import { resolveVariant, addonPriceForVehicle } from '../../../lib/schedulerConfig.js';
 import { listBookingsForOwner } from '../../../lib/bookings.js';
 import { listManualCustomers } from '../../../lib/customerProfiles.js';
 import { groupBookingsIntoCustomers } from '../../../lib/customerIdentity.js';
@@ -23,12 +24,18 @@ function formatCents(cents) {
   return `$${(cents / 100).toFixed(2)}`;
 }
 
-// Returns the cents value for a service (prefers numeric price_cents, falls
-// back to parsing the legacy free-text price field).
-function serviceCents(svc) {
-  if (!svc) return null;
-  if (typeof svc.price_cents === 'number' && svc.price_cents > 0) return svc.price_cents;
-  return parsePriceToCents(svc.price);
+// Price shown on a service's row: a single price, "from $X" when it depends
+// on the vehicle, or the owner's free text ("Call for quote").
+function servicePriceLabel(svc) {
+  const prices = chargeVehicleOptions(svc)
+    .map((t) => resolveVariant(svc, t.id)?.price_cents)
+    .filter((c) => typeof c === 'number');
+  if (prices.length > 0) {
+    const min = Math.min(...prices);
+    return prices.some((c) => c !== min) ? `from ${formatCents(min)}` : formatCents(min);
+  }
+  const base = resolveVariant(svc, null)?.price_cents;
+  return base != null ? formatCents(base) : (svc.price || '');
 }
 
 export default function ChargeModal({
@@ -37,6 +44,9 @@ export default function ChargeModal({
   services,
   prefillName,
   prefillPhone,
+  // The customer's vehicle type from their last booking, preselected when
+  // the picked service's site offers it.
+  prefillVehicleTypeId,
   siteId,
   onClose,
 }) {
@@ -44,9 +54,14 @@ export default function ChargeModal({
 
   const [mode, setMode] = useState('service');
   const [selectedService, setSelectedService] = useState(null);
+  // The customer's vehicle type: it sets the price (per-vehicle pricing in
+  // Booking settings). Cleared whenever the picked service changes.
+  const [vehicleTypeId, setVehicleTypeId] = useState('');
   // Map of addon_id → true for the add-ons selected on the current service.
   // Cleared whenever the picked service changes.
   const [selectedAddonIds, setSelectedAddonIds] = useState({});
+  // The amount the server actually charged (it prices the charge itself).
+  const [chargedCents, setChargedCents] = useState(null);
   const [customAmount, setCustomAmount] = useState('');
   const [customerName, setCustomerName] = useState(prefillName || '');
   const [customerPhone, setCustomerPhone] = useState(prefillPhone || '');
@@ -121,21 +136,47 @@ export default function ChargeModal({
 
   const enabledServices = (services || []).filter((s) => s.enabled !== false);
 
-  const serviceAddons = (selectedService && Array.isArray(selectedService.addons))
-    ? selectedService.addons.filter((a) => a && a.enabled !== false)
+  const vehicleOptions = chargeVehicleOptions(selectedService);
+  const needsVehicle = vehicleOptions.length > 0;
+  const vehicleReady = !needsVehicle || !!vehicleTypeId;
+  const priceTypeId = needsVehicle ? vehicleTypeId : null;
+
+  // Add-ons offered for the chosen vehicle (all of them when the site has
+  // no vehicle types). Shown once the vehicle is known, since it sets
+  // their prices too.
+  const serviceAddons = (selectedService && vehicleReady && Array.isArray(selectedService.addons))
+    ? selectedService.addons.filter((a) => a && a.enabled !== false && addonPriceForVehicle(a, priceTypeId) != null)
     : [];
   const chosenAddons = serviceAddons.filter((a) => selectedAddonIds[a.id]);
-  const addonTotalCents = chosenAddons.reduce(
-    (sum, a) => sum + (typeof a.price_cents === 'number' && a.price_cents > 0 ? a.price_cents : 0),
-    0
-  );
+  const quote = mode === 'service'
+    ? chargeQuote(selectedService, priceTypeId, chosenAddons.map((a) => a.id))
+    : null;
 
-  const serviceBaseCents = mode === 'service' && selectedService ? serviceCents(selectedService) : null;
   const amountCents = mode === 'service'
-    ? (serviceBaseCents != null ? serviceBaseCents + addonTotalCents : null)
+    ? (quote ? quote.totalCents : null)
     : parsePriceToCents(customAmount);
 
   const canSubmit = !!amountCents && amountCents >= 50;
+
+  function pickService(svc) {
+    setSelectedService(svc);
+    setSelectedAddonIds({});
+    const options = chargeVehicleOptions(svc);
+    const preset = options.find((t) => t.id === prefillVehicleTypeId) || (options.length === 1 ? options[0] : null);
+    setVehicleTypeId(preset ? preset.id : '');
+  }
+
+  function pickVehicle(id) {
+    setVehicleTypeId(id);
+    // Drop add-ons the new vehicle isn't offered.
+    setSelectedAddonIds((prev) => {
+      const next = {};
+      for (const a of selectedService?.addons || []) {
+        if (prev[a.id] && addonPriceForVehicle(a, id || null) != null) next[a.id] = true;
+      }
+      return next;
+    });
+  }
 
   async function handleSubmit() {
     if (!canSubmit) return;
@@ -149,15 +190,17 @@ export default function ChargeModal({
       const serviceSiteId = mode === 'service' ? selectedService?._site_id : null;
       const effectiveSiteId = serviceSiteId || siteId || null;
       const usingServiceWithId = mode === 'service' && selectedService?.id && effectiveSiteId;
-      const { charge_id, checkout_url } = await createCharge({
+      const { charge_id, checkout_url, amount_cents } = await createCharge({
         amount_cents: amountCents,
         service_name: mode === 'service' ? selectedService?.name : null,
         customer_name: customerName.trim() || null,
         customer_phone: customerPhone.trim() || null,
         site_id: effectiveSiteId,
         service_id: usingServiceWithId ? selectedService.id : undefined,
+        vehicle_type_id: usingServiceWithId && needsVehicle ? vehicleTypeId : undefined,
         addon_ids: usingServiceWithId ? chosenAddons.map((a) => a.id) : undefined,
       });
+      setChargedCents(typeof amount_cents === 'number' ? amount_cents : amountCents);
       setChargeId(charge_id);
       setCheckoutUrl(checkout_url);
       setStep(2);
@@ -262,15 +305,11 @@ export default function ChargeModal({
                     <p className="text-sm text-[#888] text-center py-4">No services configured. Use custom amount.</p>
                   )}
                   {enabledServices.map((svc) => {
-                    const cents = serviceCents(svc);
-                    const priceLabel = cents != null ? formatCents(cents) : (svc.price || '');
+                    const priceLabel = servicePriceLabel(svc);
                     return (
                       <button
-                        key={svc.id}
-                        onClick={() => {
-                          setSelectedService(svc);
-                          setSelectedAddonIds({});
-                        }}
+                        key={`${svc._site_id || ''}:${svc.id}`}
+                        onClick={() => pickService(svc)}
                         className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border text-left transition-colors ${
                           selectedService?.id === svc.id
                             ? 'border-[#cc0000] bg-[#cc0000]/[0.04]'
@@ -283,13 +322,38 @@ export default function ChargeModal({
                     );
                   })}
 
+                  {selectedService && needsVehicle && (
+                    <div className="pt-3 mt-1">
+                      <label htmlFor="acg-charge-vehicle" className="block text-[11px] font-semibold text-[#555] uppercase tracking-wide mb-2">
+                        Vehicle type
+                      </label>
+                      <select
+                        id="acg-charge-vehicle"
+                        value={vehicleTypeId}
+                        onChange={(e) => pickVehicle(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-xl border border-black/[0.12] bg-white text-[#1a1a1a] text-sm focus:outline-none focus:border-[#cc0000] transition-colors"
+                      >
+                        <option value="">Pick the customer’s vehicle…</option>
+                        {vehicleOptions.map((t) => {
+                          const cents = resolveVariant(selectedService, t.id)?.price_cents;
+                          return (
+                            <option key={t.id} value={t.id}>
+                              {t.name}{cents != null ? ` — ${formatCents(cents)}` : ''}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </div>
+                  )}
+
                   {selectedService && serviceAddons.length > 0 && (
                     <div className="pt-3 mt-1">
                       <p className="text-[11px] font-semibold text-[#555] uppercase tracking-wide mb-2">Add-ons (optional)</p>
                       <div className="space-y-1.5">
                         {serviceAddons.map((a) => {
                           const checked = !!selectedAddonIds[a.id];
-                          const priceLabel = a.price_cents > 0 ? `+${formatCents(a.price_cents)}` : 'Free';
+                          const addonCents = addonPriceForVehicle(a, priceTypeId) || 0;
+                          const priceLabel = addonCents > 0 ? `+${formatCents(addonCents)}` : 'Free';
                           return (
                             <label
                               key={a.id}
@@ -316,7 +380,7 @@ export default function ChargeModal({
                     </div>
                   )}
 
-                  {selectedService && chosenAddons.length > 0 && amountCents != null && (
+                  {selectedService && (chosenAddons.length > 0 || needsVehicle) && amountCents != null && (
                     <div className="flex items-center justify-between px-4 py-2.5 mt-2 rounded-xl bg-[#faf9f7] border border-black/[0.07]">
                       <span className="text-[11px] font-semibold text-[#555] uppercase tracking-wide">Total</span>
                       <span className="text-base font-black text-[#1a1a1a]">{formatCents(amountCents)}</span>
@@ -395,7 +459,11 @@ export default function ChargeModal({
                 disabled={!canSubmit || loading}
                 className="w-full py-3 rounded-xl bg-[#cc0000] hover:bg-[#a80000] disabled:opacity-40 text-white font-bold text-sm transition-colors"
               >
-                {loading ? 'Creating link…' : `Create Payment Link${amountCents ? ` — ${formatCents(amountCents)}` : ''} →`}
+                {loading
+                  ? 'Creating link…'
+                  : mode === 'service' && selectedService && !vehicleReady
+                    ? 'Pick the vehicle type'
+                    : `Create Payment Link${amountCents ? ` — ${formatCents(amountCents)}` : ''} →`}
               </button>
             </div>
           )}
@@ -448,7 +516,7 @@ export default function ChargeModal({
               </div>
               <div>
                 <p className="text-lg font-black text-[#1a1a1a] tracking-tight">
-                  Payment received — {amountCents ? formatCents(amountCents) : ''}
+                  Payment received — {chargedCents ? formatCents(chargedCents) : ''}
                 </p>
                 {customerName && (
                   <p className="text-sm text-[#555] mt-1">{customerName}</p>

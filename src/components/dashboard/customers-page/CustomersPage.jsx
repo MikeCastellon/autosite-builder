@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../../lib/supabase.js';
-import { listBookingsForOwner } from '../../../lib/bookings.js';
+import { listBookingsForOwner, formatBookingTime } from '../../../lib/bookings.js';
 import { listCustomerMetadata } from '../../../lib/customers.js';
 import { groupBookingsIntoCustomers, makeCustomerLikeFromProfile } from '../../../lib/customerIdentity.js';
 import { listManualCustomers } from '../../../lib/customerProfiles.js';
@@ -10,6 +10,12 @@ import AddCustomerModal from './AddCustomerModal.jsx';
 function formatDate(iso) {
   if (!iso) return '—';
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+// Appointment dates (preferred_at) are shop wall-clock time: see bookings.js.
+function formatAppointmentDate(iso) {
+  if (!iso) return '—';
+  return formatBookingTime(iso, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 // Escape one CSV field per RFC 4180 — wrap in quotes if it contains a quote,
@@ -120,7 +126,7 @@ export default function CustomersPage({
         c.bookings.length,
         formatDate(c.firstBookedAt),
         formatDate(c.lastBookedAt),
-        c.nextUpcomingAt ? formatDate(c.nextUpcomingAt) : '',
+        c.nextUpcomingAt ? formatAppointmentDate(c.nextUpcomingAt) : '',
         topServices,
         tags,
       ];
@@ -263,7 +269,7 @@ export default function CustomersPage({
                               </div>
                               {c.nextUpcomingAt && (
                                 <div className="text-[11px] text-green-700 font-medium mt-0.5">
-                                  Upcoming · {formatDate(c.nextUpcomingAt)}
+                                  Upcoming · {formatAppointmentDate(c.nextUpcomingAt)}
                                 </div>
                               )}
                             </div>
