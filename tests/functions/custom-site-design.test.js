@@ -85,8 +85,9 @@ function fakeDb({ projects = [], profiles = [ADMIN], sites = [], bookings = [], 
         const id = `user-${state.authUsers.length + 1}`;
         state.authUsers.push({ id, email, email_confirmed_at: '2026-10-02T00:00:00Z' });
         state.created.push({ email, user_metadata });
-        // The signup trigger creates the profile with the email only.
-        state.profiles.push({ id, email, scheduler_enabled: false });
+        // The signup trigger creates the profile with the email and the
+        // names passed as user metadata.
+        state.profiles.push({ id, email, first_name: user_metadata?.first_name || null, last_name: user_metadata?.last_name || null, scheduler_enabled: false });
         return { data: { user: { id, email } }, error: null };
       },
       generateLink: async ({ type, email, options }) => {
