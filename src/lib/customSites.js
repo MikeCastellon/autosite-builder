@@ -6,6 +6,7 @@ import { supabase } from './supabase.js';
 import { ASSET_BUCKET } from './customSiteForm.js';
 
 const ADMIN_FN = '/.netlify/functions/custom-site-admin';
+const SUGGEST_FN = '/.netlify/functions/custom-site-suggest';
 const FORM_FN = '/.netlify/functions/custom-site-form';
 
 async function request(url, options) {
@@ -30,6 +31,19 @@ export async function customSiteAdmin(action, payload = {}) {
   const token = data?.session?.access_token;
   if (!token) throw new Error('Not signed in');
   return request(ADMIN_FN, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ action, ...payload }),
+  });
+}
+
+// "Suggest a design" (custom-site-suggest): start { id } claims a run and
+// starts the background function; get { id } returns { suggestion }.
+export async function customSiteSuggest(action, payload = {}) {
+  const { data } = await supabase.auth.getSession();
+  const token = data?.session?.access_token;
+  if (!token) throw new Error('Not signed in');
+  return request(SUGGEST_FN, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({ action, ...payload }),

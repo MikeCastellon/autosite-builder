@@ -233,6 +233,36 @@ describe('custom-site-design-background runDesign', () => {
     expect(db.state.events.map((e) => e.type)).toEqual(['design_ready']);
   });
 
+  it('applies the Design Studio settings on the first write, and names the hero buttons for the prompt', async () => {
+    const levers = {
+      palette: { bg: '#f8f8f6', text: '#111111' },
+      fonts: { heading: 'Fraunces', body: 'Manrope' },
+      sections: { order: ['about', 'services'], hidden: ['awards'] },
+      heroLayout: 'split',
+      facts: { tagline: 'Showroom shine, at your door', yearsInBusiness: '6' },
+    };
+    const db = fakeDb({ projects: [project({ design: { ...DESIGN, levers } })] });
+    const client = fakeClient([ok()]);
+    await runDesign({ db, client, projectId: PROJECT_ID, startedAt: STARTED, adminUser: { id: 'admin-1' }, actor: 'a' });
+    const site = db.state.sites[0];
+    expect(site.generated_content._customColors).toEqual({ accent: '#cc0000', bg: '#f8f8f6', text: '#111111' });
+    expect(site.generated_content._customFonts).toEqual({ font: "'Fraunces', Georgia, serif", bodyFont: "'Manrope', sans-serif" });
+    expect(site.generated_content.sectionOrder.slice(0, 4)).toEqual(['about', 'services', 'featured', 'hero']);
+    expect(site.generated_content.hiddenSections).toEqual(['awards']);
+    expect(site.generated_content.heroLayout).toBe('split');
+    expect(site.business_info).toEqual(expect.objectContaining({ tagline: 'Showroom shine, at your door', yearsInBusiness: '6' }));
+    expect(site.generated_content.schemaType).toBe('AutoWash');
+    // mobile_chrome's Button 1 scrolls to the services: the prompt says so.
+    expect(client.calls[0].body.messages[0].content).toContain('Button 1 scrolls to the services list');
+  });
+
+  it('clears the changed Studio groups once the run applied them', async () => {
+    const db = fakeDb({ projects: [project({ design: { ...DESIGN, levers: { heroLayout: 'split' }, leversChanged: ['layout'] } })] });
+    await runDesign({ db, client: fakeClient([ok()]), projectId: PROJECT_ID, startedAt: STARTED, adminUser: { id: 'admin-1' }, actor: 'a' });
+    expect(db.state.sites[0].generated_content.heroLayout).toBe('split');
+    expect(db.state.projects[0].design.leversChanged).toEqual([]);
+  });
+
   it('rewriting replaces text and facts, and photos/colors only where the setup changed them', async () => {
     const db = fakeDb({
       projects: [project({ site_id: SITE_ID, design: { ...DESIGN, imagesChanged: [], colorsChanged: false } })],
@@ -299,6 +329,14 @@ describe('custom-site-admin design actions', () => {
     expect(saved.images).toEqual(DESIGN.images);
     Object.assign(h.db.state.projects[0], { design_status: 'generating', design_started_at: new Date().toISOString() });
     expect((await adminHandler(post({ action: 'design-save', id: PROJECT_ID, design: DESIGN }))).statusCode).toBe(409);
+  });
+
+  it('design-save keeps the launch list, suggestion and brand run the server wrote', async () => {
+    const serverKeys = { launch: { round: 2 }, suggestion: { status: 'ready' }, brand: { status: 'ready' } };
+    h.db = fakeDb({ projects: [project({ design_status: 'ready', site_id: SITE_ID, design: { ...DESIGN, ...serverKeys } })] });
+    const res = await adminHandler(post({ action: 'design-save', id: PROJECT_ID, design: { ...DESIGN, launch: { round: 9 }, suggestion: null } }));
+    expect(res.statusCode).toBe(200);
+    expect(h.db.state.projects[0].design).toEqual(expect.objectContaining(serverKeys));
   });
 
   it('design-generate claims a run, moves the project to Designing, and refuses a second run', async () => {

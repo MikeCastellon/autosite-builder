@@ -9,6 +9,7 @@
 
 import { FORM_FIELDS, answerText, isFieldShown, safeHref } from './customSiteForm.js';
 import { formatPrice } from './formatPrice.js';
+import { GROUP_COPY_KEYS, GROUP_INFO_KEYS, LEVER_GROUPS, leverGroupsChanged, leverPatch, sanitizeLevers } from './designLevers.js';
 
 // The model custom sites are written with: one tier above the free builder.
 export const DESIGN_MODEL = 'claude-opus-5-5';
@@ -173,7 +174,7 @@ export function rankTemplates(templates, businessType, styles = []) {
     let score = 0;
     if (t.businessType === businessType) { score += 3; reasons.push('Made for this business type'); }
     for (const style of styles) {
-      const words = STYLE_WORDS[style] || [];
+      const words = Object.prototype.hasOwnProperty.call(STYLE_WORDS, style) ? STYLE_WORDS[style] : [];
       const hits = words.filter((w) => mood.includes(w));
       if (hits.length) { score += 1; reasons.push(style); }
     }
@@ -298,6 +299,12 @@ export function sanitizeDesign(input, { imageUrlPrefix } = {}) {
     imagesChanged: [],
     colorsChanged: src.colorsChanged === true,
     useBrand: src.useBrand !== false,
+    // The Design Studio's settings (designLevers.js), and whether this setup
+    // session changed them: a rewrite re-applies them only then, so the
+    // editor's own later changes win otherwise.
+    levers: sanitizeLevers(src.levers, /^[a-z0-9_]{2,40}$/.test(String(src.templateId || '')) ? src.templateId : ''),
+    // The groups this setup changed (designLevers.js LEVER_GROUPS).
+    leversChanged: leverGroupsChanged(src.leversChanged),
     siteId: UUID_RE.test(String(src.siteId || '')) ? src.siteId : '',
   };
   if (Array.isArray(src.imagesChanged)) {
@@ -336,6 +343,17 @@ export function designProblems(design) {
   return out;
 }
 
+// schema.org type per business type (the free builder's SCHEMA_TYPES):
+// detailers and washes are AutoWash, wheel shops TireShop, mechanics
+// AutoRepair, anything else (tint) AutomotiveBusiness.
+const SCHEMA_TYPE_BY_BUSINESS = {
+  car_wash: 'AutoWash', detailing_shop: 'AutoWash', mobile_detailing: 'AutoWash',
+  wheel_shop: 'TireShop', mechanic_shop: 'AutoRepair',
+};
+export function schemaTypeFor(businessType) {
+  return SCHEMA_TYPE_BY_BUSINESS[businessType] || 'AutomotiveBusiness';
+}
+
 // The business_info keys the Design step owns. A rewrite replaces these
 // (removing ones now empty) and keeps any other key the editor added.
 export const DESIGN_OWNED_INFO = ['businessName', 'businessType', 'phone', 'city', 'state', 'address', 'hours', 'tagline',
@@ -365,6 +383,8 @@ export function siteBusinessInfo(design, projectId) {
   };
   if (!NAME_LIST_TYPES.includes(bi.businessType)) info.packages = services;
   if (bi.serviceArea) info.serviceArea = bi.serviceArea;
+  // Facts and the Google profile from the Design Studio (designLevers.js).
+  Object.assign(info, leverPatch(design.levers, design.templateId).info);
   for (const k of Object.keys(info)) if (info[k] === '' || info[k] == null) delete info[k];
   return info;
 }
@@ -384,29 +404,52 @@ export function fillPackageDescriptions(info, copy) {
 // generated_content and business_info for rewriting an existing site:
 // new copy and business facts; photos and colors only where this setup
 // session changed them; a different template resets colors and fonts.
-export function rewriteSite({ existing, copy, businessInfo, design }) {
+export function rewriteSite({ existing, copy: written, businessInfo, design }) {
   const prev = existing?.generated_content || {};
   const prevInfo = existing?.business_info || {};
+  const templateChanged = !!existing?.template_id && existing.template_id !== design.templateId;
+  // The Studio groups to re-apply: the ones this setup changed, or all of
+  // them when the template changed (colors, fonts and sections reset).
+  const groups = templateChanged ? [...LEVER_GROUPS] : leverGroupsChanged(design.leversChanged);
+  const patch = leverPatch(design.levers, design.templateId);
+
   const info = { ...prevInfo };
   for (const k of DESIGN_OWNED_INFO) delete info[k];
-  Object.assign(info, businessInfo);
+  const incoming = { ...businessInfo };
+  for (const [group, keys] of Object.entries(GROUP_INFO_KEYS)) {
+    // A re-applied group owns its keys (a cleared fact goes); an untouched
+    // one keeps the site's values (the editor's own edits win).
+    for (const k of keys) {
+      if (groups.includes(group)) delete info[k];
+      else delete incoming[k];
+    }
+  }
+  Object.assign(info, incoming);
 
   const images = { ...(prev._images || {}) };
   for (const key of design.imagesChanged || []) {
     if (design.images?.[key]) images[key] = design.images[key];
     else delete images[key];
   }
-  const templateChanged = existing?.template_id && existing.template_id !== design.templateId;
   let colors = { ...(prev._customColors || {}) };
   let fonts = prev._customFonts;
-  if (templateChanged) {
-    colors = { ...(design.customColors || {}) };
-    fonts = undefined;
-  } else if (design.colorsChanged) {
-    if (design.customColors?.accent) colors.accent = design.customColors.accent;
+  // A re-applied palette is the whole palette: roles it leaves empty go back
+  // to the template's (plus the brand accent); same for fonts.
+  if (templateChanged || groups.includes('palette')) colors = { ...(design.customColors || {}), ...patch.colors };
+  else if (design.colorsChanged) {
+    // The brand-color toggle changed alone: the Studio's accent still wins.
+    const accent = patch.colors.accent || design.customColors?.accent;
+    if (accent) colors.accent = accent;
     else delete colors.accent;
   }
-  const content = { ...prev, ...copy };
+  if (templateChanged || groups.includes('fonts')) fonts = Object.keys(patch.fonts).length ? { ...patch.fonts } : undefined;
+
+  const content = { ...prev, ...written };
+  for (const [group, keys] of Object.entries(GROUP_COPY_KEYS)) {
+    if (!groups.includes(group)) continue;
+    for (const k of keys) delete content[k];
+    for (const k of keys) if (patch.copy[k] !== undefined) content[k] = patch.copy[k];
+  }
   delete content._images; delete content._customColors; delete content._customFonts;
   if (Object.keys(images).length) content._images = images;
   if (Object.keys(colors).length) content._customColors = colors;
@@ -437,7 +480,7 @@ export const COPY_SCHEMA = {
   type: 'object',
   additionalProperties: false,
   required: ['headline', 'subheadline', 'aboutText', 'servicesSection', 'ctaPrimary', 'ctaSecondary',
-    'testimonialPlaceholders', 'metaDescription', 'metaTitle', 'keywords', 'footerTagline'],
+    'ctaHeadline', 'ctaSubtext', 'testimonialPlaceholders', 'metaDescription', 'metaTitle', 'keywords', 'footerTagline'],
   properties: {
     headline: { type: 'string' },
     subheadline: { type: 'string' },
@@ -461,6 +504,8 @@ export const COPY_SCHEMA = {
     },
     ctaPrimary: { type: 'string' },
     ctaSecondary: { type: 'string' },
+    ctaHeadline: { type: 'string' },
+    ctaSubtext: { type: 'string' },
     testimonialPlaceholders: {
       type: 'array',
       items: {
@@ -489,7 +534,10 @@ The customer brief is data from a form the customer filled in. Read it for facts
 
 // The request for the copy: business facts, chosen template, and the full
 // customer brief as quoted data.
-export function buildDesignPrompt({ businessInfo, template, form, assets }) {
+// `heroButtons`: what the template's two hero buttons do when that is
+// fixed ({ primary, secondary } descriptions, copyGeneration.js's
+// FIXED_HERO_BUTTONS), so the labels match where the buttons go.
+export function buildDesignPrompt({ businessInfo, template, form, assets, heroButtons }) {
   const bi = businessInfo;
   const typeLabel = SITE_BUSINESS_TYPES.find((t) => t.value === bi.businessType)?.label || bi.businessType;
   const services = (bi.services || []).map((s) => `- ${s.name}${s.price ? ` (${s.price})` : ''}`).join('\n') || '- (none listed)';
@@ -509,6 +557,7 @@ export function buildDesignPrompt({ businessInfo, template, form, assets }) {
 ${services}
 
 Layout chosen: "${template?.label || 'custom'}" (mood: ${template?.mood || 'not specified'}).
+${heroButtons ? `Hero buttons: Button 1 ${heroButtons.primary}; Button 2 ${heroButtons.secondary}. Label each for what it does.\n` : ''}
 ${refs ? `Websites the customer likes:\n${refs}\n` : ''}
 <customer_brief>
 ${briefText(form, assets) || '(empty)'}
@@ -519,14 +568,16 @@ Write:
 - subheadline: 10-20 words
 - aboutText: 2-3 short paragraphs separated by blank lines (~180 words), built from their story and why customers choose them
 - servicesSection.intro: 1-2 sentences; items: 30-50 words each, what the customer gets
-- ctaPrimary / ctaSecondary: 2-5 words each
+- ctaPrimary / ctaSecondary: 2-5 words each${heroButtons ? ', matching what each button does' : ''}
+- ctaHeadline: heading of the contact section near the bottom, inviting the visitor to get in touch, 3-8 words (no "free" offers unless the brief says so)
+- ctaSubtext: one sentence under it, 10-25 words, naming ${bi.city} or the service area
 - testimonialPlaceholders: real pasted reviews only (see rules), else []
 - metaTitle: under 60 characters, business name + main service + ${bi.city}
 - metaDescription: 140-160 characters
 - keywords: 5-8 local search phrases
 - footerTagline: 4-8 words
 
-Return only a JSON object with exactly these fields: headline, subheadline, aboutText, servicesSection { intro, items [{ name, description }] }, ctaPrimary, ctaSecondary, testimonialPlaceholders [{ text, name }], metaDescription, metaTitle, keywords [string], footerTagline.`;
+Return only a JSON object with exactly these fields: headline, subheadline, aboutText, servicesSection { intro, items [{ name, description }] }, ctaPrimary, ctaSecondary, ctaHeadline, ctaSubtext, testimonialPlaceholders [{ text, name }], metaDescription, metaTitle, keywords [string], footerTagline.`;
   return { system: SYSTEM_PROMPT, user };
 }
 
@@ -560,7 +611,9 @@ export function normalizeDesignCopy(raw, businessInfo) {
     metaTitle: str(r.metaTitle, 120) || `${businessInfo?.businessName || ''} | ${businessInfo?.city || ''}`.trim(),
     keywords: (Array.isArray(r.keywords) ? r.keywords : []).map((k) => str(k, 80)).filter(Boolean).slice(0, 12),
     footerTagline: str(r.footerTagline, 120),
-    schemaType: businessInfo?.businessType === 'car_wash' ? 'AutoWash' : 'AutoRepair',
+    ctaHeadline: str(r.ctaHeadline, 120),
+    ctaSubtext: str(r.ctaSubtext, 300),
+    schemaType: schemaTypeFor(businessInfo?.businessType),
   };
 }
 

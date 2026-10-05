@@ -1,12 +1,30 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import { TEMPLATES } from '../../data/templates.js';
 import { customSiteAdmin, importAssetToSite, startDesignRun } from '../../lib/customSites.js';
 import {
   DESIGN_MODEL, DESIGN_STALE_MS, SITE_BUSINESS_TYPES, brandAccent, designFromIntake, designProblems, isImportable, rankTemplates, showsPrices,
 } from '../../lib/customSiteDesign.js';
 import { formatBytes } from '../../lib/customSiteForm.js';
+import { changedLeverGroups, leverGroupsChanged, sanitizeLevers } from '../../lib/designLevers.js';
+import { unpackGeneratedContent } from '../../lib/siteRender.js';
+import { supabase } from '../../lib/supabase.js';
 import { useAlert } from '../ui/AlertProvider.jsx';
 import { formatDateTime } from './customSiteUi.jsx';
+import { slotImages } from './studio/designPreview.js';
+
+// The Design Studio loads only when an admin opens the setup page: these
+// stay out of the bundle every visitor downloads.
+const BrandSystemCard = lazy(() => import('./studio/BrandSystemCard.jsx'));
+const DesignPreview = lazy(() => import('./studio/DesignPreview.jsx'));
+const FactsField = lazy(() => import('./studio/FactsField.jsx'));
+const FontField = lazy(() => import('./studio/FontField.jsx'));
+const GooglePlaceField = lazy(() => import('./studio/GooglePlaceField.jsx'));
+const LayoutField = lazy(() => import('./studio/LayoutField.jsx'));
+const LooksPicker = lazy(() => import('./studio/LooksPicker.jsx'));
+const PaletteField = lazy(() => import('./studio/PaletteField.jsx'));
+const SectionsField = lazy(() => import('./studio/SectionsField.jsx'));
+const SuggestPanel = lazy(() => import('./studio/SuggestPanel.jsx'));
+const Loading = () => <p className="text-[13px] text-ink-tertiary">Loading…</p>;
 
 // The Design step of a custom website project: the card on the project page
 // (state of the build and what to do next) and the full-page setup where the
@@ -191,6 +209,8 @@ export function DesignSetup({ project, onBack, onStarted }) {
   const [templateId, setTemplateId] = useState(start.templateId || '');
   const [useBrand, setUseBrand] = useState(saved ? saved.useBrand !== false && start.brandHexes.length > 0 : start.brandHexes.length > 0);
   const [slots, setSlots] = useState(start.slots);
+  // The Design Studio's settings (src/lib/designLevers.js).
+  const [levers, setLevers] = useState(() => sanitizeLevers(start.levers, start.templateId || ''));
   const [busy, setBusy] = useState('');
   const [error, setError] = useState('');
 
@@ -198,6 +218,33 @@ export function DesignSetup({ project, onBack, onStarted }) {
   useEffect(() => {
     if (!templateId && ranked.length && info.businessType) setTemplateId(ranked[0].id);
   }, [templateId, ranked, info.businessType]);
+
+  // A section order belongs to one template: a switch starts the new one
+  // from its own default order (keeping the rest of the settings).
+  const leversTemplate = useRef(start.templateId || '');
+  useEffect(() => {
+    if (leversTemplate.current === templateId) return;
+    const from = leversTemplate.current;
+    leversTemplate.current = templateId;
+    setLevers((l) => sanitizeLevers(from ? { ...l, sections: { order: [], hidden: [] } } : l, templateId));
+  }, [templateId]);
+
+  // The site's own text and settings once it has been written, so the
+  // preview shows the real page rather than sample text.
+  const [site, setSite] = useState(null);
+  useEffect(() => {
+    const id = saved?.siteId || project.site_id;
+    if (!id) return undefined;
+    let live = true;
+    supabase.from('sites').select('business_info, generated_content').eq('id', id).maybeSingle()
+      .then(({ data }) => { if (live && data) setSite({ info: data.business_info || {}, ...unpackGeneratedContent(data.generated_content) }); })
+      .catch(() => {});
+    return () => { live = false; };
+  }, [saved?.siteId, project.site_id]);
+
+  // Half-typed About stat rows survive applying a look, brand or suggestion
+  // (those sanitize the levers, which drops incomplete rows).
+  const keepStats = (next) => setLevers((l) => ({ ...next, aboutStats: l.aboutStats }));
 
   const template = templateById(templateId);
   const accent = template && useBrand ? brandAccent(template.colors?.bg, start.brandHexes) : {};
@@ -210,9 +257,19 @@ export function DesignSetup({ project, onBack, onStarted }) {
     setInfo((prev) => ({ ...prev, services: prev.services.map((s, j) => (j === i ? { ...s, ...patch } : s)) }));
   }
 
+  // Changed since the last write? Sticky until a run applies them (the
+  // background run clears it), so Save now and Rewrite later still applies.
+  const cleanLevers = sanitizeLevers(levers, templateId);
+  const leversChanged = [...new Set([
+    ...leverGroupsChanged(saved?.leversChanged),
+    ...changedLeverGroups(cleanLevers, sanitizeLevers(saved?.levers, templateId)),
+  ])];
+
   // The design as it will be saved, with images (once imported) and colors.
   function buildDesign(extra = {}) {
     return {
+      levers: cleanLevers,
+      leversChanged,
       businessInfo: info,
       templateId,
       template: { label: template?.label || '', mood: template?.mood || '' },
@@ -248,7 +305,7 @@ export function DesignSetup({ project, onBack, onStarted }) {
     if (missing.length) { setError(`Fill in: ${missing.join(', ')}`); return; }
     if (project.site_id) {
       const ok = await confirm(
-        'This rewrites the site\'s text and business details from this page, replacing text changed in the editor. Photos and the brand color change only where you changed them here; the rest of your editor work stays.',
+        'This rewrites the site\'s text and business details from this page, replacing text changed in the editor. Photos, the brand color and the Design Studio settings change only where you changed them here; the rest of your editor work stays.',
         { title: 'Rewrite the site?', confirmText: 'Rewrite' },
       );
       if (!ok) return;
@@ -309,7 +366,8 @@ export function DesignSetup({ project, onBack, onStarted }) {
         </p>
       </header>
 
-      <div className="mt-6 space-y-6">
+      <div className="mt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(380px,0.8fr)] lg:gap-6 lg:items-start">
+      <div className="space-y-6 min-w-0">
         <Section title="Business details" intro="What the site says about the business. Facts only: the AI won't invent anything you leave out.">
           <div className="grid sm:grid-cols-2 gap-3">
             <Field label="Business name"><input value={info.businessName} onChange={set('businessName')} className={INPUT} /></Field>
@@ -417,6 +475,89 @@ export function DesignSetup({ project, onBack, onStarted }) {
           </div>
         </Section>
 
+        <Suspense fallback={<Loading />}>
+        <Section title="Suggest a design" intro={`Let ${MODEL_NAME} propose the whole look from their files and answers. You review every part.`}>
+          <SuggestPanel
+            project={project}
+            current={{ templateId, levers: cleanLevers, slots }}
+            modelName={MODEL_NAME}
+            disabled={!!busy}
+            onApply={(next) => {
+              // The suggestion's sections are made for its template: move the
+              // levers' template marker first so the switch keeps them.
+              if (next.templateId !== templateId) {
+                leversTemplate.current = next.templateId;
+                setTemplateId(next.templateId);
+              }
+              keepStats(next.levers);
+              setSlots(next.slots);
+            }}
+          />
+        </Section>
+
+        <BrandSystemCard
+          projectId={project.id}
+          brand={project.design?.brand || null}
+          levers={cleanLevers}
+          onApply={(next) => keepStats(sanitizeLevers(next, templateId))}
+        />
+
+        {template && (
+          <>
+            <Section title="Starting look" intro="Curated looks for this template. Pick one, then fine-tune below.">
+              <LooksPicker templateId={templateId} levers={cleanLevers} disabled={!!busy} onApply={keepStats} />
+            </Section>
+
+            <Section title="Colors" intro="All five colors of the page. The site repairs any pair that isn't readable.">
+              <PaletteField
+                value={levers.palette}
+                onChange={(palette) => setLevers((l) => ({ ...l, palette }))}
+                templateId={templateId}
+                defaults={template.colors}
+                brandHexes={start.brandHexes}
+              />
+            </Section>
+
+            <Section title="Fonts" intro="A heading and body pair. Custom sites can use every font in the catalog.">
+              <FontField
+                value={levers.fonts}
+                onChange={(fonts) => setLevers((l) => ({ ...l, fonts }))}
+                defaults={{ heading: template.font, body: template.bodyFont }}
+                styles={form.styles}
+                businessType={info.businessType}
+                mood={template.mood}
+                sample={info.businessName}
+              />
+            </Section>
+
+            <Section title="Sections" intro="Order and show or hide the page's sections.">
+              <SectionsField templateId={templateId} value={levers.sections} onChange={(sections) => setLevers((l) => ({ ...l, sections }))} />
+            </Section>
+
+            <Section title="Layout" intro="The hero and About layouts.">
+              <LayoutField templateId={templateId} value={levers} onChange={(part) => setLevers((l) => ({ ...l, ...part }))} />
+            </Section>
+
+            <Section title="Trust facts" intro="Only what they told you. Empty fields stay off the site.">
+              <FactsField value={levers.facts} onChange={(facts) => setLevers((l) => ({ ...l, facts }))} />
+            </Section>
+
+            <Section title="Google profile" intro="Their real Google rating, for templates with a Google badge.">
+              <GooglePlaceField
+                value={levers.googlePlace}
+                onChange={(googlePlace) => setLevers((l) => ({ ...l, googlePlace }))}
+                businessName={info.businessName}
+                city={info.city}
+                state={info.state}
+                profileLink={form.googleProfile}
+                disabled={!!busy}
+              />
+            </Section>
+          </>
+        )}
+
+        </Suspense>
+
         <Section title="Photos" intro="Copied into the site when it's written (resized for the web). You can change them in the editor later.">
           {importable.length === 0 ? (
             <p className="text-[13px] text-ink-tertiary">No usable photos yet. The template's placeholders show until you add some in the editor.</p>
@@ -465,7 +606,26 @@ export function DesignSetup({ project, onBack, onStarted }) {
         </Section>
       </div>
 
-      <div className="sticky bottom-0 mt-6 -mx-3 px-3 py-4 bg-[#faf9f7]/95 backdrop-blur border-t border-black/[0.07] flex flex-wrap items-center gap-3">
+      {template && (
+        <aside className="mt-6 lg:mt-0 lg:sticky lg:top-4" aria-label="Preview">
+          <Suspense fallback={<Loading />}>
+            <DesignPreview
+              templateId={templateId}
+              businessInfo={info}
+              levers={cleanLevers}
+              copy={site?.copy}
+              existingInfo={site?.info}
+              customColors={{ ...(site?.customColors || {}), ...accent }}
+              customFonts={site?.customFonts}
+              images={{ ...(site?.images || {}), ...slotImages({ slots, files: project.files, images: saved?.images, imported: saved?.imported }) }}
+              projectId={project.id}
+            />
+          </Suspense>
+        </aside>
+      )}
+      </div>
+
+      <div className="sticky bottom-0 z-20 mt-6 -mx-3 px-3 py-4 bg-[#faf9f7]/95 backdrop-blur border-t border-black/[0.07] flex flex-wrap items-center gap-3">
         {error && <p role="alert" className="text-[13px] font-medium text-[#cc0000]">{error}</p>}
         {busy && busy !== 'save' && busy !== 'generate' && <p role="status" className="text-[13px] text-ink-tertiary">{busy}</p>}
         <div className="ml-auto flex gap-2">

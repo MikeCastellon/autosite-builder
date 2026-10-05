@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   DESIGN_MODEL, DESIGN_STALE_MS, fillPackageDescriptions, isRunStale, rewriteSite, showsPrices, brandAccent, briefText, buildDesignPrompt, contrast, designFromIntake, designProblems, guessCityState,
   isImportable, joinHours, normalizeDesignCopy, parseCopyJson, parseServices, rankTemplates, sanitizeDesign,
-  servicesForType, siteBusinessInfo,
+  servicesForType, siteBusinessInfo, schemaTypeFor,
 } from './customSiteDesign.js';
 import { TEMPLATES } from '../data/templates.js';
 
@@ -249,5 +249,87 @@ describe('small helpers', () => {
     expect(isRunStale({ design_status: 'ready' })).toBe(false);
     expect(showsPrices('mechanic_shop')).toBe(false);
     expect(showsPrices('detailing_shop')).toBe(true);
+  });
+});
+
+describe('Design Studio plumbing', () => {
+  it('maps business types to the schema.org types the free builder uses', () => {
+    expect(schemaTypeFor('mobile_detailing')).toBe('AutoWash');
+    expect(schemaTypeFor('car_wash')).toBe('AutoWash');
+    expect(schemaTypeFor('wheel_shop')).toBe('TireShop');
+    expect(schemaTypeFor('mechanic_shop')).toBe('AutoRepair');
+    expect(schemaTypeFor('tint_shop')).toBe('AutomotiveBusiness');
+  });
+
+  it('writes the contact headline and subtext', () => {
+    const copy = normalizeDesignCopy({ ctaHeadline: ' Ready for a real shine? ', ctaSubtext: 'We come to you anywhere in Austin.' }, { businessType: 'tint_shop' });
+    expect(copy.ctaHeadline).toBe('Ready for a real shine?');
+    expect(copy.ctaSubtext).toBe('We come to you anywhere in Austin.');
+    expect(copy.schemaType).toBe('AutomotiveBusiness');
+  });
+
+  it('the prompt asks for them and describes fixed hero buttons', () => {
+    const { user } = buildDesignPrompt({
+      businessInfo: { businessName: 'A', businessType: 'tint_shop', city: 'Miami', state: 'FL', services: [] },
+      template: { label: 'X', mood: 'y' }, form: {}, assets: [],
+      heroButtons: { primary: 'scrolls to the services list', secondary: 'calls the business phone' },
+    });
+    expect(user).toContain('ctaHeadline');
+    expect(user).toContain('Button 2 calls the business phone');
+    expect(buildDesignPrompt({ businessInfo: { businessName: 'A', city: 'M', state: 'FL', services: [] }, form: {}, assets: [] }).user).not.toContain('Hero buttons');
+  });
+
+  it('keeps the levers through sanitizeDesign, and a rewrite re-applies them only when changed', () => {
+    const d = sanitizeDesign({ templateId: 'mobile_chrome', levers: { heroLayout: 'split', palette: { bg: '#ffffff' } }, leversChanged: true });
+    expect(d.levers.heroLayout).toBe('split');
+    // An older save's `true` means every group.
+    expect(d.leversChanged).toEqual(['palette', 'fonts', 'sections', 'layout', 'facts', 'googlePlace']);
+    const existing = { template_id: 'mobile_chrome', business_info: {}, generated_content: { heroLayout: 'full', _customColors: { bg: '#000000' } } };
+    const changed = rewriteSite({ existing, copy: { headline: 'H' }, businessInfo: {}, design: d });
+    expect(changed.generated_content.heroLayout).toBe('split');
+    expect(changed.generated_content._customColors).toEqual({ bg: '#ffffff' });
+    const unchanged = rewriteSite({ existing, copy: { headline: 'H' }, businessInfo: {}, design: { ...d, leversChanged: [] } });
+    expect(unchanged.generated_content.heroLayout).toBe('full');
+    expect(unchanged.generated_content._customColors).toEqual({ bg: '#000000' });
+  });
+
+  it('a re-applied group removes what was cleared; untouched groups keep the editor\'s values', () => {
+    const existing = {
+      template_id: 'detailing_sporty',
+      business_info: { awards: ['Best of Tucson 2025'], warranty: 'Lifetime', googlePlace: { placeId: 'p' }, extra: 1 },
+      generated_content: { sectionOrder: ['about', 'hero'], hiddenSections: ['gallery'], heroLayout: 'split', _customColors: { bg: '#101010', text: '#eeeeee' }, _customFonts: { font: "'Anton', sans-serif" } },
+    };
+    const design = sanitizeDesign({ templateId: 'detailing_sporty', levers: { facts: { warranty: 'Lifetime' } }, leversChanged: ['facts', 'palette', 'fonts'] });
+    const out = rewriteSite({ existing, copy: { headline: 'H' }, businessInfo: siteBusinessInfo({ ...design, businessInfo: { services: [] } }, 'p1'), design });
+    // The award cleared in the Studio is gone; the warranty kept; the Google
+    // profile (untouched group) stays as the editor left it.
+    expect(out.business_info.awards).toBeUndefined();
+    expect(out.business_info.warranty).toBe('Lifetime');
+    expect(out.business_info.googlePlace).toEqual({ placeId: 'p' });
+    expect(out.business_info.extra).toBe(1);
+    // Palette and fonts re-applied as a whole (empty = template default).
+    expect(out.generated_content._customColors).toBeUndefined();
+    expect(out.generated_content._customFonts).toBeUndefined();
+    // Sections and layout untouched: the editor's order stays.
+    expect(out.generated_content.sectionOrder).toEqual(['about', 'hero']);
+    expect(out.generated_content.heroLayout).toBe('split');
+  });
+
+  it('the brand-color toggle alone never overrides the Studio accent', () => {
+    const existing = { template_id: 'mobile_chrome', business_info: {}, generated_content: { _customColors: { accent: '#111111' } } };
+    const design = sanitizeDesign({ templateId: 'mobile_chrome', levers: { palette: { accent: '#e11d48' } }, customColors: {}, colorsChanged: true, leversChanged: [] });
+    expect(rewriteSite({ existing, copy: {}, businessInfo: {}, design }).generated_content._customColors).toEqual({ accent: '#e11d48' });
+  });
+
+  it('puts the Studio facts and Google profile on the site', () => {
+    const d = sanitizeDesign({
+      businessInfo: { businessName: 'A', businessType: 'detailing_shop', city: 'M', state: 'FL', services: [] },
+      templateId: 'detailing_sporty',
+      levers: { facts: { awards: ['Best of Miami'], insured: true }, googlePlace: { placeId: 'p1', placeName: 'A', rating: 4.9, reviewCount: 88, url: 'https://maps.google.com/?cid=1' } },
+    });
+    const info = siteBusinessInfo(d, PROJECT);
+    expect(info.awards).toEqual(['Best of Miami']);
+    expect(info.insured).toBe(true);
+    expect(info.googlePlace).toEqual({ placeId: 'p1', placeName: 'A', rating: 4.9, reviewCount: 88, url: 'https://maps.google.com/?cid=1' });
   });
 });

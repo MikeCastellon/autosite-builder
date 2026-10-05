@@ -17,9 +17,11 @@ import Anthropic from '@anthropic-ai/sdk';
 import { supabaseAdmin } from './_shared/auth.js';
 import { requireSuperAdmin } from './_lib/custom-site-auth.js';
 import { requestDesignCopy } from './_lib/custom-site-design-ai.js';
+import { FIXED_HERO_BUTTONS } from './_lib/copyGeneration.js';
 import {
   buildDesignPrompt, designProblems, fillPackageDescriptions, normalizeDesignCopy, rewriteSite, siteBusinessInfo,
 } from '../../src/lib/customSiteDesign.js';
+import { leverPatch } from '../../src/lib/designLevers.js';
 
 const TABLE = 'custom_site_projects';
 const EVENTS = 'custom_site_project_events';
@@ -63,13 +65,20 @@ export async function runDesign({ db, client, projectId, startedAt, adminUser, a
 
   try {
     const prompt = buildDesignPrompt({
-      businessInfo: design.businessInfo, template: design.template, form: project.form || {}, assets: project.assets || [],
+      businessInfo: design.businessInfo,
+      template: design.template,
+      form: project.form || {},
+      assets: project.assets || [],
+      heroButtons: FIXED_HERO_BUTTONS[design.templateId] || null,
     });
     const { raw, model } = await requestDesignCopy(client, prompt);
     const copy = normalizeDesignCopy(raw, design.businessInfo);
     const businessInfo = fillPackageDescriptions(siteBusinessInfo(design, project.id), copy);
     const images = design.images || {};
-    const colors = design.customColors || {};
+    // The Design Studio's settings (palette, fonts, sections, layouts) on top
+    // of the brand accent; the same patch the setup's preview shows.
+    const patch = leverPatch(design.levers, design.templateId);
+    const colors = { ...(design.customColors || {}), ...patch.colors };
 
     const { data: existing } = await db.from('sites').select('id, user_id, template_id, business_info, generated_content').eq('id', design.siteId).maybeSingle();
     if (existing) {
@@ -83,9 +92,10 @@ export async function runDesign({ db, client, projectId, startedAt, adminUser, a
       }).eq('id', existing.id);
       if (error) throw new Error(`Could not update the site: ${error.message}`);
     } else {
-      const generatedContent = { ...copy };
+      const generatedContent = { ...copy, ...patch.copy };
       if (Object.keys(images).length) generatedContent._images = images;
       if (Object.keys(colors).length) generatedContent._customColors = colors;
+      if (Object.keys(patch.fonts).length) generatedContent._customFonts = patch.fonts;
       const { error } = await db.from('sites').insert({
         id: design.siteId,
         user_id: adminUser.id,
@@ -105,11 +115,28 @@ export async function runDesign({ db, client, projectId, startedAt, adminUser, a
       design_finished_at: now(),
     }).eq('id', project.id);
     await logEvent(db, project.id, 'design_ready', { model, regenerated: !!existing }, actor);
+    if (Array.isArray(design.leversChanged) ? design.leversChanged.length : design.leversChanged) await clearLeversChanged(db, project.id);
     return { status: 200 };
   } catch (err) {
     console.error('[custom-site-design] failed:', err?.message || err);
     await fail(db, project.id, err?.message, actor);
     return { status: 500, error: err?.message };
+  }
+}
+
+// This write applied the Design Studio settings: clear the "changed" flag
+// so a later rewrite keeps the editor's own changes to colors, fonts and
+// sections. Guarded by updated_at like every other design write.
+async function clearLeversChanged(db, id) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const { data: row } = await db.from(TABLE).select('design, updated_at').eq('id', id).maybeSingle();
+    const d = row?.design;
+    const changed = Array.isArray(d?.leversChanged) ? d.leversChanged.length > 0 : !!d?.leversChanged;
+    if (!d || typeof d !== 'object' || !changed) return;
+    let q = db.from(TABLE).update({ design: { ...d, leversChanged: [] } }).eq('id', id);
+    if (row.updated_at) q = q.eq('updated_at', row.updated_at);
+    const { data } = await q.select('id').maybeSingle();
+    if (data) return;
   }
 }
 
@@ -127,6 +154,14 @@ export const handler = async (event) => {
   // Two attempts at most (structured, then plain) of 6 minutes each stay
   // inside the background function's 15-minute limit.
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, timeout: 6 * 60 * 1000, maxRetries: 0 });
-  const result = await runDesign({ db, client, projectId: body.id, startedAt: body.startedAt, adminUser: auth.user, actor: auth.actor });
-  return { statusCode: result.status };
+  // Netlify retries a background function that fails (an error or a 5xx),
+  // which would pay for the model run again. The run records its own
+  // outcome on the project, so once it has started, always answer 200.
+  try {
+    const result = await runDesign({ db, client, projectId: body.id, startedAt: body.startedAt, adminUser: auth.user, actor: auth.actor });
+    return { statusCode: result.status >= 500 ? 200 : result.status };
+  } catch (err) {
+    console.error('[custom-site-design] run crashed:', err?.message || err);
+    return { statusCode: 200 };
+  }
 };
