@@ -68,8 +68,13 @@ export default function BookCustomerModal({ customer, userId, onClose, onBooked 
     // The owner types shop time. Store it as wall-clock time (what the
     // booking widget, the emails and the Bookings page read back), not the
     // browser's reading of it, which lands the booking hours off.
-    const preferredAt = wallTimeToBookingIso(when);
-    if (!preferredAt) { setErr('Pick a date and time.'); return; }
+    const shopTime = wallTimeToBookingIso(when);
+    if (!shopTime) { setErr('Pick a date and time.'); return; }
+    // The browser's reading of the same time (a real instant): what this
+    // dialog sent before that fix, and what the previous deploy's
+    // owner-create-booking stores. The current function ignores it.
+    const typed = new Date(when);
+    const browserInstant = Number.isNaN(typed.getTime()) ? shopTime : typed.toISOString();
     setBusy(true); setErr(null);
     try {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -84,7 +89,13 @@ export default function BookCustomerModal({ customer, userId, onClose, onBooked 
           customer_name: customer.name,
           customer_email: customer.email,
           customer_phone: customer.phone,
-          preferred_at: preferredAt,
+          // Both readings (owner-create-booking explains why). The current
+          // function stores shop_preferred_at and refuses a request without
+          // it: that comes from a tab still running the old dialog. After a
+          // rollback, the previous function stores preferred_at, so this tab
+          // still books the time that deploy expects.
+          shop_preferred_at: shopTime,
+          preferred_at: browserInstant,
           vehicle_make: vehicleMake,
           vehicle_model: vehicleModel,
           vehicle_year: vehicleYear ? Number(vehicleYear) : null,
