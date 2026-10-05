@@ -7,6 +7,7 @@ import {
 import { useAlert } from '../ui/AlertProvider.jsx';
 import { StageBadge, copyText, duration, formatDateTime, timeAgo } from './customSiteUi.jsx';
 import { DesignCard, DesignSetup, HandoverCard } from './CustomSiteDesign.jsx';
+import { LaunchCard } from './LaunchCard.jsx';
 
 // One custom website project, full page (Admin > Custom websites > a
 // project): where the build is and what's next, the customer's answers and
@@ -384,6 +385,7 @@ export default function CustomSiteProjectPage({ projectId, onBack, onChanged, on
 
         <div className="space-y-6">
           <HandoverCard project={project} onDone={load} />
+          <LaunchCard key={project.id} project={project} onSaved={saved} />
 
           <Card title="Form link">
             <div className="flex gap-2">

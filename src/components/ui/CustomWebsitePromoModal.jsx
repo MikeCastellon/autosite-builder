@@ -77,7 +77,7 @@ export default function CustomWebsitePromoModal({ open, onClose }) {
 
               <ul className="space-y-2 mb-6">
                 {[
-                  'Custom design — not a template',
+                  'Designed around your brand: colors, fonts, layout',
                   'Up to 3 rounds of revisions',
                   'Live in 7-10 business days',
                   'Includes everything in Pro',

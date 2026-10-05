@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   DESIGN_MODEL, DESIGN_STALE_MS, fillPackageDescriptions, isRunStale, rewriteSite, showsPrices, brandAccent, briefText, buildDesignPrompt, contrast, designFromIntake, designProblems, guessCityState,
   isImportable, joinHours, normalizeDesignCopy, parseCopyJson, parseServices, rankTemplates, sanitizeDesign,
-  servicesForType, siteBusinessInfo,
+  servicesForType, siteBusinessInfo, schemaTypeFor,
 } from './customSiteDesign.js';
 import { TEMPLATES } from '../data/templates.js';
 
@@ -249,5 +249,58 @@ describe('small helpers', () => {
     expect(isRunStale({ design_status: 'ready' })).toBe(false);
     expect(showsPrices('mechanic_shop')).toBe(false);
     expect(showsPrices('detailing_shop')).toBe(true);
+  });
+});
+
+describe('Design Studio plumbing', () => {
+  it('maps business types to the schema.org types the free builder uses', () => {
+    expect(schemaTypeFor('mobile_detailing')).toBe('AutoWash');
+    expect(schemaTypeFor('car_wash')).toBe('AutoWash');
+    expect(schemaTypeFor('wheel_shop')).toBe('TireShop');
+    expect(schemaTypeFor('mechanic_shop')).toBe('AutoRepair');
+    expect(schemaTypeFor('tint_shop')).toBe('AutomotiveBusiness');
+  });
+
+  it('writes the contact headline and subtext', () => {
+    const copy = normalizeDesignCopy({ ctaHeadline: ' Ready for a real shine? ', ctaSubtext: 'We come to you anywhere in Austin.' }, { businessType: 'tint_shop' });
+    expect(copy.ctaHeadline).toBe('Ready for a real shine?');
+    expect(copy.ctaSubtext).toBe('We come to you anywhere in Austin.');
+    expect(copy.schemaType).toBe('AutomotiveBusiness');
+  });
+
+  it('the prompt asks for them and describes fixed hero buttons', () => {
+    const { user } = buildDesignPrompt({
+      businessInfo: { businessName: 'A', businessType: 'tint_shop', city: 'Miami', state: 'FL', services: [] },
+      template: { label: 'X', mood: 'y' }, form: {}, assets: [],
+      heroButtons: { primary: 'scrolls to the services list', secondary: 'calls the business phone' },
+    });
+    expect(user).toContain('ctaHeadline');
+    expect(user).toContain('Button 2 calls the business phone');
+    expect(buildDesignPrompt({ businessInfo: { businessName: 'A', city: 'M', state: 'FL', services: [] }, form: {}, assets: [] }).user).not.toContain('Hero buttons');
+  });
+
+  it('keeps the levers through sanitizeDesign, and a rewrite re-applies them only when changed', () => {
+    const d = sanitizeDesign({ templateId: 'mobile_chrome', levers: { heroLayout: 'split', palette: { bg: '#ffffff' } }, leversChanged: true });
+    expect(d.levers.heroLayout).toBe('split');
+    expect(d.leversChanged).toBe(true);
+    const existing = { template_id: 'mobile_chrome', business_info: {}, generated_content: { heroLayout: 'full', _customColors: { bg: '#000000' } } };
+    const changed = rewriteSite({ existing, copy: { headline: 'H' }, businessInfo: {}, design: d });
+    expect(changed.generated_content.heroLayout).toBe('split');
+    expect(changed.generated_content._customColors).toEqual({ bg: '#ffffff' });
+    const unchanged = rewriteSite({ existing, copy: { headline: 'H' }, businessInfo: {}, design: { ...d, leversChanged: false } });
+    expect(unchanged.generated_content.heroLayout).toBe('full');
+    expect(unchanged.generated_content._customColors).toEqual({ bg: '#000000' });
+  });
+
+  it('puts the Studio facts and Google profile on the site', () => {
+    const d = sanitizeDesign({
+      businessInfo: { businessName: 'A', businessType: 'detailing_shop', city: 'M', state: 'FL', services: [] },
+      templateId: 'detailing_sporty',
+      levers: { facts: { awards: ['Best of Miami'], insured: true }, googlePlace: { placeId: 'p1', placeName: 'A', rating: 4.9, reviewCount: 88, url: 'https://maps.google.com/?cid=1' } },
+    });
+    const info = siteBusinessInfo(d, PROJECT);
+    expect(info.awards).toEqual(['Best of Miami']);
+    expect(info.insured).toBe(true);
+    expect(info.googlePlace).toEqual({ placeId: 'p1', placeName: 'A', rating: 4.9, reviewCount: 88, url: 'https://maps.google.com/?cid=1' });
   });
 });

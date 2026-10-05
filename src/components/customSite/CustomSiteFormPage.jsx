@@ -507,6 +507,12 @@ export default function CustomSiteFormPage() {
               </p>
             )}
             {submitError && <p role="alert" className="mt-3 text-[14px] font-medium text-[#cc0000]">{submitError}</p>}
+            {/* Design runs send the answers and files to Anthropic's AI tools,
+                whose file sandbox keeps data up to 30 days (not zero-retention). */}
+            <p className="mt-4 text-[12px] leading-relaxed text-[#6b6b6b]">
+              Your answers and files are used to design your website and launch materials, including with our AI design
+              tools (Anthropic). Files processed by those tools are deleted within 30 days.
+            </p>
           </section>
         </div>
       </div>

@@ -233,6 +233,29 @@ describe('custom-site-design-background runDesign', () => {
     expect(db.state.events.map((e) => e.type)).toEqual(['design_ready']);
   });
 
+  it('applies the Design Studio settings on the first write, and names the hero buttons for the prompt', async () => {
+    const levers = {
+      palette: { bg: '#f8f8f6', text: '#111111' },
+      fonts: { heading: 'Fraunces', body: 'Manrope' },
+      sections: { order: ['about', 'services'], hidden: ['awards'] },
+      heroLayout: 'split',
+      facts: { tagline: 'Showroom shine, at your door', yearsInBusiness: '6' },
+    };
+    const db = fakeDb({ projects: [project({ design: { ...DESIGN, levers } })] });
+    const client = fakeClient([ok()]);
+    await runDesign({ db, client, projectId: PROJECT_ID, startedAt: STARTED, adminUser: { id: 'admin-1' }, actor: 'a' });
+    const site = db.state.sites[0];
+    expect(site.generated_content._customColors).toEqual({ accent: '#cc0000', bg: '#f8f8f6', text: '#111111' });
+    expect(site.generated_content._customFonts).toEqual({ font: "'Fraunces', Georgia, serif", bodyFont: "'Manrope', sans-serif" });
+    expect(site.generated_content.sectionOrder.slice(0, 3)).toEqual(['about', 'services', 'hero']);
+    expect(site.generated_content.hiddenSections).toEqual(['awards']);
+    expect(site.generated_content.heroLayout).toBe('split');
+    expect(site.business_info).toEqual(expect.objectContaining({ tagline: 'Showroom shine, at your door', yearsInBusiness: '6' }));
+    expect(site.generated_content.schemaType).toBe('AutoWash');
+    // mobile_chrome's Button 1 scrolls to the services: the prompt says so.
+    expect(client.calls[0].body.messages[0].content).toContain('Button 1 scrolls to the services list');
+  });
+
   it('rewriting replaces text and facts, and photos/colors only where the setup changed them', async () => {
     const db = fakeDb({
       projects: [project({ site_id: SITE_ID, design: { ...DESIGN, imagesChanged: [], colorsChanged: false } })],

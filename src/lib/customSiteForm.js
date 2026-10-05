@@ -437,6 +437,22 @@ export function describeEvent(evt) {
     case 'design_ready': return d.regenerated ? 'Site rewritten' : 'Site written and created';
     case 'design_failed': return `Writing the site failed${d.error ? `: ${d.error}` : ''}`;
     case 'handover': return `Site handed over to ${d.to || 'the customer'}${d.newAccount ? ' (new account)' : ''}${d.compPro ? ', with Pro' : ''}`;
+    case 'launch': {
+      const parts = [];
+      const n = (list) => (Array.isArray(list) ? list.length : 0);
+      if (n(d.checked)) parts.push(`${n(d.checked)} launch item${n(d.checked) === 1 ? '' : 's'} ticked`);
+      if (n(d.unchecked)) parts.push(`${n(d.unchecked)} unticked`);
+      if (d.round) parts.push(`revision round ${d.round.to}${d.round.of ? ` of ${d.round.of}` : ''}`);
+      if (d.roundsIncluded) parts.push(`${d.roundsIncluded.to} rounds included`);
+      if (d.notes) parts.push('launch notes edited');
+      return parts.length ? `Launch: ${parts.join(', ')}` : 'Launch list updated';
+    }
+    case 'design_suggest_started': return 'Asked Claude to suggest a design';
+    case 'design_suggest_ready': return 'Design suggestion ready';
+    case 'design_suggest_failed': return `Design suggestion failed${d.error ? `: ${d.error}` : ''}`;
+    case 'brand_started': return 'Started building the brand system';
+    case 'brand_ready': return 'Brand system ready';
+    case 'brand_failed': return `Brand system failed${d.error ? `: ${d.error}` : ''}`;
     default: return evt?.type || 'Update';
   }
 }

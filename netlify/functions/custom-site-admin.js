@@ -35,6 +35,7 @@ import {
   ASSET_BUCKET, ASSET_KINDS, STAGE_IDS, fullName, isEmail, safeHref, sanitizeForm, stageAfterInvite,
 } from '../../src/lib/customSiteForm.js';
 import { designProblems, isRunStale, sanitizeDesign } from '../../src/lib/customSiteDesign.js';
+import { applyLaunchPatch } from '../../src/lib/customSiteLaunch.js';
 
 const TABLE = 'custom_site_projects';
 const EVENTS = 'custom_site_project_events';
@@ -197,6 +198,36 @@ async function removeProjectFiles(db, projectId) {
     const { error } = await db.storage.from(ASSET_BUCKET).remove(paths.slice(i, i + 100));
     if (error) console.error('[custom-site-admin] file cleanup failed:', error.message);
   }
+}
+
+// Launch card (customSiteLaunch.js): merges what the card changed into
+// design.launch and keeps every other design key. design is one jsonb
+// column the setup's design-save also writes, so the write only lands while
+// the row is still the one read (updated_at moves on every write, via the
+// trigger); otherwise it reads again and re-applies the patch, so a save
+// landing in between is never undone. Returns [status, body].
+// design keys only server actions write (see design-save).
+const SERVER_DESIGN_KEYS = ['launch', 'suggestion', 'brand'];
+
+async function saveLaunch(db, id, patch, actor) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const current = await loadProject(db, id);
+    if (!current) return [404, { error: 'Project not found' }];
+    const design = current.design && typeof current.design === 'object' && !Array.isArray(current.design) ? current.design : {};
+    const { launch, changed, event } = applyLaunchPatch(design.launch, patch, new Date().toISOString());
+    if (!changed) return [200, { project: forAdmin(current) }];
+    let q = db.from(TABLE).update({ design: { ...design, launch } }).eq('id', current.id);
+    if (current.updated_at) q = q.eq('updated_at', current.updated_at);
+    const { data, error } = await q.select('*').maybeSingle();
+    if (error) {
+      console.error('[custom-site-admin] launch save failed:', error.message);
+      return [500, { error: 'Could not save the launch list' }];
+    }
+    if (!data) continue;
+    if (event) await logEvent(db, current.id, 'launch', event, actor);
+    return [200, { project: forAdmin(data) }];
+  }
+  return [409, { error: 'The project changed while saving. Try again.' }];
 }
 
 export const handler = async (event) => {
@@ -404,15 +435,27 @@ export const handler = async (event) => {
       }
 
       case 'design-save': {
-        const current = await loadProject(db, body.id);
-        if (!current) return reply(404, { error: 'Project not found' });
-        if (runLive(current)) return reply(409, { error: 'Wait for the copy to finish first' });
         const design = sanitizeDesign(body.design, { imageUrlPrefix: siteImagesPrefix() });
-        // A site, once created, keeps its id.
-        if (current.site_id) design.siteId = current.site_id;
-        const { data, error } = await db.from(TABLE).update({ design }).eq('id', current.id).select('*').single();
-        if (error) return reply(500, { error: 'Could not save the design' });
-        return reply(200, { project: forAdmin(data) });
+        // The launch list, a "Suggest a design" result and a brand-system run
+        // are written by their own actions and background functions, never
+        // by the setup form: carry them over. updated_at guards against one
+        // of those landing between this read and write (then re-read).
+        for (let attempt = 0; attempt < 3; attempt += 1) {
+          const current = await loadProject(db, body.id);
+          if (!current) return reply(404, { error: 'Project not found' });
+          if (runLive(current)) return reply(409, { error: 'Wait for the copy to finish first' });
+          const prev = current.design && typeof current.design === 'object' && !Array.isArray(current.design) ? current.design : {};
+          const next = { ...design };
+          for (const key of SERVER_DESIGN_KEYS) if (prev[key] !== undefined) next[key] = prev[key];
+          // A site, once created, keeps its id.
+          if (current.site_id) next.siteId = current.site_id;
+          let q = db.from(TABLE).update({ design: next }).eq('id', current.id);
+          if (current.updated_at) q = q.eq('updated_at', current.updated_at);
+          const { data, error } = await q.select('*').maybeSingle();
+          if (error) return reply(500, { error: 'Could not save the design' });
+          if (data) return reply(200, { project: forAdmin(data) });
+        }
+        return reply(409, { error: 'The project changed while saving. Try again.' });
       }
 
       case 'design-generate': {
@@ -445,6 +488,17 @@ export const handler = async (event) => {
           await logEvent(db, current.id, 'design_failed', { error: message.slice(0, 200) }, actor);
         }
         return reply(200, { ok: true });
+      }
+
+      // launch-save { id, launch: { checked?: { itemId: true|false }, round?,
+      // roundsIncluded?, notes? } } → the Launch card's change, merged into
+      // design.launch. Also after hand-over: "Handed over" is on the list.
+      case 'launch-save': {
+        if (!body.launch || typeof body.launch !== 'object' || Array.isArray(body.launch)) {
+          return reply(400, { error: 'Nothing to save' });
+        }
+        const [status, out] = await saveLaunch(db, body.id, body.launch, actor);
+        return reply(status, out);
       }
 
       case 'handover-check': {
