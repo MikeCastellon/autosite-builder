@@ -89,16 +89,31 @@ function numberOrNull(v) {
 }
 
 // The full order a template should render: the chosen ids first (unknown and
-// repeated ids dropped), then any of the template's ids that weren't chosen,
-// in the template's own order. [] when nothing was chosen.
+// repeated ids dropped), then the template's other ids in its own order.
+// Exception: a section the template added later (its `added` list, e.g.
+// Sporty's 'brands' and 'featured') that wasn't chosen goes right after the
+// section it follows by default, so an order written before it existed (a
+// look, a saved suggestion) shows it where the template puts it, never
+// below the contact section. [] when nothing was chosen.
 export function fullSectionOrder(order, templateId) {
   const ids = sectionIdsFor(templateId);
-  const chosen = [];
+  const added = TEMPLATE_SECTIONS[templateId]?.added || [];
+  const out = [];
   for (const id of Array.isArray(order) ? order : []) {
-    if (ids.includes(id) && !chosen.includes(id)) chosen.push(id);
+    if (ids.includes(id) && !out.includes(id)) out.push(id);
   }
-  if (!chosen.length) return [];
-  return [...chosen, ...ids.filter((id) => !chosen.includes(id))];
+  if (!out.length) return [];
+  for (const id of ids) if (!out.includes(id) && !added.includes(id)) out.push(id);
+  ids.forEach((id, i) => {
+    if (out.includes(id)) return;
+    let at = 0;
+    for (let j = i - 1; j >= 0; j -= 1) {
+      const k = out.indexOf(ids[j]);
+      if (k >= 0) { at = k + 1; break; }
+    }
+    out.splice(at, 0, id);
+  });
+  return out;
 }
 
 // Untrusted input (the admin's browser, or the model's suggestion) as clean

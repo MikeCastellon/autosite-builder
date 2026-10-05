@@ -19,7 +19,7 @@
 // text (links, eyebrows) only.
 // designLooks.test.js checks all of that, plus the same root-token contrast
 // check theme:check runs, on every template with every look applied.
-import { emptyLevers, sanitizeLevers } from '../lib/designLevers.js';
+import { emptyLevers, fullSectionOrder, sanitizeLevers } from '../lib/designLevers.js';
 import { isDark } from '../components/preview/templates/kit/theme.js';
 
 // Section orders in each template's own ids (templateSections.js). Every
@@ -356,7 +356,9 @@ export const DESIGN_LOOKS = deepFreeze(LOOKS.map((l) => ({
   levers: {
     palette: l.palette,
     fonts: { heading: l.fonts[0], body: l.fonts[1] },
-    sections: { order: l.order, hidden: l.hidden },
+    // Completed against the template's current ids (fullSectionOrder), so a
+    // section the template gains later sits at its default spot.
+    sections: { order: fullSectionOrder(l.order, l.templateId), hidden: l.hidden },
     heroLayout: l.heroLayout,
     aboutLayout: l.aboutLayout,
   },

@@ -5,9 +5,9 @@
 // fails when a template changes and this file doesn't.
 export const TEMPLATE_SECTIONS = Object.freeze({
   detailing_sporty: {
-    sections: [{ id: 'hero', label: 'Hero' }, { id: 'statsBar', label: 'Stats Bar' }, { id: 'services', label: 'Services' }, { id: 'about', label: 'About' }, { id: 'gallery', label: 'Gallery' }, { id: 'testimonials', label: 'Reviews' }, { id: 'cta', label: 'Contact / CTA' }, { id: 'awards', label: 'Awards' }],
-    added: [],
-    headingFields: null,
+    sections: [{ id: 'hero', label: 'Hero' }, { id: 'statsBar', label: 'Stats Bar' }, { id: 'brands', label: 'Vehicle Makes' }, { id: 'services', label: 'Services' }, { id: 'featured', label: 'Featured Service' }, { id: 'about', label: 'About' }, { id: 'gallery', label: 'Gallery' }, { id: 'testimonials', label: 'Reviews' }, { id: 'cta', label: 'Contact / CTA' }, { id: 'awards', label: 'Awards' }],
+    added: ['brands', 'featured'],
+    headingFields: ['hero', 'brands', 'services', 'featured', 'about', 'gallery', 'testimonials', 'cta'],
   },
   mechanic_industrial: {
     sections: [{ id: 'hero', label: 'Hero' }, { id: 'statsBar', label: 'Stats Bar' }, { id: 'services', label: 'Services' }, { id: 'about', label: 'About' }, { id: 'gallery', label: 'Gallery' }, { id: 'testimonials', label: 'Reviews' }, { id: 'cta', label: 'Contact / CTA' }, { id: 'awards', label: 'Awards' }],
@@ -20,9 +20,9 @@ export const TEMPLATE_SECTIONS = Object.freeze({
     headingFields: null,
   },
   mobile_chrome: {
-    sections: [{ id: 'hero', label: 'Hero' }, { id: 'statsBar', label: 'Stats Bar' }, { id: 'services', label: 'Services' }, { id: 'about', label: 'About' }, { id: 'gallery', label: 'Gallery' }, { id: 'testimonials', label: 'Reviews' }, { id: 'cta', label: 'Contact / CTA' }, { id: 'awards', label: 'Awards' }],
-    added: [],
-    headingFields: null,
+    sections: [{ id: 'hero', label: 'Hero' }, { id: 'statsBar', label: 'Stats Bar' }, { id: 'brands', label: 'Vehicle Makes' }, { id: 'services', label: 'Services' }, { id: 'featured', label: 'Featured Service' }, { id: 'about', label: 'About' }, { id: 'gallery', label: 'Gallery' }, { id: 'testimonials', label: 'Reviews' }, { id: 'cta', label: 'Contact / CTA' }, { id: 'awards', label: 'Awards' }],
+    added: ['brands', 'featured'],
+    headingFields: ['hero', 'brands', 'services', 'featured', 'about', 'gallery', 'testimonials', 'cta'],
   },
   tint_elite: {
     sections: [{ id: 'hero', label: 'Hero' }, { id: 'statsBar', label: 'Stats Bar' }, { id: 'services', label: 'Services' }, { id: 'brands', label: 'Film Brands' }, { id: 'about', label: 'About' }, { id: 'gallery', label: 'Gallery' }, { id: 'testimonials', label: 'Reviews' }, { id: 'cta', label: 'Contact / CTA' }],
@@ -35,9 +35,9 @@ export const TEMPLATE_SECTIONS = Object.freeze({
     headingFields: null,
   },
   mobile_sudsy: {
-    sections: [{ id: 'hero', label: 'Hero' }, { id: 'services', label: 'Services' }, { id: 'process', label: 'How It Works' }, { id: 'whyUs', label: 'Why Choose Us' }, { id: 'about', label: 'About' }, { id: 'gallery', label: 'Gallery' }, { id: 'testimonials', label: 'Reviews' }, { id: 'cta', label: 'Contact / CTA' }],
-    added: [],
-    headingFields: null,
+    sections: [{ id: 'hero', label: 'Hero' }, { id: 'brands', label: 'Vehicle Makes' }, { id: 'services', label: 'Services' }, { id: 'featured', label: 'Featured Service' }, { id: 'process', label: 'How It Works' }, { id: 'whyUs', label: 'Why Choose Us' }, { id: 'about', label: 'About' }, { id: 'gallery', label: 'Gallery' }, { id: 'testimonials', label: 'Reviews' }, { id: 'cta', label: 'Contact / CTA' }],
+    added: ['brands', 'featured'],
+    headingFields: ['hero', 'brands', 'services', 'featured', 'process', 'whyUs', 'about', 'gallery', 'testimonials', 'cta'],
   },
   wheel_apex: {
     sections: [{ id: 'hero', label: 'Hero' }, { id: 'trustBar', label: 'Trust Bar' }, { id: 'ticker', label: 'Scrolling Ticker' }, { id: 'products', label: 'Products' }, { id: 'brands', label: 'Brands' }, { id: 'about', label: 'About' }, { id: 'gallery', label: 'Gallery' }, { id: 'testimonials', label: 'Reviews' }, { id: 'cta', label: 'Contact / CTA' }],
@@ -61,11 +61,13 @@ export const TEMPLATE_SECTIONS = Object.freeze({
   },
 });
 
-// The section ids a template orders (its own list plus any added later), or
-// [] for a template that isn't theme-ready (no section controls).
+// The section ids a template orders, in its default order, or [] for a
+// template that isn't theme-ready (no section controls). Added ids are
+// normally in `sections` already (at their default spot); the set keeps a
+// template that lists one only in `added` from counting it twice.
 export function sectionIdsFor(templateId) {
   const t = TEMPLATE_SECTIONS[templateId];
-  return t ? [...t.sections.map((s) => s.id), ...t.added] : [];
+  return t ? [...new Set([...t.sections.map((s) => s.id), ...t.added])] : [];
 }
 
 export function sectionLabel(templateId, id) {

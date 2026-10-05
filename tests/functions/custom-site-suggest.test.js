@@ -394,7 +394,7 @@ describe('custom-site-suggest-background runSuggest', () => {
         // muted repaired as the page would (4.5:1 on the cards' surface too).
         palette: { ...SUGGESTION_JSON.levers.palette, muted: '#756e69' },
         fonts: { heading: 'Poppins', body: 'Nunito' },
-        sections: { order: ['hero', 'gallery', 'services', 'process', 'whyUs', 'about', 'testimonials', 'cta'], hidden: ['whyUs'] },
+        sections: { order: ['hero', 'brands', 'gallery', 'services', 'featured', 'process', 'whyUs', 'about', 'testimonials', 'cta'], hidden: ['whyUs'] },
         heroLayout: 'split',
         aboutLayout: 'image',
       },

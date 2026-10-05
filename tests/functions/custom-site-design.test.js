@@ -247,7 +247,7 @@ describe('custom-site-design-background runDesign', () => {
     const site = db.state.sites[0];
     expect(site.generated_content._customColors).toEqual({ accent: '#cc0000', bg: '#f8f8f6', text: '#111111' });
     expect(site.generated_content._customFonts).toEqual({ font: "'Fraunces', Georgia, serif", bodyFont: "'Manrope', sans-serif" });
-    expect(site.generated_content.sectionOrder.slice(0, 3)).toEqual(['about', 'services', 'hero']);
+    expect(site.generated_content.sectionOrder.slice(0, 4)).toEqual(['about', 'services', 'featured', 'hero']);
     expect(site.generated_content.hiddenSections).toEqual(['awards']);
     expect(site.generated_content.heroLayout).toBe('split');
     expect(site.business_info).toEqual(expect.objectContaining({ tagline: 'Showroom shine, at your door', yearsInBusiness: '6' }));
