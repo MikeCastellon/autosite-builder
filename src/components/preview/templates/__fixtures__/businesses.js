@@ -93,4 +93,66 @@ export const custom = {
   customFonts: CUSTOM_FONTS,
 };
 
-export const FIXTURES = { sparse, full, custom };
+// Every owner-editable feature set up (kit/features.js; Edit > Hero
+// services, Google Rating, Footer, Headings, Featured Service, Vehicle
+// Makes, package details, areas, insured, review sources, CTA photo). The
+// themes with live sites show these only when the owner turns them on, so
+// the contract checks their extra sections and colors with this fixture.
+const FEATURE_SUMMARIES = [
+  'Inside and out, top to bottom.',
+  'Long-lasting gloss and protection.',
+  'Swirls and scratches polished out.',
+];
+const FEATURE_SERVICES = DEMO_BUSINESS_INFO.services.map((s, i) => ({
+  ...s,
+  summary: FEATURE_SUMMARIES[i] || '',
+  ...(i === 1 ? { badge: 'Most Popular' } : {}),
+  includes: ['Interior:', 'Full vacuum', { text: 'Leather conditioning', highlight: true }, 'Exterior:', 'Hand wash and dry'],
+  image: photo(`package ${i + 1}`, '#e7ecf2', '#55606e'),
+}));
+
+export const features = {
+  businessInfo: {
+    ...full.businessInfo,
+    services: FEATURE_SERVICES,
+    packages: FEATURE_SERVICES,
+    serviceAreas: ['Northside', 'Lakeview', 'Riverbend'],
+    insured: true,
+    googlePlace: { placeId: 'ChIJfixture-features', placeName: DEMO_BUSINESS_INFO.businessName, rating: 4.8, reviewCount: 52 },
+  },
+  generatedCopy: {
+    ...DEMO_GENERATED_COPY,
+    heroCard: 'quote',
+    heroServices: [FEATURE_SERVICES[0].name, FEATURE_SERVICES[1].name],
+    googleBadge: { placements: ['hero', 'nav', 'about', 'reviews', 'footer'] },
+    footer: {
+      columns: [
+        { type: 'brand', show: true },
+        { type: 'contact', show: true },
+        { type: 'hours', show: true },
+        { type: 'links', title: 'More', show: true },
+        { type: 'areas', show: true },
+      ],
+      showCta: true,
+      ctaText: 'Book a Visit',
+      bottomText: 'Licensed and insured',
+    },
+    sectionTitles: {
+      services: { accent: 'Services' },
+      featured: { eyebrow: 'Signature Service' },
+      brands: { eyebrow: 'Every make welcome' },
+    },
+    featuredService: { serviceName: FEATURE_SERVICES[1].name, priceFrom: '$450', bullets: ['Deep gloss', 'Easier washing'] },
+    vehicleMakes: ['BMW', 'Porsche', 'Rivian'],
+    testimonialPlaceholders: DEMO_GENERATED_COPY.testimonialPlaceholders.map((q, i) => (i === 0 ? { ...q, source: 'google', rating: 5 } : q)),
+  },
+  images: {
+    ...FIXTURE_IMAGES,
+    featured: photo('featured photo', '#1b2430', '#7d8a99'),
+    cta: photo('cta photo', '#30261c', '#8c7a66'),
+  },
+  customColors: {},
+  customFonts: {},
+};
+
+export const FIXTURES = { sparse, full, custom, features };

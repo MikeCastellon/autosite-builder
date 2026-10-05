@@ -13,28 +13,57 @@
 //     so nothing paints outside the template root;
 //   - facts (trust strip, stats, awards, hours) render only when the owner
 //     entered them; editor hints go through PhotoSlot / EditorOnly.
+//
+// Owner-editable features (the kit's feature blocks, see CLAUDE.md "Feature
+// blocks"): the hero services card, the Google rating badge, the footer
+// builder, package details, headings, the featured-service band, the
+// vehicle-makes band, service areas / insured and Google review labels.
+// This design has live sites, so every feature is opt-in: each renders only
+// from data the owner saved (copy.heroCard, copy.googleBadge, copy.footer,
+// copy.sectionTitles, copy.featuredService, copy.vehicleMakes, services[i]
+// .badge/.image/.includes, businessInfo.serviceAreas, insured === true,
+// a review's source, images.cta). A site that saved none of them renders
+// byte-for-byte as before, in the editor too: no new markup, CSS or root
+// variables.
 import { SocialRow } from '../SocialIcons.jsx';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import IconOrEmoji from '../IconOrEmoji.jsx';
 import { ServiceCardCss, ServiceDescription, BookNowLink } from '../ServiceCardParts.jsx';
-import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import { buildSectionOrderAdded } from '../../../../lib/sectionOrder.js';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HOURS_DAYS } from '../../../../lib/businessHours.js';
 import { FONT_CATALOG, catalogFamily, familiesFromStack } from '../../../../lib/fontCatalog.js';
-import { deriveTheme, mix, alpha, ensureContrast, contrastRatio, hexToRgb, rgbToHex } from '../kit/theme.js';
+import { deriveTheme, mix, alpha, ensureContrast, contrastRatio, hexToRgb, rgbToHex, fillOverPhoto } from '../kit/theme.js';
 import { PhotoSlot, PHOTO_HINTS } from '../kit/PhotoSlot.jsx';
 import { MobileMenu, MobileActionBar } from '../kit/MobileMenu.jsx';
 import { EditorOnly, useEditorMode } from '../kit/EditorMode.jsx';
+import { GoogleRatingBadge, StarRow, GOOGLE_STAR_GOLD, googleRatingOf, googlePlaceUrl, googleBadgePlacements } from '../kit/GoogleRatingBadge.jsx';
+import { vehicleMakesFor } from '../kit/vehicleMakes.js';
+import { sectionTitle, splitAccent, serviceIncludes, serviceAreasOf, hasSocialLinks } from '../kit/content.js';
+import { Accented } from '../kit/Accented.jsx';
+import {
+  heroCardModeOf, heroOfferOf, featuredServiceOf, featuredHasBody, featuredTitleDefaults,
+  makesEyebrowDefault, reviewStars, footerPlan, bookingAttrs,
+} from '../kit/features.js';
+import { HeroOffer, heroOfferCss, heroOfferLockCss } from '../kit/HeroOffer.jsx';
+import { PackageBadge, PackagePhoto, PackageIncludes, packageDetailsCss } from '../kit/PackageDetails.jsx';
+import { FeaturedBand, featuredBandCss } from '../kit/FeaturedBand.jsx';
+import { MakesBand, makesBandCss } from '../kit/MakesBand.jsx';
 
 export const themeReady = true;
 
-// Same ids and order as ContentEditor's TOGGLEABLE.mobile_sudsy (and the
-// legacy buildSectionOrder call), so saved orders and hidden flags keep
-// working. Never rename an id.
+// Default top-to-bottom order. Saved sites store these ids in
+// copy.sectionOrder / copy.hiddenSections: never rename one. 'brands' and
+// 'featured' came later (addedSections): buildSectionOrderAdded gives the
+// older ids exactly their old order values, and an added id the owner never
+// placed shares its predecessor's value (it sits right after it in the DOM),
+// so a saved site's page does not move.
 export const sections = [
   { id: 'hero', label: 'Hero' },
+  { id: 'brands', label: 'Vehicle Makes' },
   { id: 'services', label: 'Services' },
+  { id: 'featured', label: 'Featured Service' },
   { id: 'process', label: 'How It Works' },
   { id: 'whyUs', label: 'Why Choose Us' },
   { id: 'about', label: 'About' },
@@ -42,8 +71,54 @@ export const sections = [
   { id: 'testimonials', label: 'Reviews' },
   { id: 'cta', label: 'Contact / CTA' },
 ];
+export const addedSections = ['brands', 'featured'];
 
 export const extraFonts = [];
+
+// Edit > Headings: the copy.sectionTitles fields each section uses.
+// titleFrom / introFrom name the copy key that owns that text (the Headings
+// tab edits it there); placeholder: this design's fixed default for a field.
+// headingDefaults() below gives the design's own text for the rest.
+export const headingFields = {
+  hero: { fields: ['eyebrow', 'title', 'accent'], titleFrom: 'headline' },
+  brands: { fields: ['eyebrow'] },
+  services: { fields: ['eyebrow', 'title', 'accent', 'intro'], titleFrom: 'servicesSection.title', introFrom: 'servicesSection.intro' },
+  featured: { fields: ['eyebrow', 'title', 'accent', 'intro'] },
+  process: { fields: ['eyebrow', 'title', 'accent', 'intro'], placeholder: { intro: 'Spoiler: it’s embarrassingly easy.' } },
+  whyUs: { fields: ['eyebrow', 'title', 'accent'] },
+  about: { fields: ['eyebrow', 'title', 'accent'] },
+  gallery: { fields: ['eyebrow', 'title', 'accent'] },
+  testimonials: { fields: ['eyebrow', 'title', 'accent'] },
+  cta: { fields: ['eyebrow', 'title', 'accent', 'intro'], titleFrom: 'ctaHeadline', introFrom: 'ctaSubtext' },
+};
+
+// Edit > Footer (kit/features.js footerPlan): the design's own footer (the
+// brand column, Explore, Services, Say Hi!) with no button. Service Areas
+// and Hours are columns the owner can switch on; they print as columns of
+// their own (no merging under Say Hi!).
+export const footerSpec = {
+  columns: [
+    { type: 'brand', show: true },
+    { type: 'links', show: true },
+    { type: 'services', show: true },
+    { type: 'areas', show: false },
+    { type: 'contact', show: true },
+    { type: 'hours', show: false },
+  ],
+  titles: { links: 'Explore', services: 'Services', areas: 'Service Areas', contact: 'Say Hi!', hours: 'Hours' },
+  mergeHours: false,
+  cta: false,
+  ctaLabel: 'Book Now!',
+  notes: {
+    brand: 'Your logo or name, Footer Tagline, social icons and Google rating. Switched off, the rating moves to the bottom line.',
+    services: 'Your first 6 services, linking to your Services section.',
+    contact: 'Phone, email, address and service area from Business Info, and your social icons while the logo column is off.',
+  },
+  // What fills the Say Hi! column (the Footer panel's "nothing to list"
+  // check); the social icons move there while the logo column is off.
+  contactFields: ['phone', 'email', 'address', 'city', 'state', 'serviceArea'],
+  socialWhenBrandOff: true,
+};
 
 const CSS = `
 .ss-root{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
@@ -385,6 +460,91 @@ a.ss-info-card:hover{translate:-2px -2px;box-shadow:6px 6px 0 var(--ss-ink)}
 .ss-book{box-shadow:6px 6px 0 var(--ss-ink)}
 .ss-foot-grid{grid-template-columns:minmax(0,1fr)}
 .ss-foot-bottom{flex-direction:column;align-items:flex-start}
+}
+`;
+
+// The feature blocks in this design's look, appended to CSS (with the kit
+// generators' block CSS) only while some feature renders, so a site without
+// the new keys keeps exactly the style string it had. The kit blocks read
+// --ss-hq-* / --ss-pk-* / --ss-ft-* / --ss-mk-* variables, each aliased here
+// to a token sudsTokens already contrast-repairs; the overrides below give
+// them the paper, ink outlines and hard shadows of the rest of the page.
+const FEATURE_CSS = `
+.ss-hq-slot{position:relative;width:100%;max-width:480px;margin:0 auto;text-shadow:none;--ss-hq-card-bg:var(--ss-card-bg);--ss-hq-opt-bg:var(--ss-card-bg);--ss-hq-card-text:var(--ss-card-text);--ss-hq-opt-text:var(--ss-card-text);--ss-hq-card-muted:var(--ss-card-muted);--ss-hq-opt-muted:var(--ss-card-muted);--ss-hq-card-accent:var(--ss-card-text);--ss-hq-opt-accent:var(--ss-card-text);--ss-hq-row-bg:var(--ss-accent-pale);--ss-hq-row-text:var(--ss-card-text);--ss-hq-row-accent:var(--ss-card-text);--ss-hq-row-muted:var(--ss-card-muted);--ss-hq-btn-bg:var(--ss-accent);--ss-hq-btn-text:var(--ss-on-accent);--ss-hq-btn-shadow:4px 4px 0 var(--ss-ink);--ss-hq-line:var(--ss-ink);--ss-hq-line-strong:var(--ss-ink);--ss-hq-pick:var(--ss-ink);--ss-hq-pick-shadow:3px 3px 0 var(--ss-ink);--ss-hq-hover:var(--ss-ink);--ss-hq-head:var(--ss-head);--ss-hq-head-w:var(--ss-head-w);--ss-hq-case:none;--ss-hq-r:26px;--ss-hq-r-ctl:16px;--ss-hq-r-lg:18px;--ss-hq-bw:2.5px;--ss-hq-shadow:8px 8px 0 var(--ss-ink);--ss-hq-focus:var(--ss-card-text)}
+.ss-hq-quote{border-width:3px}
+.ss-hq-radio:checked+.ss-hq-opt{background:var(--ss-accent-pale)}
+.ss-hq-q-cta,.ss-hq-hl-cta,.ss-hq-q-book{border:2.5px solid var(--ss-ink);font-family:var(--ss-head);font-weight:var(--ss-head-w);font-size:20px;letter-spacing:.01em}
+.ss-hq-step-l{font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+.ss-has-media .ss-hq-slot a:focus-visible,.ss-has-media .ss-hq-slot label:focus-visible{outline-color:var(--ss-card-text)}
+.ss-hq-grid{display:grid;gap:clamp(32px,5cqi,72px);align-items:center}
+.ss-split-offer{grid-template-rows:1fr auto}
+.ss-split-offer>.ss-hq-slot{grid-column:1 / -1;width:auto;margin:0 var(--ss-gutter) clamp(56px,7cqi,96px) max(var(--ss-gutter),calc((100cqi - 1240px) / 2 + var(--ss-gutter)))}
+@container (max-width:899px){.ss-hq-slot{margin-left:0}}
+@container (min-width:900px){
+.ss-hq-grid{grid-template-columns:minmax(0,1fr) minmax(320px,440px)}
+.ss-split-offer>.ss-split-photo{grid-column:2;grid-row:1}
+.ss-split-offer>.ss-hq-slot{grid-column:2;grid-row:1;align-self:center;justify-self:center;z-index:1;width:min(440px,calc(100% - 2 * clamp(24px,3cqi,48px)));margin:clamp(32px,4cqi,64px) 0}
+}
+@container (max-width:780px){
+.ss-split-offer .ss-split-photo{order:1}
+.ss-split-offer>.ss-hq-slot{margin-bottom:48px}
+}
+
+.ss-gpill{padding:8px 16px;border:2.5px solid var(--ss-ink);border-radius:999px;background:var(--ss-card-bg);color:var(--ss-card-text);box-shadow:3px 3px 0 var(--ss-ink);font-size:14px;font-weight:800}
+.ss-gpill .acg-gbadge-count{color:var(--ss-card-muted)}
+.ss-hero-g{margin-top:26px}
+/* The menu-bar rating gives way to the business name: its slot takes only
+   the room the name and the links leave (the name no longer grows into
+   it), and the badge shows only while that room fits it (navBadgeCss: a
+   size query on the slot, its nearest container). The slot's negative
+   margin cancels its extra flex gap, so with the badge hidden the name
+   has exactly the room it has without one; the badge's own margins keep
+   it 20px clear of the name and 12px from the links. */
+.ss-nav-gslot{flex:1 1 0;min-width:0;margin-left:-20px;display:flex;justify-content:flex-end;container-type:inline-size}
+.ss-brand:has(+.ss-nav-gslot){flex-grow:0}
+.ss-nav-g{display:none;margin:0 -8px 0 20px;font-size:14px;font-weight:800}
+.ss-about-g{margin:-8px 0 22px}
+.ss-rev-g{display:flex;justify-content:center;margin-top:20px}
+.ss-foot-g{margin-top:16px;font-weight:700}
+@container (max-width:1280px){.ss-nav-gslot{display:none}}
+/* Without container queries (the page's old-browser fallback turns them into
+   viewport queries) nothing can tell whether the badge fits: leave it out. */
+@supports not (container-type:inline-size){.ss-nav-gslot{display:none}}
+
+.ss-card{--ss-pk-text:var(--ss-card-text);--ss-pk-muted:var(--ss-card-muted);--ss-pk-accent:var(--ss-card-text);--ss-pk-line:var(--ss-dash);--ss-pk-badge-bg:var(--ss-accent);--ss-pk-badge-text:var(--ss-on-accent);--ss-pk-well-bg:var(--ss-card-bg);--ss-pk-well-ink:var(--ss-card-muted);--ss-pk-r:18px;--ss-pk-head:var(--ss-head);--ss-pk-case:none}
+.ss-pk-badge{position:absolute;top:-16px;right:20px;z-index:2;border:3px solid var(--ss-ink);border-radius:999px;box-shadow:3px 3px 0 var(--ss-ink);rotate:4deg;padding:4px 16px;font-family:var(--ss-head);font-weight:var(--ss-head-w);font-size:17px;line-height:1.3}
+.ss-pk-card-photo{border:3px solid var(--ss-ink);margin-bottom:18px}
+.ss-card-ph .ss-card-emo{display:none}
+.ss-pk-inc{border-top-style:dashed;border-top-width:2.5px}
+.ss-pk-inc>summary{font-size:15px;font-weight:800;letter-spacing:.02em}
+.ss-pk-inc-hl{margin-left:-6px;padding:0 6px;border-radius:999px;background:var(--ss-accent-pale);font-weight:800;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+@container (min-width:601px){.ss-grid:not(.ss-c1) .ss-pk-card-well{display:flex}}
+
+.ss-ft-band{background:var(--ss-ft-bg);color:var(--ss-card-text);--ss-em:var(--ss-num);--ss-ft-text:var(--ss-card-text);--ss-ft-muted:var(--ss-card-muted);--ss-ft-accent:var(--ss-card-text);--ss-ft-r:30px;--ss-ft-photo-max:400px}
+.ss-ft-feat-photo{justify-self:center;border:3px solid var(--ss-ink);box-shadow:10px 10px 0 var(--ss-ink);rotate:-2deg}
+.ss-ft-band .ss-ft-feat-solo{margin-left:0}
+@container (max-width:600px){.ss-ft-feat-photo{box-shadow:6px 6px 0 var(--ss-ink)}}
+.ss-ft-feat-price strong{font-family:var(--ss-head);font-weight:var(--ss-head-w);font-size:28px;color:var(--ss-card-text)}
+
+.ss-mk-makes{padding-top:44px;--ss-mk-bg:var(--ss-card-bg);--ss-mk-text:var(--ss-card-text);--ss-mk-muted:var(--ss-card-muted);--ss-mk-line:var(--ss-ink);--ss-mk-focus:var(--ss-card-text);border-top:4px solid var(--ss-ink);border-bottom:4px solid var(--ss-ink)}
+.ss-mk-makes-eye{font-family:var(--ss-head);font-weight:var(--ss-head-w);font-size:22px;text-transform:none;color:var(--ss-card-text)}
+
+.ss-rev-stars{display:flex;margin-top:10px;color:var(--ss-card-text)}
+.ss-rev-src{font-weight:800;color:var(--ss-card-text)}
+.ss-rev-more-wrap{display:flex;justify-content:center;margin-top:40px}
+
+.ss-ctaph-photo{position:absolute;inset:0;z-index:0}
+.ss-ctaph-scrim{position:absolute;inset:0;z-index:0;background:var(--ss-ctaph-scrim)}
+.ss-cta.ss-ctaph{--ss-cta-text:var(--ss-ctaph-text);--ss-cta-muted:var(--ss-ctaph-muted)}
+.ss-cta .ss-h2 em{color:inherit;text-decoration:underline;text-decoration-thickness:.08em;text-underline-offset:.12em}
+
+@container (min-width:901px){.ss-foot-grid.ss-fb{grid-template-columns:var(--ss-fcols)}}
+@container (max-width:900px){.ss-fb .ss-foot-about:not(:first-child){grid-column:auto}}
+.ss-fb .ss-foot-list{overflow-wrap:anywhere}
+.ss-foot a.ss-foot-cta{min-height:48px;margin-top:18px;padding:8px 20px;font-size:18px;color:var(--ss-on-accent)}
+.ss-foot-note{font-weight:700}
+@media (hover:hover){
+.ss-foot a.ss-foot-cta:hover{color:var(--ss-on-accent)}
 }
 `;
 
@@ -756,6 +916,79 @@ export function defaultWhyCards(businessType) {
   return defaultWhy(type, getFallbacks(type)).map((c) => ({ ...c }));
 }
 
+// The headline split for the hero's highlighted word(s): the owner's
+// Highlighted words (copy.sectionTitles.hero.accent) when they match whole
+// words of the headline, else the design's own last word.
+function heroHeadline(copy, name) {
+  const headline = txt(copy.headline) || name || 'Your Car Deserves Better.';
+  const words = headline.split(/\s+/);
+  const lastWord = words.pop();
+  return { headline, words, lastWord, own: splitAccent(headline, sectionTitle(copy.sectionTitles, 'hero').accent) };
+}
+
+// The design's own heading text for each section, used while the owner has
+// typed none: { [sectionId]: { eyebrow?, title?, accent? } }. The page
+// renders from these values and Edit > Headings shows them (placeholders,
+// and the highlighted-words check runs against them), so the two never
+// disagree. accent is what the page highlights while the owner's
+// Highlighted words field is empty. businessInfo as the template receives
+// it (normalizeBusinessInfo).
+export function headingDefaults(businessInfo, generatedCopy) {
+  const biz = businessInfo || {};
+  const copy = generatedCopy || {};
+  const type = businessKind(biz.businessType);
+  const fb = getFallbacks(type);
+  const cleaning = !type || CLEANING_TYPES.includes(type);
+  const name = txt(biz.businessName);
+  const city = txt(biz.city);
+  const hero = heroHeadline(copy, name);
+  const fs = copy.featuredService && typeof copy.featuredService === 'object' ? copy.featuredService : {};
+  return {
+    hero: {
+      eyebrow: `${type === 'mobile_detailing' ? 'We Come To YOU' : fb.heroBadge}${city ? ` · ${city}` : ''}`,
+      title: hero.headline,
+      accent: hero.lastWord,
+    },
+    brands: { eyebrow: makesEyebrowDefault(type) },
+    services: {
+      eyebrow: 'Our Services',
+      title: cleaning ? 'We clean everything.' : 'What we do best.',
+      accent: cleaning ? 'everything.' : 'do best.',
+    },
+    featured: featuredTitleDefaults(txt(fs.serviceName), Boolean(sectionTitle(copy.sectionTitles, 'featured').title)),
+    process: { eyebrow: 'Super Simple', title: 'How it works', accent: 'works' },
+    whyUs: {
+      eyebrow: 'Why Choose Us',
+      title: cleaning ? 'We’re kinda obsessed with clean cars.' : 'Why folks choose us.',
+      accent: cleaning ? 'obsessed' : 'choose us.',
+    },
+    about: { eyebrow: 'About Us', title: name || fb.shopName },
+    gallery: {
+      eyebrow: 'Our Work',
+      title: cleaning ? 'Fresh out of the suds.' : 'Our latest work.',
+      accent: cleaning ? 'suds.' : 'work.',
+    },
+    testimonials: {
+      eyebrow: 'Reviews',
+      title: cleaning ? 'They used to have dirty cars too.' : 'Word on the street.',
+      accent: cleaning ? 'dirty cars' : 'street.',
+    },
+    cta: { eyebrow: 'Let’s Talk', title: cleaning ? 'Ready for the cleanest car of your life?' : fb.ctaHeadline },
+  };
+}
+
+// A section heading from the owner's Headings (copy.sectionTitles) over the
+// design's default. `own`: the text of a copy key that owns this title
+// (servicesSection.title, ctaHeadline). The design's highlighted words apply
+// only to the design's own title; an owner title is highlighted only where
+// the owner says so. With no match the heading is plain text, and with the
+// defaults it renders exactly the design's `text <em>word</em> text`.
+function headingOf(st, d, own = '') {
+  const title = own || st.title || d.title || '';
+  const accent = st.accent || (own || st.title ? '' : d.accent || '');
+  return { title, accent };
+}
+
 // ---- Decorative pieces -----------------------------------------------------
 // Resting spots clear of the headline and buttons on wide screens (they
 // drift up through the copy only while animating). `w`: wide screens only,
@@ -881,6 +1114,9 @@ function Tag({ emoji, children, className = '' }) {
 }
 
 const fill = { position: 'absolute', inset: 0, height: '100%' };
+// An owner's footer can have five narrow columns: let a long email wrap
+// before its @ rather than mid-word.
+const emailBreak = (e) => (e.indexOf('@') > 0 ? <>{e.slice(0, e.indexOf('@'))}<wbr />{e.slice(e.indexOf('@'))}</> : e);
 
 export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const biz = businessInfo || {};
@@ -897,7 +1133,11 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
 
   const hiddenIds = list(copy.hiddenSections);
   const show = (id) => !hiddenIds.includes(id);
-  const order = buildSectionOrder(copy, sections.map((s) => s.id));
+  const order = buildSectionOrderAdded(copy, sections.map((s) => s.id), addedSections);
+  // Edit > Headings (copy.sectionTitles) over the design's own text.
+  const titles = copy.sectionTitles;
+  const hd = headingDefaults(biz, copy);
+  const st = (id) => sectionTitle(titles, id);
 
   const name = txt(biz.businessName);
   const brandName = name || fb.navSubtitle;
@@ -913,26 +1153,71 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
   const hoursSummary = hoursFact(hours);
   const payments = list(biz.paymentMethods).map(txt).filter(Boolean);
   const awards = list(biz.awards).map(txt).filter(Boolean);
+  // Owner facts from Business Info: the areas list the owner typed (never
+  // the free-text serviceArea split up) and the insured switch.
+  const ownAreas = serviceAreasOf({ serviceAreas: biz.serviceAreas });
+  const insured = biz.insured === true;
+  // Google rating badge (Edit > Google Rating): only where the owner
+  // switched it on (no default spots in this design) and only with a
+  // connected place that has a rating and a review count.
+  const rating = googleRatingOf(biz.googlePlace);
+  const placeUrl = googlePlaceUrl(biz.googlePlace);
+  const badgeAt = googleBadgePlacements(copy.googleBadge, []);
+  const badgeIn = (spot) => Boolean(rating) && badgeAt.includes(spot);
+  // The menu-bar rating's room (FEATURE_CSS .ss-nav-gslot): a typical
+  // badge plus its gap, and 7px more per review-count character past two
+  // ("1,234"), so a longer count waits for the room it needs.
+  const navBadgeCss = badgeIn('nav')
+    ? `@container (min-width:${200 + 7 * Math.max(0, rating.countText.length - 2)}px){.ss-nav-g{display:inline-flex}}`
+    : '';
+  // Google's star yellow, darkened until it reads on the paper pill.
+  const paperStar = ensureContrast(GOOGLE_STAR_GOLD, suds.vars['--ss-card-bg'], 3);
 
   // Services: the owner's Services tab (businessInfo.services, mirrored to
   // packages) wins; a service the owner kept without a description borrows
   // the AI description of the same name. Then the AI list, then the
-  // wizard's plain service names.
+  // wizard's plain service names. Package details (Edit > Services >
+  // Package details: summary, badge, photo, what's included) come along
+  // when the owner set them.
   const norm = (s) => (typeof s === 'string' ? { name: s } : s || {});
+  const details = (s) => ({ summary: txt(s.summary), badge: txt(s.badge), image: txt(s.image), includes: serviceIncludes(s.includes) });
   const aiItems = list(copy.servicesSection?.items).map(norm)
-    .map((s) => ({ name: txt(s.name), price: txt(s.price), description: txt(s.description) }))
+    .map((s) => ({ name: txt(s.name), price: txt(s.price), description: txt(s.description), ...details(s) }))
     .filter((s) => s.name || s.description);
   const aiDesc = (n) => aiItems.find((s) => s.name && s.name.toLowerCase() === n.toLowerCase())?.description || '';
   const packages = list(biz.packages).map(norm)
-    .map((s) => ({ name: txt(s.name), price: txt(s.price), description: txt(s.description) }))
+    .map((s) => ({ name: txt(s.name), price: txt(s.price), description: txt(s.description), ...details(s) }))
     .filter((s) => s.name || s.description || s.price);
   const fromPackages = packages.length > 0;
   const services = fromPackages
     ? packages.map((s) => (s.description || !s.name ? s : { ...s, description: aiDesc(s.name) }))
     : aiItems.length > 0
       ? aiItems
-      : list(biz.services).filter((s) => typeof s === 'string' && s.trim()).map((s) => ({ name: s.trim(), price: '', description: '' }));
+      : list(biz.services).filter((s) => typeof s === 'string' && s.trim()).map((s) => ({ name: s.trim(), price: '', description: '', ...details({}) }));
   const gridFor = (n) => (n === 1 ? 'ss-c1' : n === 2 || n === 4 ? 'ss-c2' : 'ss-c3');
+  const anyServicePhoto = services.some((s) => s.image);
+  const pkgOn = show('services') && services.some((s) => s.badge || s.image || s.includes.length > 0);
+
+  // The hero card (Edit > Hero > Services in the hero): 'quote' = the price
+  // picker, 'list' = a compact price list. Off unless the owner picked one
+  // (copy.heroCard), so the hero keeps its usual look. Its packages: the
+  // owner's picks (copy.heroServices), else the first three priced ones.
+  const heroCard = heroCardModeOf(copy.heroCard, 'off');
+  const { picks, listPicks, hasCard } = heroOfferOf({ services, heroServices: copy.heroServices, mode: heroCard });
+  const heroOn = show('hero') && hasCard;
+
+  // The featured-service band (Edit > Featured Service): only the service
+  // the owner picked (no automatic pick in this design). A band with only a
+  // heading and a button would repeat the package grid: the published page
+  // skips it, the editor keeps it with a hint.
+  const featured = featuredServiceOf({ featuredService: copy.featuredService, services, sectionTitles: titles, defaults: hd.featured, automatic: false });
+  const featuredBody = featuredHasBody(featured, images.featured);
+  const featuredOn = show('featured') && Boolean(featured) && (featuredBody || editor);
+
+  // The vehicle-makes band (Edit > Vehicle Makes): only the makes the owner
+  // ticked; none = no band.
+  const makes = vehicleMakesFor(copy.vehicleMakes, []);
+  const makesOn = show('brands') && makes.length > 0;
 
   const howSteps = (Array.isArray(copy.howSteps) ? copy.howSteps : defaultSteps(type))
     .map((s) => ({ emoji: fixEmoji(txt(s?.emoji)), title: txt(s?.title), desc: txt(s?.desc) }))
@@ -953,6 +1238,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
   const trust = [
     ...(!aboutShowsStats ? ownerStats.slice(0, 3).map((s) => ({ emo: '✨', text: `${s.value} ${s.label}` })) : []),
     years && { emo: '🗓️', text: /^\d+\+?$/.test(years) ? `${years} ${years === '1' ? 'year' : 'years'} in business` : years },
+    insured && { emo: '🛡️', text: 'Fully insured' },
     hoursSummary && { emo: '🕐', text: hoursSummary },
     payments.length > 0 && { emo: '💳', text: `Pay with ${joinWords(payments, 'or')}` },
   ].filter(Boolean);
@@ -966,6 +1252,12 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
 
   const testimonials = list(copy.testimonialPlaceholders).filter((q) => txt(q?.text));
   const reviews = copy.googleWidgetKey ? 'google' : testimonials.length > 0 ? 'quotes' : null;
+  // "Google review" labels and stars belong to quotes the owner marked as
+  // Google reviews (Edit > Reviews); AI-written quotes stay plain, even on
+  // a site with a connected Google place.
+  const isGoogleQuote = (q) => q?.source === 'google';
+  const googleQuotes = testimonials.some(isGoogleQuote);
+  const allGoogle = googleQuotes && testimonials.every(isGoogleQuote);
 
   const servicesAnchor = show('services') && services.length > 0 ? '#services' : null;
   const navLinks = [
@@ -1004,13 +1296,13 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
   else if (tel) heroSecondary = { href: tel, label: `Call ${phone}` };
 
   const splitHero = copy.heroLayout === 'split';
-  const headline = txt(copy.headline) || name || 'Your Car Deserves Better.';
-  const words = headline.split(/\s+/);
-  const lastWord = words.pop();
+  // The last word is highlighted, or the owner's Highlighted words
+  // (Edit > Headings > Hero) when they match the headline.
+  const { headline, words, lastWord, own: heroAccent } = heroHeadline(copy, name);
   // Steps the display size down for longer headlines (see .ss-h1): live AI
   // headlines are 49-57 characters.
   const headlineSize = headline.length > 38 ? ' ss-longer' : headline.length > 24 ? ' ss-long' : '';
-  const badge = `${isMobile ? 'We Come To YOU' : fb.heroBadge}${city ? ` · ${city}` : ''}`;
+  const badge = st('hero').eyebrow || hd.hero.eyebrow;
   // Same fallback as before the kit rewrite: the business type's plain
   // one-line description, so a sparse hero never loses its lead line.
   const lead = txt(copy.subheadline) || txt(fb.subheadline);
@@ -1039,6 +1331,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
     place && { emo: '📍', text: `Based in ${place}` },
     area && { emo: '🗺️', text: `Serving ${area}` },
     years && { emo: '🗓️', text: /^\d+\+?$/.test(years) ? `${years} ${years === '1' ? 'year' : 'years'} in business` : years },
+    insured && { emo: '🛡️', text: 'Fully insured' },
   ].filter(Boolean);
 
   const tagline = txt(copy.footerTagline) || (cleaning ? 'We make dirty cars shine.' : fb.footerDesc);
@@ -1046,6 +1339,68 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
   // Each half of the looping strip must outrun a wide screen (~2000px at
   // ~12px per uppercase character), or a gap shows before the loop.
   const marqueeRun = `✨  ${marquee}  `.repeat(Math.max(3, Math.ceil(2000 / ((marquee.length + 5) * 12))));
+
+  // Footer (Edit > Footer, kit/features.js footerPlan): the owner's columns
+  // in the owner's order, else the design's own (footerSpec: brand,
+  // Explore, Services, Say Hi!). A column with nothing to list is left out.
+  // The footer button (only once the owner switches it on) sits in the
+  // Say Hi! column, which then shows even without contact details.
+  const footAreas = serviceAreasOf(biz);
+  // The social icons live in the brand column; with that column off (the
+  // owner's footer only) they move to the Say Hi! column.
+  const social = hasSocialLinks(biz, images);
+  const plan = footerPlan({
+    footer: copy.footer,
+    spec: footerSpec,
+    ctaFallback: show('cta') ? '#contact' : null,
+    has: (kind, { builder, cta, shown }) => ({
+      brand: true,
+      links: navLinks.length > 0,
+      services: services.length > 0 && show('services'),
+      areas: footAreas.length > 0,
+      contact: Boolean(tel || email || address || place || area || cta || (builder && social && !shown.includes('brand'))),
+      hours: hours.length > 0,
+    })[kind],
+  });
+  const footSocialMoved = plan.builder && social && !plan.cells.some((c) => c.type === 'brand');
+  // The footer rating sits in the brand column; with that column switched
+  // off it moves to the bottom line, so Edit > Google Rating > Footer still
+  // works.
+  const footBarBadge = badgeIn('footer') && !plan.cells.some((c) => c.type === 'brand');
+  const footCols = plan.cells.map((c, i) => (i === 0 && c.type === 'brand' ? 'minmax(0,1.6fr)' : 'minmax(0,1fr)')).join(' ');
+
+  // Contact band photo (Edit > Contact > CTA Background): the photo under
+  // an 88% bubblegum scrim. kit fillOverPhoto deepens the band color just
+  // enough for its type to read over a white or a black photo pixel alike;
+  // --ss-ctaph-bg is the scrim over the worse of the two.
+  const ctaPhoto = show('cta') && Boolean(images.cta);
+  let ctaPhotoVars = null;
+  if (ctaPhoto) {
+    const { scrim, worst, text, muted } = fillOverPhoto({
+      fill: suds.vars['--ss-cta-bg'], text: suds.vars['--ss-cta-text'], muted: suds.vars['--ss-cta-muted'], minScrim: 0.88,
+    });
+    ctaPhotoVars = {
+      '--ss-ctaph-bg': worst,
+      '--ss-ctaph-text': text,
+      '--ss-ctaph-muted': muted,
+      '--ss-ctaph-scrim': alpha(scrim, 0.88),
+    };
+  }
+
+  // Feature CSS only while a feature shows (see FEATURE_CSS).
+  const ownTitles = Boolean(titles) && typeof titles === 'object' && Object.keys(titles).length > 0;
+  const featureOn = heroOn || pkgOn || featuredOn || makesOn || plan.builder || ctaPhoto || ownAreas.length > 0 || insured
+    || googleQuotes || (Boolean(rating) && badgeAt.length > 0) || ownTitles;
+  const css = CSS
+    // The card keeps one height while it swaps steps only where it sits
+    // beside the copy: the photo hero and the split hero from 900px, the
+    // cartoon hero from 781px.
+    + (heroOn ? heroOfferCss('ss-hq', { stackFrom: 900, scope: '.ss-hq-grid,.ss-split-offer' }) + heroOfferLockCss('ss-hq', { from: 781, scope: '.ss-hero-grid' }) : '')
+    + (pkgOn ? packageDetailsCss('ss-pk') : '')
+    + (featuredOn ? featuredBandCss('ss-ft') : '')
+    + (makesOn ? makesBandCss('ss-mk') : '')
+    + (featureOn ? FEATURE_CSS : '')
+    + navBadgeCss;
 
   const vars = {
     '--ss-bg': t.bg,
@@ -1058,7 +1413,31 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
     '--ss-head-w': headWeight(font),
     '--ss-gutter': 'clamp(20px, 5cqi, 56px)',
     ...suds.vars,
+    ...ctaPhotoVars,
   };
+
+  // Where booking links go when the booking widget is off: the contact
+  // band, else the phone. They keep data-scheduler-trigger, so with booking
+  // on they open the widget wherever their href points.
+  const bookHref = show('cta') ? '#contact' : tel || '#top';
+  const heroOffer = heroOn && (
+    <div className="ss-hq-slot">
+      <HeroOffer
+        ns="ss-hq"
+        mode={picks.length ? 'quote' : 'list'}
+        picks={picks.length ? picks : listPicks}
+        bookHref={bookHref}
+        tel={tel}
+        phoneLabel={phone}
+        listCta={servicesAnchor ? { href: '#services', label: 'See all services' } : { href: bookHref, label: 'Book Now!', books: true }}
+        labels={{ q1: 'Pick your package!', sub1: 'Choose the one that fits your ride.', go: 'Show My Price!', listTitle: 'Our Packages' }}
+      />
+    </div>
+  );
+  // The Google rating as a paper pill (hero, About, Reviews).
+  const ratingPill = () => (
+    <GoogleRatingBadge place={biz.googlePlace} className="ss-gpill" style={{ gap: 8 }} starSize=".95em" starGap=".08em" starColor={paperStar} />
+  );
 
   const brand = (logoStyle, loading) => (images.logo ? (
     <PhotoSlot src={images.logo} alt={name ? `${name} logo` : 'Logo'} loading={loading} style={logoStyle} imgStyle={{ objectFit: 'contain' }} />
@@ -1072,10 +1451,14 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
   const heroText = (withArea) => (
     <>
       <p className="ss-badge"><span aria-hidden="true">📍</span>{badge}</p>
-      <h1 className="ss-h1">
-        {words.length > 0 && <>{words.join(' ')} </>}
-        <span className="ss-hl">{lastWord}</span>
-      </h1>
+      {heroAccent ? (
+        <h1 className="ss-h1">{heroAccent.before}<span className="ss-hl">{heroAccent.match}</span>{heroAccent.after}</h1>
+      ) : (
+        <h1 className="ss-h1">
+          {words.length > 0 && <>{words.join(' ')} </>}
+          <span className="ss-hl">{lastWord}</span>
+        </h1>
+      )}
       {lead && <p className="ss-lead">{lead}</p>}
       <div className="ss-actions">
         <a className="ss-btn ss-btn-primary" href={heroPrimary.href} {...(heroPrimary.book ? { 'data-scheduler-trigger': '' } : {})}>
@@ -1087,8 +1470,13 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
           </a>
         )}
       </div>
+      {badgeIn('hero') && <div className="ss-hero-g">{ratingPill()}</div>}
       {withArea && area && (
         <p className="ss-area"><span className="ss-emo" aria-hidden="true">🗺️</span>Serving {area}</p>
+      )}
+      {/* Picked or not, no service has a price: say why there is no card. */}
+      {heroCard === 'quote' && picks.length === 0 && services.some((s) => s.name) && (
+        <EditorHint>Your price card needs services with a price (Edit &gt; Services).</EditorHint>
       )}
     </>
   );
@@ -1099,7 +1487,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
       className="ss-root"
       style={{ ...vars, containerType: 'inline-size', display: 'flex', flexDirection: 'column', minHeight: '100vh', overflowX: 'clip', background: t.bg, color: t.text, fontFamily: body, lineHeight: 1.6 }}
     >
-      <style>{CSS}</style>
+      <style>{css}</style>
       <a className="ss-skip" href="#main">Skip to content</a>
 
       <nav className="ss-nav" aria-label="Main" style={{ order: -1 }}>
@@ -1107,6 +1495,13 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
           <a className="ss-brand" href="#top" aria-label={name ? `${name}, back to top` : 'Back to top'}>
             {brand({ height: 42, width: 'auto', maxWidth: 190 }, 'eager')}
           </a>
+          {badgeIn('nav') && (
+            <div className="ss-nav-gslot">
+              <span className="ss-nav-g">
+                <GoogleRatingBadge place={biz.googlePlace} variant="inline" starColor={suds.vars['--ss-nav-text']} starSize={14} />
+              </span>
+            </div>
+          )}
           <div className="ss-links">
             {navLinks.map((l) => (
               <a key={l.href} className={`ss-link${l.extra ? ' ss-link-x' : ''}`} href={l.href}>{l.label}</a>
@@ -1130,7 +1525,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
         {show('hero') && (
           <div data-section="hero" className={`ss-hero-wrap${headlineSize}`} style={{ order: order('hero') }}>
             {splitHero ? (
-              <header className="ss-split">
+              <header className={`ss-split${heroOn ? ' ss-split-offer' : ''}`}>
                 <div className="ss-split-text">
                   <HeroBubbles />
                   {heroText(true)}
@@ -1146,6 +1541,10 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
                     fallback={<div className="ss-art-panel"><HeroBubbles /><HeroArt car={suds.car} /></div>}
                   />
                 </div>
+                {/* The services card: over the photo column from 900px, a
+                    row under the hero below that, right after the copy once
+                    the hero stacks. */}
+                {heroOffer}
               </header>
             ) : images.hero ? (
               <header className="ss-hero ss-has-media">
@@ -1153,9 +1552,16 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
                   <PhotoSlot src={images.hero} alt="" loading="eager" fetchPriority="high" />
                 </div>
                 <div className="ss-hero-scrim" />
-                <div className="ss-wrap">
-                  <div className="ss-hero-body">{heroText(true)}</div>
-                </div>
+                {heroOn ? (
+                  <div className="ss-wrap ss-hq-grid">
+                    <div className="ss-hero-body">{heroText(true)}</div>
+                    {heroOffer}
+                  </div>
+                ) : (
+                  <div className="ss-wrap">
+                    <div className="ss-hero-body">{heroText(true)}</div>
+                  </div>
+                )}
               </header>
             ) : (
               <>
@@ -1166,7 +1572,8 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
                       {heroText(true)}
                       <EditorHint>{PHOTO_HINTS.hero}</EditorHint>
                     </div>
-                    <HeroArt car={suds.car} />
+                    {/* The services card takes the cartoon car's place. */}
+                    {heroOn ? heroOffer : <HeroArt car={suds.car} />}
                   </div>
                 </header>
                 <div className="ss-teeth" aria-hidden="true" />
@@ -1192,15 +1599,24 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
           </div>
         )}
 
+        {/* Vehicle makes (Edit > Vehicle Makes): right under the hero, only
+            with makes the owner ticked. Focusable, so focus pauses the
+            scrolling row. */}
+        {makesOn && (
+          <section data-section="brands" id="makes" className="ss-mk-makes" aria-label="Vehicle makes" tabIndex={0} style={{ order: order('brands') }}>
+            <MakesBand ns="ss-mk" eyebrow={st('brands').eyebrow || hd.brands.eyebrow} makes={makes} />
+          </section>
+        )}
+
         {show('services') && (services.length > 0 || editor) && (
           <section data-section="services" id="services" className="ss-section" aria-labelledby="ss-services-h" style={{ order: order('services') }}>
             <ServiceCardCss />
             <Floats />
             <div className="ss-wrap">
               <div className="ss-head" data-acg-reveal="">
-                <Tag emoji={BUBBLES}>Our Services</Tag>
+                <Tag emoji={BUBBLES}>{st('services').eyebrow || hd.services.eyebrow}</Tag>
                 <h2 id="ss-services-h" className="ss-h2">
-                  {txt(copy.servicesSection?.title) || (cleaning ? <>We clean <em>everything.</em></> : <>What we <em>do best.</em></>)}
+                  <Accented as="em" {...headingOf(st('services'), hd.services, txt(copy.servicesSection?.title))} />
                 </h2>
                 {txt(copy.servicesSection?.intro) && <p className="ss-sub">{copy.servicesSection.intro}</p>}
               </div>
@@ -1208,7 +1624,12 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
                 <div className={`ss-grid ${gridFor(services.length)}`}>
                   {services.map((s, i) => (
                     <div key={`${s.name}-${i}`} className="ss-cell" data-acg-reveal="" style={{ '--acg-delay': `${(i % 3) * 90}ms` }}>
-                      <article className="acg-svc-card ss-card" style={{ '--ss-tint': suds.tints[i % suds.tints.length] }}>
+                      <article
+                        className={`acg-svc-card ss-card${s.badge ? ' ss-card-feat' : ''}${anyServicePhoto ? ' ss-card-ph' : ''}`}
+                        style={{ '--ss-tint': suds.tints[i % suds.tints.length] }}
+                      >
+                        {s.badge && <PackageBadge ns="ss-pk" text={s.badge} />}
+                        <PackagePhoto ns="ss-pk" src={s.image} alt={s.name} anyPhoto={anyServicePhoto} editor={editor} />
                         <span className="ss-card-emo" aria-hidden="true">{SERVICE_EMOJI[i % SERVICE_EMOJI.length]}</span>
                         {s.name && <h3 className="ss-card-title">{s.name}</h3>}
                         <ServiceDescription
@@ -1217,6 +1638,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
                           style={{ marginTop: 10, color: 'var(--ss-card-muted)', fontSize: 15.5, fontWeight: 600, lineHeight: 1.65 }}
                           accentColor="var(--ss-card-text)"
                         />
+                        {s.includes.length > 0 && <PackageIncludes ns="ss-pk" items={s.includes} label="What's included" checkStroke={3} />}
                         <div className="acg-svc-foot">
                           <div className="ss-price-row">
                             <BookNowLink serviceName={s.name} phone={phone} label={<>Book now <span aria-hidden="true">→</span></>} />
@@ -1234,6 +1656,54 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
           </section>
         )}
 
+        {/* Featured service (Edit > Featured Service): right after the
+            services, only for the service the owner picked. */}
+        {featuredOn && (
+          <section
+            data-section="featured"
+            id="featured"
+            className="ss-section ss-band ss-ft-band"
+            aria-labelledby="ss-featured-h"
+            style={{ order: order('featured'), '--ss-ft-bg': suds.tints[2] }}
+          >
+            <Floats />
+            <div className="ss-wrap">
+              <FeaturedBand
+                ns="ss-ft"
+                image={images.featured}
+                alt={`${featured.name}${name ? ` by ${name}` : ''}`}
+                heading={(
+                  <>
+                    {featured.eyebrow && <Tag emoji="✨" className="ss-tag-l ss-tag-paper">{featured.eyebrow}</Tag>}
+                    <h2 id="ss-featured-h" className="ss-h2"><Accented as="em" title={featured.title} accent={featured.accent} /></h2>
+                  </>
+                )}
+                intro={featured.intro}
+                priceFrom={featured.priceFrom}
+                price={featured.price}
+                bullets={featured.bullets}
+                button={(
+                  <div className="ss-actions">
+                    <a
+                      className="ss-btn ss-btn-primary"
+                      href={featured.buttonUrl || bookHref}
+                      {...bookingAttrs(!featured.buttonUrl, featured.name)}
+                    >
+                      {featured.buttonText}
+                    </a>
+                  </div>
+                )}
+                hints={(
+                  <>
+                    {!featuredBody && <EditorHint>This band shows on your site once it has a photo, a price or a list of benefits (Edit &gt; Featured Service).</EditorHint>}
+                    {featuredBody && !images.featured && <EditorHint>{PHOTO_HINTS.featured}</EditorHint>}
+                  </>
+                )}
+              />
+            </div>
+          </section>
+        )}
+
         {show('process') && howSteps.length > 0 && (
           <section data-section="process" id="how" className="ss-section ss-band ss-process" aria-labelledby="ss-how-h" style={{ order: order('process') }}>
             <div className="ss-marquee ss-marquee-top" aria-hidden="true">
@@ -1241,9 +1711,9 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
             </div>
             <div className="ss-wrap">
               <div className="ss-head" data-acg-reveal="">
-                <Tag emoji="🗺️" className="ss-tag-l ss-tag-paper">Super Simple</Tag>
-                <h2 id="ss-how-h" className="ss-h2">How it <em>works</em> <span aria-hidden="true">🤔</span></h2>
-                <p className="ss-sub">Spoiler: it’s embarrassingly easy.</p>
+                <Tag emoji="🗺️" className="ss-tag-l ss-tag-paper">{st('process').eyebrow || hd.process.eyebrow}</Tag>
+                <h2 id="ss-how-h" className="ss-h2"><Accented as="em" {...headingOf(st('process'), hd.process)} /> <span aria-hidden="true">🤔</span></h2>
+                <p className="ss-sub">{st('process').intro || 'Spoiler: it’s embarrassingly easy.'}</p>
               </div>
               <ol className="ss-steps" style={{ '--ss-n': howSteps.length <= 4 ? howSteps.length : 3 }}>
                 {howSteps.map((s, i) => (
@@ -1266,9 +1736,9 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
           <section data-section="whyUs" id="why" className="ss-section ss-band ss-why" aria-labelledby="ss-why-h" style={{ order: order('whyUs') }}>
             <div className="ss-wrap">
               <div className="ss-head" data-acg-reveal="">
-                <Tag emoji="💪" className="ss-tag-paper">Why Choose Us</Tag>
+                <Tag emoji="💪" className="ss-tag-paper">{st('whyUs').eyebrow || hd.whyUs.eyebrow}</Tag>
                 <h2 id="ss-why-h" className="ss-h2">
-                  {cleaning ? <>We’re kinda <em>obsessed</em> with clean cars.</> : <>Why folks <em>choose us.</em></>}
+                  <Accented as="em" {...headingOf(st('whyUs'), hd.whyUs)} />
                 </h2>
               </div>
               <div className={`ss-grid ${whyCards.length === 4 ? 'ss-c4' : gridFor(whyCards.length)}`}>
@@ -1321,8 +1791,9 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
                 )}
               </div>
               <div data-acg-reveal="" style={{ '--acg-delay': '120ms' }}>
-                <Tag emoji="👋" className="ss-tag-l">About Us</Tag>
-                <h2 id="ss-about-h" className="ss-h2">{name || fb.shopName}</h2>
+                <Tag emoji="👋" className="ss-tag-l">{st('about').eyebrow || hd.about.eyebrow}</Tag>
+                <h2 id="ss-about-h" className="ss-h2"><Accented as="em" {...headingOf(st('about'), hd.about)} /></h2>
+                {badgeIn('about') && <div className="ss-about-g">{ratingPill()}</div>}
                 {aboutParas.length > 0 && (
                   <div className="ss-prose">
                     {aboutParas.map((p, i) => <p key={i}>{p}</p>)}
@@ -1360,8 +1831,8 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
           <section data-section="gallery" id="gallery" className="ss-section" aria-labelledby="ss-gallery-h" style={{ order: order('gallery') }}>
             <div className="ss-wrap">
               <div className="ss-head" data-acg-reveal="">
-                <Tag emoji="📸">Our Work</Tag>
-                <h2 id="ss-gallery-h" className="ss-h2">{cleaning ? <>Fresh out of the <em>suds.</em></> : <>Our latest <em>work.</em></>}</h2>
+                <Tag emoji="📸">{st('gallery').eyebrow || hd.gallery.eyebrow}</Tag>
+                <h2 id="ss-gallery-h" className="ss-h2"><Accented as="em" {...headingOf(st('gallery'), hd.gallery)} /></h2>
               </div>
               {galleryImages.length === 0 ? (
                 <PhotoSlot slot="gallery" style={{ minHeight: 220, borderRadius: 26 }} />
@@ -1398,12 +1869,17 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
         )}
 
         {show('testimonials') && reviews === 'google' && (
-          <section data-section="testimonials" id="reviews" className="ss-section ss-alt" aria-label={txt(copy.googleReviewsTitle) || 'Reviews'} style={{ order: order('testimonials') }}>
+          <section data-section="testimonials" id="reviews" className="ss-section ss-alt" aria-label={txt(copy.googleReviewsTitle) || st('testimonials').title || 'Reviews'} style={{ order: order('testimonials') }}>
             <div className="ss-wrap">
-              {txt(copy.googleReviewsTitle) && (
+              {(txt(copy.googleReviewsTitle) || st('testimonials').title || badgeIn('reviews')) && (
                 <div className="ss-head">
-                  <Tag emoji="💬">Reviews</Tag>
-                  <h2 className="ss-h2">{copy.googleReviewsTitle}</h2>
+                  {(txt(copy.googleReviewsTitle) || st('testimonials').title) && (
+                    <>
+                      <Tag emoji="💬">{st('testimonials').eyebrow || hd.testimonials.eyebrow}</Tag>
+                      <h2 className="ss-h2"><Accented as="em" title={txt(copy.googleReviewsTitle) ? copy.googleReviewsTitle : st('testimonials').title} accent={st('testimonials').accent} /></h2>
+                    </>
+                  )}
+                  {badgeIn('reviews') && <div className="ss-rev-g">{ratingPill()}</div>}
                 </div>
               )}
               <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} theme={copy.googleReviewsTheme} />
@@ -1416,26 +1892,37 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
             <Floats />
             <div className="ss-wrap">
               <div className="ss-head" data-acg-reveal="">
-                <Tag emoji="💬" className="ss-tag-l">Reviews</Tag>
-                <h2 id="ss-reviews-h" className="ss-h2">{cleaning ? <>They used to have <em>dirty cars</em> too.</> : <>Word on the <em>street.</em></>}</h2>
+                <Tag emoji="💬" className="ss-tag-l">{st('testimonials').eyebrow || hd.testimonials.eyebrow}</Tag>
+                <h2 id="ss-reviews-h" className="ss-h2"><Accented as="em" {...headingOf(st('testimonials'), hd.testimonials)} /></h2>
+                {badgeIn('reviews') && <div className="ss-rev-g">{ratingPill()}</div>}
               </div>
               <div className={`ss-grid ss-quotes ${gridFor(testimonials.length)}`}>
                 {testimonials.map((q, i) => {
                   const who = txt(q.name);
                   const role = txt(q.role) || txt(q.vehicle);
                   const initials = who ? who.split(/\s+/).map((n) => n[0]).join('').toUpperCase().slice(0, 2) : BUBBLES;
+                  const google = isGoogleQuote(q);
+                  const stars = reviewStars(q);
+                  // Only the "Google review" label links to Google: a
+                  // whole-card link whose quote says "book" would be taken
+                  // over by the booking widget's auto-binding.
+                  const Src = placeUrl ? 'a' : 'span';
+                  const srcLink = placeUrl ? { href: placeUrl, target: '_blank', rel: 'noopener noreferrer' } : {};
                   return (
                     <div key={i} className="ss-cell" data-acg-reveal="" style={{ '--acg-delay': `${(i % 3) * 90}ms` }}>
                       <figure className="ss-quote" style={{ '--ss-tint': suds.tints[[0, 1, 5][i % 3]] }}>
                         <span className="ss-quote-deco" aria-hidden="true">{QUOTE_DECO[i % QUOTE_DECO.length]}</span>
                         <span className="ss-qmark" aria-hidden="true">“</span>
+                        {stars > 0 && <StarRow rating={stars} size={18} gap={3} color={ensureContrast(GOOGLE_STAR_GOLD, suds.tints[[0, 1, 5][i % 3]], 3)} className="ss-rev-stars" />}
                         <blockquote><p>{q.text}</p></blockquote>
-                        {(who || role) && (
+                        {(who || role || google) && (
                           <figcaption className="ss-who">
                             <span className="ss-av" aria-hidden="true">{initials}</span>
                             <span>
                               {who && <span className="ss-who-name">{who}</span>}
-                              {role && <span className="ss-who-role">{role}</span>}
+                              {google ? (
+                                <span className="ss-who-role">{role && `${role} · `}<Src className="ss-rev-src" {...srcLink}>Google review{placeUrl && <span className="ss-sr"> (opens Google Maps)</span>}</Src></span>
+                              ) : role && <span className="ss-who-role">{role}</span>}
                             </span>
                           </figcaption>
                         )}
@@ -1444,18 +1931,31 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
                   );
                 })}
               </div>
+              {placeUrl && googleQuotes && (
+                <div className="ss-rev-more-wrap">
+                  <a className="ss-btn ss-btn-paper ss-rev-more" href={placeUrl} target="_blank" rel="noopener noreferrer">
+                    {allGoogle ? 'Read more reviews' : 'See our Google reviews'}<span className="ss-sr"> (opens Google Maps)</span><span aria-hidden="true">→</span>
+                  </a>
+                </div>
+              )}
             </div>
           </section>
         )}
 
         {show('cta') && (
-          <section data-section="cta" id="contact" className="ss-section ss-band ss-cta" aria-labelledby="ss-contact-h" style={{ order: order('cta') }}>
+          <section data-section="cta" id="contact" className={`ss-section ss-band ss-cta${ctaPhoto ? ' ss-ctaph' : ''}`} aria-labelledby="ss-contact-h" style={{ order: order('cta') }}>
             <Floats />
+            {ctaPhoto && (
+              <>
+                <div className="ss-ctaph-photo" aria-hidden="true"><PhotoSlot src={images.cta} alt="" /></div>
+                <div className="ss-ctaph-scrim" aria-hidden="true" />
+              </>
+            )}
             <div className={`ss-wrap ss-cta-grid${contactPrimary || editor ? '' : ' ss-cta-solo'}`}>
               <div data-acg-reveal="">
-                <Tag emoji="📞" className="ss-tag-l ss-tag-paper">Let’s Talk</Tag>
+                <Tag emoji="📞" className="ss-tag-l ss-tag-paper">{st('cta').eyebrow || hd.cta.eyebrow}</Tag>
                 <h2 id="ss-contact-h" className="ss-h2">
-                  {txt(copy.ctaHeadline) || (cleaning ? 'Ready for the cleanest car of your life?' : fb.ctaHeadline)}
+                  <Accented as="em" {...headingOf(st('cta'), hd.cta, txt(copy.ctaHeadline))} />
                 </h2>
                 <p className="ss-sub">
                   {txt(copy.ctaSubtext) || (isMobile
@@ -1496,6 +1996,17 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
                       <span className="ss-info-body">
                         <span className="ss-info-label">{area ? 'We serve!' : 'Find us in'}</span>
                         <span className="ss-info-val">{area || place}</span>
+                      </span>
+                    </div>
+                  )}
+                  {ownAreas.length > 0 && (
+                    <div className="ss-info-card">
+                      <span className="ss-info-emo" aria-hidden="true">🗺️</span>
+                      <span className="ss-info-body">
+                        <span className="ss-info-label">We cover!</span>
+                        <ul className="ss-chips" style={{ marginTop: 6 }}>
+                          {ownAreas.map((a) => <li key={a} className="ss-chip">{a}</li>)}
+                        </ul>
                       </span>
                     </div>
                   )}
@@ -1549,47 +2060,101 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
 
       <footer className="ss-foot" style={{ order: 9999 }}>
         <div className="ss-wrap">
-          <div className="ss-foot-grid">
-            <div className="ss-foot-about">
-              <a className="ss-brand" href="#top" aria-label={name ? `${name}, back to top` : 'Back to top'}>
-                {brand({ height: 52, width: 'auto', maxWidth: 210 })}
-              </a>
-              {tagline && <p className="ss-foot-tag">{tagline}</p>}
-              <div className="ss-social">
-                <SocialRow biz={biz} color={suds.vars['--ss-footer-accent']} size={18} gap={10} images={images} />
-              </div>
-            </div>
-            {navLinks.length > 0 && (
-              <div>
-                <p className="ss-foot-h">Explore</p>
-                <ul className="ss-foot-list">
-                  {navLinks.map((l) => <li key={l.href}><a href={l.href}>{l.label}</a></li>)}
-                </ul>
-              </div>
-            )}
-            {services.length > 0 && show('services') && (
-              <div>
-                <p className="ss-foot-h">Services</p>
-                <ul className="ss-foot-list">
-                  {services.filter((s) => s.name).slice(0, 6).map((s, i) => <li key={`${s.name}-${i}`}><a href="#services">{s.name}</a></li>)}
-                </ul>
-              </div>
-            )}
-            {(tel || email || address || place || area) && (
-              <div>
-                <p className="ss-foot-h">Say Hi!</p>
-                <ul className="ss-foot-list">
-                  {tel && <li><a href={tel}>{phone}</a></li>}
-                  {email && <li><a href={`mailto:${email}`}>{email}</a></li>}
-                  {address && <li>{address}</li>}
-                  {place && <li>{place}</li>}
-                  {area && <li>Serving {area}</li>}
-                </ul>
-              </div>
-            )}
+          {/* The columns footerPlan picked: without copy.footer, exactly the
+              design's brand / Explore / Services / Say Hi! columns. */}
+          <div className={`ss-foot-grid${plan.builder ? ' ss-fb' : ''}`} style={plan.builder ? { '--ss-fcols': footCols } : undefined}>
+            {plan.cells.map((c) => {
+              if (c.type === 'brand') {
+                return (
+                  <div key="brand" className="ss-foot-about">
+                    <a className="ss-brand" href="#top" aria-label={name ? `${name}, back to top` : 'Back to top'}>
+                      {brand({ height: 52, width: 'auto', maxWidth: 210 })}
+                    </a>
+                    {tagline && <p className="ss-foot-tag">{tagline}</p>}
+                    {badgeIn('footer') && (
+                      <div className="ss-foot-g">
+                        <GoogleRatingBadge place={biz.googlePlace} variant="inline" starColor={suds.vars['--ss-footer-accent']} starSize={16} />
+                      </div>
+                    )}
+                    <div className="ss-social">
+                      <SocialRow biz={biz} color={suds.vars['--ss-footer-accent']} size={18} gap={10} images={images} />
+                    </div>
+                  </div>
+                );
+              }
+              if (c.type === 'links') {
+                return (
+                  <div key="links">
+                    <p className="ss-foot-h">{c.title}</p>
+                    <ul className="ss-foot-list">
+                      {navLinks.map((l) => <li key={l.href}><a href={l.href}>{l.label}</a></li>)}
+                    </ul>
+                  </div>
+                );
+              }
+              if (c.type === 'services') {
+                return (
+                  <div key="services">
+                    <p className="ss-foot-h">{c.title}</p>
+                    <ul className="ss-foot-list">
+                      {services.filter((s) => s.name).slice(0, 6).map((s, i) => <li key={`${s.name}-${i}`}><a href="#services">{s.name}</a></li>)}
+                    </ul>
+                  </div>
+                );
+              }
+              if (c.type === 'areas') {
+                return (
+                  <div key="areas">
+                    <p className="ss-foot-h">{c.title}</p>
+                    <ul className="ss-foot-list">
+                      {footAreas.map((a) => <li key={a}>{a}</li>)}
+                    </ul>
+                  </div>
+                );
+              }
+              if (c.type === 'contact') {
+                return (
+                  <div key="contact">
+                    <p className="ss-foot-h">{c.title}</p>
+                    {(tel || email || address || place || area) && (
+                      <ul className="ss-foot-list">
+                        {tel && <li><a href={tel}>{phone}</a></li>}
+                        {email && <li><a href={`mailto:${email}`}>{plan.builder ? emailBreak(email) : email}</a></li>}
+                        {address && <li>{address}</li>}
+                        {place && <li>{place}</li>}
+                        {area && <li>Serving {area}</li>}
+                      </ul>
+                    )}
+                    {footSocialMoved && (
+                      <div className="ss-social">
+                        <SocialRow biz={biz} color={suds.vars['--ss-footer-accent']} size={18} gap={10} images={images} />
+                      </div>
+                    )}
+                    {plan.cta && (
+                      <a className="ss-btn ss-btn-primary ss-foot-cta" href={plan.cta.href} {...bookingAttrs(plan.cta.books)}>
+                        {plan.cta.label}
+                      </a>
+                    )}
+                  </div>
+                );
+              }
+              return (
+                <div key="hours">
+                  <p className="ss-foot-h">{c.title}</p>
+                  <ul className="ss-foot-list">
+                    {hours.map((h) => <li key={h.days}>{h.time ? `${h.days} ${h.time}` : h.days}</li>)}
+                  </ul>
+                </div>
+              );
+            })}
           </div>
           <div className="ss-foot-bottom">
+            {/* exportHtml's owner-link script appends " · Site owner" to the
+                LAST <p> of the last <footer>: the copyright stays that <p>
+                (the owner's bottom line is a <div>). */}
             <p>© <span data-acg-year="">{new Date().getFullYear()}</span> {brandName}{place ? ` · ${place}` : ''}. All rights reserved.</p>
+            {footBarBadge && <GoogleRatingBadge place={biz.googlePlace} variant="inline" starColor={suds.vars['--ss-footer-accent']} starSize={14} />}
+            {plan.bottomText && <div className="ss-foot-note">{plan.bottomText}</div>}
             <a className="ss-top" href="#top"><span aria-hidden="true">{BUBBLES}</span>Back to top</a>
           </div>
         </div>

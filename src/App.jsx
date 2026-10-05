@@ -728,9 +728,9 @@ export default function App() {
   };
 
   // "Publish" from the editor toolbar — saves the draft first, then
-  // pushes the latest content live via publishSite (R2 upload). Same
-  // pattern as Save Draft: silent on success (inline button feedback),
-  // toast on error.
+  // pushes the latest content live via publishSite (R2 upload). Returns
+  // publish-site's { publishedUrl, bookingUrl, slug } so the toolbar can
+  // show where the site went live; toasts on error.
   const handlePublishFromEditor = async () => {
     try {
       await flushSaveSite();
@@ -748,7 +748,7 @@ export default function App() {
           autoSave({ images: fixed });
         }
       } catch { /* fall back to publishing whatever we have */ }
-      await publishSite({
+      return await publishSite({
         siteId,
         businessInfo,
         generatedCopy: editedCopy,

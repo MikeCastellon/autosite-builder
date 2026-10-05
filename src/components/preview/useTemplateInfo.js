@@ -23,6 +23,13 @@ function infoFrom(templateId, mod) {
     headingFields: mod?.headingFields && typeof mod.headingFields === 'object' ? mod.headingFields : null,
     // ... and the design's own heading text, headingDefaults(businessInfo, copy).
     headingDefaults: typeof mod?.headingDefaults === 'function' ? mod.headingDefaults : null,
+    // Edit > Footer: the design's own columns, titles and button default
+    // (kit/features.js footerPlan); null = the builder's Redline defaults.
+    footerSpec: mod?.footerSpec && typeof mod.footerSpec === 'object' ? mod.footerSpec : null,
+    // Section ids added after sites were saved with this design: the
+    // template orders them itself (buildSectionOrderAdded), so the editor's
+    // order repair leaves a saved order without them alone.
+    addedSections: Array.isArray(mod?.addedSections) ? mod.addedSections : [],
   };
 }
 

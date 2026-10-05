@@ -273,3 +273,18 @@ describe('design defaults (the template\'s headingDefaults)', () => {
     expect(out).not.toContain('Empty: ');
   });
 });
+
+describe('HeadingsPanel rows for sections not on the page', () => {
+  it("tags a switched-on section the preview does not show, with the Sections tab's hint", () => {
+    const hint = 'Not on your page yet: tick the makes you work on in Vehicle Makes.';
+    const out = html({ copy: {}, absentHints: { brands: hint } });
+    expect(out).toContain('Vehicle Makes<span class="text-gray-400 font-normal"> · not on your page yet</span>');
+    expect(out).toContain(hint);
+    expect(out.split('not on your page yet').length - 1).toBe(1);
+    // A hidden section says switched off instead.
+    const hidden = html({ copy: {}, hiddenSections: ['brands'], absentHints: { brands: hint } });
+    expect(hidden).not.toContain('not on your page yet');
+    expect(hidden).toContain(' · switched off');
+    expect(html({ copy: {} })).not.toContain('not on your page yet');
+  });
+});

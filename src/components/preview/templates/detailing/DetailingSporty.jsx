@@ -13,25 +13,43 @@
 import { SocialRow } from '../SocialIcons.jsx';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import { ServiceCardCss, ServiceDescription, BookNowLink } from '../ServiceCardParts.jsx';
-import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import { buildSectionOrderAdded } from '../../../../lib/sectionOrder.js';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HOURS_DAYS } from '../../../../lib/businessHours.js';
 import { FONT_CATALOG, familiesFromStack, catalogFamily } from '../../../../lib/fontCatalog.js';
-import { deriveTheme, mix, alpha, ensureContrast, contrastRatio, isDark } from '../kit/theme.js';
+import { deriveTheme, mix, alpha, ensureContrast, contrastRatio, isDark, fillOverPhoto } from '../kit/theme.js';
 import { PhotoSlot, PHOTO_HINTS } from '../kit/PhotoSlot.jsx';
 import { MobileMenu, MobileActionBar } from '../kit/MobileMenu.jsx';
 import { EditorOnly, useEditorMode } from '../kit/EditorMode.jsx';
+import { Accented } from '../kit/Accented.jsx';
+import { sectionTitle, serviceIncludes, serviceAreasOf, businessKindOf, splitAccent, hasSocialLinks } from '../kit/content.js';
+import {
+  heroCardModeOf, heroOfferOf, featuredServiceOf, featuredHasBody, featuredTitleDefaults, makesEyebrowDefault,
+  reviewStars, footerPlan, bookingAttrs,
+} from '../kit/features.js';
+import { HeroOffer, heroOfferCss } from '../kit/HeroOffer.jsx';
+import { PackageBadge, PackagePhoto, PackageIncludes, packageDetailsCss } from '../kit/PackageDetails.jsx';
+import { FeaturedBand, featuredBandCss } from '../kit/FeaturedBand.jsx';
+import { MakesBand, makesBandCss } from '../kit/MakesBand.jsx';
+import { vehicleMakesFor } from '../kit/vehicleMakes.js';
+import {
+  GoogleRatingBadge, StarRow, GOOGLE_STAR_GOLD, googleRatingOf, googlePlaceUrl, googleBadgePlacements,
+} from '../kit/GoogleRatingBadge.jsx';
 
 export const themeReady = true;
 
-// Same ids and order as ContentEditor's TOGGLEABLE._default (and the
-// template's old buildSectionOrder call), so saved orders keep working and
-// the editor's Sections list matches what renders. Never rename an id.
+// The ids of ContentEditor's TOGGLEABLE._default (and the template's old
+// buildSectionOrder call), so saved orders keep working and the editor's
+// Sections list matches what renders. Never rename an id. 'brands' (the
+// vehicle-makes band) and 'featured' (the featured-service band) came later:
+// see addedSections.
 export const sections = [
   { id: 'hero', label: 'Hero' },
   { id: 'statsBar', label: 'Stats Bar' },
+  { id: 'brands', label: 'Vehicle Makes' },
   { id: 'services', label: 'Services' },
+  { id: 'featured', label: 'Featured Service' },
   { id: 'about', label: 'About' },
   { id: 'gallery', label: 'Gallery' },
   { id: 'testimonials', label: 'Reviews' },
@@ -39,7 +57,55 @@ export const sections = [
   { id: 'awards', label: 'Awards' },
 ];
 
+// Ids added after sites were saved with this design. Live sites store
+// copy.sectionOrder without them, so the page orders them itself
+// (buildSectionOrderAdded): every older section keeps exactly its saved
+// order value, and an added band without a saved slot shares the value of
+// the section before it, rendering right after it in the DOM.
+export const addedSections = ['brands', 'featured'];
+
 export const extraFonts = [];
+
+// Edit > Headings: the copy.sectionTitles fields each section uses. The hero
+// headline, the services heading / intro and the contact headline / subtext
+// keep their own copy keys (titleFrom / introFrom); headingDefaults() below
+// gives the design's own text. Stats bar and awards have no heading.
+export const headingFields = {
+  hero: { fields: ['eyebrow', 'title', 'accent'], titleFrom: 'headline' },
+  brands: { fields: ['eyebrow'] },
+  services: { fields: ['eyebrow', 'title', 'accent', 'intro'], titleFrom: 'servicesSection.title', introFrom: 'servicesSection.intro' },
+  featured: { fields: ['eyebrow', 'title', 'accent', 'intro'] },
+  about: { fields: ['eyebrow', 'title', 'accent'] },
+  gallery: { fields: ['eyebrow', 'title', 'accent'] },
+  testimonials: { fields: ['eyebrow', 'title', 'accent'] },
+  cta: { fields: ['eyebrow', 'title', 'accent', 'intro'], titleFrom: 'ctaHeadline', introFrom: 'ctaSubtext' },
+};
+
+// Edit > Footer (kit/features.js footerPlan): this design's own footer is
+// the brand block, Explore, Contact and Hours; Service Areas is a column the
+// owner can switch on, and the footer button is off until they ask for it.
+// With copy.footer unset the footer renders exactly as it always has.
+export const footerSpec = {
+  columns: [
+    { type: 'brand', show: true },
+    { type: 'links', show: true },
+    { type: 'areas', show: false },
+    { type: 'contact', show: true },
+    { type: 'hours', show: true },
+  ],
+  titles: { links: 'Explore', areas: 'Service Areas', contact: 'Contact', hours: 'Hours' },
+  mergeHours: false,
+  cta: false,
+  ctaLabel: 'Book Now',
+  notes: {
+    brand: 'Your logo or name, Footer Tagline, social icons and Google rating. Switched off, the rating moves to the bottom line.',
+    contact: 'Phone, email and address from Business Info, and your social icons while the logo column is off.',
+  },
+  // What fills the contact column (the Footer panel's "nothing to list"
+  // check); the social icons move there while the logo column is off.
+  contactFields: ['phone', 'email', 'address', 'city', 'state'],
+  socialWhenBrandOff: true,
+};
 
 const CSS = `
 .ds-wrap{width:100%;max-width:1280px;margin:0 auto;padding-left:var(--ds-gutter);padding-right:var(--ds-gutter)}
@@ -379,6 +445,120 @@ html[data-acg-scrolled] .ds-nav{box-shadow:0 14px 34px -18px var(--ds-shadow)}
 }
 `;
 
+// The owner-editable features (hero services card, Google rating, footer
+// builder, package details, headings, featured and makes bands, service
+// areas, Google review labels, contact photo) in this design's look: square
+// corners, skewed slashes, heavy caps, the red band. Appended to the one
+// <style> string only while a feature renders, after the kit blocks' own
+// CSS (heroOfferCss & co.), so these rules win over it. The --ds-hq-*,
+// --ds-pk-*, --ds-ft-* and --ds-mk-* block variables alias tokens that
+// sportyTokens already contrast-repairs. A site with none of the feature
+// keys gets exactly CSS above, byte for byte.
+const FEATURE_CSS = `
+.ds-hq-grid{display:grid;gap:clamp(32px,4cqi,56px);align-items:center}
+.ds-hq-slot{position:relative;width:100%;max-width:560px;text-shadow:none;color:var(--ds-sf-text);--ds-focus:var(--ds-sf-accent);--ds-hq-card-bg:var(--ds-sf-bg);--ds-hq-card-text:var(--ds-sf-text);--ds-hq-card-muted:var(--ds-sf-muted);--ds-hq-card-accent:var(--ds-sf-accent);--ds-hq-opt-bg:var(--ds-pg-bg);--ds-hq-opt-text:var(--ds-pg-text);--ds-hq-opt-muted:var(--ds-pg-muted);--ds-hq-opt-accent:var(--ds-pg-accent);--ds-hq-row-bg:var(--ds-pg-bg);--ds-hq-row-text:var(--ds-pg-text);--ds-hq-row-muted:var(--ds-pg-muted);--ds-hq-row-accent:var(--ds-pg-accent);--ds-hq-btn-bg:var(--ds-accent);--ds-hq-btn-text:var(--ds-on-accent);--ds-hq-btn-shadow:0 16px 32px -16px var(--ds-glow);--ds-hq-line:var(--ds-sf-border);--ds-hq-line-strong:var(--ds-sf-border-strong);--ds-hq-pick:var(--ds-brand);--ds-hq-pick-shadow:inset 4px 0 0 var(--ds-brand);--ds-hq-hover:var(--ds-brand);--ds-hq-head:var(--ds-head);--ds-hq-head-w:var(--ds-head-w);--ds-hq-r:0px;--ds-hq-r-ctl:0px;--ds-hq-r-lg:0px;--ds-hq-shadow:0 30px 60px -34px var(--ds-shadow);--ds-hq-focus:var(--ds-sf-accent)}
+.ds-split-offer{grid-template-rows:1fr auto}
+.ds-split-offer>.ds-hq-slot{grid-column:1 / -1;width:auto;max-width:560px;margin:0 var(--ds-gutter) clamp(56px,7cqi,96px) max(var(--ds-gutter),calc((100cqi - 1280px) / 2 + var(--ds-gutter)))}
+.ds-has-media .ds-h1-own .ds-em{background:none;text-decoration-line:underline;text-decoration-color:var(--ds-brand);text-decoration-thickness:.08em;text-underline-offset:.03em;text-decoration-skip-ink:none}
+.ds-hq-quote::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--ds-brand)}
+.ds-hq-dot{border-radius:0;transform:skewX(-12deg)}
+.ds-hq-q-cta,.ds-hq-hl-cta,.ds-hq-q-book{clip-path:polygon(12px 0,100% 0,calc(100% - 12px) 100%,0 100%);letter-spacing:.12em}
+.ds-hq-q-book:focus-visible,.ds-hq-hl-cta:focus-visible,.ds-hq-quote:has(.ds-hq-go:focus-visible) .ds-hq-q-cta{clip-path:none}
+.ds-hq-step-l{letter-spacing:.22em}
+.ds-hq-steps i{height:2px;background:var(--ds-hq-line)}
+.ds-hq-q-call{font-size:13.5px;letter-spacing:.12em;text-transform:uppercase}
+@container (min-width:1024px){
+.ds-hq-grid{grid-template-columns:minmax(0,1fr) minmax(340px,420px)}
+.ds-hq-slot{max-width:none}
+.ds-split-offer>.ds-split-photo{grid-column:2;grid-row:1}
+.ds-split-offer>.ds-hq-slot{grid-column:2;grid-row:1;align-self:center;justify-self:center;z-index:1;width:min(420px,84%);margin:clamp(32px,4cqi,64px) 0 clamp(32px,4cqi,64px) 8%}
+.ds-hero-offer .ds-h1{--ds-h1:clamp(40px,5.2cqi,80px);--ds-col:calc(min(100cqi,1280px) - 2 * var(--ds-gutter) - 420px - clamp(32px,4cqi,56px))}
+}
+
+.ds-gpill{padding:8px 16px;border:1px solid var(--ds-border-strong);box-shadow:inset 3px 0 0 var(--ds-brand);font-size:12.5px;font-weight:700;line-height:1.4;letter-spacing:.06em;text-transform:uppercase;color:var(--ds-text);text-decoration:none}
+.ds-gpill .acg-gbadge-count{color:var(--ds-muted)}
+.ds-has-media .ds-gpill{border-color:var(--ds-on-hero-line);color:var(--ds-on-hero)}
+.ds-has-media .ds-gpill .acg-gbadge-count{color:var(--ds-on-hero-muted)}
+.ds-hero-g{margin-top:28px}
+/* The menu-bar rating gives way to the business name: its slot takes only
+   the room the name and the links leave (the name no longer grows into
+   it), and the badge shows only while that room fits it (navBadgeCss: a
+   size query on the slot, its nearest container). The slot's negative
+   margin cancels its extra flex gap, so with the badge hidden the name
+   has exactly the room it has without one; the badge's own margin keeps
+   it 24px clear of the name. */
+.ds-nav-gslot{flex:1 1 0;min-width:0;margin-left:-24px;display:flex;justify-content:flex-end;container-type:inline-size}
+.ds-brand:has(+.ds-nav-gslot){flex-grow:0}
+.ds-nav-g{display:none;margin-left:24px;font-size:12.5px;font-weight:600;color:var(--ds-muted)}
+.ds-nav-g a{color:inherit;text-decoration:none}
+.ds-about-g{margin:-8px 0 24px}
+.ds-rev-g{margin-top:22px}
+.ds-foot-g{margin-top:16px;font-size:14px}
+.ds-foot-bottom .ds-foot-g{margin-top:0;font-size:13px}
+
+.ds-fb .ds-foot-list{overflow-wrap:anywhere}
+.ds-foot .ds-foot-cta{margin-top:22px;color:var(--ds-on-accent)}
+.ds-foot-note{max-width:100%}
+
+.ds-card{--ds-pk-text:var(--ds-text);--ds-pk-muted:var(--ds-muted);--ds-pk-accent:var(--ds-accent-text);--ds-pk-line:var(--ds-border);--ds-pk-badge-bg:var(--ds-accent);--ds-pk-badge-text:var(--ds-on-accent);--ds-pk-well-bg:var(--ds-pg-bg);--ds-pk-well-ink:var(--ds-border-strong);--ds-pk-r:0px;--ds-pk-head:var(--ds-head)}
+.ds-pk-badge{position:relative;align-self:flex-start;margin-bottom:16px;clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%);padding:6px 18px;letter-spacing:.16em}
+.ds-card-feat{border-color:var(--ds-brand)}
+.ds-card-ph .ds-card-num{display:none}
+.ds-card-ph .ds-card-head{padding-right:0}
+.ds-pk-card-photo{margin-bottom:24px}
+.ds-pk-inc>summary{font-size:12.5px;letter-spacing:.18em}
+.ds-pk-inc-h{font-family:var(--ds-head);font-weight:var(--ds-head-w2)}
+@container (min-width:601px){
+.ds-grid:not(.ds-c1) .ds-pk-card-well{display:flex}
+.ds-pk-row .ds-card{padding-top:calc(clamp(28px,2.8cqi,38px) + 26px)}
+.ds-pk-row .ds-pk-badge{position:absolute;top:clamp(14px,1.4cqi,18px);left:clamp(30px,3cqi,40px);max-width:calc(100% - clamp(30px,3cqi,40px) - var(--ds-num) * 1.3);margin:0}
+}
+
+.ds-band .ds-em,.ds-ft-band .ds-em{color:inherit;background-image:linear-gradient(var(--ds-band-text),var(--ds-band-text));background-repeat:no-repeat;background-size:100% .1em;background-position:0 94%;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+
+.ds-ft-band{isolation:isolate;overflow:clip;background:var(--ds-band-bg);color:var(--ds-band-text);--ds-focus:var(--ds-band-text);--ds-ft-text:var(--ds-band-text);--ds-ft-muted:var(--ds-band-muted);--ds-ft-accent:var(--ds-band-text);--ds-ft-r:0px;--ds-ft-photo-max:440px}
+.ds-ft-band::before,.ds-ft-band::after{content:'';position:absolute;top:-20%;height:140%;z-index:-1;background:var(--ds-band-slash);transform:skewX(-18deg);pointer-events:none}
+.ds-ft-band::before{right:-6%;width:28%}
+.ds-ft-band::after{right:26%;width:5%}
+.ds-ft-band .ds-eyebrow{color:var(--ds-band-text)}
+.ds-ft-band .ds-eyebrow::before{background:var(--ds-band-text)}
+.ds-ft-band .ds-actions{margin-top:32px}
+.ds-ft-feat-solo{margin:0}
+.ds-ft-feat-price strong{font-family:var(--ds-head);font-weight:var(--ds-head-w);color:var(--ds-band-text)}
+.ds-ft-feat-photo{box-shadow:14px 14px 0 var(--ds-band-slash)}
+
+.ds-mk-makes{--ds-mk-bg:var(--ds-bg);--ds-mk-text:var(--ds-text);--ds-mk-muted:var(--ds-muted);--ds-mk-line:var(--ds-border);--ds-mk-focus:var(--ds-focus);border-top:3px solid var(--ds-brand)}
+.ds-mk-makes-eye{font-weight:700;letter-spacing:.22em}
+
+.ds-rev-stars{margin-top:18px;color:var(--ds-accent-text)}
+.ds-quote .ds-rev-src{margin-left:auto;font-family:var(--ds-body);font-size:11.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--ds-accent-text);text-decoration:none}
+.ds-rev-more{display:inline-flex;align-items:center;min-height:44px;margin-top:32px;color:var(--ds-accent-text);font-size:12.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;text-decoration:none}
+
+.ds-band-photo{position:absolute;inset:0;z-index:-3}
+.ds-band-scrim{position:absolute;inset:0;z-index:-2;background:var(--ds-ctaph-scrim)}
+.ds-band-has-photo{--ds-band-text:var(--ds-ctaph-text);--ds-band-muted:var(--ds-ctaph-muted);--ds-focus:var(--ds-ctaph-text)}
+
+@media (hover:hover){
+.ds-foot .ds-foot-cta:hover{color:var(--ds-on-accent)}
+.ds-rev-more:hover,.ds-quote a.ds-rev-src:hover,.ds-gpill:hover .acg-gbadge-count{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px}
+}
+@media (prefers-reduced-motion:no-preference){
+.ds-hero-offer .ds-hq-slot,.ds-split-offer>.ds-hq-slot{animation:ds-rise .8s cubic-bezier(.2,.7,.2,1) .2s both}
+}
+@container (min-width:901px){.ds-foot-grid.ds-fb{grid-template-columns:var(--ds-fcols)}}
+@container (max-width:1100px){.ds-nav-gslot{display:none}}
+/* Without container queries (the page's old-browser fallback turns them into
+   viewport queries) nothing can tell whether the badge fits: leave it out. */
+@supports not (container-type:inline-size){.ds-nav-gslot{display:none}}
+@container (max-width:600px){
+.ds-split-offer .ds-split-photo{order:1}
+.ds-split-offer>.ds-hq-slot{margin-bottom:44px}
+.ds-ft-band::before{width:44%;right:-18%}
+.ds-ft-band::after{display:none}
+.ds-quote .ds-rev-src{margin-left:0}
+}
+`;
+
 const txt = (v) => (typeof v === 'string' ? v.trim() : typeof v === 'number' ? String(v) : '');
 const list = (v) => (Array.isArray(v) ? v : []);
 
@@ -560,6 +740,24 @@ function sportyTokens(t) {
   };
 }
 
+// The contact band over the owner's CTA Background photo (images.cta): the
+// photo shows through a scrim of the band's own fill, at least 84% where the
+// text sits. kit fillOverPhoto deepens that fill just enough for the band's
+// text to read over a white or a black photo pixel alike; --ds-ctaph-bg is
+// the scrim over the worse of the two. Root variables only while that
+// photo shows.
+function ctaPhotoTokens(tokens) {
+  const { scrim, worst, text, muted } = fillOverPhoto({
+    fill: tokens['--ds-band-bg'], text: tokens['--ds-band-text'], muted: tokens['--ds-band-muted'], minScrim: 0.84,
+  });
+  return {
+    '--ds-ctaph-bg': worst,
+    '--ds-ctaph-text': text,
+    '--ds-ctaph-muted': muted,
+    '--ds-ctaph-scrim': `linear-gradient(90deg, ${alpha(scrim, 0.94)}, ${alpha(scrim, 0.84)})`,
+  };
+}
+
 const Icon = ({ d, size = 18, stroke = 1.8 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d={d} />
@@ -568,6 +766,7 @@ const Icon = ({ d, size = 18, stroke = 1.8 }) => (
 const ICONS = {
   phone: 'M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z',
   pin: 'M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21zM12 12.2a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z',
+  map: 'M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14',
   clock: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2',
   mail: 'M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zM3.5 6.5 12 13l8.5-6.5',
   card: 'M3 6h18v12H3zM3 10h18M7 15h3',
@@ -610,6 +809,41 @@ function EditorHint({ children }) {
 
 const fill = { position: 'absolute', inset: 0, height: '100%' };
 const nameKey = (s) => txt(s).toLowerCase().replace(/[^a-z0-9]+/g, '');
+const isObj = (v) => Boolean(v) && typeof v === 'object' && !Array.isArray(v);
+const awardNames = (biz) => list(biz.awards).map((a) => txt(a && typeof a === 'object' ? a.name : a)).filter(Boolean);
+const aboutTitleOf = (biz) => {
+  const tagline = txt(biz.tagline).replace(/\s+/g, ' ');
+  const name = txt(biz.businessName);
+  return tagline && tagline.length <= 60 ? tagline : name ? `About ${name}` : 'About Us';
+};
+
+// The design's own heading text per section, shown while the owner typed
+// none in Edit > Headings (copy.sectionTitles): { [sectionId]: { eyebrow?,
+// title?, accent? } }. accent is what the page highlights while the
+// Highlighted words field is empty ('' = nothing): only the hero headline
+// has a highlight of its own (its second half, splitHeadline). The template
+// renders from the same values, so the Headings tab and the page never
+// disagree. businessInfo as the template receives it (normalizeBusinessInfo).
+// Never throws, whatever a saved row holds.
+export function headingDefaults(businessInfo, generatedCopy) {
+  const biz = isObj(businessInfo) ? businessInfo : {};
+  const copy = isObj(generatedCopy) ? generatedCopy : {};
+  const fb = getFallbacks(biz.businessType);
+  const awards = awardNames(biz);
+  const shownAwards = awards.length > 0 && !list(copy.hiddenSections).includes('awards');
+  const heroTitle = txt(copy.headline) || sectionTitle(copy.sectionTitles, 'hero').title || txt(biz.businessName);
+  const fs = isObj(copy.featuredService) ? copy.featuredService : {};
+  return {
+    hero: { eyebrow: shownAwards ? awards[0] : fb.heroBadge, title: heroTitle, accent: splitHeadline(heroTitle)[1] },
+    brands: { eyebrow: makesEyebrowDefault(businessKindOf(biz.businessType)) },
+    services: { eyebrow: 'What We Do', title: 'Our Services', accent: '' },
+    featured: featuredTitleDefaults(txt(fs.serviceName), Boolean(sectionTitle(copy.sectionTitles, 'featured').title)),
+    about: { eyebrow: 'About Us', title: aboutTitleOf(biz), accent: '' },
+    gallery: { eyebrow: 'Gallery', title: 'Our Work', accent: '' },
+    testimonials: { eyebrow: 'Testimonials', title: 'What Clients Say', accent: '' },
+    cta: { eyebrow: 'Contact', title: fb.ctaHeadline, accent: '' },
+  };
+}
 
 export default function DetailingSporty({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const biz = businessInfo || {};
@@ -623,7 +857,11 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
 
   const hiddenIds = list(copy.hiddenSections);
   const show = (id) => !hiddenIds.includes(id);
-  const order = buildSectionOrder(copy, sections.map((s) => s.id));
+  const order = buildSectionOrderAdded(copy, sections.map((s) => s.id), addedSections);
+  const hd = headingDefaults(biz, copy);
+  // Edit > Headings: each section's own eyebrow / title / highlight / intro,
+  // '' where the owner typed none (the design's text then shows).
+  const st = (id) => sectionTitle(copy.sectionTitles, id);
 
   const name = txt(biz.businessName);
   const phone = txt(biz.phone);
@@ -656,10 +894,58 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
       name: txt(s.name),
       price: txt(s.price),
       description: txt(s.description) || (fromPackages ? aiDesc.get(nameKey(s.name)) || '' : ''),
+      // Package details (Edit > Services): only what the owner set; a card
+      // without them looks as it always has.
+      summary: txt(s.summary),
+      badge: txt(s.badge),
+      image: txt(s.image),
+      includes: serviceIncludes(s.includes),
     }))
     .filter((s) => s.name || s.description || s.price);
-  const servicesTitle = txt(copy.servicesSection?.title) || 'Our Services';
+  const svcT = st('services');
+  const servicesTitle = txt(copy.servicesSection?.title) || svcT.title || 'Our Services';
+  // The owner's intro prints as typed (raw), like it always has.
+  const servicesIntro = txt(copy.servicesSection?.intro) ? copy.servicesSection.intro : svcT.intro;
   const svcCols = services.length === 1 ? 'ds-c1' : services.length === 2 || services.length === 4 ? 'ds-c2' : 'ds-c3';
+  const anyServicePhoto = services.some((s) => s.image);
+  // Where cards share a row, a package badge sits in a strip every card
+  // keeps free, so photos and titles stay level across the row.
+  const badgeRow = svcCols !== 'ds-c1' && services.some((s) => s.badge);
+  const pkgOn = show('services') && services.some((s) => s.badge || s.image || s.includes.length > 0);
+
+  // Services in the hero (Edit > Hero): copy.heroCard 'quote' (price card) or
+  // 'list'; unset is 'off', so a site that never chose keeps today's hero.
+  const heroCard = heroCardModeOf(copy.heroCard, 'off');
+  const offer = heroOfferOf({ services, heroServices: copy.heroServices, mode: heroCard });
+  const heroOn = show('hero') && offer.hasCard;
+
+  // Google rating (Edit > Google Rating): only from the owner's connected
+  // place, and only in the spots they switch on (none by default).
+  const rating = googleRatingOf(biz.googlePlace);
+  const badgeAt = googleBadgePlacements(copy.googleBadge, []);
+  const badgeIn = (spot) => Boolean(rating) && badgeAt.includes(spot);
+  const badgeOn = badgeAt.some(badgeIn);
+  // The menu-bar rating's room (FEATURE_CSS .ds-nav-gslot): a typical
+  // badge plus its gap, and 6px more per review-count character past two
+  // ("1,234"), so a longer count waits for the room it needs.
+  const navBadgeCss = badgeIn('nav')
+    ? `@container (min-width:${196 + 6 * Math.max(0, rating.countText.length - 2)}px){.ds-nav-g{display:inline-flex}}`
+    : '';
+
+  // Featured-service band (Edit > Featured Service): only once the owner
+  // picked a service, and on the published page only with something to say.
+  const featured = featuredServiceOf({ featuredService: copy.featuredService, services, sectionTitles: copy.sectionTitles, defaults: hd.featured, automatic: false });
+  const featuredBody = featuredHasBody(featured, images.featured);
+  const featuredOn = show('featured') && Boolean(featured) && (featuredBody || editor);
+
+  // Vehicle-makes band (Edit > Vehicle Makes): only the makes the owner ticked.
+  const makes = vehicleMakesFor(copy.vehicleMakes, []);
+  const makesOn = show('brands') && makes.length > 0;
+
+  // Business Info > Areas served (the list only, never split from the
+  // free-text service area) and the Fully insured switch (only when on).
+  const ownAreas = serviceAreasOf({ serviceAreas: biz.serviceAreas });
+  const insured = biz.insured === true;
 
   // Stats only from what the owner entered: About > Stats Box values, else
   // business facts (years, area, hours, payment). No invented numbers.
@@ -690,6 +976,12 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
 
   const testimonials = list(copy.testimonialPlaceholders).filter((q) => txt(q?.text));
   const reviews = copy.googleWidgetKey ? 'google' : testimonials.length > 0 ? 'quotes' : null;
+  // Quotes the owner marked as Google reviews (Edit > Reviews) get the
+  // "Google review" label and their stars; AI quotes never do.
+  const isGoogleQuote = (q) => q?.source === 'google';
+  const placeUrl = googlePlaceUrl(biz.googlePlace);
+  const reviewsOn = show('testimonials') && reviews === 'quotes' && testimonials.some(isGoogleQuote);
+  const allGoogle = testimonials.length > 0 && testimonials.every(isGoogleQuote);
 
   const navLinks = [
     show('services') && services.length > 0 && { href: '#services', label: 'Services' },
@@ -705,9 +997,18 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
   const heroSecondaryHref = txt(copy.ctaSecondaryUrl) || tel;
   const heroSecondaryLabel = txt(copy.ctaSecondary) || (phone ? `Call ${phone}` : '');
   const splitHero = copy.heroLayout === 'split';
-  const heroMeta = [years && (/^\d+\+?$/.test(years) ? `${yearsLabel} in business` : years), place].filter(Boolean);
-  const headline = txt(copy.headline) || name;
+  // Where the hero card's and the featured band's booking links go while
+  // the booking widget is off (they carry data-scheduler-trigger, so with it
+  // on they open the widget): the phone, else the contact section while it
+  // shows, else an email, else the top of the page.
+  const bookHref = tel || (show('cta') ? '#contact' : email ? `mailto:${email}` : '#top');
+  const heroMeta = [years && (/^\d+\+?$/.test(years) ? `${yearsLabel} in business` : years), insured && 'Fully insured', place].filter(Boolean);
+  const heroT = st('hero');
+  const headline = txt(copy.headline) || heroT.title || name;
   const [headLead, headEm] = splitHeadline(headline);
+  // The owner's highlighted words (Edit > Headings) when they are whole
+  // words of the headline; a stale one keeps the design's own highlight.
+  const ownHero = heroT.accent ? splitAccent(headline, heroT.accent) : null;
   // AI headlines run 20-65 characters: step the size down for long ones,
   // and cap it so the longest word (uppercase, heavy) fits the column
   // instead of breaking mid-word (--ds-lw ~ its width in em). A face wider
@@ -757,14 +1058,26 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
 
   const heroText = (
     <>
-      {showAwards ? (
+      {heroT.eyebrow ? (
+        // The owner's own tag line (Edit > Headings) replaces the award /
+        // business-type tag; it is their words, not an award.
+        <p className="ds-tag">{heroT.eyebrow}</p>
+      ) : showAwards ? (
         <p className="ds-tag" data-acg-awards=""><Icon d={ICONS.award} size={16} stroke={2} />{awards[0]}</p>
       ) : (
         <p className="ds-tag">{fb.heroBadge}</p>
       )}
-      <h1 className={`ds-h1${h1Size}`} style={{ '--ds-lw': h1Fit }}>
-        {headLead}
-        {headEm && <>{' '}<span className="ds-em">{headEm}</span></>}
+      <h1 className={`ds-h1${h1Size}${ownHero ? ' ds-h1-own' : ''}`} style={{ '--ds-lw': h1Fit }}>
+        {ownHero ? (
+          // The owner's words can sit mid-headline, so their bar is drawn
+          // as an underline that the next line cannot cover (.ds-h1-own).
+          <>{ownHero.before}<span className="ds-em">{ownHero.match}</span>{ownHero.after}</>
+        ) : (
+          <>
+            {headLead}
+            {headEm && <>{' '}<span className="ds-em">{headEm}</span></>}
+          </>
+        )}
       </h1>
       {txt(copy.subheadline) && <p className="ds-lead">{copy.subheadline}</p>}
       <div className="ds-actions">
@@ -773,12 +1086,43 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
           <a className="ds-btn ds-btn-ghost" href={heroSecondaryHref}>{heroSecondaryLabel}</a>
         )}
       </div>
+      {badgeIn('hero') && (
+        <div className="ds-hero-g">
+          <GoogleRatingBadge
+            place={biz.googlePlace}
+            className="ds-gpill"
+            starSize=".95em"
+            starColor={images.hero && !splitHero ? GOOGLE_STAR_GOLD : ensureContrast(GOOGLE_STAR_GOLD, t.bg, 3)}
+          />
+        </div>
+      )}
       {heroMeta.length > 0 && (
         <ul className="ds-meta">
           {heroMeta.map((m, i) => <li key={i}>{m}</li>)}
         </ul>
       )}
     </>
+  );
+
+  // The hero's services card (kit HeroOffer, styled by FEATURE_CSS). Its
+  // Book links open the booking widget, else call or go to the contact band.
+  const heroOffer = heroOn && (
+    <div className="ds-hq-slot">
+      <HeroOffer
+        ns="ds-hq"
+        mode={offer.picks.length ? 'quote' : 'list'}
+        picks={offer.picks.length ? offer.picks : offer.listPicks}
+        bookHref={bookHref}
+        tel={tel}
+        phoneLabel={phone}
+        listCta={show('services') && services.length ? { href: '#services', label: 'See All Services' } : { href: bookHref, label: 'Book Now', books: true }}
+        labels={{ sub1: 'Choose the package that fits your ride.' }}
+      />
+    </div>
+  );
+  // The price card offers only priced packages: say why it is missing.
+  const heroCardHint = show('hero') && heroCard === 'quote' && offer.picks.length === 0 && services.some((s) => s.name) && (
+    <EditorHint>Your price card needs services with a price (Edit &gt; Services).</EditorHint>
   );
 
   const aboutParas = txt(copy.aboutText).split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
@@ -793,10 +1137,19 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
   // a long one becomes a pull line under a plain heading instead.
   const tagline = txt(biz.tagline).replace(/\s+/g, ' ');
   const taglineFits = tagline.length > 0 && tagline.length <= 60;
-  const aboutTitle = taglineFits ? tagline : name ? `About ${name}` : 'About Us';
+  const aboutT = st('about');
+  const aboutTitle = aboutT.title || (taglineFits ? tagline : name ? `About ${name}` : 'About Us');
   const aboutTagLine = tagline && !taglineFits ? tagline : '';
+  const galleryT = st('gallery');
+  const galleryTitle = galleryT.title || 'Our Work';
+  const reviewsT = st('testimonials');
+  const reviewsTitle = reviewsT.title || 'What Clients Say';
+  // The Google widget's heading: the owner's widget title (raw, as always)
+  // or their Headings title; none = no heading.
+  const widgetTitle = txt(copy.googleReviewsTitle) ? copy.googleReviewsTitle : reviewsT.title;
 
-  const ctaTitle = txt(copy.ctaHeadline) || fb.ctaHeadline;
+  const ctaT = st('cta');
+  const ctaTitle = txt(copy.ctaHeadline) || ctaT.title || fb.ctaHeadline;
   const contactPrimaryLabel = txt(copy.ctaButtonText) || txt(copy.ctaPrimary) || 'Get a Quote';
   const contactPrimaryHref = txt(copy.ctaUrl) || tel;
   // The editor's Contact > "Phone / Secondary Button" (text + URL, default
@@ -810,6 +1163,50 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
   const mapsHref = address
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([address, place].filter(Boolean).join(', '))}`
     : null;
+  // With the owner's Areas served list, the free-text service area joins
+  // that row instead of a second pin row right above it.
+  const foldArea = ownAreas.length > 0 && Boolean(area);
+
+  // Footer (Edit > Footer, footerSpec): without copy.footer the cells are
+  // today's brand / Explore / Contact / Hours, in that order, untitled by the
+  // owner and with no button. The owner's columns may add Service Areas
+  // (their list, else the service area / city) and the footer button.
+  const footAreas = serviceAreasOf(biz);
+  // The social icons live in the logo column; with that column off (the
+  // owner's footer only) they move to the contact column.
+  const social = hasSocialLinks(biz, images);
+  const footPlan = footerPlan({
+    footer: copy.footer,
+    spec: footerSpec,
+    ctaFallback: show('cta') ? '#contact' : null,
+    has: (type, { builder, cta, shown }) => ({
+      brand: true,
+      links: navLinks.length > 0,
+      areas: footAreas.length > 0,
+      contact: builder ? Boolean(tel || email || address || place || cta || (social && !shown.includes('brand'))) : true,
+      hours: hours.length > 0,
+    })[type],
+  });
+  const footSocialMoved = footPlan.builder && social && !footPlan.cells.some((c) => c.type === 'brand');
+  const footN = footPlan.cells.length;
+  const footCols = footPlan.cells[0]?.type === 'brand' && footN > 1
+    ? `minmax(0,1.4fr) repeat(${footN - 1},minmax(0,1fr))`
+    : `repeat(${Math.max(1, footN)},minmax(0,1fr))`;
+  // The footer's Google line sits under the brand block, or in the bottom
+  // bar when the owner switched the brand column off.
+  const footBadge = badgeIn('footer') && footPlan.cells.some((c) => c.type === 'brand');
+  const footBarBadge = badgeIn('footer') && !footBadge;
+  const footBottomText = footPlan.builder ? footPlan.bottomText : '';
+  // An owner's footer can have five narrow columns: let a long email
+  // wrap before its @ rather than mid-word.
+  const emailBreak = (e) => (e.indexOf('@') > 0 ? <>{e.slice(0, e.indexOf('@'))}<wbr />{e.slice(e.indexOf('@'))}</> : e);
+
+  // Contact band over the owner's CTA Background photo.
+  const ctaPhoto = Boolean(images.cta) && show('cta');
+  const titlesOn = isObj(copy.sectionTitles) && Object.keys(copy.sectionTitles).length > 0;
+  // Any feature on the page: only then does FEATURE_CSS join the <style>.
+  const featureOn = heroOn || badgeOn || footPlan.builder || pkgOn || titlesOn || featuredOn || makesOn
+    || ownAreas.length > 0 || insured || reviewsOn || ctaPhoto;
 
   const tile = (f, i, hot) => (
     <div key={`${f.label}-${i}`} className={`ds-tile${hot ? ' ds-tile-hot' : ''}`} data-acg-reveal="fade" style={{ '--acg-delay': `${i * 90}ms` }}>
@@ -822,9 +1219,9 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
     <div
       id="top"
       className="ds-root"
-      style={{ ...vars, containerType: 'inline-size', display: 'flex', flexDirection: 'column', minHeight: '100vh', overflowX: 'clip', background: t.bg, color: t.text, fontFamily: body, lineHeight: 1.6 }}
+      style={{ ...vars, containerType: 'inline-size', display: 'flex', flexDirection: 'column', minHeight: '100vh', overflowX: 'clip', background: t.bg, color: t.text, fontFamily: body, lineHeight: 1.6, ...(ctaPhoto ? ctaPhotoTokens(tokens) : {}) }}
     >
-      <style>{CSS}</style>
+      <style>{CSS + (heroOn ? heroOfferCss('ds-hq', { stackFrom: 1024 }) : '') + (pkgOn ? packageDetailsCss('ds-pk') : '') + (featuredOn ? featuredBandCss('ds-ft') : '') + (makesOn ? makesBandCss('ds-mk') : '') + (featureOn ? FEATURE_CSS : '') + navBadgeCss}</style>
       <a className="ds-skip" href="#main">Skip to content</a>
 
       <nav className="ds-nav" aria-label="Main" style={{ order: -1 }}>
@@ -832,6 +1229,13 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
           <a className="ds-brand" href="#top" aria-label={name ? `${name}, back to top` : 'Back to top'}>
             {brand({ height: 40, width: 'auto', maxWidth: 190 }, 'eager')}
           </a>
+          {badgeIn('nav') && (
+            <div className="ds-nav-gslot">
+              <span className="ds-nav-g">
+                <GoogleRatingBadge place={biz.googlePlace} variant="inline" starColor={ensureContrast(t.accent, t.bg, 3)} starSize={14} />
+              </span>
+            </div>
+          )}
           {(navLinks.length > 0 || tel) && (
             <div className="ds-links">
               {navLinks.map((l) => (
@@ -853,7 +1257,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
         {!show('hero') && <h1 className="ds-sr">{name}</h1>}
 
         {show('hero') && !splitHero && (
-          <header data-section="hero" className={`ds-hero${images.hero ? ' ds-has-media' : ''}`} style={{ order: order('hero') }}>
+          <header data-section="hero" className={`ds-hero${images.hero ? ' ds-has-media' : ''}${heroOn ? ' ds-hero-offer' : ''}`} style={{ order: order('hero') }}>
             {images.hero && (
               <>
                 <div className="ds-hero-media">
@@ -864,26 +1268,43 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
               </>
             )}
             <Slashes speed={!images.hero} />
-            <div className="ds-wrap">
-              <div className="ds-hero-body">
-                {heroText}
-                {!images.hero && <EditorHint>{PHOTO_HINTS.hero}</EditorHint>}
+            {heroOn ? (
+              // With the services card: copy left, card right (stacked below
+              // 1024px).
+              <div className="ds-wrap ds-hq-grid">
+                <div className="ds-hero-body">
+                  {heroText}
+                  {!images.hero && <EditorHint>{PHOTO_HINTS.hero}</EditorHint>}
+                </div>
+                {heroOffer}
               </div>
-            </div>
+            ) : (
+              <div className="ds-wrap">
+                <div className="ds-hero-body">
+                  {heroText}
+                  {!images.hero && <EditorHint>{PHOTO_HINTS.hero}</EditorHint>}
+                  {heroCardHint}
+                </div>
+              </div>
+            )}
           </header>
         )}
 
         {show('hero') && splitHero && (
-          <header data-section="hero" className="ds-split" style={{ order: order('hero') }}>
+          <header data-section="hero" className={`ds-split${heroOn ? ' ds-split-offer' : ''}`} style={{ order: order('hero') }}>
             <div className="ds-split-text">
               <Slashes speed />
               {heroText}
+              {heroCardHint}
             </div>
             {/* Without a photo the published page shows the monogram, which
                 earns its place beside the text but not as a block under it. */}
             <div className={`ds-split-photo${images.hero || editor ? '' : ' ds-split-mono'}`}>
               <PhotoSlot src={images.hero} slot="hero" alt="" loading="eager" fetchPriority="high" style={fill} fallback={<Monogram name={name} />} />
             </div>
+            {/* The services card: over the photo column from 1024px, a row
+                under the hero below that, right after the copy on phones. */}
+            {heroOffer}
           </header>
         )}
 
@@ -901,24 +1322,35 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
           </section>
         )}
 
+        {makesOn && (
+          // Focusable so a keyboard user can pause the scrolling logos.
+          <section data-section="brands" id="makes" className="ds-mk-makes" aria-label="Vehicle makes" tabIndex={0} style={{ order: order('brands') }}>
+            <MakesBand ns="ds-mk" eyebrow={st('brands').eyebrow || hd.brands.eyebrow} makes={makes} />
+          </section>
+        )}
+
         {show('services') && services.length > 0 && (
           <section data-section="services" id="services" className="ds-section" aria-labelledby="ds-services-h" style={{ order: order('services') }}>
             <ServiceCardCss />
             <div className="ds-wrap">
-              <div className={`ds-head${txt(copy.servicesSection?.intro) ? '' : ' ds-head-solo'}`} data-acg-reveal="">
+              <div className={`ds-head${servicesIntro ? '' : ' ds-head-solo'}`} data-acg-reveal="">
                 <div>
-                  <p className="ds-eyebrow">What We Do</p>
+                  <p className="ds-eyebrow">{svcT.eyebrow || 'What We Do'}</p>
                   <div className="ds-fit ds-fit-h2">
-                    <h2 id="ds-services-h" className="ds-h2" style={fit(servicesTitle)}>{servicesTitle}</h2>
+                    <h2 id="ds-services-h" className="ds-h2" style={fit(servicesTitle)}>
+                      <Accented title={servicesTitle} accent={svcT.accent || hd.services.accent} className="ds-em" />
+                    </h2>
                   </div>
                 </div>
-                {txt(copy.servicesSection?.intro) && <p className="ds-intro">{copy.servicesSection.intro}</p>}
+                {servicesIntro && <p className="ds-intro">{servicesIntro}</p>}
               </div>
-              <div className={`ds-grid ${svcCols}`}>
+              <div className={`ds-grid ${svcCols}${badgeRow ? ' ds-pk-row' : ''}`}>
                 {services.map((s, i) => (
                   <div key={`${s.name}-${i}`} className="ds-cell" data-acg-reveal="" style={{ '--acg-delay': `${(i % 3) * 90}ms` }}>
-                    <article className="acg-svc-card ds-card">
+                    <article className={`acg-svc-card ds-card${s.badge ? ' ds-card-feat' : ''}${anyServicePhoto ? ' ds-card-ph' : ''}`}>
                       <span className="ds-card-num" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+                      {s.badge && <PackageBadge ns="ds-pk" text={s.badge} />}
+                      <PackagePhoto ns="ds-pk" src={s.image} alt={s.name} anyPhoto={anyServicePhoto} editor={editor} />
                       {s.name && (
                         <div className="ds-fit ds-card-head">
                           <h3 className="ds-card-title" style={fit(s.name, 0.03)}>{s.name}</h3>
@@ -931,6 +1363,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
                         style={{ position: 'relative', marginTop: 14, color: 'var(--ds-muted)', fontSize: 15.5, lineHeight: 1.7 }}
                         accentColor="var(--ds-accent-text)"
                       />
+                      {s.includes.length > 0 && <PackageIncludes ns="ds-pk" items={s.includes} label="What's Included" checkStroke={2.5} />}
                       <div className="acg-svc-foot">
                         <div className="ds-card-foot">
                           <BookNowLink serviceName={s.name} phone={phone} label={<>Book now <Icon d={ICONS.arrow} size={16} stroke={2} /></>} />
@@ -940,6 +1373,49 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
                   </div>
                 ))}
               </div>
+            </div>
+          </section>
+        )}
+
+        {featuredOn && (
+          <section data-section="featured" id="featured" className="ds-section ds-ft-band" aria-labelledby="ds-featured-h" style={{ order: order('featured') }}>
+            <div className="ds-wrap" data-acg-reveal="">
+              <FeaturedBand
+                ns="ds-ft"
+                image={images.featured}
+                alt={`${featured.name}${name ? ` by ${name}` : ''}`}
+                heading={(
+                  <>
+                    {featured.eyebrow && <p className="ds-eyebrow">{featured.eyebrow}</p>}
+                    <div className="ds-fit ds-fit-band">
+                      <h2 id="ds-featured-h" className="ds-band-h" style={fit(featured.title || featured.name)}>
+                        <Accented title={featured.title || featured.name} accent={featured.accent} className="ds-em" />
+                      </h2>
+                    </div>
+                  </>
+                )}
+                intro={featured.intro}
+                priceFrom={featured.priceFrom}
+                price={featured.price}
+                bullets={featured.bullets}
+                button={(
+                  <div className="ds-actions">
+                    <a
+                      className="ds-btn ds-btn-inv"
+                      href={featured.buttonUrl || bookHref}
+                      {...bookingAttrs(!featured.buttonUrl, featured.name)}
+                    >
+                      {featured.buttonText}
+                    </a>
+                  </div>
+                )}
+                hints={(
+                  <>
+                    {!featuredBody && <EditorHint>This band shows on your site once it has a photo, a price or a list of benefits (Edit &gt; Featured Service).</EditorHint>}
+                    {featuredBody && !images.featured && <EditorHint>{PHOTO_HINTS.featured}</EditorHint>}
+                  </>
+                )}
+              />
             </div>
           </section>
         )}
@@ -970,10 +1446,17 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
                 )}
               </div>
               <div data-acg-reveal="" style={{ '--acg-delay': '120ms' }}>
-                <p className="ds-eyebrow">About Us</p>
+                <p className="ds-eyebrow">{aboutT.eyebrow || 'About Us'}</p>
                 <div className="ds-fit ds-fit-h2" style={{ marginBottom: 28 }}>
-                  <h2 id="ds-about-h" className="ds-h2" style={fit(aboutTitle)}>{aboutTitle}</h2>
+                  <h2 id="ds-about-h" className="ds-h2" style={fit(aboutTitle)}>
+                    <Accented title={aboutTitle} accent={aboutT.accent || hd.about.accent} className="ds-em" />
+                  </h2>
                 </div>
+                {badgeIn('about') && (
+                  <div className="ds-about-g">
+                    <GoogleRatingBadge place={biz.googlePlace} className="ds-gpill" starSize=".95em" starColor={ensureContrast(GOOGLE_STAR_GOLD, t.surface, 3)} />
+                  </div>
+                )}
                 {aboutTagLine && <p className="ds-pull">{aboutTagLine}</p>}
                 {aboutParas.length > 0 && (
                   <div className="ds-prose">
@@ -1000,9 +1483,11 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
             <div className="ds-wrap">
               <div className="ds-head ds-head-solo" data-acg-reveal="">
                 <div>
-                  <p className="ds-eyebrow">Gallery</p>
+                  <p className="ds-eyebrow">{galleryT.eyebrow || 'Gallery'}</p>
                   <div className="ds-fit ds-fit-h2">
-                    <h2 id="ds-gallery-h" className="ds-h2">Our Work</h2>
+                    <h2 id="ds-gallery-h" className="ds-h2" style={galleryT.title ? fit(galleryTitle) : undefined}>
+                      <Accented title={galleryTitle} accent={galleryT.accent || hd.gallery.accent} className="ds-em" />
+                    </h2>
                   </div>
                 </div>
               </div>
@@ -1033,15 +1518,26 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
         )}
 
         {show('testimonials') && reviews === 'google' && (
-          <section data-section="testimonials" id="reviews" className="ds-section" aria-label={txt(copy.googleReviewsTitle) || 'Reviews'} style={{ order: order('testimonials') }}>
+          <section data-section="testimonials" id="reviews" className="ds-section" aria-label={txt(copy.googleReviewsTitle) || reviewsT.title || 'Reviews'} style={{ order: order('testimonials') }}>
             <div className="ds-wrap">
-              {txt(copy.googleReviewsTitle) && (
+              {(widgetTitle || badgeIn('reviews')) && (
                 <div className="ds-head ds-head-solo">
                   <div>
-                    <p className="ds-eyebrow">Reviews</p>
-                    <div className="ds-fit ds-fit-h2">
-                      <h2 className="ds-h2" style={fit(copy.googleReviewsTitle)}>{copy.googleReviewsTitle}</h2>
-                    </div>
+                    {widgetTitle && (
+                      <>
+                        <p className="ds-eyebrow">{reviewsT.eyebrow || 'Reviews'}</p>
+                        <div className="ds-fit ds-fit-h2">
+                          <h2 className="ds-h2" style={fit(widgetTitle)}>
+                            <Accented title={widgetTitle} accent={reviewsT.accent} className="ds-em" />
+                          </h2>
+                        </div>
+                      </>
+                    )}
+                    {badgeIn('reviews') && (
+                      <div className="ds-rev-g">
+                        <GoogleRatingBadge place={biz.googlePlace} className="ds-gpill" starSize=".95em" starColor={ensureContrast(GOOGLE_STAR_GOLD, t.bg, 3)} />
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -1057,30 +1553,53 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
             <div className="ds-wrap">
               <div className="ds-head ds-head-solo" data-acg-reveal="">
                 <div>
-                  <p className="ds-eyebrow">Testimonials</p>
+                  <p className="ds-eyebrow">{reviewsT.eyebrow || 'Testimonials'}</p>
                   <div className="ds-fit ds-fit-h2">
-                    <h2 id="ds-reviews-h" className="ds-h2">What Clients Say</h2>
+                    <h2 id="ds-reviews-h" className="ds-h2" style={reviewsT.title ? fit(reviewsTitle) : undefined}>
+                      <Accented title={reviewsTitle} accent={reviewsT.accent || hd.testimonials.accent} className="ds-em" />
+                    </h2>
                   </div>
+                  {badgeIn('reviews') && (
+                    <div className="ds-rev-g">
+                      <GoogleRatingBadge place={biz.googlePlace} className="ds-gpill" starSize=".95em" starColor={ensureContrast(GOOGLE_STAR_GOLD, t.surface, 3)} />
+                    </div>
+                  )}
                 </div>
               </div>
               <div className={`ds-grid ${testimonials.length === 1 ? 'ds-c1' : testimonials.length === 2 || testimonials.length === 4 ? 'ds-c2' : 'ds-c3'}`}>
-                {testimonials.map((q, i) => (
-                  <div key={i} className="ds-cell" data-acg-reveal="" style={{ '--acg-delay': `${(i % 3) * 90}ms` }}>
-                    <figure className="ds-quote">
-                      <svg className="ds-quote-mark" width="38" height="29" viewBox="0 0 34 26" fill="currentColor" aria-hidden="true">
-                        <path d="M0 26V15.6C0 6.9 4.6 1.7 13.2 0l1.5 3.4C9.8 5 7.4 8 7.1 12.2H14V26H0zm19.3 0V15.6C19.3 6.9 23.9 1.7 32.5 0L34 3.4c-4.9 1.6-7.3 4.6-7.6 8.8h6.9V26H19.3z" />
-                      </svg>
-                      <blockquote><p>{q.text}</p></blockquote>
-                      {(txt(q.name) || txt(q.vehicle) || txt(q.role)) && (
-                        <figcaption>
-                          {txt(q.name)}
-                          {(txt(q.vehicle) || txt(q.role)) && <span>{txt(q.vehicle) || txt(q.role)}</span>}
-                        </figcaption>
-                      )}
-                    </figure>
-                  </div>
-                ))}
+                {testimonials.map((q, i) => {
+                  // Only a quote the owner marked as a Google review (Edit >
+                  // Reviews) gets the label and its stars.
+                  const google = q?.source === 'google';
+                  const stars = reviewStars(q);
+                  const Src = placeUrl ? 'a' : 'span';
+                  const srcLink = placeUrl ? { href: placeUrl, target: '_blank', rel: 'noopener noreferrer' } : {};
+                  return (
+                    <div key={i} className="ds-cell" data-acg-reveal="" style={{ '--acg-delay': `${(i % 3) * 90}ms` }}>
+                      <figure className="ds-quote">
+                        <svg className="ds-quote-mark" width="38" height="29" viewBox="0 0 34 26" fill="currentColor" aria-hidden="true">
+                          <path d="M0 26V15.6C0 6.9 4.6 1.7 13.2 0l1.5 3.4C9.8 5 7.4 8 7.1 12.2H14V26H0zm19.3 0V15.6C19.3 6.9 23.9 1.7 32.5 0L34 3.4c-4.9 1.6-7.3 4.6-7.6 8.8h6.9V26H19.3z" />
+                        </svg>
+                        {stars > 0 && <StarRow rating={stars} size={18} gap={3} color="currentColor" className="ds-rev-stars" />}
+                        <blockquote><p>{q.text}</p></blockquote>
+                        {(txt(q.name) || txt(q.vehicle) || txt(q.role) || google) && (
+                          <figcaption>
+                            {txt(q.name)}
+                            {(txt(q.vehicle) || txt(q.role)) && <span>{txt(q.vehicle) || txt(q.role)}</span>}
+                            {google && <Src className="ds-rev-src" {...srcLink}>Google review{placeUrl && <span className="ds-sr"> (opens Google Maps)</span>}</Src>}
+                          </figcaption>
+                        )}
+                      </figure>
+                    </div>
+                  );
+                })}
               </div>
+              {placeUrl && reviewsOn && (
+                <a className="ds-rev-more" href={placeUrl} target="_blank" rel="noopener noreferrer">
+                  {allGoogle ? 'Read more reviews' : 'See our Google reviews'}
+                  <span className="ds-sr"> (opens Google Maps)</span>
+                </a>
+              )}
             </div>
           </section>
         )}
@@ -1090,13 +1609,21 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
             {/* The grid is an inner box: contact-form.js appends its inquiry
                 form to #contact, and it must land below both panels. */}
             <div className="ds-contact">
-              <div className="ds-band">
+              <div className={`ds-band${ctaPhoto ? ' ds-band-has-photo' : ''}`}>
+                {ctaPhoto && (
+                  <>
+                    <div className="ds-band-photo" aria-hidden="true"><PhotoSlot src={images.cta} alt="" /></div>
+                    <div className="ds-band-scrim" aria-hidden="true" />
+                  </>
+                )}
                 <div data-acg-reveal="">
-                  <p className="ds-eyebrow">Contact</p>
+                  <p className="ds-eyebrow">{ctaT.eyebrow || 'Contact'}</p>
                   <div className="ds-fit ds-fit-band">
-                    <h2 id="ds-contact-h" className="ds-band-h" style={fit(ctaTitle)}>{ctaTitle}</h2>
+                    <h2 id="ds-contact-h" className="ds-band-h" style={fit(ctaTitle)}>
+                      <Accented title={ctaTitle} accent={ctaT.accent || hd.cta.accent} className="ds-em" />
+                    </h2>
                   </div>
-                  <p className="ds-band-lead">{txt(copy.ctaSubtext) || 'Get in touch to schedule a service or ask a question.'}</p>
+                  <p className="ds-band-lead">{txt(copy.ctaSubtext) || ctaT.intro || 'Get in touch to schedule a service or ask a question.'}</p>
                   {tel && (
                     <a className="ds-band-phone" href={tel}><Icon d={ICONS.phone} size={30} stroke={2} />{phone}</a>
                   )}
@@ -1141,15 +1668,27 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
                         </span>
                       </li>
                     )}
-                    {(address || place || area) && (
+                    {(address || place || (area && !foldArea)) && (
                       <li className="ds-row">
                         <span className="ds-icon"><Icon d={ICONS.pin} /></span>
                         <span className="ds-row-body">
-                          <span className="ds-label">{address ? 'Location' : area ? 'Service area' : 'Based in'}</span>
+                          <span className="ds-label">{address ? 'Location' : area && !foldArea ? 'Service area' : 'Based in'}</span>
                           <span className="ds-row-value">
-                            {address ? <a href={mapsHref} target="_blank" rel="noopener noreferrer">{[address, place].filter(Boolean).join(', ')}</a> : (area || place)}
+                            {address ? <a href={mapsHref} target="_blank" rel="noopener noreferrer">{[address, place].filter(Boolean).join(', ')}</a> : (foldArea ? place : (area || place))}
                           </span>
-                          {address && area && <span className="ds-row-value" style={{ color: 'var(--ds-muted)' }}>Serving {area}</span>}
+                          {address && area && !foldArea && <span className="ds-row-value" style={{ color: 'var(--ds-muted)' }}>Serving {area}</span>}
+                        </span>
+                      </li>
+                    )}
+                    {ownAreas.length > 0 && (
+                      <li className="ds-row">
+                        <span className="ds-icon"><Icon d={ICONS.map} /></span>
+                        <span className="ds-row-body">
+                          <span className="ds-label">Areas we serve</span>
+                          {foldArea && <span className="ds-row-value">{area}</span>}
+                          <span className="ds-chips">
+                            {ownAreas.map((a) => <span key={a} className="ds-chip">{a}</span>)}
+                          </span>
                         </span>
                       </li>
                     )}
@@ -1170,6 +1709,15 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
                               ))}
                             </dl>
                           )}
+                        </span>
+                      </li>
+                    )}
+                    {insured && (
+                      <li className="ds-row">
+                        <span className="ds-icon"><Icon d={ICONS.shield} /></span>
+                        <span className="ds-row-body">
+                          <span className="ds-label">Insurance</span>
+                          <span className="ds-row-value">Fully insured</span>
                         </span>
                       </li>
                     )}
@@ -1222,45 +1770,82 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
 
       <footer className="ds-foot" style={{ order: 9999 }}>
         <div className="ds-wrap">
-          <div className="ds-foot-grid">
-            <div className="ds-foot-brand">
-              <a className="ds-brand" href="#top" aria-label={name ? `${name}, back to top` : 'Back to top'}>
-                {brand({ height: 48, width: 'auto', maxWidth: 200 })}
-              </a>
-              {txt(copy.footerTagline) && <p className="ds-foot-tag">{copy.footerTagline}</p>}
-              <div className="ds-social">
-                <SocialRow biz={biz} color={tokens['--ds-footer-em']} size={18} gap={10} images={images} />
+          <div
+            className={`ds-foot-grid${footPlan.builder ? ' ds-fb' : ''}`}
+            style={footPlan.builder ? { '--ds-fcols': footCols } : undefined}
+          >
+            {footPlan.cells.map((c) => (c.type === 'brand' ? (
+              <div key="brand" className="ds-foot-brand">
+                <a className="ds-brand" href="#top" aria-label={name ? `${name}, back to top` : 'Back to top'}>
+                  {brand({ height: 48, width: 'auto', maxWidth: 200 })}
+                </a>
+                {txt(copy.footerTagline) && <p className="ds-foot-tag">{copy.footerTagline}</p>}
+                {footBadge && (
+                  <div className="ds-foot-g">
+                    <GoogleRatingBadge place={biz.googlePlace} variant="inline" starColor={tokens['--ds-footer-em']} starSize={16} />
+                  </div>
+                )}
+                <div className="ds-social">
+                  <SocialRow biz={biz} color={tokens['--ds-footer-em']} size={18} gap={10} images={images} />
+                </div>
               </div>
-            </div>
-            {navLinks.length > 0 && (
-              <div>
-                <p className="ds-foot-h">Explore</p>
+            ) : c.type === 'links' ? (
+              <div key="links">
+                <p className="ds-foot-h">{c.title}</p>
                 <ul className="ds-foot-list">
                   {navLinks.map((l) => <li key={l.href}><a href={l.href}>{l.label}</a></li>)}
                 </ul>
               </div>
-            )}
-            <div>
-              <p className="ds-foot-h">Contact</p>
-              <ul className="ds-foot-list">
-                {tel && <li><a href={tel}>{phone}</a></li>}
-                {email && <li><a href={`mailto:${email}`}>{email}</a></li>}
-                {address && <li>{address}</li>}
-                {place && <li>{place}</li>}
-              </ul>
-            </div>
-            {hours.length > 0 && (
-              <div>
-                <p className="ds-foot-h">Hours</p>
+            ) : c.type === 'areas' ? (
+              <div key="areas">
+                <p className="ds-foot-h">{c.title}</p>
+                <ul className="ds-foot-list">
+                  {footAreas.map((a) => <li key={a}>{a}</li>)}
+                </ul>
+              </div>
+            ) : c.type === 'contact' ? (
+              <div key="contact">
+                <p className="ds-foot-h">{c.title}</p>
+                <ul className="ds-foot-list">
+                  {tel && <li><a href={tel}>{phone}</a></li>}
+                  {email && <li><a href={`mailto:${email}`}>{footPlan.builder ? emailBreak(email) : email}</a></li>}
+                  {address && <li>{address}</li>}
+                  {place && <li>{place}</li>}
+                </ul>
+                {footSocialMoved && (
+                  <div className="ds-social">
+                    <SocialRow biz={biz} color={tokens['--ds-footer-em']} size={18} gap={10} images={images} />
+                  </div>
+                )}
+                {footPlan.cta && (
+                  <a
+                    className="ds-btn ds-btn-primary ds-btn-sm ds-foot-cta"
+                    href={footPlan.cta.href}
+                    {...bookingAttrs(footPlan.cta.books)}
+                  >
+                    {footPlan.cta.label}
+                  </a>
+                )}
+              </div>
+            ) : (
+              <div key="hours">
+                <p className="ds-foot-h">{c.title}</p>
                 <ul className="ds-foot-list">
                   {hours.map((h) => <li key={h.days}>{h.time ? `${h.days} ${h.time}` : h.days}</li>)}
                 </ul>
               </div>
-            )}
+            )))}
           </div>
           <div className="ds-foot-bottom">
+            {/* The copyright (or "Serving") line stays the footer's last <p>:
+                the published page appends its "Site owner" link there. */}
             <p>© <span data-acg-year="">{new Date().getFullYear()}</span> {name}. All rights reserved.</p>
-            {area && <p>Serving {area}</p>}
+            {footBarBadge && (
+              <div className="ds-foot-g">
+                <GoogleRatingBadge place={biz.googlePlace} variant="inline" starColor={tokens['--ds-footer-em']} starSize={14} />
+              </div>
+            )}
+            {footBottomText ? <div className="ds-foot-note">{footBottomText}</div> : area && <p>Serving {area}</p>}
           </div>
         </div>
       </footer>

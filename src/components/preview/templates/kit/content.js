@@ -118,6 +118,17 @@ export function serviceAreasOf(biz) {
   return [area];
 }
 
+// Whether SocialRow (../SocialIcons.jsx) draws any icon: an Instagram,
+// Facebook or TikTok handle the owner did not hide (images.hideInstagram,
+// .hideFacebook, .hideTiktok). A footer that moves the icons out of a
+// switched-off logo column asks this first.
+export function hasSocialLinks(biz, images) {
+  const b = biz && typeof biz === 'object' ? biz : {};
+  const im = images && typeof images === 'object' ? images : {};
+  const on = (key, hide) => !im[hide] && typeof b[key] === 'string' && b[key].trim() !== '';
+  return on('instagram', 'hideInstagram') || on('facebook', 'hideFacebook') || on('tiktok', 'hideTiktok');
+}
+
 // Footer columns a template can build from copy.footer (Edit > Footer):
 // the brand block, the Explore links, the service areas, the contact list
 // and the hours. The whole shape, as the editor writes it:
@@ -131,25 +142,29 @@ export const FOOTER_COLUMN_TYPES = ['brand', 'links', 'areas', 'contact', 'hours
 
 // copy.footer.columns -> [{ type, title, show }] for every type. Without a
 // columns array (no footer saved, or an old / broken value) the design's own
-// footer: every type in the default order, shown, untitled. With one: the
-// known types in the owner's order (the first entry of a type wins, show
-// unless show === false), then any type the array lacks, hidden. The editor's
-// Footer panel (editor/footerBuilder.js) reads the same way; keep the two in
-// step.
-export function footerColumnsOf(footer) {
+// footer: `defaults` (a template's footerSpec.columns, [{ type, show }]; by
+// default every FOOTER_COLUMN_TYPES type, shown), untitled. With one: the
+// types `defaults` knows, in the owner's order (the first entry of a type
+// wins, show unless show === false), then any type the array lacks, hidden,
+// in the defaults' order. So a type a design does not offer ('services' is
+// only in specs that list it) never renders. The editor's Footer panel
+// (editor/footerBuilder.js) reads the same way; keep the two in step.
+export function footerColumnsOf(footer, defaults = FOOTER_COLUMN_TYPES.map((type) => ({ type, show: true }))) {
+  const base = Array.isArray(defaults) ? defaults.filter((d) => d && typeof d === 'object' && typeof d.type === 'string') : [];
+  const known = base.map((d) => d.type);
   const cols = footer && typeof footer === 'object' && !Array.isArray(footer) && Array.isArray(footer.columns)
     ? footer.columns
     : null;
-  if (!cols) return FOOTER_COLUMN_TYPES.map((type) => ({ type, title: '', show: true }));
+  if (!cols) return base.map((d) => ({ type: d.type, title: '', show: d.show !== false }));
   const out = [];
   const seen = new Set();
   for (const c of cols) {
     const type = c && typeof c === 'object' ? c.type : null;
-    if (!FOOTER_COLUMN_TYPES.includes(type) || seen.has(type)) continue;
+    if (!known.includes(type) || seen.has(type)) continue;
     seen.add(type);
     out.push({ type, title: str(c.title), show: c.show !== false });
   }
-  for (const type of FOOTER_COLUMN_TYPES) if (!seen.has(type)) out.push({ type, title: '', show: false });
+  for (const type of known) if (!seen.has(type)) { seen.add(type); out.push({ type, title: '', show: false }); }
   return out;
 }
 

@@ -115,7 +115,8 @@ function sectionHtml(html, id) {
 
 describe('Google rating badge', () => {
   it('renders nowhere without a connected place, or with only a rating or only a count', () => {
-    for (const fx of Object.values(FIXTURES)) expect(markup(render(fx))).not.toContain('acg-gbadge');
+    // (FIXTURES.features has a connected place, so it is not one of these.)
+    for (const fx of Object.values(FIXTURES).filter((f) => !f.businessInfo.googlePlace)) expect(markup(render(fx))).not.toContain('acg-gbadge');
     expect(markup(render(RICH))).not.toContain('acg-gbadge');
     expect(markup(render(RICH, { biz: { googlePlace: { rating: 4.9 } } }))).not.toContain('acg-gbadge');
     expect(markup(render(RICH, { biz: { googlePlace: { reviewCount: 88 } } }))).not.toContain('acg-gbadge');
@@ -501,7 +502,7 @@ describe('sections', () => {
     expect(text).toContain('Paint Correction');
     expect(text).toContain('Starting at $450');
     expect(text).toContain('Swirl removal');
-    expect(decode(sectionHtml(own, 'featured'))).toContain('href="https://example.com/pc"');
+    expect(decode(sectionHtml(own, 'featured'))).toContain('href="https://example.com/pc" data-scheduler-bound=""');
   });
 
   it('says what an AI-listed featured service is, and skips a band with nothing to say', () => {
@@ -1000,7 +1001,7 @@ describe('footer columns (copy.footer)', () => {
     expect(count(off, 'Request Appointment')).toBe(1);
     expect(off).not.toContain('rl-pillbtn');
     const own = footerHtml(render(RICH, { copy: { footer: { ctaText: 'Text Us', ctaUrl: 'https://book.example.com/x' } } }));
-    expect(own).toContain('<a class="rl-pillbtn" href="https://book.example.com/x">Text Us</a>');
+    expect(own).toContain('<a class="rl-pillbtn" href="https://book.example.com/x" data-scheduler-bound="">Text Us</a>');
     expect(own).not.toMatch(/rl-pillbtn[^>]*data-scheduler-trigger/);
     // Its own link survives a hidden contact band; the default one doesn't.
     expect(footerHtml(render(RICH, { copy: { hiddenSections: ['cta'], footer: { ctaUrl: 'https://book.example.com/x' } } }))).toContain('href="https://book.example.com/x"');

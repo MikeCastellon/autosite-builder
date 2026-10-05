@@ -1,8 +1,9 @@
 // Edit > Hero > Services in the hero. The template reads copy.heroCard
-// ('quote' price card, 'list' price list, 'off' none) and copy.heroServices
-// (service names in the owner's order, at most 4; unset = the first 3
-// services with a price). Mounted at the bottom of the Hero tab for
-// templates that read those keys (editorCapabilities 'heroServices').
+// ('quote' price card, 'list' price list, 'off' none; unset = the template's
+// default, `defaultMode` from editorCapabilities heroCardDefault) and
+// copy.heroServices (service names in the owner's order, at most 4; unset =
+// the first 3 services with a price). Mounted at the bottom of the Hero tab
+// for templates that read those keys (editorCapabilities 'heroServices').
 import { formatPrice } from '../../../lib/formatPrice.js';
 import { Label, Help, Toggle, MoveButtons, linkButtonClass } from './fields.jsx';
 import { serviceList, nameKey } from './serviceRefs.js';
@@ -20,10 +21,12 @@ const MODE_HELP = {
   off: 'No services in the hero: your headline uses the full width.',
 };
 
-export function HeroServicesPanel({ copy, setCopy, businessInfo }) {
+// offHelp: the template's own words for 'None' (templateHelp 'heroCardOff'),
+// for a design whose hero does not widen without the card.
+export function HeroServicesPanel({ copy, setCopy, businessInfo, defaultMode = 'quote', offHelp = null }) {
   const services = serviceList(businessInfo, copy);
-  const mode = heroCardMode(copy);
-  const selection = heroSelection(copy, services);
+  const mode = heroCardMode(copy, defaultMode);
+  const selection = heroSelection(copy, services, defaultMode);
   const { names, automatic, stale } = selection;
   const pickedKeys = names.map(nameKey);
   const unpriced = new Set(unpricedPicks(selection, services).map(nameKey));
@@ -48,7 +51,7 @@ export function HeroServicesPanel({ copy, setCopy, businessInfo }) {
     <div className="mb-2">
       <Label>Services in the hero</Label>
       <Toggle value={mode} onChange={(v) => setCopy('heroCard', HERO_CARD_MODES.includes(v) ? v : 'quote')} options={MODE_OPTIONS} />
-      <Help className="-mt-2 mb-3">{MODE_HELP[mode]}</Help>
+      <Help className="-mt-2 mb-3">{mode === 'off' && offHelp ? offHelp : MODE_HELP[mode]}</Help>
 
       {mode !== 'off' && (
         services.length === 0 ? (
@@ -82,7 +85,7 @@ export function HeroServicesPanel({ copy, setCopy, businessInfo }) {
                         className="mt-0.5 shrink-0 accent-gray-900"
                         checked={picked}
                         disabled={!picked && full}
-                        onChange={(e) => writeNames(toggleHeroService(copy, services, s.name, e.target.checked))}
+                        onChange={(e) => writeNames(toggleHeroService(copy, services, s.name, e.target.checked, defaultMode))}
                         aria-label={`Show ${s.name} in the hero`}
                       />
                       {picked && <span className="text-[11px] font-semibold text-gray-400 tabular-nums w-3 shrink-0 mt-px">{pos + 1}</span>}
@@ -102,7 +105,7 @@ export function HeroServicesPanel({ copy, setCopy, businessInfo }) {
                     </label>
                     {picked && (
                       <div className="flex shrink-0">
-                        <MoveButtons index={pos} count={names.length} onMove={(from, to) => writeNames(moveHeroService(copy, services, from, to))} label={s.name} />
+                        <MoveButtons index={pos} count={names.length} onMove={(from, to) => writeNames(moveHeroService(copy, services, from, to, defaultMode))} label={s.name} />
                       </div>
                     )}
                   </div>
@@ -120,7 +123,8 @@ export function HeroServicesPanel({ copy, setCopy, businessInfo }) {
         </p>
       ))}
 
-      {!automatic && (
+      {/* With None picked the list is hidden, so resetting it would show nothing. */}
+      {!automatic && mode !== 'off' && (
         <button type="button" className={linkButtonClass} onClick={() => writeNames(null)}>Back to automatic</button>
       )}
     </div>

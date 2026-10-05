@@ -1,8 +1,11 @@
 // Edit > Hero > Services in the hero: which services the hero shows
 // (copy.heroServices, service names in the owner's order) and how
 // (copy.heroCard: 'quote' price card, 'list' price list, 'off' none).
-// Pure helpers for HeroServicesPanel; the rules match MobileRedline's
-// reader, so the panel shows what the page shows.
+// Pure helpers for HeroServicesPanel; the rules match the kit's reader
+// (kit/features.js heroOfferOf), so the panel shows what the page shows.
+// `fallback` is the template's mode while copy.heroCard is unset
+// (editorCapabilities HERO_CARD_DEFAULTS: 'quote' for Redline, 'off' for
+// themes whose hero had no card before).
 import { nameKey } from './serviceRefs.js';
 
 export const HERO_CARD_MODES = ['quote', 'list', 'off'];
@@ -10,10 +13,10 @@ export const MAX_HERO_SERVICES = 4;
 
 const hasPrice = (s) => /\d/.test(String(s?.price ?? ''));
 
-// Absent or unknown means the price card (the template's default).
-export function heroCardMode(copy) {
+// Absent or unknown means the template's default (`fallback`).
+export function heroCardMode(copy, fallback = 'quote') {
   const v = copy?.heroCard;
-  return HERO_CARD_MODES.includes(v) ? v : 'quote';
+  return HERO_CARD_MODES.includes(v) ? v : fallback;
 }
 
 // The template's automatic pick while the owner has chosen nothing: the
@@ -35,7 +38,7 @@ export function defaultHeroPicks(services, mode = 'quote') {
 // When none match, the automatic pick (automatic: true).
 // stale: saved names that match no service any more (the reader ignores
 // them; the panel offers Remove).
-export function heroSelection(copy, services) {
+export function heroSelection(copy, services, fallback = 'quote') {
   const list = Array.isArray(services) ? services : [];
   const byKey = new Map();
   for (const s of list) {
@@ -61,7 +64,7 @@ export function heroSelection(copy, services) {
       stale.push(entry.trim());
     }
   }
-  if (!names.length) return { names: defaultHeroPicks(list, heroCardMode(copy)), automatic: true, stale };
+  if (!names.length) return { names: defaultHeroPicks(list, heroCardMode(copy, fallback)), automatic: true, stale };
   return { names, automatic: false, stale };
 }
 
@@ -70,8 +73,8 @@ export function heroSelection(copy, services) {
 // A 5th service is not added. Returns the names to save, or null when
 // none are left (back to automatic). Stale names are dropped: they show
 // nothing, and an old name must not come back if a service gets it again.
-export function toggleHeroService(copy, services, name, on) {
-  const { names } = heroSelection(copy, services);
+export function toggleHeroService(copy, services, name, on, fallback = 'quote') {
+  const { names } = heroSelection(copy, services, fallback);
   const k = nameKey(name);
   let next = names;
   if (on) {
@@ -86,8 +89,8 @@ export function toggleHeroService(copy, services, name, on) {
 }
 
 // Move a picked service up / down. Saves the shown list as the owner's own.
-export function moveHeroService(copy, services, from, to) {
-  const { names } = heroSelection(copy, services);
+export function moveHeroService(copy, services, from, to, fallback = 'quote') {
+  const { names } = heroSelection(copy, services, fallback);
   if (!names.length) return null;
   if (from === to || from < 0 || to < 0 || from >= names.length || to >= names.length) return names;
   const next = [...names];

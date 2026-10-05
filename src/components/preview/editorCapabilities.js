@@ -69,15 +69,23 @@ export const SOURCE_CAPABILITIES = {
 
 const KIT = ['ctaPrimaryUrl', 'ctaSecondaryUrl', 'ctaSecondaryText', 'servicesTitle', 'aboutStats'];
 
+// Redline's feature set, offered as opt-in features by themes that already
+// had live sites (kit/features.js): each shows only once the owner sets it
+// up, so a saved site renders exactly as before.
+const OPT_IN = [
+  'heroServices', 'googleBadge', 'footerBuilder', 'sectionTitles', 'featuredService', 'vehicleMakes',
+  'serviceDetails', 'serviceAreas', 'insured', 'ctaImage', 'reviewSources',
+];
+
 export const TEMPLATE_READS = {
   // Theme-ready (visible) templates.
-  detailing_sporty: KIT,
+  detailing_sporty: [...KIT, ...OPT_IN],
   mechanic_industrial: KIT,
   mechanic_garage: KIT,
-  mobile_chrome: KIT,
+  mobile_chrome: [...KIT, ...OPT_IN],
   tint_elite: [...KIT, 'filmBrandsList', 'reviewMode'],
   tint_obsidian: [...KIT, 'howSteps', 'filmBrandsList', 'shadeGuide'],
-  mobile_sudsy: [...KIT, 'howSteps', 'whyCards'],
+  mobile_sudsy: [...KIT, 'howSteps', 'whyCards', ...OPT_IN],
   wheel_apex: [...KIT, 'products', 'wheelBrands', 'trustBar', 'tickerItems'],
   mechanic_ironclad: [...KIT, 'whyCards'],
   carwash_bubble: [...KIT, 'howSteps', 'whyCards'],
@@ -110,11 +118,25 @@ export function templateReads(templateId, key) {
 // templates turn a 4th gallery photo into a carousel, show a trust bar and
 // send Button 2 to the phone. Keyed by template id, then by the spot in
 // ContentEditor that shows it (templateHelp falls back to the shared text).
+// Opt-in themes (OPT_IN above) say how their new bands appear: nothing
+// shows until the owner turns it on.
+const OPT_IN_HELP = {
+  heroCardOff: 'No services in the hero: it keeps its usual look.',
+  'empty:brands': 'Not on your page yet: tick the makes you work on in Vehicle Makes.',
+};
+
 export const TEMPLATE_HELP = {
   mobile_redline: {
     gallery: 'Your photos show as a grid on your site, as many as you add.',
     trustBar: 'With none of your own, the chips under your headline show facts from Business Info: We Come to You for a mobile business, and Fully Insured when that switch is on. Your own items (up to 4) replace them.',
     button2Url: 'Button 2 URL (default: from its text)',
+  },
+  detailing_sporty: OPT_IN_HELP,
+  mobile_chrome: OPT_IN_HELP,
+  mobile_sudsy: {
+    ...OPT_IN_HELP,
+    // Its booking links fall back to the contact section, not the phone.
+    featuredLink: 'A full link (https://…) or a section like #contact. Left empty, it opens your booking form, or goes to your contact section while booking is off.',
   },
 };
 export function templateHelp(templateId, spot) {
@@ -124,10 +146,35 @@ export function templateHelp(templateId, spot) {
 // Where each template shows the Google badge while copy.googleBadge is
 // unset: the default list of its googleBadgePlacements call
 // (editorCapabilities.test.js parses it from the source).
-export const GOOGLE_BADGE_DEFAULTS = { mobile_redline: ['hero', 'footer'] };
+// Opt-in themes show it nowhere until the owner switches a spot on.
+export const GOOGLE_BADGE_DEFAULTS = {
+  mobile_redline: ['hero', 'footer'],
+  detailing_sporty: [],
+  mobile_chrome: [],
+  mobile_sudsy: [],
+};
 export function googleBadgeDefaults(templateId) {
   return GOOGLE_BADGE_DEFAULTS[templateId] || [];
 }
+
+// What each feature does while the owner has saved nothing, per template.
+// Redline shows its features by default; themes with live sites start with
+// every feature off. editorCapabilities.test.js checks each entry against the
+// template's own call (heroCardModeOf / featuredServiceOf / vehicleMakesFor),
+// and the panels take these as props, so these tables are also the seed for
+// a future per-theme feature admin panel.
+//   HERO_CARD_DEFAULTS         copy.heroCard unset: 'quote' | 'list' | 'off'
+//   FEATURED_AUTOMATIC         no copy.featuredService.serviceName: features
+//                              the first ceramic / coating service (true) or
+//                              shows no band (false)
+//   VEHICLE_MAKES_DEFAULT_ALL  no copy.vehicleMakes: every make (true) or no
+//                              band (false)
+export const HERO_CARD_DEFAULTS = { mobile_redline: 'quote', detailing_sporty: 'off', mobile_chrome: 'off', mobile_sudsy: 'off' };
+export const heroCardDefault = (templateId) => HERO_CARD_DEFAULTS[templateId] || 'quote';
+export const FEATURED_AUTOMATIC = { mobile_redline: true, detailing_sporty: false, mobile_chrome: false, mobile_sudsy: false };
+export const featuredAutomatic = (templateId) => FEATURED_AUTOMATIC[templateId] ?? true;
+export const VEHICLE_MAKES_DEFAULT_ALL = { mobile_redline: true, detailing_sporty: false, mobile_chrome: false, mobile_sudsy: false };
+export const vehicleMakesDefaultAll = (templateId) => VEHICLE_MAKES_DEFAULT_ALL[templateId] ?? true;
 
 // The Edit panel's tabs, top to bottom. `needs`: the capability a tab
 // depends on; `group`: where the icon rail files it. Labels are what
