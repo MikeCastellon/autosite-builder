@@ -18,7 +18,7 @@ export const CHANGELOG = [
     items: [
       {
         strong: 'A fresh design for every template',
-        text: '— cleaner layouts and sharper type, with your photos, services, prices and contact details carried over.',
+        text: '— cleaner layouts and sharper type, with the photos, services, prices and contact details saved in your editor.',
       },
       {
         strong: 'Built for phones',
