@@ -6,7 +6,8 @@ import { useAlert } from '../ui/AlertProvider.jsx';
 import { formatPhone } from '../../lib/formatPhone.js';
 import { formatPrice } from '../../lib/formatPrice.js';
 import { uploadSiteImage } from '../../lib/imageUpload.js';
-import { mergeSectionOrder, orderNeedsRepair, sameOrder, moveSection, placeSectionOrder } from '../../lib/sectionManifest.js';
+import { mergeSectionOrder, sameOrder, moveSection, placeSectionOrder } from '../../lib/sectionManifest.js';
+import { repairSectionOrder } from '../../lib/sectionOrder.js';
 import { getFallbacks, businessKind, defaultHowSteps, defaultWhyCards } from '../../lib/templateFallbacks.js';
 import { useTemplateInfo } from './useTemplateInfo.js';
 import { editorTabs, templateReads, shadeGuideState, googleBadgeDefaults, templateHelp, heroCardDefault, featuredAutomatic, vehicleMakesDefaultAll } from './editorCapabilities.js';
@@ -21,7 +22,8 @@ import GoogleRatingPanel, { TypedRatingNote } from './editor/GoogleRatingPanel.j
 import TestimonialSourceFields, { ReviewSourcesIntro } from './editor/TestimonialSourceFields.jsx';
 import DayHoursEditor from './editor/DayHoursEditor.jsx';
 import BusinessExtrasPanel from './editor/BusinessExtrasPanel.jsx';
-import { followServiceRename, removeServiceRefs } from './editor/serviceRefs.js';
+import { followServiceRename, removeServiceRefs, nameKey } from './editor/serviceRefs.js';
+import { featuredSummaryService } from './editor/featuredService.js';
 import { patchServiceList } from './editor/serviceDetails.js';
 import { heroCardMode } from './editor/heroServices.js';
 import { MoveButtons, moveItem } from './editor/fields.jsx';
@@ -550,15 +552,15 @@ export default function ContentEditor({ isOpen, onClose, topOffset = 0, siteId, 
   // a switch, so App's autosave already sees the new template id.
   //
   // Ids the template added after sites were saved with it (its
-  // addedSections) do not count as missing: the template orders them itself
-  // (buildSectionOrderAdded, right after the section before them), so a
-  // saved site's order is never rewritten just by opening the editor. When
-  // another id is missing, the repair still slots them in like any other.
+  // addedSections) are left out of the repair (repairSectionOrder): the
+  // template orders them itself (buildSectionOrderAdded, right after the
+  // section before them), so opening the editor never rewrites a saved
+  // order for them, and a repair for another missing id saves exactly the
+  // order it saved before the template added them.
   useEffect(() => {
     if (!isOpen || !templateInfo || templateInfo.templateId !== templateId) return;
-    const added = templateInfo.addedSections || [];
-    if (!orderNeedsRepair(copy?.sectionOrder, defaultOrder.filter((id) => !added.includes(id)))) return;
-    setCopy('sectionOrder', mergeSectionOrder(copy.sectionOrder, defaultOrder, { keepForeign: true }));
+    const repaired = repairSectionOrder(copy?.sectionOrder, defaultOrder, templateInfo.addedSections);
+    if (repaired) setCopy('sectionOrder', repaired);
   }, [isOpen, templateId, templateInfo, copy?.sectionOrder]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const isSectionHidden = (id) => hiddenSections.includes(id);
@@ -641,11 +643,23 @@ export default function ContentEditor({ isOpen, onClose, topOffset = 0, siteId, 
       .filter(({ id }) => !isSectionHidden(id) && !presentIds.has(id))
       .map(({ id }) => [id, templateHelp(templateId, `empty:${id}`) || EMPTY_SECTION_HINTS[id] || EMPTY_SECTION_HINT]))
     : null;
-  // The package summary shows only in the hero's services card: say so
-  // while the design's hero has none.
-  const summaryHelp = has('heroServices') && heroCardMode(copy, heroCardDefault(templateId)) === 'off'
-    ? 'One line under the name in the hero price card or list. Your hero shows no services yet: turn them on in Edit > Hero > Services in the hero.'
-    : null;
+  // Where a package summary shows: the hero's services card, and the
+  // Featured Service band's intro for the band's service while it lists no
+  // benefits (featuredSummaryService). Say so while the design's hero has
+  // no services card, or when the band uses it. null = the field's own help.
+  const heroCardOff = has('heroServices') && heroCardMode(copy, heroCardDefault(templateId)) === 'off';
+  const summaryHelpFor = (pkg, packages) => {
+    const inBand = has('featuredService') && !isSectionHidden('featured') && nameKey(pkg?.name) !== ''
+      && nameKey(featuredSummaryService(copy, packages, { automatic: featuredAutomatic(templateId) })) === nameKey(pkg?.name);
+    if (inBand) {
+      return heroCardOff
+        ? "Shows as the Featured Service band's intro. It also goes under the name in the hero price card or list once you turn that on in Edit > Hero > Services in the hero."
+        : 'One line under the name in the hero price card or list. The Featured Service band shows it as its intro too.';
+    }
+    return heroCardOff
+      ? 'One line under the name in the hero price card or list. Your hero shows no services yet: turn them on in Edit > Hero > Services in the hero.'
+      : null;
+  };
 
   if (!isOpen) return null;
 
@@ -918,7 +932,7 @@ export default function ContentEditor({ isOpen, onClose, topOffset = 0, siteId, 
                     </div>
                     <Field label="Description" value={pkg.description} onChange={(v) => updatePackage(i, 'description', v)} multiline rows={2} />
                     {has('serviceDetails') && (
-                      <ServiceDetailsFields service={pkg} index={i} siteId={siteId} summaryHelp={summaryHelp} onPatch={(key, value) => patchService(i, key, value, { name: pkg.name, count: packages.length })} />
+                      <ServiceDetailsFields service={pkg} index={i} siteId={siteId} summaryHelp={summaryHelpFor(pkg, packages)} onPatch={(key, value) => patchService(i, key, value, { name: pkg.name, count: packages.length })} />
                     )}
                   </div>
                 ))}

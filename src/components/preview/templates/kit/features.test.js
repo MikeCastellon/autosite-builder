@@ -3,10 +3,11 @@
 // featuredServiceOf automatic, footerPlan specs, footerColumnsOf defaults,
 // vehicleMakesFor defaults).
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
 import {
   nameKey, HERO_CARD_MODES, heroCardModeOf, cardPriceLong, optPriceLong, heroOfferOf,
   featuredServiceOf, featuredHasBody, featuredTitleDefaults, makesEyebrowDefault, makesRepeats,
-  reviewStars, footerPlan,
+  reviewStars, footerPlan, bookingAttrs,
 } from './features.js';
 import { footerColumnsOf, FOOTER_COLUMN_TYPES } from './content.js';
 import { vehicleMakesFor, VEHICLE_MAKES } from './vehicleMakes.js';
@@ -302,5 +303,19 @@ describe('footerPlan', () => {
     const plan = footerPlan({ footer: null, spec: OPT_IN, has: (type, ctx) => type === 'contact' || (type === 'hours' && !ctx.hoursMerged) });
     expect(plan.cells.map((c) => c.type)).toEqual(['contact', 'hours']);
     expect(footerPlan({ footer: { bottomText: '  Hi ' }, spec: OPT_IN, has: all }).bottomText).toBe('Hi');
+  });
+});
+
+describe('bookingAttrs', () => {
+  it('opens the booking widget, or keeps scheduler.js off a button with the owner\'s link', () => {
+    expect(bookingAttrs(true)).toEqual({ 'data-scheduler-trigger': '' });
+    expect(bookingAttrs(true, 'Ceramic Coating')).toEqual({ 'data-scheduler-trigger': '', 'data-scheduler-service': 'Ceramic Coating' });
+    expect(bookingAttrs(false, 'Ceramic Coating')).toEqual({ 'data-scheduler-bound': '' });
+  });
+
+  it('uses the attribute public/scheduler.js skips', () => {
+    const src = readFileSync(new URL('../../../../../public/scheduler.js', import.meta.url), 'utf8');
+    expect(src).toMatch(/function autoDetectBookNow[\s\S]*?hasAttribute\('data-scheduler-bound'\)\) return;/);
+    expect(src).toMatch(/function attachOpen[\s\S]*?hasAttribute\('data-scheduler-bound'\)\) return;/);
   });
 });

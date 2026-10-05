@@ -33,7 +33,7 @@ import { EditorOnly, useEditorMode } from '../kit/EditorMode.jsx';
 import { Accented } from '../kit/Accented.jsx';
 import { serviceIncludes, serviceAreasOf, sectionTitle, splitAccent, businessKindOf, hasSocialLinks } from '../kit/content.js';
 import {
-  heroCardModeOf, heroOfferOf, featuredServiceOf, featuredHasBody, featuredTitleDefaults, makesEyebrowDefault, reviewStars, footerPlan,
+  heroCardModeOf, heroOfferOf, featuredServiceOf, featuredHasBody, featuredTitleDefaults, makesEyebrowDefault, reviewStars, footerPlan, bookingAttrs,
 } from '../kit/features.js';
 import { HeroOffer, heroOfferCss } from '../kit/HeroOffer.jsx';
 import { PackageBadge, PackagePhoto, PackageIncludes, packageDetailsCss } from '../kit/PackageDetails.jsx';
@@ -401,7 +401,16 @@ const FEATURE_CSS = `
 .mc-gpill .acg-gbadge-count{color:var(--mc-muted)}
 .mc-has-media .mc-gpill{border-color:var(--mc-on-hero-line);background:rgba(0,0,0,.2);color:var(--mc-on-hero)}
 .mc-has-media .mc-gpill .acg-gbadge-count{color:var(--mc-on-hero-muted)}
-.mc-nav-g{display:inline-flex;font-size:12.5px;color:var(--mc-muted)}
+/* The menu-bar rating gives way to the business name: its slot takes only
+   the room the name and the links leave (the name no longer grows into
+   it), and the badge shows only while that room fits it (navBadgeCss: a
+   size query on the slot, its nearest container). The slot's negative
+   margin cancels its extra flex gap, so with the badge hidden the name
+   has exactly the room it has without one; the badge's own margin keeps
+   it 24px clear of the name. */
+.mc-nav-gslot{flex:1 1 0;min-width:0;margin-left:-24px;display:flex;justify-content:flex-end;container-type:inline-size}
+.mc-brand:has(+.mc-nav-gslot){flex-grow:0}
+.mc-nav-g{display:none;margin-left:24px;font-size:12.5px;color:var(--mc-muted)}
 .mc-nav-g a{color:inherit;text-decoration:none}
 .mc-about-g{margin:-12px 0 24px}
 .mc-rev-g{margin-top:22px}
@@ -463,7 +472,10 @@ const FEATURE_CSS = `
 .mc-split-offer>.mc-split-photo{grid-column:2;grid-row:1}
 .mc-split-offer>.mc-hq-slot{grid-column:2;grid-row:1;align-self:center;justify-self:center;z-index:2;width:min(420px,calc(100% - 2 * clamp(24px,4cqi,56px)));margin:clamp(32px,4cqi,64px) 0}
 }
-@container (max-width:1100px){.mc-nav-g{display:none}}
+@container (max-width:1100px){.mc-nav-gslot{display:none}}
+/* Without container queries (the page's old-browser fallback turns them into
+   viewport queries) nothing can tell whether the badge fits: leave it out. */
+@supports not (container-type:inline-size){.mc-nav-gslot{display:none}}
 @container (max-width:600px){
 .mc-split-offer .mc-split-photo{order:1}
 .mc-split-offer>.mc-hq-slot{margin-bottom:40px}
@@ -732,6 +744,12 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
   const placeUrl = googlePlaceUrl(biz.googlePlace);
   const badgeAt = googleBadgePlacements(copy.googleBadge, []);
   const badgeIn = (spot) => Boolean(rating) && badgeAt.includes(spot);
+  // The menu-bar rating's room (FEATURE_CSS .mc-nav-gslot): a typical
+  // badge plus its gap, and 6px more per review-count character past two
+  // ("1,234"), so a longer count waits for the room it needs.
+  const navBadgeCss = badgeIn('nav')
+    ? `@container (min-width:${192 + 6 * Math.max(0, rating.countText.length - 2)}px){.mc-nav-g{display:inline-flex}}`
+    : '';
 
   // Services: the owner's Services tab (businessInfo.services, mirrored to
   // packages by normalizeBusinessInfo) wins over the AI list, as before.
@@ -979,7 +997,8 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
     + (pkgOn ? packageDetailsCss('mc-pk') : '')
     + (featuredOn ? featuredBandCss('mc-ft') : '')
     + (makesOn ? makesBandCss('mc-mk') : '')
-    + (featureOn ? FEATURE_CSS : '');
+    + (featureOn ? FEATURE_CSS : '')
+    + navBadgeCss;
 
   return (
     <div
@@ -995,13 +1014,15 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
           <a className="mc-brand" href="#top" aria-label={name ? `${name}, back to top` : 'Back to top'}>
             {brand({ height: 40, width: 'auto', maxWidth: 180 }, 'eager')}
           </a>
-          {(navLinks.length > 0 || tel || badgeIn('nav')) && (
+          {badgeIn('nav') && (
+            <div className="mc-nav-gslot">
+              <span className="mc-nav-g">
+                <GoogleRatingBadge place={biz.googlePlace} variant="inline" starColor={pageStar} starSize={14} />
+              </span>
+            </div>
+          )}
+          {(navLinks.length > 0 || tel) && (
             <div className="mc-links">
-              {badgeIn('nav') && (
-                <span className="mc-nav-g">
-                  <GoogleRatingBadge place={biz.googlePlace} variant="inline" starColor={pageStar} starSize={14} />
-                </span>
-              )}
               {navLinks.map((l) => (
                 <a key={l.href} className={`mc-link${l.extra ? ' mc-link-x' : ''}`} href={l.href}>{l.label}</a>
               ))}
@@ -1162,7 +1183,7 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
                     <a
                       className="mc-btn mc-btn-chrome"
                       href={featured.buttonUrl || bookHref}
-                      {...(featured.buttonUrl ? {} : { 'data-scheduler-trigger': '', 'data-scheduler-service': featured.name })}
+                      {...bookingAttrs(!featured.buttonUrl, featured.name)}
                     >
                       {featured.buttonText}
                     </a>
@@ -1568,7 +1589,7 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
                         </div>
                       )}
                       {plan.cta && (
-                        <a className="mc-btn mc-btn-chrome mc-btn-sm mc-foot-cta" href={plan.cta.href} {...(plan.cta.books ? { 'data-scheduler-trigger': '' } : {})}>{plan.cta.label}</a>
+                        <a className="mc-btn mc-btn-chrome mc-btn-sm mc-foot-cta" href={plan.cta.href} {...bookingAttrs(plan.cta.books)}>{plan.cta.label}</a>
                       )}
                     </div>
                   );

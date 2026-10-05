@@ -51,7 +51,7 @@ import { LucideIcon as Icon } from '../kit/icons.jsx';
 import { Accented as AccentedText } from '../kit/Accented.jsx';
 import {
   nameKey, cardPriceLong, heroCardModeOf, heroOfferOf, featuredServiceOf, featuredHasBody,
-  featuredTitleDefaults, makesEyebrowDefault, reviewStars, footerPlan,
+  featuredTitleDefaults, makesEyebrowDefault, reviewStars, footerPlan, bookingAttrs,
 } from '../kit/features.js';
 import { HeroOffer } from '../kit/HeroOffer.jsx';
 import { PackageBadge, PackagePhoto, PackageIncludes } from '../kit/PackageDetails.jsx';
@@ -1554,7 +1554,7 @@ export default function MobileRedline({ businessInfo, generatedCopy, templateMet
                   <a
                     className="rl-btn"
                     href={featured.buttonUrl || bookHref}
-                    {...(featured.buttonUrl ? {} : { 'data-scheduler-trigger': '', 'data-scheduler-service': featured.name })}
+                    {...bookingAttrs(!featured.buttonUrl, featured.name)}
                   >
                     {featured.buttonText}<Icon name="arrowRight" />
                   </a>
@@ -1797,7 +1797,7 @@ export default function MobileRedline({ businessInfo, generatedCopy, templateMet
                       </div>
                     )}
                     {footCta && (
-                      <a className="rl-pillbtn" href={footCta.href} {...(footCta.books ? { 'data-scheduler-trigger': '' } : {})}>{footCta.label}</a>
+                      <a className="rl-pillbtn" href={footCta.href} {...bookingAttrs(footCta.books)}>{footCta.label}</a>
                     )}
                   </div>
                 );

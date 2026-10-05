@@ -103,6 +103,18 @@ export function featuredServiceOf({ featuredService, services, sectionTitles, de
   };
 }
 
+// Booking attributes for a button that opens the booking widget unless the
+// owner gave it a link of their own (featured band, footer button). With
+// booking on, public/scheduler.js opens the widget from every
+// data-scheduler-trigger and, while the owner set no CTA selector, from any
+// link whose text says "book" ("Book Now", "Book Ceramic Coating") unless
+// it carries data-scheduler-bound. A button with the owner's link carries
+// that, so their link is followed. `service` preselects a package.
+export function bookingAttrs(books, service) {
+  if (!books) return { 'data-scheduler-bound': '' };
+  return service ? { 'data-scheduler-trigger': '', 'data-scheduler-service': service } : { 'data-scheduler-trigger': '' };
+}
+
 // A band with only a heading and a button repeats the package grid: the
 // published page skips it (the editor keeps it, with a hint).
 export function featuredHasBody(featured, image) {

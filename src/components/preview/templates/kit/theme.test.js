@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   hexToRgb, rgbToHex, mix, alpha, luminance, contrastRatio, isDark,
-  readableOn, ensureContrast, deriveTheme, heroScrimBase, overPhoto,
+  readableOn, ensureContrast, deriveTheme, heroScrimBase, overPhoto, fillOverPhoto,
 } from './theme.js';
 import { TEMPLATES } from '../../../../data/templates.js';
 
@@ -195,5 +195,39 @@ describe('heroScrimBase / overPhoto', () => {
         }
       }
     }
+  });
+});
+
+describe('fillOverPhoto', () => {
+  // The scrim at its lowest alpha over the lightest, the darkest and a
+  // mid-grey photo pixel, and alone.
+  const behind = (scrim, minScrim) => [scrim, ...['#ffffff', '#000000', '#808080'].map((px) => mix(scrim, px, 1 - minScrim))];
+
+  it('reads at 4.5:1 over a white and a black photo pixel, on mid-tone fills too', () => {
+    const cases = [
+      ['#d93b3b', '#ffffff'], ['#2563eb', '#ffffff'], ['#db2777', '#ffffff'], ['#0c857b', '#ffffff'],
+      ['#16a34a', '#111111'], ['#f73b7a', '#1c1917'], ['#ef6b97', '#2d2d2d'], ['#9d7f25', '#07070a'],
+      ['#7a7a7a', '#777777'], ['#111111', '#ffffff'], ['#fafafa', '#111111'], ['not a color', '#ffffff'],
+    ];
+    for (const [fill, text] of cases) {
+      for (const minScrim of [0.84, 0.88]) {
+        const out = fillOverPhoto({ fill, text, muted: mix(text, fill, 0.25), minScrim });
+        for (const bg of behind(out.scrim, minScrim)) {
+          expect(contrastRatio(out.text, bg), `${fill} ${text} ${minScrim} text on ${bg}`).toBeGreaterThanOrEqual(4.5);
+          expect(contrastRatio(out.muted, bg), `${fill} ${text} ${minScrim} muted on ${bg}`).toBeGreaterThanOrEqual(4.5);
+        }
+        expect(out.worst).toBe(mix(out.scrim, isDark(out.text) ? '#000000' : '#ffffff', 1 - minScrim));
+      }
+    }
+  });
+
+  it('keeps the fill and the text when they already read, and deepens away from the text', () => {
+    expect(fillOverPhoto({ fill: '#9d254d', text: '#ffffff', minScrim: 0.88 })).toMatchObject({ scrim: '#9d254d', text: '#ffffff' });
+    const red = fillOverPhoto({ fill: '#d93b3b', text: '#ffffff', minScrim: 0.84 });
+    expect(red.text).toBe('#ffffff');
+    expect(luminance(red.scrim)).toBeLessThan(luminance('#d93b3b'));
+    const pink = fillOverPhoto({ fill: '#f73b7a', text: '#1c1917', minScrim: 0.88 });
+    expect(pink.text).toBe('#1c1917');
+    expect(luminance(pink.scrim)).toBeGreaterThan(luminance('#f73b7a'));
   });
 });

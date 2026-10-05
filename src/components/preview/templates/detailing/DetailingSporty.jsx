@@ -18,7 +18,7 @@ import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HOURS_DAYS } from '../../../../lib/businessHours.js';
 import { FONT_CATALOG, familiesFromStack, catalogFamily } from '../../../../lib/fontCatalog.js';
-import { deriveTheme, mix, alpha, ensureContrast, contrastRatio, isDark } from '../kit/theme.js';
+import { deriveTheme, mix, alpha, ensureContrast, contrastRatio, isDark, fillOverPhoto } from '../kit/theme.js';
 import { PhotoSlot, PHOTO_HINTS } from '../kit/PhotoSlot.jsx';
 import { MobileMenu, MobileActionBar } from '../kit/MobileMenu.jsx';
 import { EditorOnly, useEditorMode } from '../kit/EditorMode.jsx';
@@ -26,7 +26,7 @@ import { Accented } from '../kit/Accented.jsx';
 import { sectionTitle, serviceIncludes, serviceAreasOf, businessKindOf, splitAccent, hasSocialLinks } from '../kit/content.js';
 import {
   heroCardModeOf, heroOfferOf, featuredServiceOf, featuredHasBody, featuredTitleDefaults, makesEyebrowDefault,
-  reviewStars, footerPlan,
+  reviewStars, footerPlan, bookingAttrs,
 } from '../kit/features.js';
 import { HeroOffer, heroOfferCss } from '../kit/HeroOffer.jsx';
 import { PackageBadge, PackagePhoto, PackageIncludes, packageDetailsCss } from '../kit/PackageDetails.jsx';
@@ -480,7 +480,16 @@ const FEATURE_CSS = `
 .ds-has-media .ds-gpill{border-color:var(--ds-on-hero-line);color:var(--ds-on-hero)}
 .ds-has-media .ds-gpill .acg-gbadge-count{color:var(--ds-on-hero-muted)}
 .ds-hero-g{margin-top:28px}
-.ds-nav-g{display:inline-flex;font-size:12.5px;font-weight:600;color:var(--ds-muted)}
+/* The menu-bar rating gives way to the business name: its slot takes only
+   the room the name and the links leave (the name no longer grows into
+   it), and the badge shows only while that room fits it (navBadgeCss: a
+   size query on the slot, its nearest container). The slot's negative
+   margin cancels its extra flex gap, so with the badge hidden the name
+   has exactly the room it has without one; the badge's own margin keeps
+   it 24px clear of the name. */
+.ds-nav-gslot{flex:1 1 0;min-width:0;margin-left:-24px;display:flex;justify-content:flex-end;container-type:inline-size}
+.ds-brand:has(+.ds-nav-gslot){flex-grow:0}
+.ds-nav-g{display:none;margin-left:24px;font-size:12.5px;font-weight:600;color:var(--ds-muted)}
 .ds-nav-g a{color:inherit;text-decoration:none}
 .ds-about-g{margin:-8px 0 24px}
 .ds-rev-g{margin-top:22px}
@@ -537,7 +546,10 @@ const FEATURE_CSS = `
 .ds-hero-offer .ds-hq-slot,.ds-split-offer>.ds-hq-slot{animation:ds-rise .8s cubic-bezier(.2,.7,.2,1) .2s both}
 }
 @container (min-width:901px){.ds-foot-grid.ds-fb{grid-template-columns:var(--ds-fcols)}}
-@container (max-width:1100px){.ds-nav-g{display:none}}
+@container (max-width:1100px){.ds-nav-gslot{display:none}}
+/* Without container queries (the page's old-browser fallback turns them into
+   viewport queries) nothing can tell whether the badge fits: leave it out. */
+@supports not (container-type:inline-size){.ds-nav-gslot{display:none}}
 @container (max-width:600px){
 .ds-split-offer .ds-split-photo{order:1}
 .ds-split-offer>.ds-hq-slot{margin-bottom:44px}
@@ -729,19 +741,20 @@ function sportyTokens(t) {
 }
 
 // The contact band over the owner's CTA Background photo (images.cta): the
-// photo shows through a scrim of the band's own fill, and the band's text is
-// repaired against both the fill and the fill "lit" by a mid-gray photo
-// (--ds-ctaph-bg, what the scrim averages to), so it reads wherever the
-// photo is light. Root variables only while that photo shows.
+// photo shows through a scrim of the band's own fill, at least 84% where the
+// text sits. kit fillOverPhoto deepens that fill just enough for the band's
+// text to read over a white or a black photo pixel alike; --ds-ctaph-bg is
+// the scrim over the worse of the two. Root variables only while that
+// photo shows.
 function ctaPhotoTokens(tokens) {
-  const fill = tokens['--ds-band-bg'];
-  const lit = mix(fill, mix('#ffffff', '#000000', 0.5), 0.14);
-  const repair = (c) => ensureContrast(ensureContrast(c, lit, 4.5), fill, 4.5);
+  const { scrim, worst, text, muted } = fillOverPhoto({
+    fill: tokens['--ds-band-bg'], text: tokens['--ds-band-text'], muted: tokens['--ds-band-muted'], minScrim: 0.84,
+  });
   return {
-    '--ds-ctaph-bg': lit,
-    '--ds-ctaph-text': repair(tokens['--ds-band-text']),
-    '--ds-ctaph-muted': repair(tokens['--ds-band-muted']),
-    '--ds-ctaph-scrim': `linear-gradient(90deg, ${alpha(fill, 0.94)}, ${alpha(fill, 0.84)})`,
+    '--ds-ctaph-bg': worst,
+    '--ds-ctaph-text': text,
+    '--ds-ctaph-muted': muted,
+    '--ds-ctaph-scrim': `linear-gradient(90deg, ${alpha(scrim, 0.94)}, ${alpha(scrim, 0.84)})`,
   };
 }
 
@@ -912,6 +925,12 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
   const badgeAt = googleBadgePlacements(copy.googleBadge, []);
   const badgeIn = (spot) => Boolean(rating) && badgeAt.includes(spot);
   const badgeOn = badgeAt.some(badgeIn);
+  // The menu-bar rating's room (FEATURE_CSS .ds-nav-gslot): a typical
+  // badge plus its gap, and 6px more per review-count character past two
+  // ("1,234"), so a longer count waits for the room it needs.
+  const navBadgeCss = badgeIn('nav')
+    ? `@container (min-width:${196 + 6 * Math.max(0, rating.countText.length - 2)}px){.ds-nav-g{display:inline-flex}}`
+    : '';
 
   // Featured-service band (Edit > Featured Service): only once the owner
   // picked a service, and on the published page only with something to say.
@@ -1202,7 +1221,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
       className="ds-root"
       style={{ ...vars, containerType: 'inline-size', display: 'flex', flexDirection: 'column', minHeight: '100vh', overflowX: 'clip', background: t.bg, color: t.text, fontFamily: body, lineHeight: 1.6, ...(ctaPhoto ? ctaPhotoTokens(tokens) : {}) }}
     >
-      <style>{CSS + (heroOn ? heroOfferCss('ds-hq', { stackFrom: 1024 }) : '') + (pkgOn ? packageDetailsCss('ds-pk') : '') + (featuredOn ? featuredBandCss('ds-ft') : '') + (makesOn ? makesBandCss('ds-mk') : '') + (featureOn ? FEATURE_CSS : '')}</style>
+      <style>{CSS + (heroOn ? heroOfferCss('ds-hq', { stackFrom: 1024 }) : '') + (pkgOn ? packageDetailsCss('ds-pk') : '') + (featuredOn ? featuredBandCss('ds-ft') : '') + (makesOn ? makesBandCss('ds-mk') : '') + (featureOn ? FEATURE_CSS : '') + navBadgeCss}</style>
       <a className="ds-skip" href="#main">Skip to content</a>
 
       <nav className="ds-nav" aria-label="Main" style={{ order: -1 }}>
@@ -1210,13 +1229,15 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
           <a className="ds-brand" href="#top" aria-label={name ? `${name}, back to top` : 'Back to top'}>
             {brand({ height: 40, width: 'auto', maxWidth: 190 }, 'eager')}
           </a>
-          {(navLinks.length > 0 || tel || badgeIn('nav')) && (
+          {badgeIn('nav') && (
+            <div className="ds-nav-gslot">
+              <span className="ds-nav-g">
+                <GoogleRatingBadge place={biz.googlePlace} variant="inline" starColor={ensureContrast(t.accent, t.bg, 3)} starSize={14} />
+              </span>
+            </div>
+          )}
+          {(navLinks.length > 0 || tel) && (
             <div className="ds-links">
-              {badgeIn('nav') && (
-                <span className="ds-nav-g">
-                  <GoogleRatingBadge place={biz.googlePlace} variant="inline" starColor={ensureContrast(t.accent, t.bg, 3)} starSize={14} />
-                </span>
-              )}
               {navLinks.map((l) => (
                 <a key={l.href} className={`ds-link${l.extra ? ' ds-link-x' : ''}`} href={l.href}>{l.label}</a>
               ))}
@@ -1382,7 +1403,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
                     <a
                       className="ds-btn ds-btn-inv"
                       href={featured.buttonUrl || bookHref}
-                      {...(featured.buttonUrl ? {} : { 'data-scheduler-trigger': '', 'data-scheduler-service': featured.name })}
+                      {...bookingAttrs(!featured.buttonUrl, featured.name)}
                     >
                       {featured.buttonText}
                     </a>
@@ -1800,7 +1821,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
                   <a
                     className="ds-btn ds-btn-primary ds-btn-sm ds-foot-cta"
                     href={footPlan.cta.href}
-                    {...(footPlan.cta.books ? { 'data-scheduler-trigger': '' } : {})}
+                    {...bookingAttrs(footPlan.cta.books)}
                   >
                     {footPlan.cta.label}
                   </a>

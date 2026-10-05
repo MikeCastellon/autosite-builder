@@ -283,6 +283,17 @@ describe('Google rating badge', () => {
     const html = render(FEATURES);
     expect(sectionHtml(html, 'hero')).toContain('mc-hero-g');
     expect(html.slice(0, html.indexOf('</nav>'))).toContain('mc-nav-g');
+    // Its own slot between the name and the links, shown only while the
+    // slot fits it (the name never shrinks for it); a longer review count
+    // waits for more room.
+    expect(markup(html)).toMatch(/<a class="mc-brand"[\s\S]*?<\/a><div class="mc-nav-gslot"><span class="mc-nav-g">[\s\S]*?<\/span><\/div><div class="mc-links">/);
+    const css = styleBlock(html);
+    expect(css).toContain('.mc-brand:has(+.mc-nav-gslot){flex-grow:0}');
+    expect(css).toContain('@container (max-width:1100px){.mc-nav-gslot{display:none}}');
+    expect(css).toContain('@container (min-width:192px){.mc-nav-g{display:inline-flex}}');
+    expect(styleBlock(render(FEATURES, { biz: { googlePlace: { ...PLACE, reviewCount: 1234 } } }))).toContain('@container (min-width:210px){.mc-nav-g{');
+    expect(styleBlock(render(FEATURES, { copy: { googleBadge: { placements: ['hero'] } } }))).not.toContain('{.mc-nav-g{display:inline-flex}}');
+    expect(css).toContain('@supports not (container-type:inline-size){.mc-nav-gslot{display:none}}');
     expect(sectionHtml(html, 'about')).toContain('mc-about-g');
     expect(sectionHtml(html, 'testimonials')).toContain('mc-rev-g');
     expect(footerHtml(html)).toContain('mc-foot-g');
@@ -345,8 +356,12 @@ describe('footer builder', () => {
 
   it('the button follows the owner\'s link, and switches off', () => {
     const own = footerHtml(render(FEATURES, { copy: { footer: { ...FEATURES.generatedCopy.footer, ctaUrl: 'https://book.example.com' } } }));
-    expect(own).toMatch(/class="mc-btn mc-btn-chrome mc-btn-sm mc-foot-cta" href="https:\/\/book.example.com">Book a Visit/);
+    expect(own).toMatch(/class="mc-btn mc-btn-chrome mc-btn-sm mc-foot-cta" href="https:\/\/book.example.com" data-scheduler-bound="">Book a Visit/);
     expect(own).not.toContain('data-scheduler-trigger');
+    // A "Book" label with the owner's link: scheduler.js leaves it alone.
+    const featured = render(FEATURES, { copy: { featuredService: { ...FEATURES.generatedCopy.featuredService, buttonUrl: 'https://example.com/ceramic' } } });
+    expect(featured).toMatch(/href="https:\/\/example.com\/ceramic" data-scheduler-bound="">Book /);
+    expect(render(FEATURES)).not.toContain('data-scheduler-bound');
     const off = footerHtml(render(FEATURES, { copy: { footer: { ...FEATURES.generatedCopy.footer, showCta: false } } }));
     expect(off).not.toContain('mc-foot-cta');
     const def = footerHtml(render(FEATURES, { copy: { footer: { columns: [{ type: 'contact' }] } } }));

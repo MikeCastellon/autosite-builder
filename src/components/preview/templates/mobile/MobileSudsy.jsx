@@ -34,7 +34,7 @@ import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HOURS_DAYS } from '../../../../lib/businessHours.js';
 import { FONT_CATALOG, catalogFamily, familiesFromStack } from '../../../../lib/fontCatalog.js';
-import { deriveTheme, mix, alpha, ensureContrast, contrastRatio, hexToRgb, rgbToHex } from '../kit/theme.js';
+import { deriveTheme, mix, alpha, ensureContrast, contrastRatio, hexToRgb, rgbToHex, fillOverPhoto } from '../kit/theme.js';
 import { PhotoSlot, PHOTO_HINTS } from '../kit/PhotoSlot.jsx';
 import { MobileMenu, MobileActionBar } from '../kit/MobileMenu.jsx';
 import { EditorOnly, useEditorMode } from '../kit/EditorMode.jsx';
@@ -44,7 +44,7 @@ import { sectionTitle, splitAccent, serviceIncludes, serviceAreasOf, hasSocialLi
 import { Accented } from '../kit/Accented.jsx';
 import {
   heroCardModeOf, heroOfferOf, featuredServiceOf, featuredHasBody, featuredTitleDefaults,
-  makesEyebrowDefault, reviewStars, footerPlan,
+  makesEyebrowDefault, reviewStars, footerPlan, bookingAttrs,
 } from '../kit/features.js';
 import { HeroOffer, heroOfferCss, heroOfferLockCss } from '../kit/HeroOffer.jsx';
 import { PackageBadge, PackagePhoto, PackageIncludes, packageDetailsCss } from '../kit/PackageDetails.jsx';
@@ -493,11 +493,23 @@ const FEATURE_CSS = `
 .ss-gpill{padding:8px 16px;border:2.5px solid var(--ss-ink);border-radius:999px;background:var(--ss-card-bg);color:var(--ss-card-text);box-shadow:3px 3px 0 var(--ss-ink);font-size:14px;font-weight:800}
 .ss-gpill .acg-gbadge-count{color:var(--ss-card-muted)}
 .ss-hero-g{margin-top:26px}
-.ss-nav-g{display:inline-flex;margin-right:8px;font-size:14px;font-weight:800}
+/* The menu-bar rating gives way to the business name: its slot takes only
+   the room the name and the links leave (the name no longer grows into
+   it), and the badge shows only while that room fits it (navBadgeCss: a
+   size query on the slot, its nearest container). The slot's negative
+   margin cancels its extra flex gap, so with the badge hidden the name
+   has exactly the room it has without one; the badge's own margins keep
+   it 20px clear of the name and 12px from the links. */
+.ss-nav-gslot{flex:1 1 0;min-width:0;margin-left:-20px;display:flex;justify-content:flex-end;container-type:inline-size}
+.ss-brand:has(+.ss-nav-gslot){flex-grow:0}
+.ss-nav-g{display:none;margin:0 -8px 0 20px;font-size:14px;font-weight:800}
 .ss-about-g{margin:-8px 0 22px}
 .ss-rev-g{display:flex;justify-content:center;margin-top:20px}
 .ss-foot-g{margin-top:16px;font-weight:700}
-@container (max-width:1280px){.ss-nav-g{display:none}}
+@container (max-width:1280px){.ss-nav-gslot{display:none}}
+/* Without container queries (the page's old-browser fallback turns them into
+   viewport queries) nothing can tell whether the badge fits: leave it out. */
+@supports not (container-type:inline-size){.ss-nav-gslot{display:none}}
 
 .ss-card{--ss-pk-text:var(--ss-card-text);--ss-pk-muted:var(--ss-card-muted);--ss-pk-accent:var(--ss-card-text);--ss-pk-line:var(--ss-dash);--ss-pk-badge-bg:var(--ss-accent);--ss-pk-badge-text:var(--ss-on-accent);--ss-pk-well-bg:var(--ss-card-bg);--ss-pk-well-ink:var(--ss-card-muted);--ss-pk-r:18px;--ss-pk-head:var(--ss-head);--ss-pk-case:none}
 .ss-pk-badge{position:absolute;top:-16px;right:20px;z-index:2;border:3px solid var(--ss-ink);border-radius:999px;box-shadow:3px 3px 0 var(--ss-ink);rotate:4deg;padding:4px 16px;font-family:var(--ss-head);font-weight:var(--ss-head-w);font-size:17px;line-height:1.3}
@@ -1152,6 +1164,12 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
   const placeUrl = googlePlaceUrl(biz.googlePlace);
   const badgeAt = googleBadgePlacements(copy.googleBadge, []);
   const badgeIn = (spot) => Boolean(rating) && badgeAt.includes(spot);
+  // The menu-bar rating's room (FEATURE_CSS .ss-nav-gslot): a typical
+  // badge plus its gap, and 7px more per review-count character past two
+  // ("1,234"), so a longer count waits for the room it needs.
+  const navBadgeCss = badgeIn('nav')
+    ? `@container (min-width:${200 + 7 * Math.max(0, rating.countText.length - 2)}px){.ss-nav-g{display:inline-flex}}`
+    : '';
   // Google's star yellow, darkened until it reads on the paper pill.
   const paperStar = ensureContrast(GOOGLE_STAR_GOLD, suds.vars['--ss-card-bg'], 3);
 
@@ -1352,18 +1370,20 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
   const footCols = plan.cells.map((c, i) => (i === 0 && c.type === 'brand' ? 'minmax(0,1.6fr)' : 'minmax(0,1fr)')).join(' ');
 
   // Contact band photo (Edit > Contact > CTA Background): the photo under
-  // a bubblegum scrim. Its type is repaired against the scrim alone and
-  // against the scrim over a mid-gray photo, the lightest mix it should see.
+  // an 88% bubblegum scrim. kit fillOverPhoto deepens the band color just
+  // enough for its type to read over a white or a black photo pixel alike;
+  // --ss-ctaph-bg is the scrim over the worse of the two.
   const ctaPhoto = show('cta') && Boolean(images.cta);
   let ctaPhotoVars = null;
   if (ctaPhoto) {
-    const ctaBg = suds.vars['--ss-cta-bg'];
-    const lit = mix(ctaBg, mix('#ffffff', '#000000', 0.5), 0.12);
+    const { scrim, worst, text, muted } = fillOverPhoto({
+      fill: suds.vars['--ss-cta-bg'], text: suds.vars['--ss-cta-text'], muted: suds.vars['--ss-cta-muted'], minScrim: 0.88,
+    });
     ctaPhotoVars = {
-      '--ss-ctaph-bg': lit,
-      '--ss-ctaph-text': readableOnAll(suds.vars['--ss-cta-text'], [lit, ctaBg]),
-      '--ss-ctaph-muted': readableOnAll(suds.vars['--ss-cta-muted'], [lit, ctaBg]),
-      '--ss-ctaph-scrim': alpha(ctaBg, 0.88),
+      '--ss-ctaph-bg': worst,
+      '--ss-ctaph-text': text,
+      '--ss-ctaph-muted': muted,
+      '--ss-ctaph-scrim': alpha(scrim, 0.88),
     };
   }
 
@@ -1379,7 +1399,8 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
     + (pkgOn ? packageDetailsCss('ss-pk') : '')
     + (featuredOn ? featuredBandCss('ss-ft') : '')
     + (makesOn ? makesBandCss('ss-mk') : '')
-    + (featureOn ? FEATURE_CSS : '');
+    + (featureOn ? FEATURE_CSS : '')
+    + navBadgeCss;
 
   const vars = {
     '--ss-bg': t.bg,
@@ -1474,12 +1495,14 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
           <a className="ss-brand" href="#top" aria-label={name ? `${name}, back to top` : 'Back to top'}>
             {brand({ height: 42, width: 'auto', maxWidth: 190 }, 'eager')}
           </a>
-          <div className="ss-links">
-            {badgeIn('nav') && (
+          {badgeIn('nav') && (
+            <div className="ss-nav-gslot">
               <span className="ss-nav-g">
                 <GoogleRatingBadge place={biz.googlePlace} variant="inline" starColor={suds.vars['--ss-nav-text']} starSize={14} />
               </span>
-            )}
+            </div>
+          )}
+          <div className="ss-links">
             {navLinks.map((l) => (
               <a key={l.href} className={`ss-link${l.extra ? ' ss-link-x' : ''}`} href={l.href}>{l.label}</a>
             ))}
@@ -1664,7 +1687,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
                     <a
                       className="ss-btn ss-btn-primary"
                       href={featured.buttonUrl || bookHref}
-                      {...(featured.buttonUrl ? {} : { 'data-scheduler-trigger': '', 'data-scheduler-service': featured.name })}
+                      {...bookingAttrs(!featured.buttonUrl, featured.name)}
                     >
                       {featured.buttonText}
                     </a>
@@ -2108,7 +2131,7 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
                       </div>
                     )}
                     {plan.cta && (
-                      <a className="ss-btn ss-btn-primary ss-foot-cta" href={plan.cta.href} {...(plan.cta.books ? { 'data-scheduler-trigger': '' } : {})}>
+                      <a className="ss-btn ss-btn-primary ss-foot-cta" href={plan.cta.href} {...bookingAttrs(plan.cta.books)}>
                         {plan.cta.label}
                       </a>
                     )}

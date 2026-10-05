@@ -14,7 +14,7 @@ import { normalizeBusinessInfo } from '../../../../lib/normalizeBusinessInfo.js'
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import { EditorModeProvider } from '../kit/EditorMode.jsx';
 import { PHOTO_HINTS } from '../kit/PhotoSlot.jsx';
-import { contrastRatio } from '../kit/theme.js';
+import { contrastRatio, mix, rgbToHex } from '../kit/theme.js';
 import { FIXTURES, FIXTURE_IMAGES, CUSTOM_COLORS, CUSTOM_FONTS } from '../__fixtures__/businesses.js';
 
 const Sporty = mod.default;
@@ -241,6 +241,22 @@ describe('detailing_sporty features: Google rating badge', () => {
     expect(visibleText(html)).toMatch(/4\.8 · 52/);
   });
 
+  it('gives the menu-bar rating its own slot, shown only while it fits beside the name', () => {
+    const html = render(FULL, { biz: { googlePlace: PLACE }, copy: { googleBadge: { placements: ['nav'] } } });
+    expect(markup(html)).toMatch(/<a class="ds-brand"[\s\S]*?<\/a><div class="ds-nav-gslot"><span class="ds-nav-g">[\s\S]*?<\/span><\/div><div class="ds-links">/);
+    const css = styleText(html);
+    expect(css).toContain('.ds-nav-gslot{flex:1 1 0;min-width:0;margin-left:-24px;display:flex;justify-content:flex-end;container-type:inline-size}');
+    expect(css).toContain('.ds-brand:has(+.ds-nav-gslot){flex-grow:0}');
+    expect(css).toContain('@container (max-width:1100px){.ds-nav-gslot{display:none}}');
+    expect(css).toContain('@container (min-width:196px){.ds-nav-g{display:inline-flex}}');
+    const big = styleText(render(FULL, { biz: { googlePlace: { ...PLACE, reviewCount: 12345 } }, copy: { googleBadge: { placements: ['nav'] } } }));
+    expect(big).toContain('@container (min-width:220px){.ds-nav-g{');
+    const elsewhere = render(FULL, { biz: { googlePlace: PLACE }, copy: { googleBadge: { placements: ['hero'] } } });
+    expect(markup(elsewhere)).not.toContain('ds-nav-gslot');
+    expect(styleText(elsewhere)).not.toContain('{.ds-nav-g{display:inline-flex}}');
+    expect(css).toContain('@supports not (container-type:inline-size){.ds-nav-gslot{display:none}}');
+  });
+
   it('moves the footer rating to the bottom bar when the brand column is off', () => {
     const html = markup(render(FULL, {
       biz: { googlePlace: PLACE },
@@ -278,7 +294,23 @@ describe('detailing_sporty features: footer builder', () => {
     const books = markup(render(FULL, { copy: { footer: { showCta: true } } }));
     expect(books).toMatch(/<a class="ds-btn ds-btn-primary ds-btn-sm ds-foot-cta" href="#contact" data-scheduler-trigger="">Book Now<\/a>/);
     const own = markup(render(FULL, { copy: { footer: { showCta: true, ctaText: 'Get Started', ctaUrl: 'https://example.com/book' } } }));
-    expect(own).toMatch(/<a class="ds-btn ds-btn-primary ds-btn-sm ds-foot-cta" href="https:\/\/example.com\/book">Get Started<\/a>/);
+    expect(own).toMatch(/<a class="ds-btn ds-btn-primary ds-btn-sm ds-foot-cta" href="https:\/\/example.com\/book" data-scheduler-bound="">Get Started<\/a>/);
+  });
+
+  it('keeps the booking widget off the buttons that have the owner\'s own link, "Book" labels included', () => {
+    // public/scheduler.js binds any link saying "book" unless it is marked
+    // data-scheduler-bound.
+    const html = markup(render(FULL, {
+      copy: {
+        footer: { showCta: true, ctaUrl: 'https://squareup.com/book/x' },
+        featuredService: { serviceName: SERVICES[0].name, priceFrom: '$450', buttonUrl: 'https://example.com/ceramic' },
+      },
+    }));
+    expect(html).toContain('<a class="ds-btn ds-btn-primary ds-btn-sm ds-foot-cta" href="https://squareup.com/book/x" data-scheduler-bound="">Book Now</a>');
+    expect(html).toContain(`<a class="ds-btn ds-btn-inv" href="https://example.com/ceramic" data-scheduler-bound="">Book ${SERVICES[0].name}</a>`);
+    const books = markup(render(FULL, { copy: { featuredService: { serviceName: SERVICES[0].name, priceFrom: '$450' } } }));
+    expect(books).toContain(`data-scheduler-trigger="" data-scheduler-service="${SERVICES[0].name}">Book ${SERVICES[0].name}</a>`);
+    expect(books).not.toContain('data-scheduler-bound');
   });
 
   it('prints the owner\'s bottom line and keeps the copyright the last <p> (the "Site owner" link goes there)', () => {
@@ -428,15 +460,24 @@ describe('detailing_sporty features: makes, areas, insured, reviews, contact pho
   });
 
   it('puts the contact photo behind a scrim, with text repaired on every palette', () => {
-    for (const fx of [FULL, { ...FULL, customColors: CUSTOM_COLORS, customFonts: CUSTOM_FONTS }, { ...FULL, customColors: LOW_CONTRAST_COLORS }]) {
-      const html = render(fx, { images: { cta: FIXTURE_IMAGES.gallery0 } });
+    const palettes = [{}, CUSTOM_COLORS, LOW_CONTRAST_COLORS, { accent: '#2563eb' }, { accent: '#db2777' }, { accent: '#0d9488' }, { accent: '#16a34a' }, { bg: '#0b0b0f', text: '#f5f5f5', accent: '#e11d48' }];
+    for (const customColors of palettes) {
+      const html = render({ ...FULL, customColors }, { images: { cta: FIXTURE_IMAGES.gallery0 } });
       expect(markup(html)).toContain('class="ds-band ds-band-has-photo"');
       const v = rootVars(html);
-      for (const k of ['--ds-ctaph-text', '--ds-ctaph-muted']) {
-        expect(contrastRatio(v[k], v['--ds-ctaph-bg'])).toBeGreaterThanOrEqual(4.5);
-        expect(contrastRatio(v[k], v['--ds-band-bg'])).toBeGreaterThanOrEqual(4.5);
-      }
       expect(v['--ds-ctaph-scrim']).toMatch(/^linear-gradient\(90deg/);
+      // Each scrim stop over a white and a black photo pixel (what shows
+      // through where the scrim is thinnest), and over the band fill while
+      // the photo loads.
+      const stops = [...v['--ds-ctaph-scrim'].matchAll(/rgba\((\d+), (\d+), (\d+), ([\d.]+)\)/g)]
+        .map((m) => ({ c: rgbToHex(+m[1], +m[2], +m[3]), a: +m[4] }));
+      expect(stops.map((s) => s.a)).toEqual([0.94, 0.84]);
+      const bgs = [v['--ds-ctaph-bg'], ...stops.flatMap((s) => ['#ffffff', '#000000', v['--ds-band-bg']].map((px) => mix(s.c, px, 1 - s.a)))];
+      for (const k of ['--ds-ctaph-text', '--ds-ctaph-muted']) {
+        for (const bg of bgs) {
+          expect({ palette: customColors, k, bg, ok: contrastRatio(v[k], bg) >= 4.5 }).toEqual({ palette: customColors, k, bg, ok: true });
+        }
+      }
     }
     expect(Object.keys(rootVars(render(FULL))).some((k) => k.startsWith('--ds-ctaph'))).toBe(false);
   });

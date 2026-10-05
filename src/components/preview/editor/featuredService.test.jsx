@@ -4,7 +4,11 @@
 import { describe, it, expect } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { FIXTURES } from '../templates/__fixtures__/businesses.js';
-import { featuredMatch, setFeaturedField, MAX_BULLETS, leftoverFields, clearLeftovers } from './featuredService.js';
+import { featuredMatch, setFeaturedField, MAX_BULLETS, leftoverFields, clearLeftovers, featuredSummaryService } from './featuredService.js';
+import * as sporty from '../templates/detailing/DetailingSporty.jsx';
+import { createElement } from 'react';
+import { buildTemplateMeta } from '../../../lib/siteRender.js';
+import { normalizeBusinessInfo } from '../../../lib/normalizeBusinessInfo.js';
 import * as redline from '../templates/mobile/MobileRedline.jsx';
 import { serviceList } from './serviceRefs.js';
 import FeaturedServicePanel from './FeaturedServicePanel.jsx';
@@ -209,5 +213,48 @@ describe('opt-in band (automatic: false)', () => {
     expect(out).toContain('<option value="Ceramic Coating" selected="">Ceramic Coating</option>');
     expect(out).toContain('placeholder="$299"');
     expect(out).not.toContain('Pick a service');
+  });
+});
+
+describe('featuredSummaryService', () => {
+  const pkgs = [
+    { name: 'Full Detail', price: '$149', summary: 'Inside and out.' },
+    { name: 'Ceramic Coating', price: '$899', summary: 'Gloss for years.' },
+  ];
+  const chosen = (fs, extra = {}) => ({ featuredService: { serviceName: 'ceramic coating', ...fs }, ...extra });
+
+  it('names the band\'s service while the band lists no benefits and has no intro of its own', () => {
+    expect(featuredSummaryService(chosen({}), pkgs, { automatic: false })).toBe('Ceramic Coating');
+    expect(featuredSummaryService(chosen({ bullets: ['Gloss'] }), pkgs, { automatic: false })).toBe('');
+    expect(featuredSummaryService(chosen({ bullets: [' ', ''] }), pkgs, { automatic: false })).toBe('Ceramic Coating');
+    expect(featuredSummaryService(chosen({}, { sectionTitles: { featured: { intro: 'Our best.' } } }), pkgs, { automatic: false })).toBe('');
+    // The package's own included items are the band's benefits; a group heading alone is not.
+    const withIncludes = pkgs.map((p, i) => (i === 1 ? { ...p, includes: ['Paint:', 'Clay bar'] } : p));
+    expect(featuredSummaryService(chosen({}), withIncludes, { automatic: false })).toBe('');
+    expect(featuredSummaryService(chosen({}), pkgs.map((p, i) => (i === 1 ? { ...p, includes: ['Paint:'] } : p)), { automatic: false })).toBe('Ceramic Coating');
+  });
+
+  it('follows the opt-in rule: no choice is no band, unless the design picks a coating itself', () => {
+    expect(featuredSummaryService({}, pkgs, { automatic: false })).toBe('');
+    expect(featuredSummaryService({}, pkgs, { automatic: true })).toBe('Ceramic Coating');
+    expect(featuredSummaryService(chosen({}, { featuredService: { serviceName: 'Window Tint' } }), pkgs, { automatic: false })).toBe('');
+  });
+
+  it('matches what an opt-in design prints: the summary is the band\'s intro exactly then', () => {
+    const render = (copy, services) => renderToStaticMarkup(createElement(sporty.default, {
+      businessInfo: normalizeBusinessInfo({ ...FIXTURES.full.businessInfo, services }),
+      generatedCopy: { ...FIXTURES.full.generatedCopy, ...copy },
+      templateMeta: buildTemplateMeta('detailing_sporty', {}, {}),
+      images: {},
+    }));
+    const band = (html) => {
+      const at = html.indexOf('data-section="featured"');
+      return at < 0 ? '' : html.slice(at, html.indexOf('</section>', at));
+    };
+    const withIncludes = pkgs.map((p, i) => (i === 1 ? { ...p, includes: ['Clay bar'] } : p));
+    for (const [copy, services] of [[chosen({}), pkgs], [chosen({ bullets: ['Gloss'] }), pkgs], [chosen({}), withIncludes], [chosen({}, { sectionTitles: { featured: { intro: 'Our best.' } } }), pkgs]]) {
+      const named = featuredSummaryService(copy, services, { automatic: false });
+      expect({ copy, shown: band(render(copy, services)).includes('Gloss for years.') }).toEqual({ copy, shown: named === 'Ceramic Coating' });
+    }
   });
 });

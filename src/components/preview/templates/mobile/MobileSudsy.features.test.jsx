@@ -16,7 +16,7 @@ import { normalizeBusinessInfo } from '../../../../lib/normalizeBusinessInfo.js'
 import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import { EditorModeProvider } from '../kit/EditorMode.jsx';
 import { FIXTURES, FIXTURE_IMAGES, CUSTOM_COLORS } from '../__fixtures__/businesses.js';
-import { contrastRatio, ensureContrast } from '../kit/theme.js';
+import { contrastRatio, ensureContrast, mix, rgbToHex } from '../kit/theme.js';
 import { GOOGLE_STAR_GOLD } from '../kit/GoogleRatingBadge.jsx';
 import { PHOTO_HINTS } from '../kit/PhotoSlot.jsx';
 
@@ -376,7 +376,9 @@ describe('mobile_sudsy: features from owner data', () => {
 
     it('links the button to the owner\'s URL without the booking widget', () => {
       const html = render(RICH, { copy: { footer: { showCta: true, ctaUrl: 'https://example.com/book' } } });
-      expect(html).toContain('<a class="ss-btn ss-btn-primary ss-foot-cta" href="https://example.com/book">Book Now!</a>');
+      // data-scheduler-bound: scheduler.js would bind it for its "Book" label.
+      expect(html).toContain('<a class="ss-btn ss-btn-primary ss-foot-cta" href="https://example.com/book" data-scheduler-bound="">Book Now!</a>');
+      expect(render(RICH)).not.toContain('data-scheduler-bound');
     });
   });
 
@@ -459,7 +461,7 @@ describe('mobile_sudsy: features from owner data', () => {
 
     it('follows the owner\'s button URL and the hidden-sections switch', () => {
       const html = render(RICH, { copy: { featuredService: { ...RICH.generatedCopy.featuredService, buttonUrl: 'https://example.com/c', buttonText: 'Learn more' } } });
-      expect(sectionHtml(html, 'featured')).toContain('<a class="ss-btn ss-btn-primary" href="https://example.com/c">Learn more</a>');
+      expect(sectionHtml(html, 'featured')).toContain('<a class="ss-btn ss-btn-primary" href="https://example.com/c" data-scheduler-bound="">Learn more</a>');
       expect(openTag(render(RICH, { copy: { hiddenSections: ['featured'] } }), 'featured')).toBeNull();
     });
   });
@@ -531,11 +533,19 @@ describe('mobile_sudsy: features from owner data', () => {
       ['default', {}],
       ['custom', CUSTOM_COLORS],
       ['low-contrast', LOW_CONTRAST_COLORS],
-    ])('keeps its type readable (%s palette)', (_, colors) => {
+      ['blue', { accent: '#2563eb' }],
+      ['green', { accent: '#16a34a' }],
+      ['dark page', { bg: '#0b0b0f', text: '#f5f5f5', accent: '#e11d48' }],
+    ])('keeps its type readable over a white or a black photo pixel (%s palette)', (_, colors) => {
       const vars = rootVars(render(RICH, { colors }));
+      // The scrim over the lightest and the darkest pixel that can show
+      // through it, and over the band color while the photo loads.
+      const m = vars['--ss-ctaph-scrim'].match(/^rgba\((\d+), (\d+), (\d+), ([\d.]+)\)$/);
+      expect(Number(m[4])).toBe(0.88);
+      const scrim = rgbToHex(+m[1], +m[2], +m[3]);
+      const bgs = [vars['--ss-ctaph-bg'], scrim, ...['#ffffff', '#000000', vars['--ss-cta-bg']].map((px) => mix(scrim, px, 0.12))];
       for (const k of ['--ss-ctaph-text', '--ss-ctaph-muted']) {
-        expect(contrastRatio(vars[k], vars['--ss-ctaph-bg']), k).toBeGreaterThanOrEqual(4.5);
-        expect(contrastRatio(vars[k], vars['--ss-cta-bg']), k).toBeGreaterThanOrEqual(4.5);
+        for (const bg of bgs) expect(contrastRatio(vars[k], bg), `${k} on ${bg}`).toBeGreaterThanOrEqual(4.5);
       }
     });
   });
@@ -584,7 +594,7 @@ describe('mobile_sudsy: round-1 fixes', () => {
     const css = styleOf(render(RICH));
     expect(css).toMatch(/\.ss-pk-inc-hl\{[^}]*background:var\(--ss-accent-pale\)/);
     expect(css).toContain('@container (max-width:900px){.ss-fb .ss-foot-about:not(:first-child){grid-column:auto}}');
-    expect(css).toContain('@container (max-width:1280px){.ss-nav-g{display:none}}');
+    expect(css).toContain('@container (max-width:1280px){.ss-nav-gslot{display:none}}');
     expect(css).toContain('.ss-hq-step-l{font-weight:800;letter-spacing:.1em;text-transform:uppercase}');
   });
 
@@ -616,5 +626,26 @@ describe('mobile_sudsy: round-1 fixes', () => {
     // Gold itself, or gold darkened only as far as its card needs (3:1).
     expect(contrastRatio(fill, GOOGLE_STAR_GOLD)).toBeLessThan(contrastRatio('#000000', GOOGLE_STAR_GOLD));
     expect(ensureContrast(GOOGLE_STAR_GOLD, '#ffffff', 3)).toMatch(/^#/);
+  });
+});
+
+describe('menu-bar rating gives way to the business name', () => {
+  it('sits in its own slot between the name and the links, shown only while the slot fits it', () => {
+    const html = render(RICH);
+    const nav = markup(html).slice(0, markup(html).indexOf('</nav>'));
+    expect(nav).toMatch(/<a class="ss-brand"[\s\S]*?<\/a><div class="ss-nav-gslot"><span class="ss-nav-g">[\s\S]*?<\/span><\/div><div class="ss-links">/);
+    const css = styleOf(html);
+    expect(css).toContain('.ss-nav-gslot{flex:1 1 0;min-width:0;margin-left:-20px;display:flex;justify-content:flex-end;container-type:inline-size}');
+    expect(css).toContain('.ss-brand:has(+.ss-nav-gslot){flex-grow:0}');
+    expect(css).toMatch(/\.ss-nav-g\{display:none;/);
+    // A typical badge plus its gap; a longer review count needs more room.
+    expect(css).toContain('@container (min-width:200px){.ss-nav-g{display:inline-flex}}');
+    const big = styleOf(render(RICH, { biz: { googlePlace: { ...PLACE, reviewCount: 1234 } } }));
+    expect(big).toContain('@container (min-width:221px){.ss-nav-g{display:inline-flex}}');
+    // Without the menu-bar spot: no slot, no query.
+    const off = render(RICH, { copy: { googleBadge: { placements: ['hero'] } } });
+    expect(markup(off)).not.toContain('ss-nav-gslot');
+    expect(styleOf(off)).not.toContain('{.ss-nav-g{display:inline-flex}}');
+    expect(css).toContain('@supports not (container-type:inline-size){.ss-nav-gslot{display:none}}');
   });
 });

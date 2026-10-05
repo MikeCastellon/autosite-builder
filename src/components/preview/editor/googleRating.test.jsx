@@ -326,9 +326,10 @@ describe('GoogleRatingPanel on a design without default spots', () => {
 });
 
 describe('GoogleRatingPanel: the Menu bar spot', () => {
-  it('says the menu bar badge shows on wide screens only', () => {
+  it('says the menu bar badge shows on wide screens only, where it fits beside the name', () => {
     const panel = (copy) => html(GoogleRatingPanel, { businessInfo: { googlePlace: PLACE }, setBiz: noop, copy, setCopy: noop, defaultPlacements: [] });
     expect(panel({ googleBadge: { placements: ['nav'] } })).toContain('Shows on wide screens only');
+    expect(panel({ googleBadge: { placements: ['nav'] } })).toContain('your name is never shortened for it');
     expect(panel({ googleBadge: { placements: ['hero'] } })).not.toContain('Shows on wide screens only');
   });
 });

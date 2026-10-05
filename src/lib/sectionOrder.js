@@ -1,3 +1,5 @@
+import { mergeSectionOrder, orderNeedsRepair } from './sectionManifest.js';
+
 /**
  * Returns a CSS order value for a section based on the saved section order.
  * Templates should wrap each section in a div with style={{ order: getOrder('sectionId') }}.
@@ -43,4 +45,21 @@ export function buildSectionOrderAdded(generatedCopy, ids, added) {
     }
     return 0;
   };
+}
+
+/**
+ * The editor's order repair (ContentEditor) for a saved order that lacks
+ * some of a template's sections: the order to save, or null when nothing
+ * is missing. Only the template's older ids count and get slotted in
+ * (mergeSectionOrder; other templates' ids stay where they are). Its
+ * `added` ids are left out: they order themselves (buildSectionOrderAdded),
+ * and writing them into the saved list would shift every later old id's
+ * saved index, so a repaired site would move sections it never touched.
+ * An added id the saved order already holds keeps its slot.
+ */
+export function repairSectionOrder(savedOrder, ids, added) {
+  const extra = Array.isArray(added) ? added : [];
+  const legacy = (Array.isArray(ids) ? ids : []).filter((id) => !extra.includes(id));
+  if (!orderNeedsRepair(savedOrder, legacy)) return null;
+  return mergeSectionOrder(savedOrder, legacy, { keepForeign: true });
 }

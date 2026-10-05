@@ -203,7 +203,7 @@ export function GoogleRatingPanel({
               help={s.id === 'footer' && footerBrandOff && placements.includes('footer')
                 ? "Your footer's logo column is off (Edit > Footer), so the rating shows in the footer's bottom line."
                 : s.id === 'nav' && placements.includes('nav')
-                  ? 'Shows on wide screens only: the menu bar has no room for it on phones and tablets.'
+                  ? 'Shows on wide screens only, and only while the menu bar has room for it beside your business name and links: your name is never shortened for it.'
                   : undefined}
             />
           ))}

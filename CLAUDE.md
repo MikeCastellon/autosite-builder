@@ -100,7 +100,9 @@ export const extraFonts = ["'Barlow Condensed', sans-serif"];  // stacks used be
 #### Feature blocks (Redline's owner-editable features, shared)
 
 - `kit/features.js` (pure): `heroCardModeOf`, `heroOfferOf`, `featuredServiceOf`, `featuredHasBody`, `featuredTitleDefaults`,
-  `makesEyebrowDefault`, `reviewStars`, `footerPlan`, `nameKey`. Also `kit/icons.jsx` (`LucideIcon`) and `kit/Accented.jsx`.
+  `makesEyebrowDefault`, `reviewStars`, `footerPlan`, `nameKey`, `bookingAttrs` (a button with the owner's own link gets
+  `data-scheduler-bound`, so `public/scheduler.js` never turns its "Book" label into the booking widget). Also
+  `kit/icons.jsx` (`LucideIcon`) and `kit/Accented.jsx`.
 - Blocks take a class namespace `ns`: `HeroOffer`, `PackageBadge` / `PackagePhoto` / `PackageIncludes`, `FeaturedBand`,
   `MakesBand`. Redline passes `rl` (its markup is frozen in `kit/blocks.golden.json`); other themes pass
   `<p>-hq|pk|ft|mk`. The CSS generators `heroOfferCss` / `packageDetailsCss` / `featuredBandCss` / `makesBandCss` are
@@ -112,7 +114,8 @@ export const extraFonts = ["'Barlow Condensed', sans-serif"];  // stacks used be
   `heroCardModeOf(copy.heroCard, 'off')`, `googleBadgePlacements(copy.googleBadge, [])`,
   `featuredServiceOf({ ..., automatic: false })`, `vehicleMakesFor(copy.vehicleMakes, [])`, export a `footerSpec` whose
   default columns are the old footer with the button off, and list new section ids in `addedSections`, ordered with
-  `buildSectionOrderAdded`: old ids keep their order values, and the editor's order repair skips added ids.
+  `buildSectionOrderAdded`: old ids keep their order values, and the editor's order repair (`repairSectionOrder`) leaves
+  added ids out, so it saves the same order it saved before the template added them.
 - Per-theme defaults live in `editorCapabilities.js` (`HERO_CARD_DEFAULTS`, `GOOGLE_BADGE_DEFAULTS`, `FEATURED_AUTOMATIC`,
   `VEHICLE_MAKES_DEFAULT_ALL`, `TEMPLATE_READS`, `TEMPLATE_HELP`). The panels take them as props, so they are the seed
   for a per-theme feature admin. `editorCapabilities.test.js` checks each one against the template's own calls, so a
@@ -120,7 +123,8 @@ export const extraFonts = ["'Barlow Condensed', sans-serif"];  // stacks used be
 - Layout helpers: `heroOfferCss(ns, { stackFrom, scope })` (+ `heroOfferLockCss`) keeps the card one height only where
   it sits beside the copy; a split hero renders the card as its own grid item after the photo (over the photo column on
   desktop, never stacked in the text column). Text over an owner photo: `overPhoto` / `heroScrimBase` (`kit/theme.js`),
-  repaired for the scrim's lowest alpha. A `footerSpec` may add `contactFields` / `socialWhenBrandOff` (the Footer
+  repaired for the scrim's lowest alpha; a band that keeps its own color over the photo uses `fillOverPhoto`, which
+  deepens the fill until the text reads over a white and a black pixel alike. A `footerSpec` may add `contactFields` / `socialWhenBrandOff` (the Footer
   panel's empty checks); `footerPlan`'s `has()` also gets `shown`, and `hasSocialLinks` (`kit/content.js`) says when the
   social icons have something to move.
 
