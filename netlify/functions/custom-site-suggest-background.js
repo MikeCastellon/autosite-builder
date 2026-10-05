@@ -101,6 +101,14 @@ export const handler = async (event) => {
   // time left before the claim goes stale (runSuggest passes each its
   // timeout); the client's own timeout is only a ceiling.
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, timeout: SUGGEST_STALE_MS, maxRetries: 0 });
-  const result = await runSuggest({ db, client, projectId: body.id, startedAt: body.startedAt, actor: auth.actor });
-  return { statusCode: result.status };
+  // Netlify retries a background function that fails (an error or a 5xx),
+  // which would pay for the model run again. The run records its own
+  // outcome on the project, so once it has started, always answer 200.
+  try {
+    const result = await runSuggest({ db, client, projectId: body.id, startedAt: body.startedAt, actor: auth.actor });
+    return { statusCode: result.status >= 500 ? 200 : result.status };
+  } catch (err) {
+    console.error('[custom-site-suggest] run crashed:', err?.message || err);
+    return { statusCode: 200 };
+  }
 };

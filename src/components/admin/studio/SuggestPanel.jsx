@@ -33,6 +33,9 @@ export default function SuggestPanel({ project, current, onApply, modelName = 'C
   const [applied, setApplied] = useState(false);
   const live = isSuggestRunLive(suggestion);
   const timer = useRef(null);
+  // Bumped after every check, so a failed check (a network blip) still
+  // schedules the next one.
+  const [polls, setPolls] = useState(0);
 
   // Poll while a run is live; stop on unmount.
   useEffect(() => {
@@ -41,15 +44,26 @@ export default function SuggestPanel({ project, current, onApply, modelName = 'C
       try {
         const res = await customSiteSuggest('get', { id: project.id });
         setSuggestion(res.suggestion || null);
+        setError('');
       } catch (e) {
         setError(e.message || 'Could not check the suggestion');
+      } finally {
+        setPolls((n) => n + 1);
       }
     }, POLL_MS);
     return () => clearTimeout(timer.current);
-  }, [live, suggestion, project.id]);
+  }, [live, polls, project.id]);
 
   const ready = suggestion?.status === 'ready';
-  const changed = useMemo(() => (ready ? changedParts(current, suggestion) : []), [ready, current, suggestion]);
+  const changed = useMemo(() => {
+    if (!ready) return [];
+    const parts = changedParts(current, suggestion);
+    // Sections are made for the suggested template, so on their own they
+    // change nothing when the template differs; taken with it, they do.
+    const hasSections = !!(suggestion.levers?.sections?.order?.length || suggestion.levers?.sections?.hidden?.length);
+    if (hasSections && parts.includes('template') && !parts.includes('sections')) parts.push('sections');
+    return parts;
+  }, [ready, current, suggestion]);
   // A fresh result: tick every part that changes something, and every fact.
   const resultKey = ready ? suggestion.finishedAt || suggestion.startedAt : '';
   useEffect(() => {
@@ -75,6 +89,8 @@ export default function SuggestPanel({ project, current, onApply, modelName = 'C
 
   function apply() {
     const parts = Object.fromEntries(SUGGESTION_PARTS.map((p) => [p, take[p] !== false && changed.includes(p)]));
+    // Without the template, the suggested sections don't fit the page.
+    if (!parts.template && changedParts(current, suggestion).includes('template')) parts.sections = false;
     parts.facts = take.facts !== false && changed.includes('facts') ? factPicks : false;
     onApply(applySuggestion(current, suggestion, parts));
     setApplied(true);

@@ -256,6 +256,13 @@ describe('custom-site-design-background runDesign', () => {
     expect(client.calls[0].body.messages[0].content).toContain('Button 1 scrolls to the services list');
   });
 
+  it('clears the changed Studio groups once the run applied them', async () => {
+    const db = fakeDb({ projects: [project({ design: { ...DESIGN, levers: { heroLayout: 'split' }, leversChanged: ['layout'] } })] });
+    await runDesign({ db, client: fakeClient([ok()]), projectId: PROJECT_ID, startedAt: STARTED, adminUser: { id: 'admin-1' }, actor: 'a' });
+    expect(db.state.sites[0].generated_content.heroLayout).toBe('split');
+    expect(db.state.projects[0].design.leversChanged).toEqual([]);
+  });
+
   it('rewriting replaces text and facts, and photos/colors only where the setup changed them', async () => {
     const db = fakeDb({
       projects: [project({ site_id: SITE_ID, design: { ...DESIGN, imagesChanged: [], colorsChanged: false } })],
@@ -322,6 +329,14 @@ describe('custom-site-admin design actions', () => {
     expect(saved.images).toEqual(DESIGN.images);
     Object.assign(h.db.state.projects[0], { design_status: 'generating', design_started_at: new Date().toISOString() });
     expect((await adminHandler(post({ action: 'design-save', id: PROJECT_ID, design: DESIGN }))).statusCode).toBe(409);
+  });
+
+  it('design-save keeps the launch list, suggestion and brand run the server wrote', async () => {
+    const serverKeys = { launch: { round: 2 }, suggestion: { status: 'ready' }, brand: { status: 'ready' } };
+    h.db = fakeDb({ projects: [project({ design_status: 'ready', site_id: SITE_ID, design: { ...DESIGN, ...serverKeys } })] });
+    const res = await adminHandler(post({ action: 'design-save', id: PROJECT_ID, design: { ...DESIGN, launch: { round: 9 }, suggestion: null } }));
+    expect(res.statusCode).toBe(200);
+    expect(h.db.state.projects[0].design).toEqual(expect.objectContaining(serverKeys));
   });
 
   it('design-generate claims a run, moves the project to Designing, and refuses a second run', async () => {

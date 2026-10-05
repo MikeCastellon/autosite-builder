@@ -9,7 +9,7 @@
 
 import { FORM_FIELDS, answerText, isFieldShown, safeHref } from './customSiteForm.js';
 import { formatPrice } from './formatPrice.js';
-import { leverPatch, sanitizeLevers } from './designLevers.js';
+import { GROUP_COPY_KEYS, GROUP_INFO_KEYS, LEVER_GROUPS, leverGroupsChanged, leverPatch, sanitizeLevers } from './designLevers.js';
 
 // The model custom sites are written with: one tier above the free builder.
 export const DESIGN_MODEL = 'claude-opus-5-5';
@@ -303,7 +303,8 @@ export function sanitizeDesign(input, { imageUrlPrefix } = {}) {
     // session changed them: a rewrite re-applies them only then, so the
     // editor's own later changes win otherwise.
     levers: sanitizeLevers(src.levers, /^[a-z0-9_]{2,40}$/.test(String(src.templateId || '')) ? src.templateId : ''),
-    leversChanged: src.leversChanged === true,
+    // The groups this setup changed (designLevers.js LEVER_GROUPS).
+    leversChanged: leverGroupsChanged(src.leversChanged),
     siteId: UUID_RE.test(String(src.siteId || '')) ? src.siteId : '',
   };
   if (Array.isArray(src.imagesChanged)) {
@@ -404,37 +405,51 @@ export function fillPackageDescriptions(info, copy) {
 // new copy and business facts; photos and colors only where this setup
 // session changed them; a different template resets colors and fonts.
 export function rewriteSite({ existing, copy: written, businessInfo, design }) {
-  let copy = written;
   const prev = existing?.generated_content || {};
   const prevInfo = existing?.business_info || {};
+  const templateChanged = !!existing?.template_id && existing.template_id !== design.templateId;
+  // The Studio groups to re-apply: the ones this setup changed, or all of
+  // them when the template changed (colors, fonts and sections reset).
+  const groups = templateChanged ? [...LEVER_GROUPS] : leverGroupsChanged(design.leversChanged);
+  const patch = leverPatch(design.levers, design.templateId);
+
   const info = { ...prevInfo };
   for (const k of DESIGN_OWNED_INFO) delete info[k];
-  Object.assign(info, businessInfo);
+  const incoming = { ...businessInfo };
+  for (const [group, keys] of Object.entries(GROUP_INFO_KEYS)) {
+    // A re-applied group owns its keys (a cleared fact goes); an untouched
+    // one keeps the site's values (the editor's own edits win).
+    for (const k of keys) {
+      if (groups.includes(group)) delete info[k];
+      else delete incoming[k];
+    }
+  }
+  Object.assign(info, incoming);
 
   const images = { ...(prev._images || {}) };
   for (const key of design.imagesChanged || []) {
     if (design.images?.[key]) images[key] = design.images[key];
     else delete images[key];
   }
-  const templateChanged = existing?.template_id && existing.template_id !== design.templateId;
   let colors = { ...(prev._customColors || {}) };
   let fonts = prev._customFonts;
-  if (templateChanged) {
-    colors = { ...(design.customColors || {}) };
-    fonts = undefined;
-  } else if (design.colorsChanged) {
-    if (design.customColors?.accent) colors.accent = design.customColors.accent;
+  // A re-applied palette is the whole palette: roles it leaves empty go back
+  // to the template's (plus the brand accent); same for fonts.
+  if (templateChanged || groups.includes('palette')) colors = { ...(design.customColors || {}), ...patch.colors };
+  else if (design.colorsChanged) {
+    // The brand-color toggle changed alone: the Studio's accent still wins.
+    const accent = patch.colors.accent || design.customColors?.accent;
+    if (accent) colors.accent = accent;
     else delete colors.accent;
   }
-  // The Design Studio's settings, when this session changed them (or the
-  // template changed, which resets colors and fonts to the design's).
-  if (design.leversChanged || templateChanged) {
-    const patch = leverPatch(design.levers, design.templateId);
-    Object.assign(colors, patch.colors);
-    if (Object.keys(patch.fonts).length) fonts = { ...(fonts || {}), ...patch.fonts };
-    copy = { ...copy, ...patch.copy };
+  if (templateChanged || groups.includes('fonts')) fonts = Object.keys(patch.fonts).length ? { ...patch.fonts } : undefined;
+
+  const content = { ...prev, ...written };
+  for (const [group, keys] of Object.entries(GROUP_COPY_KEYS)) {
+    if (!groups.includes(group)) continue;
+    for (const k of keys) delete content[k];
+    for (const k of keys) if (patch.copy[k] !== undefined) content[k] = patch.copy[k];
   }
-  const content = { ...prev, ...copy };
   delete content._images; delete content._customColors; delete content._customFonts;
   if (Object.keys(images).length) content._images = images;
   if (Object.keys(colors).length) content._customColors = colors;

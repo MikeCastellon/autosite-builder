@@ -282,14 +282,43 @@ describe('Design Studio plumbing', () => {
   it('keeps the levers through sanitizeDesign, and a rewrite re-applies them only when changed', () => {
     const d = sanitizeDesign({ templateId: 'mobile_chrome', levers: { heroLayout: 'split', palette: { bg: '#ffffff' } }, leversChanged: true });
     expect(d.levers.heroLayout).toBe('split');
-    expect(d.leversChanged).toBe(true);
+    // An older save's `true` means every group.
+    expect(d.leversChanged).toEqual(['palette', 'fonts', 'sections', 'layout', 'facts', 'googlePlace']);
     const existing = { template_id: 'mobile_chrome', business_info: {}, generated_content: { heroLayout: 'full', _customColors: { bg: '#000000' } } };
     const changed = rewriteSite({ existing, copy: { headline: 'H' }, businessInfo: {}, design: d });
     expect(changed.generated_content.heroLayout).toBe('split');
     expect(changed.generated_content._customColors).toEqual({ bg: '#ffffff' });
-    const unchanged = rewriteSite({ existing, copy: { headline: 'H' }, businessInfo: {}, design: { ...d, leversChanged: false } });
+    const unchanged = rewriteSite({ existing, copy: { headline: 'H' }, businessInfo: {}, design: { ...d, leversChanged: [] } });
     expect(unchanged.generated_content.heroLayout).toBe('full');
     expect(unchanged.generated_content._customColors).toEqual({ bg: '#000000' });
+  });
+
+  it('a re-applied group removes what was cleared; untouched groups keep the editor\'s values', () => {
+    const existing = {
+      template_id: 'detailing_sporty',
+      business_info: { awards: ['Best of Tucson 2025'], warranty: 'Lifetime', googlePlace: { placeId: 'p' }, extra: 1 },
+      generated_content: { sectionOrder: ['about', 'hero'], hiddenSections: ['gallery'], heroLayout: 'split', _customColors: { bg: '#101010', text: '#eeeeee' }, _customFonts: { font: "'Anton', sans-serif" } },
+    };
+    const design = sanitizeDesign({ templateId: 'detailing_sporty', levers: { facts: { warranty: 'Lifetime' } }, leversChanged: ['facts', 'palette', 'fonts'] });
+    const out = rewriteSite({ existing, copy: { headline: 'H' }, businessInfo: siteBusinessInfo({ ...design, businessInfo: { services: [] } }, 'p1'), design });
+    // The award cleared in the Studio is gone; the warranty kept; the Google
+    // profile (untouched group) stays as the editor left it.
+    expect(out.business_info.awards).toBeUndefined();
+    expect(out.business_info.warranty).toBe('Lifetime');
+    expect(out.business_info.googlePlace).toEqual({ placeId: 'p' });
+    expect(out.business_info.extra).toBe(1);
+    // Palette and fonts re-applied as a whole (empty = template default).
+    expect(out.generated_content._customColors).toBeUndefined();
+    expect(out.generated_content._customFonts).toBeUndefined();
+    // Sections and layout untouched: the editor's order stays.
+    expect(out.generated_content.sectionOrder).toEqual(['about', 'hero']);
+    expect(out.generated_content.heroLayout).toBe('split');
+  });
+
+  it('the brand-color toggle alone never overrides the Studio accent', () => {
+    const existing = { template_id: 'mobile_chrome', business_info: {}, generated_content: { _customColors: { accent: '#111111' } } };
+    const design = sanitizeDesign({ templateId: 'mobile_chrome', levers: { palette: { accent: '#e11d48' } }, customColors: {}, colorsChanged: true, leversChanged: [] });
+    expect(rewriteSite({ existing, copy: {}, businessInfo: {}, design }).generated_content._customColors).toEqual({ accent: '#e11d48' });
   });
 
   it('puts the Studio facts and Google profile on the site', () => {

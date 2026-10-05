@@ -248,6 +248,14 @@ export const handler = async (event) => {
   // this timeout only covers the Files API calls.
   const skill = brandSkill();
   const client = skill ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, timeout: 2 * 60 * 1000 }) : null;
-  const result = await runBrand({ db, client, projectId: body.id, startedAt: body.startedAt, actor: auth.actor, skill });
-  return { statusCode: result.status };
+  // Netlify retries a background function that fails (an error or a 5xx),
+  // which would pay for the model run again. The run records its own
+  // outcome on the project, so once it has started, always answer 200.
+  try {
+    const result = await runBrand({ db, client, projectId: body.id, startedAt: body.startedAt, actor: auth.actor, skill });
+    return { statusCode: result.status >= 500 ? 200 : result.status };
+  } catch (err) {
+    console.error('[custom-site-brand] run crashed:', err?.message || err);
+    return { statusCode: 200 };
+  }
 };

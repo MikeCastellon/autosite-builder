@@ -65,11 +65,22 @@ export const TEMPLATE_SECTIONS = Object.freeze({
 // template that isn't theme-ready (no section controls). Added ids are
 // normally in `sections` already (at their default spot); the set keeps a
 // template that lists one only in `added` from counting it twice.
+// One template's entry, or null. Own keys only: 'constructor' and friends
+// are not templates.
+export function templateSectionsFor(templateId) {
+  return own(templateId);
+}
+
+function own(templateId) {
+  return typeof templateId === 'string' && Object.prototype.hasOwnProperty.call(TEMPLATE_SECTIONS, templateId)
+    ? TEMPLATE_SECTIONS[templateId] : null;
+}
+
 export function sectionIdsFor(templateId) {
-  const t = TEMPLATE_SECTIONS[templateId];
+  const t = own(templateId);
   return t ? [...new Set([...t.sections.map((s) => s.id), ...t.added])] : [];
 }
 
 export function sectionLabel(templateId, id) {
-  return TEMPLATE_SECTIONS[templateId]?.sections.find((s) => s.id === id)?.label || id;
+  return own(templateId)?.sections.find((s) => s.id === id)?.label || id;
 }

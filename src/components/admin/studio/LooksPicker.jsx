@@ -1,4 +1,4 @@
-import { looksFor, lookIdFor } from '../../../data/designLooks.js';
+import { applyLook, looksFor, lookIdFor } from '../../../data/designLooks.js';
 import { hasLevers } from '../../../lib/designLevers.js';
 
 // Design Studio: curated starting looks for the chosen template
@@ -6,7 +6,8 @@ import { hasLevers } from '../../../lib/designLevers.js';
 // sections, layouts); business content in the levers stays. The admin can
 // fine-tune everything below afterwards, and the card then reads
 // "Customized".
-export default function LooksPicker({ templateId, levers, onPick, disabled = false }) {
+//   onApply(nextLevers): the levers with the picked look's style applied.
+export default function LooksPicker({ templateId, levers, onApply, disabled = false }) {
   const looks = looksFor(templateId);
   if (!looks.length) {
     return <p className="text-[13px] text-ink-tertiary">This template has no curated looks: set the colors and fonts below.</p>;
@@ -23,7 +24,7 @@ export default function LooksPicker({ templateId, levers, onPick, disabled = fal
             <li key={look.id}>
               <button
                 type="button"
-                onClick={() => onPick(look.id)}
+                onClick={() => onApply(applyLook(levers, look.id))}
                 disabled={disabled}
                 aria-pressed={on}
                 className={`w-full h-full text-left rounded-xl border p-3.5 transition-colors disabled:opacity-60 ${on ? 'border-[#cc0000] bg-[#cc0000]/[0.05]' : 'border-black/[0.08] hover:border-[#cc0000]/40'}`}

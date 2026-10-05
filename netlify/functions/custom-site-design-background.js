@@ -115,7 +115,7 @@ export async function runDesign({ db, client, projectId, startedAt, adminUser, a
       design_finished_at: now(),
     }).eq('id', project.id);
     await logEvent(db, project.id, 'design_ready', { model, regenerated: !!existing }, actor);
-    if (design.leversChanged) await clearLeversChanged(db, project.id);
+    if (Array.isArray(design.leversChanged) ? design.leversChanged.length : design.leversChanged) await clearLeversChanged(db, project.id);
     return { status: 200 };
   } catch (err) {
     console.error('[custom-site-design] failed:', err?.message || err);
@@ -131,8 +131,9 @@ async function clearLeversChanged(db, id) {
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const { data: row } = await db.from(TABLE).select('design, updated_at').eq('id', id).maybeSingle();
     const d = row?.design;
-    if (!d || typeof d !== 'object' || !d.leversChanged) return;
-    let q = db.from(TABLE).update({ design: { ...d, leversChanged: false } }).eq('id', id);
+    const changed = Array.isArray(d?.leversChanged) ? d.leversChanged.length > 0 : !!d?.leversChanged;
+    if (!d || typeof d !== 'object' || !changed) return;
+    let q = db.from(TABLE).update({ design: { ...d, leversChanged: [] } }).eq('id', id);
     if (row.updated_at) q = q.eq('updated_at', row.updated_at);
     const { data } = await q.select('id').maybeSingle();
     if (data) return;
@@ -153,6 +154,14 @@ export const handler = async (event) => {
   // Two attempts at most (structured, then plain) of 6 minutes each stay
   // inside the background function's 15-minute limit.
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, timeout: 6 * 60 * 1000, maxRetries: 0 });
-  const result = await runDesign({ db, client, projectId: body.id, startedAt: body.startedAt, adminUser: auth.user, actor: auth.actor });
-  return { statusCode: result.status };
+  // Netlify retries a background function that fails (an error or a 5xx),
+  // which would pay for the model run again. The run records its own
+  // outcome on the project, so once it has started, always answer 200.
+  try {
+    const result = await runDesign({ db, client, projectId: body.id, startedAt: body.startedAt, adminUser: auth.user, actor: auth.actor });
+    return { statusCode: result.status >= 500 ? 200 : result.status };
+  } catch (err) {
+    console.error('[custom-site-design] run crashed:', err?.message || err);
+    return { statusCode: 200 };
+  }
 };

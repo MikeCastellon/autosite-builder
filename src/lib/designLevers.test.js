@@ -61,6 +61,8 @@ describe('sanitizeLevers', () => {
     const p = (extra) => sanitizeLevers({ googlePlace: { placeId: 'x', ...extra } }, 'mobile_chrome').googlePlace;
     expect(p({ rating: null, reviewCount: '' })).toEqual(expect.objectContaining({ rating: null, reviewCount: null }));
     expect(p({ url: 'https://evil.example/maps' }).url).toBe('');
+    expect(p({ url: 'https://google.evil.io/maps' }).url).toBe('');
+    expect(p({ url: 'https://www.google.co.uk/maps/place/x' }).url).toBe('https://www.google.co.uk/maps/place/x');
     expect(p({ url: 'https://www.google.com/maps/place/?q=place_id:x' }).url).toBe('https://www.google.com/maps/place/?q=place_id:x');
     expect(p({ url: 'https://maps.app.goo.gl/abc123' }).url).toBe('https://maps.app.goo.gl/abc123');
   });

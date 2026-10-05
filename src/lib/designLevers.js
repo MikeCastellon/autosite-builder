@@ -11,7 +11,7 @@
 import { FONT_CATALOG } from './fontCatalog.js';
 import { BODY_FONTS, HEADING_FONTS } from '../data/fontOptions.js';
 import { templateReads } from '../components/preview/editorCapabilities.js';
-import { TEMPLATE_SECTIONS, sectionIdsFor } from '../data/templateSections.js';
+import { sectionIdsFor, templateSectionsFor } from '../data/templateSections.js';
 
 export const COLOR_ROLES = Object.freeze(['bg', 'secondary', 'text', 'muted', 'accent']);
 export const HERO_LAYOUTS = Object.freeze(['full', 'split']);
@@ -78,7 +78,9 @@ function textList(v, maxItems, maxLen = 80) {
 // The published badge links to this, so only Google Maps / Search links.
 function googleUrl(v) {
   const s = typeof v === 'string' ? v.trim() : '';
-  return /^https:\/\/(?:(?:www|maps)\.)?google\.[a-z.]{2,10}\/[^\s"'<>]*$|^https:\/\/maps\.app\.goo\.gl\/[^\s"'<>]+$/i.test(s) ? s.slice(0, 500) : '';
+  // google.com, google.<cc>, google.co.<cc> or google.com.<cc> only (not
+  // google.evil.io).
+  return /^https:\/\/(?:(?:www|maps)\.)?google\.(?:com|[a-z]{2}|co\.[a-z]{2}|com\.[a-z]{2})\/[^\s"'<>]*$|^https:\/\/maps\.app\.goo\.gl\/[^\s"'<>]+$/i.test(s) ? s.slice(0, 500) : '';
 }
 
 // A number from a field that may be blank: blank, null or junk is missing.
@@ -97,7 +99,7 @@ function numberOrNull(v) {
 // below the contact section. [] when nothing was chosen.
 export function fullSectionOrder(order, templateId) {
   const ids = sectionIdsFor(templateId);
-  const added = TEMPLATE_SECTIONS[templateId]?.added || [];
+  const added = templateSectionsFor(templateId)?.added || [];
   const out = [];
   for (const id of Array.isArray(order) ? order : []) {
     if (ids.includes(id) && !out.includes(id)) out.push(id);
@@ -178,7 +180,7 @@ export function sanitizeLevers(raw, templateId) {
 //   fonts   _customFonts { font, bodyFont } as CSS stacks
 export function leverPatch(levers, templateId) {
   const l = sanitizeLevers(levers, templateId);
-  const themeReady = !!TEMPLATE_SECTIONS[templateId];
+  const themeReady = !!templateSectionsFor(templateId);
   const copy = {};
   if (l.sections.order.length) copy.sectionOrder = l.sections.order;
   if (l.sections.hidden.length) copy.hiddenSections = l.sections.hidden;
@@ -194,6 +196,46 @@ export function leverPatch(levers, templateId) {
   if (l.fonts.body) fonts.bodyFont = fontStack(l.fonts.body);
 
   return { copy, info, colors: { ...l.palette }, fonts };
+}
+
+// The Studio's settings in groups, and the site keys each one owns. A
+// rewrite re-applies a group only when the setup changed it (the page sends
+// those group names as design.leversChanged), and then the group is the
+// whole truth for its keys: a value cleared in the Studio is removed from
+// the site, and keys of untouched groups keep the editor's own values.
+export const LEVER_GROUPS = Object.freeze(['palette', 'fonts', 'sections', 'layout', 'facts', 'googlePlace']);
+export const GROUP_COPY_KEYS = Object.freeze({
+  sections: ['sectionOrder', 'hiddenSections'],
+  layout: ['heroLayout', 'aboutLayout', 'aboutStats'],
+});
+export const GROUP_INFO_KEYS = Object.freeze({
+  facts: [...Object.keys(FACT_TEXTS), ...Object.keys(FACT_LISTS), 'insured'],
+  googlePlace: ['googlePlace'],
+});
+
+// The slice of the levers one group covers (for comparing two settings).
+export function leverGroup(levers, group) {
+  const l = levers || {};
+  switch (group) {
+    case 'palette': return l.palette || {};
+    case 'fonts': return l.fonts || {};
+    case 'sections': return l.sections || {};
+    case 'layout': return { heroLayout: l.heroLayout || '', aboutLayout: l.aboutLayout || '', aboutStats: l.aboutStats || [] };
+    case 'facts': return l.facts || {};
+    case 'googlePlace': return l.googlePlace || null;
+    default: return null;
+  }
+}
+
+// The groups that differ between two sanitized lever sets.
+export function changedLeverGroups(a, b) {
+  return LEVER_GROUPS.filter((g) => JSON.stringify(leverGroup(a, g)) !== JSON.stringify(leverGroup(b, g)));
+}
+
+// design.leversChanged as a list of groups: true (older saves) means all.
+export function leverGroupsChanged(flag) {
+  if (flag === true) return [...LEVER_GROUPS];
+  return Array.isArray(flag) ? LEVER_GROUPS.filter((g) => flag.includes(g)) : [];
 }
 
 // Has any lever been set? (An all-empty levers object changes nothing.)
