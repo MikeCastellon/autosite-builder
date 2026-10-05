@@ -29,8 +29,8 @@ export const CHANGELOG = [
         text: '— the colors and fonts you pick in the editor now apply to every section of your site.',
       },
       {
-        strong: 'Most sites switch over on their own',
-        text: '— over the next few days we\'re republishing live websites with the new design, and your site card shows "New design live" once yours is done. Some sites need a quick check first; if yours does, we\'ll get in touch. You can also switch any time: open your site, look it over, and click Republish.',
+        strong: 'We\'ll switch your site over for you',
+        text: '— we\'re moving live websites to the new design over the coming weeks and checking each one first. Your site card shows "New design live" once yours is done, and if yours needs anything from you, we\'ll get in touch.',
       },
     ],
   },
