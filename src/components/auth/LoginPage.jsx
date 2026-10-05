@@ -56,19 +56,10 @@ export default function LoginPage({ initialMode = 'signin' }) {
         setLoading(false);
         return;
       }
-      // Persist profile fields. Tries to update an existing profile row created
-      // by Supabase trigger — falls back to upsert if the row isn't there yet.
-      const userId = data?.user?.id;
-      if (userId) {
-        await supabase.from('profiles').upsert({
-          id: userId,
-          email: email.trim().toLowerCase(),
-          first_name: firstName.trim() || null,
-          last_name: lastName.trim() || null,
-          business_name: businessName.trim() || null,
-          phone: phone.trim() || null,
-        }, { onConflict: 'id' });
-      }
+      // The profile fields travel in options.data above: the signup trigger
+      // (handle_new_user) copies them into profiles. No client write here:
+      // profiles has no INSERT policy, and with email confirmation on there
+      // is no session yet, so an upsert from the browser is always refused.
       if (data?.session) {
         // Logged in immediately (Supabase email confirmation off) — AuthContext picks this up.
         setMessage('Welcome — your account is ready.');
