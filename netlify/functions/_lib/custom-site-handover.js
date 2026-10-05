@@ -81,8 +81,11 @@ export async function handOverSite({ db, project, compPro }) {
   }
   if (account.isAdmin) throw Object.assign(new Error('That email belongs to an admin account'), { status: 409 });
 
-  // Profile: names for a new account (the signup trigger only copies the
-  // email), Pro when included. Existing accounts keep their own details.
+  // Profile: the project's details for a new account, or one taken over
+  // (the signup trigger copies only the names createUser passes, and a
+  // taken-over account's own signup values were typed by someone who never
+  // proved the inbox), Pro when included. Existing accounts keep their own
+  // details.
   const profilePatch = {};
   if (newAccount) {
     Object.assign(profilePatch, {
