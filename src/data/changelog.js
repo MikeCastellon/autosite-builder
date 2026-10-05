@@ -10,11 +10,14 @@
 
 export const CHANGELOG = [
   {
-    id: '2026-10-site-upgrade',
+    // Was '2026-10-site-upgrade' (new designs only). The editor options were
+    // added the same day under a new id, so owners who had already closed
+    // the first banner see the combined one.
+    id: '2026-10-05-designs-and-editor',
     // The release day of PR #10; keep SITE_UPGRADE_RELEASE_DATE in
     // src/lib/siteUpgrade.js the same.
     date: '2026-10-05',
-    title: 'New designs for every website',
+    title: 'New designs, plus new options in your editor',
     items: [
       {
         strong: 'A fresh design for every template',
@@ -27,6 +30,14 @@ export const CHANGELOG = [
       {
         strong: 'Your colors and fonts everywhere',
         text: '— the colors and fonts you pick in the editor now apply to every section of your site.',
+      },
+      {
+        strong: 'New options for Bold & Sporty, Chrome Elite, Bright & Bubbly and Redline',
+        text: '— add a services card at the top of your site, show your Google rating, feature one service, list the vehicle makes you work on, add details to your packages (a badge, a photo and what\'s included), choose what your footer shows and rename section headings. Nothing changes until you turn them on under Edit in the editor.',
+      },
+      {
+        strong: 'See where your site went live',
+        text: '— after you click Publish, the editor shows your live link.',
       },
       {
         strong: 'We\'ll switch your site over for you',
