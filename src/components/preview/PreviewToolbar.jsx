@@ -7,6 +7,11 @@ export default function PreviewToolbar({ viewMode, onViewMode, onBack, backLabel
   const [savedDraft, setSavedDraft] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [published, setPublished] = useState(false);
+  // Where the site just went live (publish-site's publishedUrl). Publishing
+  // from the editor stays in the editor, so this panel is the owner's
+  // confirmation and the only link to the live site from here.
+  const [liveUrl, setLiveUrl] = useState(null);
+  const [copied, setCopied] = useState(false);
   const flashTimers = useRef({ draft: null, publish: null });
   // Clear any pending flash timers on unmount so they don't setState on a
   // dead component (no-op warning in dev).
@@ -27,11 +32,20 @@ export default function PreviewToolbar({ viewMode, onViewMode, onBack, backLabel
   const handlePublishClick = async () => {
     setPublishing(true);
     try {
-      await onPublish();
+      const result = await onPublish();
       setPublished(true);
+      setCopied(false);
+      setLiveUrl(typeof result?.publishedUrl === 'string' ? result.publishedUrl : null);
       flashTimers.current.publish = setTimeout(() => setPublished(false), SAVED_FLASH_MS);
     } catch { /* parent already toasted */ }
     finally { setPublishing(false); }
+  };
+
+  const copyLiveUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(liveUrl);
+      setCopied(true);
+    } catch { /* clipboard blocked: the link is still visible to copy by hand */ }
   };
 
   const Check = () => (
@@ -70,7 +84,7 @@ export default function PreviewToolbar({ viewMode, onViewMode, onBack, backLabel
       </div>
 
       {/* Right: actions */}
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="relative flex items-center gap-2 shrink-0">
         {onPreviewDemo && (
           <button
             type="button"
@@ -138,6 +152,22 @@ export default function PreviewToolbar({ viewMode, onViewMode, onBack, backLabel
               <span className="sm:hidden">{published ? 'Done' : publishing ? '…' : 'Publish'}</span>
             </span>
           </button>
+        )}
+        {liveUrl && (
+          <div role="status" className="absolute right-0 top-full mt-2 w-[min(340px,calc(100vw-24px))] bg-white border border-gray-200 rounded-xl shadow-lg p-4 text-left">
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-[13px] font-semibold text-gray-900">Your site is live</p>
+              <button type="button" onClick={() => setLiveUrl(null)} aria-label="Close" className="text-gray-400 hover:text-gray-700 -mt-1 -mr-1 p-1">
+                <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
+              </button>
+            </div>
+            <a href={liveUrl} target="_blank" rel="noopener noreferrer" className="block mt-1 text-[12px] text-blue-700 hover:underline break-all">{liveUrl}</a>
+            <div className="flex flex-wrap gap-2 mt-3">
+              <a href={liveUrl} target="_blank" rel="noopener noreferrer" className="text-[12px] font-semibold px-3 py-1.5 rounded-lg bg-gray-900 hover:bg-gray-800 text-white">View site</a>
+              <button type="button" onClick={copyLiveUrl} className="text-[12px] font-semibold px-3 py-1.5 rounded-lg border border-gray-300 hover:border-gray-400 text-gray-800">{copied ? 'Copied' : 'Copy link'}</button>
+              <button type="button" onClick={onBack} className="text-[12px] font-semibold px-3 py-1.5 rounded-lg border border-gray-300 hover:border-gray-400 text-gray-800">{backLabel}</button>
+            </div>
+          </div>
         )}
       </div>
     </div>

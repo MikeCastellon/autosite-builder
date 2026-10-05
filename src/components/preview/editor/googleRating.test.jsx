@@ -293,3 +293,42 @@ describe('wizard', () => {
     expect(src).toContain('placeFromResult(place)');
   });
 });
+
+// Themes whose badge is opt-in (GOOGLE_BADGE_DEFAULTS []): every switch
+// starts off, and the reset turns the badge off rather than "back on".
+describe('GoogleRatingPanel on a design without default spots', () => {
+  const panel = (props) => html(GoogleRatingPanel, { businessInfo: { googlePlace: PLACE }, setBiz: noop, copy: {}, setCopy: noop, defaultPlacements: [], ...props });
+
+  it('starts with every switch off and says how to turn one on', () => {
+    const out = panel();
+    expect(out).not.toMatch(/role="switch"[^>]*aria-checked="true"|aria-checked="true"[^>]*role="switch"/);
+    expect(out).toContain('Switch on where your badge shows: your design shows it nowhere until you do.');
+    expect(out).not.toContain('default spots');
+    expect(out).not.toContain('switched off everywhere');
+  });
+
+  it('offers to turn it off everywhere once a spot is on', () => {
+    const out = panel({ copy: { googleBadge: { placements: ['nav'] } } });
+    expect(out).toContain('Turn the badge off everywhere');
+    expect(out).not.toContain('Use the design');
+    const off = panel({ copy: { googleBadge: { placements: [] } } });
+    expect(off).not.toContain('Turn the badge off everywhere');
+    expect(off).toContain('The badge is switched off everywhere.');
+  });
+
+  it("reads the footer's columns with the design's footerSpec", () => {
+    const spec = { columns: [{ type: 'brand', show: true }, { type: 'services', show: true }], titles: { services: 'Services' }, mergeHours: false, cta: false, ctaLabel: 'Book' };
+    const copy = { googleBadge: { placements: ['footer'] }, footer: { columns: [{ type: 'services' }, { type: 'brand', show: false }] } };
+    expect(panel({ copy, footerSpec: spec })).toContain('so the rating shows in the footer&#x27;s bottom line.');
+    const shown = { googleBadge: { placements: ['footer'] }, footer: { columns: [{ type: 'services' }, { type: 'brand' }] } };
+    expect(panel({ copy: shown, footerSpec: spec })).not.toContain('bottom line');
+  });
+});
+
+describe('GoogleRatingPanel: the Menu bar spot', () => {
+  it('says the menu bar badge shows on wide screens only', () => {
+    const panel = (copy) => html(GoogleRatingPanel, { businessInfo: { googlePlace: PLACE }, setBiz: noop, copy, setCopy: noop, defaultPlacements: [] });
+    expect(panel({ googleBadge: { placements: ['nav'] } })).toContain('Shows on wide screens only');
+    expect(panel({ googleBadge: { placements: ['hero'] } })).not.toContain('Shows on wide screens only');
+  });
+});

@@ -169,3 +169,45 @@ describe('another service picked (leftover settings)', () => {
     expect(panel({ copy: { featuredService: { buttonUrl: 'calendly.com/x' } } })).not.toContain('Start the link with');
   });
 });
+
+// Themes whose band is opt-in (editorCapabilities FEATURED_AUTOMATIC false):
+// no chosen service means no band, never an automatic ceramic pick.
+describe('opt-in band (automatic: false)', () => {
+  it('featuredMatch picks nothing without a chosen name', () => {
+    expect(featuredMatch({}, SERVICES, { automatic: false })).toEqual({ name: '', service: null, automatic: true });
+    expect(featuredMatch({ featuredService: { serviceName: 'full detail' } }, SERVICES, { automatic: false }).service).toBe(SERVICES[0]);
+    expect(featuredMatch({}, SERVICES).name).toBe('Ceramic Coating');
+  });
+
+  it("the panel offers 'None (no band)' and asks for a pick", () => {
+    const out = panel({ automatic: false });
+    expect(out).toContain('<option value="" selected="">None (no band)</option>');
+    expect(out).not.toContain('Automatic (');
+    expect(out).toContain('Pick a service to add this band to your page.');
+    expect(out).not.toContain('ceramic coating.');
+    // Nothing else to set until a service is picked: the band is not on the
+    // page, so price, benefits, button and photo would change nothing.
+    expect(out).toContain('Its price, benefits, button and photo can be set once you pick a service.');
+    expect(out).not.toContain('Starting price');
+    expect(out).not.toContain('Featured Photo');
+    expect(out).not.toContain('placeholder="Book Now"');
+    // Saved details without a service can still be cleared.
+    expect(panel({ copy: { featuredService: { priceFrom: '$450' } }, automatic: false })).toContain('Clear featured settings');
+    // An automatic band keeps every field.
+    expect(panel({})).toContain('Starting price');
+  });
+
+  it('the template can word the empty button link (linkHelp)', () => {
+    const copy = { featuredService: { serviceName: 'Ceramic Coating' } };
+    expect(panel({ copy, automatic: false })).toContain('or calls you while booking is off.');
+    expect(panel({ copy, automatic: false, linkHelp: 'Goes to your contact section.' })).toContain('Goes to your contact section.');
+  });
+
+  it('a chosen service reads the same as with an automatic band', () => {
+    const copy = { featuredService: { serviceName: 'Ceramic Coating' } };
+    const out = panel({ copy, automatic: false });
+    expect(out).toContain('<option value="Ceramic Coating" selected="">Ceramic Coating</option>');
+    expect(out).toContain('placeholder="$299"');
+    expect(out).not.toContain('Pick a service');
+  });
+});

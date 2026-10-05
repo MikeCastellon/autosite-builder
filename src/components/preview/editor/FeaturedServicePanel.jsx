@@ -1,8 +1,12 @@
 // Edit > Featured Service: the spotlight band for one service
 // (copy.featuredService + images.featured). Without a chosen service the
 // template features the first ceramic / coating service, so the select's
-// first option says which one that is. The band's heading is in
-// Edit > Headings (copy.sectionTitles.featured), not here.
+// first option says which one that is; a template whose band is opt-in
+// (`automatic` false, editorCapabilities featuredAutomatic) shows no band
+// until the owner picks one, so its other fields wait for that pick. The
+// band's heading is in Edit > Headings (copy.sectionTitles.featured), not
+// here. linkHelp: the template's own words for an empty button link
+// (templateHelp 'featuredLink'), where its fallback is not the phone.
 import { useId, useState } from 'react';
 import { formatPrice } from '../../../lib/formatPrice.js';
 import { Label, Help, Note, Field, ImageSlot, TextListEditor, inputClass, linkButtonClass } from './fields.jsx';
@@ -20,14 +24,15 @@ function withoutSection(titles, id) {
   return Object.keys(rest).length ? rest : null;
 }
 
-export function FeaturedServicePanel({ copy, setCopy, businessInfo, images, setImage, siteId, hasHeadingsTab = false, headingDefaults = null }) {
+export function FeaturedServicePanel({ copy, setCopy, businessInfo, images, setImage, siteId, hasHeadingsTab = false, headingDefaults = null, automatic = true, linkHelp = null }) {
   const services = serviceList(businessInfo, copy);
   const fs = copy?.featuredService && typeof copy.featuredService === 'object' && !Array.isArray(copy.featuredService) ? copy.featuredService : {};
   const own = typeof fs.serviceName === 'string' ? fs.serviceName : '';
   const ownService = own.trim() ? services.find((s) => nameKey(s.name) === nameKey(own)) : null;
-  const match = featuredMatch(copy, services);
-  // What "Automatic" would feature, whatever is chosen now.
-  const auto = featuredMatch({ ...(copy || {}), featuredService: null }, services);
+  const match = featuredMatch(copy, services, { automatic });
+  // What "Automatic" would feature, whatever is chosen now (opt-in band:
+  // nothing, so the first option reads "None").
+  const auto = automatic ? featuredMatch({ ...(copy || {}), featuredService: null }, services) : null;
 
   // "Something else…" stays selected while the owner types a name, even
   // one that happens to match a service; a saved name that is no service
@@ -68,6 +73,9 @@ export function FeaturedServicePanel({ copy, setCopy, businessInfo, images, setI
   const ownHeading = copy?.sectionTitles?.featured && typeof copy.sectionTitles.featured === 'object' ? copy.sectionTitles.featured : {};
   const heading = (typeof ownHeading.title === 'string' && ownHeading.title.trim()) || designDefaults(headingDefaults, businessInfo, copy)?.featured?.title || '';
   const leftovers = pickedFrom && nameKey(pickedFrom) !== nameKey(name) ? leftoverFields(copy, images) : [];
+  // An opt-in band with no service picked is not on the page: its price,
+  // benefits, button and photo would change nothing yet, so they wait.
+  const waiting = !automatic && !name && selectValue !== OTHER;
 
   return (
     <>
@@ -76,13 +84,19 @@ export function FeaturedServicePanel({ copy, setCopy, businessInfo, images, setI
       <div className="mb-4">
         <Label htmlFor={selectId}>Service to feature</Label>
         <select id={selectId} aria-label="Service to feature" value={selectValue} onChange={(e) => onSelect(e.target.value)} className={inputClass}>
-          <option value="">{`Automatic (${auto.name || 'none found'})`}</option>
+          <option value="">{auto ? `Automatic (${auto.name || 'none found'})` : 'None (no band)'}</option>
           {services.map((s, i) => (
             <option key={`${i}-${s.name}`} value={s.name}>{s.name}</option>
           ))}
           <option value={OTHER}>Something else…</option>
         </select>
-        {!name && <Help>Pick a service to feature. Until then this band only shows when one of your services is a ceramic coating.</Help>}
+        {!name && (
+          <Help>
+            {automatic
+              ? 'Pick a service to feature. Until then this band only shows when one of your services is a ceramic coating.'
+              : 'Pick a service to add this band to your page.'}
+          </Help>
+        )}
       </div>
 
       {leftovers.length > 0 && (
@@ -119,6 +133,10 @@ export function FeaturedServicePanel({ copy, setCopy, businessInfo, images, setI
         />
       )}
 
+      {waiting ? (
+        <Help className="mb-4">Its price, benefits, button and photo can be set once you pick a service.</Help>
+      ) : (
+      <>
       <div className="mb-4">
         <Label htmlFor={priceId}>Starting price</Label>
         <input
@@ -158,7 +176,7 @@ export function FeaturedServicePanel({ copy, setCopy, businessInfo, images, setI
         onChange={(v) => write('buttonUrl', v)}
         onBlur={(v) => { if (normalizeLink(v) !== v.trim() || v !== v.trim()) write('buttonUrl', normalizeLink(v)); }}
         placeholder="Leave empty for your booking form"
-        help={linkProblem(fs.buttonUrl) || 'A full link (https://…) or a section like #contact. Left empty, it opens your booking form, or calls you while booking is off.'}
+        help={linkProblem(fs.buttonUrl) || linkHelp || 'A full link (https://…) or a section like #contact. Left empty, it opens your booking form, or calls you while booking is off.'}
         helpTone={linkProblem(fs.buttonUrl) ? 'error' : undefined}
       />
 
@@ -176,6 +194,8 @@ export function FeaturedServicePanel({ copy, setCopy, businessInfo, images, setI
           {heading ? <>Heading on the page: <span className="text-gray-700">&ldquo;{heading}&rdquo;</span>. </> : null}
           Set the small label and the heading in Edit &gt; Headings.
         </Help>
+      )}
+      </>
       )}
 
       {hasSettings && (

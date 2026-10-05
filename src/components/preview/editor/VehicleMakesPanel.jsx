@@ -3,10 +3,13 @@
 // first untick from the default keeps the other makes; makes the glyph set
 // lacks are added by name under "Other makes" and show as text on the page.
 // Every change is one setCopy('vehicleMakes', names | null).
+// defaultAll (editorCapabilities vehicleMakesDefaultAll): null means every
+// make (Redline), or, when false, no band (an opt-in band: it shows once the
+// owner ticks a make, and "Clear all" removes it).
 import { useState } from 'react';
 import { Label, Help, Note, smallInputClass, linkButtonClass } from './fields.jsx';
 import { VEHICLE_MAKES } from '../templates/kit/vehicleMakes.js';
-import { CUSTOM_MAX_LEN, currentMakes, isPicked, toggleMake, addCustomMake, removeMake, customNames, clearKnownMakes, firstMakes } from './vehicleMakesEdit.js';
+import { CUSTOM_MAX_LEN, currentMakes, isPicked, toggleMake, addCustomMake, removeMake, customNames, clearKnownMakes, firstMakes, allMakes } from './vehicleMakesEdit.js';
 
 const ERRORS = {
   duplicate: 'Already in the list.',
@@ -14,8 +17,9 @@ const ERRORS = {
   full: 'Up to 40 makes.',
 };
 
-export function VehicleMakesPanel({ copy, setCopy }) {
+export function VehicleMakesPanel({ copy, setCopy, defaultAll = true }) {
   const value = copy?.vehicleMakes;
+  const opts = { defaultAll };
   const picked = currentMakes(value);
   const custom = customNames(value);
   const hidden = Array.isArray(copy?.hiddenSections) && copy.hiddenSections.includes('brands');
@@ -23,9 +27,11 @@ export function VehicleMakesPanel({ copy, setCopy }) {
   const [error, setError] = useState(null);
   // "Clear all" with no names of the owner's own: nothing can be saved for
   // an empty grid (empty = every make), so the grid shows unticked here and
-  // the first tick saves that one make.
-  const [cleared, setCleared] = useState(false);
-  const knownPicked = !cleared && VEHICLE_MAKES.some((m) => isPicked(value, m.name));
+  // the first tick saves that one make. An opt-in band needs none of this:
+  // there, null already means no makes.
+  const [clearedState, setCleared] = useState(false);
+  const cleared = defaultAll && clearedState;
+  const knownPicked = !cleared && VEHICLE_MAKES.some((m) => isPicked(value, m.name, opts));
 
   const write = (next) => {
     setCleared(false);
@@ -37,7 +43,7 @@ export function VehicleMakesPanel({ copy, setCopy }) {
     else setCleared(true);
   };
   const add = () => {
-    const result = addCustomMake(value, draft);
+    const result = addCustomMake(value, draft, opts);
     if (result.error) {
       // An empty box is not worth a message: the Add button is disabled.
       setError(result.error === 'empty' ? null : result.error);
@@ -50,10 +56,29 @@ export function VehicleMakesPanel({ copy, setCopy }) {
 
   return (
     <>
-      <Help className="mb-3">The band of car makes that scrolls across your page. Tick the makes you work on.</Help>
+      <Help className="mb-3">
+        {defaultAll
+          ? 'The band of car makes that scrolls across your page. Tick the makes you work on.'
+          : 'The band of car makes that scrolls across your page. It shows once you tick at least one make.'}
+      </Help>
       {hidden && <Note tone="warn" title="This band is switched off in Sections." />}
 
-      {cleared ? (
+      {!defaultAll ? (
+        picked === null ? (
+          <div className="flex items-baseline justify-between gap-2 mb-2">
+            <Help className="">No band yet.</Help>
+            <button type="button" className={linkButtonClass} onClick={() => write(allMakes())}>Show all makes</button>
+          </div>
+        ) : (
+          <div className="mb-2">
+            <div className="flex items-baseline justify-between gap-2">
+              <Help className="">{picked.length} {picked.length === 1 ? 'make' : 'makes'} picked.</Help>
+              <button type="button" className={linkButtonClass} onClick={() => write(null)}>Clear all</button>
+            </div>
+            <Help>Clear all removes the band from your page.</Help>
+          </div>
+        )
+      ) : cleared ? (
         <Note title="Tick the makes you work on.">Until you tick one, your band keeps showing every make.</Note>
       ) : picked === null ? (
         <div className="flex items-baseline justify-between gap-2 mb-2">
@@ -78,7 +103,7 @@ export function VehicleMakesPanel({ copy, setCopy }) {
           "Lamborghini" reads in full instead of being cut. */}
       <div className="grid grid-cols-2 gap-1 mb-4">
         {VEHICLE_MAKES.map((m) => {
-          const on = !cleared && isPicked(value, m.name);
+          const on = !cleared && isPicked(value, m.name, opts);
           return (
             <label
               key={m.id}
@@ -92,7 +117,7 @@ export function VehicleMakesPanel({ copy, setCopy }) {
                   className="shrink-0 accent-gray-900"
                   checked={on}
                   aria-label={`Show ${m.name}`}
-                  onChange={(e) => write(cleared ? firstMakes(m.name) : toggleMake(value, m.name, e.target.checked))}
+                  onChange={(e) => write(cleared ? firstMakes(m.name) : toggleMake(value, m.name, e.target.checked, opts))}
                 />
                 <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" className="shrink-0">
                   <path d={m.d} fill="currentColor" />
@@ -115,7 +140,7 @@ export function VehicleMakesPanel({ copy, setCopy }) {
                 className="shrink-0 w-4 h-4 flex items-center justify-center rounded-full text-gray-400 hover:text-red-500 hover:bg-white transition"
                 aria-label={`Remove ${name}`}
                 title="Remove"
-                onClick={() => write(removeMake(value, name))}
+                onClick={() => write(removeMake(value, name, opts))}
               >
                 ×
               </button>

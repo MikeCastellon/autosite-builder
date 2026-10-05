@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   hexToRgb, rgbToHex, mix, alpha, luminance, contrastRatio, isDark,
-  readableOn, ensureContrast, deriveTheme,
+  readableOn, ensureContrast, deriveTheme, heroScrimBase, overPhoto,
 } from './theme.js';
 import { TEMPLATES } from '../../../../data/templates.js';
 
@@ -169,5 +169,31 @@ describe('deriveTheme', () => {
     }
     expect(deriveTheme({}).bg).toBe('#ffffff');
     expect(deriveTheme({ text: '#ffffff' }).isDark).toBe(true);
+  });
+});
+
+describe('heroScrimBase / overPhoto', () => {
+  it("is deriveTheme's scrim base", () => {
+    for (const colors of [{}, { bg: '#0a0a0a' }, { bg: '#1e3a5f', text: '#ffffff' }, { bg: '#fdf6ec' }]) {
+      const t = deriveTheme(colors);
+      const base = heroScrimBase(t.bg, t.isDark);
+      expect(t.heroScrimLeft).toContain(alpha(base, 0.88));
+      expect(heroScrimBase(t.bg)).toBe(base);
+    }
+  });
+
+  it('repairs text for the photo showing through, a bright pixel included', () => {
+    for (const colors of [{}, { bg: '#0a0a0a', text: '#f5f5f5', accent: '#e11d48' }, { bg: '#ffffff', text: '#1a1a1a' }, { bg: '#7a7a7a' }]) {
+      const t = deriveTheme(colors);
+      const base = heroScrimBase(t.bg, t.isDark);
+      for (const minScrim of [0.8, 0.6]) {
+        const { lit, text, muted } = overPhoto({ base, text: t.onHero, muted: mix(t.onHero, base, 0.2), minScrim });
+        expect(lit).toBe(mix(base, '#808080', 1 - minScrim));
+        for (const bg of [base, lit, mix(base, '#f2f2f2', 1 - minScrim)]) {
+          expect(contrastRatio(text, bg), `${JSON.stringify(colors)} ${minScrim} text on ${bg}`).toBeGreaterThanOrEqual(4.5);
+          expect(contrastRatio(muted, bg), `${JSON.stringify(colors)} ${minScrim} muted on ${bg}`).toBeGreaterThanOrEqual(4.5);
+        }
+      }
+    }
   });
 });

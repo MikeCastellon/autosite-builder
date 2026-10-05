@@ -18,10 +18,18 @@ import {
   CAPABILITY_KEYS,
   SOURCE_CAPABILITIES,
   GOOGLE_BADGE_DEFAULTS,
+  HERO_CARD_DEFAULTS,
+  FEATURED_AUTOMATIC,
+  VEHICLE_MAKES_DEFAULT_ALL,
   TEMPLATE_READS,
+  TEMPLATE_HELP,
   EDITOR_TABS,
   editorTabs,
   templateReads,
+  templateHelp,
+  heroCardDefault,
+  featuredAutomatic,
+  vehicleMakesDefaultAll,
   shadeGuideState,
 } from './editorCapabilities.js';
 import { loadTemplateInfo } from './useTemplateInfo.js';
@@ -138,7 +146,7 @@ describe('section manifests', () => {
     expect(seen).toBeGreaterThan(0);
     const redline = await loadTemplateInfo('mobile_redline');
     expect(redline.headingFields && typeof redline.headingFields).toBe('object');
-    expect((await loadTemplateInfo('mobile_sudsy')).headingFields).toBe(null);
+    expect((await loadTemplateInfo('carwash_bubble')).headingFields).toBe(null);
   });
 
   it('loadTemplateInfo passes through a module\'s own panel defaults', async () => {
@@ -146,9 +154,26 @@ describe('section manifests', () => {
     expect(typeof info.defaultHowSteps).toBe('function');
     expect(typeof info.defaultWhyCards).toBe('function');
     expect((await loadTemplateInfo('mechanic_garage')).defaultWhyCards).toBe(null);
+    expect(typeof (await loadTemplateInfo('carwash_bubble')).defaultWhyCards).toBe('function');
     const missing = await loadTemplateInfo('no_such_template', {});
     expect(missing.themeReady).toBe(false);
     expect(missing.sections.length).toBeGreaterThan(0);
+    expect(missing.footerSpec).toBe(null);
+    expect(missing.addedSections).toEqual([]);
+    const sporty = await loadTemplateInfo('detailing_sporty');
+    expect(sporty.addedSections).toEqual(['brands', 'featured']);
+    expect(Array.isArray(sporty.footerSpec?.columns)).toBe(true);
+    expect((await loadTemplateInfo('carwash_bubble')).footerSpec).toBe(null);
+  });
+
+  it('addedSections name sections the template declares', async () => {
+    for (const id of IDS) {
+      const mod = await TEMPLATE_COMPONENT_MAP[id]();
+      if (mod.addedSections === undefined) continue;
+      const sectionIds = (mod.sections || []).map((s) => s.id);
+      expect(Array.isArray(mod.addedSections)).toBe(true);
+      expect({ id, unknown: mod.addedSections.filter((a) => !sectionIds.includes(a)) }).toEqual({ id, unknown: [] });
+    }
   });
 });
 
@@ -200,7 +225,8 @@ describe('editorTabs', () => {
   const ids = (templateId, opts) => editorTabs(templateId, opts).map((t) => t.id);
 
   it('adds template-specific tabs only where the template reads them', () => {
-    expect(ids('detailing_sporty')).toEqual(['visibility', 'hero', 'services', 'about', 'gallery', 'testimonials', 'contact', 'colors', 'footer']);
+    expect(ids('detailing_sporty')).toEqual(['visibility', 'hero', 'headings', 'services', 'featured', 'makes', 'about', 'gallery', 'testimonials', 'google', 'contact', 'colors', 'footer']);
+    expect(ids('mechanic_garage')).toEqual(['visibility', 'hero', 'services', 'about', 'gallery', 'testimonials', 'contact', 'colors', 'footer']);
     expect(ids('tint_obsidian')).toEqual(expect.arrayContaining(['howItWorks', 'filmBrands', 'shadeGuide']));
     expect(ids('tint_obsidian')).not.toContain('whyUs');
     expect(ids('wheel_apex')).toEqual(expect.arrayContaining(['products', 'brands', 'trustBar', 'ticker']));
@@ -239,6 +265,81 @@ describe('Google badge defaults', () => {
       if (templateReads(id, 'googleBadge')) expect({ id, has: Array.isArray(GOOGLE_BADGE_DEFAULTS[id]) }).toEqual({ id, has: true });
     });
   }
+});
+
+// The per-template feature defaults (what a feature does while the owner
+// saved nothing) must be the template's own: each table entry is checked
+// against the literal call in the template source, so the editor's panels
+// (and a future per-theme admin panel seeded from these tables) describe
+// exactly what the page renders.
+describe('feature defaults match the template sources', () => {
+  const FOOTER_COLUMN_TYPES = ['brand', 'links', 'services', 'areas', 'contact', 'hours'];
+
+  it('every table names registered templates that read the feature', () => {
+    for (const [table, cap] of [[HERO_CARD_DEFAULTS, 'heroServices'], [FEATURED_AUTOMATIC, 'featuredService'], [VEHICLE_MAKES_DEFAULT_ALL, 'vehicleMakes'], [GOOGLE_BADGE_DEFAULTS, 'googleBadge']]) {
+      for (const id of Object.keys(table)) {
+        expect({ id, cap, known: IDS.includes(id), reads: templateReads(id, cap) }).toEqual({ id, cap, known: true, reads: true });
+      }
+    }
+  });
+
+  for (const id of IDS) {
+    it(`${id}: hero card, featured band, makes band and footer defaults`, async () => {
+      const src = source(id);
+      if (templateReads(id, 'heroServices')) {
+        const m = src.match(/heroCardModeOf\(\s*(?:copy|generatedCopy)\??\.heroCard\s*,\s*'(quote|list|off)'\s*\)/);
+        expect({ id, call: Boolean(m) }).toEqual({ id, call: true });
+        expect({ id, mode: heroCardDefault(id) }).toEqual({ id, mode: m[1] });
+        expect({ id, listed: HERO_CARD_DEFAULTS[id] }).toEqual({ id, listed: m[1] });
+      }
+      if (templateReads(id, 'featuredService')) {
+        const m = src.match(/featuredServiceOf\(\{[\s\S]*?automatic:\s*(true|false)/);
+        expect({ id, call: Boolean(m) }).toEqual({ id, call: true });
+        expect({ id, automatic: featuredAutomatic(id) }).toEqual({ id, automatic: m[1] === 'true' });
+        expect({ id, listed: FEATURED_AUTOMATIC[id] }).toEqual({ id, listed: m[1] === 'true' });
+      }
+      if (templateReads(id, 'vehicleMakes')) {
+        const m = src.match(/vehicleMakesFor\(\s*(?:copy|generatedCopy)\??\.vehicleMakes\s*(,\s*\[\s*\])?\s*\)/);
+        expect({ id, call: Boolean(m) }).toEqual({ id, call: true });
+        expect({ id, all: vehicleMakesDefaultAll(id) }).toEqual({ id, all: !m[1] });
+        expect({ id, listed: VEHICLE_MAKES_DEFAULT_ALL[id] }).toEqual({ id, listed: !m[1] });
+      }
+      if (templateReads(id, 'footerBuilder')) {
+        const { footerSpec: spec } = await TEMPLATE_COMPONENT_MAP[id]();
+        expect({ id, spec: Boolean(spec) && typeof spec === 'object' }).toEqual({ id, spec: true });
+        const types = (spec.columns || []).map((c) => c.type);
+        expect(types.length).toBeGreaterThan(0);
+        expect(new Set(types).size).toBe(types.length);
+        expect({ id, unknown: types.filter((t) => !FOOTER_COLUMN_TYPES.includes(t)) }).toEqual({ id, unknown: [] });
+        for (const c of spec.columns) expect(typeof c.show).toBe('boolean');
+        expect({ id, untitled: types.filter((t) => t !== 'brand' && !(typeof spec.titles?.[t] === 'string' && spec.titles[t])) }).toEqual({ id, untitled: [] });
+        expect(typeof spec.mergeHours).toBe('boolean');
+        expect(typeof spec.cta).toBe('boolean');
+        expect(typeof spec.ctaLabel === 'string' && spec.ctaLabel.length > 0).toBe(true);
+        if (spec.notes !== undefined) {
+          for (const [t, note] of Object.entries(spec.notes)) expect({ id, t, ok: types.includes(t) && typeof note === 'string' }).toEqual({ id, t, ok: true });
+        }
+        if (spec.contactFields !== undefined) {
+          expect({ id, ok: Array.isArray(spec.contactFields) && spec.contactFields.length > 0 && spec.contactFields.every((k) => typeof k === 'string' && k) }).toEqual({ id, ok: true });
+        }
+        if (spec.socialWhenBrandOff !== undefined) expect(typeof spec.socialWhenBrandOff).toBe('boolean');
+      }
+    });
+  }
+
+  it('themes with live sites start every feature off', () => {
+    for (const id of ['detailing_sporty', 'mobile_chrome', 'mobile_sudsy']) {
+      expect({ id, hero: heroCardDefault(id), featured: featuredAutomatic(id), makes: vehicleMakesDefaultAll(id), badge: GOOGLE_BADGE_DEFAULTS[id] })
+        .toEqual({ id, hero: 'off', featured: false, makes: false, badge: [] });
+      expect(templateHelp(id, 'heroCardOff')).toBeTruthy();
+      expect(templateHelp(id, 'empty:brands')).toBeTruthy();
+    }
+    expect(heroCardDefault('mobile_redline')).toBe('quote');
+    expect(featuredAutomatic('mobile_redline')).toBe(true);
+    expect(vehicleMakesDefaultAll('mobile_redline')).toBe(true);
+    expect(templateHelp('mobile_redline', 'heroCardOff')).toBe(null);
+    expect(Object.keys(TEMPLATE_HELP).every((id) => IDS.includes(id))).toBe(true);
+  });
 });
 
 describe('icon picker', () => {

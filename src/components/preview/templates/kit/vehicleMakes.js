@@ -66,14 +66,15 @@ export function findVehicleMake(name) {
 
 // The band's makes: the owner's list (an array or a comma string, in their
 // order; known names get their glyph, unknown ones { name, d: null } so a
-// template can show the name as text) or, when they listed none, the
-// default VEHICLE_MAKES. Duplicates are dropped.
-export function vehicleMakesFor(ownerList) {
+// template can show the name as text) or, when they listed none,
+// `defaults`: VEHICLE_MAKES (Redline shows every make), or [] for a theme
+// whose band is opt-in (no owner list = no band). Duplicates are dropped.
+export function vehicleMakesFor(ownerList, defaults = VEHICLE_MAKES) {
   const raw = Array.isArray(ownerList)
     ? ownerList
     : typeof ownerList === 'string' ? ownerList.split(/[,\n·|;]+/) : [];
   const names = raw.map((n) => (typeof n === 'string' ? n.trim() : '')).filter(Boolean);
-  if (names.length === 0) return VEHICLE_MAKES;
+  if (names.length === 0) return defaults;
   const seen = new Set();
   const out = [];
   for (const n of names) {

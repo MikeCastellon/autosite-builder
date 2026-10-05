@@ -7,6 +7,11 @@
 //
 // The panel never writes []: readers treat an empty list as "default", so
 // removing the last make writes null and the band shows every make again.
+//
+// `defaultAll` (editorCapabilities vehicleMakesDefaultAll) is what null
+// means for the template: every make (Redline) or no band at all (themes
+// whose band is opt-in, vehicleMakesFor(copy.vehicleMakes, [])). Helpers
+// that start from what the band shows take it as { defaultAll }.
 import { VEHICLE_MAKES, findVehicleMake, vehicleMakesFor } from '../templates/kit/vehicleMakes.js';
 
 export const CUSTOM_MAX_LEN = 30;
@@ -31,22 +36,28 @@ export function currentMakes(value) {
   return out.length ? out : null;
 }
 
-// What the band shows: the owner's names, else every default make.
-export function effectiveNames(value) {
-  return currentMakes(value) || [...DEFAULT_NAMES];
+// Every make in the grid, in its order ("Show all makes" on an opt-in band).
+export function allMakes() {
+  return VEHICLE_MAKES.map((m) => m.name);
 }
 
-export function isPicked(value, name) {
+// What the band shows: the owner's names, else every default make (or none
+// when the template's band is opt-in).
+export function effectiveNames(value, { defaultAll = true } = {}) {
+  return currentMakes(value) || (defaultAll ? [...DEFAULT_NAMES] : []);
+}
+
+export function isPicked(value, name, opts) {
   const k = makeKey(name);
-  return Boolean(k) && effectiveNames(value).some((n) => makeKey(n) === k);
+  return Boolean(k) && effectiveNames(value, opts).some((n) => makeKey(n) === k);
 }
 
 // Tick (append, in the owner's order) or untick a make. Starts from what the
 // band shows, so the first untick from the default keeps the other makes in
 // the default order. Returns the names, or null once none are left (a
 // toggle that changes nothing returns the value as it was read).
-export function toggleMake(value, name, on) {
-  const names = effectiveNames(value);
+export function toggleMake(value, name, on, opts) {
+  const names = effectiveNames(value, opts);
   const k = makeKey(name);
   const has = Boolean(k) && names.some((n) => makeKey(n) === k);
   if (!k || Boolean(on) === has) return currentMakes(value);
@@ -56,20 +67,20 @@ export function toggleMake(value, name, on) {
 
 // Add a typed name ('Rivian'; 'vw' adds the known Volkswagen). The cap only
 // bounds free-typed names: ticking the 30 known makes never hits it.
-export function addCustomMake(value, name) {
+export function addCustomMake(value, name, opts) {
   const text = typeof name === 'string' ? name.trim() : '';
   if (!keyOf(text)) return { error: 'empty' };
   if (text.length > CUSTOM_MAX_LEN) return { error: 'long' };
-  const names = effectiveNames(value);
+  const names = effectiveNames(value, opts);
   const k = makeKey(text);
   if (names.some((n) => makeKey(n) === k)) return { error: 'duplicate' };
   if (names.length >= MAKES_MAX) return { error: 'full' };
   return { names: [...names, displayName(text)] };
 }
 
-export function removeMake(value, name) {
+export function removeMake(value, name, opts) {
   const k = makeKey(name);
-  const names = effectiveNames(value).filter((n) => makeKey(n) !== k);
+  const names = effectiveNames(value, opts).filter((n) => makeKey(n) !== k);
   return names.length ? names : null;
 }
 

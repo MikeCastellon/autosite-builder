@@ -118,7 +118,9 @@ function IncludesEditor({ items, onChange }) {
   );
 }
 
-export function ServiceDetailsFields({ service, index, onChange, onPatch, siteId }) {
+// summaryHelp: replaces the summary's help (ContentEditor says so when the
+// design's hero shows no services yet, the only place the summary appears).
+export function ServiceDetailsFields({ service, index, onChange, onPatch, siteId, summaryHelp = null }) {
   const s = serviceObject(service);
   // Open on mount when the package already has details; after that the
   // owner's own toggle wins. Deriving `open` from the data on every render
@@ -142,7 +144,7 @@ export function ServiceDetailsFields({ service, index, onChange, onPatch, siteId
         onChange={(v) => set('summary', v)}
         maxLength={SUMMARY_MAX}
         placeholder="e.g. Full detail + 6 month wax"
-        help="One line under the name in the hero price card or list."
+        help={summaryHelp || 'One line under the name in the hero price card or list.'}
       />
       <Field
         label="Badge"

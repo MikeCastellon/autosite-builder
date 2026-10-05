@@ -115,7 +115,8 @@ function sectionHtml(html, id) {
 
 describe('Google rating badge', () => {
   it('renders nowhere without a connected place, or with only a rating or only a count', () => {
-    for (const fx of Object.values(FIXTURES)) expect(markup(render(fx))).not.toContain('acg-gbadge');
+    // (FIXTURES.features has a connected place, so it is not one of these.)
+    for (const fx of Object.values(FIXTURES).filter((f) => !f.businessInfo.googlePlace)) expect(markup(render(fx))).not.toContain('acg-gbadge');
     expect(markup(render(RICH))).not.toContain('acg-gbadge');
     expect(markup(render(RICH, { biz: { googlePlace: { rating: 4.9 } } }))).not.toContain('acg-gbadge');
     expect(markup(render(RICH, { biz: { googlePlace: { reviewCount: 88 } } }))).not.toContain('acg-gbadge');

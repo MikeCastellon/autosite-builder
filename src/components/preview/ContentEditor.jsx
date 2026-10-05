@@ -9,7 +9,7 @@ import { uploadSiteImage } from '../../lib/imageUpload.js';
 import { mergeSectionOrder, orderNeedsRepair, sameOrder, moveSection, placeSectionOrder } from '../../lib/sectionManifest.js';
 import { getFallbacks, businessKind, defaultHowSteps, defaultWhyCards } from '../../lib/templateFallbacks.js';
 import { useTemplateInfo } from './useTemplateInfo.js';
-import { editorTabs, templateReads, shadeGuideState, googleBadgeDefaults, templateHelp } from './editorCapabilities.js';
+import { editorTabs, templateReads, shadeGuideState, googleBadgeDefaults, templateHelp, heroCardDefault, featuredAutomatic, vehicleMakesDefaultAll } from './editorCapabilities.js';
 import { colorChecks, formatRatio } from './colorChecks.js';
 import HeroServicesPanel from './editor/HeroServicesPanel.jsx';
 import FeaturedServicePanel from './editor/FeaturedServicePanel.jsx';
@@ -23,6 +23,7 @@ import DayHoursEditor from './editor/DayHoursEditor.jsx';
 import BusinessExtrasPanel from './editor/BusinessExtrasPanel.jsx';
 import { followServiceRename, removeServiceRefs } from './editor/serviceRefs.js';
 import { patchServiceList } from './editor/serviceDetails.js';
+import { heroCardMode } from './editor/heroServices.js';
 import { MoveButtons, moveItem } from './editor/fields.jsx';
 
 // The Vehicle Makes tab carries the kit's make logos (~70 KB): load it when
@@ -547,9 +548,16 @@ export default function ContentEditor({ isOpen, onClose, topOffset = 0, siteId, 
   // and every other id stays put, so a round trip through other templates
   // adds their ids once and never reorders the owner's. Runs a render after
   // a switch, so App's autosave already sees the new template id.
+  //
+  // Ids the template added after sites were saved with it (its
+  // addedSections) do not count as missing: the template orders them itself
+  // (buildSectionOrderAdded, right after the section before them), so a
+  // saved site's order is never rewritten just by opening the editor. When
+  // another id is missing, the repair still slots them in like any other.
   useEffect(() => {
     if (!isOpen || !templateInfo || templateInfo.templateId !== templateId) return;
-    if (!orderNeedsRepair(copy?.sectionOrder, defaultOrder)) return;
+    const added = templateInfo.addedSections || [];
+    if (!orderNeedsRepair(copy?.sectionOrder, defaultOrder.filter((id) => !added.includes(id)))) return;
     setCopy('sectionOrder', mergeSectionOrder(copy.sectionOrder, defaultOrder, { keepForeign: true }));
   }, [isOpen, templateId, templateInfo, copy?.sectionOrder]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -590,7 +598,7 @@ export default function ContentEditor({ isOpen, onClose, topOffset = 0, siteId, 
   // don't count: they never reach the published page.
   const [presentIds, setPresentIds] = useState(null);
   useEffect(() => {
-    const watching = isOpen && activeSection === 'visibility' && templateInfo?.themeReady && typeof document !== 'undefined';
+    const watching = isOpen && (activeSection === 'visibility' || activeSection === 'headings') && templateInfo?.themeReady && typeof document !== 'undefined';
     const root = watching ? document.querySelector('.preview-wrap') : null;
     if (!root) {
       setPresentIds((prev) => (prev === null ? prev : null));
@@ -625,6 +633,19 @@ export default function ContentEditor({ isOpen, onClose, topOffset = 0, siteId, 
       if (frame) cancelAnimationFrame(frame);
     };
   }, [isOpen, activeSection, templateInfo]);
+
+  // Switched-on sections the preview shows nothing of, with the Sections
+  // tab's hint: the Headings tab flags their rows too.
+  const absentHints = presentIds
+    ? Object.fromEntries(orderedSections
+      .filter(({ id }) => !isSectionHidden(id) && !presentIds.has(id))
+      .map(({ id }) => [id, templateHelp(templateId, `empty:${id}`) || EMPTY_SECTION_HINTS[id] || EMPTY_SECTION_HINT]))
+    : null;
+  // The package summary shows only in the hero's services card: say so
+  // while the design's hero has none.
+  const summaryHelp = has('heroServices') && heroCardMode(copy, heroCardDefault(templateId)) === 'off'
+    ? 'One line under the name in the hero price card or list. Your hero shows no services yet: turn them on in Edit > Hero > Services in the hero.'
+    : null;
 
   if (!isOpen) return null;
 
@@ -743,7 +764,7 @@ export default function ContentEditor({ isOpen, onClose, topOffset = 0, siteId, 
                       </span>
                     </div>
                     {absent && (
-                      <p className="mt-1 ml-5 text-[11px] text-gray-500 leading-snug">{EMPTY_SECTION_HINTS[id] || EMPTY_SECTION_HINT}</p>
+                      <p className="mt-1 ml-5 text-[11px] text-gray-500 leading-snug">{templateHelp(templateId, `empty:${id}`) || EMPTY_SECTION_HINTS[id] || EMPTY_SECTION_HINT}</p>
                     )}
                   </div>
                 );
@@ -786,7 +807,7 @@ export default function ContentEditor({ isOpen, onClose, topOffset = 0, siteId, 
               {has('heroServices') && (
                 <>
                   <hr className="my-3 border-gray-100" />
-                  <HeroServicesPanel copy={copy} setCopy={setCopy} businessInfo={businessInfo} />
+                  <HeroServicesPanel copy={copy} setCopy={setCopy} businessInfo={businessInfo} defaultMode={heroCardDefault(templateId)} offHelp={templateHelp(templateId, 'heroCardOff')} />
                 </>
               )}
             </>
@@ -897,7 +918,7 @@ export default function ContentEditor({ isOpen, onClose, topOffset = 0, siteId, 
                     </div>
                     <Field label="Description" value={pkg.description} onChange={(v) => updatePackage(i, 'description', v)} multiline rows={2} />
                     {has('serviceDetails') && (
-                      <ServiceDetailsFields service={pkg} index={i} siteId={siteId} onPatch={(key, value) => patchService(i, key, value, { name: pkg.name, count: packages.length })} />
+                      <ServiceDetailsFields service={pkg} index={i} siteId={siteId} summaryHelp={summaryHelp} onPatch={(key, value) => patchService(i, key, value, { name: pkg.name, count: packages.length })} />
                     )}
                   </div>
                 ))}
@@ -1433,21 +1454,21 @@ export default function ContentEditor({ isOpen, onClose, topOffset = 0, siteId, 
           })()}
 
           {activeSection === 'headings' && (
-            <HeadingsPanel copy={copy} setCopy={setCopy} sections={orderedSections} headingFields={templateInfo?.headingFields || null} hiddenSections={hiddenSections} businessInfo={businessInfo} headingDefaults={templateInfo?.headingDefaults || null} />
+            <HeadingsPanel copy={copy} setCopy={setCopy} sections={orderedSections} headingFields={templateInfo?.headingFields || null} hiddenSections={hiddenSections} businessInfo={businessInfo} headingDefaults={templateInfo?.headingDefaults || null} absentHints={absentHints} />
           )}
 
           {activeSection === 'featured' && (
-            <FeaturedServicePanel copy={copy} setCopy={setCopy} businessInfo={businessInfo} images={images} setImage={setImage} siteId={siteId} hasHeadingsTab={has('sectionTitles')} headingDefaults={templateInfo?.headingDefaults || null} />
+            <FeaturedServicePanel copy={copy} setCopy={setCopy} businessInfo={businessInfo} images={images} setImage={setImage} siteId={siteId} hasHeadingsTab={has('sectionTitles')} headingDefaults={templateInfo?.headingDefaults || null} automatic={featuredAutomatic(templateId)} linkHelp={templateHelp(templateId, 'featuredLink')} />
           )}
 
           {activeSection === 'makes' && (
             <Suspense fallback={<p className="text-[12px] text-gray-400 py-3">Loading makes…</p>}>
-              <VehicleMakesPanel copy={copy} setCopy={setCopy} />
+              <VehicleMakesPanel copy={copy} setCopy={setCopy} defaultAll={vehicleMakesDefaultAll(templateId)} />
             </Suspense>
           )}
 
           {activeSection === 'google' && (
-            <GoogleRatingPanel businessInfo={businessInfo} setBiz={setBiz} copy={copy} setCopy={setCopy} defaultPlacements={googleBadgeDefaults(templateId)} canEditBusiness={Boolean(onBusinessInfoChange)} />
+            <GoogleRatingPanel businessInfo={businessInfo} setBiz={setBiz} copy={copy} setCopy={setCopy} defaultPlacements={googleBadgeDefaults(templateId)} canEditBusiness={Boolean(onBusinessInfoChange)} footerSpec={templateInfo?.footerSpec || null} />
           )}
 
           {activeSection === 'gallery' && (
@@ -1633,7 +1654,7 @@ export default function ContentEditor({ isOpen, onClose, topOffset = 0, siteId, 
                   );
                 })}
               </div>
-              {has('footerBuilder') && <FooterBuilderPanel copy={copy} setCopy={setCopy} hasGoogleTab={has('googleBadge')} businessInfo={businessInfo} />}
+              {has('footerBuilder') && <FooterBuilderPanel copy={copy} setCopy={setCopy} hasGoogleTab={has('googleBadge')} businessInfo={businessInfo} spec={templateInfo?.footerSpec || null} />}
             </>
           )}
 

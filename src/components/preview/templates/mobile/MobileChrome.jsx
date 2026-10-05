@@ -9,26 +9,51 @@
 //     glass + shadow from html[data-acg-scrolled] (siteRuntime.js);
 //   - facts (stats, awards, hours) render only when the owner entered them,
 //     and editor hints go through PhotoSlot / EditorOnly.
+//
+// Owner-editable features (CLAUDE.md, "Feature blocks"): the hero services
+// card, the Google rating badge, the footer builder, package details, section
+// headings, the featured-service band, the vehicle-makes band, service areas
+// + insured, Google review labels and a contact background photo. They are
+// the kit's shared blocks (HeroOffer, PackageDetails, FeaturedBand,
+// MakesBand) in this design's look (FEATURE_CSS). Live sites use this
+// design, so every feature is opt-in: it renders only from the owner's own
+// new data, and a site that saved none of it gets exactly the markup, CSS
+// and root variables it had before the features existed.
 import { SocialRow } from '../SocialIcons.jsx';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import { ServiceCardCss, ServiceDescription, BookNowLink } from '../ServiceCardParts.jsx';
-import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import { buildSectionOrderAdded } from '../../../../lib/sectionOrder.js';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HOURS_DAYS } from '../../../../lib/businessHours.js';
-import { deriveTheme, mix, alpha, ensureContrast } from '../kit/theme.js';
+import { deriveTheme, mix, alpha, ensureContrast, heroScrimBase, overPhoto } from '../kit/theme.js';
 import { PhotoSlot, PHOTO_HINTS } from '../kit/PhotoSlot.jsx';
 import { MobileMenu, MobileActionBar } from '../kit/MobileMenu.jsx';
 import { EditorOnly, useEditorMode } from '../kit/EditorMode.jsx';
+import { Accented } from '../kit/Accented.jsx';
+import { serviceIncludes, serviceAreasOf, sectionTitle, splitAccent, businessKindOf, hasSocialLinks } from '../kit/content.js';
+import {
+  heroCardModeOf, heroOfferOf, featuredServiceOf, featuredHasBody, featuredTitleDefaults, makesEyebrowDefault, reviewStars, footerPlan,
+} from '../kit/features.js';
+import { HeroOffer, heroOfferCss } from '../kit/HeroOffer.jsx';
+import { PackageBadge, PackagePhoto, PackageIncludes, packageDetailsCss } from '../kit/PackageDetails.jsx';
+import { FeaturedBand, featuredBandCss } from '../kit/FeaturedBand.jsx';
+import { MakesBand, makesBandCss } from '../kit/MakesBand.jsx';
+import { vehicleMakesFor } from '../kit/vehicleMakes.js';
+import { GoogleRatingBadge, StarRow, GOOGLE_STAR_GOLD, googleRatingOf, googlePlaceUrl, googleBadgePlacements } from '../kit/GoogleRatingBadge.jsx';
 
 export const themeReady = true;
 
-// Same ids and order as ContentEditor's TOGGLEABLE._default, so the
-// editor's Sections list matches what renders. Never rename an id.
+// Default top-to-bottom order. The original eight ids are ContentEditor's
+// TOGGLEABLE._default, which saved sites store in copy.sectionOrder /
+// copy.hiddenSections: never rename an id. 'brands' (the vehicle-makes band)
+// and 'featured' (the featured-service band) came later: see addedSections.
 export const sections = [
   { id: 'hero', label: 'Hero' },
   { id: 'statsBar', label: 'Stats Bar' },
+  { id: 'brands', label: 'Vehicle Makes' },
   { id: 'services', label: 'Services' },
+  { id: 'featured', label: 'Featured Service' },
   { id: 'about', label: 'About' },
   { id: 'gallery', label: 'Gallery' },
   { id: 'testimonials', label: 'Reviews' },
@@ -36,7 +61,55 @@ export const sections = [
   { id: 'awards', label: 'Awards' },
 ];
 
+// Ids added after sites were saved with this design. They are ordered by
+// buildSectionOrderAdded: every original id keeps exactly its old order
+// value, and an added id the owner has not placed shares the value of the
+// section before it (it sits right after that section in the DOM, so the
+// CSS order tie keeps it there).
+export const addedSections = ['brands', 'featured'];
+
 export const extraFonts = [];
+
+// Edit > Headings: the copy.sectionTitles fields each section uses (any
+// other field is ignored by this design). titleFrom / introFrom name the copy
+// key that owns that text; the Headings tab edits it there. Stats Bar and
+// Awards have no heading. headingDefaults() below gives the design's text.
+export const headingFields = {
+  hero: { fields: ['eyebrow', 'title', 'accent'], titleFrom: 'headline' },
+  brands: { fields: ['eyebrow'] },
+  services: { fields: ['eyebrow', 'title', 'accent', 'intro'], titleFrom: 'servicesSection.title', introFrom: 'servicesSection.intro' },
+  featured: { fields: ['eyebrow', 'title', 'accent', 'intro'] },
+  about: { fields: ['eyebrow', 'title', 'accent'] },
+  gallery: { fields: ['eyebrow', 'title', 'accent'] },
+  testimonials: { fields: ['eyebrow', 'title', 'accent', 'intro'] },
+  cta: { fields: ['eyebrow', 'title', 'accent', 'intro'], titleFrom: 'ctaHeadline', introFrom: 'ctaSubtext' },
+};
+
+// Edit > Footer (kit/features.js footerPlan): the design's own footer (logo
+// column, Explore, Contact) while the owner saved none; Service Areas and
+// Hours are columns an owner can switch on, and the footer button stays off
+// until the owner turns it on.
+export const footerSpec = {
+  columns: [
+    { type: 'brand', show: true },
+    { type: 'links', show: true },
+    { type: 'areas', show: false },
+    { type: 'contact', show: true },
+    { type: 'hours', show: false },
+  ],
+  titles: { links: 'Explore', areas: 'Service Areas', contact: 'Contact', hours: 'Hours' },
+  mergeHours: false,
+  cta: false,
+  ctaLabel: 'Book Now',
+  notes: {
+    brand: 'Your logo or name, Footer Tagline, social icons and Google rating. Switched off, the rating moves to the bottom line.',
+    contact: 'Phone, email and city from Business Info, and your social icons while the logo column is off.',
+  },
+  // What fills the contact column (the Footer panel's "nothing to list"
+  // check); the social icons move there while the logo column is off.
+  contactFields: ['phone', 'email', 'city', 'state'],
+  socialWhenBrandOff: true,
+};
 
 const CSS = `
 .mc-wrap{width:100%;max-width:1240px;margin:0 auto;padding-left:var(--mc-gutter);padding-right:var(--mc-gutter)}
@@ -304,6 +377,110 @@ html[data-acg-scrolled] .mc-nav{box-shadow:0 14px 36px -18px var(--mc-shadow)}
 }
 `;
 
+// The owner-editable features' CSS, appended to CSS only while one of them
+// renders (a site without them gets exactly CSS). The kit blocks' own CSS
+// (heroOfferCss / packageDetailsCss / featuredBandCss / makesBandCss) comes
+// first; these rules point the blocks' --mc-hq-* / -pk- / -ft- / -mk-
+// variables at this design's tokens and restyle them in its look: hairlines,
+// 2-4px radii, the metallic chrome buttons and orb, small tracked capitals,
+// headings in the owner's case.
+const FEATURE_CSS = `
+.mc-hq-grid{display:grid;gap:clamp(32px,4cqi,64px);align-items:end}
+.mc-hq-slot{position:relative;width:100%;max-width:560px;text-shadow:none;--mc-hq-btn-bg:var(--mc-chrome);--mc-hq-btn-text:var(--mc-on-accent);--mc-hq-btn-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 14px 34px -18px var(--mc-glow);--mc-hq-line:var(--mc-border);--mc-hq-line-strong:var(--mc-border-strong);--mc-hq-pick:var(--mc-hq-card-accent);--mc-hq-pick-shadow:0 0 0 1px var(--mc-hq-card-accent);--mc-hq-hover:var(--mc-border-strong);--mc-hq-head:var(--mc-head);--mc-hq-head-w:600;--mc-hq-case:none;--mc-hq-r:4px;--mc-hq-r-ctl:2px;--mc-hq-r-lg:2px;--mc-hq-shadow:0 28px 56px -32px var(--mc-shadow);--mc-hq-focus:var(--mc-hq-card-accent)}
+.mc-split-offer{grid-template-rows:1fr auto}
+.mc-split-offer>.mc-hq-slot{grid-column:1 / -1;width:auto;max-width:560px;margin:0 var(--mc-gutter) clamp(56px,7cqi,96px) max(var(--mc-gutter),calc((100cqi - 1240px) / 2 + var(--mc-gutter)))}
+.mc-hq-back,.mc-hq-q-call{font-size:13px;font-weight:600;letter-spacing:.16em;text-transform:uppercase}
+.mc-hq-quote::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:var(--mc-line)}
+.mc-hq-q-cta,.mc-hq-hl-cta,.mc-hq-q-book{background-color:var(--mc-accent);background-size:220% 100%;background-position:0 0;font-size:13px;font-weight:600;letter-spacing:.16em;text-transform:uppercase}
+.mc-hq-step-l,.mc-hq-row-l{text-transform:uppercase;letter-spacing:.26em;font-size:11px}
+.mc-hq-q-h,.mc-hq-q-title,.mc-hq-row-v{letter-spacing:-.02em}
+.mc-hq-d1,.mc-hq-quote:has(.mc-hq-go:checked) .mc-hq-d2{background:var(--mc-orb)}
+.mc-hq-quote svg{stroke-width:1.6}
+.mc-hero-g{margin-top:28px}
+.mc-gpill{padding:8px 16px;border:1px solid var(--mc-border-strong);border-radius:999px;background:var(--mc-glass);font-size:12.5px;letter-spacing:.06em;color:var(--mc-text);text-decoration:none}
+.mc-gpill .acg-gbadge-count{color:var(--mc-muted)}
+.mc-has-media .mc-gpill{border-color:var(--mc-on-hero-line);background:rgba(0,0,0,.2);color:var(--mc-on-hero)}
+.mc-has-media .mc-gpill .acg-gbadge-count{color:var(--mc-on-hero-muted)}
+.mc-nav-g{display:inline-flex;font-size:12.5px;color:var(--mc-muted)}
+.mc-nav-g a{color:inherit;text-decoration:none}
+.mc-about-g{margin:-12px 0 24px}
+.mc-rev-g{margin-top:22px}
+.mc-foot-g{margin-top:16px;font-size:14px}
+.mc-foot a.mc-foot-cta{margin-top:22px;color:var(--mc-on-accent)}
+.mc-fb .mc-foot-list{overflow-wrap:anywhere}
+.mc-foot-note{margin-top:6px}
+.mc-card{--mc-pk-text:var(--mc-text);--mc-pk-muted:var(--mc-muted);--mc-pk-accent:var(--mc-accent-text);--mc-pk-line:var(--mc-border);--mc-pk-badge-bg:transparent;--mc-pk-badge-text:var(--mc-accent-text);--mc-pk-well-bg:var(--mc-bg);--mc-pk-well-ink:var(--mc-border-strong);--mc-pk-r:2px;--mc-pk-focus:var(--mc-focus)}
+.mc-pk-badge{align-self:flex-start;margin-top:18px;border:1px solid var(--mc-accent-text);border-radius:999px;padding:5px 14px;font-size:10.5px;font-weight:600;letter-spacing:.2em}
+.mc-card-feat{border-color:var(--mc-accent-text)}
+.mc-pk-card-photo{margin-bottom:22px;border:1px solid var(--mc-border)}
+.mc-pk-inc>summary{font-size:12px;font-weight:600;letter-spacing:.2em}
+.mc-pk-inc-h{font-size:13px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--mc-muted)}
+.mc-pk-inc-i{font-size:15px;font-weight:400;line-height:1.5;color:var(--mc-text)}
+.mc-ft-band{overflow:clip;isolation:isolate;--mc-ft-text:var(--mc-text);--mc-ft-muted:var(--mc-muted);--mc-ft-accent:var(--mc-accent-text);--mc-ft-r:2px;--mc-ft-photo-max:440px}
+.mc-ft-band>.mc-rings{z-index:-1;right:max(-34cqi,-460px);opacity:.35}
+.mc-ft-feat-solo{margin-left:0}
+.mc-ft-band .mc-hub{display:none}
+.mc-ft-feat-photo{border:1px solid var(--mc-border)}
+.mc-ft-feat-price{font-size:17px;line-height:1.7}
+.mc-ft-feat-price strong{font-family:var(--mc-head);font-size:clamp(22px,2.2cqi,28px);font-weight:600;letter-spacing:-.02em;color:var(--mc-text)}
+.mc-ft-feat-list li{line-height:1.6}
+.mc-mk-makes{--mc-mk-bg:var(--mc-surface);--mc-mk-text:var(--mc-text);--mc-mk-muted:var(--mc-muted);--mc-mk-line:var(--mc-border);--mc-mk-focus:var(--mc-focus)}
+.mc-mk-makes-eye{font-size:11px;font-weight:600;letter-spacing:.26em}
+.mc-quote .mc-rev-stars{margin-top:18px;color:var(--mc-accent-text)}
+.mc-quote figcaption .mc-rev-src{margin-left:auto;font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--mc-accent-text);text-decoration:none}
+.mc-rev-more{display:inline-flex;align-items:center;gap:10px;min-height:44px;margin-top:32px;font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--mc-accent-text);text-decoration:none}
+.mc-ctaph{--mc-focus:var(--mc-ctaph-text)}
+.mc-ctaph .mc-panel{--mc-focus:var(--mc-accent-text)}
+.mc-ctaph-photo{position:absolute;inset:0;z-index:-3}
+.mc-ctaph-scrim{position:absolute;inset:0;z-index:-2;background:var(--mc-ctaph-scrim)}
+.mc-ctaph>.mc-rings{display:none}
+.mc-ctaph .mc-eyebrow,.mc-ctaph .mc-h2{color:var(--mc-ctaph-text)}
+.mc-ctaph .mc-lead{color:var(--mc-ctaph-muted)}
+.mc-ctaph .mc-btn-ghost{color:var(--mc-ctaph-text);border-color:var(--mc-on-hero-line)}
+@supports ((-webkit-background-clip:text) or (background-clip:text)){
+.mc-h1 span.mc-h1-em{background-image:var(--mc-chrome-text)}
+.mc-has-media .mc-h1 span.mc-h1-em{background-image:var(--mc-h1-grad-hero);text-decoration:underline;text-decoration-color:var(--mc-accent);text-decoration-thickness:.06em;text-underline-offset:.12em}
+.mc-ctaph .mc-h2 .mc-chrome-text{background-image:var(--mc-h1-grad-hero);text-decoration:underline;text-decoration-color:var(--mc-accent);text-decoration-thickness:.06em;text-underline-offset:.12em}
+}
+@media (hover:hover){
+.mc-hq-q-cta:hover,.mc-hq-hl-cta:hover,.mc-hq-q-book:hover{background-position:100% 0;filter:none}
+.mc-gpill:hover{border-color:var(--mc-accent-text)}
+.mc-has-media .mc-gpill:hover{border-color:var(--mc-on-hero)}
+.mc-foot a.mc-foot-cta:hover{color:var(--mc-on-accent)}
+.mc-nav-g a:hover,.mc-rev-more:hover,.mc-quote figcaption a.mc-rev-src:hover{color:var(--mc-text)}
+.mc-ctaph .mc-btn-ghost:hover{border-color:var(--mc-ctaph-text);background:var(--mc-on-hero-soft)}
+}
+@media (prefers-reduced-motion:no-preference){
+.mc-hq-q-cta,.mc-hq-hl-cta,.mc-hq-q-book{transition:background-position .7s cubic-bezier(.2,.7,.2,1),box-shadow .3s ease}
+.mc-gpill,.mc-nav-g a,.mc-rev-more,.mc-rev-src{transition:color .2s ease,border-color .2s ease}
+}
+@container (min-width:601px){.mc-grid:not(.mc-c1) .mc-pk-card-well{display:flex}}
+@container (min-width:901px){.mc-foot-grid.mc-fb{grid-template-columns:var(--mc-fcols)}}
+@container (min-width:1024px){
+.mc-hq-grid{grid-template-columns:minmax(0,1fr) minmax(340px,420px)}
+.mc-hq-slot{max-width:none}
+.mc-hero-offer .mc-h1{font-size:clamp(40px,5.2cqi,76px)}
+.mc-split-offer>.mc-split-photo{grid-column:2;grid-row:1}
+.mc-split-offer>.mc-hq-slot{grid-column:2;grid-row:1;align-self:center;justify-self:center;z-index:2;width:min(420px,calc(100% - 2 * clamp(24px,4cqi,56px)));margin:clamp(32px,4cqi,64px) 0}
+}
+@container (max-width:1100px){.mc-nav-g{display:none}}
+@container (max-width:600px){
+.mc-split-offer .mc-split-photo{order:1}
+.mc-split-offer>.mc-hq-slot{margin-bottom:40px}
+.mc-ft-band>.mc-rings{top:0;right:-60cqi;width:120cqi}
+}
+`;
+
+// The hero services card's wording: this design calls them services.
+const HQ_LABELS = {
+  legend: 'Choose a service',
+  q1: 'Which Service Do You Need?',
+  sub1: 'Choose the one that fits your car.',
+  pick: 'Pick a service to see its price.',
+  row: 'Service',
+  listTitle: 'Our Services',
+};
+
 const txt = (v) => (typeof v === 'string' ? v.trim() : typeof v === 'number' ? String(v) : '');
 
 function telHref(phone) {
@@ -393,7 +570,72 @@ function chromeTokens(t) {
   };
 }
 
+// The hero services card (only while it renders): a surface-colored card
+// with page-colored option rows, every text color repaired against what it
+// sits on (theme:check contrast-tests each --mc-hq-*-text|muted with its
+// --mc-hq-*-bg).
+function chromeOfferVars(t) {
+  const rowBg = mix(t.surface, t.text, 0.04);
+  return {
+    '--mc-hq-card-bg': t.surface,
+    '--mc-hq-card-text': ensureContrast(t.text, t.surface, 4.5),
+    '--mc-hq-card-muted': ensureContrast(t.textMuted, t.surface, 4.5),
+    '--mc-hq-card-accent': ensureContrast(t.accentText, t.surface, 4.5),
+    '--mc-hq-opt-bg': t.bg,
+    '--mc-hq-opt-text': t.text,
+    '--mc-hq-opt-muted': t.textMuted,
+    '--mc-hq-opt-accent': t.accentText,
+    '--mc-hq-row-bg': rowBg,
+    '--mc-hq-row-text': ensureContrast(t.text, rowBg, 4.5),
+    '--mc-hq-row-muted': ensureContrast(t.textMuted, rowBg, 4.5),
+    '--mc-hq-row-accent': ensureContrast(t.accentText, rowBg, 4.5),
+  };
+}
+
+// The contact section over the owner's background photo (only while it
+// renders): white-ish copy under its own scrim of deriveTheme's scrim base
+// (the page darkened on a dark palette, near-black on a light one), at
+// least 80% opaque at every width, so at most a fifth of the photo shows
+// through where the copy sits. The copy is repaired for that (kit
+// overPhoto: a mid-grey and a near-white photo pixel); --mc-ctaph-bg is the
+// mid-grey mix theme:check pairs it with.
+function chromeCtaPhotoVars(t) {
+  const base = heroScrimBase(t.bg, t.isDark);
+  const { lit, text, muted } = overPhoto({ base, text: t.onHero, muted: mix(t.onHero, base, 0.2), minScrim: 0.8 });
+  return {
+    '--mc-ctaph-bg': lit,
+    '--mc-ctaph-text': text,
+    '--mc-ctaph-muted': muted,
+    '--mc-ctaph-scrim': `linear-gradient(90deg, ${alpha(base, 0.9)}, ${alpha(base, 0.8)})`,
+  };
+}
+
 const list = (v) => (Array.isArray(v) ? v : []);
+
+// The design's own heading text for each section, used while the owner has
+// typed none (copy.sectionTitles): { [sectionId]: { eyebrow?, title?,
+// accent? } }. The template renders from these and Edit > Headings shows
+// them as placeholders, so the two never disagree. accent '' = nothing is
+// highlighted. businessInfo as the template receives it.
+export function headingDefaults(businessInfo, generatedCopy) {
+  const biz = businessInfo || {};
+  const copy = generatedCopy || {};
+  const fb = getFallbacks(biz.businessType);
+  const name = txt(biz.businessName);
+  const fs = copy.featuredService && typeof copy.featuredService === 'object' ? copy.featuredService : {};
+  const ft = sectionTitle(copy.sectionTitles, 'featured');
+  return {
+    hero: { eyebrow: fb.heroBadge, title: txt(copy.headline) || name, accent: '' },
+    brands: { eyebrow: makesEyebrowDefault(businessKindOf(biz.businessType)) },
+    services: { eyebrow: 'Services', title: 'Our Services', accent: '' },
+    // Featured: only the owner's chosen service (no automatic pick here).
+    featured: { eyebrow: 'Featured', ...featuredTitleDefaults(txt(fs.serviceName), Boolean(ft.title)) },
+    about: { eyebrow: 'About', title: name ? `About ${name}` : 'About Us', accent: '' },
+    gallery: { eyebrow: 'Gallery', title: 'Our Work', accent: '' },
+    testimonials: { eyebrow: 'Testimonials', title: 'What Clients Say', accent: '' },
+    cta: { eyebrow: 'Contact', title: fb.ctaHeadline, accent: '' },
+  };
+}
 
 const Icon = ({ d, size = 18 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -403,6 +645,7 @@ const Icon = ({ d, size = 18 }) => (
 const ICONS = {
   phone: 'M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z',
   pin: 'M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21zM12 12.2a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z',
+  map: 'M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14',
   clock: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2',
   mail: 'M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zM3.5 6.5 12 13l8.5-6.5',
   card: 'M3 6h18v12H3zM3 10h18M7 15h3',
@@ -446,6 +689,9 @@ function EditorHint({ children }) {
 }
 
 const fill = { position: 'absolute', inset: 0, height: '100%' };
+// An owner's footer can have five narrow columns: let a long email wrap
+// before its @ rather than mid-word.
+const emailBreak = (e) => (e.indexOf('@') > 0 ? <>{e.slice(0, e.indexOf('@'))}<wbr />{e.slice(e.indexOf('@'))}</> : e);
 
 export default function MobileChrome({ businessInfo, generatedCopy, templateMeta, images = {} }) {
   const biz = businessInfo || {};
@@ -455,10 +701,13 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
   const font = templateMeta?.font;
   const body = templateMeta?.bodyFont;
   const fb = getFallbacks(biz.businessType);
+  const titles = copy.sectionTitles;
+  // The design's heading defaults (shared with Edit > Headings).
+  const hd = headingDefaults(biz, copy);
 
   const hiddenIds = list(copy.hiddenSections);
   const show = (id) => !hiddenIds.includes(id);
-  const order = buildSectionOrder(copy, sections.map((s) => s.id));
+  const order = buildSectionOrderAdded(copy, sections.map((s) => s.id), addedSections);
 
   const name = txt(biz.businessName);
   const phone = txt(biz.phone);
@@ -471,15 +720,59 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
   const warranty = txt(biz.warranty);
   const email = txt(biz.email);
   const address = txt(biz.address);
+  // Business Info > Insured: only an explicit yes.
+  const insured = biz.insured === true;
+  // Business Info > Areas served, the owner's own list only (no split of the
+  // older free-text serviceArea, no city): the contact panel's area chips.
+  const ownAreas = serviceAreasOf({ serviceAreas: biz.serviceAreas });
+  // Google rating (Edit > Google Rating): only where the owner switched it on
+  // (no default spots in this design), and only with a connected place that
+  // has a rating and a review count.
+  const rating = googleRatingOf(biz.googlePlace);
+  const placeUrl = googlePlaceUrl(biz.googlePlace);
+  const badgeAt = googleBadgePlacements(copy.googleBadge, []);
+  const badgeIn = (spot) => Boolean(rating) && badgeAt.includes(spot);
 
   // Services: the owner's Services tab (businessInfo.services, mirrored to
   // packages by normalizeBusinessInfo) wins over the AI list, as before.
+  // Package details (summary, badge, photo, included items) are the owner's
+  // own only: no list is made from the description.
   const fromPackages = list(biz.packages).length > 0;
   const services = (fromPackages ? biz.packages : list(copy.servicesSection?.items))
     .map((s) => (typeof s === 'string' ? { name: s } : s || {}))
-    .map((s) => ({ name: txt(s.name), price: txt(s.price), description: txt(s.description) }))
+    .map((s) => ({
+      name: txt(s.name),
+      price: txt(s.price),
+      description: txt(s.description),
+      summary: txt(s.summary),
+      badge: txt(s.badge),
+      image: txt(s.image),
+      includes: serviceIncludes(s.includes),
+    }))
     .filter((s) => s.name || s.description || s.price);
   const svcCols = services.length === 1 ? 'mc-c1' : services.length === 2 || services.length === 4 ? 'mc-c2' : 'mc-c3';
+  const anyServicePhoto = services.some((s) => s.image);
+  const pkgOn = show('services') && services.some((s) => s.badge || s.image || s.includes.length > 0);
+
+  // The hero services card (Edit > Hero > Services in the hero): only when
+  // the owner picked 'quote' (price card) or 'list'; absent = today's hero.
+  // Its packages: kit/features.js heroOfferOf (the owner's picks, else the
+  // first priced ones; the price card never shows without a price).
+  const heroCard = heroCardModeOf(copy.heroCard, 'off');
+  const { picks, listPicks, hasCard } = heroOfferOf({ services, heroServices: copy.heroServices, mode: heroCard });
+  const heroOn = show('hero') && hasCard;
+
+  // The featured-service band (Edit > Featured Service): only the service the
+  // owner chose (no automatic ceramic pick). A band with only a heading and a
+  // button repeats the service grid: the published page skips it.
+  const featured = featuredServiceOf({ featuredService: copy.featuredService, services, sectionTitles: titles, defaults: hd.featured, automatic: false });
+  const featuredBody = featuredHasBody(featured, images.featured);
+  const featuredOn = show('featured') && Boolean(featured) && (featuredBody || editor);
+
+  // The vehicle-makes band (Edit > Vehicle Makes): only the makes the owner
+  // ticked; no list = no band.
+  const makes = vehicleMakesFor(copy.vehicleMakes, []);
+  const makesOn = show('brands') && makes.length > 0;
 
   // Stats only from what the owner entered: About > Stats Box values, else
   // business facts (years, area, hours, payment). No invented numbers.
@@ -508,6 +801,10 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
   const testimonials = list(copy.testimonialPlaceholders)
     .filter((q) => txt(q?.text));
   const reviews = copy.googleWidgetKey ? 'google' : testimonials.length > 0 ? 'quotes' : null;
+  // "Google Review" labels, stars and the Google link belong to quotes the
+  // owner marked as Google reviews; AI-written quotes stay plain.
+  const googleQuotes = reviews === 'quotes' && testimonials.some((q) => q?.source === 'google');
+  const allGoogle = googleQuotes && testimonials.every((q) => q?.source === 'google');
 
   const navLinks = [
     show('services') && services.length > 0 && { href: '#services', label: 'Services' },
@@ -522,7 +819,12 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
   const heroSecondaryHref = copy.ctaSecondaryUrl || tel;
   const heroSecondaryLabel = txt(copy.ctaSecondary) || (phone ? `Call ${phone}` : '');
   const splitHero = copy.heroLayout === 'split';
-  const heroMeta = [txt(biz.tagline), place].filter(Boolean);
+  const heroMeta = [txt(biz.tagline), insured && 'Fully insured', place].filter(Boolean);
+  // Where booking links go when the booking widget is off (they carry
+  // data-scheduler-trigger, so with it on they open the widget): the phone,
+  // else the contact section, else an email, else the top of the page.
+  const bookHref = tel || (show('cta') ? '#contact' : email ? `mailto:${email}` : '#top');
+  const ctaPhoto = show('cta') && Boolean(images.cta);
 
   const vars = {
     '--mc-bg': t.bg,
@@ -543,7 +845,14 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
     '--mc-body': body,
     '--mc-gutter': 'clamp(20px, 5cqi, 48px)',
     ...chromeTokens(t),
+    ...(heroOn ? chromeOfferVars(t) : {}),
+    ...(ctaPhoto ? chromeCtaPhotoVars(t) : {}),
   };
+  // Google's star gold, darkened where the page is light so the stars keep
+  // 3:1 (photo hero: the gold as is; footer: the design's accent).
+  const pageStar = ensureContrast(GOOGLE_STAR_GOLD, t.bg, 3);
+  const surfaceStar = ensureContrast(GOOGLE_STAR_GOLD, t.surface, 3);
+  const footStar = ensureContrast(t.accentText, vars['--mc-footer-bg'], 3);
 
   // Logo if uploaded, else the chrome orb + wordmark (nav and footer).
   const brand = (logoStyle, loading) => (images.logo ? (
@@ -555,10 +864,22 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
     </>
   ));
 
+  // Hero heading (Edit > Headings > Hero): the owner's eyebrow, and the
+  // highlighted words in the chrome sheen (whole words of the headline only).
+  const heroT = sectionTitle(titles, 'hero');
+  const heroAccent = splitAccent(txt(copy.headline) || name, heroT.accent);
   const heroText = (
     <>
-      <p className="mc-eyebrow">{fb.heroBadge}</p>
-      <h1 className="mc-h1"><span>{txt(copy.headline) || name}</span></h1>
+      <p className="mc-eyebrow">{heroT.eyebrow || fb.heroBadge}</p>
+      {heroAccent ? (
+        <h1 className="mc-h1">
+          {heroAccent.before && <span>{heroAccent.before}</span>}
+          <span className="mc-h1-em">{heroAccent.match}</span>
+          {heroAccent.after && <span>{heroAccent.after}</span>}
+        </h1>
+      ) : (
+        <h1 className="mc-h1"><span>{txt(copy.headline) || name}</span></h1>
+      )}
       {txt(copy.subheadline) && <p className="mc-lead">{copy.subheadline}</p>}
       <div className="mc-actions">
         <a className="mc-btn mc-btn-chrome" href={heroPrimaryHref}>{heroPrimaryLabel}</a>
@@ -566,6 +887,11 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
           <a className="mc-btn mc-btn-ghost" href={heroSecondaryHref}>{heroSecondaryLabel}</a>
         )}
       </div>
+      {badgeIn('hero') && (
+        <div className="mc-hero-g">
+          <GoogleRatingBadge place={biz.googlePlace} className="mc-gpill" starColor={images.hero && !splitHero ? GOOGLE_STAR_GOLD : pageStar} />
+        </div>
+      )}
       {heroMeta.length > 0 && (
         <ul className="mc-hero-meta">
           {heroMeta.map((m, i) => <li key={i}>{m}</li>)}
@@ -574,17 +900,86 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
     </>
   );
 
+  // Picked or not, no service has a price: say why there is no price card.
+  const heroCardHint = heroCard === 'quote' && picks.length === 0 && services.some((s) => s.name) && (
+    <EditorHint>Your price card needs services with a price (Edit &gt; Services).</EditorHint>
+  );
+  const heroSlot = heroOn && (
+    <div className="mc-hq-slot">
+      <HeroOffer
+        ns="mc-hq"
+        mode={picks.length ? 'quote' : 'list'}
+        picks={picks.length ? picks : listPicks}
+        bookHref={bookHref}
+        tel={tel}
+        phoneLabel={phone}
+        listCta={show('services') && services.length > 0 ? { href: '#services', label: 'View All Services' } : { href: bookHref, label: 'Book Now', books: true }}
+        labels={HQ_LABELS}
+      />
+    </div>
+  );
+
   const aboutParas = txt(copy.aboutText).split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
   const aboutFacts = [
     place && { label: 'Based in', value: place },
     area && { label: 'Service area', value: area },
   ].filter(Boolean);
 
+  // With the owner's Areas served list, the free-text service area joins
+  // that row instead of a second pin row right above it.
+  const foldArea = ownAreas.length > 0 && Boolean(area);
   const contactPrimaryLabel = txt(copy.ctaButtonText) || txt(copy.ctaPrimary) || 'Get a Quote';
   const contactPrimaryHref = copy.ctaUrl || tel;
   const mapsHref = address
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([address, place].filter(Boolean).join(', '))}`
     : null;
+
+  // Section headings (Edit > Headings): the owner's text, else the design's.
+  const svcT = sectionTitle(titles, 'services');
+  const svcIntro = txt(copy.servicesSection?.intro) ? copy.servicesSection.intro : svcT.intro;
+  const aboutT = sectionTitle(titles, 'about');
+  const galT = sectionTitle(titles, 'gallery');
+  const revT = sectionTitle(titles, 'testimonials');
+  const ctaT = sectionTitle(titles, 'cta');
+
+  // Footer (Edit > Footer, kit/features.js footerPlan over footerSpec): the
+  // owner's columns in the owner's order, or the design's own brand /
+  // Explore / Contact. A column with nothing to list is left out. The footer
+  // button (off unless the owner turns it on): the owner's link, else the
+  // contact section with the booking widget, while that section shows.
+  const footAreas = serviceAreasOf(biz);
+  // The social icons live in the logo column; with that column off (the
+  // owner's footer only) they move to the contact column.
+  const social = hasSocialLinks(biz, images);
+  const plan = footerPlan({
+    footer: copy.footer,
+    spec: footerSpec,
+    ctaFallback: show('cta') ? '#contact' : null,
+    has: (type, { builder, cta, shown }) => ({
+      brand: true,
+      links: navLinks.length > 0,
+      areas: footAreas.length > 0,
+      contact: builder ? Boolean(tel || email || place || cta || (social && !shown.includes('brand'))) : true,
+      hours: hours.length > 0,
+    })[type],
+  });
+  const footSocialMoved = plan.builder && social && !plan.cells.some((c) => c.type === 'brand');
+  // The footer rating sits in the logo column; with that column switched off
+  // it moves to the bottom line.
+  const footBarBadge = badgeIn('footer') && !plan.cells.some((c) => c.type === 'brand');
+  // The owner's columns side by side from 901px; the logo column keeps the
+  // design's wider share.
+  const footCols = plan.cells.map((c) => (c.type === 'brand' ? 'minmax(0,1.5fr)' : 'minmax(0,1fr)')).join(' ');
+
+  // Any feature on this page: FEATURE_CSS joins the style block.
+  const featureOn = heroOn || pkgOn || featuredOn || makesOn || plan.builder || ctaPhoto || insured || googleQuotes
+    || ownAreas.length > 0 || Boolean(heroAccent) || ['hero', 'nav', 'about', 'reviews', 'footer'].some(badgeIn);
+  const css = CSS
+    + (heroOn ? heroOfferCss('mc-hq', { stackFrom: 1024 }) : '')
+    + (pkgOn ? packageDetailsCss('mc-pk') : '')
+    + (featuredOn ? featuredBandCss('mc-ft') : '')
+    + (makesOn ? makesBandCss('mc-mk') : '')
+    + (featureOn ? FEATURE_CSS : '');
 
   return (
     <div
@@ -592,7 +987,7 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
       className="mc-root"
       style={{ ...vars, containerType: 'inline-size', display: 'flex', flexDirection: 'column', minHeight: '100vh', overflowX: 'clip', background: t.bg, color: t.text, fontFamily: body, lineHeight: 1.6 }}
     >
-      <style>{CSS}</style>
+      <style>{css}</style>
       <a className="mc-skip" href="#main">Skip to content</a>
 
       <nav className="mc-nav" aria-label="Main" style={{ order: -1 }}>
@@ -600,8 +995,13 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
           <a className="mc-brand" href="#top" aria-label={name ? `${name}, back to top` : 'Back to top'}>
             {brand({ height: 40, width: 'auto', maxWidth: 180 }, 'eager')}
           </a>
-          {(navLinks.length > 0 || tel) && (
+          {(navLinks.length > 0 || tel || badgeIn('nav')) && (
             <div className="mc-links">
+              {badgeIn('nav') && (
+                <span className="mc-nav-g">
+                  <GoogleRatingBadge place={biz.googlePlace} variant="inline" starColor={pageStar} starSize={14} />
+                </span>
+              )}
               {navLinks.map((l) => (
                 <a key={l.href} className={`mc-link${l.extra ? ' mc-link-x' : ''}`} href={l.href}>{l.label}</a>
               ))}
@@ -621,7 +1021,7 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
         {!show('hero') && <h1 className="mc-sr">{name}</h1>}
 
         {show('hero') && !splitHero && (
-          <header data-section="hero" className={`mc-hero${images.hero ? ' mc-has-media' : ''}`} style={{ order: order('hero') }}>
+          <header data-section="hero" className={`mc-hero${images.hero ? ' mc-has-media' : ''}${heroOn ? ' mc-hero-offer' : ''}`} style={{ order: order('hero') }}>
             {images.hero ? (
               <>
                 <div className="mc-hero-media">
@@ -636,24 +1036,30 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
                 <Rings />
               </div>
             )}
-            <div className="mc-wrap">
+            <div className={`mc-wrap${heroOn ? ' mc-hq-grid' : ''}`}>
               <div className="mc-hero-body">
                 {heroText}
                 {!images.hero && <EditorHint>{PHOTO_HINTS.hero}</EditorHint>}
+                {heroCardHint}
               </div>
+              {heroSlot}
             </div>
           </header>
         )}
 
         {show('hero') && splitHero && (
-          <header data-section="hero" className="mc-split" style={{ order: order('hero') }}>
+          <header data-section="hero" className={`mc-split${heroOn ? ' mc-split-offer' : ''}`} style={{ order: order('hero') }}>
             <div className="mc-split-text">
               <div className="mc-decor"><div className="mc-lines" /></div>
               {heroText}
+              {heroCardHint}
             </div>
             <div className="mc-split-photo">
               <PhotoSlot src={images.hero} slot="hero" alt="" loading="eager" fetchPriority="high" style={fill} fallback={<Monogram name={name} />} />
             </div>
+            {/* The services card: over the photo column from 1024px, a row
+                under the hero below that, right after the copy on phones. */}
+            {heroSlot}
           </header>
         )}
 
@@ -678,25 +1084,38 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
           </section>
         )}
 
+        {makesOn && (
+          <section data-section="brands" id="makes" className="mc-mk-makes" aria-label="Vehicle makes" tabIndex={0} style={{ order: order('brands') }}>
+            <MakesBand ns="mc-mk" eyebrow={sectionTitle(titles, 'brands').eyebrow || hd.brands.eyebrow} makes={makes} />
+          </section>
+        )}
+
         {show('services') && services.length > 0 && (
           <section data-section="services" id="services" className="mc-section" aria-labelledby="mc-services-h" style={{ order: order('services') }}>
             <ServiceCardCss />
             <div className="mc-wrap">
-              <div className={`mc-head${txt(copy.servicesSection?.intro) ? '' : ' mc-head-solo'}`} data-acg-reveal="">
+              <div className={`mc-head${svcIntro ? '' : ' mc-head-solo'}`} data-acg-reveal="">
                 <div>
-                  <p className="mc-eyebrow">Services</p>
-                  <h2 id="mc-services-h" className="mc-h2">{txt(copy.servicesSection?.title) || 'Our Services'}</h2>
+                  <p className="mc-eyebrow">{svcT.eyebrow || hd.services.eyebrow}</p>
+                  <h2 id="mc-services-h" className="mc-h2">
+                    <Accented title={txt(copy.servicesSection?.title) || svcT.title || hd.services.title} accent={svcT.accent} className="mc-chrome-text" />
+                  </h2>
                 </div>
-                {txt(copy.servicesSection?.intro) && <p className="mc-intro">{copy.servicesSection.intro}</p>}
+                {svcIntro && <p className="mc-intro">{svcIntro}</p>}
               </div>
               <div className={`mc-grid ${svcCols}`}>
                 {services.map((s, i) => (
                   <div key={`${s.name}-${i}`} className="mc-cell" data-acg-reveal="" style={{ '--acg-delay': `${(i % 3) * 90}ms` }}>
-                    <article className="acg-svc-card mc-card">
+                    <article className={`acg-svc-card mc-card${s.badge ? ' mc-card-feat' : ''}${anyServicePhoto ? ' mc-card-ph' : ''}`}>
+                      {/* Once one service has a photo, the others keep the
+                          space where cards share a row (an upload slot in the
+                          editor, a quiet car mark on the site). */}
+                      <PackagePhoto ns="mc-pk" src={s.image} alt={s.name} anyPhoto={anyServicePhoto} editor={editor} />
                       <div className="mc-card-top">
                         <span className="mc-idx">{String(i + 1).padStart(2, '0')}</span>
                         {s.price && <span className="mc-price mc-chrome-text">{s.price}</span>}
                       </div>
+                      {s.badge && <PackageBadge ns="mc-pk" text={s.badge} />}
                       {s.name && <h3 className="mc-card-title">{s.name}</h3>}
                       <ServiceDescription
                         id={`svc-more-${fromPackages ? 'pkg' : 'ai'}-${i}`}
@@ -704,6 +1123,7 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
                         style={{ marginTop: 12, color: t.textMuted, fontSize: 15.5, lineHeight: 1.7 }}
                         accentColor={t.accentText}
                       />
+                      {s.includes.length > 0 && <PackageIncludes ns="mc-pk" items={s.includes} label="What's Included" checkStroke={1.8} />}
                       <div className="acg-svc-foot">
                         <div className="mc-foot-line">
                           <BookNowLink serviceName={s.name} phone={phone} label={<>Book now <Icon d={ICONS.arrow} size={16} /></>} />
@@ -713,6 +1133,48 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
                   </div>
                 ))}
               </div>
+            </div>
+          </section>
+        )}
+
+        {featuredOn && (
+          <section data-section="featured" id="featured" className="mc-section mc-alt mc-ft-band" aria-labelledby="mc-featured-h" style={{ order: order('featured') }}>
+            <Rings />
+            <div className="mc-wrap">
+              <FeaturedBand
+                ns="mc-ft"
+                image={images.featured}
+                alt={`${featured.name}${name ? ` by ${name}` : ''}`}
+                heading={(
+                  <>
+                    <p className="mc-eyebrow">{featured.eyebrow || hd.featured.eyebrow}</p>
+                    <h2 id="mc-featured-h" className="mc-h2">
+                      <Accented title={featured.title} accent={featured.accent} className="mc-chrome-text" />
+                    </h2>
+                  </>
+                )}
+                intro={featured.intro}
+                priceFrom={featured.priceFrom}
+                price={featured.price}
+                bullets={featured.bullets}
+                button={(
+                  <div className="mc-actions">
+                    <a
+                      className="mc-btn mc-btn-chrome"
+                      href={featured.buttonUrl || bookHref}
+                      {...(featured.buttonUrl ? {} : { 'data-scheduler-trigger': '', 'data-scheduler-service': featured.name })}
+                    >
+                      {featured.buttonText}
+                    </a>
+                  </div>
+                )}
+                hints={(
+                  <>
+                    {!featuredBody && <EditorHint>This band shows on your site once it has a photo, a price or a list of benefits (Edit &gt; Featured Service).</EditorHint>}
+                    {featuredBody && !images.featured && <EditorHint>{PHOTO_HINTS.featured}</EditorHint>}
+                  </>
+                )}
+              />
             </div>
           </section>
         )}
@@ -748,8 +1210,15 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
                 )}
               </div>
               <div data-acg-reveal="" style={{ '--acg-delay': '120ms' }}>
-                <p className="mc-eyebrow">About</p>
-                <h2 id="mc-about-h" className="mc-h2" style={{ marginBottom: 28 }}>{name ? `About ${name}` : 'About Us'}</h2>
+                <p className="mc-eyebrow">{aboutT.eyebrow || hd.about.eyebrow}</p>
+                <h2 id="mc-about-h" className="mc-h2" style={{ marginBottom: 28 }}>
+                  <Accented title={aboutT.title || hd.about.title} accent={aboutT.accent} className="mc-chrome-text" />
+                </h2>
+                {badgeIn('about') && (
+                  <div className="mc-about-g">
+                    <GoogleRatingBadge place={biz.googlePlace} className="mc-gpill" starColor={pageStar} />
+                  </div>
+                )}
                 {aboutParas.length > 0 && (
                   <div className="mc-prose">
                     {aboutParas.map((p, i) => <p key={i}>{p}</p>)}
@@ -775,8 +1244,10 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
             <div className="mc-wrap">
               <div className="mc-head mc-head-solo" data-acg-reveal="">
                 <div>
-                  <p className="mc-eyebrow">Gallery</p>
-                  <h2 id="mc-gallery-h" className="mc-h2">Our Work</h2>
+                  <p className="mc-eyebrow">{galT.eyebrow || hd.gallery.eyebrow}</p>
+                  <h2 id="mc-gallery-h" className="mc-h2">
+                    <Accented title={galT.title || hd.gallery.title} accent={galT.accent} className="mc-chrome-text" />
+                  </h2>
                 </div>
               </div>
               {galleryImages.length === 0 ? (
@@ -806,13 +1277,24 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
         )}
 
         {show('testimonials') && reviews === 'google' && (
-          <section data-section="testimonials" id="reviews" className="mc-section" aria-label={txt(copy.googleReviewsTitle) || 'Reviews'} style={{ order: order('testimonials') }}>
+          <section data-section="testimonials" id="reviews" className="mc-section" aria-label={txt(copy.googleReviewsTitle) || revT.title || 'Reviews'} style={{ order: order('testimonials') }}>
             <div className="mc-wrap">
-              {txt(copy.googleReviewsTitle) && (
+              {(txt(copy.googleReviewsTitle) || revT.title || badgeIn('reviews')) && (
                 <div className="mc-head mc-head-solo">
                   <div>
-                    <p className="mc-eyebrow">Reviews</p>
-                    <h2 className="mc-h2">{copy.googleReviewsTitle}</h2>
+                    {(txt(copy.googleReviewsTitle) || revT.title) && (
+                      <>
+                        <p className="mc-eyebrow">{revT.eyebrow || 'Reviews'}</p>
+                        <h2 className="mc-h2">
+                          <Accented title={txt(copy.googleReviewsTitle) ? copy.googleReviewsTitle : revT.title} accent={revT.accent} className="mc-chrome-text" />
+                        </h2>
+                      </>
+                    )}
+                    {badgeIn('reviews') && (
+                      <div className="mc-rev-g">
+                        <GoogleRatingBadge place={biz.googlePlace} className="mc-gpill" starColor={pageStar} />
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -826,42 +1308,73 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
         {show('testimonials') && reviews === 'quotes' && (
           <section data-section="testimonials" id="reviews" className="mc-section mc-alt" aria-labelledby="mc-reviews-h" style={{ order: order('testimonials') }}>
             <div className="mc-wrap">
-              <div className="mc-head mc-head-solo" data-acg-reveal="">
+              <div className={`mc-head${revT.intro ? '' : ' mc-head-solo'}`} data-acg-reveal="">
                 <div>
-                  <p className="mc-eyebrow">Testimonials</p>
-                  <h2 id="mc-reviews-h" className="mc-h2">What Clients Say</h2>
+                  <p className="mc-eyebrow">{revT.eyebrow || hd.testimonials.eyebrow}</p>
+                  <h2 id="mc-reviews-h" className="mc-h2">
+                    <Accented title={revT.title || hd.testimonials.title} accent={revT.accent} className="mc-chrome-text" />
+                  </h2>
+                  {badgeIn('reviews') && (
+                    <div className="mc-rev-g">
+                      <GoogleRatingBadge place={biz.googlePlace} className="mc-gpill" starColor={surfaceStar} />
+                    </div>
+                  )}
                 </div>
+                {revT.intro && <p className="mc-intro">{revT.intro}</p>}
               </div>
               <div className={`mc-grid ${testimonials.length === 1 ? 'mc-c1' : testimonials.length === 2 || testimonials.length === 4 ? 'mc-c2' : 'mc-c3'}`}>
-                {testimonials.map((q, i) => (
-                  <div key={i} className="mc-cell" data-acg-reveal="" style={{ '--acg-delay': `${(i % 3) * 90}ms` }}>
-                    <figure className="mc-quote">
-                      <svg className="mc-quote-mark" width="34" height="26" viewBox="0 0 34 26" fill="currentColor" aria-hidden="true">
-                        <path d="M0 26V15.6C0 6.9 4.6 1.7 13.2 0l1.5 3.4C9.8 5 7.4 8 7.1 12.2H14V26H0zm19.3 0V15.6C19.3 6.9 23.9 1.7 32.5 0L34 3.4c-4.9 1.6-7.3 4.6-7.6 8.8h6.9V26H19.3z" />
-                      </svg>
-                      <blockquote><p>{q.text}</p></blockquote>
-                      {(txt(q.name) || txt(q.vehicle) || txt(q.role)) && (
-                        <figcaption>
-                          {txt(q.name)}
-                          {(txt(q.vehicle) || txt(q.role)) && <span>{txt(q.vehicle) || txt(q.role)}</span>}
-                        </figcaption>
-                      )}
-                    </figure>
-                  </div>
-                ))}
+                {testimonials.map((q, i) => {
+                  // Only a quote the owner marked as a Google review gets the
+                  // label (linked to the place) and its 1-5 stars.
+                  const google = q?.source === 'google';
+                  const stars = reviewStars(q);
+                  const Src = placeUrl ? 'a' : 'span';
+                  const srcLink = placeUrl ? { href: placeUrl, target: '_blank', rel: 'noopener noreferrer' } : {};
+                  return (
+                    <div key={i} className="mc-cell" data-acg-reveal="" style={{ '--acg-delay': `${(i % 3) * 90}ms` }}>
+                      <figure className="mc-quote">
+                        <svg className="mc-quote-mark" width="34" height="26" viewBox="0 0 34 26" fill="currentColor" aria-hidden="true">
+                          <path d="M0 26V15.6C0 6.9 4.6 1.7 13.2 0l1.5 3.4C9.8 5 7.4 8 7.1 12.2H14V26H0zm19.3 0V15.6C19.3 6.9 23.9 1.7 32.5 0L34 3.4c-4.9 1.6-7.3 4.6-7.6 8.8h6.9V26H19.3z" />
+                        </svg>
+                        {stars > 0 && <StarRow rating={stars} size={16} gap={3} color="currentColor" className="mc-rev-stars" />}
+                        <blockquote><p>{q.text}</p></blockquote>
+                        {(google || txt(q.name) || txt(q.vehicle) || txt(q.role)) && (
+                          <figcaption>
+                            {txt(q.name)}
+                            {(txt(q.vehicle) || txt(q.role)) && <span>{txt(q.vehicle) || txt(q.role)}</span>}
+                            {google && <Src className="mc-rev-src" {...srcLink}>Google Review{placeUrl && <span className="mc-sr"> (opens Google Maps)</span>}</Src>}
+                          </figcaption>
+                        )}
+                      </figure>
+                    </div>
+                  );
+                })}
               </div>
+              {placeUrl && googleQuotes && (
+                <a className="mc-rev-more" href={placeUrl} target="_blank" rel="noopener noreferrer">
+                  {allGoogle ? 'Read More Reviews' : 'See Our Google Reviews'}<span className="mc-sr"> (opens Google Maps)</span><Icon d={ICONS.arrow} size={16} />
+                </a>
+              )}
             </div>
           </section>
         )}
 
         {show('cta') && (
-          <section data-section="cta" id="contact" className="mc-section mc-contact" aria-labelledby="mc-contact-h" style={{ order: order('cta') }}>
+          <section data-section="cta" id="contact" className={`mc-section mc-contact${ctaPhoto ? ' mc-ctaph' : ''}`} aria-labelledby="mc-contact-h" style={{ order: order('cta') }}>
+            {ctaPhoto && (
+              <>
+                <div className="mc-ctaph-photo" aria-hidden="true"><PhotoSlot src={images.cta} alt="" /></div>
+                <div className="mc-ctaph-scrim" aria-hidden="true" />
+              </>
+            )}
             <Rings />
             <div className="mc-wrap mc-contact-grid">
               <div data-acg-reveal="">
-                <p className="mc-eyebrow">Contact</p>
-                <h2 id="mc-contact-h" className="mc-h2 mc-h2-xl">{txt(copy.ctaHeadline) || fb.ctaHeadline}</h2>
-                <p className="mc-lead">{txt(copy.ctaSubtext) || 'Get in touch to schedule a service or ask a question.'}</p>
+                <p className="mc-eyebrow">{ctaT.eyebrow || hd.cta.eyebrow}</p>
+                <h2 id="mc-contact-h" className="mc-h2 mc-h2-xl">
+                  <Accented title={txt(copy.ctaHeadline) || ctaT.title || fb.ctaHeadline} accent={ctaT.accent} className="mc-chrome-text" />
+                </h2>
+                <p className="mc-lead">{txt(copy.ctaSubtext) || ctaT.intro || 'Get in touch to schedule a service or ask a question.'}</p>
                 <div className="mc-actions">
                   {contactPrimaryHref && (
                     <a
@@ -898,15 +1411,27 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
                       </span>
                     </li>
                   )}
-                  {(address || place || area) && (
+                  {(address || place || (area && !foldArea)) && (
                     <li className="mc-row">
                       <span className="mc-icon"><Icon d={ICONS.pin} /></span>
                       <span className="mc-row-body">
-                        <span className="mc-label">{address ? 'Location' : area ? 'Service area' : 'Based in'}</span>
+                        <span className="mc-label">{address ? 'Location' : area && !foldArea ? 'Service area' : 'Based in'}</span>
                         <span className="mc-row-value">
-                          {address ? <a href={mapsHref} target="_blank" rel="noopener noreferrer">{[address, place].filter(Boolean).join(', ')}</a> : (area || place)}
+                          {address ? <a href={mapsHref} target="_blank" rel="noopener noreferrer">{[address, place].filter(Boolean).join(', ')}</a> : (foldArea ? place : (area || place))}
                         </span>
-                        {address && area && <span className="mc-row-value" style={{ color: t.textMuted }}>{area}</span>}
+                        {address && area && !foldArea && <span className="mc-row-value" style={{ color: t.textMuted }}>{area}</span>}
+                      </span>
+                    </li>
+                  )}
+                  {ownAreas.length > 0 && (
+                    <li className="mc-row">
+                      <span className="mc-icon"><Icon d={ICONS.map} /></span>
+                      <span className="mc-row-body">
+                        <span className="mc-label">Areas we serve</span>
+                        {foldArea && <span className="mc-row-value">{area}</span>}
+                        <span className="mc-chips">
+                          {ownAreas.map((a) => <span key={a} className="mc-chip">{a}</span>)}
+                        </span>
                       </span>
                     </li>
                   )}
@@ -927,6 +1452,15 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
                             ))}
                           </dl>
                         )}
+                      </span>
+                    </li>
+                  )}
+                  {insured && (
+                    <li className="mc-row">
+                      <span className="mc-icon"><Icon d={ICONS.shield} /></span>
+                      <span className="mc-row-body">
+                        <span className="mc-label">Insurance</span>
+                        <span className="mc-row-value">Fully insured</span>
                       </span>
                     </li>
                   )}
@@ -978,35 +1512,88 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
 
       <footer className="mc-foot" style={{ order: 9999 }}>
         <div className="mc-wrap">
-          <div className="mc-foot-grid">
-            <div className="mc-foot-brand">
-              <a className="mc-brand" href="#top" aria-label={name ? `${name}, back to top` : 'Back to top'}>
-                {brand({ height: 48, width: 'auto', maxWidth: 200 })}
-              </a>
-              {txt(copy.footerTagline) && <p className="mc-foot-tag">{copy.footerTagline}</p>}
-              <div className="mc-social">
-                <SocialRow biz={biz} color={t.accentText} size={18} gap={10} images={images} />
-              </div>
+          {plan.cells.length > 0 && (
+            <div className={`mc-foot-grid${plan.builder ? ' mc-fb' : ''}`} {...(plan.builder ? { style: { '--mc-fcols': footCols } } : {})}>
+              {plan.cells.map((c) => {
+                if (c.type === 'brand') {
+                  return (
+                    <div key="brand" className="mc-foot-brand">
+                      <a className="mc-brand" href="#top" aria-label={name ? `${name}, back to top` : 'Back to top'}>
+                        {brand({ height: 48, width: 'auto', maxWidth: 200 })}
+                      </a>
+                      {txt(copy.footerTagline) && <p className="mc-foot-tag">{copy.footerTagline}</p>}
+                      {badgeIn('footer') && (
+                        <div className="mc-foot-g">
+                          <GoogleRatingBadge place={biz.googlePlace} variant="inline" starColor={footStar} starSize={16} />
+                        </div>
+                      )}
+                      <div className="mc-social">
+                        <SocialRow biz={biz} color={t.accentText} size={18} gap={10} images={images} />
+                      </div>
+                    </div>
+                  );
+                }
+                if (c.type === 'links') {
+                  return (
+                    <div key="links">
+                      <p className="mc-foot-h">{c.title}</p>
+                      <ul className="mc-foot-list">
+                        {navLinks.map((l) => <li key={l.href}><a href={l.href}>{l.label}</a></li>)}
+                      </ul>
+                    </div>
+                  );
+                }
+                if (c.type === 'areas') {
+                  return (
+                    <div key="areas">
+                      <p className="mc-foot-h">{c.title}</p>
+                      <ul className="mc-foot-list">
+                        {footAreas.map((a) => <li key={a}>{a}</li>)}
+                      </ul>
+                    </div>
+                  );
+                }
+                if (c.type === 'contact') {
+                  return (
+                    <div key="contact">
+                      <p className="mc-foot-h">{c.title}</p>
+                      <ul className="mc-foot-list">
+                        {tel && <li><a href={tel}>{phone}</a></li>}
+                        {email && <li><a href={`mailto:${email}`}>{plan.builder ? emailBreak(email) : email}</a></li>}
+                        {place && <li>{place}</li>}
+                      </ul>
+                      {footSocialMoved && (
+                        <div className="mc-social">
+                          <SocialRow biz={biz} color={t.accentText} size={18} gap={10} images={images} />
+                        </div>
+                      )}
+                      {plan.cta && (
+                        <a className="mc-btn mc-btn-chrome mc-btn-sm mc-foot-cta" href={plan.cta.href} {...(plan.cta.books ? { 'data-scheduler-trigger': '' } : {})}>{plan.cta.label}</a>
+                      )}
+                    </div>
+                  );
+                }
+                return (
+                  <div key="hours">
+                    <p className="mc-foot-h">{c.title}</p>
+                    <ul className="mc-foot-list">
+                      {hours.map((h) => <li key={h.days}>{h.time ? `${h.days} ${h.time}` : h.days}</li>)}
+                    </ul>
+                  </div>
+                );
+              })}
             </div>
-            {navLinks.length > 0 && (
-              <div>
-                <p className="mc-foot-h">Explore</p>
-                <ul className="mc-foot-list">
-                  {navLinks.map((l) => <li key={l.href}><a href={l.href}>{l.label}</a></li>)}
-                </ul>
+          )}
+          <div className="mc-foot-bottom">
+            {/* exportHtml's owner-link script appends to the LAST <p> of the
+                footer: the copyright stays that <p>; the rest are <div>s. */}
+            <p>© <span data-acg-year="">{new Date().getFullYear()}</span> {name}. All rights reserved.</p>
+            {footBarBadge && (
+              <div className="mc-foot-note">
+                <GoogleRatingBadge place={biz.googlePlace} variant="inline" starColor={footStar} starSize={14} />
               </div>
             )}
-            <div>
-              <p className="mc-foot-h">Contact</p>
-              <ul className="mc-foot-list">
-                {tel && <li><a href={tel}>{phone}</a></li>}
-                {email && <li><a href={`mailto:${email}`}>{email}</a></li>}
-                {place && <li>{place}</li>}
-              </ul>
-            </div>
-          </div>
-          <div className="mc-foot-bottom">
-            <p>© <span data-acg-year="">{new Date().getFullYear()}</span> {name}. All rights reserved.</p>
+            {plan.bottomText && <div className="mc-foot-note">{plan.bottomText}</div>}
           </div>
         </div>
       </footer>
