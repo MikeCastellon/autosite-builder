@@ -260,6 +260,70 @@ describe('checkUpgradedContent: regressions', () => {
       value: 'come to you at your convenience fully mobile professional',
     }]);
   });
+
+  // vivid-detailing-customs: the old WheelApex ticker showed the owner's
+  // specialties split at the commas, so the whole text was never on the
+  // page in one piece; the new page drops it.
+  it('flags owner text an old template showed piece by piece', () => {
+    const specialties = 'We are a group of trained professionals with a passion for cars, from the soccer mom minivan to the weekend sports car, and marine restorations. For your convenience we come to you';
+    const info = { ...INFO, specialties };
+    const ticker = specialties.split(',').map((p) => `<span>${p.trim()}</span><span>•</span>`).join('');
+    const live = newPage(`<p>Rivera Auto Care</p><div>${ticker}${ticker}</div>`);
+    let r = checkUpgradedContent(live, newPage('<p>Rivera Auto Care</p>'), siteRow({ business_info: info }));
+    expect(r.regressions).toEqual([expect.objectContaining({ kind: 'owner-text', value: specialties })]);
+    // Kept (in one piece or piece by piece): nothing to report.
+    r = checkUpgradedContent(live, newPage(`<p>Rivera Auto Care</p><p>${specialties}</p>`), siteRow({ business_info: info }));
+    expect(r.regressions).toEqual([]);
+    r = checkUpgradedContent(live, live, siteRow({ business_info: info }));
+    expect(r.regressions).toEqual([]);
+    // One short piece on the live page is not the text being shown.
+    const onePiece = newPage('<p>Rivera Auto Care</p><p>from the soccer mom minivan</p>');
+    r = checkUpgradedContent(onePiece, newPage('<p>Rivera Auto Care</p>'), siteRow({ business_info: info }));
+    expect(r.regressions).toEqual([]);
+  });
+
+  // vivid-detailing-customs: a product photo lives in products[].image, not
+  // in _images; it is the draft's photo all the same.
+  it('counts image URLs anywhere in the draft as the draft\'s photos', () => {
+    const product = `${ST}/product0-g2an19lp.jpg`;
+    const row = siteRow({ generated_content: { ...COPY, _images: IMAGES, products: [{ name: 'Wax', image: `${product}?v=1` }], instagramUrl: 'https://instagram.com/riveraauto' } });
+    const live = newPage(`<p>Rivera Auto Care</p><img src="${product}"/>`);
+    const r = checkUpgradedContent(live, live, row);
+    expect(r.live.ownerImages).toEqual([product]);
+    const owner = { id: 'owner-1', subscription_status: 'active' };
+    const codes = eligibility(row, live, r, owner, { renderCopy: COPY, manualSkip: [] }).reasons.map((x) => x.code);
+    expect(codes).not.toContain('draft_missing_images');
+  });
+
+  // B2-3 (magician-detailing, proppa-llc, juanito-detailing): a mobile
+  // detailer's street address is often their home.
+  describe('a mobile business\'s street address the live page never showed', () => {
+    const mobile = siteRow({ business_info: { ...INFO, businessType: 'mobile_detailing' } });
+    const hidden = newPage('<p>Rivera Auto Care</p><p>Tucson, AZ</p>');
+    const maps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('1420 W Grant Rd, Tucson, AZ')}`;
+
+    it('is reported when the new page shows it as text or behind a map link', () => {
+      let r = checkUpgradedContent(hidden, newPage('<p>Rivera Auto Care</p><p>1420 W Grant Rd, Tucson, AZ</p>'), mobile);
+      expect(r.exposed).toEqual([{ kind: 'address', label: expect.stringMatching(/Street address "1420 W Grant Rd" shows on the new page/), value: '1420 W Grant Rd' }]);
+      expect(r.regressions).toEqual([]);
+      r = checkUpgradedContent(hidden, newPage(`<p>Rivera Auto Care</p><a href="${maps}">Directions</a>`), mobile);
+      expect(r.exposed).toHaveLength(1);
+      const owner = { id: 'owner-1', subscription_status: 'active' };
+      const v = eligibility(mobile, hidden, r, owner, { renderCopy: COPY, manualSkip: [] });
+      expect(v.reasons.map((x) => x.code)).toContain('address_newly_shown');
+    });
+
+    it('is not reported when the live page showed it, or for a shop', () => {
+      const shown = newPage('<p>Rivera Auto Care</p><footer>1420 W Grant Rd, Tucson</footer>');
+      const withAddress = newPage('<p>Rivera Auto Care</p><p>1420 W Grant Rd, Tucson, AZ</p>');
+      expect(checkUpgradedContent(shown, withAddress, mobile).exposed).toEqual([]);
+      const viaMap = newPage(`<p>Rivera Auto Care</p><a href="${maps}">Map</a>`);
+      expect(checkUpgradedContent(viaMap, withAddress, mobile).exposed).toEqual([]);
+      const shop = siteRow({ business_info: { ...INFO, businessType: 'detailing_shop' } });
+      expect(checkUpgradedContent(hidden, withAddress, shop).exposed).toEqual([]);
+      expect(checkUpgradedContent(hidden, hidden, mobile).exposed).toEqual([]);
+    });
+  });
 });
 
 describe('HTML readers', () => {
@@ -342,6 +406,17 @@ describe('eligibility', () => {
     expect(codes(eligibility(siteRow(), live, clean, owner, ctx({ draftColors: { bg: '#123456', accent: '#abcdef' } })))).toEqual(['draft_colors_differ']);
   });
 
+  // the-spot-orlando: the dark background is on the live page, the saved
+  // accent (orange) is not: the live teal was never saved.
+  it('flags a draft accent the live page does not use, even when the background matches', () => {
+    const { bg, accent } = buildTemplateMeta('mobile_chrome').colors;
+    expect(live.toLowerCase()).toContain(accent.toLowerCase());
+    const r = eligibility(siteRow(), live, clean, owner, ctx({ draftColors: { bg, accent: '#f97316' } }));
+    expect(r.reasons).toEqual([{ code: 'draft_colors_differ', text: expect.stringMatching(/accent color #f97316/) }]);
+    // Background off, accent on: as before, ready.
+    expect(eligibility(siteRow(), live, clean, owner, ctx({ draftColors: { bg: '#123456', accent } })).status).toBe('ready');
+  });
+
   it('skips the colors heuristic for templates whose old version ignored the palette', () => {
     const r = eligibility(siteRow({ template_id: 'wheel_apex' }), live, clean, owner, ctx({ draftColors: { bg: '#123456', accent: '#abcdef' } }));
     expect(r.status).toBe('ready');
@@ -393,10 +468,10 @@ describe('eligibility', () => {
     add(eligibility(siteRow({ slug: 'A b' }), null, null, owner, ctx()));
     const differs = { ...COPY, headline: 'Other', subheadline: 'Other sub', googleWidgetKey: undefined };
     add(eligibility(siteRow({ generated_content: { ...differs, _images: {} } }), live, {
-      regressions: [{ kind: 'phone', label: 'x' }], live: { siteIds: ['other'], ownerImages: [`${ST}/gone.jpg`] },
+      regressions: [{ kind: 'phone', label: 'x' }], exposed: [{ kind: 'address', label: 'y' }], live: { siteIds: ['other'], ownerImages: [`${ST}/gone.jpg`] },
     }, owner, ctx({ renderCopy: differs, draftColors: { bg: '#123456', accent: '#abcdef' } })));
     expect([...all].sort()).toEqual([
-      'booking_only', 'custom_domain_pending', 'draft_colors_differ', 'draft_copy_differs', 'draft_empty', 'draft_inline_images',
+      'address_newly_shown', 'booking_only', 'custom_domain_pending', 'draft_colors_differ', 'draft_copy_differs', 'draft_empty', 'draft_inline_images',
       'draft_missing_images', 'draft_text_differs', 'invalid_slug', 'legacy_widgets', 'live_missing', 'live_other_site', 'live_too_large',
       'manual_skip', 'no_slug', 'no_template', 'not_live', 'on_hold', 'owner_unknown', 'regression', 'reserved_slug', 'shared_slug',
     ]);

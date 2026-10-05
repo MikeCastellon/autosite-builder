@@ -460,6 +460,42 @@ function draftImages(site) {
   return site?.generated_content?._images || {};
 }
 
+const IMAGE_URL_RE = /\.(?:jpe?g|png|webp|gif|avif|heic|heif|svg)$/i;
+
+// Every photo URL the draft holds, without query or hash: the _images
+// slots, and image URLs anywhere else in it (products[].image, package
+// photos...), which templates render too.
+function draftUrlSet(site) {
+  const out = new Set(Object.values(draftImages(site))
+    .filter((v) => typeof v === 'string' && /^https?:\/\//i.test(v))
+    .map(stripUrl));
+  const walk = (v, depth) => {
+    if (v == null || depth > 8) return;
+    if (typeof v === 'string') {
+      const u = v.trim();
+      if (/^https?:\/\/[^\s"'<>]+$/i.test(u) && (isStorageUrl(u) || IMAGE_URL_RE.test(stripUrl(u)))) out.add(stripUrl(u));
+      return;
+    }
+    if (typeof v === 'object') for (const x of Object.values(v)) walk(x, depth + 1);
+  };
+  walk(site?.generated_content, 0);
+  return out;
+}
+
+function isMobileBusiness(info) {
+  return /mobile/i.test(String(info?.businessType || ''));
+}
+
+// Map links (Google / Apple Maps) as decoded text, for "does a map link
+// point at this address".
+function mapLinks(html) {
+  return hrefs(html)
+    .filter((h) => /^https?:\/\/(?:www\.)?(?:google\.[a-z.]+\/maps|maps\.google\.[a-z.]+|maps\.apple\.com)/i.test(h))
+    .map((h) => {
+      try { return decodeURIComponent(h.replace(/\+/g, ' ')); } catch { return h; }
+    });
+}
+
 // Owner-entered service / package names and prices, plus the service
 // names in the copy (servicesSection.items).
 function ownerServices(site) {
@@ -532,14 +568,18 @@ const INTENDED_REMOVALS = [
 ];
 
 // What owner content on the live page would be missing from the new page.
-// Returns { regressions, intended, live, ok }:
+// Returns { regressions, intended, exposed, live, ok }:
 //   regressions — owner content the new page lost; any one flags the site
 //   intended    — fabricated claims / placeholders the new designs drop on purpose
+//   exposed     — owner data the new page shows that the live page never did
+//                 and the owner may not want public (a mobile business's
+//                 street address); any one flags the site
 //   live        — facts about the live page eligibility() uses
 // `appOrigin` is where the new page's widget scripts must point.
 export function checkUpgradedContent(liveHtml, newHtml, site, { appOrigin = PRODUCTION_APP_ORIGIN } = {}) {
   const regressions = [];
   const intended = [];
+  const exposed = [];
   const add = (kind, label, value) => regressions.push(value === undefined ? { kind, label } : { kind, label, value });
 
   const liveText = visibleText(liveHtml);
@@ -560,11 +600,28 @@ export function checkUpgradedContent(liveHtml, newHtml, site, { appOrigin = PROD
     if (v && wasShown(v) && !keptText(v)) add(kind, `${label} "${v}" is missing`, v);
   }
 
+  // A mobile business's street address is often the owner's home: one the
+  // live page never showed must not start showing (as text or behind a map
+  // link) without the owner's OK (impact report B2-3).
+  const street = String(info.address || '').trim();
+  if (street && normText(street).length >= 5 && isMobileBusiness(info)) {
+    const onMap = (html) => mapLinks(html).some((h) => normText(h).includes(normText(street)));
+    if (!wasShown(street) && !onMap(liveHtml) && (keptText(street) || onMap(newHtml))) {
+      exposed.push({ kind: 'address', label: `Street address "${street}" shows on the new page (with a map link) but never on the live page`, value: street });
+    }
+  }
+
   // The owner's other free text. A list the new design shows item by item
-  // ("XPEL, LLumar, 3M" as chips) still counts as kept.
+  // ("XPEL, LLumar, 3M" as chips) still counts as kept. A list an old
+  // template showed piece by piece (WheelApex splits the specialties at
+  // commas) counts as shown when its longer pieces, most of the text, are
+  // on the live page.
   for (const { key, value } of ownerFreeText(site)) {
-    if (!wasShown(value) || keptText(value)) continue;
     const pieces = value.split(/[,;|·•\n]+/).map((s) => s.trim()).filter((s) => normText(s).length >= 3);
+    const long = pieces.filter((s) => normText(s).length >= 12);
+    const shownInPieces = long.length >= 2 && long.every(wasShown)
+      && long.reduce((n, s) => n + normText(s).length, 0) * 2 >= normText(value).length;
+    if (!(wasShown(value) || shownInPieces) || keptText(value)) continue;
     if (pieces.length > 1 && pieces.every(keptText)) continue;
     const short = value.length > 80 ? `${value.slice(0, 77)}…` : value;
     add('owner-text', `Owner text (${key}) "${short}" is missing`, value);
@@ -602,9 +659,7 @@ export function checkUpgradedContent(liveHtml, newHtml, site, { appOrigin = PROD
   }
 
   // Photos: owner uploads (Storage) and every image URL the draft holds.
-  const draftUrls = new Set(Object.values(draftImages(site))
-    .filter((v) => typeof v === 'string' && /^https?:\/\//i.test(v))
-    .map(stripUrl));
+  const draftUrls = draftUrlSet(site);
   const liveUrls = urlsIn(liveHtml);
   const newUrls = urlsIn(newHtml);
   const liveOwnerImages = [...liveUrls].filter((u) => isStorageUrl(u) || draftUrls.has(u));
@@ -660,6 +715,7 @@ export function checkUpgradedContent(liveHtml, newHtml, site, { appOrigin = PROD
   return {
     regressions,
     intended,
+    exposed,
     live: {
       siteIds: [...new Set(liveScripts.map((s) => s.siteId))],
       ownerImages: liveOwnerImages,
@@ -741,7 +797,7 @@ export function eligibility(site, liveHtml, checkResult, ownerProfile, ctx = {})
     const liveNorm = normText(visibleText(liveHtml));
     const onLive = (s) => liveNorm.includes(normText(s));
 
-    const draftUrls = new Set(Object.values(images).filter((v) => typeof v === 'string').map(stripUrl));
+    const draftUrls = draftUrlSet(site);
     const notInDraft = (checkResult?.live?.ownerImages || []).filter((u) => !draftUrls.has(u)).length
       + (checkResult?.live?.inlineImagesMissing || 0);
     if (notInDraft) flag('draft_missing_images', `Live page shows ${notInDraft} photo(s) the saved draft doesn't have`);
@@ -769,11 +825,18 @@ export function eligibility(site, liveHtml, checkResult, ownerProfile, ctx = {})
       flag('draft_text_differs', `Live page doesn't show the draft's ${differs.join(', ')}: the draft changed since the last publish, or the live page has text the draft doesn't (it would be replaced)`);
     }
 
+    // The accent is checked on its own too: a dark background is common to
+    // many palettes, so a live page can carry the draft's background and
+    // still show another brand color (the-spot-orlando: teal live, orange
+    // saved).
     const colors = hexes(ctx.draftColors);
     if (colors.length && !LEGACY_FIXED_PALETTE.has(site?.template_id)) {
       const liveLower = String(liveHtml).toLowerCase();
+      const [accent] = hexes({ accent: ctx.draftColors?.accent });
       if (!colors.some((c) => liveLower.includes(c))) {
         flag('draft_colors_differ', 'Live page uses neither the draft\'s background nor accent color: the template or colors changed since the last publish');
+      } else if (accent && !liveLower.includes(accent)) {
+        flag('draft_colors_differ', `Live page doesn't use the draft's accent color ${accent}: the brand color would change (the colors changed since the last publish, or the live color was never saved)`);
       }
     }
 
@@ -787,6 +850,7 @@ export function eligibility(site, liveHtml, checkResult, ownerProfile, ctx = {})
   }
 
   for (const r of checkResult?.regressions || []) flag('regression', r.label);
+  for (const e of checkResult?.exposed || []) flag('address_newly_shown', e.label);
 
   return { status: reasons.length ? 'flagged' : 'ready', reasons };
 }
@@ -820,6 +884,7 @@ export const NEXT_STEPS = Object.freeze({
   live_other_site: 'The live page belongs to another site. Sort out the web address before anything is published.',
   legacy_widgets: `${OWNER_REPUBLISH}; that rebuilds their widgets.`,
   regression: `${COMPARE_THEN}. If a template drops it on purpose (e.g. Redline hides a mobile business's street address), the owner decides.`,
+  address_newly_shown: `Ask the owner first: a mobile business's street address is often their home. If they want it shown, ${OWNER_REPUBLISH.charAt(0).toLowerCase()}${OWNER_REPUBLISH.slice(1)}; if not, they clear the address in the editor, then check again.`,
   no_page: 'Open the site in the editor to see why the page does not build.',
 });
 

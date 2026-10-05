@@ -74,41 +74,42 @@
 //     test goes only to the signed-in admin's own address. Sends are
 //     sequential and stop at the first error that is not about one
 //     recipient; every result so far is returned.
+//
+// The page checks, backup, upload, restore and hold steps live in
+// _shared/siteUpgradeOps.js, which the terminal tool (scripts/site-upgrade/)
+// runs too, so both refuse and write the same way.
 import { randomBytes } from 'node:crypto';
 import { supabaseAdmin } from './_shared/auth.js';
 import { requireSuperAdmin } from './_shared/adminAuth.js';
 import { corsHeaders, jsonHeaders } from './_shared/cors.js';
 import { isReservedSlug, isValidSlug } from './_shared/slug.js';
-import { isSlugShared, resolvePublishSlug } from './_shared/slugClaim.js';
+import { isSlugShared } from './_shared/slugClaim.js';
 import {
-  BACKUP_ID_RE, BACKUP_META_FILE, backupKey, backupLivePages, holdKey, isMissingColumnError, listBackups,
-  livePageKey, r2GetJson, r2GetText, r2PutHtml, r2PutJson, setPublishedAt, upgradeEmailKey, upgradeEmailRunKey,
-  uploadSitePages,
+  BACKUP_ID_RE, backupLivePages, isMissingColumnError, listBackups, livePageKey, r2GetJson, r2GetText, r2PutJson,
+  setPublishedAt, upgradeEmailKey, upgradeEmailRunKey, holdKey,
 } from './_shared/r2.js';
 import {
-  PRODUCTION_APP_ORIGIN, UPGRADE_MANUAL_SKIP, isEmailAddress, upgradeEmailMarkerState, upgradeEmailOwnerSkip,
-  upgradeEmailPageSkip, upgradeEmailSiteSkip, upgradeEmailSiteUrl, widgetScripts,
+  MAX_BOOKING_BYTES, MAX_HTML_BYTES, assertNotHeld, backupAndUpload, byteLength, checkPublishRequest, fail,
+  holdAfterRestore, holdMarker, holdState, liveFile, readableSlug, restoreBackup, writableSlug, writeHold,
+} from './_shared/siteUpgradeOps.js';
+import {
+  PRODUCTION_APP_ORIGIN, isEmailAddress, upgradeEmailMarkerState, upgradeEmailOwnerSkip,
+  upgradeEmailPageSkip, upgradeEmailSiteSkip, upgradeEmailSiteUrl,
 } from '../../src/lib/siteUpgrade.js';
 import {
   greetingName, sendSiteUpgradeEmail, siteUpgradeEmail, upgradeEmailConfig, upgradeEmailConfigProblem,
   upgradeEmailStreamInfo,
 } from './_lib/siteUpgradeEmail.js';
 
+export { MAX_BOOKING_BYTES, MAX_HTML_BYTES };
+
 const TAG = '[admin-site-upgrade]';
 const PUBLISH_DOMAIN = process.env.PUBLISH_DOMAIN || 'autocaregeniushub.com';
-
-// Netlify caps a function request and response at 6 MB. A built page is
-// usually 50-300 KB; one past 3 MB holds inline images and is flagged.
-export const MAX_HTML_BYTES = 3 * 1024 * 1024;
-// The /book page is a ~1 KB shell (src/lib/bookingPageHtml.js).
-export const MAX_BOOKING_BYTES = 64 * 1024;
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 // Same as src/lib/siteRender.js WIDGET_KEY_TYPES (that module pulls in the
 // template registry, which has no place in a function bundle).
 const WIDGET_KEY_TYPES = ['instagram-feed', 'google-reviews'];
-
-const fail = (status, message) => Object.assign(new Error(message), { status });
 
 async function loadSite(db, siteId) {
   if (typeof siteId !== 'string' || !UUID_RE.test(siteId)) throw fail(400, 'A valid siteId is required');
@@ -125,26 +126,6 @@ async function loadSite(db, siteId) {
   return data;
 }
 
-// For reads: the stored slug, which must be usable. A shared slug may be
-// read (the page shown is whichever row published last).
-function readableSlug(site) {
-  if (!site.slug) throw fail(409, 'This site has no web address');
-  if (!isValidSlug(site.slug) || isReservedSlug(site.slug)) throw fail(409, 'This site\'s web address is not usable');
-  return site.slug;
-}
-
-// For writes: only a live website, only under its own stored slug.
-async function writableSlug(db, site) {
-  if (site.site_type && site.site_type !== 'website') throw fail(409, 'Only websites are upgraded here');
-  if (!site.published_url) throw fail(409, 'This site is not live');
-  if (!site.slug) throw fail(409, 'This site has no web address; it can only be published from the editor');
-  const claim = await resolvePublishSlug(db, site, site.slug);
-  if (!claim.slug) throw fail(claim.status || 409, claim.error);
-  // resolvePublishSlug only claims a new slug for a row without one.
-  if (claim.slug !== site.slug) throw fail(409, 'Web address mismatch');
-  return claim.slug;
-}
-
 // published_at records which sites are on the new design: the tab leaves
 // them out of "Republish all", and owners get their badge from it. Without
 // the column (migration 20261004_sites_published_at.sql not applied) an
@@ -157,75 +138,6 @@ async function requirePublishedAtColumn(db, siteId) {
   }
   console.error(`${TAG} published_at could not be read for site ${siteId}:`, error.message);
   throw fail(500, 'Could not load the site');
-}
-
-function byteLength(s) {
-  return Buffer.byteLength(s, 'utf8');
-}
-
-// This site's page, built on the production app.
-function checkPageHtml(html, siteId) {
-  if (typeof html !== 'string' || !html.trim()) throw fail(400, 'htmlContent is required');
-  if (byteLength(html) > MAX_HTML_BYTES) throw fail(413, 'The page is too large to publish');
-  if (!/^\s*<!doctype html>/i.test(html)) throw fail(400, 'htmlContent is not a full page');
-  const scripts = widgetScripts(html);
-  for (const kind of ['scheduler', 'contact']) {
-    if (!scripts.some((s) => s.kind === kind && s.siteId === siteId)) {
-      throw fail(400, `The page has no ${kind === 'scheduler' ? 'booking widget' : 'contact form'} for this site`);
-    }
-  }
-  checkScripts(scripts, siteId);
-}
-
-function checkBookingHtml(html, siteId) {
-  if (typeof html !== 'string' || !html.trim()) throw fail(400, 'bookingPageHtml must be a page');
-  if (byteLength(html) > MAX_BOOKING_BYTES) throw fail(413, 'The booking page is too large');
-  const scripts = widgetScripts(html);
-  if (!scripts.some((s) => s.kind === 'scheduler' && s.fullPage && s.siteId === siteId)) {
-    throw fail(400, 'The booking page has no booking widget for this site');
-  }
-  checkScripts(scripts, siteId);
-}
-
-function checkScripts(scripts, siteId) {
-  for (const s of scripts) {
-    if (s.siteId !== siteId) throw fail(400, 'The page loads a widget for another site');
-    if (s.origin !== PRODUCTION_APP_ORIGIN) {
-      throw fail(400, `The page's widgets load from ${s.origin || 'an unknown host'}; build it on ${PRODUCTION_APP_ORIGIN}`);
-    }
-  }
-}
-
-// A backed-up page must be this site's: its widgets carry this site's id
-// (very old pages may have none). Backups are already stored per site, so
-// this is a second guard.
-function checkBackupOwner(html, siteId, what) {
-  if (widgetScripts(html).some((s) => s.siteId !== siteId)) {
-    throw fail(409, `This backup's ${what} belongs to another site, so it was not restored`);
-  }
-}
-
-// A live file for the browser: its text, or why it is not there.
-async function liveFile(key, maxBytes) {
-  const r = await r2GetText(key);
-  if (!r.found) return { found: false };
-  if (r.size > maxBytes) return { found: true, size: r.size, tooLarge: true };
-  return { found: true, size: r.size, html: r.body };
-}
-
-// The hold marker as the browser sees it, or null when there never was
-// one: { held, reason ('restored' | 'manual'), note, at, by, backupId }.
-function holdState(h) {
-  if (!h) return null;
-  const str = (v) => (typeof v === 'string' ? v : null);
-  return {
-    held: h.held === true,
-    reason: str(h.reason),
-    note: str(h.note),
-    at: str(h.at),
-    by: h.by && typeof h.by === 'object' ? { id: str(h.by.id), email: str(h.by.email) } : null,
-    backupId: str(h.backupId),
-  };
 }
 
 // ─── Owner emails ─────────────────────────────────────────────────────
@@ -580,15 +492,7 @@ export const handler = async (event) => {
       case 'hold': {
         if (typeof body.held !== 'boolean') throw fail(400, 'held must be true or false');
         site = await loadSite(db, body.siteId);
-        const marker = {
-          held: body.held,
-          reason: body.held ? 'manual' : 'released',
-          note: typeof body.note === 'string' ? body.note.trim().slice(0, 200) || null : null,
-          at: new Date().toISOString(),
-          by,
-          siteId: site.id,
-        };
-        await r2PutJson(holdKey(site.id), marker, 'R2 hold');
+        const marker = await writeHold(holdMarker({ siteId: site.id, held: body.held, note: body.note, by }));
         log(body.held ? 'held' : 'released');
         return reply(200, { hold: holdState(marker) });
       }
@@ -596,38 +500,18 @@ export const handler = async (event) => {
       case 'publish': {
         site = await loadSite(db, body.siteId);
         const { htmlContent, bookingPageHtml } = body;
-        if (UPGRADE_MANUAL_SKIP.some((s) => s.siteId === site.id)) {
-          throw fail(409, 'This site is on the manual check list; it is republished by hand');
-        }
-        checkPageHtml(htmlContent, site.id);
-        if (bookingPageHtml != null) {
-          if (!site.scheduler_enabled) throw fail(409, 'Booking is off for this site now; check it again');
-          checkBookingHtml(bookingPageHtml, site.id);
-        }
+        checkPublishRequest(site, { htmlContent, bookingPageHtml });
         slug = await writableSlug(db, site);
         await requirePublishedAtColumn(db, site.id);
-        const hold = await r2GetJson(holdKey(site.id));
-        if (hold?.held === true) throw fail(409, 'This site is on hold. Release the hold first.');
+        await assertNotHeld(site.id);
         log(`start bytes=${byteLength(htmlContent)}${bookingPageHtml ? ' +book' : ''}`);
 
         let backup;
         try {
-          backup = await backupLivePages({ slug, siteId: site.id, reason: 'publish', by });
+          backup = await backupAndUpload({ slug, siteId: site.id, htmlContent, bookingPageHtml, by, log });
         } catch (e) {
-          log(`backup FAILED: ${e.message}`);
-          return reply(502, { error: `Could not back up the live page, so nothing was published (${e.message})` });
-        }
-        if (!backup.files.includes('index.html')) {
-          log('no live page to back up; not publishing');
-          return reply(409, { error: 'No live page was found to back up, so nothing was published. Publish this site from the editor instead.' });
-        }
-        log(`backup=${backup.backupId} files=${backup.files.join(',')}`);
-
-        try {
-          await uploadSitePages(slug, { htmlContent, bookingPageHtml: bookingPageHtml || undefined });
-        } catch (e) {
-          log(`upload FAILED after backup ${backup.backupId}: ${e.message}`);
-          return reply(500, { error: `${e.message}. The previous page is saved as backup ${backup.backupId}.`, backupId: backup.backupId });
+          if (!e.status) throw e;
+          return reply(e.status, { error: e.message, ...(e.backupId ? { backupId: e.backupId } : {}) });
         }
 
         // Same row bookkeeping as publish-site: published_url (unchanged
@@ -648,33 +532,17 @@ export const handler = async (event) => {
         log(`start backup=${backupId}`);
 
         // Only this site's folder is ever read (backups are keyed by site
-        // id), and the files must be this site's pages.
-        const index = await r2GetText(backupKey(site.id, backupId, 'index.html'));
-        if (!index.found) throw fail(404, 'Backup not found');
-        const meta = await r2GetJson(backupKey(site.id, backupId, BACKUP_META_FILE));
-        if (meta && meta.siteId !== site.id) throw fail(409, 'This backup belongs to another site, so it was not restored');
-        checkBackupOwner(index.body, site.id, 'page');
-        const book = await r2GetText(backupKey(site.id, backupId, 'book/index.html'));
-        if (book.found) checkBackupOwner(book.body, site.id, '/book page');
-
-        let safety;
+        // id), the files must be this site's pages, and the live page is
+        // backed up before it is overwritten.
+        let restored;
         try {
-          safety = await backupLivePages({ slug, siteId: site.id, reason: 'restore', by });
+          restored = await restoreBackup({ slug, siteId: site.id, backupId, by, log });
         } catch (e) {
-          log(`safety backup FAILED: ${e.message}`);
-          return reply(502, { error: `Could not back up the live page, so nothing was restored (${e.message})` });
+          if ('safetyBackupId' in e) return reply(500, { error: e.message, safetyBackupId: e.safetyBackupId });
+          if (e.status === 502) return reply(502, { error: e.message });
+          throw e;
         }
-        log(`safety backup=${safety.backupId || 'none (nothing live)'}`);
-
-        try {
-          await r2PutHtml(livePageKey(slug, 'index.html'), index.body, 'R2 restore');
-          // A backup without a /book page leaves the live one alone: the
-          // booking shell does not change with the design.
-          if (book.found) await r2PutHtml(livePageKey(slug, 'book/index.html'), book.body, 'R2 booking-page restore');
-        } catch (e) {
-          log(`restore FAILED: ${e.message}`);
-          return reply(500, { error: e.message, safetyBackupId: safety.backupId });
-        }
+        const { files, safetyBackupId } = restored;
 
         // The restored page's publish time is unknown: clear published_at
         // (null = "before tracking"), which also drops the dashboard's "New
@@ -682,17 +550,9 @@ export const handler = async (event) => {
         await setPublishedAt(db, site.id, null);
         // Hold the site, so the next check flags it and "Republish all"
         // cannot put the new design straight back.
-        const hold = { held: true, reason: 'restored', note: null, at: new Date().toISOString(), by, siteId: site.id, backupId, safetyBackupId: safety.backupId };
-        let holdError = null;
-        try {
-          await r2PutJson(holdKey(site.id), hold, 'R2 hold');
-        } catch (e) {
-          holdError = `The page was restored, but the site could not be put on hold (${e.message}). Put it on hold by hand.`;
-          log(`hold FAILED: ${e.message}`);
-        }
-        const files = book.found ? ['index.html', 'book/index.html'] : ['index.html'];
-        log(`restored backup=${backupId} files=${files.join(',')} safety=${safety.backupId || 'none'}${holdError ? '' : ' held'}`);
-        return reply(200, { slug, restored: backupId, files, safetyBackupId: safety.backupId, hold: holdError ? null : holdState(hold), holdError });
+        const { hold, holdError } = await holdAfterRestore({ siteId: site.id, backupId, safetyBackupId, by, log });
+        log(`restored backup=${backupId} files=${files.join(',')} safety=${safetyBackupId || 'none'}${holdError ? '' : ' held'}`);
+        return reply(200, { slug, restored: backupId, files, safetyBackupId, hold: holdError ? null : holdState(hold), holdError });
       }
 
       case 'emailStatus': {
