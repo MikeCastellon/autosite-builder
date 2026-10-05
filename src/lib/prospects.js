@@ -204,9 +204,10 @@ export function useProspects({ userId = null } = {}) {
    *
    * The list can be minutes old, so the row is read first: another admin may
    * have ruled it out, or it may have turned out to be a customer, and their
-   * decision stands. (The function itself only refuses a business that is
-   * gone.) When it is already in the Pipeline the function hands back that
-   * lead, and the note goes onto it here rather than being lost.
+   * decision stands. The function checks the same thing again under its row
+   * lock, for a change that lands in between. When it is already in the
+   * Pipeline the function hands back that lead, and the note goes onto it
+   * here rather than being lost.
    */
   const toPipe = useCallback(async (id, note = '') => {
     const text = note.trim() || null;
@@ -217,7 +218,9 @@ export function useProspects({ userId = null } = {}) {
       return { error: 'Someone else already changed this one. The list now shows where it is.' };
     }
     const { data, error: err } = await supabase.rpc('sales_prospect_to_pipe', { p_prospect_id: id, p_note: text });
-    if (err) return { error: err.message };
+    // The function refuses a business someone changed since the re-read;
+    // re-read again so the list shows where it went.
+    if (err) { await reread(id); return { error: err.message }; }
     if (!data?.lead_id) return { error: 'Not added. Try again.' };
     if (data.created) {
       patchLocal(id, { status: 'piped', lead_id: data.lead_id, dismiss_reason: null, status_note: null, status_by: userId });

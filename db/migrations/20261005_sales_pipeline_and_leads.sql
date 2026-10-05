@@ -441,7 +441,8 @@ grant select on public.sales_prospect_scans to authenticated;
 -- ---------------------------------------------------------------------------
 -- One transaction, so a dropped connection can't leave a lead in the Pipeline
 -- while the business still reads "New" (and gets piped a second time).
--- Idempotent: a business already in the Pipeline hands back its lead.
+-- Idempotent: a business already in the Pipeline hands back its lead. A
+-- business marked Not a fit, or matched to an account, is refused.
 -- p_owner lets an admin file the lead for another admin; default is the caller.
 -- Returns { lead_id, created }.
 create or replace function public.sales_prospect_to_pipe(
@@ -480,6 +481,13 @@ begin
       update public.sales_prospects set status = 'piped' where id = v_p.id;
     end if;
     return jsonb_build_object('lead_id', v_p.lead_id, 'created', false);
+  end if;
+
+  -- Another admin ruled it out, or it turned out to have an account, after
+  -- this admin's list was loaded: their decision stands. Checked here, under
+  -- the row lock, because the browser's own re-read is a round trip earlier.
+  if v_p.status = 'dismissed' or v_p.match_user_id is not null then
+    raise exception 'Someone else already changed this one. The list now shows where it is.';
   end if;
 
   select id into v_stage from public.sales_stages
