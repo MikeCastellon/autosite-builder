@@ -26,6 +26,8 @@ vi.mock('../../netlify/functions/_shared/auth.js', () => ({
 
 const { handler, MAX_HTML_BYTES, MAX_EMAIL_SITES } = await import('../../netlify/functions/admin-site-upgrade.js');
 const { BACKUP_ID_RE } = await import('../../netlify/functions/_shared/r2.js');
+// Email eligibility counts from the release day, so the fixtures follow it.
+const { SITE_UPGRADE_RELEASE_DATE: RELEASE } = await import('../../src/lib/siteUpgrade.js');
 
 const SITE_ID = '11111111-2222-4333-8444-555555555555';
 const OTHER_ID = '99999999-2222-4333-8444-555555555555';
@@ -550,7 +552,7 @@ describe('backup and hold', () => {
 
 describe('owner emails', () => {
   const ORIGIN = { origin: APP };
-  const UPGRADED_AT = '2026-10-02T15:00:00.000Z';
+  const UPGRADED_AT = `${RELEASE}T15:00:00.000Z`;
   const CREATED_AT = '2025-05-01T00:00:00.000Z';
   const A1 = 'a1a1a1a1-1111-4111-8111-111111111111'; // Mike's first site
   const A2 = 'a2a2a2a2-1111-4111-8111-111111111111'; // Mike's second site (own domain, booking on)
@@ -563,7 +565,7 @@ describe('owner emails', () => {
   const MISSING = 'ffffffff-1111-4111-8111-111111111111';
   const RUN = 'run-0001-test';
   const LEASE_KEY = '_backups/upgrade-email-run.json';
-  const UPGRADE_BACKUP = '2026-10-02T15-00-00-000Z-publish-0a1b2c3d';
+  const UPGRADE_BACKUP = `${RELEASE}T15-00-00-000Z-publish-0a1b2c3d`;
 
   const live = (id, userId, name, slug, extra = {}) => ({
     id, user_id: userId, slug, published_url: `https://${slug}.autocaregeniushub.com`, site_type: 'website',
@@ -812,7 +814,7 @@ describe('owner emails', () => {
       emailSetup({
         sites: [
           ...SITES.filter((s) => ![A1, A2, B].includes(s.id)),
-          live(A1, 'owner-1', 'Top Choice', 'top-choice', { created_at: '2026-10-02T12:00:00.000Z' }),
+          live(A1, 'owner-1', 'Top Choice', 'top-choice', { created_at: `${RELEASE}T12:00:00.000Z` }),
           live(A2, 'owner-1', 'Top Choice Tint', 'top-choice-tint', { template_id: 'detailing_coastal' }),
           live(B, 'owner-2', 'Jane\'s Detail', 'janes-detail'),
         ],

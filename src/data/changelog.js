@@ -11,9 +11,9 @@
 export const CHANGELOG = [
   {
     id: '2026-10-site-upgrade',
-    // Placeholder: set to the release day when PR #10 merges (and keep
-    // SITE_UPGRADE_RELEASE_DATE in src/lib/siteUpgrade.js the same).
-    date: '2026-10-02',
+    // The release day of PR #10; keep SITE_UPGRADE_RELEASE_DATE in
+    // src/lib/siteUpgrade.js the same.
+    date: '2026-10-05',
     title: 'New designs for every website',
     items: [
       {

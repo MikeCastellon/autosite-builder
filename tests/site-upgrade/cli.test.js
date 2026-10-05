@@ -38,6 +38,7 @@ let run;
 let render;
 let FIXTURES;
 let SKIP;
+let RELEASE; // SITE_UPGRADE_RELEASE_DATE: "already upgraded" counts from it
 let VERIFY;
 let BUILT;
 
@@ -50,6 +51,7 @@ beforeAll(async () => {
   ({ FIXTURES } = await import('../../src/components/preview/templates/__fixtures__/businesses.js'));
   const su = await import('../../src/lib/siteUpgrade.js');
   SKIP = su.UPGRADE_MANUAL_SKIP[0].siteId;
+  RELEASE = su.SITE_UPGRADE_RELEASE_DATE;
   ({ VERIFY } = await import('../../scripts/site-upgrade/ops.js'));
   // The production app once PR #10 is deployed: this checkout's build.
   BUILT = await (await import('../../scripts/site-upgrade/guard.js')).localBuild(ROOT);
@@ -284,7 +286,7 @@ describe('publish refuses, and writes nothing', () => {
   ])('%s', async (_, edit, opts, msg) => {
     envFile();
     world({ guardPass: opts.guardPass !== false });
-    if (opts.upgraded) sites[0].published_at = '2026-10-03T00:00:00+00:00';
+    if (opts.upgraded) sites[0].published_at = `${RELEASE}T12:00:00+00:00`;
     if (opts.stale) exportedAt = new Date(Date.now() - (opts.stale === true ? 2 : opts.stale) * 3600e3).toISOString();
     if (opts.unpinned) pin.pinned = false;
     const base = publishArgs();

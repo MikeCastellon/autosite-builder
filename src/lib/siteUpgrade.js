@@ -12,7 +12,7 @@
 // deployed. A site whose published_at is on or after it shows "New design
 // live" on the owner's dashboard. (published_at is only written by code
 // that ships with the new designs, so this is a second guard.)
-export const SITE_UPGRADE_RELEASE_DATE = '2026-10-02';
+export const SITE_UPGRADE_RELEASE_DATE = '2026-10-05';
 
 // exportHtml bakes window.location.origin into the published page's widget
 // script URLs (scheduler.js, contact-form.js), so a page built anywhere
