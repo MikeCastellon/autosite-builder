@@ -4,7 +4,7 @@ import {
   addDays, addMonths, subMonths, isSameDay, isSameMonth, format,
 } from 'date-fns';
 import StatusPill from './StatusPill.jsx';
-import { formatBookingTime, bookingDayKey } from '../../../lib/bookings.js';
+import { formatBookingTime, bookingDayKey, isUnscheduledRequest } from '../../../lib/bookings.js';
 
 // Appointment times are shop wall-clock time (see bookings.js), so they are
 // bucketed and labelled in UTC; date-fns format() would use the viewer's zone.
@@ -72,9 +72,9 @@ export default function BookingsCalendar({ bookings, onSelect }) {
                     key={b.id}
                     onClick={() => onSelect(b)}
                     className={`w-full text-left text-[11px] px-1.5 py-0.5 rounded border truncate ${STATUS_COLOR[b.status]}`}
-                    title={`${b.customer_name} — ${slotLabel(b.preferred_at)}`}
+                    title={`${b.customer_name} — ${isUnscheduledRequest(b) ? 'time to arrange' : slotLabel(b.preferred_at)}`}
                   >
-                    {slotLabel(b.preferred_at)} {b.customer_name}
+                    {isUnscheduledRequest(b) ? 'Request' : slotLabel(b.preferred_at)} {b.customer_name}
                   </button>
                 ))}
                 {items.length > 3 && (

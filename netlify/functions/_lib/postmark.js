@@ -24,6 +24,14 @@ function esc(s) {
   }[c]));
 }
 
+// Plain-text copy of an esc()-built HTML snippet: tags dropped, entities
+// back to characters (the text email showed "O&#39;Brien").
+function htmlToText(html) {
+  return String(html ?? '')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&(amp|lt|gt|quot|#39);/g, (m, e) => ({ amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'" }[e]));
+}
+
 const WHEN_FORMAT = {
   weekday: 'short', month: 'short', day: 'numeric',
   year: 'numeric', hour: 'numeric', minute: '2-digit',
@@ -179,11 +187,15 @@ function businessInfoTextBlock(site) {
   return lines.length ? `\n\n---\n${lines.join('\n')}` : '';
 }
 
-export async function newBookingToOwner({ booking, site, ownerEmail }) {
+// requestedTimeText: set for a request-form booking (booking_mode 'simple'),
+// whose preferred_at is only a placeholder; the customer's own words are
+// shown instead of that time.
+export async function newBookingToOwner({ booking, site, ownerEmail, requestedTimeText = null }) {
   if (!client) { console.warn('Postmark not configured; skipping email'); return; }
   const b = booking;
   const name = site?.business_info?.businessName || 'your site';
   const dashLink = `${APP_URL}/?bookings=${encodeURIComponent(b.id)}`;
+  const whenText = requestedTimeText ? `asks for: ${requestedTimeText}` : formatWhen(b.preferred_at);
 
   const vehicleLine = [b.vehicle_year, b.vehicle_make, b.vehicle_model].filter(Boolean).join(' ');
   const detailCard = `
@@ -201,17 +213,19 @@ export async function newBookingToOwner({ booking, site, ownerEmail }) {
   const html = renderEmailShell({
     icon: '📅',
     title: `${esc(b.customer_name)} wants to book`,
-    intro: `Preferred time: <strong style="color:#18181b;">${esc(formatWhen(b.preferred_at))}</strong>`,
+    intro: requestedTimeText
+      ? `Requested time, in their words: <strong style="color:#18181b;">${esc(requestedTimeText)}</strong>. Set the time when you confirm it.`
+      : `Preferred time: <strong style="color:#18181b;">${esc(formatWhen(b.preferred_at))}</strong>`,
     cta: { label: 'Open in your dashboard', href: dashLink },
     body: detailCard,
   });
-  const text = `New booking request for ${name}\n\n${b.customer_name} (${b.customer_email}, ${b.customer_phone}) wants to book for ${formatWhen(b.preferred_at)}.\nVehicle: ${b.vehicle_year} ${b.vehicle_make} ${b.vehicle_model} (${b.vehicle_type_name || b.vehicle_size})\n${b.service_name ? 'Service: ' + b.service_name + '\n' : ''}${b.service_address ? 'Service address: ' + b.service_address + '\n' : ''}${b.notes ? 'Notes: ' + b.notes + '\n' : ''}${addonsBreakdownText(b)}\nOpen: ${dashLink}`;
+  const text = `New booking request for ${name}\n\n${b.customer_name} (${b.customer_email}, ${b.customer_phone}) wants to book ${requestedTimeText ? `and ${whenText}` : `for ${whenText}`}.\nVehicle: ${b.vehicle_year} ${b.vehicle_make} ${b.vehicle_model} (${b.vehicle_type_name || b.vehicle_size})\n${b.service_name ? 'Service: ' + b.service_name + '\n' : ''}${b.service_address ? 'Service address: ' + b.service_address + '\n' : ''}${b.notes ? 'Notes: ' + b.notes + '\n' : ''}${addonsBreakdownText(b)}\nOpen: ${dashLink}`;
 
   try {
     const res = await client.sendEmail({
       From: FROM,
       To: ownerEmail,
-      Subject: `New booking request from ${b.customer_name} — ${formatWhen(b.preferred_at)}`,
+      Subject: `New booking request from ${b.customer_name} — ${requestedTimeText ? 'time to arrange' : formatWhen(b.preferred_at)}`,
       HtmlBody: html,
       TextBody: text,
       MessageStream: 'outbound',
@@ -227,7 +241,9 @@ export async function newBookingToOwner({ booking, site, ownerEmail }) {
 // Customer receipt — sent immediately when a booking request is created.
 // Gives the customer a record of what they submitted, an at-a-glance
 // reminder of the business's contact details, and sets expectations.
-export async function bookingReceivedToCustomer({ booking, site, isSimple }) {
+// confirmed: the owner booked it from the dashboard (owner-create-booking),
+// so it is already confirmed and the email says so instead of "we'll confirm".
+export async function bookingReceivedToCustomer({ booking, site, isSimple, confirmed = false }) {
   if (!client) { console.warn('Postmark not configured; skipping email'); return; }
   const b = booking;
   const name = site?.business_info?.businessName || 'the business';
@@ -235,9 +251,11 @@ export async function bookingReceivedToCustomer({ booking, site, isSimple }) {
   const bizBlockText = businessInfoTextBlock(site);
   const vehicleLine = [b.vehicle_year, b.vehicle_make, b.vehicle_model].filter(Boolean).join(' ');
 
-  const timeLine = isSimple
-    ? 'We\'ll reach out shortly to confirm a time that works for you.'
-    : `You requested <strong>${esc(formatWhen(b.preferred_at))}</strong>. We'll confirm availability shortly.`;
+  const timeLine = confirmed
+    ? `You're booked for <strong>${esc(formatWhen(b.preferred_at))}</strong>.`
+    : isSimple
+      ? 'We\'ll reach out shortly to confirm a time that works for you.'
+      : `You requested <strong>${esc(formatWhen(b.preferred_at))}</strong>. We'll confirm availability shortly.`;
 
   const detailCard = `
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#fafafa;border:1px solid #f4f4f5;border-radius:12px;padding:16px 18px;margin-bottom:8px;"><tr><td>
@@ -251,16 +269,18 @@ export async function bookingReceivedToCustomer({ booking, site, isSimple }) {
     <p style="margin:20px 0 0;font-size:12px;color:#a1a1aa;text-align:center;">If you need to change anything, just reply to this email.</p>`;
   const html = renderEmailShell({
     icon: '✓',
-    title: `Thanks for your request, ${esc(b.customer_name)}!`,
+    title: confirmed ? `You're booked, ${esc(b.customer_name)}!` : `Thanks for your request, ${esc(b.customer_name)}!`,
     intro: timeLine,
     body: detailCard,
   });
   const text =
-    `Request received — ${name}\n\n` +
-    `Thanks for your request, ${b.customer_name}!\n\n` +
-    (isSimple
-      ? `We'll reach out shortly to confirm a time that works for you.\n`
-      : `You requested ${formatWhen(b.preferred_at)}. We'll confirm availability shortly.\n`) +
+    (confirmed ? `Booking confirmed — ${name}\n\n` : `Request received — ${name}\n\n`) +
+    (confirmed ? `You're booked, ${b.customer_name}!\n\n` : `Thanks for your request, ${b.customer_name}!\n\n`) +
+    (confirmed
+      ? `You're booked for ${formatWhen(b.preferred_at)}.\n`
+      : isSimple
+        ? `We'll reach out shortly to confirm a time that works for you.\n`
+        : `You requested ${formatWhen(b.preferred_at)}. We'll confirm availability shortly.\n`) +
     (b.service_name ? `\nService: ${b.service_name}` : '') +
     (vehicleLine ? `\nVehicle: ${vehicleLine}${(b.vehicle_type_name || b.vehicle_size) ? ' (' + (b.vehicle_type_name || b.vehicle_size) + ')' : ''}` : '') +
     (b.service_address ? `\nService address: ${b.service_address}` : '') +
@@ -273,7 +293,7 @@ export async function bookingReceivedToCustomer({ booking, site, isSimple }) {
     const res = await client.sendEmail({
       From: FROM,
       To: b.customer_email,
-      Subject: `We got your request — ${name}`,
+      Subject: confirmed ? `Your booking is confirmed — ${name}` : `We got your request — ${name}`,
       HtmlBody: html,
       TextBody: text,
       MessageStream: 'outbound',
@@ -286,12 +306,18 @@ export async function bookingReceivedToCustomer({ booking, site, isSimple }) {
   }
 }
 
-export async function statusUpdateToCustomer({ booking, site, status, reason }) {
+// requestedTime: a request-form booking declined or cancelled before the
+// owner set a time. Its preferred_at is a placeholder, so the email names
+// what the customer asked for instead.
+export async function statusUpdateToCustomer({ booking, site, status, reason, requestedTime = null }) {
   if (!client) { console.warn('Postmark not configured; skipping email'); return; }
   const b = booking;
   const name = site?.business_info?.businessName || 'the business';
   const bizBlockHtml = businessInfoHtmlBlock(site);
   const bizBlockText = businessInfoTextBlock(site);
+  const whatHtml = requestedTime
+    ? `your request (${esc(requestedTime)})`
+    : esc(formatWhen(b.preferred_at));
 
   const map = {
     confirmed: {
@@ -302,12 +328,14 @@ export async function statusUpdateToCustomer({ booking, site, status, reason }) 
     declined: {
       subject: `Your booking request — ${name}`,
       heading: `We couldn't confirm that time`,
-      body: `Sorry ${esc(b.customer_name)} — we can't make ${esc(formatWhen(b.preferred_at))} work.${reason ? ' Reason: ' + esc(reason) : ''} Feel free to submit another request.`,
+      body: `Sorry ${esc(b.customer_name)} — we can't make ${whatHtml} work.${reason ? ' Reason: ' + esc(reason) : ''} Feel free to submit another request.`,
     },
     cancelled: {
       subject: `Your booking was cancelled — ${name}`,
       heading: `Your booking was cancelled`,
-      body: `Your booking for ${esc(formatWhen(b.preferred_at))} has been cancelled.`,
+      body: requestedTime
+        ? `Your request (${esc(requestedTime)}) has been cancelled.`
+        : `Your booking for ${esc(formatWhen(b.preferred_at))} has been cancelled.`,
     },
   };
   const m = map[status];
@@ -320,7 +348,7 @@ export async function statusUpdateToCustomer({ booking, site, status, reason }) 
     intro: m.body,
     body: bizBlockHtml,
   });
-  const text = `${m.heading}\n\n${m.body.replace(/<[^>]+>/g,'')}${bizBlockText}`;
+  const text = `${m.heading}\n\n${htmlToText(m.body)}${bizBlockText}`;
 
   try {
     const res = await client.sendEmail({

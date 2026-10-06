@@ -13,6 +13,21 @@
 // reject. The cost of rejecting legitimate users during an outage is
 // higher than letting a few extra calls through, and the underlying
 // downstream guards (auth, validation, Stripe idempotency) still apply.
+
+// The caller's IP for rate limits. Netlify sets x-nf-client-connection-ip
+// itself; X-Forwarded-For only gets the real address appended to whatever
+// the client sent, so its first entry is the client's own choice, and a
+// fresh made-up value per request opened a fresh rate-limit bucket.
+// X-Forwarded-For stays as the fallback for `netlify dev`, which doesn't
+// set the Netlify header.
+export function clientIp(event) {
+  const h = event?.headers || {};
+  const nf = String(h['x-nf-client-connection-ip'] || h['X-Nf-Client-Connection-Ip'] || '').trim();
+  if (nf) return nf.slice(0, 64);
+  const xff = String(h['x-forwarded-for'] || h['X-Forwarded-For'] || '').split(',')[0].trim();
+  return xff ? xff.slice(0, 64) : 'unknown';
+}
+
 export async function checkAndRecordRateLimit({
   db,
   ip,

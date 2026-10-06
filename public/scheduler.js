@@ -27,11 +27,21 @@
   var noTrack = script && script.getAttribute('data-no-track') === 'true';
   if (!siteId) return;
 
+  // Back from the Stripe deposit page (create-booking's return URLs end in
+  // ?acg_deposit=paid|cancelled): show the outcome on the shop's own page.
+  var depositReturn = null;
+  try {
+    var depositMatch = /[?&]acg_deposit=(paid|cancelled)(?:&|$)/.exec(window.location.search || '');
+    if (depositMatch) depositReturn = depositMatch[1];
+  } catch (e) { /* no location */ }
+
   // The owner's own views never count: the dashboard's site thumbnails load
   // the live page in an iframe with #acg-no-track, and no real visitor sees
   // a published page inside a frame.
   if (pageHash.indexOf('acg-no-track') !== -1) noTrack = true;
   try { if (window.self !== window.top) noTrack = true; } catch (e) { noTrack = true; }
+  // The customer's return from Stripe is not a new visit.
+  if (depositReturn) noTrack = true;
 
   var API = script.src.replace(/\/scheduler\.js.*$/, '');
 
@@ -72,19 +82,64 @@
     .then(function (r) { return r.ok ? r.json() : { enabled: false }; })
     .catch(function () { return { enabled: false }; })
     .then(function (cfg) {
-      if (!cfg || !cfg.enabled) return;
-      if (fullPage) renderFullPage(cfg);
-      else if (previewMode) openModal(cfg, { inline: true });
-      else if (autoOpen) openModal(cfg, { inline: false });
+      if (depositReturn) clearDepositParam();
+      if (!cfg || !cfg.enabled) {
+        // Bookings are off, the owner's plan lapsed, or the request failed.
+        // A booking page has nothing else on it: say so instead of leaving
+        // "Loading booking…" up forever. A website just shows no button.
+        // Only a booking page's title is the business name (in the
+        // dashboard preview it is the app's).
+        var off = { enabled: false, businessName: fullPage ? pageBusinessName() : '' };
+        if (fullPage) renderFullPage(off, { notice: 'unavailable' });
+        else if (previewMode) openModal(off, { inline: true, notice: 'unavailable' });
+        else if (autoOpen) openModal(off, { inline: false, notice: 'unavailable' });
+        else if (depositReturn) openModal(off, { inline: false, deposit: depositReturn });
+        // A shared booking link (#book) gets an answer, not a silent homepage.
+        else if (hashOpen) openModal(off, { inline: false, notice: 'unavailable' });
+        return;
+      }
+      // Nothing can be booked yet (no opening hours, or no service offered
+      // for any vehicle type): no dead-end flow, and on a website the page's
+      // own Book links keep doing what they did without the widget.
+      var notice = cfg.bookable === false ? 'not_ready' : null;
+      if (fullPage) renderFullPage(cfg, depositReturn ? { deposit: depositReturn } : { notice: notice });
+      else if (previewMode) openModal(cfg, { inline: true, notice: notice });
+      else if (autoOpen) openModal(cfg, { inline: false, notice: notice });
+      else if (depositReturn) { if (!notice) mountButton(cfg); openModal(cfg, { inline: false, deposit: depositReturn }); }
+      else if (notice) { if (hashOpen) openModal(cfg, { inline: false, notice: notice }); return; }
       else if (hashOpen) { mountButton(cfg); openModal(cfg, { inline: false, preselect: hashPreselect }); }
       else mountButton(cfg);
     });
 
-  function renderFullPage(cfg) {
+  // Shared by the button and the modal: owner-written text and colors go
+  // into innerHTML and style attributes, so text is escaped and colors must
+  // be plain hex (the server checks too).
+  function escHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function safeColor(c, fallback) {
+    return typeof c === 'string' && /^#(?:[0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(c.trim()) ? c.trim() : fallback;
+  }
+  // The booking page's <title> is the business name (bookingPageHtml.js).
+  function pageBusinessName() {
+    var t = (document.title || '').trim();
+    return t && t !== 'Book an appointment' ? t : '';
+  }
+  function clearDepositParam() {
+    try {
+      var url = new URL(window.location.href);
+      url.searchParams.delete('acg_deposit');
+      window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+    } catch (e) { /* old browser: the parameter just stays */ }
+  }
+
+  function renderFullPage(cfg, extra) {
     var loading = document.querySelector('.acg-loading');
     if (loading) loading.remove();
     var a = cfg.appearance || {};
-    var accent = a.accent_color || cfg.brandColor || '#1a1a1a';
+    var accent = safeColor(a.accent_color, null) || safeColor(cfg.brandColor, '#1a1a1a');
     var radius = a.corner_style === 'sharp' ? '0px' : '16px';
     var dark = a.background === 'dark';
     var pageBg = dark ? '#0f1115' : '#f0f1f3';
@@ -144,17 +199,19 @@
     wrap.appendChild(host);
     document.body.appendChild(wrap);
 
-    openModal(cfg, { inline: true, preselect: hashPreselect });
+    var opts = { inline: true, preselect: hashPreselect };
+    if (extra) { for (var k in extra) { if (extra[k]) opts[k] = extra[k]; } }
+    openModal(cfg, opts);
   }
 
   function mountButton(cfg) {
-    var brand = cfg.brandColor || '#1a1a1a';
+    var brand = safeColor(cfg.brandColor, '#1a1a1a');
     var btn = document.createElement('button');
     btn.type = 'button';
     btn.setAttribute('aria-label', 'Open booking form');
     btn.innerHTML =
       '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:8px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>' +
-      (cfg.button_label || 'Book Now');
+      escHtml(cfg.button_label || 'Book Now');
     btn.style.cssText =
       'position:fixed;right:20px;bottom:72px;z-index:9998;padding:14px 22px;' +
       'background:' + brand + ';color:#fff;border:0;border-radius:999px;' +
@@ -383,7 +440,9 @@
     var themeKey = cfg.modal_theme && THEMES[cfg.modal_theme] ? cfg.modal_theme : 'light';
     var T = THEMES[themeKey];
     // Brand color: theme override (gold/silver/neon/rust) or the site's brandColor.
-    var brand = T.brandSolid || cfg.brandColor || '#1a1a1a';
+    var brand = T.brandSolid || safeColor(cfg.brandColor, '#1a1a1a');
+    var lastFocus = document.activeElement;
+    function onKey(e) { if (e.key === 'Escape') close(); }
     var brandAccentFill = T.brandAccent || brand; // used for top stripe + gradients
     var FONT = "Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif";
 
@@ -403,6 +462,7 @@
       container.id = 'acg-scheduler-modal';
       container.setAttribute('role', 'dialog');
       container.setAttribute('aria-modal', 'true');
+      container.setAttribute('aria-label', 'Book an appointment');
       container.style.cssText =
         'position:fixed;inset:0;background:' + T.backdrop + ';z-index:9999;' +
         'display:flex;align-items:center;justify-content:center;padding:16px;' +
@@ -416,9 +476,10 @@
       container.appendChild(card);
       document.body.appendChild(container);
       container.addEventListener('click', function (e) { if (e.target === container) close(); });
-      document.addEventListener('keydown', function onKey(e) {
-        if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onKey); }
-      });
+      // Removed again in close(), however the modal is closed.
+      document.addEventListener('keydown', onKey);
+      card.setAttribute('tabindex', '-1');
+      card.style.outline = 'none';
     }
 
     var state = {
@@ -519,6 +580,34 @@
       if (cents % 100 === 0) return '$' + (cents / 100);
       return '$' + (cents / 100).toFixed(2);
     }
+    // The shop's date (scheduler-config sends it): the visitor's own clock
+    // may be in another zone, and UTC is already tomorrow in a US evening.
+    function shopToday() {
+      return /^\d{4}-\d{2}-\d{2}$/.test(cfg.today || '') ? cfg.today : new Date().toISOString().slice(0, 10);
+    }
+    // The forms are novalidate (no browser bubbles), so check them here and
+    // name the field, instead of sending them off for a server error.
+    function formProblem(form) {
+      var fields = form.querySelectorAll('input, select, textarea');
+      for (var i = 0; i < fields.length; i++) {
+        var el = fields[i];
+        if (el.name === 'website' || !el.willValidate) continue;
+        var value = String(el.value || '').trim();
+        if (el.required && !value) return { el: el, message: 'Please fill in ' + fieldLabel(el) + '.' };
+        if (value && el.validity && !el.validity.valid) return { el: el, message: 'Please check ' + fieldLabel(el) + '.' };
+      }
+      return null;
+    }
+    function fieldLabel(el) {
+      var label = el.closest ? el.closest('label') : null;
+      var text = label ? (label.firstChild && label.firstChild.nodeType === 3 ? label.firstChild.nodeValue : label.textContent) : el.name;
+      return '\u201c' + String(text || el.name).replace(/\*/g, '').trim() + '\u201d';
+    }
+    function showFormProblem(errBox, problem) {
+      errBox.textContent = problem.message;
+      errBox.style.display = 'block';
+      try { problem.el.focus(); } catch (e) { /* not focusable */ }
+    }
     function totalCents() {
       if (!state.service) return null;
       var v = chosenVariant();
@@ -532,7 +621,14 @@
       return base + addOnTotal;
     }
 
-    function close() { container.remove(); }
+    function close() {
+      document.removeEventListener('keydown', onKey);
+      container.remove();
+      // Back to the Book button (or whatever opened the modal).
+      if (!opts.inline && lastFocus && typeof lastFocus.focus === 'function') {
+        try { lastFocus.focus(); } catch (e) { /* element gone */ }
+      }
+    }
 
     function brandBar() {
       // Top accent stripe (Pro Hub signature). Uses gradient on luxury themes.
@@ -586,7 +682,57 @@
       '</div>';
     }
 
+    // "Can't book online" screens. Owners previewing from the dashboard get
+    // what to fix; customers get who to contact.
+    function renderNotice(kind) {
+      var owner = previewMode || autoOpen;
+      var name = cfg.businessName || 'This business';
+      var title, text;
+      if (kind === 'not_ready') {
+        title = 'Online booking isn\u2019t open yet';
+        text = owner
+          ? 'Customers can\u2019t book yet. In Booking Settings, add at least one service (offered for at least one vehicle type) and your opening hours.'
+          : name + ' hasn\u2019t opened online booking yet. Please check back soon, or contact them directly.';
+      } else {
+        title = 'Online booking is unavailable';
+        text = owner
+          ? 'Customers can\u2019t book right now: bookings are switched off for this site, or your Pro plan isn\u2019t active.'
+          : name + ' isn\u2019t taking online bookings right now. Please contact them directly.';
+      }
+      card.innerHTML = brandBar() + brandHeader() +
+        '<div style="padding:36px 28px 32px;text-align:center;">' +
+          '<h2 style="margin:0 0 10px;font-size:20px;font-weight:800;color:' + T.text + ';letter-spacing:-0.3px;">' + esc(title) + '</h2>' +
+          '<p style="margin:0 auto;max-width:400px;color:' + T.muted + ';font-size:14px;line-height:1.6;">' + esc(text) + '</p>' +
+        '</div>';
+      wireClose();
+    }
+
+    // Back from the deposit page. The booking is still a request the owner
+    // confirms, so "paid" never says "confirmed".
+    function renderDepositResult(kind) {
+      var name = cfg.businessName || 'The shop';
+      var paid = kind === 'paid';
+      var title = paid ? 'Deposit received' : 'Deposit not paid';
+      var text = paid
+        ? 'Thank you! ' + name + ' will email you to confirm your appointment.'
+        : 'No charge was made. Your booking request was still sent, and ' + name + ' may contact you about it.';
+      var canBook = cfg.enabled !== false && cfg.bookable !== false;
+      card.innerHTML = brandBar() + brandHeader() +
+        '<div style="padding:40px 28px 32px;text-align:center;">' +
+          '<h2 style="margin:0 0 10px;font-size:22px;font-weight:800;color:' + T.text + ';letter-spacing:-0.4px;">' + esc(title) + '</h2>' +
+          '<p style="margin:0 auto;max-width:400px;color:' + T.muted + ';font-size:14px;line-height:1.6;">' + esc(text) + '</p>' +
+          (opts.inline && canBook
+            ? '<button type="button" data-book-again style="margin-top:20px;padding:12px 24px;background:' + brand + ';color:#fff;border:0;border-radius:12px;font-family:' + FONT + ';font-weight:700;font-size:14px;cursor:pointer;">Book another appointment</button>'
+            : '') +
+        '</div>';
+      wireClose();
+      var again = card.querySelector('[data-book-again]');
+      if (again) again.addEventListener('click', function () { opts.deposit = null; render(); });
+    }
+
     function render() {
+      if (opts.notice) return renderNotice(opts.notice);
+      if (opts.deposit) return renderDepositResult(opts.deposit);
       var enabledServices = (cfg.services || []).filter(function (s) { return s.enabled !== false; });
       if (vehicleTypes().length > 0) {
         enabledServices = enabledServices.filter(function (s) { return offeredVehicleTypes(s).length > 0; });
@@ -779,6 +925,8 @@
       var form = card.querySelector('#acg-booking-form');
       var errBox = card.querySelector('#acg-form-error');
       errBox.style.display = 'none';
+      var problem = formProblem(form);
+      if (problem) { showFormProblem(errBox, problem); return; }
       var data = Object.fromEntries(new FormData(form).entries());
 
       // Resolve selected service if the user picked one from a dropdown.
@@ -795,12 +943,11 @@
         }
       }
 
-      // Simple mode has no slot — stash a far-future placeholder so the
-      // validator passes, and prepend the user's free-text preferred time
-      // to the notes so the owner sees it.
+      // Simple mode has no slot. preferred_at is a placeholder the server
+      // replaces; the customer's own words go as preferred_time_text and
+      // the server puts them first in the notes the owner sees.
       var placeholderWhen = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
       var preferredTimeText = (data.preferred_time_text || '').trim();
-      var combinedNotes = (preferredTimeText ? 'Preferred time: ' + preferredTimeText + '\n\n' : '') + (data.notes || '');
 
       var payload = {
         siteId: siteId,
@@ -814,7 +961,8 @@
         vehicle_size: vt ? sizeFromTypeName(vt.name) : (data.vehicle_size || undefined),
         vehicle_type_id: data.vehicle_type_id || undefined,
         service_address: data.service_address || undefined,
-        notes: combinedNotes || undefined,
+        notes: data.notes || undefined,
+        preferred_time_text: preferredTimeText || undefined,
         referral_source: undefined,
         website: data.website || undefined,
         service_id: state.service ? state.service.id : undefined,
@@ -832,7 +980,7 @@
 
       fetch(API + '/.netlify/functions/create-booking', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
-      }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, status: r.status, j: j }; }); })
         .then(function (res) {
           if (res.ok) {
             if (res.j && res.j.checkout_url) {
@@ -862,6 +1010,7 @@
       if (vehicleTypes().length > 0) {
         services = services.filter(function (s) { return offeredVehicleTypes(s).length > 0; });
       }
+      if (services.length === 0) return renderNotice('not_ready');
       var counts = stepCounts();
       var items = services.map(function (s) {
         var priceLabel = servicePriceLabel(s);
@@ -1047,15 +1196,18 @@
     }
 
     function renderCalendar(host) {
-      var cursor = state.cursorMonth || monthStart(new Date());
+      var today = shopToday();
+      var thisMonth = monthStart(new Date(today + 'T00:00:00.000Z'));
+      var cursor = state.cursorMonth || thisMonth;
       state.cursorMonth = cursor;
-      var rows = monthGrid(cursor);
+      var atFirstMonth = cursor.getTime() <= thisMonth.getTime();
+      var rows = monthGrid(cursor, today);
       var label = cursor.toLocaleString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
       host.innerHTML =
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
           '<div style="font-weight:700;color:' + T.text + ';font-size:15px;letter-spacing:-0.2px;">' + esc(label) + '</div>' +
           '<div style="display:flex;gap:4px;">' +
-            '<button type="button" data-prev aria-label="Previous month" style="background:' + T.subtle + ';border:0;width:32px;height:32px;border-radius:8px;cursor:pointer;color:' + T.muted + ';font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;">‹</button>' +
+            '<button type="button" data-prev aria-label="Previous month"' + (atFirstMonth ? ' disabled' : '') + ' style="background:' + T.subtle + ';border:0;width:32px;height:32px;border-radius:8px;cursor:' + (atFirstMonth ? 'default' : 'pointer') + ';opacity:' + (atFirstMonth ? '0.35' : '1') + ';color:' + T.muted + ';font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;">‹</button>' +
             '<button type="button" data-next aria-label="Next month" style="background:' + T.subtle + ';border:0;width:32px;height:32px;border-radius:8px;cursor:pointer;color:' + T.muted + ';font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;">›</button>' +
           '</div>' +
         '</div>' +
@@ -1079,27 +1231,41 @@
           }).join('') +
         '</div>';
 
-      host.querySelector('[data-prev]').addEventListener('click', function () { state.cursorMonth = addMonths(cursor, -1); renderDateTime(); });
+      host.querySelector('[data-prev]').addEventListener('click', function () {
+        if (atFirstMonth) return;
+        state.cursorMonth = addMonths(cursor, -1);
+        renderDateTime();
+      });
       host.querySelector('[data-next]').addEventListener('click', function () { state.cursorMonth = addMonths(cursor, 1); renderDateTime(); });
       host.querySelectorAll('[data-day]:not([disabled])').forEach(function (b) {
         b.addEventListener('click', function () {
           state.dateISO = b.getAttribute('data-day');
           state.slotISO = null;
-          renderDateTime();
-          loadSlots();
+          renderDateTime(); // re-renders the calendar, which loads the slots
         });
       });
       if (state.dateISO) loadSlots();
     }
 
+    // Each day click starts a new request; an older one that answers late
+    // (slow network, quick clicks) must not fill in another day's times.
+    var slotsRequest = 0;
     function loadSlots() {
       var slotsHost = card.querySelector('#acg-slots');
-      slotsHost.innerHTML = '<div style="color:#888;font-size:13px;">Loading…</div>';
+      if (!slotsHost) return;
+      var reqId = ++slotsRequest;
+      slotsHost.innerHTML = '<div style="color:' + T.softMuted + ';font-size:13px;">Loading…</div>';
       var url = API + '/.netlify/functions/scheduler-slots?siteId=' + encodeURIComponent(siteId) +
         '&date=' + encodeURIComponent(state.dateISO) +
         (state.service ? '&serviceId=' + encodeURIComponent(state.service.id) : '') +
         (state.vehicleType ? '&vehicleTypeId=' + encodeURIComponent(state.vehicleType.id) : '');
-      fetch(url).then(function (r) { return r.json(); }).then(function (res) {
+      fetch(url).then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      }).then(function (res) {
+        if (reqId !== slotsRequest) return;
+        slotsHost = card.querySelector('#acg-slots');
+        if (!slotsHost) return;
         if (!res.slots || res.slots.length === 0) {
           slotsHost.innerHTML = '<div style="color:' + T.softMuted + ';font-size:13px;padding:16px 12px;background:' + T.subtle + ';border-radius:10px;text-align:center;width:100%;">No times available — try another day.</div>';
           return;
@@ -1115,6 +1281,13 @@
             render();
           });
         });
+      }).catch(function () {
+        if (reqId !== slotsRequest) return;
+        var host = card.querySelector('#acg-slots');
+        if (!host) return;
+        host.innerHTML = '<div style="color:' + T.softMuted + ';font-size:13px;padding:16px 12px;background:' + T.subtle + ';border-radius:10px;text-align:center;width:100%;">Couldn\u2019t load times. ' +
+          '<button type="button" data-retry style="background:none;border:0;padding:0;color:' + brand + ';font-weight:700;font-size:13px;cursor:pointer;text-decoration:underline;font-family:' + FONT + ';">Try again</button></div>';
+        host.querySelector('[data-retry]').addEventListener('click', loadSlots);
       });
     }
 
@@ -1243,6 +1416,8 @@
       var form = card.querySelector('#acg-booking-form');
       var errBox = card.querySelector('#acg-form-error');
       errBox.style.display = 'none';
+      var problem = formProblem(form);
+      if (problem) { showFormProblem(errBox, problem); return; }
       var data = Object.fromEntries(new FormData(form).entries());
       var chosen = selectedAddons();
       var payload = {
@@ -1275,7 +1450,7 @@
 
       fetch(API + '/.netlify/functions/create-booking', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
-      }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, status: r.status, j: j }; }); })
         .then(function (res) {
           if (res.ok) {
             if (res.j && res.j.checkout_url) {
@@ -1289,6 +1464,15 @@
             errBox.style.display = 'block';
             submitBtn.disabled = false;
             submitBtn.textContent = 'Submit request';
+            // Someone else got the slot first: one click back to the times.
+            if (res.status === 409 && !(res.j && res.j.code)) {
+              var repick = document.createElement('button');
+              repick.type = 'button';
+              repick.textContent = 'Pick another time';
+              repick.style.cssText = 'margin-left:8px;background:none;border:0;padding:0;color:' + brand + ';font-weight:700;font-size:13px;cursor:pointer;text-decoration:underline;font-family:' + FONT + ';';
+              repick.addEventListener('click', function () { state.slotISO = null; render(); });
+              errBox.appendChild(repick);
+            }
           }
         })
         .catch(function () {
@@ -1346,16 +1530,18 @@
     }
 
     render();
+    // Keyboard and screen-reader users land in the dialog, not behind it.
+    if (!opts.inline) { try { card.focus(); } catch (e) { /* not focusable */ } }
   }
 
   function monthStart(d) { var x = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1)); return x; }
   function addMonths(d, n) { return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + n, 1)); }
   function isoDay(d) { return d.toISOString().slice(0, 10); }
-  function monthGrid(cursor) {
+  // todayISO: "YYYY-MM-DD" at the shop; earlier days are past.
+  function monthGrid(cursor, todayISO) {
     var first = monthStart(cursor);
     var gridStart = new Date(first); gridStart.setUTCDate(first.getUTCDate() - first.getUTCDay());
     var out = [];
-    var today = new Date(); today.setUTCHours(0, 0, 0, 0);
     for (var i = 0; i < 42; i++) {
       var d = new Date(gridStart); d.setUTCDate(gridStart.getUTCDate() + i);
       out.push({
@@ -1363,7 +1549,7 @@
         dayNum: d.getUTCDate(),
         weekday: ['sun','mon','tue','wed','thu','fri','sat'][d.getUTCDay()],
         inMonth: d.getUTCMonth() === cursor.getUTCMonth(),
-        past: d.getTime() < today.getTime(),
+        past: isoDay(d) < todayISO,
       });
     }
     return out;

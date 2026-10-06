@@ -1,8 +1,11 @@
+import { createHash } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 import { validateBookingPayload } from './_lib/booking-validation.js';
 import { newBookingToOwner, bookingReceivedToCustomer } from './_lib/postmark.js';
-import { computeSlots } from './_lib/slot-math.js';
-import { isEffectiveSchedulerActive } from './_lib/subscription-gating.js';
+import { computeSlots, normalizeGranularity, normalizeLeadHours } from './_lib/slot-math.js';
+import { isEffectiveSchedulerActive, GATING_PROFILE_COLUMNS } from './_lib/subscription-gating.js';
+import { resolveShopTimeZone, shopNowWallMs } from './_lib/shop-time.js';
+import { REQUESTED_TIME_PREFIX, requestedTimeText as requestedTimeFromNotes } from './_lib/booking-request.js';
 import { getStripe } from './_lib/stripe.js';
 import {
   computeDepositCents,
@@ -14,7 +17,7 @@ import {
   vehicleSizeFromTypeName,
   enabledVehicleTypes,
 } from './_lib/vehicle-pricing.js';
-import { checkAndRecordRateLimit } from './_shared/rateLimit.js';
+import { checkAndRecordRateLimit, clientIp } from './_shared/rateLimit.js';
 import { PUBLIC_CORS, PUBLIC_CORS_JSON } from './_shared/cors.js';
 
 // Public widget endpoint — called from scheduler.js injected on every
@@ -24,71 +27,105 @@ import { PUBLIC_CORS, PUBLIC_CORS_JSON } from './_shared/cors.js';
 const CORS = PUBLIC_CORS_JSON;
 
 const WEEKDAY_KEYS = ['sun','mon','tue','wed','thu','fri','sat'];
+const HOUR_MS = 3600 * 1000;
+
+// Every request also emails the address it typed, so the limits cover the
+// sender (per site and across all sites) and the recipient.
+const LIMIT_PER_IP_PER_SITE = 5;
+const LIMIT_PER_IP = 20;
+const LIMIT_PER_EMAIL = 5;
+
+const STALE_FORM_ERROR = 'This booking form was just updated. Please reload the page and try again.';
+
+const reply = (statusCode, body) => ({ statusCode, headers: CORS, body: JSON.stringify(body) });
+
+function emailKey(email) {
+  return createHash('sha256').update(String(email).trim().toLowerCase()).digest('hex').slice(0, 32);
+}
+
+// Where Stripe sends the customer after the deposit page: back to the
+// shop's own page, whose scheduler.js shows the outcome (acg_deposit).
+// The app's /booking-confirmed pages are only the fallback for a site with
+// no public address.
+function depositReturnBase(site) {
+  const custom = site.custom_domain && site.custom_domain_status === 'active_ssl'
+    ? `https://www.${site.custom_domain}`
+    : null;
+  const base = custom || site.published_url;
+  return typeof base === 'string' && /^https:\/\//.test(base) ? base.replace(/\/+$/, '') : null;
+}
 
 export const handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: PUBLIC_CORS };
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, headers: CORS, body: JSON.stringify({ error: 'Method not allowed' }) };
-  }
+  if (event.httpMethod !== 'POST') return reply(405, { error: 'Method not allowed' });
 
   let payload;
   try { payload = JSON.parse(event.body || '{}'); }
-  catch { return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Invalid JSON' }) }; }
+  catch { return reply(400, { error: 'Invalid JSON' }); }
 
   const v = validateBookingPayload(payload);
-  if (v.honeypot) return { statusCode: 200, headers: CORS, body: JSON.stringify({ ok: true }) };
-  if (!v.ok) return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: v.error }) };
+  if (v.honeypot) return reply(200, { ok: true });
+  if (!v.ok) return reply(400, { error: v.error });
 
   const supabase = createClient(
     process.env.VITE_SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
   );
 
-  // Postgres-backed rate limit: 5 bookings per IP+site per hour. Replaces
-  // the previous in-memory Map which was bypassable across containers.
-  // (Security Audit H2 / CC-5)
-  const ip = event.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown';
-  const { limited } = await checkAndRecordRateLimit({
-    db: supabase,
-    ip,
-    kind: `create-booking:${payload.siteId}`,
-    windowMs: 60 * 60 * 1000,
-    limit: 5,
-  });
-  if (limited) {
-    return { statusCode: 429, headers: CORS, body: JSON.stringify({ error: 'Too many requests' }) };
+  // Postgres-backed rate limits (Security Audit H2 / CC-5), keyed by the IP
+  // Netlify saw (clientIp: X-Forwarded-For alone could be made up per request).
+  const ip = clientIp(event);
+  const limits = [
+    { ip, kind: `create-booking:${payload.siteId}`, limit: LIMIT_PER_IP_PER_SITE },
+    { ip, kind: 'create-booking-ip', limit: LIMIT_PER_IP },
+    { ip: emailKey(payload.customer_email), kind: 'create-booking-email', limit: LIMIT_PER_EMAIL },
+  ];
+  for (const l of limits) {
+    const { limited } = await checkAndRecordRateLimit({ db: supabase, windowMs: HOUR_MS, ...l });
+    if (limited) return reply(429, { error: 'Too many requests. Please try again later.' });
   }
 
   const { data: site } = await supabase
     .from('sites')
-    .select('id, user_id, business_info, scheduler_enabled, scheduler_config, slug, published_url, generated_content')
+    .select('id, user_id, site_type, business_info, scheduler_enabled, scheduler_config, slug, published_url, custom_domain, custom_domain_status, generated_content')
     .eq('id', payload.siteId)
     .maybeSingle();
   if (!site || !site.scheduler_enabled) {
-    return { statusCode: 403, headers: CORS, body: JSON.stringify({ error: 'Bookings not available for this site' }) };
+    return reply(403, { error: 'Bookings not available for this site' });
   }
 
   const { data: owner } = await supabase
     .from('profiles')
-    .select('email, is_super_admin, scheduler_enabled, subscription_status, subscription_ends_at, stripe_first_failed_payment_at, stripe_connect_account_id, stripe_connect_charges_enabled')
+    .select(`email, ${GATING_PROFILE_COLUMNS}, stripe_connect_account_id, stripe_connect_charges_enabled`)
     .eq('id', site.user_id)
     .maybeSingle();
   if (!isEffectiveSchedulerActive(owner)) {
-    return { statusCode: 403, headers: CORS, body: JSON.stringify({ error: 'Bookings not available for this site' }) };
+    return reply(403, { error: 'Bookings not available for this site' });
   }
 
   const cfg = site.scheduler_config || {};
+
+  // The owner's saved mode decides which checks apply, never the request:
+  // `is_simple_request` once skipped the slot, lead-time and opening-hours
+  // checks for any site. It now only tells a request form apart, and one
+  // left open while the owner switched to the calendar must reload.
+  const isRequestMode = cfg.booking_mode === 'simple';
+  if (payload.is_simple_request === true && !isRequestMode) {
+    return reply(409, { error: STALE_FORM_ERROR, code: 'reload_required' });
+  }
+  const isTimeRequest = isRequestMode && payload.is_simple_request === true;
+
   const services = cfg.services || [];
   const enabledServices = services.filter((s) => s.enabled !== false);
 
   let chosenService = null;
   if (enabledServices.length > 1) {
     if (!payload.service_id) {
-      return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'service_id required' }) };
+      return reply(400, { error: 'Please pick a service.' });
     }
     chosenService = enabledServices.find((s) => s.id === payload.service_id);
     if (!chosenService) {
-      return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Unknown or disabled service' }) };
+      return reply(400, { error: 'That service is no longer offered. Please reload the page and pick another.' });
     }
   } else if (enabledServices.length === 1) {
     chosenService = enabledServices[0];
@@ -101,12 +138,12 @@ export const handler = async (event) => {
   if (payload.vehicle_type_id) {
     chosenVehicleType = vehicleTypesCfg.find((t) => t.id === payload.vehicle_type_id) || null;
     if (!chosenVehicleType) {
-      return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Unknown vehicle type' }) };
+      return reply(400, { error: 'Unknown vehicle type' });
     }
   }
   const variant = chosenService ? resolveVariant(chosenService, chosenVehicleType?.id) : null;
   if (chosenService && chosenVehicleType && !variant) {
-    return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'That service is not offered for the selected vehicle type' }) };
+    return reply(400, { error: 'That service is not offered for the selected vehicle type' });
   }
 
   // Resolve + validate add-ons. The widget sends `addon_ids: [...]`.
@@ -117,17 +154,17 @@ export const handler = async (event) => {
   let resolvedAddons = [];
   if (requestedAddonIds.length > 0) {
     if (!chosenService) {
-      return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'add-ons require a service' }) };
+      return reply(400, { error: 'add-ons require a service' });
     }
     const available = Array.isArray(chosenService.addons) ? chosenService.addons : [];
     for (const id of requestedAddonIds) {
       const match = available.find((a) => a.id === id && a.enabled !== false);
       if (!match) {
-        return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Unknown or disabled add-on' }) };
+        return reply(400, { error: 'Unknown or disabled add-on' });
       }
       const addonPrice = addonPriceForVehicle(match, chosenVehicleType?.id);
       if (addonPrice == null) {
-        return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'That add-on is not offered for the selected vehicle type' }) };
+        return reply(400, { error: 'That add-on is not offered for the selected vehicle type' });
       }
       resolvedAddons.push({ id: match.id, name: match.name, price_cents: addonPrice });
     }
@@ -137,23 +174,41 @@ export const handler = async (event) => {
   const bookedDurationMin = variant?.duration_minutes ?? null;
   const totalCents = computeTotalCents(servicePriceCentsValue, resolvedAddons);
 
-  const when = new Date(payload.preferred_at);
-  const isSimple = cfg.booking_mode === 'simple' || payload.is_simple_request === true;
+  const shopNow = shopNowWallMs(resolveShopTimeZone(cfg, site.business_info));
+  let preferredAt = payload.preferred_at;
+  let notes = payload.notes || null;
+  let requestedTimeText = null;
 
-  // Simple mode: no calendar, preferred_at is a placeholder — skip all
-  // slot / lead-time / availability validation. The owner will follow up
-  // manually with the preferred_time_text the customer included.
-  if (!isSimple) {
+  if (isTimeRequest) {
+    // Request form: no calendar. The customer's own words lead the notes
+    // (the current form sends them apart; one loaded before this deploy
+    // already put them there).
+    requestedTimeText = (payload.preferred_time_text || '').trim() || null;
+    if (requestedTimeText) {
+      notes = REQUESTED_TIME_PREFIX + requestedTimeText + (notes ? `\n\n${notes}` : '');
+    } else {
+      requestedTimeText = requestedTimeFromNotes(notes);
+    }
+    if (!requestedTimeText) {
+      return reply(400, { error: "Please tell us when you'd like to come in." });
+    }
+    // preferred_at is only a placeholder that keeps the request on the
+    // owner's upcoming list for a week; the owner sets the real time when
+    // confirming. Set here, never taken from the request.
+    preferredAt = new Date(Math.floor((shopNow + 7 * 24 * HOUR_MS) / HOUR_MS) * HOUR_MS).toISOString();
+  } else {
+    const when = new Date(payload.preferred_at);
     const dateISO = when.toISOString().slice(0, 10);
     const weekday = WEEKDAY_KEYS[when.getUTCDay()];
     const availability = (cfg.availability || {})[weekday] || [];
 
-    const leadMs = (cfg.lead_time_hours ?? 24) * 3600 * 1000;
-    if (when.getTime() < Date.now() + leadMs) {
-      return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Too close to now; please pick a later time.' }) };
+    // Lead time from the shop's wall clock, like scheduler-slots.
+    const leadMs = normalizeLeadHours(cfg.lead_time_hours) * HOUR_MS;
+    if (when.getTime() < shopNow + leadMs) {
+      return reply(400, { error: 'Too close to now; please pick a later time.' });
     }
 
-    const granularityMin = cfg.slot_granularity_minutes ?? 30;
+    const granularityMin = normalizeGranularity(cfg.slot_granularity_minutes);
     const durationMin = bookedDurationMin ?? 60;
 
     const { data: confirmed } = await supabase
@@ -178,8 +233,9 @@ export const handler = async (event) => {
     });
 
     if (!validSlots.includes(when.toISOString())) {
-      return { statusCode: 409, headers: CORS, body: JSON.stringify({ error: 'That time is no longer available. Please pick another.' }) };
+      return reply(409, { error: 'That time is no longer available. Please pick another.' });
     }
+    preferredAt = when.toISOString();
   }
 
   const { data: inserted, error: insErr } = await supabase
@@ -188,16 +244,16 @@ export const handler = async (event) => {
       site_id: site.id,
       owner_user_id: site.user_id,
       status: 'pending',
-      customer_name: payload.customer_name,
-      customer_email: payload.customer_email,
-      customer_phone: payload.customer_phone,
-      preferred_at: payload.preferred_at,
-      vehicle_make: payload.vehicle_make,
-      vehicle_model: payload.vehicle_model,
-      vehicle_year: payload.vehicle_year,
+      customer_name: payload.customer_name.trim(),
+      customer_email: payload.customer_email.trim(),
+      customer_phone: payload.customer_phone.trim(),
+      preferred_at: preferredAt,
+      vehicle_make: payload.vehicle_make.trim(),
+      vehicle_model: payload.vehicle_model.trim(),
+      vehicle_year: Number(payload.vehicle_year),
       vehicle_size: chosenVehicleType ? vehicleSizeFromTypeName(chosenVehicleType.name) : payload.vehicle_size,
       service_address: payload.service_address || null,
-      notes: payload.notes || null,
+      notes,
       referral_source: payload.referral_source || null,
       service_id: chosenService?.id || null,
       service_name: chosenService?.name || null,
@@ -213,7 +269,7 @@ export const handler = async (event) => {
 
   if (insErr) {
     console.error('create-booking insert error:', insErr);
-    return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: 'Failed to create booking' }) };
+    return reply(500, { error: 'Failed to create booking' });
   }
 
   // Compute deposit if configured. Failures here are non-fatal — the booking
@@ -230,8 +286,14 @@ export const handler = async (event) => {
 
     if (depositRequiredCents && connectReady) {
       const stripe = getStripe();
-      const successBase = `${process.env.APP_URL || ''}/booking-confirmed`;
-      const cancelBase  = `${process.env.APP_URL || ''}/booking-cancelled`;
+      const returnBase = depositReturnBase(site);
+      const appUrl = (process.env.MAIN_APP_URL || process.env.APP_URL || 'https://sitebuilder.autocaregenius.com').replace(/\/+$/, '');
+      const successUrl = returnBase
+        ? `${returnBase}/?acg_deposit=paid`
+        : `${appUrl}/booking-confirmed?booking=${inserted.id}`;
+      const cancelUrl = returnBase
+        ? `${returnBase}/?acg_deposit=cancelled`
+        : `${appUrl}/booking-cancelled?booking=${inserted.id}`;
       const addonSummary = resolvedAddons.length > 0
         ? ` + ${resolvedAddons.length} add-on${resolvedAddons.length === 1 ? '' : 's'}`
         : '';
@@ -254,39 +316,40 @@ export const handler = async (event) => {
           application_fee_amount: 200,            // $2 platform fee, in cents
           metadata: { booking_id: inserted.id },
         },
-        success_url: `${successBase}?booking=${inserted.id}`,
-        cancel_url:  `${cancelBase}?booking=${inserted.id}`,
-        customer_email: payload.customer_email,
+        success_url: successUrl,
+        cancel_url: cancelUrl,
+        customer_email: inserted.customer_email,
         metadata: { booking_id: inserted.id, site_id: site.id },
       }, {
         stripeAccount: owner.stripe_connect_account_id,
       });
 
-      await supabase.from('bookings').update({
+      // The webhook matches the payment to this booking by the session id
+      // stored here. If it can't be stored, don't send the customer to pay:
+      // the payment could never be credited to the booking.
+      const { error: depErr } = await supabase.from('bookings').update({
         deposit_required_cents: depositRequiredCents,
         deposit_status: 'pending',
         deposit_checkout_session_id: checkoutSession.id,
         deposit_application_fee_cents: 200,
       }).eq('id', inserted.id);
-
-      checkoutUrl = checkoutSession.url;
+      if (depErr) {
+        console.error('create-booking: could not record the deposit session, booking continues without a deposit:', depErr);
+      } else {
+        checkoutUrl = checkoutSession.url;
+      }
     }
   } catch (err) {
     console.error('create-booking: deposit checkout creation failed:', err);
     // Booking proceeds without a deposit; do not return an error to the customer.
   }
 
-  // Existing emails block — unchanged.
   await Promise.allSettled([
-    newBookingToOwner({ booking: inserted, site, ownerEmail: owner.email })
+    newBookingToOwner({ booking: inserted, site, ownerEmail: owner.email, requestedTimeText })
       .catch((err) => console.error('owner email failed:', err)),
-    bookingReceivedToCustomer({ booking: inserted, site, isSimple })
+    bookingReceivedToCustomer({ booking: inserted, site, isSimple: !!requestedTimeText })
       .catch((err) => console.error('customer email failed:', err)),
   ]);
 
-  return {
-    statusCode: 200,
-    headers: CORS,
-    body: JSON.stringify({ ok: true, bookingId: inserted.id, checkout_url: checkoutUrl }),
-  };
+  return reply(200, { ok: true, bookingId: inserted.id, checkout_url: checkoutUrl });
 };

@@ -36,7 +36,7 @@ vi.mock('../../../lib/supabase.js', () => ({
 const { default: BookCustomerModal } = await import('./BookCustomerModal.jsx');
 
 const PROPS = {
-  customer: { name: 'Dana Smith', email: 'dana@example.com', phone: '555-0100' },
+  customer: { name: 'Dana Smith', email: 'dana@example.com', phone: '555-0100', manualContact: { vehicleYear: '2020' } },
   userId: 'owner-1',
   onClose: () => {},
   onBooked: vi.fn(),
@@ -108,5 +108,19 @@ describe('BookCustomerModal request', () => {
     await bookAt('');
     expect(fetchMock).not.toHaveBeenCalled();
     expect(find(render(), (n) => n.type === 'p' && n.props.children === 'Pick a date and time.')).not.toBeNull();
+  });
+
+  // bookings.vehicle_year is NOT NULL: a blank year used to reach the
+  // function and fail there with "Failed to create booking".
+  it('sends nothing without a vehicle year, and says so', async () => {
+    const saved = PROPS.customer;
+    PROPS.customer = { ...saved, manualContact: {} };
+    try {
+      await bookAt('2026-10-17T10:00');
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(find(render(), (n) => n.type === 'p' && n.props.children === "Enter the vehicle's year.")).not.toBeNull();
+    } finally {
+      PROPS.customer = saved;
+    }
   });
 });

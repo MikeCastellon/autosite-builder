@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import BookingFilters from './BookingFilters.jsx';
 import StatusPill from './StatusPill.jsx';
-import { formatBookingTime } from '../../../lib/bookings.js';
+import { formatBookingTime, isUnscheduledRequest } from '../../../lib/bookings.js';
 
 const SHORT = { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' };
 
@@ -72,7 +72,7 @@ export default function BookingsList({ bookings, onSelect }) {
                       {depositPill(b)}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-gray-800">{formatBookingTime(b.preferred_at, SHORT)}</td>
+                  <td className="px-4 py-3 text-gray-800">{isUnscheduledRequest(b) ? 'Time to arrange' : formatBookingTime(b.preferred_at, SHORT)}</td>
                   <td className="px-4 py-3">
                     <div className="font-semibold text-gray-900">{b.customer_name}</div>
                     <div className="text-xs text-gray-500">{b.customer_phone}</div>
