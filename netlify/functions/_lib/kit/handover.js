@@ -263,6 +263,9 @@ export async function loadInputs(ctx) {
   // The other runs: data for the PDF, stored files for the zip.
   const parts = {};
   const notReady = [];
+  // The run's own clock (ctx.nowMs), so "still running" vs "stopped" is
+  // judged at the same moment as generatedAt below.
+  const nowMs = typeof ctx.nowMs === 'function' ? ctx.nowMs() : Date.now();
   for (const key of entry.uses) {
     if (key === 'brand') continue;
     const data = partData(key, kitData(project, key));
@@ -270,7 +273,7 @@ export async function loadInputs(ctx) {
     const signedAt = key === 'claims' ? Date.parse(kitRunOf(project, key)?.signOff?.at || '') : NaN;
     if (data && Number.isFinite(signedAt)) data.reviewedAt = new Date(signedAt).toISOString().slice(0, 10);
     if (data) parts[key] = data;
-    else notReady.push({ key, label: kitSkill(key).label, state: RUN_STATE_WORDS[kitRunState(kitRunOf(project, key))] || 'not ready' });
+    else notReady.push({ key, label: kitSkill(key).label, state: RUN_STATE_WORDS[kitRunState(kitRunOf(project, key), nowMs)] || 'not ready' });
   }
   const kitFiles = [];
   const kitSkipped = [];
