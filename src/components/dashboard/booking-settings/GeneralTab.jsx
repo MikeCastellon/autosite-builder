@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { saveSchedulerConfig } from '../../../lib/schedulerConfig.js';
+import { uploadSiteImage } from '../../../lib/imageUpload.js';
 
 export default function GeneralTab({ siteId, config, siteImages, onSaved }) {
   const [welcome, setWelcome] = useState(config?.welcome_text || '');
@@ -64,20 +65,28 @@ export default function GeneralTab({ siteId, config, siteImages, onSaved }) {
     finally { setLogoBusy(false); }
   }
 
-  function handleLogoUpload(e) {
+  // Uploaded to storage like the editor's images: the booking widget loads
+  // this config on every page view, and a logo saved inline (base64) made
+  // that download hundreds of KB before the Book Now button appeared.
+  async function handleLogoUpload(e) {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
-    if (file.size > 500 * 1024) {
-      setErr('Logo must be under 500KB');
+    if (file.size > 5 * 1024 * 1024) {
+      setErr('Logo must be under 5MB');
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = reader.result;
-      setLogoUrl(dataUrl);
-      persistLogo(dataUrl);
-    };
-    reader.readAsDataURL(file);
+    setLogoBusy(true); setErr(null);
+    let url;
+    try {
+      url = await uploadSiteImage(file, { siteId, imageKey: 'booking-logo' });
+    } catch (uploadErr) {
+      setErr(uploadErr?.message || 'Logo upload failed');
+      setLogoBusy(false);
+      return;
+    }
+    setLogoUrl(url);
+    await persistLogo(url);
   }
 
   function removeLogo() {
@@ -230,7 +239,7 @@ export default function GeneralTab({ siteId, config, siteImages, onSaved }) {
                 ? 'Custom booking logo (saved automatically). Shown at the top of the customer-facing modal.'
                 : siteLogo
                   ? 'Using the logo uploaded in your site editor. Upload here to override just for the booking modal.'
-                  : 'No logo yet. Upload one in the site editor (Images tab → Logo) or here. PNG / SVG, under 500KB.'}
+                  : 'No logo yet. Upload one in the site editor (Images tab → Logo) or here. PNG, JPG or SVG.'}
             </p>
           </div>
         </div>

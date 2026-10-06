@@ -4,6 +4,8 @@ import { useAuth } from '../../../lib/AuthContext.jsx';
 import { generateSlug } from '../../../lib/publishUtils.js';
 import { defaultSchedulerConfig, defaultAppearance } from '../../../lib/schedulerConfig.js';
 import { publishBookingPage } from '../../../lib/publishSite.js';
+import { isEffectiveSchedulerActive } from '../../../lib/subscriptionGating.js';
+import UpgradeProDialog from '../../ui/UpgradeProDialog.jsx';
 import ShareBookingCard from './ShareBookingCard.jsx';
 
 const labelBase = 'block text-[12px] font-semibold text-[#1a1a1a] mb-1.5 uppercase tracking-[0.5px]';
@@ -11,7 +13,10 @@ const inputBase = 'w-full border border-black/10 rounded-xl px-3.5 py-2.5 text-[
 const SWATCHES = ['#1a1a1a', '#2563eb', '#16a34a', '#dc2626', '#7c3aed', '#ea580c'];
 
 export default function BookingOnlySetup({ onDone, onCancel }) {
-  const { session } = useAuth();
+  const { session, profile } = useAuth();
+  // The page only takes bookings for a Pro owner (scheduler-config).
+  const isPro = isEffectiveSchedulerActive(profile);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [businessName, setBusinessName] = useState('');
   const [slug, setSlug] = useState('');
   const [slugDirty, setSlugDirty] = useState(false);
@@ -80,20 +85,44 @@ export default function BookingOnlySetup({ onDone, onCancel }) {
   }
 
   if (result) {
+    // A new page has no services yet, so it can't take bookings until the
+    // owner adds one (and, without Pro, until they upgrade). Say what's
+    // left instead of "live": the link shows "not open yet" until then.
+    const steps = [
+      'Add your services and prices in Booking Settings (from your dashboard).',
+      'Check your opening hours there (Monday to Friday, 9 to 5 for now).',
+    ];
+    if (!isPro) steps.push('Upgrade to Pro so customers can book.');
     return (
       <div className="max-w-[560px] mx-auto py-8">
-        <h2 className="text-[22px] font-bold text-[#1a1a1a] mb-1">Your booking page is live 🎉</h2>
-        <p className="text-[14px] text-[#888] mb-5">Share this link anywhere — Instagram, text, business cards.</p>
+        <h2 className="text-[22px] font-bold text-[#1a1a1a] mb-1">Your booking page is set up</h2>
+        <p className="text-[14px] text-[#888] mb-4">A few steps before customers can book on it:</p>
+        <ol className="list-decimal pl-5 mb-5 space-y-1.5 text-[14px] text-[#1a1a1a]">
+          {steps.map((step) => <li key={step}>{step}</li>)}
+        </ol>
+        {!isPro && (
+          <button type="button" onClick={() => setUpgradeOpen(true)}
+            className="mb-5 w-full rounded-xl bg-[#cc0000] hover:bg-[#b30000] text-white text-[14px] font-semibold py-3 transition-colors">
+            Upgrade to Pro
+          </button>
+        )}
         {result.takenSlug && (
           <p className="text-[13px] text-[#4a4a4a] bg-[#f4f3f0] rounded-xl px-3.5 py-2.5 mb-4">
             “{result.takenSlug}” is already in use, so your link uses the address below.
           </p>
         )}
+        <p className="text-[13px] text-[#4a4a4a] mb-2">Your link (share it once the steps above are done):</p>
         <ShareBookingCard bookingUrl={result.bookingUrl} />
         <button type="button" onClick={() => onDone && onDone(result.siteId)}
           className="mt-5 w-full rounded-xl bg-[#1a1a1a] hover:bg-[#cc0000] text-white text-[14px] font-semibold py-3 transition-colors">
-          Done
+          Go to dashboard
         </button>
+        <UpgradeProDialog
+          open={upgradeOpen}
+          onClose={() => setUpgradeOpen(false)}
+          heading="Take bookings with Pro"
+          subheading="Your booking page is ready. Upgrade to let customers book on it."
+        />
       </div>
     );
   }
@@ -142,7 +171,10 @@ export default function BookingOnlySetup({ onDone, onCancel }) {
         </button>
         {onCancel && <button type="button" onClick={onCancel} className="rounded-xl px-5 py-2.5 text-[14px] font-semibold border border-black/10">Cancel</button>}
       </div>
-      <p className="text-[12px] text-[#888] mt-4">Next: add your services, prices, and availability in Booking Settings.</p>
+      <p className="text-[12px] text-[#888] mt-4">
+        Next: add your services, prices, and availability in Booking Settings.
+        {!isPro && ' Customers can book once you\u2019re on Pro.'}
+      </p>
     </div>
   );
 }

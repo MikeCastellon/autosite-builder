@@ -259,7 +259,7 @@ export const ARTICLES = [
       },
       {
         heading: 'Set your weekly availability',
-        body: 'Open the **Availability** tab. Set which days and hours you accept appointments — e.g. Mon–Fri 9am–5pm, Sat 9am–12pm, closed Sunday. Timezone is set automatically.',
+        body: 'Open the **Availability** tab. Set which days and hours you accept appointments — e.g. Mon–Fri 9am–5pm, Sat 9am–12pm, closed Sunday. The time zone is picked up from your computer the first time you save; you can change it on the same tab.',
       },
       {
         heading: 'Add services',
@@ -276,7 +276,7 @@ export const ARTICLES = [
       },
       {
         heading: 'Manage incoming bookings',
-        body: "Click **Bookings** in the top nav to see every upcoming (and past) appointment. Click a booking for full details, customer info, and status controls — confirm, reschedule, cancel, or mark complete. Email notifications go out automatically on every status change.",
+        body: "Click **Bookings** in the top nav to see every upcoming (and past) appointment. Click a booking for full details, customer info, and status controls — confirm, decline, cancel, or mark complete. A request sent through the request form (no calendar) asks you to set the appointment time when you confirm it. If a booking overlaps one you already confirmed, you're asked before it's confirmed. Email notifications go out automatically on every status change.",
       },
       {
         heading: 'Collect a deposit',

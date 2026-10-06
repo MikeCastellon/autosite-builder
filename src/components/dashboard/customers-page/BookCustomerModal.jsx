@@ -70,6 +70,13 @@ export default function BookCustomerModal({ customer, userId, onClose, onBooked 
     // browser's reading of it, which lands the booking hours off.
     const shopTime = wallTimeToBookingIso(when);
     if (!shopTime) { setErr('Pick a date and time.'); return; }
+    // bookings.vehicle_year is required: without it the save used to fail
+    // with a bare "Failed to create booking".
+    const year = Number(vehicleYear);
+    if (!Number.isInteger(year) || year < 1900 || year > 2100) {
+      setErr("Enter the vehicle's year.");
+      return;
+    }
     // The browser's reading of the same time (a real instant): what this
     // dialog sent before that fix, and what the previous deploy's
     // owner-create-booking stores. The current function ignores it.
@@ -219,7 +226,7 @@ export default function BookCustomerModal({ customer, userId, onClose, onBooked 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <TextField label="Make" value={vehicleMake} onChange={setVehicleMake} />
               <TextField label="Model" value={vehicleModel} onChange={setVehicleModel} />
-              <TextField label="Year" type="number" value={vehicleYear} onChange={setVehicleYear} />
+              <TextField label="Year" type="number" value={vehicleYear} onChange={setVehicleYear} required />
               {siteVehicleTypes.length === 0 && (
                 <div>
                   <label className="block text-xs font-medium text-[#1a1a1a] mb-1">Size</label>
@@ -270,13 +277,14 @@ export default function BookCustomerModal({ customer, userId, onClose, onBooked 
   );
 }
 
-function TextField({ label, value, onChange, type = 'text' }) {
+function TextField({ label, value, onChange, type = 'text', required = false }) {
   return (
     <div>
-      <label className="block text-xs font-medium text-[#1a1a1a] mb-1">{label}</label>
+      <label className="block text-xs font-medium text-[#1a1a1a] mb-1">{label}{required && ' *'}</label>
       <input
         type={type}
         value={value}
+        required={required}
         onChange={(e) => onChange(e.target.value)}
         className="w-full border border-black/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#cc0000]/30"
       />

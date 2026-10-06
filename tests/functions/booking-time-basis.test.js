@@ -239,6 +239,7 @@ describe('writers whose time format did not change still accept requests without
   });
 
   it('create-booking: the simple-mode request form still books without shop_preferred_at', async () => {
+    h.db.state.sites[0].scheduler_config.booking_mode = 'simple';
     const res = await createBooking(post({
       siteId: SITE_ID,
       customer_name: 'Lee Park',

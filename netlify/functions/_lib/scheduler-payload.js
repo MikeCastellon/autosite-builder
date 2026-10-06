@@ -1,6 +1,8 @@
 import { servicePriceCents } from './deposit-math.js';
 import { normalizeAppearance } from './appearance.js';
-import { enabledVehicleTypes } from './vehicle-pricing.js';
+import { enabledVehicleTypes, resolveVariant } from './vehicle-pricing.js';
+import { isOpenWindow, normalizeGranularity, normalizeLeadHours } from './slot-math.js';
+import { resolveShopTimeZone, shopTodayISO } from './shop-time.js';
 
 function formatCents(cents) {
   if (typeof cents !== 'number' || cents <= 0) return '';
@@ -9,6 +11,38 @@ function formatCents(cents) {
 }
 
 const TEMPLATE_FALLBACK_COLORS = { default: '#1a1a1a' };
+
+// Everything below comes from owner-written jsonb and is placed into
+// innerHTML / style attributes on every published page, so colors must be
+// plain hex and text is length-capped. The widget escapes text as well.
+const HEX_COLOR_RE = /^#(?:[0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
+function safeColor(value, fallback) {
+  return typeof value === 'string' && HEX_COLOR_RE.test(value.trim()) ? value.trim() : fallback;
+}
+
+function capText(value, max) {
+  return typeof value === 'string' ? value.slice(0, max) : '';
+}
+
+// This payload is fetched (uncached) on every page view before the Book
+// Now button appears. Booking Settings used to store uploaded logos as
+// base64 data URLs: one of 400 KB+ made the widget wait seconds on a phone.
+// Small inline images and http(s) URLs pass; anything else is dropped (the
+// widget then shows the business initial).
+export const MAX_INLINE_LOGO_CHARS = 48 * 1024;
+function safeLogoUrl(value) {
+  if (typeof value !== 'string') return null;
+  const v = value.trim();
+  if (!v) return null;
+  if (/^https?:\/\//i.test(v)) return v.length <= 2048 ? v : null;
+  if (/^data:image\//i.test(v)) return v.length <= MAX_INLINE_LOGO_CHARS ? v : null;
+  return null;
+}
+
+function hasOpenHours(availability) {
+  if (!availability || typeof availability !== 'object') return false;
+  return Object.values(availability).some((wins) => Array.isArray(wins) && wins.some(isOpenWindow));
+}
 
 // Public payload discipline: nested per-vehicle maps only carry keys for
 // vehicle types the owner currently offers (see vehicle-pricing.js for the
@@ -23,40 +57,60 @@ function pickVehicleKeys(map, ids) {
 }
 
 // Pure builder: takes a `sites` row, returns the public widget payload.
-// No DB / network — unit testable.
-export function buildSchedulerPayload(site) {
-  const businessName = site.business_info?.businessName || 'Book Now';
+// No DB / network — unit testable. `now` only moves "today" in tests.
+export function buildSchedulerPayload(site, { now = Date.now() } = {}) {
+  const businessName = capText(site.business_info?.businessName, 120) || 'Book Now';
   const customColors = site.generated_content?._customColors || {};
-  const brandColor =
-    customColors.primary ||
-    customColors.accent ||
-    TEMPLATE_FALLBACK_COLORS[site.template_id] ||
-    TEMPLATE_FALLBACK_COLORS.default;
+  const brandColor = safeColor(
+    customColors.primary || customColors.accent || TEMPLATE_FALLBACK_COLORS[site.template_id],
+    TEMPLATE_FALLBACK_COLORS.default,
+  );
 
   const cfg = site.scheduler_config || {};
   const appearance = normalizeAppearance(cfg.appearance);
+  appearance.accent_color = safeColor(appearance.accent_color, '#1a1a1a');
+  appearance.logo_url = safeLogoUrl(appearance.logo_url) || '';
+  appearance.tagline = capText(appearance.tagline, 160);
   const vehicleTypes = enabledVehicleTypes(cfg.vehicle_types);
   const vehicleTypeIds = new Set(vehicleTypes.map((t) => t.id));
-  const enabledServices = (cfg.services || []).filter((s) => s.enabled !== false);
+  const enabledServices = (cfg.services || []).filter((s) => s && s.enabled !== false);
   const siteLogo = site.generated_content?._images?.logo || null;
-  const logoUrl = appearance.logo_url || cfg.logo_url || siteLogo || null;
+  const logoUrl = appearance.logo_url || safeLogoUrl(cfg.logo_url) || safeLogoUrl(siteLogo) || null;
+  const bookingMode = cfg.booking_mode === 'simple' ? 'simple' : 'full';
+  const timeZone = resolveShopTimeZone(cfg, site.business_info);
+
+  // Can a customer finish a booking at all? The request form (simple mode)
+  // always can. The calendar needs opening hours, and once vehicle types
+  // are saved, a service offered for at least one of them. When false the
+  // widget shows "not available" instead of a flow that dead-ends.
+  const bookable = bookingMode === 'simple' || (
+    hasOpenHours(cfg.availability) && (
+      vehicleTypes.length === 0
+      || enabledServices.some((s) => vehicleTypes.some((t) => resolveVariant(s, t.id) !== null))
+    )
+  );
 
   return {
     enabled: true,
+    bookable,
     site_type: site.site_type || 'website',
     businessName,
     brandColor,
     appearance,
     logo_url: logoUrl,
-    city: site.business_info?.city || '',
-    booking_mode: cfg.booking_mode === 'simple' ? 'simple' : 'full',
-    modal_theme: cfg.modal_theme || 'light',
-    welcome_text: cfg.welcome_text || "Tell us about your car and we'll be in touch.",
-    button_label: cfg.button_label || 'Book Now',
-    lead_time_hours: cfg.lead_time_hours ?? 24,
-    slot_granularity_minutes: cfg.slot_granularity_minutes ?? 30,
-    cta_selector: cfg.cta_selector || '',
-    cancellation_policy: cfg.cancellation_policy || '',
+    city: capText(site.business_info?.city, 80),
+    booking_mode: bookingMode,
+    modal_theme: typeof cfg.modal_theme === 'string' ? cfg.modal_theme.slice(0, 20) : 'light',
+    welcome_text: capText(cfg.welcome_text, 600) || "Tell us about your car and we'll be in touch.",
+    button_label: capText(cfg.button_label, 40) || 'Book Now',
+    lead_time_hours: normalizeLeadHours(cfg.lead_time_hours),
+    slot_granularity_minutes: normalizeGranularity(cfg.slot_granularity_minutes),
+    cta_selector: capText(cfg.cta_selector, 200),
+    cancellation_policy: capText(cfg.cancellation_policy, 5000),
+    // The shop's date, for the calendar's "past" days (the visitor's own
+    // clock may be in another zone or wrong).
+    timezone: timeZone,
+    today: shopTodayISO(timeZone, now),
     vehicle_types: vehicleTypes.map((t) => ({ id: t.id, name: t.name })),
     services: enabledServices.map((s) => {
       const cents = servicePriceCents(s);

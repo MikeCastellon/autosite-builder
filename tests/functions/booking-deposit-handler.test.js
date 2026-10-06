@@ -4,7 +4,8 @@ import { handleBookingCheckoutCompleted } from '../../netlify/functions/_lib/boo
 
 // Fake Supabase client supporting:
 //   .from(table).select(cols).eq(col,val).maybeSingle() → returns booking
-//   .from(table).update(data).eq(col,val).eq(col,val)   → records update
+//   .from(table).update(data).eq(col,val)…               → records the update
+//     (with every .eq filter) when the chain is awaited
 function fakeDb({ booking }) {
   const calls = [];
   return {
@@ -18,16 +19,10 @@ function fakeDb({ booking }) {
       update: (data) => {
         const eqs = [];
         const builder = {
-          eq: (col, val) => {
-            eqs.push({ col, val });
-            // Allow chaining a second .eq() — at the end of the chain we
-            // record the call. We detect the end by counting: the handler
-            // does .eq('id', X).eq('deposit_status', 'pending').
-            if (eqs.length >= 2) {
-              calls.push({ table, op: 'update', data, eqs });
-              return Promise.resolve({ error: null });
-            }
-            return builder;
+          eq: (col, val) => { eqs.push({ col, val }); return builder; },
+          then: (resolve, reject) => {
+            calls.push({ table, op: 'update', data, eqs });
+            return Promise.resolve({ error: null }).then(resolve, reject);
           },
         };
         return builder;
@@ -48,7 +43,7 @@ describe('handleBookingCheckoutCompleted', () => {
         id: 'cs_abc',
       }},
     };
-    const db = fakeDb({ booking: { deposit_required_cents: 2475, deposit_status: 'pending' } });
+    const db = fakeDb({ booking: { deposit_required_cents: 2475, deposit_status: 'pending', deposit_checkout_session_id: 'cs_abc' } });
     await handleBookingCheckoutCompleted(event, { db });
 
     expect(db._calls).toHaveLength(1);
@@ -62,6 +57,37 @@ describe('handleBookingCheckoutCompleted', () => {
     // idempotency — replays after refund must not double-flip to paid.
     expect(call.eqs).toContainEqual({ col: 'id', val: 'booking-uuid-1' });
     expect(call.eqs).toContainEqual({ col: 'deposit_status', val: 'pending' });
+    // Only while the row still holds this session (no race with a newer one).
+    expect(call.eqs).toContainEqual({ col: 'deposit_checkout_session_id', val: 'cs_abc' });
+  });
+
+  it("ignores a paid session that is not the one create-booking stored for the booking", async () => {
+    // Every connected account's events reach this webhook, and
+    // client_reference_id is whatever the session's creator set: another
+    // shop could pay its own session naming this booking.
+    const event = {
+      type: 'checkout.session.completed',
+      data: { object: {
+        mode: 'payment',
+        client_reference_id: 'booking-uuid-1',
+        amount_total: 5000,
+        payment_intent: 'pi_other',
+        id: 'cs_someone_elses',
+      }},
+    };
+    const db = fakeDb({ booking: { deposit_required_cents: 2475, deposit_status: 'pending', deposit_checkout_session_id: 'cs_abc' } });
+    await handleBookingCheckoutCompleted(event, { db });
+    expect(db._calls).toHaveLength(0);
+  });
+
+  it('ignores a booking that never had a deposit session', async () => {
+    const event = {
+      type: 'checkout.session.completed',
+      data: { object: { mode: 'payment', client_reference_id: 'booking-uuid-1', amount_total: 5000, id: 'cs_new' } },
+    };
+    const db = fakeDb({ booking: { deposit_required_cents: null, deposit_status: 'not_required', deposit_checkout_session_id: null } });
+    await handleBookingCheckoutCompleted(event, { db });
+    expect(db._calls).toHaveLength(0);
   });
 
   it('ignores sessions missing client_reference_id', async () => {
@@ -95,7 +121,7 @@ describe('handleBookingCheckoutCompleted', () => {
         id: 'cs_under',
       }},
     };
-    const db = fakeDb({ booking: { deposit_required_cents: 2475, deposit_status: 'pending' } });
+    const db = fakeDb({ booking: { deposit_required_cents: 2475, deposit_status: 'pending', deposit_checkout_session_id: 'cs_under' } });
     await handleBookingCheckoutCompleted(event, { db });
     // Booking should NOT be flipped — guard against stale checkout URLs
     // or tampered amounts (Security Audit H7).
@@ -117,10 +143,9 @@ describe('handleBookingCheckoutCompleted', () => {
     expect(db._calls).toHaveLength(0);
   });
 
-  it('still updates when deposit_required_cents is null (legacy / no-deposit-required bookings)', async () => {
-    // Older bookings created before deposits existed could plausibly
-    // arrive here via a manual checkout. We don't gate on amount when
-    // there's no required amount stored.
+  it('still updates when deposit_required_cents is null (its own session, no amount stored)', async () => {
+    // We don't gate on amount when there's no required amount stored; the
+    // session must still be the booking's own.
     const event = {
       type: 'checkout.session.completed',
       data: { object: {
@@ -131,7 +156,7 @@ describe('handleBookingCheckoutCompleted', () => {
         id: 'cs_legacy',
       }},
     };
-    const db = fakeDb({ booking: { deposit_required_cents: null, deposit_status: 'pending' } });
+    const db = fakeDb({ booking: { deposit_required_cents: null, deposit_status: 'pending', deposit_checkout_session_id: 'cs_legacy' } });
     await handleBookingCheckoutCompleted(event, { db });
     expect(db._calls).toHaveLength(1);
     expect(db._calls[0].data.deposit_status).toBe('paid');
