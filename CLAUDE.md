@@ -32,10 +32,13 @@ Owners pick one of 21 React templates, customize it in the editor, and publish a
 | `npm run theme:check` | Template render gate + kit/font tests |
 | `npm run theme:render` | Writes every template x fixture as a published page to `$RENDER_OUT` (default `<tmpdir>/theme-renders`); filter with `THEMES=id1,id2` |
 | `npx vite build` | Production build |
+| `node scripts/replica/capture.mjs` / `compare.mjs render\|leak-check\|palette` | "Exact replica" dev tools (`scripts/replica/README.md`): headless Chrome captures, side-by-side review, leak check, registry-safe palette. `npm run replica:test` also runs their ~18 s headless Chrome part, which `npx vitest run` skips unless `REPLICA_CHROME=1` |
 
 ## How a site renders
 
 - Registry: `src/data/templates.js` (`TEMPLATES` metadata + `TEMPLATE_COMPONENT_MAP` lazy imports).
+  `hidden: true` + `customFor: ['<project id>']` marks an "Exact replica" (`replica_<first 8 of the project id>`), listed
+  only in that custom-site project's Design step; build one with the `.claude/skills/replica-template` skill.
 - Editor: `src/components/preview/WebsitePreview.jsx` renders the template inside `<EditorModeProvider>`;
   `ContentEditor.jsx` is the side panel (sections list, copy, images, Colors & Fonts).
 - Publish: `src/lib/exportHtml.js` runs `renderToStaticMarkup` in the owner's browser. **No effects, no state

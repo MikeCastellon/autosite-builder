@@ -13,6 +13,14 @@
 // It stores the proposal in design.suggestion and nothing else: the site,
 // the rest of the design and the levers stay as they are until the admin
 // applies the parts they want.
+//
+// "Match its layout": a claim that carries reference { mode: 'match',
+// source } (and studioPalette, the Studio's colors when it started, and
+// useBrand, its "Use their brand color" toggle) runs as a match: the
+// reference's screenshots go first as the layout to mirror, the colors
+// come from our side, and the result carries suggestion.reference. The
+// claim is the only place the choice is read from: the request body only
+// names the run. Its events (ready or failed) carry mode: 'match'.
 import Anthropic from '@anthropic-ai/sdk';
 import { supabaseAdmin } from './_shared/auth.js';
 import { requireSuperAdmin } from './_lib/custom-site-auth.js';
@@ -41,11 +49,22 @@ export async function runSuggest({ db, client, projectId, startedAt, actor, now 
   const claim = project.design?.suggestion;
   if (!isSameSuggestRun(claim, startedAt)) return { status: 409, error: 'No matching run to start' };
 
+  // A match run says so in its log whether it ends ready or failed, so the
+  // activity reads "Layout match failed" rather than a plain suggestion.
+  const mode = claim.reference?.mode === 'match' ? { mode: 'match' } : {};
   let next;
   let result = null;
   try {
     const deadlineMs = Date.parse(claim.startedAt) + SUGGEST_STALE_MS - DEADLINE_MARGIN_MS;
-    result = await suggestDesign({ db, client, project, deadlineMs });
+    result = await suggestDesign({
+      db,
+      client,
+      project,
+      deadlineMs,
+      reference: claim.reference || null,
+      studioPalette: claim.studioPalette || null,
+      useBrand: typeof claim.useBrand === 'boolean' ? claim.useBrand : undefined,
+    });
     next = {
       status: 'ready',
       startedAt: claim.startedAt,
@@ -58,9 +77,10 @@ export async function runSuggest({ db, client, projectId, startedAt, actor, now 
       facts: result.facts,
       skipped: result.skipped,
       error: null,
+      ...(result.reference ? { reference: result.reference } : {}),
     };
   } catch (err) {
-    console.error('[custom-site-suggest] failed:', err?.message || err);
+    console.error(`[custom-site-suggest] ${mode.mode === 'match' ? 'layout match' : 'suggestion'} failed:`, err?.message || err);
     next = failedSuggestion({ startedAt: claim.startedAt, finishedAt: now(), error: err?.message });
   }
 
@@ -79,10 +99,11 @@ export async function runSuggest({ db, client, projectId, startedAt, actor, now 
     await logEvent(db, project.id, 'design_suggest_ready', {
       model: result.model, templateId: result.templateId, images: result.imageCount, skipped: result.skipped.length,
       droppedFacts: result.dropped.facts, droppedPhotos: result.dropped.photos,
+      ...mode,
     }, actor);
     return { status: 200 };
   }
-  await logEvent(db, project.id, 'design_suggest_failed', { error: next.error.slice(0, 200) }, actor);
+  await logEvent(db, project.id, 'design_suggest_failed', { error: next.error.slice(0, 200), ...mode }, actor);
   return { status: 500, error: next.error };
 }
 

@@ -16,8 +16,10 @@ import {
   ABOUT_LAYOUTS, ALWAYS_SHOWN, COLOR_ROLES, FACT_LISTS, FACT_TEXTS, HERO_LAYOUTS, sanitizeLevers,
 } from './designLevers.js';
 import { TEMPLATE_SECTIONS, sectionIdsFor } from '../data/templateSections.js';
-import { DESIGN_EFFORT, DESIGN_MODEL, SITE_BUSINESS_TYPES, briefText, isImportable } from './customSiteDesign.js';
+import { DESIGN_EFFORT, DESIGN_MODEL, SITE_BUSINESS_TYPES, brandAccent, briefText, isImportable } from './customSiteDesign.js';
 import { FORM_FIELDS, safeHref } from './customSiteForm.js';
+import { brandPaletteOf } from './brandSpec.js';
+import { REFERENCE_MODES } from './referenceModes.js';
 import { deriveTheme } from '../components/preview/templates/kit/theme.js';
 
 export const SUGGEST_MODEL = DESIGN_MODEL;
@@ -112,6 +114,338 @@ export function suggestImageCandidates(assets) {
   return out;
 }
 
+// ─── "Match its layout": one reference, mirrored ─────────────────────
+//
+// The Design step lets the admin choose, for a reference, "Use as
+// inspiration" (the default: taste only, as the prompt below says) or
+// "Match its layout": Claude looks at a screenshot of that one reference
+// and lays the customer's site out like it (closest template, section
+// order, hero and about layouts, fonts with the same feel). Colors come
+// from our side (the Studio palette, the brand system or the customer's
+// brand colors, never sampled from the reference) and the logo, photos
+// and words stay the customer's. design.reference holds the choice:
+//   { mode: 'inspire' | 'match',
+//     source: { kind: 'asset', path } | { kind: 'url', url } | null,
+//     replica: { status, requestedAt, templateId, note } }
+// Only layout, structure, spacing, type feel and component style are ever
+// taken from a reference: never its text, photos, logo, brand marks, name
+// or anything else that identifies that business.
+
+// 'inspire' | 'match' (referenceModes.js, shared with customSiteDesign.js
+// without an import cycle).
+export { REFERENCE_MODES };
+// Screenshots of one reference a match run sends at most: a long page
+// reads best as a few screen-height tiles, top first.
+export const MATCH_SHOT_LIMIT = 4;
+
+// ─── Screenshot groups ───────────────────────────────────────────────
+//
+// A tall screenshot is cut into tiles in the browser (ReferenceShotUpload:
+// at most MATCH_SHOT_LIMIT, each small enough for the model to read at full
+// size), and each tile is its own reference upload. The tiles of one
+// upload share `group` and are numbered from the top by `part` (1..4), so
+// a match sends the whole page, top first, whichever tile was picked.
+export const REFERENCE_GROUP_RE = /^[a-z0-9-]{8,40}$/;
+
+const isPart = (n) => Number.isInteger(n) && n >= 1 && n <= MATCH_SHOT_LIMIT;
+
+// The group a stored reference belongs to, or '' (a single screenshot).
+// Both fields must be well formed: a group without a part has no order.
+export function referenceShotGroup(asset) {
+  return typeof asset?.group === 'string' && REFERENCE_GROUP_RE.test(asset.group) && isPart(asset.part) ? asset.group : '';
+}
+
+// What reference-add was sent as a tile's place: {} for a single
+// screenshot (neither field, or both empty), { group, part } for a tile,
+// or { error } (one without the other, or a malformed value).
+export function checkReferenceGroup({ group, part } = {}) {
+  const none = (v) => v === undefined || v === null || v === '';
+  if (none(group) && none(part)) return {};
+  if (typeof group !== 'string' || !REFERENCE_GROUP_RE.test(group) || !isPart(part)) {
+    return { error: 'That screenshot part isn\'t valid. Upload the screenshot again.' };
+  }
+  return { group, part };
+}
+
+// Screenshots the admin adds (custom-site-admin reference-upload-url /
+// reference-add): the formats screenshot tools save and Claude reads.
+export const REFERENCE_SHOT_MAX_BYTES = 10 * 1024 * 1024;
+export const REFERENCE_SHOT_TYPES = Object.freeze({ 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' });
+const SHOT_EXT_TYPES = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp' };
+// The run sends an image only up to about 3.9 MB (the API's 5 MB counts
+// the base64 text); ReferenceShotUpload shrinks a bigger screenshot in the
+// browser before uploading so the match can use it.
+export const MATCH_SHOT_SEND_BYTES = Math.floor(3.5 * 1024 * 1024);
+
+// A screenshot the admin wants to upload: { fileName, size, type } →
+// { ext, type } (the stored extension and media type) or { error }. The
+// type may be empty (some systems hand files over without one); the name
+// decides then. A type that disagrees with the name is refused: the file
+// is stored under the name's extension.
+export function checkReferenceShot({ fileName, size, type } = {}) {
+  const ext = (/\.([a-z0-9]{1,5})$/i.exec(String(fileName || ''))?.[1] || '').toLowerCase();
+  const byName = SHOT_EXT_TYPES[ext];
+  const given = typeof type === 'string' ? type.trim().toLowerCase() : '';
+  if (!byName || (given && given !== byName)) return { error: 'Use a PNG, JPEG or WebP screenshot.' };
+  if (!Number.isFinite(size) || size <= 0) return { error: 'That file looks empty.' };
+  if (size > REFERENCE_SHOT_MAX_BYTES) return { error: 'That screenshot is over 10 MB. Save a smaller one (or a few screen-height ones).' };
+  return { ext: ext === 'jpeg' ? 'jpg' : ext, type: byName };
+}
+
+const UUID_PART = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
+const REFERENCE_PATH_RE = new RegExp(`^(${UUID_PART})/reference/${UUID_PART}\\.([a-z0-9]{1,5})$`);
+
+// Is `path` a file in this project's reference folder? Returns its
+// extension, or '' (another project's folder, another kind, made up).
+export function referenceShotPath(projectId, path) {
+  const m = REFERENCE_PATH_RE.exec(typeof path === 'string' ? path : '');
+  return m && m[1] === projectId ? m[2] : '';
+}
+
+// A web address as a comparable key: host without "www.", path without
+// the trailing slash, query kept, lower case ('' when it isn't one).
+export function referenceUrlKey(input) {
+  const href = safeHref(input);
+  if (!href) return '';
+  const u = new URL(href);
+  return `${u.hostname.replace(/^www\./, '')}${u.pathname.replace(/\/+$/, '')}${u.search}`.toLowerCase();
+}
+
+// Addresses written in a note ("Screenshot of https://shop.com - hero").
+// Each word counts as written and without the punctuation a sentence puts
+// around it: ReferenceShotUpload writes the address as it is stored, and
+// one that really ends in "." or ")" must still find its screenshots.
+function urlKeysIn(text) {
+  const keys = new Set();
+  for (const token of String(text || '').split(/\s+/)) {
+    const t = token.replace(/^[("'<[]+|[)"'>\],.;:!?]+$/g, '');
+    for (const word of new Set([token, t])) {
+      const key = word.includes('.') ? referenceUrlKey(word) : '';
+      if (key) keys.add(key);
+    }
+  }
+  return keys;
+}
+
+const isViewableShot = (a) => VIEWABLE_EXT.test(String(a?.name || a?.path || '')) && VIEWABLE_EXT.test(String(a?.path || ''));
+
+// The viewable tiles of `group` in `list`, top first. One per part: a
+// retried tile recorded twice keeps the first (reference-add records a
+// group's part once, this guards older rows too).
+function groupParts(list, group) {
+  const byPart = new Map();
+  for (const a of list) {
+    if (referenceShotGroup(a) === group && isViewableShot(a) && !byPart.has(a.part)) byPart.set(a.part, a);
+  }
+  return [...byPart.keys()].sort((x, y) => x - y).map((p) => byPart.get(p));
+}
+
+// The screenshots that picture a reference, top of the page first, at
+// most MATCH_SHOT_LIMIT, only images Claude can view:
+//   an uploaded image   that image; a tile of a cut-up screenshot brings
+//                       its whole group, ordered by part
+//   a web address       the reference uploads whose note names that
+//                       address (ReferenceShotUpload writes "Screenshot of
+//                       <url>"), in upload order; a group counts as one
+//                       upload: its tiles stay together, in part order, at
+//                       the place of its first tile that names the address
+// Never fetched from the web: a site without a screenshot can't be matched.
+export function referenceShots(source, assets) {
+  const list = (Array.isArray(assets) ? assets : []).filter((a) => a && a.kind === 'reference' && typeof a.path === 'string');
+  if (source?.kind === 'asset') {
+    const chosen = list.find((a) => a.path === source.path);
+    const group = referenceShotGroup(chosen);
+    if (group) return groupParts(list, group).slice(0, MATCH_SHOT_LIMIT);
+    return chosen && isViewableShot(chosen) ? [chosen] : [];
+  }
+  if (source?.kind === 'url') {
+    const key = referenceUrlKey(source.url);
+    if (!key) return [];
+    const out = [];
+    const groups = new Set();
+    for (const a of list) {
+      if (!isViewableShot(a) || !urlKeysIn(a.note).has(key)) continue;
+      const group = referenceShotGroup(a);
+      if (!group) out.push(a);
+      else if (!groups.has(group)) {
+        groups.add(group);
+        out.push(...groupParts(list, group));
+      }
+    }
+    return out.slice(0, MATCH_SHOT_LIMIT);
+  }
+  return [];
+}
+
+// A reference source checked against the project: { source } (null for
+// none) or { error }. An image must be one of this project's own reference
+// uploads; an address must be http(s).
+function referenceSourceOf(raw, project) {
+  if (raw === undefined || raw === null) return { source: null };
+  if (typeof raw !== 'object' || Array.isArray(raw)) return { error: 'Unknown reference' };
+  if (raw.kind === 'asset') {
+    const path = typeof raw.path === 'string' ? raw.path : '';
+    const own = referenceShotPath(project?.id, path)
+      && (Array.isArray(project?.assets) ? project.assets : []).some((a) => a?.kind === 'reference' && a.path === path);
+    return own ? { source: { kind: 'asset', path } } : { error: 'That screenshot isn\'t one of this project\'s reference images' };
+  }
+  if (raw.kind === 'url') {
+    // At most 500 characters before and after safeHref, as
+    // customSiteDesign.js sanitizeReference keeps it (safeHref may add
+    // "https://"), so the server never runs a source the page can't save.
+    const url = typeof raw.url === 'string' && raw.url.length <= 500 ? safeHref(raw.url) : null;
+    return url && url.length <= 500 ? { source: { kind: 'url', url } } : { error: 'That reference link isn\'t a web address' };
+  }
+  return { error: 'Unknown reference' };
+}
+
+// The page's reference choice (design.reference, or what a "Suggest a
+// design" start sends) checked against the project. Returns { reference:
+// { mode, source }, shots, error, problem }: error is '' when a run may
+// start; problem names what's missing for the page ('choice', 'source',
+// 'pick', 'no-shot', 'unviewable'). An inspire choice never fails (its
+// source plays no part in the run).
+export function checkReferenceChoice(input, project) {
+  const inspire = { reference: { mode: 'inspire', source: null }, shots: [], error: '', problem: '' };
+  if (input === undefined || input === null) return inspire;
+  if (typeof input !== 'object' || Array.isArray(input)) return { ...inspire, error: 'Unknown reference choice', problem: 'choice' };
+  const mode = input.mode === undefined ? 'inspire' : input.mode;
+  if (!REFERENCE_MODES.includes(mode)) return { ...inspire, error: 'Unknown reference choice', problem: 'choice' };
+  const { source, error } = referenceSourceOf(input.source, project);
+  if (mode === 'inspire') return { ...inspire, reference: { mode, source: error ? null : source } };
+  if (error) return { ...inspire, error, problem: 'source' };
+  if (!source) return { ...inspire, error: 'Pick the reference site to match', problem: 'pick' };
+  const reference = { mode, source };
+  const shots = referenceShots(source, project?.assets);
+  if (shots.length) return { reference, shots, error: '', problem: '' };
+  if (source.kind === 'url') return { reference, shots, error: 'Add a screenshot of this site to match it', problem: 'no-shot' };
+  const name = (project?.assets || []).find((a) => a?.path === source.path)?.name || 'that file';
+  return { reference, shots, error: `Claude can't view ${name}: add a PNG, JPEG or WebP screenshot to match it`, problem: 'unviewable' };
+}
+
+// A part's name ("home (part 2 of 3).jpg", ReferenceShotUpload tileName)
+// without its place in the screenshot.
+const PART_SUFFIX_RE = / \(part \d+ of \d+\)(?=\.[a-z0-9]{1,5}$)/i;
+
+// A short name for a reference: the address without "https://" and "www.",
+// or the screenshot's file name. A part of a cut-up screenshot is named as
+// the whole one ("home.jpg"): a match on any part sends them all, so the
+// prompt must not read as if only part 2 were the reference (the page's
+// wholeShotName does the same for its labels).
+export function referenceLabel(source, assets) {
+  if (source?.kind === 'url') {
+    const href = safeHref(source.url);
+    return href ? href.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '') : 'the reference site';
+  }
+  if (source?.kind === 'asset') {
+    const a = (Array.isArray(assets) ? assets : []).find((x) => x?.path === source.path);
+    const name = referenceShotGroup(a) ? String(a.name || '').replace(PART_SUFFIX_RE, '') : a?.name;
+    return oneLine(name, 80) || 'the reference screenshot';
+  }
+  return 'the reference';
+}
+
+// The Studio palette a start request sends (the page's current one, maybe
+// unsaved), kept to the five roles as #rrggbb. Partial is fine.
+export function studioPaletteOf(raw) {
+  return sanitizeLevers({ palette: raw && typeof raw === 'object' ? raw : {} }, '').palette;
+}
+
+// Where a match run's colors come from: always our side, in this order.
+//   studio       all five roles set in the Studio
+//   brand        the brand system's palette (design.brand, ready)
+//   brandColors  the chosen template's colors with the customer's brand
+//                color as the accent (brandAccent, as the setup does),
+//                unless the setup turned "Use their brand color" off
+//   template     the chosen template's own colors (no brand colors given,
+//                or brandOff: they gave some and the toggle is off)
+// Studio roles that are set always win over the others. `useBrand` is the
+// page's "Use their brand color" toggle when the run started (maybe not
+// saved yet; custom-site-suggest keeps it on the claim): a boolean wins
+// over the saved design.useBrand, anything else leaves the saved one. It
+// may come as { useBrand } or as the boolean itself. Returns { from,
+// studio, brand, hexes, brandOff }; matchPaletteFor turns it into the
+// palette.
+export function matchPalettePlan(project, studioPalette, opts = {}) {
+  const studio = studioPaletteOf(studioPalette);
+  const run = project?.design?.brand;
+  const brand = run?.status === 'ready' ? brandPaletteOf(run.brand?.palette) : null;
+  const form = project?.form && typeof project.form === 'object' ? project.form : {};
+  const override = typeof opts === 'boolean' ? opts : opts?.useBrand;
+  const useBrand = typeof override === 'boolean' ? override : project?.design?.useBrand !== false;
+  const given = form.colorMode === 'mine' && Array.isArray(form.colors)
+    ? form.colors.filter((h) => typeof h === 'string' && /^#[0-9a-f]{6}$/i.test(h)).map((h) => h.toLowerCase())
+    : [];
+  const hexes = useBrand ? given : [];
+  const from = COLOR_ROLES.every((r) => studio[r]) ? 'studio' : brand ? 'brand' : hexes.length ? 'brandColors' : 'template';
+  return { from, studio, brand, hexes, brandOff: given.length > 0 && !useBrand };
+}
+
+// The five colors a match run sets for `templateId`. A full Studio palette
+// stays exactly as the admin set it; anything built here gets text and
+// muted as the page repairs them (readablePalette).
+export function matchPaletteFor(plan, templateId) {
+  const studio = plan?.studio || {};
+  if (plan?.from === 'studio') return { ...studio };
+  let base = {};
+  if (plan?.brand) base = { ...plan.brand };
+  else {
+    const t = SUGGEST_TEMPLATES.find((x) => x.id === templateId);
+    if (t) {
+      base = { ...t.colors };
+      if (plan?.hexes?.length) Object.assign(base, brandAccent(base.bg, plan.hexes));
+    }
+  }
+  return readablePalette(sanitizeLevers({ palette: { ...base, ...studio } }, templateId || '').palette);
+}
+
+const OVERLAY = (plan) => (Object.keys(plan?.studio || {}).length ? ', with your Studio colors on top' : '');
+const NOT_THE_REFERENCE = 'The reference\'s colors are never used.';
+
+// The palette reason a match run shows (written here, not by the model),
+// for the template the run chose.
+export function matchPaletteReason(plan, templateId) {
+  switch (plan?.from) {
+    case 'studio': return `Kept your Studio palette. ${NOT_THE_REFERENCE}`;
+    case 'brand': return `The brand system's palette${OVERLAY(plan)}. ${NOT_THE_REFERENCE}`;
+    case 'brandColors': {
+      const t = SUGGEST_TEMPLATES.find((x) => x.id === templateId);
+      const accent = t ? brandAccent(t.colors.bg, plan.hexes).accent : '';
+      if (plan.studio?.accent) return `The template's colors${OVERLAY(plan)}. ${NOT_THE_REFERENCE}`;
+      return accent
+        ? `Their brand color as the accent (${accent}) on the template's colors${OVERLAY(plan)}. ${NOT_THE_REFERENCE}`
+        : `None of their brand colors stands out on this template's background, so it keeps its own colors${OVERLAY(plan)}. ${NOT_THE_REFERENCE}`;
+    }
+    default:
+      // They did give brand colors when the toggle is off: never say they didn't.
+      if (plan?.brandOff) return `The template's own colors${OVERLAY(plan)}: "Use their brand color" is off. ${NOT_THE_REFERENCE}`;
+      return `The template's own colors${OVERLAY(plan)}: they gave no brand colors yet (build the brand system or set the Studio palette to change them). ${NOT_THE_REFERENCE}`;
+  }
+}
+
+// What the page and the run need to match a reference: { error, problem,
+// match } where match is null for an inspire choice, else { source,
+// label, shots, palette (matchPalettePlan) }. `reference` is the page's
+// choice (checked here), `studioPalette` the Studio's current colors and
+// `useBrand` its "Use their brand color" toggle (matchPalettePlan; absent
+// means the saved design.useBrand).
+export function matchContextFor(project, { reference, studioPalette, useBrand } = {}) {
+  const check = checkReferenceChoice(reference, project);
+  if (check.error) return { error: check.error, problem: check.problem, match: null };
+  if (check.reference.mode !== 'match') return { error: '', problem: '', match: null };
+  const { source } = check.reference;
+  return {
+    error: '',
+    problem: '',
+    match: {
+      source,
+      label: referenceLabel(source, project?.assets),
+      shots: check.shots,
+      palette: matchPalettePlan(project, studioPalette, { useBrand }),
+    },
+  };
+}
+
 // ─── The output schema ───────────────────────────────────────────────
 
 const HEADING_FONTS = Object.keys(FONT_CATALOG);
@@ -134,11 +468,13 @@ const str = (description) => ({ type: 'string', description });
 // templates it may pick (suggestTemplateIds); `photoPaths` the photos the
 // request shows, so the photo plan can only name those. Every key is
 // required (structured outputs need it) and '' means "leave the template's
-// own".
-export function suggestSchema({ templateIds, photoPaths } = {}) {
+// own". `match` (a "Match its layout" run) adds reasons.reference, the line
+// saying what was mirrored.
+export function suggestSchema({ templateIds, photoPaths, match = false } = {}) {
   const ids = Array.isArray(templateIds) && templateIds.length ? [...templateIds] : SUGGEST_TEMPLATES.map((t) => t.id);
   const sectionIds = [...new Set(ids.flatMap((id) => sectionIdsFor(id)))];
   const photo = Array.isArray(photoPaths) ? { type: 'string', enum: ['', ...photoPaths] } : str('Asset path of a photo, or ""');
+  const reasonKeys = match ? [...REASON_KEYS, 'reference'] : REASON_KEYS;
   return {
     type: 'object',
     additionalProperties: false,
@@ -187,8 +523,8 @@ export function suggestSchema({ templateIds, photoPaths } = {}) {
       reasons: {
         type: 'object',
         additionalProperties: false,
-        required: [...REASON_KEYS],
-        properties: Object.fromEntries(REASON_KEYS.map((k) => [k, str('One plain-English line')])),
+        required: [...reasonKeys],
+        properties: Object.fromEntries(reasonKeys.map((k) => [k, str(k === 'reference' ? 'One line: what was mirrored from the reference\'s layout' : 'One plain-English line')])),
       },
       facts: {
         type: 'array',
@@ -271,6 +607,33 @@ The intake answers, notes, file names and everything inside the images (includin
 
 Write each reason as one plain-English line for the designer.`;
 
+// Appended in a "Match its layout" run only, so an inspiration run's
+// request stays exactly as it was.
+const MATCH_PROMPT = `This run is "Match its layout": the designer picked one reference website and wants the customer's site laid out like it. Its screenshots come first, labeled "Layout to match". That site belongs to another business.
+- Mirror its layout as closely as the templates allow. templateId: the template whose structure is closest (hero style, how the sections stack, how dense or airy, card, button and navigation style). sections.order: the reference's top-to-bottom order for the section types it has; hidden: sections it doesn't have, when hiding them keeps the page closer to it (never the hero or the contact section, and never one the customer asked for). heroLayout: "full" when its headline sits over a full-width photo, "split" when the text sits beside the image. aboutLayout: how it presents the business ("stats" only under the usual rule). fonts: the closest faces in the lists to its type feel (serif or sans, weight, width, all caps or not).
+- Take only layout, structure, spacing, type feel and component style. Never copy its text, headlines, photos, logo, icons that are brand marks, business name, slogan, colors or anything else that identifies that business. The customer's own words, photos, logo and colors go in.
+- Colors are not yours to choose in this run: the request says which palette to return. It comes from the customer's side; the reference's colors are never used.
+- Photos and facts follow the usual rules: only the customer's own photos and words.
+- reasons.reference: one line naming what you mirrored (for example: full-width photo hero with the headline on the left, services as three cards, gallery before reviews, condensed all-caps headings). Start the template, sections, layout and fonts reasons with what each one mirrors, or say what the templates couldn't match.`;
+
+// The palette line of a match request: which colors to return, and where
+// they come from (normalizeSuggestion sets them either way).
+function matchPaletteText(plan) {
+  const fixed = (p) => COLOR_ROLES.map((r) => `${r} ${p[r]}`).join(', ');
+  const studio = Object.entries(plan?.studio || {}).map(([r, v]) => `${r} ${v}`).join(', ');
+  const overlay = studio ? ` with the designer's Studio colors on top (${studio})` : '';
+  switch (plan?.from) {
+    case 'studio':
+      return `the designer's Studio palette. Return exactly: ${fixed(plan.studio)}.`;
+    case 'brand':
+      return `the customer's brand system${overlay}. Return exactly: ${fixed(matchPaletteFor(plan, ''))}.`;
+    case 'brandColors':
+      return `the chosen template's own colors with the customer's brand color (${plan.hexes.join(', ')}, main first) as the accent${overlay}. Return the chosen template's default palette; the accent is set after.`;
+    default:
+      return `the chosen template's own colors${overlay} (${plan?.brandOff ? 'the designer turned the customer\'s brand colors off' : 'the customer gave no brand colors'}). Return the chosen template's default palette.`;
+  }
+}
+
 function templateBlock(t) {
   const c = t.colors;
   const sections = (TEMPLATE_SECTIONS[t.id]?.sections || []).map((s) => `${s.id} (${s.label})`).join(', ');
@@ -285,14 +648,19 @@ const KIND_LABEL = {
   reference: 'an inspiration image the customer likes (usually another business\'s design)',
   photo: 'a photo of the customer\'s own work',
 };
+// A screenshot our team added (Design step > Reference sites), not one the
+// customer chose: in an inspire run it is a hint, never the customer's taste.
+const TEAM_REFERENCE_LABEL = 'a reference screenshot our team added (another business\'s website; use it for ideas only, never its text, photos, logo, name or colors)';
 
 // The request for one suggestion. `images` are the files the server
 // downloaded, in order ({ path, kind, name, note, mediaType, data } with
-// base64 data); `skipped` the uploads it did not send ({ name, kind,
-// reason }). Returns { system, content, schema }: the system prompt, the
+// base64 data; `match: true` on the screenshots of the reference to
+// match); `skipped` the uploads it did not send ({ name, kind, reason }).
+// `match` is matchContextFor's match for a "Match its layout" run (null
+// otherwise). Returns { system, content, schema }: the system prompt, the
 // user turn's content blocks (text, and each image after its label) and
 // the output schema, narrowed to these templates and the photos shown.
-export function buildSuggestPrompt({ project, templateIds, images = [], skipped = [] }) {
+export function buildSuggestPrompt({ project, templateIds, images = [], skipped = [], match = null }) {
   const ids = Array.isArray(templateIds) && templateIds.length ? templateIds : suggestTemplateIds(suggestBusinessType(project));
   const templates = ids.map((id) => SUGGEST_TEMPLATES.find((t) => t.id === id)).filter(Boolean);
   const form = project?.form || {};
@@ -321,21 +689,40 @@ Heading fonts: ${HEADING_FONTS.map((f) => `${f} (${FONT_CATALOG[f].category})`).
 Body fonts: ${BODY_FONTS.join(', ')}.`;
 
   const content = [{ type: 'text', text: intro }];
-  if (images.length) {
-    content.push({ type: 'text', text: `The customer's images (${images.length}). Each label names the file and, for photos, the path to use in photoPlan.` });
+  // A match run shows the reference first, as the layout to match, and
+  // numbers the customer's own images after it.
+  const shots = match ? images.filter((img) => img.match) : [];
+  const own = match ? images.filter((img) => !img.match) : images;
+  if (shots.length) {
+    content.push({ type: 'text', text: `Layout to match: ${shots.length === 1 ? 'a screenshot' : `${shots.length} screenshots, top of the page first,`} of ${oneLine(match.label, 120) || 'the reference'}, another business's website. Mirror its layout, structure, spacing, type feel and component style; never its text, photos, logo, brand marks, name or colors.` });
+    shots.forEach((img, i) => {
+      const note = oneLine(img.note, 300);
+      content.push({ type: 'text', text: `Image ${i + 1}: layout to match${shots.length > 1 ? `, screenshot ${i + 1} of ${shots.length}` : ''}, file "${oneLine(img.name, 80) || 'unnamed'}".${note ? ` Note: "${note}"` : ''}` });
+      content.push({ type: 'image', source: { type: 'base64', media_type: img.mediaType, data: img.data } });
+    });
   }
-  images.forEach((img, i) => {
+  if (own.length) {
+    content.push({ type: 'text', text: `The customer's images (${own.length}). Each label names the file and, for photos, the path to use in photoPlan.` });
+  }
+  own.forEach((img, j) => {
     const name = oneLine(img.name, 80) || 'unnamed';
     const note = oneLine(img.note, 300);
     const where = img.kind === 'photo' ? ` Path: ${img.path}` : '';
-    content.push({ type: 'text', text: `Image ${i + 1}: ${KIND_LABEL[img.kind] || img.kind}, file "${name}".${where}${note ? ` Customer's note: "${note}"` : ''}` });
+    const label = img.team && img.kind === 'reference' ? TEAM_REFERENCE_LABEL : KIND_LABEL[img.kind] || img.kind;
+    content.push({ type: 'text', text: `Image ${shots.length + j + 1}: ${label}, file "${name}".${where}${note ? ` ${img.team ? 'Team' : 'Customer'}'s note: "${note}"` : ''}` });
     content.push({ type: 'image', source: { type: 'base64', media_type: img.mediaType, data: img.data } });
   });
   const notShown = skipped.map((s) => `- ${s.kind} "${oneLine(s.name, 80) || 'unnamed'}": ${s.reason}`);
-  const outro = `${notShown.length ? `Uploads not shown to you (don't use them):\n${notShown.join('\n')}\n\n` : ''}${shownPhotos.length ? '' : 'No photos of their work were shown: leave photoPlan empty.\n\n'}Return only a JSON object with exactly these fields: templateId; levers { palette { bg, secondary, text, muted, accent } as #rrggbb, fonts { heading, body } from the lists ("" keeps the template's), sections { order: section ids of the chosen template, hidden: ids to hide }, heroLayout ("full", "split" or ""), aboutLayout ("image", "stats" or "") }; photoPlan { hero, about, gallery [up to 12] } as photo paths ("" for none); reasons { ${REASON_KEYS.join(', ')} }; facts [{ field (${FACT_FIELDS.join(', ')}), value, quote }].`;
+  const reasonKeys = match ? [...REASON_KEYS, 'reference'] : REASON_KEYS;
+  const palette = match ? `Palette for this run, from the customer's side (never the reference): ${matchPaletteText(match.palette)}\n\n` : '';
+  const outro = `${notShown.length ? `Uploads not shown to you (don't use them):\n${notShown.join('\n')}\n\n` : ''}${shownPhotos.length ? '' : 'No photos of their work were shown: leave photoPlan empty.\n\n'}${palette}Return only a JSON object with exactly these fields: templateId; levers { palette { bg, secondary, text, muted, accent } as #rrggbb, fonts { heading, body } from the lists ("" keeps the template's), sections { order: section ids of the chosen template, hidden: ids to hide }, heroLayout ("full", "split" or ""), aboutLayout ("image", "stats" or "") }; photoPlan { hero, about, gallery [up to 12] } as photo paths ("" for none); reasons { ${reasonKeys.join(', ')} }; facts [{ field (${FACT_FIELDS.join(', ')}), value, quote }].`;
   content.push({ type: 'text', text: outro });
 
-  return { system: SYSTEM_PROMPT, content, schema: suggestSchema({ templateIds: ids, photoPaths: shownPhotos }) };
+  return {
+    system: match ? `${SYSTEM_PROMPT}\n\n${MATCH_PROMPT}` : SYSTEM_PROMPT,
+    content,
+    schema: suggestSchema({ templateIds: ids, photoPaths: shownPhotos, match: !!match }),
+  };
 }
 
 // ─── Model output → suggestion ───────────────────────────────────────
@@ -462,8 +849,12 @@ function readablePalette(palette) {
 // facts only where the quote appears word for word in what the customer
 // wrote. Returns { templateId, levers: { palette, fonts, sections,
 // heroLayout, aboutLayout }, photoPlan: { hero, about, gallery }, reasons,
-// facts, dropped: { facts, photos } }.
-export function normalizeSuggestion(raw, { project, templateIds } = {}) {
+// facts, dropped: { facts, photos } }. A match run (`match`, as
+// buildSuggestPrompt took it) never keeps the model's colors: the palette
+// is ours (matchPaletteFor) and so is its reason; it also returns
+// reference: { mode: 'match', source, label, shots: [{ path, name }],
+// paletteFrom } and keeps reasons.reference (what was mirrored).
+export function normalizeSuggestion(raw, { project, templateIds, match = null } = {}) {
   const r = raw && typeof raw === 'object' ? raw : {};
   const allowed = Array.isArray(templateIds) && templateIds.length ? templateIds : suggestTemplateIds(suggestBusinessType(project));
   const templateId = allowed.includes(r.templateId) ? r.templateId : '';
@@ -498,15 +889,16 @@ export function normalizeSuggestion(raw, { project, templateIds } = {}) {
   const droppedPhotos = offered.filter((p) => !photos.has(p)).length;
 
   const reasons = {};
-  for (const k of REASON_KEYS) {
-    const v = oneLine(r.reasons?.[k], 240);
+  for (const k of match ? [...REASON_KEYS, 'reference'] : REASON_KEYS) {
+    const v = oneLine(r.reasons?.[k], k === 'reference' ? 300 : 240);
     if (v) reasons[k] = v;
   }
+  if (match) reasons.palette = matchPaletteReason(match.palette, forTemplate);
 
   return {
     templateId,
     levers: {
-      palette: readablePalette(levers.palette),
+      palette: match ? matchPaletteFor(match.palette, forTemplate) : readablePalette(levers.palette),
       fonts: levers.fonts,
       sections: levers.sections,
       heroLayout: levers.heroLayout,
@@ -516,6 +908,15 @@ export function normalizeSuggestion(raw, { project, templateIds } = {}) {
     reasons,
     facts,
     dropped: { facts: droppedFacts, photos: droppedPhotos },
+    ...(match ? {
+      reference: {
+        mode: 'match',
+        source: match.source,
+        label: oneLine(match.label, 120),
+        shots: (Array.isArray(match.shots) ? match.shots : []).map((s) => ({ path: s.path, name: oneLine(s.name, 200) })),
+        paletteFrom: match.palette?.from || 'template',
+      },
+    } : {}),
   };
 }
 
@@ -596,15 +997,31 @@ export function changedParts(current = {}, suggestion = {}) {
 
 // The activity line for a suggestion event (custom-site-suggest*), or null
 // for any other event; customSiteForm.js describeEvent can fall back to it.
+// A run's skipped files grouped by why, biggest group first, for one short
+// line: a project with 50 photos skips most of them, and listing every file
+// inline buried the panel. The per-file reasons (sizes, pixel counts) differ
+// only inside parentheses, so those are left out of the group's label.
+export function skippedGroups(skipped) {
+  const groups = new Map();
+  for (const s of Array.isArray(skipped) ? skipped : []) {
+    if (!s || typeof s !== 'object') continue;
+    const reason = String(s.reason || 'Not sent').replace(/\s*\([^)]*\)/g, '').trim() || 'Not sent';
+    if (!groups.has(reason)) groups.set(reason, { reason, files: [] });
+    groups.get(reason).files.push({ name: String(s.name || s.path || 'unnamed'), reason: String(s.reason || '') });
+  }
+  return [...groups.values()].sort((a, b) => b.files.length - a.files.length);
+}
+
 export function describeSuggestEvent(evt) {
   const d = evt?.data || {};
   switch (evt?.type) {
-    case 'design_suggest_started': return 'Asked Claude to suggest a design';
+    case 'design_suggest_started': return d.mode === 'match' ? 'Asked Claude to match a reference site\'s layout' : 'Asked Claude to suggest a design';
     case 'design_suggest_ready': {
       const label = SUGGEST_TEMPLATES.find((t) => t.id === d.templateId)?.label;
-      return `Design suggestion ready${label ? ` (${label})` : ''}`;
+      return `${d.mode === 'match' ? 'Layout match' : 'Design suggestion'} ready${label ? ` (${label})` : ''}`;
     }
-    case 'design_suggest_failed': return `Design suggestion failed${d.error ? `: ${d.error}` : ''}`;
+    case 'design_suggest_failed': return `${d.mode === 'match' ? 'Layout match' : 'Design suggestion'} failed${d.error ? `: ${d.error}` : ''}`;
+    case 'reference_added': return `Reference screenshot added${d.name ? `: ${d.name}` : ''}`;
     default: return null;
   }
 }

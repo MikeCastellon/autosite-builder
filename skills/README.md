@@ -7,6 +7,9 @@ Agent Skills that Genius Websites runs through the **Claude API** (the paid "Cus
 | `skills/api/<name>/` | An API skill: a folder with `SKILL.md` (+ scripts, assets) uploaded to Anthropic with `POST /v1/skills` | Claude, inside Anthropic's code-execution container, when a Messages request lists it in `container.skills` |
 | `.claude/skills/<name>/` | Claude Code project skills (how to work on this repo, e.g. `skills-release`) | Claude Code sessions in this repo; never uploaded |
 
+The "Exact replica" builder (`.claude/skills/replica-template/`) is one of the Claude Code skills, not an API skill:
+nothing of it is uploaded or released.
+
 Nothing in `skills/api/` runs on Netlify or in the browser. The runtime only sends the skill's **id and pinned version**,
 which come from environment variables.
 

@@ -1,3 +1,15 @@
+// Template registry. Besides the metadata every entry has, two flags limit
+// where a template is offered:
+//   hidden: true          kept out of the free wizard and the editor's
+//                         template switcher (saved sites on it still render).
+//   customFor: ['<id>']   an "Exact replica" template built for custom
+//                         website projects with these custom_site_projects
+//                         ids only (.claude/skills/replica-template). Always
+//                         paired with hidden: true. The admin Design step
+//                         lists it, labeled "Replica, this customer only",
+//                         for those projects alone; every other picker skips
+//                         it because it is hidden. Its colors are the
+//                         customer's palette, never the reference site's.
 export const TEMPLATES = {
   // ─── Detailing Shop ────────────────────────────────────────────
   detailing_sporty: {

@@ -1,8 +1,8 @@
-import { ASSET_BUCKET } from '../../../src/lib/customSiteForm.js';
+import { ASSET_BUCKET, isTeamAsset } from '../../../src/lib/customSiteForm.js';
 import { parseCopyJson } from '../../../src/lib/customSiteDesign.js';
 import {
-  SUGGEST_EFFORT, SUGGEST_IMAGE_LIMITS, SUGGEST_MODEL, buildSuggestPrompt, normalizeSuggestion, suggestBusinessType,
-  suggestImageCandidates, suggestTemplateIds,
+  MATCH_SHOT_LIMIT, SUGGEST_EFFORT, SUGGEST_IMAGE_LIMITS, SUGGEST_MODEL, buildSuggestPrompt, matchContextFor, normalizeSuggestion,
+  referenceShotGroup, suggestBusinessType, suggestImageCandidates, suggestTemplateIds,
 } from '../../../src/lib/designSuggest.js';
 
 // "Suggest a design" on the server: the customer's images from the private
@@ -94,7 +94,7 @@ async function loadOne(db, asset) {
   if (info.width > MAX_IMAGE_SIDE || info.height > MAX_IMAGE_SIDE) {
     return { skip: skip(asset, `Too many pixels to send (${info.width}×${info.height}; the limit is ${MAX_IMAGE_SIDE} on a side)`) };
   }
-  return { image: { path: asset.path, kind: asset.kind, name: asset.name || '', note: asset.note || '', mediaType: info.mediaType, data } };
+  return { image: { path: asset.path, kind: asset.kind, name: asset.name || '', note: asset.note || '', team: isTeamAsset(asset), mediaType: info.mediaType, data } };
 }
 
 const KIND_PLURAL = { logo: 'logo', reference: 'inspiration images', photo: 'photos' };
@@ -102,14 +102,51 @@ const KIND_PLURAL = { logo: 'logo', reference: 'inspiration images', photo: 'pho
 // The images one request shows: at most 1 logo, 4 inspiration images and
 // 8 photos (SUGGEST_IMAGE_LIMITS), in upload order, each one checked after
 // download. A file that can't be sent makes room for the next of its kind.
-// Returns { images: [{ path, kind, name, note, mediaType, data }],
-// skipped: [{ path, kind, name, reason }] }.
-export async function loadSuggestImages(db, project) {
+// `matchShots` (a "Match its layout" run: referenceShots' assets, top of
+// the page first) go first, marked `match: true`, ahead of everything else
+// in the size budget; the other inspiration images are left out then, so
+// nothing pulls the layout away from the one to match. Of a cut-up
+// screenshot (tiles sharing a group), a lower tile that can't be sent only
+// loses that stretch of the page and the others still go, in order; but
+// without its top tile none of the group goes: the prompt shows the shots
+// as "top of the page first", so a middle tile would be read as the nav
+// and hero, the part a layout match leans on most. Returns { images:
+// [{ path, kind, name, note, mediaType, data, match? }], skipped: [{ path,
+// kind, name, reason }] }.
+export async function loadSuggestImages(db, project, { matchShots } = {}) {
   const candidates = suggestImageCandidates(project?.assets);
   const skipped = candidates.unviewable.map((a) => skip(a, a.reason));
   const images = [];
   let budget = MAX_TOTAL_BASE64_BYTES;
-  for (const kind of ['logo', 'reference', 'photo']) {
+  const shots = (Array.isArray(matchShots) ? matchShots : []).slice(0, MATCH_SHOT_LIMIT);
+  if (shots.length) {
+    const loaded = await Promise.all(shots.map((a) => loadOne(db, a)));
+    const seenGroups = new Set();
+    const toplessGroups = new Set();
+    loaded.forEach((r, i) => {
+      const group = referenceShotGroup(shots[i]);
+      // referenceShots orders a group by part: its first shot here is its top.
+      const isTop = !!group && !seenGroups.has(group);
+      if (group) seenGroups.add(group);
+      if (toplessGroups.has(group)) {
+        skipped.push(skip(shots[i], 'Not sent: the top of this screenshot couldn\'t be sent'));
+        return;
+      }
+      const left = r.skip || (r.image.data.length > budget ? skip(shots[i], 'Left out to keep the request under its size limit') : null);
+      if (left) {
+        skipped.push(left);
+        if (isTop) toplessGroups.add(group);
+        return;
+      }
+      budget -= r.image.data.length;
+      images.push({ ...r.image, match: true });
+    });
+    const shotPaths = new Set(shots.map((a) => a.path));
+    for (const a of candidates.reference) {
+      if (!shotPaths.has(a.path)) skipped.push(skip(a, 'Not sent: this run matches the chosen reference\'s layout'));
+    }
+  }
+  for (const kind of shots.length ? ['logo', 'photo'] : ['logo', 'reference', 'photo']) {
     const limit = SUGGEST_IMAGE_LIMITS[kind];
     const queue = candidates[kind].slice();
     let taken = 0;
@@ -181,13 +218,33 @@ export async function requestSuggestion(client, prompt, { deadlineMs } = {}) {
 // The whole suggestion for one project: images, request, checks
 // (normalizeSuggestion). Never writes anything. Returns { model,
 // templateId, levers, photoPlan, reasons, facts, skipped, dropped,
-// imageCount }.
-export async function suggestDesign({ db, client, project, deadlineMs }) {
+// imageCount } (+ reference for a match run).
+//
+// `reference` is the choice the run was claimed with (custom-site-suggest
+// `start` checked it; it is checked again here, against the project as it
+// is now), `studioPalette` the Studio colors and `useBrand` the "Use their
+// brand color" toggle sent with it (a boolean wins over the saved
+// design.useBrand; matchPalettePlan). A match run needs a screenshot it can
+// send (for a cut-up one, its top tile; loadSuggestImages): without one it
+// fails before the request (the reference is never fetched from the web,
+// and a match never quietly turns into an inspiration run).
+export async function suggestDesign({ db, client, project, deadlineMs, reference = null, studioPalette = null, useBrand }) {
   const templateIds = suggestTemplateIds(suggestBusinessType(project));
-  const { images, skipped } = await loadSuggestImages(db, project);
-  const prompt = buildSuggestPrompt({ project, templateIds, images, skipped });
+  const { error, match: context } = matchContextFor(project, { reference, studioPalette, useBrand });
+  if (error) throw Object.assign(new Error(error), { code: 'reference' });
+  const { images, skipped } = await loadSuggestImages(db, project, { matchShots: context?.shots });
+  let match = null;
+  if (context) {
+    const sent = images.filter((img) => img.match);
+    if (!sent.length) {
+      const why = skipped.find((s) => context.shots.some((a) => a.path === s.path))?.reason;
+      throw Object.assign(new Error(`The screenshot to match couldn't be sent${why ? ` (${why})` : ''}. Add a PNG, JPEG or WebP screenshot and try again.`), { code: 'reference' });
+    }
+    match = { ...context, shots: sent.map(({ path, name }) => ({ path, name })) };
+  }
+  const prompt = buildSuggestPrompt({ project, templateIds, images, skipped, match });
   const { raw, model } = await requestSuggestion(client, prompt, { deadlineMs });
-  return { ...normalizeSuggestion(raw, { project, templateIds }), model, skipped, imageCount: images.length };
+  return { ...normalizeSuggestion(raw, { project, templateIds, match }), model, skipped, imageCount: images.length };
 }
 
 // ─── Storage (design.suggestion) ─────────────────────────────────────

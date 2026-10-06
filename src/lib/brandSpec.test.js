@@ -219,6 +219,17 @@ describe('inputs and prompt', () => {
     ]);
   });
 
+  it('never takes a screenshot the team added (a reference to match, not the customer\'s taste)', () => {
+    const mine = { path: `${PROJECT_ID}/reference/mine.png`, kind: 'reference', name: 'mine.png', size: 1000 };
+    const team = {
+      path: `${PROJECT_ID}/reference/home.jpg`, kind: 'reference', name: 'home (part 1 of 2).jpg', size: 1000,
+      note: 'Screenshot of https://ref.test/', addedBy: 'admin', group: 'rs-home-1a2b3c4d', part: 1,
+    };
+    const out = brandInputCandidates([team, mine]);
+    expect(out.reference).toEqual([mine]);
+    expect(out.skipped).toEqual([]);
+  });
+
   it('shows the brand answers only, as data', () => {
     const text = brandIntakeText({
       business_name: 'Gloss Boss',

@@ -339,6 +339,40 @@ describe('custom-site-admin design actions', () => {
     expect(h.db.state.projects[0].design).toEqual(expect.objectContaining(serverKeys));
   });
 
+  it('design-save keeps the reference choice, and only this project\'s own screenshot', async () => {
+    const shot = (pid) => `${pid}/reference/aaaaaaaa-bbbb-4ccc-8ddd-000000000001.png`;
+    const NONE = { status: 'none', requestedAt: '', templateId: '', note: '' };
+    h.db = fakeDb({ projects: [project({ design_status: 'ready', site_id: SITE_ID, design: {} })] });
+    const reference = {
+      mode: 'match',
+      source: { kind: 'asset', path: shot(PROJECT_ID) },
+      replica: { status: 'requested', requestedAt: '2026-10-06T10:00:00.000Z', templateId: '', note: 'Hero and services grid' },
+    };
+    const res = await adminHandler(post({ action: 'design-save', id: PROJECT_ID, design: { ...DESIGN, reference } }));
+    expect(res.statusCode).toBe(200);
+    expect(json(res).project.design.reference).toEqual(reference);
+    expect(h.db.state.projects[0].design.reference).toEqual(reference);
+    // It comes back with the project.
+    const { project: loaded } = json(await adminHandler(post({ action: 'get', id: PROJECT_ID })));
+    expect(loaded.design.reference).toEqual(reference);
+    // A save that doesn't send a choice at all (a tab opened before it
+    // existed) keeps the stored one, replica request included.
+    expect((await adminHandler(post({ action: 'design-save', id: PROJECT_ID, design: DESIGN }))).statusCode).toBe(200);
+    expect(h.db.state.projects[0].design.reference).toEqual(reference);
+
+    // Another project's screenshot is dropped, and a match with nothing to
+    // match falls back to inspiration.
+    const other = await adminHandler(post({
+      action: 'design-save', id: PROJECT_ID,
+      design: { ...DESIGN, reference: { mode: 'match', source: { kind: 'asset', path: shot('99999999-2222-4333-8444-555555555555') } } },
+    }));
+    expect(other.statusCode).toBe(200);
+    expect(h.db.state.projects[0].design.reference).toEqual({ mode: 'inspire', source: null, replica: NONE });
+    // A listed site's address needs no folder and is kept.
+    await adminHandler(post({ action: 'design-save', id: PROJECT_ID, design: { ...DESIGN, reference: { mode: 'match', source: { kind: 'url', url: 'refshop.test' } } } }));
+    expect(h.db.state.projects[0].design.reference).toEqual({ mode: 'match', source: { kind: 'url', url: 'https://refshop.test/' }, replica: NONE });
+  });
+
   it('design-generate claims a run, moves the project to Designing, and refuses a second run', async () => {
     h.db = fakeDb({ projects: [project({ design_status: 'none', design_started_at: null })] });
     const res = await adminHandler(post({ action: 'design-generate', id: PROJECT_ID }));

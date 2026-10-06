@@ -1,10 +1,11 @@
-import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, lazy, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { TEMPLATES } from '../../data/templates.js';
 import { customSiteAdmin, importAssetToSite, startDesignRun } from '../../lib/customSites.js';
 import {
-  DESIGN_MODEL, DESIGN_STALE_MS, SITE_BUSINESS_TYPES, brandAccent, designFromIntake, designProblems, isImportable, rankTemplates, showsPrices,
+  DESIGN_MODEL, DESIGN_STALE_MS, REPLICA_LABEL, SITE_BUSINESS_TYPES, brandAccent, canMatchReference, designFromIntake, designProblems, isImportable,
+  rankTemplates, replicaTemplatesFor, sameReferenceSource, sanitizeReference, showsPrices,
 } from '../../lib/customSiteDesign.js';
-import { formatBytes } from '../../lib/customSiteForm.js';
+import { formatBytes, safeHref } from '../../lib/customSiteForm.js';
 import { changedLeverGroups, leverGroupsChanged, sanitizeLevers } from '../../lib/designLevers.js';
 import { unpackGeneratedContent } from '../../lib/siteRender.js';
 import { supabase } from '../../lib/supabase.js';
@@ -22,6 +23,7 @@ const GooglePlaceField = lazy(() => import('./studio/GooglePlaceField.jsx'));
 const LayoutField = lazy(() => import('./studio/LayoutField.jsx'));
 const LooksPicker = lazy(() => import('./studio/LooksPicker.jsx'));
 const PaletteField = lazy(() => import('./studio/PaletteField.jsx'));
+const ReferenceShotUpload = lazy(() => import('./studio/ReferenceShotUpload.jsx'));
 const SectionsField = lazy(() => import('./studio/SectionsField.jsx'));
 const SuggestPanel = lazy(() => import('./studio/SuggestPanel.jsx'));
 const Loading = () => <p className="text-[13px] text-ink-tertiary">Loading…</p>;
@@ -188,6 +190,338 @@ function Section({ title, intro, children }) {
 
 const SLOT_LABELS = { logo: 'Logo', hero: 'Hero (top of the page)', about: 'About section' };
 
+// ─── Reference sites (design.reference, customSiteDesign.js) ─────────
+
+// A replica template for this project is in this build, so the request is
+// done: it saves as ready, naming the replica in use (else the first one).
+function withBuiltReplica(reference, replicas, templateId) {
+  if (!replicas.length) return reference;
+  const known = (id) => replicas.some((t) => t.id === id);
+  const id = known(templateId) ? templateId : known(reference.replica.templateId) ? reference.replica.templateId : replicas[0].id;
+  return { ...reference, replica: { ...reference.replica, status: 'ready', templateId: id } };
+}
+
+const shortUrl = (href) => href.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
+
+// The reference files as the list shows them, in upload order: one entry
+// per screenshot, the parts of a cut-up one (ReferenceShotUpload gives
+// them one `group`, numbered from the top by `part`) together, top first.
+// The server checks group and part; this only needs them to be there.
+function shotGroups(files) {
+  const out = [];
+  const byGroup = new Map();
+  for (const f of files) {
+    if (f.kind !== 'reference') continue;
+    const group = typeof f.group === 'string' && f.group && Number.isInteger(f.part) ? f.group : '';
+    if (!group) { out.push([f]); continue; }
+    if (byGroup.has(group)) { byGroup.get(group).push(f); continue; }
+    const parts = [f];
+    byGroup.set(group, parts);
+    out.push(parts);
+  }
+  return out.map((parts) => (parts.length > 1 ? [...parts].sort((a, b) => a.part - b.part) : parts));
+}
+
+// "home (part 1 of 3).jpg" → "home.jpg": the screenshot the parts came
+// from (studio/referenceMatch.js tileName names them; its wholeShotName is
+// the same rule, kept apart so this page doesn't load the match code).
+const wholeName = (name) => String(name || 'Screenshot').replace(/ \(part \d+ of \d+\)(?=\.[a-z0-9]{1,5}$)/i, '');
+
+// The screenshots a matched address is matched from, as the list says
+// it: the parts of one cut-up screenshot count as one screenshot.
+function urlShotsText(shots) {
+  const n = shots.length;
+  const whole = new Set(shots.map((s) => (typeof s.group === 'string' && s.group ? s.group : s.path))).size;
+  const screenshots = whole === 1 ? 'its screenshot' : `its ${whole} screenshots`;
+  if (whole === n) return n === 1 ? screenshots : `${screenshots}, top first`;
+  return `${screenshots} in ${n} parts, top first`;
+}
+
+// The customer typed the business name: in the prompt the admin pastes
+// into Claude Code it stays a plain label (letters, digits, simple
+// punctuation), never text that could read as an instruction.
+const promptName = (name) => String(name || '').replace(/[^\p{L}\p{N} &'.,-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 60);
+
+// The sites they listed and the reference screenshots (theirs and ones the
+// team added), each used as inspiration or, for one at a time, matched:
+// "Suggest a design" then mirrors that reference's layout. Below it, the
+// exact-replica request (a custom-only template built in the repo).
+//
+//   files       the project's files (assets with signed links), fresh
+//   reference   design.reference as it will be saved (sanitized)
+//   urlShots    (source) => the screenshots that picture a matched web
+//               address (designSuggest.js referenceShots, the rule the
+//               run uses), or null while that module loads
+//   onChange    (reference) => void, kept in the page until Save
+//   onSave      (reference, message) => Promise, saves the page right away
+//   onShotAdded (asset, row) => void, per screenshot (or part) recorded
+//   onShotBusy  (busy) => void, while a pick of screenshots uploads
+//   replicas    this project's replica templates in this build
+function ReferenceSection({
+  project, files, reference, urlShots, replicas, templateId, busy, onChange, onSave, onShotAdded, onShotBusy, onPickTemplate,
+}) {
+  const { toast } = useAlert();
+  const first = project.client_first_name || 'the customer';
+  const form = project.form || {};
+  // The note for a request not yet made (a saved request keeps its own).
+  const [note, setNote] = useState(reference.replica.note || '');
+  // Each item's radio pair is its own group; one id keeps the names unique.
+  const group = useId();
+
+  const sites = (Array.isArray(form.referenceSites) ? form.referenceSites : [])
+    .filter((r) => r && (r.url || r.note))
+    .map((r, i) => {
+      const href = safeHref(r.url);
+      return {
+        key: `site-${i}`, kind: 'url', title: href ? shortUrl(href) : String(r.url || 'No address given'), href, note: r.note || '',
+        source: href ? { kind: 'url', url: href } : null,
+        why: href ? '' : 'Not a usable web address, so it can only inspire.',
+      };
+    });
+  const shots = shotGroups(files).map((parts) => {
+    const f = parts[0];
+    // As the run decides (designSuggest.js): both the name and the stored
+    // file must be a format Claude can view.
+    const matchable = canMatchReference(f.name || f.path) && canMatchReference(f.path);
+    return {
+      key: f.path, kind: 'asset', title: parts.length > 1 ? wholeName(f.name) : f.name || 'Screenshot',
+      thumb: matchable ? f.url : null, open: f.url, note: f.note || '',
+      byTeam: f.addedBy === 'admin',
+      parts: parts.length,
+      // Matching any part matches the whole screenshot (the run sends its
+      // parts top first), so a saved source on a lower part still shows here.
+      paths: parts.map((p) => p.path),
+      source: matchable ? { kind: 'asset', path: f.path } : null,
+      why: matchable ? '' : 'Claude can only look at PNG, JPEG, GIF or WebP images. Add a screenshot in one of those to match it.',
+    };
+  });
+  const items = [...sites, ...shots];
+  const matched = reference.mode === 'match'
+    ? items.find((it) => (it.paths
+      ? !!it.source && reference.source?.kind === 'asset' && it.paths.includes(reference.source.path)
+      : sameReferenceSource(it.source, reference.source))) || null
+    : null;
+  // A matched address is matched through its screenshots (their note names
+  // it: ReferenceShotUpload writes "Screenshot of <url>" when given the
+  // address). Nothing ever opens the site itself.
+  const matchedUrl = reference.mode === 'match' && reference.source?.kind === 'url' ? reference.source.url : '';
+  const matchedUrlShots = matchedUrl && urlShots ? urlShots(reference.source) : null;
+  const sourceLabel = (src) => {
+    if (!src) return '';
+    if (src.kind === 'url') return shortUrl(src.url);
+    const f = files.find((x) => x.path === src.path);
+    return f ? (f.group ? wholeName(f.name) : f.name || 'a screenshot') : 'a screenshot';
+  };
+
+  const replica = reference.replica;
+  const name = promptName(project.business_name);
+  // The skill (.claude/skills/replica-template) reads the project, its
+  // design.reference and the request's note; the prompt repeats the rule.
+  const prompt = `Build the exact replica template for custom website project ${project.id}${name ? ` (${name})` : ''}. `
+    + 'Copy only its layout, structure, spacing, type feel and component style, never the reference\'s words, photos, logo, brand marks or name.';
+
+  async function copyPrompt() {
+    try {
+      await navigator.clipboard.writeText(prompt);
+      toast('Copied', 'success');
+    } catch {
+      toast('The browser blocked copying: select the text and copy it', 'error');
+    }
+  }
+
+  return (
+    <Section title="Reference sites" intro={`Sites and screenshots ${first} likes. Use each one as inspiration, or match one's layout.`}>
+      <p className="rounded-lg bg-[#faf9f7] border border-black/[0.06] px-3 py-2 text-[12px] text-[#4a4a4a]">
+        <strong className="text-[#1a1a1a]">Layout only.</strong> Matching or replicating a site copies its structure, spacing, type feel and the style of
+        its parts. Never its words, photos, logo, icons, business name or anything else that identifies that business: {first}'s own content,
+        colors and logo go in.
+      </p>
+
+      {items.length === 0 ? (
+        <p className="mt-3 text-[13px] text-ink-tertiary">They didn't list a site or send a screenshot. Add a screenshot below to match a site's layout.</p>
+      ) : (
+        <ul className="mt-3 space-y-2">
+          {items.map((item, i) => {
+            const on = !!matched && matched.key === item.key;
+            return (
+              <li key={item.key} className={`rounded-xl border p-3 ${on ? 'border-[#cc0000] bg-[#cc0000]/[0.03]' : 'border-black/[0.08]'}`}>
+                <div className="flex gap-3">
+                  {item.thumb ? (
+                    <a href={item.open} target="_blank" rel="noreferrer" className="shrink-0">
+                      <img src={item.thumb} alt={`Screenshot: ${item.title}`} className="w-20 h-14 rounded-md object-cover object-top border border-black/10" />
+                    </a>
+                  ) : (
+                    <span className="w-20 h-14 shrink-0 rounded-md bg-black/[0.04] flex items-center justify-center text-ink-tertiary" aria-hidden="true">
+                      {item.kind === 'url' ? (
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20" /></svg>
+                      ) : (
+                        <span className="text-[10px] font-bold uppercase">{(/\.([a-z0-9]{1,5})$/i.exec(item.title)?.[1] || 'file')}</span>
+                      )}
+                    </span>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[13px] font-semibold text-[#1a1a1a] [overflow-wrap:anywhere]">
+                      {item.href
+                        ? <a href={item.href} target="_blank" rel="noreferrer" className="hover:underline">{item.title}</a>
+                        : item.open ? <a href={item.open} target="_blank" rel="noreferrer" className="hover:underline">{item.title}</a> : item.title}
+                      {item.parts > 1 && <span className="ml-2 inline-block whitespace-nowrap text-[11px] font-normal text-ink-tertiary">{item.parts} parts, top first</span>}
+                      {item.byTeam && <span className="ml-2 inline-block whitespace-nowrap text-[10px] font-bold uppercase tracking-wider text-ink-tertiary">Added by the team</span>}
+                    </p>
+                    {item.note && <p className="mt-0.5 text-[12px] text-[#4a4a4a]">{item.byTeam ? 'Note' : 'They wrote'}: "{item.note}"</p>}
+                    <fieldset className="mt-2">
+                      <legend className="sr-only">How to use {item.title}</legend>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1">
+                        <label className="inline-flex items-center gap-1.5 text-[12px] text-[#1a1a1a] cursor-pointer">
+                          <input
+                            type="radio"
+                            name={`${group}-${i}`}
+                            checked={!on}
+                            onChange={() => { if (on) onChange({ ...reference, mode: 'inspire', source: null }); }}
+                            className="w-3.5 h-3.5 accent-[#cc0000]"
+                          />
+                          Use as inspiration
+                        </label>
+                        <label className={`inline-flex items-center gap-1.5 text-[12px] ${item.source ? 'text-[#1a1a1a] cursor-pointer' : 'text-ink-tertiary'}`}>
+                          <input
+                            type="radio"
+                            name={`${group}-${i}`}
+                            checked={on}
+                            disabled={!item.source}
+                            // One reference is matched at a time: this replaces any other.
+                            onChange={() => onChange({ ...reference, mode: 'match', source: item.source })}
+                            className="w-3.5 h-3.5 accent-[#cc0000]"
+                          />
+                          Match its layout
+                        </label>
+                      </div>
+                    </fieldset>
+                    {item.why && <p className="mt-1 text-[11px] text-ink-tertiary">{item.why}</p>}
+                    {on && item.kind === 'url' && matchedUrlShots && (
+                      matchedUrlShots.length === 0 ? (
+                        <p className="mt-2 text-[12px] text-amber-800">
+                          <strong>Add a screenshot of this site to match it.</strong> Claude never opens other websites: the screenshots you add below are
+                          labeled as this site's and are what it matches.
+                        </p>
+                      ) : (
+                        <p className="mt-2 text-[12px] text-[#4a4a4a]">
+                          Matched from {urlShotsText(matchedUrlShots)}, labeled
+                          "Screenshot of {item.title}". Claude never opens the site itself.
+                        </p>
+                      )
+                    )}
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {matched && (matched.kind === 'asset' || matchedUrlShots?.length > 0) && (
+        <p className="mt-3 text-[12px] text-[#4a4a4a]">
+          Suggest a design will mirror <strong>{matched.title}</strong>: the closest template, section order, hero and About layouts, and fonts.
+          Colors come from {first}'s side (the Studio palette, else the brand system, else their brand colors), never from the reference, and the
+          logo is theirs.
+        </p>
+      )}
+      {reference.mode === 'match' && !matched && (
+        <p className="mt-3 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-[12px] text-amber-900">
+          The reference being matched ({sourceLabel(reference.source)}) isn't in their answers or the project's files anymore.{' '}
+          <button type="button" onClick={() => onChange({ ...reference, mode: 'inspire', source: null })} className="font-semibold underline">Stop matching it</button>
+        </p>
+      )}
+
+      <div className="mt-4">
+        <p className="text-[12px] font-semibold text-[#1a1a1a] mb-2">Add a screenshot</p>
+        <Suspense fallback={<Loading />}>
+          {/* With an address matched, the upload labels its screenshots as
+              that site's ("Screenshot of <url>"), which is how the match
+              finds them (a tall one is cut into up to four parts, top
+              first, kept together as one group). */}
+          <ReferenceShotUpload projectId={project.id} sourceUrl={matchedUrl} onAdded={onShotAdded} onBusy={onShotBusy} disabled={!!busy} />
+        </Suspense>
+      </div>
+
+      <div className="mt-5 rounded-xl border border-black/[0.08] p-4">
+        <p className="text-[13px] font-bold text-[#1a1a1a]">Exact replica</p>
+        <p className="mt-0.5 text-[12px] text-ink-tertiary">
+          When matching isn't close enough: Claude builds a new template modeled on the reference you match, for {first} only. It copies the
+          layout, never the words, photos, logo or brand. {first}'s content, colors and logo go in.
+        </p>
+
+        {replicas.length > 0 ? (
+          <div className="mt-3 space-y-2">
+            {replicas.map((t) => (
+              <div key={t.id} className="flex flex-wrap items-center gap-3 rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2">
+                <span className="text-[13px] text-[#1a1a1a]"><strong>Ready:</strong> {t.label} <span className="text-ink-tertiary">({REPLICA_LABEL})</span></span>
+                {templateId === t.id
+                  ? <span className="ml-auto text-[12px] font-semibold text-emerald-800">In use</span>
+                  : <button type="button" onClick={() => onPickTemplate(t.id)} disabled={!!busy} className={`${BTN} ml-auto`}>Use this template</button>}
+              </div>
+            ))}
+            <p className="text-[11px] text-ink-tertiary">It's also first under Look. Save or write the site to keep a switch.</p>
+          </div>
+        ) : replica.status === 'none' ? (
+          <div className="mt-3">
+            <Field label="What should it copy? (optional)" hint="For Claude: the parts to follow closely, like the hero, the services grid or the spacing.">
+              <textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} maxLength={1000} className={`${INPUT} leading-relaxed`} />
+            </Field>
+            {!reference.source && <p className="mt-2 text-[12px] text-ink-tertiary">First choose Match its layout on the reference to replicate.</p>}
+            <button
+              type="button"
+              disabled={!!busy || !reference.source}
+              onClick={() => onSave({ ...reference, replica: { status: 'requested', requestedAt: new Date().toISOString(), templateId: '', note } }, 'Replica requested')}
+              className={`${BTN} mt-3`}
+            >
+              Request exact replica
+            </button>
+            <p className="mt-1.5 text-[11px] text-ink-tertiary">Saves this page with the request.</p>
+          </div>
+        ) : (
+          <div className="mt-3 text-[13px]">
+            <p className="text-[#1a1a1a]">
+              <strong>{replica.status === 'building' ? 'Being built' : replica.status === 'ready' ? 'Marked ready' : 'Requested'}</strong>
+              {replica.requestedAt && <span className="text-ink-tertiary"> · {formatDateTime(replica.requestedAt)}</span>}
+              {reference.source && <span className="text-ink-tertiary"> · from {sourceLabel(reference.source)}</span>}
+            </p>
+            {replica.status === 'ready' && (
+              <p className="mt-1 text-[12px] text-amber-800">
+                The replica template{replica.templateId ? ` (${replica.templateId})` : ''} isn't in this build yet. It shows here once it's deployed.
+              </p>
+            )}
+            {!reference.source && <p className="mt-1 text-[12px] text-amber-800">No reference is matched: choose Match its layout on the one to replicate.</p>}
+            {replica.note && <p className="mt-1 text-[12px] text-[#4a4a4a]">Note: {replica.note}</p>}
+            <div className="mt-3 rounded-lg bg-[#faf9f7] border border-black/[0.06] px-3 py-2.5">
+              <p className="text-[12px] font-semibold text-[#1a1a1a]">Next step: Ask Claude to build the replica template for this project.</p>
+              <p className="mt-0.5 text-[12px] text-ink-tertiary">In Claude Code, in the Website Creator repo, paste:</p>
+              <div className="mt-1.5 flex items-center gap-2">
+                <code className="min-w-0 flex-1 [overflow-wrap:anywhere] rounded bg-white border border-black/[0.08] px-2 py-1 text-[12px] text-[#1a1a1a]">{prompt}</code>
+                <button type="button" onClick={copyPrompt} className={BTN}>Copy</button>
+              </div>
+              <p className="mt-1.5 text-[11px] text-ink-tertiary">Once it's deployed, it shows up here and first under Look, for {first} only.</p>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {replica.status === 'requested' && (
+                <button type="button" disabled={!!busy} onClick={() => onSave({ ...reference, replica: { ...replica, status: 'building' } }, 'Marked as being built')} className={BTN}>
+                  Mark as being built
+                </button>
+              )}
+              <button
+                type="button"
+                disabled={!!busy}
+                onClick={() => { setNote(replica.note || ''); onSave({ ...reference, replica: { status: 'none' } }, 'Replica request cancelled'); }}
+                className={BTN}
+              >
+                Cancel the request
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </Section>
+  );
+}
+
 export function DesignSetup({ project, onBack, onStarted }) {
   const { toast, confirm } = useAlert();
   const form = project.form || {};
@@ -205,18 +539,50 @@ export function DesignSetup({ project, onBack, onStarted }) {
   }, [project, saved]);
 
   const [info, setInfo] = useState(start.businessInfo);
-  const ranked = useMemo(() => rankTemplates(ALL_TEMPLATES, info.businessType, form.styles || []), [info.businessType, form.styles]);
+  // This project's replica templates (customFor) come first, labeled; no
+  // other project ever sees them.
+  const ranked = useMemo(() => rankTemplates(ALL_TEMPLATES, info.businessType, form.styles || [], project.id), [info.businessType, form.styles, project.id]);
+  const replicas = useMemo(() => replicaTemplatesFor(ALL_TEMPLATES, project.id), [project.id]);
   const [templateId, setTemplateId] = useState(start.templateId || '');
   const [useBrand, setUseBrand] = useState(saved ? saved.useBrand !== false && start.brandHexes.length > 0 : start.brandHexes.length > 0);
   const [slots, setSlots] = useState(start.slots);
   // The Design Studio's settings (src/lib/designLevers.js).
   const [levers, setLevers] = useState(() => sanitizeLevers(start.levers, start.templateId || ''));
+  // Reference sites: inspire / match one / exact replica (design.reference).
+  const [reference, setReference] = useState(() => sanitizeReference(saved?.reference, { projectId: project.id }));
+  // The project's files with signed links, and project.assets (what the
+  // match check reads, as the server does); both refreshed after the team
+  // adds a reference screenshot, so it shows (and can be matched) at once.
+  const [projectFiles, setProjectFiles] = useState(project.files || []);
+  useEffect(() => { setProjectFiles(project.files || []); }, [project.files]);
+  const [projectAssets, setProjectAssets] = useState(project.assets || []);
+  useEffect(() => { setProjectAssets(project.assets || []); }, [project.assets]);
+  // Only the latest refresh lands: screenshots are added one after another,
+  // and an older list arriving last would hide the newer ones.
+  const filesRefresh = useRef(0);
+  // Screenshot picks still uploading in Reference sites: a tall one goes up
+  // in parts, and a match started after the first would see only the top,
+  // so Suggest a design holds a match until they are all in.
+  const [shotUploads, setShotUploads] = useState(0);
+  const onShotBusy = (on) => setShotUploads((n) => Math.max(0, n + (on ? 1 : -1)));
+  // designSuggest.js decides which screenshots picture a matched address
+  // (the rule the run uses). Loaded on demand, like the Studio's panels,
+  // so it stays out of the bundle every visitor downloads.
+  const [urlShots, setUrlShots] = useState(null);
+  useEffect(() => {
+    let live = true;
+    import('../../lib/designSuggest.js')
+      .then((m) => { if (live) setUrlShots(() => m.referenceShots); })
+      .catch(() => {});
+    return () => { live = false; };
+  }, []);
   const [busy, setBusy] = useState('');
   const [error, setError] = useState('');
 
-  // Default to the best match once the business type is known.
+  // Default to the best match once the business type is known (the one
+  // labeled so: a replica leads the list but is picked on purpose).
   useEffect(() => {
-    if (!templateId && ranked.length && info.businessType) setTemplateId(ranked[0].id);
+    if (!templateId && ranked.length && info.businessType) setTemplateId((ranked.find((r) => !r.replica) || ranked[0]).id);
   }, [templateId, ranked, info.businessType]);
 
   // A section order belongs to one template: a switch starts the new one
@@ -248,7 +614,7 @@ export function DesignSetup({ project, onBack, onStarted }) {
 
   const template = templateById(templateId);
   const accent = template && useBrand ? brandAccent(template.colors?.bg, start.brandHexes) : {};
-  const files = (project.files || []).filter((f) => f.url);
+  const files = projectFiles.filter((f) => f.url);
   const importable = files.filter((f) => isImportable(f.name));
   const notImportable = files.filter((f) => !isImportable(f.name) && f.kind !== 'reference');
   const set = (k) => (e) => setInfo((prev) => ({ ...prev, [k]: e.target.value }));
@@ -265,6 +631,17 @@ export function DesignSetup({ project, onBack, onStarted }) {
     ...changedLeverGroups(cleanLevers, sanitizeLevers(saved?.levers, templateId)),
   ])];
 
+  const cleanReference = useMemo(
+    () => withBuiltReplica(sanitizeReference(reference, { projectId: project.id }), replicas, templateId),
+    [reference, replicas, templateId, project.id],
+  );
+  // SuggestPanel shows thumbnails from project.files and checks a match
+  // against project.assets: give it the fresh lists.
+  const suggestProject = useMemo(
+    () => ({ ...project, files: projectFiles, assets: projectAssets }),
+    [project, projectFiles, projectAssets],
+  );
+
   // The design as it will be saved, with images (once imported) and colors.
   function buildDesign(extra = {}) {
     return {
@@ -279,8 +656,55 @@ export function DesignSetup({ project, onBack, onStarted }) {
       images: saved?.images || {},
       imported: saved?.imported || {},
       siteId: saved?.siteId || project.site_id || '',
+      reference: cleanReference,
       ...extra,
     };
+  }
+
+  // A replica request (or its cancel) saves the page at once, so the
+  // request is on the project when someone asks Claude to build it.
+  // The page shows the request only once it is saved: a failed save must
+  // not look like a request someone could act on.
+  async function saveReference(next, message) {
+    setBusy('save');
+    setError('');
+    try {
+      const ref = withBuiltReplica(sanitizeReference(next, { projectId: project.id }), replicas, templateId);
+      await customSiteAdmin('design-save', { id: project.id, design: buildDesign({ reference: ref }) });
+      setReference(next);
+      toast(message, 'success');
+    } catch (e) {
+      setError(e.message || 'Could not save');
+    } finally {
+      setBusy('');
+    }
+  }
+
+  // A screenshot the team just added (ReferenceShotUpload, here or in
+  // SuggestPanel): `asset` comes with its signed link and `row` is the
+  // project row with the new assets, so it shows and can be matched at
+  // once; then the files are fetched again. A matched address stays the
+  // source: its screenshots are found by their "Screenshot of <url>" note.
+  async function onShotAdded(asset, row) {
+    if (asset?.path) {
+      setProjectFiles((list) => (list.some((f) => f.path === asset.path) ? list : [...list, asset]));
+      if (Array.isArray(row?.assets)) setProjectAssets(row.assets);
+      else {
+        const stored = { ...asset };
+        delete stored.url;
+        delete stored.downloadUrl;
+        setProjectAssets((list) => (list.some((a) => a.path === asset.path) ? list : [...list, stored]));
+      }
+    }
+    const seq = ++filesRefresh.current;
+    try {
+      const res = await customSiteAdmin('get', { id: project.id });
+      if (seq !== filesRefresh.current) return;
+      if (Array.isArray(res.project?.files)) setProjectFiles(res.project.files);
+      if (Array.isArray(res.project?.assets)) setProjectAssets(res.project.assets);
+    } catch (e) {
+      if (seq === filesRefresh.current) toast(`Added, but the list didn't refresh (${e.message || 'reload the page'})`, 'error');
+    }
   }
 
   async function save() {
@@ -425,9 +849,11 @@ export function DesignSetup({ project, onBack, onStarted }) {
             <p className="text-[13px] text-ink-tertiary">Choose the business type first.</p>
           ) : (
             <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {ranked.map((r, i) => {
+              {ranked.map((r) => {
                 const t = templateById(r.id);
                 const on = templateId === r.id;
+                // Replicas lead the list; "Best match" stays on the best of the rest.
+                const best = !r.replica && r.id === ranked.find((x) => !x.replica)?.id;
                 return (
                   <li key={r.id}>
                     <button
@@ -438,13 +864,15 @@ export function DesignSetup({ project, onBack, onStarted }) {
                     >
                       <span className="flex items-center gap-2">
                         <span className="flex overflow-hidden rounded-md border border-black/10" aria-hidden="true">
-                          {[t.colors.bg, t.colors.accent, t.colors.secondary].map((c, k) => <span key={k} className="w-5 h-7" style={{ background: c }} />)}
+                          {[t.colors?.bg, t.colors?.accent, t.colors?.secondary].map((c, k) => <span key={k} className="w-5 h-7" style={{ background: c }} />)}
                         </span>
                         <span className="text-[14px] font-bold text-[#1a1a1a]">{t.label}</span>
-                        {i === 0 && <span className="ml-auto text-[10px] font-bold uppercase tracking-wider text-[#cc0000]">Best match</span>}
+                        {best && <span className="ml-auto text-[10px] font-bold uppercase tracking-wider text-[#cc0000]">Best match</span>}
                       </span>
                       <span className="block mt-1.5 text-[12px] text-ink-tertiary leading-snug">{t.description}</span>
-                      {r.reasons.length > 0 && <span className="block mt-1 text-[11px] text-[#4a4a4a]">{r.reasons.join(' · ')}</span>}
+                      {r.reasons.length > 0 && (
+                        <span className={`block mt-1 text-[11px] ${r.replica ? 'font-bold text-[#cc0000]' : 'text-[#4a4a4a]'}`}>{r.reasons.join(' · ')}</span>
+                      )}
                     </button>
                   </li>
                 );
@@ -476,9 +904,30 @@ export function DesignSetup({ project, onBack, onStarted }) {
         </Section>
 
         <Suspense fallback={<Loading />}>
+        <ReferenceSection
+          project={project}
+          files={projectFiles}
+          reference={cleanReference}
+          urlShots={urlShots ? (source) => urlShots(source, projectAssets) : null}
+          replicas={replicas}
+          templateId={templateId}
+          busy={busy}
+          onChange={setReference}
+          onSave={saveReference}
+          onShotAdded={onShotAdded}
+          onShotBusy={onShotBusy}
+          onPickTemplate={setTemplateId}
+        />
+
         <Section title="Suggest a design" intro={`Let ${MODEL_NAME} propose the whole look from their files and answers. You review every part.`}>
           <SuggestPanel
-            project={project}
+            project={suggestProject}
+            reference={cleanReference}
+            onReferenceAdded={onShotAdded}
+            // A match takes their brand color only when this page does,
+            // saved or not.
+            useBrand={useBrand}
+            uploading={shotUploads > 0}
             current={{ templateId, levers: cleanLevers, slots }}
             modelName={MODEL_NAME}
             disabled={!!busy}
@@ -617,7 +1066,7 @@ export function DesignSetup({ project, onBack, onStarted }) {
               existingInfo={site?.info}
               customColors={{ ...(site?.customColors || {}), ...accent }}
               customFonts={site?.customFonts}
-              images={{ ...(site?.images || {}), ...slotImages({ slots, files: project.files, images: saved?.images, imported: saved?.imported }) }}
+              images={{ ...(site?.images || {}), ...slotImages({ slots, files: projectFiles, images: saved?.images, imported: saved?.imported }) }}
               projectId={project.id}
             />
           </Suspense>

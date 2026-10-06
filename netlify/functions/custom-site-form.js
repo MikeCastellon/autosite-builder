@@ -12,14 +12,18 @@
 // bucket through the signed URL (Netlify functions cap request bodies at
 // ~6 MB, logos and photos are bigger). The form only ever stores paths this
 // function minted for the project (sanitizeAssets checks the folder).
+// project.assets also holds the team's reference screenshots (addedBy:
+// 'admin', custom-site-admin reference-add): the form never lists or
+// counts them, and a save keeps them whatever the browser sends
+// (mergeFormAssets).
 import crypto from 'node:crypto';
 import { supabaseAdmin } from './_shared/auth.js';
 import { corsHeaders, jsonHeaders } from './_shared/cors.js';
 import { checkAndRecordRateLimit } from './_shared/rateLimit.js';
 import { customSiteFormToAdmin, customSiteReceivedToCustomer } from './_lib/postmark.js';
 import {
-  ASSET_BUCKET, ASSET_KINDS, assetPath, checkUpload, firstName, isEmail, missingRequired, sanitizeAssets,
-  sanitizeForm, stageAfterSave, stageAfterSubmit,
+  ASSET_BUCKET, ASSET_KINDS, assetPath, checkUpload, customerAssets, firstName, isEmail, mergeFormAssets,
+  missingRequired, sanitizeForm, stageAfterSave, stageAfterSubmit,
 } from '../../src/lib/customSiteForm.js';
 
 const TABLE = 'custom_site_projects';
@@ -36,7 +40,7 @@ const NOT_ACTIVE = 'This form link isn\'t active. Check the latest email from us
 async function findProject(db, token) {
   if (typeof token !== 'string' || !TOKEN_RE.test(token)) return null;
   const { data, error } = await db.from(TABLE)
-    .select('id, token, stage, client_first_name, client_name, client_email, client_phone, business_name, form, assets, created_by, form_started_at, form_saved_at, form_submitted_at')
+    .select('id, token, stage, client_first_name, client_name, client_email, client_phone, business_name, form, assets, created_by, form_started_at, form_saved_at, form_submitted_at, updated_at')
     .eq('token', token)
     .maybeSingle();
   if (error) throw Object.assign(new Error('Could not load the form'), { status: 500 });
@@ -61,6 +65,41 @@ async function advanceStage(db, projectId, fromStage, nextStage, fromStages) {
   });
   if (error) console.error('[custom-site-form] stage event not logged:', error.message);
   return true;
+}
+
+// Writes the customer's answers and uploads. project.assets is shared with
+// the team (custom-site-admin reference-add appends screenshots to it at
+// any time), so the write only lands while the row is still the one read
+// (updated_at moves on every write, via the trigger); otherwise it reads
+// again and merges again, so a screenshot the team added in between is
+// never dropped. Returns { current, assets }: the row as it was just
+// before the write and the list stored, or null when the row kept
+// changing.
+async function writeAnswers(db, token, project, { form, list, submitting, now }) {
+  let current = project;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    if (attempt) {
+      current = await findProject(db, token);
+      if (!current) throw Object.assign(new Error(NOT_ACTIVE), { status: 404 });
+    }
+    const assets = mergeFormAssets(current.assets, list, current.id);
+    const patch = { form, assets, form_saved_at: now };
+    if (!current.form_started_at) patch.form_started_at = now;
+    // The admin only had a name and email; the business and phone the
+    // customer gives show up in the admin list.
+    if (form.businessName && form.businessName !== current.business_name) patch.business_name = form.businessName.slice(0, 160);
+    if (form.contactPhone && form.contactPhone !== current.client_phone) patch.client_phone = form.contactPhone.slice(0, 40);
+    if (submitting) patch.form_submitted_at = now;
+    let q = db.from(TABLE).update(patch).eq('id', current.id);
+    if (current.updated_at) q = q.eq('updated_at', current.updated_at);
+    const { data, error } = await q.select('id').maybeSingle();
+    if (error) {
+      console.error('[custom-site-form] save failed:', error.message);
+      throw Object.assign(new Error('Could not save. Please try again.'), { status: 500 });
+    }
+    if (data) return { current, assets };
+  }
+  return null;
 }
 
 // Who gets the customer's answers: the admin who added the customer, plus
@@ -110,7 +149,9 @@ export const handler = async (event) => {
     if (event.httpMethod === 'GET') {
       const project = await findProject(db, event.queryStringParameters?.t);
       if (!project) return reply(404, { error: NOT_ACTIVE });
-      const assets = Array.isArray(project.assets) ? project.assets : [];
+      // The customer's own files only: the team's screenshots aren't theirs
+      // to see, edit or remove.
+      const assets = customerAssets(project.assets);
       // Thumbnails for the files already uploaded, valid for an hour.
       let urls = new Map();
       if (assets.length) {
@@ -151,7 +192,8 @@ export const handler = async (event) => {
         const kind = body.kind;
         const check = checkUpload({ kind, fileName: body.fileName, size: Number(body.size) });
         if (check.error) return reply(400, { error: check.error });
-        const used = (project.assets || []).filter((a) => a.kind === kind).length;
+        // The team's screenshots don't use up the customer's room.
+        const used = customerAssets(project.assets).filter((a) => a.kind === kind).length;
         if (used >= ASSET_KINDS[kind].max) {
           return reply(400, { error: `You can add up to ${ASSET_KINDS[kind].max} files here. Remove one to add another.` });
         }
@@ -171,58 +213,49 @@ export const handler = async (event) => {
           return reply(429, { error: 'Too many tries. Please wait a bit and try again.' });
         }
         const form = sanitizeForm(body.form);
-        const assets = sanitizeAssets(body.assets, project.id);
         if (submitting) {
           const missing = missingRequired(form);
           if (missing.length) return reply(400, { error: `Please fill in: ${missing.map((m) => m.label).join(', ')}`, missing });
         }
 
-        // Read before the update: these describe the project as it was.
-        const { stage: fromStage } = project;
-        const firstSave = !project.form_started_at;
-        const resubmitted = !!project.form_submitted_at;
-
-        const patch = { form, assets, form_saved_at: now };
-        if (firstSave) patch.form_started_at = now;
-        // The admin only had a name and email; the business and phone the
-        // customer gives show up in the admin list.
-        if (form.businessName && form.businessName !== project.business_name) patch.business_name = form.businessName.slice(0, 160);
-        if (form.contactPhone && form.contactPhone !== project.client_phone) patch.client_phone = form.contactPhone.slice(0, 40);
-        if (submitting) patch.form_submitted_at = now;
-        const { error } = await db.from(TABLE).update(patch).eq('id', project.id);
-        if (error) {
-          console.error('[custom-site-form] save failed:', error.message);
-          return reply(500, { error: 'Could not save. Please try again.' });
-        }
-        if (firstSave) await logEvent(db, project.id, 'form_started');
+        const written = await writeAnswers(db, body.t, project, { form, list: body.assets, submitting, now });
+        if (!written) return reply(409, { error: 'Could not save just now. Please try again.' });
+        // The row the write landed on, as it was: these describe the project
+        // before this save. The team email lists the customer's own files.
+        const { current } = written;
+        const assets = customerAssets(written.assets);
+        const { stage: fromStage } = current;
+        const firstSave = !current.form_started_at;
+        const resubmitted = !!current.form_submitted_at;
+        if (firstSave) await logEvent(db, current.id, 'form_started');
 
         if (!submitting) {
-          await advanceStage(db, project.id, fromStage, stageAfterSave(fromStage), ['new', 'invited']);
+          await advanceStage(db, current.id, fromStage, stageAfterSave(fromStage), ['new', 'invited']);
           return reply(200, { ok: true, savedAt: now });
         }
 
-        await logEvent(db, project.id, resubmitted ? 'form_resubmitted' : 'form_submitted');
-        await advanceStage(db, project.id, fromStage, stageAfterSubmit(fromStage), ['new', 'invited', 'form_started']);
+        await logEvent(db, current.id, resubmitted ? 'form_resubmitted' : 'form_submitted');
+        await advanceStage(db, current.id, fromStage, stageAfterSubmit(fromStage), ['new', 'invited', 'form_started']);
 
         // Await both before returning (Netlify stops the function when the
         // handler returns). allSettled: the answers are saved either way.
-        const formUrl = `${APP_URL}/custom-site?t=${encodeURIComponent(project.token)}`;
-        const [{ to, creator }, files] = await Promise.all([teamRecipients(db, project), withEmailLinks(db, assets)]);
+        const formUrl = `${APP_URL}/custom-site?t=${encodeURIComponent(current.token)}`;
+        const [{ to, creator }, files] = await Promise.all([teamRecipients(db, current), withEmailLinks(db, assets)]);
         const sends = [];
         if (to) {
           sends.push(customSiteFormToAdmin({
-            to, project, form, assets: files, resubmitted,
-            adminUrl: `${APP_URL}/?admin=custom-sites&project=${project.id}`,
+            to, project: current, form, assets: files, resubmitted,
+            adminUrl: `${APP_URL}/?admin=custom-sites&project=${current.id}`,
           }));
         }
         // The confirmation goes to the address the team entered, not one
         // typed into the form, and only once.
         if (!resubmitted) {
           sends.push(customSiteReceivedToCustomer({
-            to: project.client_email,
+            to: current.client_email,
             replyTo: creator,
-            firstName: project.client_first_name || firstName(form.contactName),
-            businessName: form.businessName || project.business_name,
+            firstName: current.client_first_name || firstName(form.contactName),
+            businessName: form.businessName || current.business_name,
             formUrl,
           }));
         }

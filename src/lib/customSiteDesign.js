@@ -7,9 +7,10 @@
 // React template components, which the functions bundle must not include,
 // so callers pass the template metadata they need.
 
-import { FORM_FIELDS, answerText, isFieldShown, safeHref } from './customSiteForm.js';
+import { FORM_FIELDS, answerText, isFieldShown, isTeamAsset, safeHref } from './customSiteForm.js';
 import { formatPrice } from './formatPrice.js';
 import { GROUP_COPY_KEYS, GROUP_INFO_KEYS, LEVER_GROUPS, leverGroupsChanged, leverPatch, sanitizeLevers } from './designLevers.js';
+import { REFERENCE_MODES } from './referenceModes.js';
 
 // The model custom sites are written with: one tier above the free builder.
 export const DESIGN_MODEL = 'claude-opus-5-5';
@@ -164,11 +165,37 @@ const STYLE_WORDS = {
   'Classic & trusted': ['trustworthy', 'reliable', 'honest', 'professional', 'dependable'],
 };
 
-// Visible templates ranked for this business type and these style picks.
+// Replica templates: built in the repo for ONE customer, modeled on their
+// reference site (the "Exact replica" request below). Their registry entry
+// carries hidden: true (so the free wizard and the editor's switcher skip
+// it) and customFor: [projectId, ...], the only projects that may use it.
+export const REPLICA_LABEL = 'Replica, this customer only';
+
+export function isReplicaTemplate(t) {
+  return Array.isArray(t?.customFor) && t.customFor.length > 0;
+}
+
+export function isReplicaFor(t, projectId) {
+  return !!projectId && isReplicaTemplate(t) && t.customFor.includes(projectId);
+}
+
+// The replica templates this project may use, by label.
+export function replicaTemplatesFor(templates, projectId) {
+  return (templates || []).filter((t) => t && isReplicaFor(t, projectId))
+    .sort((a, b) => String(a.label).localeCompare(String(b.label)));
+}
+
+// Visible templates ranked for this business type and these style picks,
+// after this project's own replica templates (whatever their business type:
+// the admin asked for them). A replica never shows for another project,
+// even if its entry forgot hidden: true.
 // `templates` is Object.values(TEMPLATES) from src/data/templates.js.
-export function rankTemplates(templates, businessType, styles = []) {
-  const list = (templates || []).filter((t) => t && !t.hidden);
-  return list.map((t) => {
+export function rankTemplates(templates, businessType, styles = [], projectId = '') {
+  const replicas = replicaTemplatesFor(templates, projectId).map((t) => ({
+    id: t.id, label: t.label, score: 0, reasons: [REPLICA_LABEL], dark: luminance(t.colors?.bg || '#ffffff') < 0.2, replica: true,
+  }));
+  const list = (templates || []).filter((t) => t && !t.hidden && !isReplicaTemplate(t));
+  const ranked = list.map((t) => {
     const mood = String(t.mood || '').toLowerCase();
     const reasons = [];
     let score = 0;
@@ -183,6 +210,7 @@ export function rankTemplates(templates, businessType, styles = []) {
     if (styles.includes('Bright & friendly') && !dark) score += 1;
     return { id: t.id, label: t.label, score, reasons, dark };
   }).sort((a, b) => b.score - a.score || a.label.localeCompare(b.label));
+  return [...replicas, ...ranked];
 }
 
 // ─── Colors ──────────────────────────────────────────────────────────
@@ -255,11 +283,91 @@ function clean(v, max) {
 const PATH_RE = /^[0-9a-f-]{36}\/(logo|brand|reference|photo)\/[0-9a-f-]{36}\.[a-z0-9]{1,5}$/;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const IMAGE_KEY_RE = /^(logo|hero|about|gallery(?:[0-9]|1[01]))$/;
+const TEMPLATE_ID_RE = /^[a-z0-9_]{2,40}$/;
+
+// ─── Reference sites ─────────────────────────────────────────────────
+//
+// design.reference: how the customer's reference sites shape the design.
+//   mode     'inspire' (the default: Claude reads them for taste only) or
+//            'match' ("Suggest a design" mirrors the layout of `source`:
+//            closest template, section order, hero/About layouts, fonts;
+//            colors and logo still come from the customer's side).
+//   source   the ONE reference matched: { kind: 'asset', path } (a
+//            screenshot in this project's reference folder) or
+//            { kind: 'url', url } (a site they listed). Nothing fetches
+//            web pages, so a url can only be matched through a screenshot.
+//   replica  the "Exact replica" request: a custom-only template built in
+//            the repo, modeled on the reference, for this customer alone.
+// A reference only ever lends layout, structure, spacing, type feel and
+// component style: never its words, photos, logo, brand marks or name.
+
+// One list for both modules (referenceModes.js says why it lives there).
+export { REFERENCE_MODES };
+export const REPLICA_STATUSES = Object.freeze(['none', 'requested', 'building', 'ready']);
+
+// The formats Claude reads as images (designSuggest.js sends only these),
+// so only these screenshots can be matched.
+const MATCHABLE_RE = /\.(jpe?g|png|gif|webp)$/i;
+export function canMatchReference(name) {
+  return MATCHABLE_RE.test(String(name || ''));
+}
+
+// Two sources point at the same reference.
+export function sameReferenceSource(a, b) {
+  if (!a || !b || a.kind !== b.kind) return false;
+  return a.kind === 'asset' ? a.path === b.path : a.url === b.url;
+}
+
+function referenceSource(input, projectId) {
+  if (!input || typeof input !== 'object') return null;
+  if (input.kind === 'asset') {
+    const path = typeof input.path === 'string' ? input.path : '';
+    const m = PATH_RE.exec(path);
+    // Only a reference upload, and (when the caller knows the project) only
+    // one in this project's own folder.
+    if (!m || m[1] !== 'reference') return null;
+    if (projectId && !path.startsWith(`${projectId}/reference/`)) return null;
+    return { kind: 'asset', path };
+  }
+  if (input.kind === 'url') {
+    const raw = typeof input.url === 'string' ? input.url : '';
+    // safeHref: http(s) only, so a "javascript:" address never becomes a link.
+    const url = raw.length <= 500 ? safeHref(raw) : null;
+    return url && url.length <= 500 ? { kind: 'url', url } : null;
+  }
+  return null;
+}
+
+// design.reference kept to known keys and shapes. `projectId` (when given)
+// also pins an asset source to that project's reference folder.
+export function sanitizeReference(input, { projectId } = {}) {
+  const src = input && typeof input === 'object' && !Array.isArray(input) ? input : {};
+  const source = referenceSource(src.source, projectId);
+  const r = src.replica && typeof src.replica === 'object' && !Array.isArray(src.replica) ? src.replica : {};
+  const status = REPLICA_STATUSES.includes(r.status) ? r.status : 'none';
+  const replica = { status, requestedAt: '', templateId: '', note: '' };
+  // A cancelled (or never made) request keeps nothing.
+  if (status !== 'none') {
+    const at = typeof r.requestedAt === 'string' && r.requestedAt.length <= 40 ? Date.parse(r.requestedAt) : NaN;
+    if (Number.isFinite(at)) replica.requestedAt = new Date(at).toISOString();
+    if (TEMPLATE_ID_RE.test(String(r.templateId || ''))) replica.templateId = r.templateId;
+    replica.note = clean(r.note, 1000);
+  }
+  const mode = REFERENCE_MODES.includes(src.mode) ? src.mode : 'inspire';
+  return {
+    // Matching needs something to match.
+    mode: mode === 'match' && !source ? 'inspire' : mode,
+    source,
+    replica,
+  };
+}
 
 // What the admin saves from the setup form, kept to known keys and shapes.
 // `imageUrlPrefix` is the public site-images URL prefix: imported images
 // must live there (customer uploads are private and their links expire).
-export function sanitizeDesign(input, { imageUrlPrefix } = {}) {
+// `projectId`, when given, pins design.reference's screenshot to the
+// project's own folder.
+export function sanitizeDesign(input, { imageUrlPrefix, projectId } = {}) {
   const src = input && typeof input === 'object' ? input : {};
   const bi = src.businessInfo && typeof src.businessInfo === 'object' ? src.businessInfo : {};
   const businessType = TYPE_IDS.includes(bi.businessType) ? bi.businessType : '';
@@ -306,6 +414,9 @@ export function sanitizeDesign(input, { imageUrlPrefix } = {}) {
     // The groups this setup changed (designLevers.js LEVER_GROUPS).
     leversChanged: leverGroupsChanged(src.leversChanged),
     siteId: UUID_RE.test(String(src.siteId || '')) ? src.siteId : '',
+    // Inspire / match / replica (sanitizeReference above). Client-owned:
+    // saved with the rest of the setup.
+    reference: sanitizeReference(src.reference, { projectId }),
   };
   if (Array.isArray(src.imagesChanged)) {
     out.imagesChanged = [...new Set(src.imagesChanged.filter((k) => IMAGE_KEY_RE.test(String(k))))];
@@ -471,7 +582,10 @@ export function briefText(form = {}, assets = []) {
     const v = answerText(f, form[f.id]);
     if (v) lines.push(`${f.label}: ${v.includes('\n') ? `\n${v}` : v}`);
   }
-  const notes = assets.filter((a) => a.kind === 'reference' && a.note).map((a) => `- ${a.name}: ${a.note}`);
+  // The customer's own notes only: a screenshot the team added (addedBy:
+  // 'admin', for "Match its layout") carries the team's note, which is no
+  // part of what the customer wrote.
+  const notes = assets.filter((a) => a?.kind === 'reference' && a.note && !isTeamAsset(a)).map((a) => `- ${a.name}: ${a.note}`);
   if (notes.length) lines.push(`Notes on inspiration images:\n${notes.join('\n')}`);
   return lines.join('\n');
 }
