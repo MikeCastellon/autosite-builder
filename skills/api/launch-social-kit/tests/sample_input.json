@@ -1,0 +1,305 @@
+{
+ "version": 1,
+ "business": {
+  "name": "Sample Shine Mobile Detailing",
+  "type": "Mobile detailing"
+ },
+ "palette": {
+  "bg": "#0a0909",
+  "secondary": "#1a1818",
+  "text": "#f8f8f8",
+  "muted": "#a7a3a4",
+  "accent": "#ee3533"
+ },
+ "paletteSource": "brand",
+ "fonts": {
+  "heading": {
+   "family": "Oswald",
+   "files": []
+  },
+  "body": {
+   "family": "Inter",
+   "files": []
+  }
+ },
+ "logo": {
+  "file": "logo-1.png",
+  "width": 900,
+  "height": 260,
+  "reading": {
+   "dominant": [
+    "#ee3533",
+    "#f5f5f5"
+   ],
+   "background": "transparent",
+   "hasText": true
+  }
+ },
+ "photos": [
+  {
+   "file": "photo-1.png",
+   "width": 1200,
+   "height": 800,
+   "role": "hero",
+   "score": 8.6,
+   "alt": "A car parked outside on a clear day.",
+   "focal": {
+    "x": 0.52,
+    "y": 0.6
+   },
+   "blur": [
+    {
+     "x": 0.47,
+     "y": 0.63,
+     "w": 0.1,
+     "h": 0.06,
+     "kind": "plate"
+    }
+   ],
+   "note": ""
+  },
+  {
+   "file": "photo-2.png",
+   "width": 1000,
+   "height": 1000,
+   "role": "gallery",
+   "score": 7.8,
+   "alt": "A car parked outside on a clear day.",
+   "focal": {
+    "x": 0.5,
+    "y": 0.55
+   },
+   "blur": [],
+   "note": ""
+  },
+  {
+   "file": "photo-3.png",
+   "width": 1200,
+   "height": 800,
+   "role": "gallery",
+   "score": 7.1,
+   "alt": "A car parked outside on a clear day.",
+   "focal": {
+    "x": 0.52,
+    "y": 0.6
+   },
+   "blur": [],
+   "note": ""
+  }
+ ],
+ "links": {
+  "site": "https://sample-shine.autocaregeniushub.com/",
+  "host": "sample-shine.autocaregeniushub.com",
+  "booking": true,
+  "phone": true
+ },
+ "words": {
+  "ready": true,
+  "captions": [
+   "Our new website is live! Book a Full Detail at home or at work, in a few taps.",
+   "Inside and out, at your place. See every service on the new site.",
+   "Trusted by 500+ happy customers in Exampleton."
+  ],
+  "bio": "Mobile detailing in Exampleton and Sampleville. We come to you."
+ },
+ "sources": [
+  {
+   "id": "facts.businessName",
+   "kind": "facts",
+   "label": "Business name",
+   "text": "Sample Shine Mobile Detailing"
+  },
+  {
+   "id": "facts.location",
+   "kind": "facts",
+   "label": "City and state",
+   "text": "Exampleton, FL"
+  },
+  {
+   "id": "facts.serviceArea",
+   "kind": "facts",
+   "label": "Service area",
+   "text": "Exampleton and Sampleville"
+  },
+  {
+   "id": "facts.phone",
+   "kind": "facts",
+   "label": "Phone",
+   "text": "(555) 010-0199"
+  },
+  {
+   "id": "facts.site",
+   "kind": "facts",
+   "label": "Site address",
+   "text": "sample-shine.autocaregeniushub.com"
+  },
+  {
+   "id": "facts.yearsInBusiness",
+   "kind": "facts",
+   "label": "Years in business",
+   "text": "8 years in business"
+  },
+  {
+   "id": "facts.services[0]",
+   "kind": "facts",
+   "label": "services",
+   "text": "Full Detail"
+  },
+  {
+   "id": "facts.services[0].price",
+   "kind": "facts",
+   "label": "services price",
+   "text": "Full Detail $199"
+  },
+  {
+   "id": "facts.services[0].description",
+   "kind": "facts",
+   "label": "services description",
+   "text": "Inside and out, at your place."
+  },
+  {
+   "id": "facts.services[1]",
+   "kind": "facts",
+   "label": "services",
+   "text": "Ceramic Coating"
+  },
+  {
+   "id": "facts.services[1].price",
+   "kind": "facts",
+   "label": "services price",
+   "text": "Ceramic Coating $899"
+  },
+  {
+   "id": "facts.services[2]",
+   "kind": "facts",
+   "label": "services",
+   "text": "Interior Refresh"
+  },
+  {
+   "id": "facts.services[2].price",
+   "kind": "facts",
+   "label": "services price",
+   "text": "Interior Refresh $119"
+  },
+  {
+   "id": "owner.businessName",
+   "kind": "owner",
+   "label": "Business name",
+   "text": "Sample Shine Mobile Detailing"
+  },
+  {
+   "id": "owner.serviceArea",
+   "kind": "owner",
+   "label": "City or area you serve",
+   "text": "Exampleton and Sampleville"
+  },
+  {
+   "id": "owner.services",
+   "kind": "owner",
+   "label": "Services and prices",
+   "text": "Full Detail - $199\nCeramic Coating - $899\nInterior Refresh - $119"
+  },
+  {
+   "id": "owner.about",
+   "kind": "owner",
+   "label": "Your story",
+   "text": "I have been detailing cars for 8 years. I come to you with my own water and power."
+  },
+  {
+   "id": "owner.whyUs",
+   "kind": "owner",
+   "label": "Why do customers choose you?",
+   "text": "I show up on time and I don't rush the job."
+  },
+  {
+   "id": "owner.instagram",
+   "kind": "owner",
+   "label": "Instagram",
+   "text": "@sampleshine"
+  },
+  {
+   "id": "site.headline",
+   "kind": "site",
+   "label": "headline",
+   "text": "Showroom shine, wherever you park"
+  },
+  {
+   "id": "site.subheadline",
+   "kind": "site",
+   "label": "subheadline",
+   "text": "Mobile detailing in Exampleton and Sampleville. We bring the water and the power."
+  },
+  {
+   "id": "site.aboutText",
+   "kind": "site",
+   "label": "aboutText",
+   "text": "Sam has been detailing cars for 8 years. Every job is done by hand, at your home or office."
+  },
+  {
+   "id": "site.ctaPrimary",
+   "kind": "site",
+   "label": "ctaPrimary",
+   "text": "Book a detail"
+  },
+  {
+   "id": "site.footerTagline",
+   "kind": "site",
+   "label": "footerTagline",
+   "text": "Showroom shine, wherever you park."
+  },
+  {
+   "id": "site.metaTitle",
+   "kind": "site",
+   "label": "metaTitle",
+   "text": "Sample Shine Mobile Detailing | Exampleton, FL"
+  },
+  {
+   "id": "words.social.bio",
+   "kind": "words",
+   "label": "Social bio",
+   "text": "Mobile detailing in Exampleton and Sampleville. We come to you."
+  },
+  {
+   "id": "words.social.captions[0]",
+   "kind": "words",
+   "label": "Social caption",
+   "text": "Our new website is live! Book a Full Detail at home or at work, in a few taps."
+  },
+  {
+   "id": "words.social.captions[1]",
+   "kind": "words",
+   "label": "Social caption",
+   "text": "Inside and out, at your place. See every service on the new site."
+  },
+  {
+   "id": "words.social.captions[2]",
+   "kind": "words",
+   "label": "Social caption",
+   "text": "Trusted by 500+ happy customers in Exampleton."
+  },
+  {
+   "id": "words.gbp.description",
+   "kind": "words",
+   "label": "Google profile description",
+   "text": "Sample Shine brings mobile detailing to Exampleton and Sampleville."
+  },
+  {
+   "id": "words.seo.title",
+   "kind": "words",
+   "label": "Search title",
+   "text": "Mobile Detailing in Exampleton | Sample Shine"
+  },
+  {
+   "id": "words.seo.description",
+   "kind": "words",
+   "label": "Search description",
+   "text": "Mobile detailing in Exampleton and Sampleville."
+  },
+  {
+   "id": "reviews",
+   "kind": "reviews",
+   "label": "Pasted reviews",
+   "text": "\"Sam made my truck look brand new. Showed up right on time!\" - Riley Q.\n\"Friendly, careful and the car looks great.\" - Casey V."
+  }
+ ]
+}

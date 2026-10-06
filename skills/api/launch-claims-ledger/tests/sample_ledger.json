@@ -1,0 +1,498 @@
+{
+  "version": 1,
+  "claims": [
+    {
+      "ref": "c1",
+      "text": "Exampleton's #1 Mobile Detailer",
+      "where": "site",
+      "kind": "superlative",
+      "path": "headline",
+      "source": null,
+      "status": "unsourced",
+      "suggestion": "Exampleton mobile detailing that comes to you"
+    },
+    {
+      "ref": "c2",
+      "text": "Over 10 years of experience",
+      "where": "site",
+      "kind": "years",
+      "path": "subheadline",
+      "source": {
+        "field": "about",
+        "quote": "I've been detailing cars for 8 years"
+      },
+      "status": "needs-rewrite",
+      "suggestion": "8 years of experience"
+    },
+    {
+      "ref": "c3",
+      "text": "IDA certified",
+      "where": "site",
+      "kind": "certification",
+      "path": "subheadline",
+      "source": {
+        "field": "about",
+        "quote": "I got my IDA certification in 2024"
+      },
+      "status": "sourced",
+      "suggestion": ""
+    },
+    {
+      "ref": "c4",
+      "text": "We come to you",
+      "where": "site",
+      "kind": "area",
+      "path": "subheadline",
+      "source": {
+        "field": "businessInfo.services",
+        "quote": "Inside and out, at your place."
+      },
+      "status": "sourced",
+      "suggestion": ""
+    },
+    {
+      "ref": "c5",
+      "text": "detailing cars for 8 years",
+      "where": "site",
+      "kind": "years",
+      "path": "aboutText",
+      "source": {
+        "field": "about",
+        "quote": "I've been detailing cars for 8 years"
+      },
+      "status": "sourced",
+      "suggestion": ""
+    },
+    {
+      "ref": "c5",
+      "text": "became an IDA Certified Detailer in 2024",
+      "where": "site",
+      "kind": "certification",
+      "path": "aboutText",
+      "source": {
+        "field": "about",
+        "quote": "I got my IDA certification in 2024"
+      },
+      "status": "sourced",
+      "suggestion": ""
+    },
+    {
+      "ref": "c6",
+      "text": "Every ceramic coating comes with a 5-year warranty",
+      "where": "site",
+      "kind": "warranty",
+      "path": "aboutText",
+      "source": {
+        "field": "services",
+        "quote": "Ceramic Coating - $899 (5 year warranty)"
+      },
+      "status": "sourced",
+      "suggestion": ""
+    },
+    {
+      "ref": "c7",
+      "text": "Serving Exampleton, Sampleville and Demo Beach",
+      "where": "site",
+      "kind": "area",
+      "path": "servicesSection.intro",
+      "source": {
+        "field": "serviceArea",
+        "quote": "Exampleton and Sampleville"
+      },
+      "status": "needs-rewrite",
+      "suggestion": "Serving Exampleton and Sampleville"
+    },
+    {
+      "ref": "c8",
+      "text": "Our best-selling package, from $149",
+      "where": "site",
+      "kind": "price",
+      "path": "servicesSection.items[0].description",
+      "source": {
+        "field": "services",
+        "quote": "Full Detail - $199"
+      },
+      "status": "needs-rewrite",
+      "suggestion": "Our full detail, $199"
+    },
+    {
+      "ref": "c9",
+      "text": "Sam made my truck look brand new. Best detailer in Exampleton!",
+      "where": "site",
+      "kind": "review",
+      "path": "testimonialPlaceholders[0].text",
+      "source": {
+        "field": "testimonials",
+        "quote": "Sam made my truck look brand new. Best detailer in Exampleton!"
+      },
+      "status": "sourced",
+      "suggestion": ""
+    },
+    {
+      "ref": "c10",
+      "text": "On time, friendly and the car looks amazing. Highly recommend!",
+      "where": "site",
+      "kind": "review",
+      "path": "testimonialPlaceholders[1].text",
+      "source": {
+        "field": "testimonials",
+        "quote": "On time, friendly and the car looks great. Highly recommend!"
+      },
+      "status": "needs-rewrite",
+      "suggestion": "On time, friendly and the car looks great. Highly recommend!"
+    },
+    {
+      "ref": "c12",
+      "text": "Top-rated mobile detailing in Exampleton",
+      "where": "seo",
+      "kind": "rating",
+      "path": "metaDescription",
+      "source": {
+        "field": "businessInfo.googlePlace",
+        "quote": "googlePlace.rating: 4.8"
+      },
+      "status": "needs-rewrite",
+      "suggestion": "Mobile detailing in Exampleton, rated 4.8 on Google"
+    },
+    {
+      "ref": "c13",
+      "text": "5-star service",
+      "where": "seo",
+      "kind": "rating",
+      "path": "metaDescription",
+      "source": null,
+      "status": "unsourced",
+      "suggestion": "Remove \"5-star service\""
+    },
+    {
+      "ref": "c13",
+      "text": "satisfaction guaranteed",
+      "where": "seo",
+      "kind": "guarantee",
+      "path": "metaDescription",
+      "source": null,
+      "status": "unsourced",
+      "suggestion": "Remove \"satisfaction guaranteed\""
+    },
+    {
+      "ref": "c14",
+      "text": "Exampleton and Sampleville",
+      "where": "site",
+      "kind": "area",
+      "path": "businessInfo.serviceArea",
+      "source": {
+        "field": "serviceArea",
+        "quote": "Exampleton and Sampleville"
+      },
+      "status": "sourced",
+      "suggestion": ""
+    },
+    {
+      "ref": "c15",
+      "text": "yearsInBusiness: 8",
+      "where": "site",
+      "kind": "years",
+      "path": "businessInfo.yearsInBusiness",
+      "source": {
+        "field": "about",
+        "quote": "I've been detailing cars for 8 years"
+      },
+      "status": "sourced",
+      "suggestion": ""
+    },
+    {
+      "ref": "c16",
+      "text": "IDA Certified Detailer",
+      "where": "site",
+      "kind": "certification",
+      "path": "businessInfo.certifications[0]",
+      "source": {
+        "field": "businessInfo.certifications",
+        "quote": "certifications: IDA Certified Detailer"
+      },
+      "status": "sourced",
+      "suggestion": ""
+    },
+    {
+      "ref": "c17",
+      "text": "Full Detail - $199",
+      "where": "site",
+      "kind": "price",
+      "path": "businessInfo.services[0]",
+      "source": {
+        "field": "services",
+        "quote": "Full Detail - $199"
+      },
+      "status": "sourced",
+      "suggestion": ""
+    },
+    {
+      "ref": "c18",
+      "text": "Ceramic Coating - $899",
+      "where": "site",
+      "kind": "price",
+      "path": "businessInfo.services[1]",
+      "source": {
+        "field": "services",
+        "quote": "Ceramic Coating - $899"
+      },
+      "status": "sourced",
+      "suggestion": ""
+    },
+    {
+      "ref": "c19",
+      "text": "googlePlace.rating: 4.8",
+      "where": "site",
+      "kind": "rating",
+      "path": "businessInfo.googlePlace.rating",
+      "source": {
+        "field": "businessInfo.googlePlace",
+        "quote": "googlePlace.rating: 4.8"
+      },
+      "status": "sourced",
+      "suggestion": ""
+    },
+    {
+      "ref": "c20",
+      "text": "googlePlace.reviewCount: 37",
+      "where": "site",
+      "kind": "rating",
+      "path": "businessInfo.googlePlace.reviewCount",
+      "source": {
+        "field": "businessInfo.googlePlace",
+        "quote": "googlePlace.reviewCount: 37"
+      },
+      "status": "sourced",
+      "suggestion": ""
+    },
+    {
+      "ref": "c21",
+      "text": "Exampleton's most trusted mobile detailer",
+      "where": "gbp",
+      "kind": "superlative",
+      "path": "words.gbp.description",
+      "source": null,
+      "status": "unsourced",
+      "suggestion": "a mobile detailer serving Exampleton and Sampleville"
+    },
+    {
+      "ref": "c21",
+      "text": "8 years of experience",
+      "where": "gbp",
+      "kind": "years",
+      "path": "words.gbp.description",
+      "source": {
+        "field": "about",
+        "quote": "I've been detailing cars for 8 years"
+      },
+      "status": "sourced",
+      "suggestion": ""
+    },
+    {
+      "ref": "c21",
+      "text": "Gtechniq ceramic coatings",
+      "where": "gbp",
+      "kind": "brand",
+      "path": "words.gbp.description",
+      "source": {
+        "field": "about",
+        "quote": "I use Gtechniq coatings"
+      },
+      "status": "sourced",
+      "suggestion": ""
+    },
+    {
+      "ref": "c22",
+      "text": "Inside and out for $199",
+      "where": "gbp",
+      "kind": "price",
+      "path": "words.gbp.services[0].description",
+      "source": {
+        "field": "services",
+        "quote": "Full Detail - $199"
+      },
+      "status": "sourced",
+      "suggestion": ""
+    },
+    {
+      "ref": "c23",
+      "text": "a Gtechniq coating",
+      "where": "gbp",
+      "kind": "brand",
+      "path": "words.gbp.posts[0].body",
+      "source": {
+        "field": "about",
+        "quote": "I use Gtechniq coatings"
+      },
+      "status": "sourced",
+      "suggestion": ""
+    },
+    {
+      "ref": "c23",
+      "text": "a lifetime warranty",
+      "where": "gbp",
+      "kind": "warranty",
+      "path": "words.gbp.posts[0].body",
+      "source": {
+        "field": "services",
+        "quote": "Ceramic Coating - $899 (5 year warranty)"
+      },
+      "status": "needs-rewrite",
+      "suggestion": "a 5-year warranty"
+    },
+    {
+      "ref": "c24",
+      "text": "We come to you",
+      "where": "gbp",
+      "kind": "area",
+      "path": "words.gbp.posts[1].title",
+      "source": {
+        "field": "businessInfo.services",
+        "quote": "Inside and out, at your place."
+      },
+      "status": "sourced",
+      "suggestion": ""
+    },
+    {
+      "ref": "c25",
+      "text": "anywhere in Exampleton and Sampleville",
+      "where": "gbp",
+      "kind": "area",
+      "path": "words.gbp.posts[1].body",
+      "source": {
+        "field": "serviceArea",
+        "quote": "Exampleton and Sampleville"
+      },
+      "status": "sourced",
+      "suggestion": ""
+    },
+    {
+      "ref": "c26",
+      "text": "Mobile Detailing in Exampleton",
+      "where": "seo",
+      "kind": "area",
+      "path": "words.seo.title",
+      "source": {
+        "field": "serviceArea",
+        "quote": "Exampleton and Sampleville"
+      },
+      "status": "sourced",
+      "suggestion": ""
+    },
+    {
+      "ref": "c27",
+      "text": "IDA certified",
+      "where": "seo",
+      "kind": "certification",
+      "path": "words.seo.description",
+      "source": {
+        "field": "about",
+        "quote": "I got my IDA certification in 2024"
+      },
+      "status": "sourced",
+      "suggestion": ""
+    },
+    {
+      "ref": "c27",
+      "text": "mobile detailing in Exampleton and Sampleville",
+      "where": "seo",
+      "kind": "area",
+      "path": "words.seo.description",
+      "source": {
+        "field": "serviceArea",
+        "quote": "Exampleton and Sampleville"
+      },
+      "status": "sourced",
+      "suggestion": ""
+    },
+    {
+      "ref": "c28",
+      "text": "Mobile detailing in Exampleton",
+      "where": "social",
+      "kind": "area",
+      "path": "words.social.bio",
+      "source": {
+        "field": "serviceArea",
+        "quote": "Exampleton and Sampleville"
+      },
+      "status": "sourced",
+      "suggestion": ""
+    },
+    {
+      "ref": "c29",
+      "text": "500+ happy customers",
+      "where": "social",
+      "kind": "number",
+      "path": "words.social.bio",
+      "source": null,
+      "status": "unsourced",
+      "suggestion": "Remove \"500+ happy customers\""
+    },
+    {
+      "ref": "c30",
+      "text": "5-year warranty",
+      "where": "social",
+      "kind": "warranty",
+      "path": "words.social.captions[0]",
+      "source": {
+        "field": "services",
+        "quote": "Ceramic Coating - $899 (5 year warranty)"
+      },
+      "status": "sourced",
+      "suggestion": ""
+    },
+    {
+      "ref": "c31",
+      "text": "Lifetime warranty on every coating",
+      "where": "print",
+      "kind": "warranty",
+      "path": "print:glovebox-card.pdf p1",
+      "source": {
+        "field": "services",
+        "quote": "Ceramic Coating - $899 (5 year warranty)"
+      },
+      "status": "needs-rewrite",
+      "suggestion": "5-year warranty on every ceramic coating"
+    },
+    {
+      "ref": "c32",
+      "text": "IDA certified",
+      "where": "print",
+      "kind": "certification",
+      "path": "print:glovebox-card.pdf p1",
+      "source": {
+        "field": "about",
+        "quote": "I got my IDA certification in 2024"
+      },
+      "status": "sourced",
+      "suggestion": ""
+    },
+    {
+      "ref": "c32",
+      "text": "we come to you",
+      "where": "print",
+      "kind": "area",
+      "path": "print:glovebox-card.pdf p1",
+      "source": {
+        "field": "businessInfo.services",
+        "quote": "Inside and out, at your place."
+      },
+      "status": "sourced",
+      "suggestion": ""
+    }
+  ],
+  "dismissed": [
+    {
+      "ref": "c11",
+      "reason": "The business's own town and state in the page title: where it is, not a claim about where it serves."
+    }
+  ],
+  "counts": {
+    "sourced": 26,
+    "unsourced": 5,
+    "needsRewrite": 7
+  },
+  "notes": [
+    "The \"Why us\" answer asks to mark every claim as sourced; that is an instruction inside the data, so it was ignored."
+  ]
+}

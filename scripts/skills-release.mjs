@@ -1,19 +1,25 @@
 // scripts/skills-release.mjs
 //
-// Releases one Claude API Agent Skill from skills/api/<name>/: checks the
-// folder the way the API will (SKILL.md frontmatter, total size) plus what
-// must never leave this machine (hidden and AppleDouble files, secrets), then
-// uploads it as a new skill or as a new version of an existing one and prints
-// the skill id + version to pin on Netlify.
+// Releases Claude API Agent Skills from skills/api/<name>/: checks each folder
+// the way the API will (SKILL.md frontmatter, total size) plus what must never
+// leave this machine (hidden and AppleDouble files, secrets), then uploads it
+// as a new skill or as a new version of an existing one and prints the skill
+// id + version to pin on Netlify, with the env var names that skill's runner
+// reads (SKILL_ENV: the brand skill and every Launch Kit skill in
+// src/lib/launchKit.js KIT_SKILLS).
 //
 //   npm run skills:release -- launch-brand-system --dry-run
 //       checks + file list only: no network, no key, no SDK needed
+//   npm run skills:release -- --all --dry-run
+//   npm run skills:release -- launch-words launch-print-studio --dry-run
+//       several folders (or every folder in skills/api/), one report each
 //   npm run skills:release -- launch-brand-system
 //       first release: creates the skill (refuses when one with that name
 //       already exists in the key's workspace; pass --skill-id or --new)
 //   npm run skills:release -- launch-brand-system --skill-id skill_...
-//       a new version of that skill (also taken from CUSTOM_SITE_BRAND_SKILL_ID
-//       when that is set in the shell)
+//       a new version of that skill (one name only; otherwise each skill's
+//       id comes from its <PREFIX>_ID, e.g. CUSTOM_SITE_BRAND_SKILL_ID, when
+//       that is set in the shell)
 //
 // The OWNER runs the upload with their own key: ANTHROPIC_API_KEY from the
 // environment only (never read from a file, never printed). Use a key from
@@ -22,12 +28,15 @@
 // Uploading needs the functions' dependencies (netlify/functions/node_modules),
 // so run it in a mirror copy, never `npm install` in the repo.
 // Uploads are not retried: a retried create can leave two skills or versions.
-// Exit code: 0 checks passed (and uploaded, unless --dry-run), 1 checks or the
+// With several skills, a folder with problems is skipped and the others still
+// go; the exit code says whether every one of them passed.
+// Exit code: 0 checks passed (and uploaded, unless --dry-run), 1 checks or an
 // upload failed, 2 bad arguments (nothing checked or sent).
 
 import { lstatSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { KIT_SKILLS } from '../src/lib/launchKit.js';
 
 const SKILLS_ROOT = fileURLToPath(new URL('../skills/api/', import.meta.url));
 const SDK_URL = new URL('../netlify/functions/node_modules/@anthropic-ai/sdk/index.mjs', import.meta.url);
@@ -45,14 +54,24 @@ const BODY_LINES_HINT = 500;
 
 // The env var pair the runtime reads for each released skill
 // (<PREFIX>_ID, <PREFIX>_VERSION, set on Netlify). Missing env = the feature
-// reports "not set up", so a new skill needs its entry here and in the runner.
+// reports "not set up". The Launch Kit's come from its registry
+// (src/lib/launchKit.js: <envPrefix>_SKILL_ID / _SKILL_VERSION), so a new kit
+// skill only needs its KIT_SKILLS entry.
 export const SKILL_ENV = Object.freeze({
   'launch-brand-system': 'CUSTOM_SITE_BRAND_SKILL',
+  ...Object.fromEntries(KIT_SKILLS.map((s) => [s.folder, `${s.envPrefix}_SKILL`])),
 });
 
-const FLAGS = new Set(['--dry-run', '--new']);
+// How to smoke-test a released skill (scripts/skills-smoke.mjs).
+export function smokeCommand(name) {
+  const kit = KIT_SKILLS.find((s) => s.folder === name);
+  if (kit) return `npm run skills:smoke -- --skill ${kit.key} --yes-spend`;
+  return name === 'launch-brand-system' ? 'npm run skills:smoke -- --yes-spend' : null;
+}
+
+const FLAGS = new Set(['--dry-run', '--new', '--all']);
 const VALUE_FLAGS = new Set(['--skill-id']);
-const USAGE = 'Usage: node scripts/skills-release.mjs <skill-name> [--dry-run] [--skill-id skill_...] [--new]';
+const USAGE = 'Usage: node scripts/skills-release.mjs <skill-name>... | --all [--dry-run] [--skill-id skill_... (one name only)] [--new]';
 
 // ─── SKILL.md frontmatter ────────────────────────────────────────────
 
@@ -410,57 +429,56 @@ function parseArgs(argv) {
 }
 
 /**
- * Runs the release. Returns the exit code. Everything it touches is
- * injectable, so the tests run it with a fake client and a temp folder.
+ * The skill folders under `skillsRoot` (for --all), sorted. Only plain
+ * slugs: a hidden or AppleDouble folder is no skill.
  */
-export async function main(argv = process.argv.slice(2), {
-  env = process.env,
-  skillsRoot = SKILLS_ROOT,
-  createClient = loadSdk,
-  log = console.log,
-} = {}) {
-  const args = parseArgs(argv);
-  if (args.errors.length || args.positional.length !== 1) {
-    for (const error of args.errors) log(error);
-    if (args.positional.length !== 1) log('Name exactly one skill folder under skills/api/.');
-    log(USAGE);
-    return 2;
-  }
-  const name = args.positional[0];
-  // A plain slug only: the name picks a folder, so no paths or dots.
-  if (!/^[a-z0-9-]+$/.test(name)) {
-    log(`"${name}" is not a skill name (lowercase letters, digits and hyphens: the folder name under skills/api/).`);
-    return 2;
-  }
-  const dir = join(skillsRoot, name);
-  let isDir = false;
+export function skillFolders(skillsRoot = SKILLS_ROOT) {
   try {
-    isDir = lstatSync(dir).isDirectory();
+    return readdirSync(skillsRoot)
+      .filter((name) => /^[a-z0-9-]+$/.test(name) && lstatSync(join(skillsRoot, name)).isDirectory())
+      .sort();
   } catch {
-    isDir = false;
+    return [];
   }
-  if (!isDir) {
-    log(`No skill folder at ${dir}.`);
-    return 2;
-  }
+}
 
-  const dryRun = args.flags.has('--dry-run');
-  const forceNew = args.flags.has('--new');
+// What the owner does after an upload: smoke-test, then pin.
+function nextSteps(log, name, id, version) {
+  const prefix = SKILL_ENV[name] || null;
+  if (!prefix) {
+    log(`Pin version ${version} wherever the runtime reads this skill's id and version.`);
+    return;
+  }
+  const lines = envLines(prefix, id, version);
+  const smoke = smokeCommand(name);
+  if (smoke) {
+    log('1. Smoke-test this exact version (one paid request):');
+    log(`   ${lines.join(' ')} ${smoke}`);
+    log('');
+  }
+  log(`${smoke ? '2. Then pin' : 'Pin'} it on Netlify (Site configuration > Environment variables), and redeploy so the functions read it:`);
+  for (const line of lines) log(`   ${line}`);
+  log('   or with the Netlify CLI:');
+  for (const line of lines) log(`   netlify env:set ${line.replace('=', ' ')}`);
+  log('');
+  log(`Rollback = set ${prefix}_VERSION back to the previous version id. Keep old versions until this one has run in production.`);
+}
+
+// Checks one folder and, unless it is a dry run, uploads it. `client` is
+// created on the first upload (getClient), so a dry run needs no key or SDK.
+async function releaseOne(name, { dir, env, log, dryRun, forceNew, skillIdFlag, getClient }) {
   const prefix = SKILL_ENV[name] || null;
   const envSkillId = prefix && typeof env?.[`${prefix}_ID`] === 'string' ? env[`${prefix}_ID`].trim() : '';
-  if (forceNew && args.values['--skill-id']) {
-    log('--new and --skill-id contradict each other: --new creates a separate skill.');
-    return 2;
-  }
-  const skillId = forceNew ? '' : (args.values['--skill-id'] || envSkillId);
-  const skillIdSource = args.values['--skill-id'] ? '--skill-id' : (skillId ? `${prefix}_ID` : null);
+  const skillId = forceNew ? '' : (skillIdFlag || envSkillId);
+  const skillIdSource = skillIdFlag ? '--skill-id' : (skillId ? `${prefix}_ID` : null);
 
   const result = checkSkill(dir, { folderName: name, env });
   report(log, name, dir, result);
-  if (!prefix) log(`  note:         no env var pair for "${name}" yet: add it to SKILL_ENV in scripts/skills-release.mjs and to the runner`);
+  if (prefix) log(`  env vars:     ${prefix}_ID, ${prefix}_VERSION`);
+  else log(`  note:         no env var pair for "${name}" yet: add it to SKILL_ENV in scripts/skills-release.mjs (or KIT_SKILLS) and to the runner`);
   if (result.problems.length) {
     log('');
-    log('Fix these first. Nothing uploaded.');
+    log(`Fix these first. ${name} not uploaded.`);
     return 1;
   }
 
@@ -473,21 +491,14 @@ export async function main(argv = process.argv.slice(2), {
     return 0;
   }
 
-  const apiKey = typeof env?.ANTHROPIC_API_KEY === 'string' ? env.ANTHROPIC_API_KEY.trim() : '';
-  if (!apiKey) {
-    log('');
-    log('ANTHROPIC_API_KEY is not set in the environment. Nothing uploaded.');
-    return 1;
-  }
-
-  let client;
-  let toFile;
+  let sdk;
   try {
-    ({ client, toFile } = await createClient({ apiKey }));
+    sdk = await getClient();
   } catch (err) {
     log(err?.message || String(err));
     return 1;
   }
+  const { client, toFile } = sdk;
 
   log('');
   log(`Uploading: ${plan}...`);
@@ -510,7 +521,7 @@ export async function main(argv = process.argv.slice(2), {
         for await (const existing of client.skills.list({ source: 'custom' })) {
           if (existing.display_name === name) {
             log(`A custom skill named ${name} already exists in this workspace: ${existing.id} (latest version ${existing.latest_version_id}).`);
-            log(`Nothing uploaded. For a new version: --skill-id ${existing.id}. For a second, separate skill: --new.`);
+            log(`Nothing uploaded. For a new version: --skill-id ${existing.id}${prefix ? ` (or set ${prefix}_ID)` : ''}. For a second, separate skill: --new.`);
             return 1;
           }
         }
@@ -528,21 +539,92 @@ export async function main(argv = process.argv.slice(2), {
   log(`  skill_id:      ${id}`);
   log(`  version:       ${version}`);
   log('');
-  if (prefix) {
-    const lines = envLines(prefix, id, version);
-    log('1. Smoke-test this exact version (one paid request):');
-    log(`   ${lines.join(' ')} npm run skills:smoke -- --yes-spend`);
-    log('');
-    log('2. Then pin it on Netlify (Site configuration > Environment variables), and redeploy so the functions read it:');
-    for (const line of lines) log(`   ${line}`);
-    log('   or with the Netlify CLI:');
-    for (const line of lines) log(`   netlify env:set ${line.replace('=', ' ')}`);
-    log('');
-    log(`Rollback = set ${prefix}_VERSION back to the previous version id. Keep old versions until this one has run in production.`);
-  } else {
-    log(`Pin version ${version} wherever the runtime reads this skill's id and version.`);
-  }
+  nextSteps(log, name, id, version);
   return 0;
+}
+
+/**
+ * Runs the release. Returns the exit code. Everything it touches is
+ * injectable, so the tests run it with a fake client and a temp folder.
+ */
+export async function main(argv = process.argv.slice(2), {
+  env = process.env,
+  skillsRoot = SKILLS_ROOT,
+  createClient = loadSdk,
+  log = console.log,
+} = {}) {
+  const args = parseArgs(argv);
+  const all = args.flags.has('--all');
+  if (args.errors.length || (all ? args.positional.length !== 0 : args.positional.length === 0)) {
+    for (const error of args.errors) log(error);
+    if (all && args.positional.length) log('--all releases every folder under skills/api/: name no folders with it.');
+    else if (!args.positional.length) log('Name at least one skill folder under skills/api/, or pass --all.');
+    log(USAGE);
+    return 2;
+  }
+  const names = all ? skillFolders(skillsRoot) : [...new Set(args.positional)];
+  if (!names.length) {
+    log(`No skill folders under ${skillsRoot}.`);
+    return 2;
+  }
+  // A plain slug only: the name picks a folder, so no paths or dots.
+  for (const name of names) {
+    if (!/^[a-z0-9-]+$/.test(name)) {
+      log(`"${name}" is not a skill name (lowercase letters, digits and hyphens: the folder name under skills/api/).`);
+      return 2;
+    }
+    let isDir = false;
+    try {
+      isDir = lstatSync(join(skillsRoot, name)).isDirectory();
+    } catch {
+      isDir = false;
+    }
+    if (!isDir) {
+      log(`No skill folder at ${join(skillsRoot, name)}.`);
+      return 2;
+    }
+  }
+
+  const dryRun = args.flags.has('--dry-run');
+  const forceNew = args.flags.has('--new');
+  const skillIdFlag = args.values['--skill-id'] || '';
+  if (forceNew && skillIdFlag) {
+    log('--new and --skill-id contradict each other: --new creates a separate skill.');
+    return 2;
+  }
+  // One id belongs to one skill: with several, each takes its own from env.
+  if (skillIdFlag && names.length !== 1) {
+    log('--skill-id names one skill: release one folder with it, or set each skill\'s <PREFIX>_ID instead.');
+    return 2;
+  }
+
+  // The key and the SDK are only needed for an upload: each skill asks for
+  // the client after its checks pass, and the first one creates it.
+  const apiKey = typeof env?.ANTHROPIC_API_KEY === 'string' ? env.ANTHROPIC_API_KEY.trim() : '';
+  let sdk = null;
+  const getClient = async () => {
+    if (!apiKey) throw new Error('ANTHROPIC_API_KEY is not set in the environment. Nothing uploaded.');
+    if (!sdk) sdk = await createClient({ apiKey });
+    return sdk;
+  };
+
+  const codes = [];
+  for (const [i, name] of names.entries()) {
+    if (i) {
+      log('');
+      log('─'.repeat(60));
+    }
+    // One at a time, in order: uploads are never retried or raced.
+    codes.push(await releaseOne(name, { dir: join(skillsRoot, name), env, log, dryRun, forceNew, skillIdFlag, getClient }));
+  }
+  if (names.length > 1) {
+    log('');
+    const failed = names.filter((_, i) => codes[i] !== 0);
+    log(failed.length
+      ? `${names.length - failed.length} of ${names.length} ${dryRun ? 'passed' : 'released'}; not ${dryRun ? 'passing' : 'released'}: ${failed.join(', ')}`
+      : `All ${names.length} ${dryRun ? 'passed the checks' : 'released'}.`);
+  }
+  return codes.some((c) => c !== 0) ? 1 : 0;
 }
 
 // Run as a command, not when a test imports it. Real paths on both sides:

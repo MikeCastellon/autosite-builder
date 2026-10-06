@@ -1,0 +1,14 @@
+{
+  "about": "Words alt text and pair notes may not use (errors: claims nobody can see in a photo) or should use only when the customer's note says so (warnings). The errors list is src/lib/kit/photos.js CLAIM_WORDS; the server drops alt text that has one.",
+  "errors": [
+    "best", "#1", "number one", "no. 1", "award", "awards", "award-winning", "certified", "certification",
+    "guarantee", "guaranteed", "warranty", "top-rated", "top rated", "5-star", "five-star", "5 star", "five star",
+    "flawless", "perfect", "perfectly", "cheapest", "lowest price", "voted", "world-class", "unbeatable",
+    "licensed", "insured"
+  ],
+  "warnings": [
+    "amazing", "stunning", "beautiful", "gorgeous", "incredible", "showroom", "like new", "brand new", "pristine",
+    "immaculate", "expert", "professional", "premium", "luxury", "high-quality", "spotless", "mirror finish",
+    "ceramic", "coating", "coated", "paint correction", "corrected", "ppf", "film"
+  ]
+}

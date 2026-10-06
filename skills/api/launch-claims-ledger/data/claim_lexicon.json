@@ -1,0 +1,38 @@
+{
+  "about": "Names the pre-pass (scripts/extract_claims.py) flags as claims. A product or body named on a page is a claim that the business uses, sells, installs or is certified by it. 'brands' match in any case; 'brandsExactCase' are also everyday words, so they match only as written here.",
+  "brands": [
+    "Ceramic Pro", "Gtechniq", "XPEL", "SunTek", "LLumar", "Gyeon", "IGL Coatings", "Feynlab", "System X", "Opti-Coat",
+    "Optimum No Rinse", "CQuartz", "CarPro", "Kamikaze Collection", "Modesta", "Nasiol", "STEK", "Hexis", "Avery Dennison",
+    "Oracal", "Inozetek", "KPMF", "Huper Optik", "Madico", "Solar Gard", "Rayno", "Geoshield", "Kavaca", "Ziebart",
+    "Rhino Linings", "Line-X", "Adam's Polishes", "Chemical Guys", "Meguiar's", "Meguiars", "Griot's Garage", "Koch-Chemie",
+    "Koch Chemie", "Rupes", "Labocosmetica", "Jescar", "Lake Country", "Mirka", "3D Products", "Shine Armor", "Turtle Wax",
+    "Swissvax", "Zymol", "Auto Finesse", "Bilt Hamber", "Carbon Collective", "Fusso", "Rain-X", "Simoniz", "Blue Coral",
+    "Sonny's", "3M", "BBS", "Vossen", "HRE", "Forgiato", "Rohana", "Ferrada", "American Racing", "Fuel Off-Road",
+    "Method Race Wheels", "Enkei", "Volk", "Michelin", "Goodyear", "Bridgestone", "Pirelli", "Firestone", "BFGoodrich",
+    "Nitto", "Yokohama", "Hankook", "Falken", "General Tire", "Kumho", "Hunter Engineering", "Snap-on", "Mobil 1",
+    "Castrol", "Valvoline", "Pennzoil", "ACDelco", "Motorcraft", "Mopar", "NAPA", "Carfax", "Bosch", "Sherwin-Williams",
+    "PPG", "Axalta", "Glasurit", "Spies Hecker"
+  ],
+  "brandsExactCase": [
+    "Flex", "Hunter", "Cooper", "Continental", "Toyo", "Rays", "Work Wheels", "Sonax", "Optimum", "Mothers", "Kenzo",
+    "Coats", "Avalon King", "P&S"
+  ],
+  "bodies": [
+    "IDA", "International Detailing Association", "ASE", "I-CAR", "ICAR", "NATEF", "ASE Blue Seal", "BBB",
+    "Better Business Bureau", "AAA", "ICA", "International Carwash Association", "EPA", "OSHA", "NIASE", "IMI",
+    "Chamber of Commerce", "Angi", "Angie's List", "HomeAdvisor", "Yelp", "Nextdoor", "Google Guaranteed",
+    "Google Screened", "Thumbtack"
+  ],
+  "placeStopWords": [
+    "and", "the", "area", "areas", "county", "counties", "city", "metro", "surrounding", "around", "near", "nearby",
+    "all", "of", "in", "to", "from", "north", "south", "east", "west", "mobile", "only", "shop", "we", "our", "serve",
+    "serving", "plus", "more", "also", "i", "my", "anywhere", "within", "miles"
+  ],
+  "keywordStopWords": [
+    "the", "and", "for", "with", "our", "your", "you", "are", "was", "were", "has", "have", "had", "this", "that",
+    "from", "into", "out", "all", "any", "can", "will", "get", "got", "its", "it's", "they", "them", "their", "who",
+    "what", "when", "where", "how", "why", "not", "but", "too", "very", "just", "every", "each", "more", "most", "than",
+    "then", "also", "only", "over", "about", "car", "cars", "vehicle", "vehicles", "service", "services", "detail",
+    "detailing", "work", "make", "made", "like", "love", "one", "day", "year", "years"
+  ]
+}

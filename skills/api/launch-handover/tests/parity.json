@@ -1,0 +1,226 @@
+{
+ "_about": "Written by tests/test_handover.py (UPDATE_FIXTURES=1) from the \"broken\" sample; read by src/lib/kit/handover.test.js.",
+ "inputs": {
+  "links": {
+   "site": "https://sample-shine.autocaregeniushub.com",
+   "booking": "https://sample-shine.autocaregeniushub.com/book#book",
+   "review": "https://search.google.com/local/writereview?placeid=ChIJ_sample_place_0001",
+   "signIn": "https://sitebuilder.autocaregenius.com"
+  },
+  "kitFiles": [
+   {
+    "key": "photos",
+    "name": "contact_sheet.png"
+   },
+   {
+    "key": "mobile",
+    "name": "contact.vcf"
+   },
+   {
+    "key": "mobile",
+    "name": "apple-touch-icon.png"
+   },
+   {
+    "key": "mobile",
+    "name": "icon-192.png"
+   },
+   {
+    "key": "mobile",
+    "name": "icon-512.png"
+   },
+   {
+    "key": "mobile",
+    "name": "favicon-32.png"
+   },
+   {
+    "key": "words",
+    "name": "words.pdf"
+   },
+   {
+    "key": "print",
+    "name": "review-hang-tag.pdf"
+   },
+   {
+    "key": "print",
+    "name": "counter-card.pdf"
+   },
+   {
+    "key": "print",
+    "name": "glovebox-card.pdf"
+   },
+   {
+    "key": "print",
+    "name": "business-cards.pdf"
+   },
+   {
+    "key": "social",
+    "name": "share-1200x630.png"
+   },
+   {
+    "key": "social",
+    "name": "facebook-cover.png"
+   },
+   {
+    "key": "social",
+    "name": "profile-800.png"
+   },
+   {
+    "key": "social",
+    "name": "post-1.png"
+   },
+   {
+    "key": "social",
+    "name": "post-2.png"
+   },
+   {
+    "key": "social",
+    "name": "post-3.png"
+   },
+   {
+    "key": "social",
+    "name": "story-1080x1920.png"
+   }
+  ],
+  "kitSkipped": [],
+  "board": true,
+  "generated": [
+   "brand",
+   "social",
+   "words"
+  ]
+ },
+ "handover": {
+  "version": 1,
+  "summary": "12-page handover for Sample Shine Mobile Detailing and a zip of 23 files (1 left out); 3 statements for the customer to confirm.",
+  "sections": [
+   "What we built and why",
+   "Your brand",
+   "Your links",
+   "How to edit your site",
+   "Your Launch Kit",
+   "Claims sign-off",
+   "Do these 5 things this week",
+   "Your first 30 days"
+  ],
+  "pages": 12,
+  "files": [
+   "handover.pdf",
+   "README.txt",
+   "01-brand/brand-board.png",
+   "01-brand/brand-colors.txt",
+   "02-photos/contact_sheet.png",
+   "03-mobile/apple-touch-icon.png",
+   "03-mobile/contact.vcf",
+   "03-mobile/favicon-32.png",
+   "03-mobile/icon-192.png",
+   "03-mobile/icon-512.png",
+   "04-words/paste-ready.txt",
+   "04-words/words.pdf",
+   "05-print/business-cards.pdf",
+   "05-print/glovebox-card.pdf",
+   "05-print/review-hang-tag.pdf",
+   "06-social/captions.txt",
+   "06-social/facebook-cover.png",
+   "06-social/post-1.png",
+   "06-social/post-2.png",
+   "06-social/post-3.png",
+   "06-social/profile-800.png",
+   "06-social/share-1200x630.png",
+   "06-social/story-1080x1920.png"
+  ],
+  "left": [
+   {
+    "file": "05-print/counter-card.pdf",
+    "reason": "Could not be added this time; ask us and we will send it separately."
+   }
+  ],
+  "links": {
+   "site": "https://sample-shine.autocaregeniushub.com",
+   "booking": "https://sample-shine.autocaregeniushub.com/book#book",
+   "review": "https://search.google.com/local/writereview?placeid=ChIJ_sample_place_0001",
+   "signIn": "https://sitebuilder.autocaregenius.com"
+  },
+  "thisWeek": [
+   {
+    "title": "Check your site on your phone",
+    "detail": "Open sample-shine.autocaregeniushub.com on your phone, tap Call and Book, and read every section once. Tell us anything that is off."
+   },
+   {
+    "title": "Sign off the claims list",
+    "detail": "Read the 3 statements on the Claims sign-off page and confirm or correct each one."
+   },
+   {
+    "title": "Paste your Google profile copy",
+    "detail": "Paste the description and services from words.pdf into your Google Business Profile; paste-ready.txt has the same words to copy."
+   },
+   {
+    "title": "Put your link everywhere",
+    "detail": "Add sample-shine.autocaregeniushub.com to your Google Business Profile, your social bios, your invoices and your email signature."
+   },
+   {
+    "title": "Ask five recent customers for a review",
+    "detail": "Text them your Google review link. Never offer anything in return: Google does not allow it."
+   }
+  ],
+  "checklist": [
+   {
+    "week": 1,
+    "task": "Tick off the 5 things on the \"This week\" page."
+   },
+   {
+    "week": 1,
+    "task": "Share sample-shine.autocaregeniushub.com with your regular customers by text or email."
+   },
+   {
+    "week": 2,
+    "task": "Post the first of your 12 Google profile posts from the copy deck; one a week lasts three months."
+   },
+   {
+    "week": 2,
+    "task": "Post post-1.png with its caption from captions.txt."
+   },
+   {
+    "week": 2,
+    "task": "Ask every happy customer this week for a Google review with your review link."
+   },
+   {
+    "week": 3,
+    "task": "Reply to every new review, good or bad; the copy deck has reply starters."
+   },
+   {
+    "week": 3,
+    "task": "Take the photos on your shot list: A wide shot of the van at a driveway; Before and after of a seat; You at work."
+   },
+   {
+    "week": 3,
+    "task": "Post post-2.png."
+   },
+   {
+    "week": 3,
+    "task": "Post your next Google profile update."
+   },
+   {
+    "week": 4,
+    "task": "Check Bookings and Inquiries in the app for new bookings and messages."
+   },
+   {
+    "week": 4,
+    "task": "Swap in your newest photos: Edit, click a photo, upload."
+   },
+   {
+    "week": 4,
+    "task": "Tell us what you would like changed: reply to any email from us."
+   }
+  ],
+  "claims": {
+   "checked": 14,
+   "sourced": 11,
+   "toConfirm": 3,
+   "listed": 3
+  },
+  "notes": [
+   "Not found in the container: kit-print-counter-card.pdf.",
+   "1 kit file left out of the zip (listed in the PDF)."
+  ]
+ }
+}

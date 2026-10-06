@@ -1,0 +1,158 @@
+{
+  "version": 1,
+  "pieces": [
+    {
+      "file": "review-hang-tag.pdf",
+      "name": "Review hang tag",
+      "size": "3.5 x 8.5 in",
+      "bleed": "0.125in",
+      "pages": [
+        "front",
+        "back",
+        "die-line"
+      ],
+      "qr": [
+        {
+          "label": "Scan to leave a Google review",
+          "kind": "review",
+          "url": "https://search.google.com/local/writereview?placeid=ChIJ_sample_place_0001",
+          "vcard": "",
+          "sizeIn": 2.0
+        },
+        {
+          "label": "Scan to book online",
+          "kind": "booking",
+          "url": "https://sample-shine.autocaregeniushub.com/book#book",
+          "vcard": "",
+          "sizeIn": 1.6
+        }
+      ],
+      "text": [
+        "How did we do?",
+        "Scan to leave a Google review",
+        "Point your phone's camera at the code.",
+        "Thank you for choosing Sample Shine Mobile Detailing",
+        "sample-shine.autocaregeniushub.com",
+        "Please remove before driving.",
+        "Book your next visit",
+        "Scan to book online",
+        "(555) 010-0199",
+        "sample-shine.autocaregeniushub.com",
+        "Mobile detailing in Exampleton, FL",
+        "Please remove before driving."
+      ],
+      "note": "14-16 pt card, both sides printed, die-cut. Trim 3.5 x 8.5 in; 0.125 in bleed and crop marks on every page. Page 3 is the die-line (spot color DieCut, rounded corners, mirror hole and slit): cut with it, never print it."
+    },
+    {
+      "file": "counter-card.pdf",
+      "name": "Counter card",
+      "size": "4 x 6 in",
+      "bleed": "0.125in",
+      "pages": [
+        "front"
+      ],
+      "qr": [
+        {
+          "label": "Scan to leave a Google review",
+          "kind": "review",
+          "url": "https://search.google.com/local/writereview?placeid=ChIJ_sample_place_0001",
+          "vcard": "",
+          "sizeIn": 2.2
+        }
+      ],
+      "text": [
+        "How did we do?",
+        "Scan to leave a Google review",
+        "Point your phone's camera at the code.",
+        "Thank you for choosing Sample Shine Mobile Detailing",
+        "sample-shine.autocaregeniushub.com"
+      ],
+      "note": "16 pt card, front only; stands in an acrylic sign holder or on an easel back. Trim 4 x 6 in; 0.125 in bleed and crop marks on every page."
+    },
+    {
+      "file": "glovebox-card.pdf",
+      "name": "Glovebox card",
+      "size": "3.5 x 2 in",
+      "bleed": "0.125in",
+      "pages": [
+        "front",
+        "back"
+      ],
+      "qr": [
+        {
+          "label": "Scan to save our contact",
+          "kind": "contact",
+          "url": "",
+          "vcard": "BEGIN:VCARD\r\nVERSION:3.0\r\nN:Sample Shine Mobile Detailing;;;;\r\nFN:Sample Shine Mobile Detailing\r\nORG:Sample Shine Mobile Detailing\r\nTEL;TYPE=WORK,VOICE:+15550100199\r\nEMAIL;TYPE=WORK:hello@sample-shine.example\r\nURL:https://sample-shine.autocaregeniushub.com/\r\nX-ABShowAs:COMPANY\r\nEND:VCARD",
+          "sizeIn": 1.3
+        },
+        {
+          "label": "Scan to book online",
+          "kind": "booking",
+          "url": "https://sample-shine.autocaregeniushub.com/book#book",
+          "vcard": "",
+          "sizeIn": 1.3
+        }
+      ],
+      "text": [
+        "Save our contact",
+        "Sample Shine Mobile Detailing",
+        "(555) 010-0199",
+        "sample-shine.autocaregeniushub.com",
+        "Scan to save our contact",
+        "Book your next visit",
+        "Scan to book online",
+        "(555) 010-0199",
+        "Keep this card in your glovebox."
+      ],
+      "note": "16 pt card, both sides printed (business-card size). Trim 3.5 x 2 in; 0.125 in bleed and crop marks on every page."
+    },
+    {
+      "file": "business-cards.pdf",
+      "name": "Business cards",
+      "size": "3.5 x 2 in",
+      "bleed": "0.125in",
+      "pages": [
+        "front",
+        "back"
+      ],
+      "qr": [
+        {
+          "label": "Scan for our site",
+          "kind": "site",
+          "url": "https://sample-shine.autocaregeniushub.com/",
+          "vcard": "",
+          "sizeIn": 0.85
+        }
+      ],
+      "text": [
+        "Sample Shine Mobile Detailing",
+        "Mobile detailing in Exampleton, FL",
+        "Sam Sample",
+        "Sample Shine Mobile Detailing",
+        "(555) 010-0199",
+        "hello@sample-shine.example",
+        "sample-shine.autocaregeniushub.com",
+        "Serving Exampleton and Sampleville",
+        "Scan for our site"
+      ],
+      "note": "16 pt matte or uncoated card (so a date can be written on it), both sides printed. Trim 3.5 x 2 in; 0.125 in bleed and crop marks on every page."
+    }
+  ],
+  "omitted": [],
+  "fonts": {
+    "heading": "Oswald",
+    "body": "Inter",
+    "fallback": false
+  },
+  "colors": {
+    "panel": "#0a0909",
+    "ink": "#f8f8f8",
+    "accent": "#ee3533",
+    "cmykRisk": []
+  },
+  "notes": [
+    "The logo prints at about 183 ppi at its largest; a bigger or vector logo would print sharper.",
+    "Colors are RGB; the print shop converts them to CMYK. Ask for a proof before a large run."
+  ]
+}

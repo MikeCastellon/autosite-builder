@@ -1,0 +1,149 @@
+{
+  "_about": "What each Launch Kit file is for, in the customer's words. Keyed by '<part>/<file name>' ('root/' for the top of the zip). 'keep' ranks what stays when the zip has to shrink: 1 stays longest. The handover's tests check that every kit output the registry (src/lib/launchKit.js) sends has an entry.",
+  "files": {
+    "root/handover.pdf": {
+      "label": "Handover guide",
+      "what": "This guide: what we built, your links, how to edit, and what to do first.",
+      "use": "Start here. Print the checklist pages if you like ticking boxes.",
+      "keep": 1
+    },
+    "root/README.txt": {
+      "label": "Read me",
+      "what": "A plain-text list of every folder in this kit.",
+      "use": "Open it if you're not sure which file is which.",
+      "keep": 1
+    },
+    "brand/brand-board.png": {
+      "label": "Brand board",
+      "what": "Your colors and fonts on one page, the way your site uses them.",
+      "use": "Send it to anyone who makes something for you (sign shop, wrap installer, printer) so it matches your site.",
+      "keep": 3
+    },
+    "brand/brand-colors.txt": {
+      "label": "Brand colors and fonts",
+      "what": "Your color codes and font names as plain text.",
+      "use": "Copy them into an email to a sign shop, printer or anyone who designs for you.",
+      "keep": 1
+    },
+    "photos/contact_sheet.png": {
+      "label": "Photo contact sheet",
+      "what": "Your photos side by side, marked with the picks and crops we suggested for your site.",
+      "use": "See which of your shots work best and which ones are worth retaking.",
+      "keep": 6
+    },
+    "mobile/contact.vcf": {
+      "label": "Contact card",
+      "what": "Your business as a phone contact.",
+      "use": "Text or email it to customers so they can save your number in one tap.",
+      "keep": 2
+    },
+    "mobile/apple-touch-icon.png": {
+      "label": "iPhone home-screen icon",
+      "what": "Your icon sized for iPhone home screens (180 x 180).",
+      "use": "Keep it with your brand files; whoever builds pages for you can add it.",
+      "keep": 4
+    },
+    "mobile/icon-192.png": {
+      "label": "App icon, small",
+      "what": "Your icon at 192 x 192 for Android home screens.",
+      "use": "Keep it with your brand files; your web person may ask for it.",
+      "keep": 4
+    },
+    "mobile/icon-512.png": {
+      "label": "App icon, large",
+      "what": "Your icon at 512 x 512.",
+      "use": "Good as a profile picture where a square logo works best.",
+      "keep": 4
+    },
+    "mobile/favicon-32.png": {
+      "label": "Browser tab icon",
+      "what": "The small icon in a browser tab (32 x 32).",
+      "use": "Keep it with your brand files.",
+      "keep": 4
+    },
+    "words/words.pdf": {
+      "label": "Copy deck",
+      "what": "Your Google Business Profile description, services and posts, review request texts and replies, and a social bio with captions.",
+      "use": "Paste each piece where it goes. Nothing is posted for you: you stay in control of your profiles.",
+      "keep": 1
+    },
+    "words/paste-ready.txt": {
+      "label": "Copy deck, plain text",
+      "what": "The same words as plain text.",
+      "use": "Copy and paste from here: no PDF line breaks to clean up.",
+      "keep": 1
+    },
+    "print/business-cards.pdf": {
+      "label": "Business cards",
+      "what": "Print-ready business cards, front and back, with bleed and crop marks.",
+      "use": "Send the file as it is to any print shop or online printer.",
+      "keep": 1
+    },
+    "print/glovebox-card.pdf": {
+      "label": "Glovebox card",
+      "what": "A card to leave in each car you work on, with codes to save your number and to find you again.",
+      "use": "Print it with your business cards and leave one in every car.",
+      "keep": 1
+    },
+    "print/review-hang-tag.pdf": {
+      "label": "Review hang tag",
+      "what": "A mirror hang tag with a code that opens your Google review page.",
+      "use": "Hang one on the mirror when you hand the car back. Never offer anything in return for a review.",
+      "keep": 2
+    },
+    "print/counter-card.pdf": {
+      "label": "Counter card",
+      "what": "A small stand-up card with a code to your Google review page.",
+      "use": "Put it where customers pay or pick up their keys.",
+      "keep": 2
+    },
+    "social/share-1200x630.png": {
+      "label": "Share image",
+      "what": "An image sized for link previews (1200 x 630), in your colors.",
+      "use": "Post it as a launch picture; whoever edits your site can also set it as the link preview.",
+      "keep": 3
+    },
+    "social/facebook-cover.png": {
+      "label": "Facebook cover",
+      "what": "A cover photo sized for your Facebook page.",
+      "use": "Upload it as your Facebook cover photo.",
+      "keep": 3
+    },
+    "social/profile-800.png": {
+      "label": "Profile picture",
+      "what": "A square profile picture with your logo.",
+      "use": "Use it on Instagram, Facebook, TikTok and your Google profile.",
+      "keep": 3
+    },
+    "social/post-1.png": {
+      "label": "Launch post 1",
+      "what": "A ready-made post announcing your new site.",
+      "use": "Post it with its caption from captions.txt.",
+      "keep": 5
+    },
+    "social/post-2.png": {
+      "label": "Launch post 2",
+      "what": "A second ready-made post.",
+      "use": "Post it a few days after the first one.",
+      "keep": 5
+    },
+    "social/post-3.png": {
+      "label": "Launch post 3",
+      "what": "A third ready-made post.",
+      "use": "Post it the week after.",
+      "keep": 5
+    },
+    "social/story-1080x1920.png": {
+      "label": "Story",
+      "what": "A full-screen story image for Instagram or Facebook.",
+      "use": "Share it as a story with your website link.",
+      "keep": 6
+    },
+    "social/captions.txt": {
+      "label": "Captions",
+      "what": "A caption written for each social image.",
+      "use": "Copy the caption that goes with the image you post.",
+      "keep": 3
+    }
+  }
+}

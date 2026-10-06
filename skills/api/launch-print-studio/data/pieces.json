@@ -1,0 +1,56 @@
+{
+  "_doc": "Every print piece, in the order print.json lists them. src/lib/kit/print.js PRINT_PIECES mirrors file, name, size, pages and review (print.test.js compares them). Inches, trim size; 0.125 in bleed on every side. qr: the codes each page carries and their printed size without the quiet zone (at least 0.75 in). review pieces need a Google review link and are left out without one.",
+  "bleedIn": 0.125,
+  "slugIn": 0.5,
+  "safeIn": 0.125,
+  "qrMinIn": 0.75,
+  "quietModules": 4,
+  "pieces": [
+    {
+      "file": "review-hang-tag.pdf",
+      "name": "Review hang tag",
+      "size": "3.5 x 8.5 in",
+      "w": 3.5,
+      "h": 8.5,
+      "pages": ["front", "back", "die-line"],
+      "review": true,
+      "qr": { "front": { "role": "review", "sizeIn": 2.0 }, "back": { "role": "rebook", "sizeIn": 1.6 } },
+      "hole": { "cx": 1.75, "fromTop": 1.0, "d": 1.25, "clearIn": 0.2, "slitDeg": 45 },
+      "cornerIn": 0.125,
+      "stock": "14-16 pt card, both sides printed, die-cut"
+    },
+    {
+      "file": "counter-card.pdf",
+      "name": "Counter card",
+      "size": "4 x 6 in",
+      "w": 4,
+      "h": 6,
+      "pages": ["front"],
+      "review": true,
+      "qr": { "front": { "role": "review", "sizeIn": 2.2 } },
+      "stock": "16 pt card, front only; stands in an acrylic sign holder or on an easel back"
+    },
+    {
+      "file": "glovebox-card.pdf",
+      "name": "Glovebox card",
+      "size": "3.5 x 2 in",
+      "w": 3.5,
+      "h": 2,
+      "pages": ["front", "back"],
+      "review": false,
+      "qr": { "front": { "role": "contact", "sizeIn": 1.3 }, "back": { "role": "rebook", "sizeIn": 1.3 } },
+      "stock": "16 pt card, both sides printed (business-card size)"
+    },
+    {
+      "file": "business-cards.pdf",
+      "name": "Business cards",
+      "size": "3.5 x 2 in",
+      "w": 3.5,
+      "h": 2,
+      "pages": ["front", "back"],
+      "review": false,
+      "qr": { "back": { "role": "site", "sizeIn": 0.85, "optional": true } },
+      "stock": "16 pt matte or uncoated card (so a date can be written on it), both sides printed"
+    }
+  ]
+}

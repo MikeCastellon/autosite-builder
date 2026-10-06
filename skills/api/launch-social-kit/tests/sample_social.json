@@ -1,0 +1,182 @@
+{
+ "version": 1,
+ "images": [
+  {
+   "file": "share-1200x630.png",
+   "size": "1200x630",
+   "purpose": "Link preview when the site is shared (also the site's og:image later)",
+   "alt": "Sample Shine Mobile Detailing: Showroom shine, wherever you park.",
+   "layout": "photo-left",
+   "photo": "photo-1.png",
+   "text": [
+    {
+     "role": "eyebrow",
+     "text": "Exampleton, FL"
+    },
+    {
+     "role": "headline",
+     "text": "Showroom shine, wherever you park"
+    },
+    {
+     "role": "sub",
+     "text": "We bring the water and the power."
+    },
+    {
+     "role": "footer",
+     "text": "sample-shine.autocaregeniushub.com"
+    }
+   ]
+  },
+  {
+   "file": "facebook-cover.png",
+   "size": "1640x624",
+   "purpose": "Facebook page cover photo",
+   "alt": "A car at night next to the words: Showroom shine, wherever you park.",
+   "layout": "photo-right",
+   "photo": "photo-3.png",
+   "text": [
+    {
+     "role": "eyebrow",
+     "text": "Exampleton and Sampleville"
+    },
+    {
+     "role": "headline",
+     "text": "Showroom shine, wherever you park"
+    }
+   ]
+  },
+  {
+   "file": "profile-800.png",
+   "size": "800x800",
+   "purpose": "Profile picture for Facebook, Instagram and Google (shown as a circle)",
+   "alt": "Sample Shine Mobile Detailing logo",
+   "layout": "logo",
+   "photo": null,
+   "text": []
+  },
+  {
+   "file": "post-1.png",
+   "size": "1080x1080",
+   "purpose": "Launch post 1 (Instagram and Facebook feed)",
+   "alt": "A red car with the words: Our new website is live. Book online.",
+   "layout": "photo-overlay",
+   "photo": "photo-1.png",
+   "text": [
+    {
+     "role": "eyebrow",
+     "text": "New website"
+    },
+    {
+     "role": "headline",
+     "text": "Our new website is live"
+    },
+    {
+     "role": "cta",
+     "text": "Book online"
+    },
+    {
+     "role": "footer",
+     "text": "sample-shine.autocaregeniushub.com"
+    }
+   ]
+  },
+  {
+   "file": "post-2.png",
+   "size": "1080x1080",
+   "purpose": "Launch post 2 (Instagram and Facebook feed)",
+   "alt": "Our services: Full Detail $199, Ceramic Coating $899, Interior Refresh $119.",
+   "layout": "services",
+   "photo": "photo-2.png",
+   "text": [
+    {
+     "role": "eyebrow",
+     "text": "Our services"
+    },
+    {
+     "role": "items",
+     "text": "Full Detail $199"
+    },
+    {
+     "role": "items",
+     "text": "Ceramic Coating $899"
+    },
+    {
+     "role": "items",
+     "text": "Interior Refresh $119"
+    }
+   ]
+  },
+  {
+   "file": "post-3.png",
+   "size": "1080x1080",
+   "purpose": "Launch post 3 (Instagram and Facebook feed)",
+   "alt": "A review: \"Sam made my truck look brand new. Showed up right on time!\" Riley Q.",
+   "layout": "quote",
+   "photo": null,
+   "text": [
+    {
+     "role": "eyebrow",
+     "text": "What our customers say"
+    },
+    {
+     "role": "quote",
+     "text": "Sam made my truck look brand new. Showed up right on time!"
+    },
+    {
+     "role": "cite",
+     "text": "Riley Q."
+    }
+   ]
+  },
+  {
+   "file": "story-1080x1920.png",
+   "size": "1080x1920",
+   "purpose": "Instagram and Facebook story",
+   "alt": "A car at night with the words: Showroom shine, wherever you park. Book online.",
+   "layout": "photo-full",
+   "photo": "photo-3.png",
+   "text": [
+    {
+     "role": "eyebrow",
+     "text": "Exampleton and Sampleville"
+    },
+    {
+     "role": "headline",
+     "text": "Showroom shine, wherever you park"
+    },
+    {
+     "role": "cta",
+     "text": "Book online"
+    },
+    {
+     "role": "footer",
+     "text": "sample-shine.autocaregeniushub.com"
+    }
+   ]
+  }
+ ],
+ "captions": [
+  {
+   "file": "post-1.png",
+   "text": "Our new website is live! Book a Full Detail at home or at work, in a few taps."
+  },
+  {
+   "file": "post-2.png",
+   "text": "Inside and out, at your place. See every service on the new site."
+  },
+  {
+   "file": "post-3.png",
+   "text": "\"Sam made my truck look brand new.\" Thank you, Riley!"
+  }
+ ],
+ "fonts": {
+  "heading": "Oswald",
+  "body": "Inter",
+  "standIn": true
+ },
+ "notes": [
+  "The Words kit's third caption claimed \"500+ happy customers\", which nothing backs: post-3 quotes a review instead.",
+  "Blurred the plate and face areas the photo desk marked (1 area across the photos used).",
+  "The brand font files were not in the request: the text is set in DejaVu Sans as a stand-in."
+ ]
+}

@@ -1,38 +1,58 @@
 // scripts/skills-smoke.mjs
 //
-// One real run of the released launch-brand-system skill through the
-// production code: buildBrand (netlify/functions/custom-site-brand-background.js)
-// → runSkillRequest (same model, effort, tool, container, refusal fallback,
-// pause_turn resumes, turn cap and 11-minute budget) → sanitizeBrand
-// (src/lib/brandSpec.js). The project is a sample: one logo, drawn here at
-// runtime (no binary in the repo), served by a stand-in for the storage
-// bucket, plus a few intake answers. Nothing touches the database or the
-// bucket.
+// One real run of a released skill through the production code.
 //
-// It downloads brand.json and brand_board.png to /tmp/skills-smoke-<time>/
-// (--out to change), checks the raw brand.json against the shared contract
-// (strictly: a palette the server had to repair counts as a failure of the
-// skill), prints the usage and an estimated cost at Claude Opus 5.5 prices,
-// and exits non-zero when anything is off. Run it after each release,
-// before pinning the version on Netlify.
+// The brand skill (default, or --skill brand): buildBrand
+// (netlify/functions/custom-site-brand-background.js) → runSkillRequest (same
+// model, effort, tool, container, refusal fallback, pause_turn resumes, turn
+// cap and 11-minute budget) → sanitizeBrand (src/lib/brandSpec.js). The
+// project is a sample: one logo, drawn here at runtime (no binary in the
+// repo), served by a stand-in for the storage bucket, plus a few intake
+// answers. It downloads brand.json and brand_board.png to
+// /tmp/skills-smoke-<time>/ (--out to change), checks the raw brand.json
+// against the shared contract (strictly: a palette the server had to repair
+// counts as a failure of the skill).
 //
-// COSTS MONEY (one skill run of up to MAX_SKILL_TURNS requests; the output
-// ceiling is printed first), so it sends nothing without --yes-spend:
+// A Launch Kit skill (--skill photos|mobile|words|claims|print|social|
+// handover, src/lib/launchKit.js): the sample project comes from that
+// skill's own spec (netlify/functions/_lib/kit/<key>.js smokeSample()), and
+// the run goes through production's prepareKitRun / buildKitRun
+// (custom-site-kit-background.js): the spec's inputs and prompt plus the kit
+// rules, runSkillRequest, only the expected output files (types, sizes,
+// caps), the spec's sanitizer. It writes every output, the raw JSON
+// (<name>.raw.json) and the transcript to /tmp/skills-smoke-<key>-<time>/,
+// and fails on a missing or wrong file, a near-miss file name, or the spec's
+// own smokeCheck. Without --yes-spend it still prepares the sample (no
+// network, no key): `--skill all` does that for every kit skill, so a spec
+// that can't build its request is caught before anyone pays.
 //
-//   npm run skills:smoke                                    # prints the plan, sends nothing
-//   npm run skills:smoke -- --yes-spend                     # the version pinned in the env
-//   npm run skills:smoke -- --yes-spend --version skver_... # another version
+// Every run prints the usage and an estimated cost at Claude Opus 5.5 prices
+// and exits non-zero when anything is off. Run it after each release, before
+// pinning the version on Netlify.
 //
-// Reads ANTHROPIC_API_KEY, CUSTOM_SITE_BRAND_SKILL_ID and
-// CUSTOM_SITE_BRAND_SKILL_VERSION from the environment only (flags override
-// the skill pair); the key is never printed. Needs the functions'
-// dependencies (netlify/functions/node_modules), so run it in a mirror copy,
-// never `npm install` in the repo. The run deletes its Files API uploads and
-// outputs, as production does (--keep-files keeps the outputs).
-// Exit code: 0 the run finished and brand.json + the board are valid; 1 they
-// are not, the run failed, or it could not start (no ANTHROPIC_API_KEY, no
-// SDK); 2 nothing was sent on purpose (no --yes-spend, skill not set up, bad
-// arguments).
+// COSTS MONEY (one skill run of up to its turn cap; the output ceiling is
+// printed first), so it sends nothing without --yes-spend:
+//
+//   npm run skills:smoke                                    # brand: prints the plan, sends nothing
+//   npm run skills:smoke -- --yes-spend                     # brand: the version pinned in the env
+//   npm run skills:smoke -- --yes-spend --version skver_... # brand: another version
+//   npm run skills:smoke -- --skill all                     # every kit skill: dry run, sends nothing
+//   npm run skills:smoke -- --skill words                   # one kit skill: dry run + plan
+//   npm run skills:smoke -- --skill words --yes-spend       # one kit skill: the paid run
+//
+// Reads ANTHROPIC_API_KEY and the skill's id/version pair from the
+// environment only (CUSTOM_SITE_BRAND_SKILL_ID/_VERSION, or
+// CUSTOM_SITE_KIT_<KEY>_SKILL_ID/_VERSION; flags override the pair); the key
+// is never printed. Needs the functions' dependencies
+// (netlify/functions/node_modules), so run it in a mirror copy, never
+// `npm install` in the repo. The run deletes its Files API uploads and
+// outputs, as production does (--keep-files keeps the outputs). Nothing
+// touches the database or the bucket.
+// Exit code: 0 the run finished and its files are valid (--skill all: every
+// built kit skill prepares its sample); 1 they are not, the run failed, or it
+// could not start (no ANTHROPIC_API_KEY, no SDK, a spec that can't prepare
+// its sample); 2 nothing was sent on purpose (no --yes-spend, skill not set
+// up or not built, bad arguments).
 
 import { mkdirSync, realpathSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -45,10 +65,13 @@ import {
   BRAND_BOARD_SIZE, BRAND_EFFORT, BRAND_FILES, BRAND_MODEL, BRAND_NOTES_MAX, BRAND_RUN_BUDGET_MS, BRAND_VERSION,
   brandContrast, sanitizeBrand,
 } from '../src/lib/brandSpec.js';
+import { KIT_BUDGET_MS, KIT_KEYS, KIT_SKILLS, isKitKey, kitEnvNames, kitSkill } from '../src/lib/launchKit.js';
 
 const SDK_URL = new URL('../netlify/functions/node_modules/@anthropic-ai/sdk/index.mjs', import.meta.url);
 const BRAND_FN_URL = new URL('../netlify/functions/custom-site-brand-background.js', import.meta.url);
 const SKILLS_LIB_URL = new URL('../netlify/functions/_lib/custom-site-skills.js', import.meta.url);
+const KIT_FN_URL = new URL('../netlify/functions/custom-site-kit-background.js', import.meta.url);
+const KIT_INDEX_URL = new URL('../netlify/functions/_lib/kit/index.js', import.meta.url);
 
 export const SKILL_NAME = 'launch-brand-system';
 export const ENV_PREFIX = 'CUSTOM_SITE_BRAND_SKILL';
@@ -60,8 +83,8 @@ export const PRICED_MODEL = 'claude-opus-5-5';
 export const PRICES = Object.freeze({ input: 4, output: 20, cacheRead: 0.2, cacheWrite: 5 });
 
 const FLAGS = new Set(['--yes-spend', '--keep-files']);
-const VALUE_FLAGS = new Set(['--skill-id', '--version', '--out']);
-const USAGE = 'Usage: node scripts/skills-smoke.mjs [--yes-spend] [--skill-id skill_...] [--version skver_...|latest] [--out DIR] [--keep-files]';
+const VALUE_FLAGS = new Set(['--skill', '--skill-id', '--version', '--out']);
+const USAGE = 'Usage: node scripts/skills-smoke.mjs [--skill brand|<kit key>|all] [--yes-spend] [--skill-id skill_...] [--version skver_...|latest] [--out DIR] [--keep-files]';
 
 // ─── Sample logo (PNG drawn in memory) ───────────────────────────────
 
@@ -514,9 +537,9 @@ function paletteLines(label, p) {
   ];
 }
 
-function usageLines(turns) {
+function usageLines(turns, model = BRAND_MODEL) {
   const usage = sumUsage(turns);
-  const others = usage.models.filter((m) => m !== BRAND_MODEL);
+  const others = usage.models.filter((m) => m !== model);
   return [
     `  usage:          input ${thousands(usage.input_tokens)}, output ${thousands(usage.output_tokens)}, cache read ${thousands(usage.cache_read_input_tokens)}, cache write ${thousands(usage.cache_creation_input_tokens)} (${turns.length} request(s))`,
     `  estimated cost: ${usd(estimateCost(usage))} at Opus 5.5 prices ($${PRICES.input}/M input, $${PRICES.output}/M output, $${PRICES.cacheRead}/M cache read); code-execution container time is billed separately`,
@@ -524,25 +547,9 @@ function usageLines(turns) {
   ];
 }
 
-/**
- * Runs the smoke test. Returns the exit code. Everything it touches is
- * injectable, so the tests run it with a fake client and no key.
- */
-export async function main(argv = process.argv.slice(2), {
-  env = process.env,
-  createClient = loadSdk,
-  runner = loadRunner,
-  log: rawLog = console.log,
-  now = Date.now,
-} = {}) {
-  const log = (line = '') => rawLog(printable(line));
-  const args = parseArgs(argv);
-  if (args.errors.length) {
-    for (const error of args.errors) log(error);
-    log(USAGE);
-    return 2;
-  }
-
+// The brand skill's smoke test (no --skill, or --skill brand): unchanged
+// since the brand skill shipped.
+async function brandMain(args, { env, createClient, runner, log, now }) {
   const apiKey = typeof env?.ANTHROPIC_API_KEY === 'string' ? env.ANTHROPIC_API_KEY.trim() : '';
   if (!apiKey) {
     log('ANTHROPIC_API_KEY is not set in the environment. Nothing sent.');
@@ -705,6 +712,318 @@ export async function main(argv = process.argv.slice(2), {
   }
   log(`Files saved in ${outDir}`);
   return problems.length ? 1 : 0;
+}
+
+// ─── Launch Kit skills (--skill <key>) ───────────────────────────────
+
+/**
+ * The part of the service-role Supabase client a kit run reads: storage
+ * downloads, served from the sample's `files` (customer uploads and earlier
+ * kit runs' stored files). It stores nothing and has no database: the run
+ * gets the sample's site directly.
+ */
+export function sampleKitDb(files = {}) {
+  return {
+    storage: {
+      from: () => ({
+        download: async (path) => (files[path]
+          ? { data: new Blob([files[path]]), error: null }
+          : { data: null, error: { message: `no such object ${path}` } }),
+        upload: async () => ({ data: null, error: { message: 'the smoke test stores nothing' } }),
+      }),
+    },
+    from: (table) => {
+      throw new Error(`the smoke test has no database (the spec asked for ${table}); put what it needs in smokeSample()`);
+    },
+  };
+}
+
+// Dry runs never touch the network: the brand fonts come back as warnings.
+const noNetwork = async () => {
+  throw new Error('no network in a dry run');
+};
+
+// The production kit run and its limits. Loaded on demand: they import the SDK.
+async function loadKitRunner() {
+  try {
+    const [bg, index, skillsLib] = await Promise.all([import(KIT_FN_URL.href), import(KIT_INDEX_URL.href), import(SKILLS_LIB_URL.href)]);
+    return {
+      prepareKitRun: bg.prepareKitRun,
+      buildKitRun: bg.buildKitRun,
+      specs: index.KIT_SPECS,
+      model: index.KIT_MODEL,
+      effort: index.KIT_EFFORT,
+      skillFromEnv: skillsLib.skillFromEnv,
+      pickOutput: skillsLib.pickOutput,
+      maxTurns: skillsLib.MAX_SKILL_TURNS,
+      maxTokens: skillsLib.SKILL_MAX_TOKENS,
+      tool: skillsLib.CODE_EXECUTION_TOOL?.type,
+    };
+  } catch (err) {
+    throw mirrorHint('the launch kit run (netlify/functions/custom-site-kit-background.js)', err);
+  }
+}
+
+const kb = (n) => `${(n / 1024).toFixed(1)} KB`;
+
+/**
+ * The free half of a kit smoke test: the spec's smokeSample(), its inputs
+ * and its prompt, exactly as production prepares them (prepareKitRun), with
+ * no request sent. Returns { ok, sample, prepared }.
+ */
+export async function dryKit(key, run, { log, now = Date.now, fetchImpl } = {}) {
+  const spec = run.specs[key];
+  let sample;
+  try {
+    sample = await spec.smokeSample();
+    if (!isObject(sample?.project)) throw new Error('it returned no project');
+  } catch (err) {
+    log(`  sample:         smokeSample() failed: ${err?.message || err}`);
+    return { ok: false };
+  }
+  let prepared;
+  try {
+    prepared = await run.prepareKitRun({
+      db: sampleKitDb(sample.files), project: sample.project, site: sample.site || null, key, spec,
+      deadline: now() + KIT_BUDGET_MS, nowMs: now, fetchImpl: fetchImpl || sample.fetchImpl || noNetwork,
+    });
+  } catch (err) {
+    log(`  inputs:         the spec could not prepare the sample: ${err?.message || err}`);
+    return { ok: false, sample };
+  }
+  const { files, system, userText, ctx } = prepared;
+  log(`  inputs:         ${files.length} file(s)${files.length ? `: ${files.map((f) => `${f.name} (${f.mediaType}, ${kb(f.data.length)}${f.vision === false ? ', container only' : ''})`).join(', ')}` : ''}`);
+  for (const s of (ctx.inputs?.skipped || []).slice(0, 5)) log(`  skipped:        ${s.name || s.path}: ${s.reason}`);
+  for (const w of (ctx.inputs?.warnings || []).slice(0, 5)) log(`  input warning:  ${w}`);
+  log(`  prompt:         system ${system.length} chars (with the kit rules), request ${userText.length} chars`);
+  return { ok: true, sample, prepared };
+}
+
+/** `--skill all`: the dry run for every Launch Kit skill. 0 when every built spec prepares its sample. */
+async function kitDryAll({ kitRunner, log, now }) {
+  let run;
+  try {
+    run = await kitRunner();
+  } catch (err) {
+    log(err?.message || String(err));
+    return 1;
+  }
+  const failed = [];
+  for (const entry of KIT_SKILLS) {
+    log(`${entry.label} (--skill ${entry.key}, ${entry.folder})`);
+    const spec = run.specs[entry.key];
+    if (!spec || spec.stub) {
+      log('  not built yet: its spec is still the stub');
+      continue;
+    }
+    const dry = await dryKit(entry.key, run, { log, now });
+    if (!dry.ok) failed.push(entry.key);
+  }
+  log('');
+  log('The brand skill: npm run skills:smoke (prints its plan; needs ANTHROPIC_API_KEY).');
+  log(failed.length ? `Result: ${failed.length} skill(s) could not prepare their sample: ${failed.join(', ')}` : 'Result: every built skill prepares its sample. Nothing was sent.');
+  return failed.length ? 1 : 0;
+}
+
+/** One Launch Kit skill: the dry run, then (with --yes-spend) one paid run through buildKitRun. */
+async function kitMain(key, args, { env, createClient, kitRunner, log, now }) {
+  const entry = kitSkill(key);
+  let run;
+  try {
+    run = await kitRunner();
+  } catch (err) {
+    log(err?.message || String(err));
+    return 1;
+  }
+  const spec = run.specs[key];
+  log(`Launch kit smoke test: ${entry.label} (${entry.folder}), through production's buildKitRun`);
+  if (!spec || spec.stub) {
+    log(`  ${entry.label} isn't built yet: netlify/functions/_lib/kit/${key}.js is still the stub. Nothing sent.`);
+    return 2;
+  }
+  const dry = await dryKit(key, run, { log, now });
+  if (!dry.ok) {
+    log('Fix the spec first. Nothing sent.');
+    return 1;
+  }
+
+  const names = kitEnvNames(key);
+  const fromEnv = (name) => (typeof env?.[name] === 'string' ? env[name].trim() : '');
+  const skillId = args.values['--skill-id'] || fromEnv(names.id);
+  const version = args.values['--version'] || fromEnv(names.version);
+  const stamp = new Date(now()).toISOString().replace(/[:.]/g, '-');
+  const outDir = resolve(args.values['--out'] || join(process.platform === 'win32' ? tmpdir() : '/tmp', `skills-smoke-${key}-${stamp}`));
+  const ceiling = (spec.maxTurns * run.maxTokens * PRICES.output) / 1e6;
+  log(`  skill:          ${skillId ? `${skillId}, version ${version || '(not pinned)'}` : `not set up (${names.id})`}`);
+  log(`  model:          ${run.model}, effort ${run.effort}, refusal fallback and prompt caching as in production`);
+  if (run.model !== PRICED_MODEL) log(`  warning:        the cost estimate uses ${PRICED_MODEL} prices; update PRICES in this script for ${run.model}`);
+  log(`  tool:           ${run.tool}; up to ${spec.maxTurns} requests (pause_turn resumes), max_tokens ${run.maxTokens}, ${Math.round(KIT_BUDGET_MS / 60000)} min budget`);
+  log(`  outputs:        ${entry.outputs.map((o) => `${o.name}${o.required ? '' : ' (optional)'}`).join(', ')}`);
+  log(`  output to:      ${outDir}`);
+
+  if (!args.flags.has('--yes-spend')) {
+    log('');
+    log(`Not sent. A run is paid: ${run.model} at $${PRICES.input}/M input and $${PRICES.output}/M output tokens (usually ${entry.estimate}).`);
+    log(`Output alone is at most ${usd(ceiling)} (every request using all of max_tokens); input grows with each resume and code result. The real total is printed after the run.`);
+    log(`Run again with --yes-spend to send it (${names.id} and ${names.version} set, or --skill-id / --version).`);
+    return 2;
+  }
+
+  const apiKey = typeof env?.ANTHROPIC_API_KEY === 'string' ? env.ANTHROPIC_API_KEY.trim() : '';
+  if (!apiKey) {
+    log('ANTHROPIC_API_KEY is not set in the environment. Nothing sent.');
+    return 1;
+  }
+  if (!skillId) {
+    log(`${entry.label} is not set up: ${names.id} is not set. Release it first (npm run skills:release -- ${entry.folder}), or pass --skill-id. Nothing sent.`);
+    return 2;
+  }
+  if (!version) {
+    log(`${names.version} is not set. Pin the version to test (--version skver_..., or --version latest for the newest). Nothing sent.`);
+    return 2;
+  }
+  // The production reading of the pair: a malformed id is "not set up", a
+  // malformed version runs latest.
+  const skill = run.skillFromEnv(skillId, version);
+  if (!skill) {
+    log(`"${skillId}" is not a skill id the functions accept, so production would report "not set up". Nothing sent.`);
+    return 2;
+  }
+  if (skill.version !== version) log(`warning: production would run version ${skill.version}, not "${version}" (not a valid version id)`);
+
+  let client;
+  try {
+    ({ client } = await createClient({ apiKey }));
+  } catch (err) {
+    log(err?.message || String(err));
+    return 1;
+  }
+
+  mkdirSync(outDir, { recursive: true });
+  const transcript = join(outDir, 'transcript.json');
+  const rec = {};
+  const saveTranscript = () => writeFileSync(transcript, `${JSON.stringify({ requests: rec.requests, responses: rec.turns }, null, 2)}\n`);
+  const recording = recordingClient(client, rec, { keepOutputs: args.flags.has('--keep-files'), onTurn: saveTranscript });
+  const { sample } = dry;
+  const t0 = now();
+
+  log('');
+  log('Running the skill through buildKitRun (this can take several minutes)...');
+  let result = null;
+  let failure = null;
+  try {
+    result = await run.buildKitRun({
+      db: sampleKitDb(sample.files), client: recording, project: sample.project, site: sample.site || null, key, spec, skill,
+      deadline: now() + KIT_BUDGET_MS, fetchImpl: sample.fetchImpl || globalThis.fetch,
+    });
+  } catch (err) {
+    failure = err;
+  }
+  const seconds = Math.round((now() - t0) / 1000);
+  if (rec.turns.length) saveTranscript();
+
+  const last = rec.turns.at(-1);
+  const runs = codeRuns(rec.turns);
+  log(`${failure ? 'FAILED' : 'Finished'} after ${seconds} s (budget ${Math.round(KIT_BUDGET_MS / 1000)} s).`);
+  if (failure) {
+    log(`  error:          ${failure?.status ? `${failure.status} ` : ''}${failure?.message || failure}`);
+    if (STATUS_HINTS[failure?.status]) log(`  likely cause:   ${STATUS_HINTS[failure.status]}`);
+  }
+  log(`  model:          ${last?.model || failure?.model || 'unknown'}`);
+  log(`  stop_reason:    ${last?.stop_reason ?? 'none'}`);
+  log(`  container:      ${last?.container?.id || 'none'}`);
+  log(`  code runs:      ${runs.runs}${runs.failed.length ? `, ${runs.failed.length} failed` : ''}`);
+  for (const f of runs.failed.slice(-3)) log(`    ${f.code}${f.stderr ? `: ${f.stderr.trim().split('\n').slice(-3).join(' | ').slice(0, 300)}` : ''}`);
+  for (const line of usageLines(rec.turns, run.model)) log(line);
+  log(`  output files:   ${[...new Set(rec.names.values())].filter(Boolean).join(', ') || 'none'}`);
+  if (rec.turns.length) log(`  transcript:     ${transcript}`);
+  if (rec.kept.length) log(`  kept in the Files API (--keep-files): ${rec.kept.join(', ')}`);
+
+  const problems = [];
+  if (failure) problems.push(`the run failed: ${failure?.message || failure}`);
+  if (last?.stop_reason === 'pause_turn') problems.push(`the run stopped while paused (turn cap ${spec.maxTurns} or the ${Math.round(KIT_BUDGET_MS / 60000)} min budget)`);
+  // What the skill wrote, as downloaded (the raw JSON too), and what
+  // production would store (the sanitized JSON in its place).
+  for (const output of entry.outputs) {
+    const got = downloaded(rec, output.name, run.pickOutput);
+    if (got?.buf) writeFileSync(join(outDir, output.name === entry.dataFile ? `${output.name}.raw.json` : output.name), got.buf);
+    // Production accepts a near name; the contract names the files exactly.
+    if (got && got.name !== output.name) problems.push(`${output.name}: written as ${JSON.stringify(got.name)} (production still takes it; the contract name is ${output.name})`);
+  }
+  if (result) {
+    for (const out of result.outputs) writeFileSync(join(outDir, out.name), out.data);
+    for (const w of result.warnings) {
+      // A file of the wrong size or kind is the skill's mistake; the rest
+      // (an input the sample lacks) is information.
+      if (/ is \d+x\d+, not \d+x\d+$|isn't (a|valid)|could not be read/.test(w)) problems.push(w);
+      else log(`warning: ${w}`);
+    }
+    if (typeof spec.smokeCheck === 'function') {
+      try {
+        problems.push(...(spec.smokeCheck(result.raw, result.data, result.outputs) || []).map(String));
+      } catch (err) {
+        problems.push(`smokeCheck failed: ${err?.message || err}`);
+      }
+    }
+    for (const n of result.notes) log(`note: ${n}`);
+  }
+  const summary = (last?.content || []).filter((b) => b?.type === 'text').map((b) => b.text).join('\n').trim();
+  if (summary) {
+    log('');
+    log('Claude said:');
+    log(summary.length > 1200 ? `${summary.slice(0, 1200)}...` : summary);
+  }
+
+  log('');
+  if (problems.length) {
+    log(`Result: ${problems.length} problem(s)`);
+    for (const problem of problems) log(`  - ${problem}`);
+  } else {
+    log(`Result: OK (every required file, the right types and sizes, ${entry.dataFile} accepted by the sanitizer)`);
+  }
+  log(`Files saved in ${outDir}`);
+  return problems.length ? 1 : 0;
+}
+
+// ─── CLI entry ───────────────────────────────────────────────────────
+
+/**
+ * Runs the smoke test. Returns the exit code. Everything it touches is
+ * injectable, so the tests run it with a fake client and no key.
+ *   --skill brand (default)  the brand skill, as before
+ *   --skill <kit key>        one Launch Kit skill (src/lib/launchKit.js)
+ *   --skill all              the dry run of every Launch Kit skill (never spends)
+ */
+export async function main(argv = process.argv.slice(2), {
+  env = process.env,
+  createClient = loadSdk,
+  runner = loadRunner,
+  kitRunner = loadKitRunner,
+  log: rawLog = console.log,
+  now = Date.now,
+} = {}) {
+  const log = (line = '') => rawLog(printable(line));
+  const args = parseArgs(argv);
+  if (args.errors.length) {
+    for (const error of args.errors) log(error);
+    log(USAGE);
+    return 2;
+  }
+  const which = args.values['--skill'] || 'brand';
+  if (which === 'brand') return brandMain(args, { env, createClient, runner, log, now });
+  if (which === 'all') {
+    if (args.flags.has('--yes-spend')) {
+      log('--skill all only checks (no requests). Spend on one skill at a time: --skill <key> --yes-spend.');
+      return 2;
+    }
+    return kitDryAll({ kitRunner, log, now });
+  }
+  if (!isKitKey(which)) {
+    log(`Unknown skill "${which}". One of: brand, ${KIT_KEYS.join(', ')}, all.`);
+    log(USAGE);
+    return 2;
+  }
+  return kitMain(which, args, { env, createClient, kitRunner, log, now });
 }
 
 // Run as a command, not when a test imports it. Real paths on both sides:

@@ -1,0 +1,14 @@
+{
+  "_about": "oneLine() cases both sides must agree on: src/lib/kit/handover.test.js runs them through oneLine (JavaScript) and tests/test_handover.py through common.one_line (Python). The server's caps count UTF-16 units, so jsLength is what String.length says.",
+  "cases": [
+    {"in": "Plain line", "out": "Plain line", "jsLength": 10},
+    {"in": "  two  spaces\tand a tab  ", "out": "two spaces and a tab", "jsLength": 20},
+    {"in": "line one\nline two\r\nline three", "out": "line one line two line three", "jsLength": 28},
+    {"in": "nbsp\u00a0and\u2003em space", "out": "nbsp and em space", "jsLength": 17},
+    {"in": "sep\u2028ar\u2029ators", "out": "sep ar ators", "jsLength": 12},
+    {"in": "bom\ufeff inside", "out": "bom inside", "jsLength": 10},
+    {"in": "control\u0007bell\u007fdel", "out": "control bell del", "jsLength": 16},
+    {"in": "Joe\u2019s D\u00e9tail \u2728", "out": "Joe\u2019s D\u00e9tail \u2728", "jsLength": 14},
+    {"in": "emoji \ud83d\ude97 car", "out": "emoji \ud83d\ude97 car", "jsLength": 12}
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "_about": "The 'How to edit your site' page. {signIn} and {siteHost} are filled from handover-inputs.json. Matches the app's own help articles (Editing Your Site, Publishing Your Site): keep the button names in step with the app.",
+  "steps": [
+    {
+      "title": "Sign in",
+      "text": "Go to {signIn} and sign in with the email address we sent your access link to. Forgot the password? Use \"Forgot password\" on the sign-in page."
+    },
+    {
+      "title": "Open the editor",
+      "text": "On your Dashboard, click Edit on your site's card. Your site opens in the middle, with the editing tabs on the left."
+    },
+    {
+      "title": "Change words and photos",
+      "text": "Click any heading or paragraph on the preview to rewrite it. Click any photo to replace it with one from your phone or computer."
+    },
+    {
+      "title": "Hours, phone, address and sections",
+      "text": "Business Info holds your hours, phone and address: change them there and every part of the site follows. Each section can be hidden or shown."
+    },
+    {
+      "title": "It saves as you go",
+      "text": "Your changes save on their own a moment after you stop typing. They are not on your live site yet."
+    },
+    {
+      "title": "Publish",
+      "text": "Back on the Dashboard, click Republish on your site's card. In a few seconds {siteHost} shows your changes, at the same address."
+    }
+  ],
+  "tips": [
+    "Keep this template: your colors and fonts were set up for it, and switching templates resets them. Ask us first.",
+    "Photos look best wide and well lit; a phone photo in daylight beats a dark one taken at night.",
+    "The Help button in the app has step-by-step guides for editing, publishing and bookings."
+  ],
+  "bookingTip": "New bookings show up under Bookings in the app's top menu, and messages from your site's contact form under Inquiries."
+}

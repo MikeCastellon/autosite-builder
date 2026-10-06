@@ -36,6 +36,7 @@ import {
 } from '../../src/lib/customSiteForm.js';
 import { designProblems, isRunStale, sanitizeDesign } from '../../src/lib/customSiteDesign.js';
 import { applyLaunchPatch } from '../../src/lib/customSiteLaunch.js';
+import { KIT_KEYS } from '../../src/lib/launchKit.js';
 
 const TABLE = 'custom_site_projects';
 const EVENTS = 'custom_site_project_events';
@@ -194,6 +195,12 @@ async function removeProjectFiles(db, projectId) {
     const { data } = await db.storage.from(ASSET_BUCKET).list(`${projectId}/${kind}`, { limit: 1000 });
     for (const f of data || []) paths.push(`${projectId}/${kind}/${f.name}`);
   }
+  // Launch kit files (custom-site-kit) and brand boards live under
+  // <id>/kit/<key>/ and <id>/brand/.
+  for (const folder of [...KIT_KEYS.map((k) => `kit/${k}`), 'brand']) {
+    const { data } = await db.storage.from(ASSET_BUCKET).list(`${projectId}/${folder}`, { limit: 1000 });
+    for (const f of data || []) paths.push(`${projectId}/${folder}/${f.name}`);
+  }
   for (let i = 0; i < paths.length; i += 100) {
     const { error } = await db.storage.from(ASSET_BUCKET).remove(paths.slice(i, i + 100));
     if (error) console.error('[custom-site-admin] file cleanup failed:', error.message);
@@ -207,7 +214,7 @@ async function removeProjectFiles(db, projectId) {
 // trigger); otherwise it reads again and re-applies the patch, so a save
 // landing in between is never undone. Returns [status, body].
 // design keys only server actions write (see design-save).
-const SERVER_DESIGN_KEYS = ['launch', 'suggestion', 'brand'];
+const SERVER_DESIGN_KEYS = ['launch', 'suggestion', 'brand', 'kit'];
 
 async function saveLaunch(db, id, patch, actor) {
   for (let attempt = 0; attempt < 3; attempt += 1) {

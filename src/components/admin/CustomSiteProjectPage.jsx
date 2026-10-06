@@ -8,6 +8,7 @@ import { useAlert } from '../ui/AlertProvider.jsx';
 import { StageBadge, copyText, duration, formatDateTime, timeAgo } from './customSiteUi.jsx';
 import { DesignCard, DesignSetup, HandoverCard } from './CustomSiteDesign.jsx';
 import { LaunchCard } from './LaunchCard.jsx';
+import LaunchKitPanel from './LaunchKitPanel.jsx';
 
 // One custom website project, full page (Admin > Custom websites > a
 // project): where the build is and what's next, the customer's answers and
@@ -149,6 +150,21 @@ export default function CustomSiteProjectPage({ projectId, onBack, onChanged, on
   useEffect(() => { window.scrollTo(0, 0); }, [projectId]);
 
   // After a change: show the saved project, then refresh the activity log.
+  // The photo desk's "Use these picks": saved as the Design setup's photos
+  // (hero, about, gallery). They reach the site on the next write or
+  // rewrite, which copies only the photos that changed.
+  async function applyPhotoPicks({ hero, about, gallery }) {
+    const design = project?.design && typeof project.design === 'object' ? project.design : {};
+    const slots = { ...(design.slots || {}), hero: hero || '', about: about || '', gallery: Array.isArray(gallery) ? gallery.slice(0, 12) : [] };
+    try {
+      const res = await customSiteAdmin('design-save', { id: projectId, design: { ...design, slots } });
+      saved(res.project);
+      toast('Photo picks saved to the Design setup. Write or rewrite the site to use them.', 'success');
+    } catch (e) {
+      toast(e.message || 'Could not save the picks', 'error');
+    }
+  }
+
   function saved(next) {
     setProject((prev) => ({ ...prev, ...next, files: prev?.files }));
     onChangedRef.current?.(next);
@@ -379,6 +395,7 @@ export default function CustomSiteProjectPage({ projectId, onBack, onChanged, on
             onOpenEditor={openEditor}
             onOpenBookingSettings={(siteId) => onOpenBookingSettings?.(siteId, projectId)}
           />
+          <LaunchKitPanel projectId={project.id} project={project} onRefresh={refresh} onApplyPhotos={applyPhotoPicks} />
           <Answers project={project} />
           <Files project={project} />
         </div>

@@ -1,0 +1,265 @@
+{
+  "version": 1,
+  "inputsFile": "mobile-inputs.json",
+  "limits": {
+    "phoneHeadline": 40,
+    "siteHeadlinePhone": 60,
+    "shortName": 12,
+    "smsBody": 160,
+    "label": 24,
+    "note": 300,
+    "notes": 8,
+    "checkNote": 200,
+    "monogram": 3
+  },
+  "actionKinds": [
+    "call",
+    "text",
+    "book",
+    "directions",
+    "save"
+  ],
+  "defaultLabels": {
+    "call": "Call",
+    "text": "Text a photo",
+    "book": "Book",
+    "directions": "Directions",
+    "save": "Save contact"
+  },
+  "defaultSmsBody": "Hi {name}, I'd like a quote. Here's a photo of my vehicle:",
+  "defaultSmsBodyShort": "Hi, I'd like a quote. Here's a photo of my vehicle:",
+  "saveHref": "contact.vcf",
+  "servicesSectionIds": [
+    "services",
+    "products"
+  ],
+  "servicesWithin": 3,
+  "icons": [
+    {
+      "name": "apple-touch-icon.png",
+      "size": 180,
+      "purpose": "apple"
+    },
+    {
+      "name": "icon-192.png",
+      "size": 192,
+      "purpose": "maskable"
+    },
+    {
+      "name": "icon-512.png",
+      "size": 512,
+      "purpose": "maskable"
+    },
+    {
+      "name": "favicon-32.png",
+      "size": 32,
+      "purpose": "favicon"
+    }
+  ],
+  "maskableSafeRadius": 0.4,
+  "applePadding": 0.12,
+  "faviconMinContentPx": 12,
+  "logoContrastPixel": 2,
+  "logoVisibleShare": 0.8,
+  "checks": [
+    {
+      "id": "call",
+      "label": "Tap to call",
+      "from": "inputs"
+    },
+    {
+      "id": "phone-format",
+      "label": "Number dials from any phone",
+      "from": "inputs"
+    },
+    {
+      "id": "text",
+      "label": "Text-a-photo link opens Messages",
+      "from": "inputs"
+    },
+    {
+      "id": "text-capable",
+      "label": "The number takes texts",
+      "from": "manual"
+    },
+    {
+      "id": "book",
+      "label": "Online booking",
+      "from": "inputs"
+    },
+    {
+      "id": "directions",
+      "label": "Directions to the shop",
+      "from": "inputs"
+    },
+    {
+      "id": "contact-card",
+      "label": "Contact card has a name and a way to reach them",
+      "from": "inputs"
+    },
+    {
+      "id": "phone-headline",
+      "label": "Phone headline fits",
+      "from": "inputs"
+    },
+    {
+      "id": "site-headline",
+      "label": "Site headline is short enough for a phone",
+      "from": "inputs"
+    },
+    {
+      "id": "sections",
+      "label": "Services near the top on a phone",
+      "from": "inputs"
+    },
+    {
+      "id": "action-bar",
+      "label": "Call/Book bar on phones",
+      "from": "inputs"
+    },
+    {
+      "id": "hours",
+      "label": "Hours on the site",
+      "from": "inputs"
+    },
+    {
+      "id": "theme-color",
+      "label": "Browser bar in a brand color",
+      "from": "inputs"
+    },
+    {
+      "id": "icons",
+      "label": "Home-screen icons inside the safe zone",
+      "from": "skill"
+    },
+    {
+      "id": "favicon",
+      "label": "Favicon readable at 32 px",
+      "from": "skill"
+    },
+    {
+      "id": "logo-contrast",
+      "label": "Logo stands out on the icon background",
+      "from": "skill"
+    },
+    {
+      "id": "tap-targets",
+      "label": "Buttons and links at least 44 px",
+      "from": "preview"
+    },
+    {
+      "id": "text-size",
+      "label": "Body text at least 16 px",
+      "from": "preview"
+    },
+    {
+      "id": "sideways-scroll",
+      "label": "No sideways scrolling at 375 px",
+      "from": "preview"
+    }
+  ],
+  "fixedNotes": {
+    "text-capable": "Confirm with the customer that this number takes texts (a landline can't). If it can't, drop the Text action.",
+    "tap-targets": "Check in preview: the browser measures tap targets, not this kit.",
+    "text-size": "Check in preview: measured in the browser at phone width.",
+    "sideways-scroll": "Check in preview: open the site at 375 px and swipe sideways."
+  },
+  "claimWords": [
+    "best",
+    "top",
+    "rated",
+    "award",
+    "awards",
+    "winning",
+    "certified",
+    "certification",
+    "licensed",
+    "insured",
+    "bonded",
+    "guarantee",
+    "guaranteed",
+    "warranty",
+    "voted",
+    "leading",
+    "premier",
+    "trusted",
+    "cheapest",
+    "lowest",
+    "free",
+    "fastest",
+    "expert",
+    "experts",
+    "professional",
+    "professionals",
+    "pro",
+    "pros",
+    "elite",
+    "ultimate",
+    "perfect",
+    "years",
+    "since",
+    "star",
+    "stars",
+    "official",
+    "verified",
+    "unbeatable",
+    "number",
+    "first",
+    "only",
+    "original",
+    "favorite",
+    "cheap",
+    "affordable",
+    "discount",
+    "deal",
+    "deals",
+    "sale",
+    "special",
+    "specials",
+    "fast",
+    "quick",
+    "instant",
+    "same",
+    "open",
+    "premium",
+    "luxury",
+    "eco",
+    "organic"
+  ],
+  "glueWords": [
+    "your",
+    "yours",
+    "with",
+    "near",
+    "from",
+    "into",
+    "onto",
+    "that",
+    "this",
+    "these",
+    "those",
+    "here",
+    "there",
+    "they",
+    "them",
+    "their",
+    "what",
+    "when",
+    "where",
+    "while",
+    "just",
+    "more",
+    "than",
+    "then",
+    "also",
+    "every",
+    "right",
+    "come",
+    "comes",
+    "done",
+    "make",
+    "made",
+    "over",
+    "back"
+  ]
+}
