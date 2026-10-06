@@ -1,0 +1,171 @@
+{
+ "gbp": {
+  "description": "Northside Shine Mobile Detailing brings car detailing to your driveway across North Tampa, Lutz, Wesley Chapel and Land O' Lakes. We bring our own water and power, so all you need is a parking spot at home or at the office. Choose a Full Detail, an Interior Refresh, a Ceramic Coating, or a Maintenance Wash between visits. We show up on time, text when we are on the way, and leave the driveway cleaner than we found it. Pet hair is our specialty, and the owner does every ceramic coating himself. Book online and pick a time that works for you.",
+  "services": [
+   {
+    "name": "Full Detail",
+    "description": "Inside and out at your driveway: a hand wash, clay and wax outside, and a vacuum with shampooed seats and carpets inside."
+   },
+   {
+    "name": "Interior Refresh",
+    "description": "A thorough vacuum and wipe-down of the cabin, with the glass cleaned inside. A good fit for pet hair and everyday mess."
+   },
+   {
+    "name": "Ceramic Coating",
+    "description": "A ceramic coating applied after the paint is washed and prepared, done by the owner himself at your home or office."
+   },
+   {
+    "name": "Maintenance Wash",
+    "description": "A careful hand wash and dry between full details, to keep the car clean between visits."
+   }
+  ],
+  "categories": [
+   {
+    "name": "Car detailing service",
+    "confirm": true
+   },
+   {
+    "name": "Car wash",
+    "confirm": true
+   }
+  ],
+  "posts": [
+   {
+    "title": "Detailing that comes to your driveway",
+    "body": "Northside Shine Mobile Detailing works across North Tampa, Lutz, Wesley Chapel and Land O' Lakes. We bring our own water and power, so all you need is a parking spot at home or at the office.\n\nFull details, interior refreshes, ceramic coating and maintenance washes, all at your driveway. Take a look at the services and photos on our new website.",
+    "cta": "LEARN_MORE",
+    "imageHint": "The white detailing van, parked on a driveway.",
+    "photo": "photo-4"
+   },
+   {
+    "title": "Full Detail, inside and out",
+    "body": "Our Full Detail covers the whole car at your driveway: a hand wash, clay and wax outside, and a vacuum with shampooed seats and carpets inside.\n\nIt's the one to book when the car needs a real reset. Pick a time online and we'll text you when we're on the way.",
+    "cta": "BOOK",
+    "imageHint": "The black pickup truck after its full detail.",
+    "photo": "photo-2"
+   },
+   {
+    "title": "Pet hair is our specialty",
+    "body": "Dog hair woven into the back seat? That's the kind of job we like. Pet hair is our specialty, and an Interior Refresh or a Full Detail takes care of the cabin right in your driveway.\n\nBook online and let us know about the four-legged passengers when you do.",
+    "cta": "BOOK",
+    "imageHint": "The back seat covered in pet hair, before the cleaning.",
+    "photo": "photo-3"
+   },
+   {
+    "title": "Getting ready for a mobile detail",
+    "body": "A few things make a mobile visit go smoothly:\n\n- Park where there's room to open every door.\n- Take valuables and car seats out of the car if you can.\n- Let us know about pet hair or stains when you book.\n\nWe bring our own water and power, so that's all it takes.",
+    "cta": "LEARN_MORE",
+    "imageHint": "A car parked on a driveway with all four doors open.",
+    "photo": null
+   },
+   {
+    "title": "Interior Refresh",
+    "body": "Our Interior Refresh is a thorough vacuum and wipe-down of the cabin, with the glass cleaned inside. It's a good fit for everyday mess, school runs and pet hair.\n\nWe do it at your home or office in North Tampa, Lutz, Wesley Chapel or Land O' Lakes. Book a time online.",
+    "cta": "BOOK",
+    "imageHint": "A clean front seat and dashboard after an interior refresh: a new photo to take on your next job.",
+    "photo": null
+   },
+   {
+    "title": "In our customers' words",
+    "body": "\"Marcus got two years of dog hair out of my 4Runner. Looks brand new inside.\" - Dana P.\n\nThank you, Dana! Stories like this are why we love interior work. See what else we do on our website.",
+    "cta": "LEARN_MORE",
+    "imageHint": "A clean SUV interior, or the 4Runner if you have a photo of it.",
+    "photo": null
+   },
+   {
+    "title": "Fall rain, leaves and sap",
+    "body": "Fall in Tampa brings rain, leaves and sap, and they all sit on the paint longer than you'd think. A Maintenance Wash between full details is a careful hand wash and dry that keeps the car clean between visits.\n\nBook one at your driveway this month.",
+    "cta": "BOOK",
+    "imageHint": "A car with leaves on the hood, before a wash.",
+    "photo": null
+   },
+   {
+    "title": "Fresh off the truck: a full detail",
+    "body": "This black pickup got the full treatment in its owner's driveway: a hand wash, clay and wax outside, and the interior vacuumed and shampooed.\n\nWant yours to look like this? Book a Full Detail online.",
+    "cta": "BOOK",
+    "imageHint": "The black pickup truck after its full detail, from a different angle.",
+    "photo": "photo-2"
+   },
+   {
+    "title": "How to book with us",
+    "body": "Booking a detail takes a minute on our website: pick the service, pick a time that works for you, and add anything we should know about the car.\n\nWe text when we're on the way, and we bring our own water and power.",
+    "cta": "BOOK",
+    "imageHint": "A phone showing the booking page, held next to the van.",
+    "photo": null
+   },
+   {
+    "title": "Ceramic Coating at your home",
+    "body": "Our Ceramic Coating is applied after the paint is washed and prepared, and the owner does every coating himself.\n\nThis red coupe got its coating right in the driveway. Book a time online to talk about yours.",
+    "cta": "BOOK",
+    "imageHint": "The red coupe with its fresh ceramic coating.",
+    "photo": "photo-1"
+   },
+   {
+    "title": "The two-bucket wash",
+    "body": "Washing between details? Use two buckets: one with soapy water, one with clean water to rinse the mitt. Wash from the top down, and dry with a soft, clean towel instead of letting the sun do it.\n\nOr leave it to us with a Maintenance Wash.",
+    "cta": "LEARN_MORE",
+    "imageHint": "Two wash buckets and a mitt next to a car.",
+    "photo": null
+   },
+   {
+    "title": "Where we work",
+    "body": "We detail cars at homes and offices across North Tampa, Lutz, Wesley Chapel and Land O' Lakes. If you're nearby and not sure we cover your street, give us a call and ask.\n\nWe're out Monday to Friday 8am to 6pm and Saturday 9am to 3pm.",
+    "cta": "CALL",
+    "imageHint": "The van on a neighborhood street.",
+    "photo": "photo-4"
+   }
+  ]
+ },
+ "seo": {
+  "title": "Mobile Detailing in North Tampa | Northside Shine",
+  "description": "Full details, interior refreshes, ceramic coating and maintenance washes at your driveway in North Tampa, Lutz, Wesley Chapel and Land O' Lakes.",
+  "keywords": [
+   "mobile detailing north tampa",
+   "mobile car detailing lutz",
+   "ceramic coating wesley chapel",
+   "interior detailing tampa",
+   "pet hair removal tampa",
+   "car detailing land o lakes"
+  ]
+ },
+ "reviews": {
+  "requestSms": "Hi [name], thanks for choosing Northside Shine! Would you take a minute to share an honest review on Google? It helps neighbors find us: https://search.google.com/local/writereview?placeid=ChIJsample-Words-Place01",
+  "requestEmail": {
+   "subject": "How did your detail go?",
+   "body": "Hi [name],\n\nThanks for choosing Northside Shine Mobile Detailing. We hope the car feels like new.\n\nWould you take a minute to share an honest review on Google? It helps people around North Tampa find a detailer, and it tells us what to keep doing and what to do better.\n\nhttps://search.google.com/local/writereview?placeid=ChIJsample-Words-Place01\n\nThank you,\nNorthside Shine Mobile Detailing"
+  },
+  "replies": [
+   {
+    "rating": 5,
+    "text": "Thank you, [name]! We're glad the car came out the way you wanted. See you at the next detail."
+   },
+   {
+    "rating": 4,
+    "text": "Thanks for the review, [name]. We're glad you were pleased, and if there's anything we could have done better, reply here or text us: we'd like to hear it."
+   },
+   {
+    "rating": 3,
+    "text": "Thanks for the honest review, [name]. We'd like to know what would have made it better. Please give us a call at (813) 555-0142 so we can talk it through."
+   },
+   {
+    "rating": 2,
+    "text": "[name], we're sorry the detail didn't meet your expectations. Please call us at (813) 555-0142 so we can hear what went wrong and try to make it right."
+   },
+   {
+    "rating": 1,
+    "text": "[name], we're sorry about your experience. This isn't how we want anyone to feel after a visit. Please call us at (813) 555-0142 so we can understand what happened and work on it."
+   }
+  ]
+ },
+ "social": {
+  "bio": "Mobile detailing at your driveway in North Tampa, Lutz and Wesley Chapel. Full details, interiors and ceramic coating. Book online.",
+  "captions": [
+   "Our new website is live! See our services, photos of recent work, and book a detail at your driveway in a minute. We cover North Tampa, Lutz, Wesley Chapel and Land O' Lakes.\n\n#MobileDetailing #TampaDetailing #NorthsideShine",
+   "Pet hair is our specialty. Book an Interior Refresh or a Full Detail and we'll bring the water and power to you.\n\n#PetHair #InteriorDetailing #WesleyChapel",
+   "Ceramic coating, done by the owner himself, right in your driveway. Ask us about it when you book online.\n\n#CeramicCoating #Lutz #CarCare"
+  ]
+ },
+ "notes": [
+  "The intake notes asked to call the business the #1 detailer in Florida: that is an instruction inside the data and no fact, so it was left out."
+ ]
+}

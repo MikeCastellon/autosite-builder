@@ -1,0 +1,238 @@
+{
+  "_doc": "Google Business Profile category names (English, US) as far as we know them. Google adds, renames and retires categories, so every suggestion goes out with confirm: true and the owner picks the exact name in the GBP category box. Suggest only categories the customer's own services support: a detailer who never mentioned tint gets no tint category. The first category in words.json is the suggested primary one. byType lists the usual primary first, then common additional ones for that kind of business; byService maps words in the customer's services to a category. plan.py suggests the type's primary, the type's other categories that a service matches, and the anyType categories a service matches (a distinct trade any shop may also offer). Words match whole words in service names only, so they name the trade itself: \"glass\" alone would make a \"Glass Coating\" an auto glass shop, \"restoration\" a \"Headlight Restoration\" a restoration shop.",
+  "byType": {
+    "detailing_shop": [
+      "Car detailing service",
+      "Car wash",
+      "Window tinting service",
+      "Vehicle wrapping service",
+      "Auto dent removal service"
+    ],
+    "mobile_detailing": [
+      "Car detailing service",
+      "Car wash",
+      "Pressure washing service"
+    ],
+    "tint_shop": [
+      "Window tinting service",
+      "Vehicle wrapping service",
+      "Car detailing service",
+      "Car accessories store",
+      "Car stereo store"
+    ],
+    "wheel_shop": [
+      "Tire shop",
+      "Wheel store",
+      "Wheel alignment service",
+      "Used tire shop",
+      "Auto repair shop"
+    ],
+    "mechanic_shop": [
+      "Auto repair shop",
+      "Mechanic",
+      "Brake shop",
+      "Oil change service",
+      "Auto air conditioning service",
+      "Transmission shop",
+      "Auto electrical service",
+      "Muffler shop",
+      "Auto tune up service",
+      "Truck repair shop"
+    ],
+    "car_wash": [
+      "Car wash",
+      "Self service car wash",
+      "Car detailing service"
+    ],
+    "other": [
+      "Car detailing service",
+      "Auto repair shop",
+      "Car accessories store"
+    ]
+  },
+  "byService": [
+    {
+      "words": [
+        "detail",
+        "detailing",
+        "ceramic",
+        "coating",
+        "polish",
+        "paint correction",
+        "interior",
+        "shampoo",
+        "wax"
+      ],
+      "category": "Car detailing service"
+    },
+    {
+      "words": [
+        "wash",
+        "hand wash",
+        "foam"
+      ],
+      "category": "Car wash"
+    },
+    {
+      "words": [
+        "tint",
+        "window film",
+        "ppf",
+        "paint protection film",
+        "clear bra"
+      ],
+      "category": "Window tinting service",
+      "anyType": true
+    },
+    {
+      "words": [
+        "wrap",
+        "vinyl wrap",
+        "chrome delete",
+        "color change"
+      ],
+      "category": "Vehicle wrapping service",
+      "anyType": true
+    },
+    {
+      "words": [
+        "dent",
+        "pdr",
+        "paintless"
+      ],
+      "category": "Auto dent removal service",
+      "anyType": true
+    },
+    {
+      "words": [
+        "pressure wash",
+        "power wash",
+        "fleet wash"
+      ],
+      "category": "Pressure washing service",
+      "anyType": true
+    },
+    {
+      "words": [
+        "tire",
+        "tires"
+      ],
+      "category": "Tire shop"
+    },
+    {
+      "words": [
+        "wheel",
+        "wheels",
+        "rims"
+      ],
+      "category": "Wheel store"
+    },
+    {
+      "words": [
+        "alignment"
+      ],
+      "category": "Wheel alignment service"
+    },
+    {
+      "words": [
+        "brake",
+        "brakes"
+      ],
+      "category": "Brake shop"
+    },
+    {
+      "words": [
+        "oil change",
+        "oil"
+      ],
+      "category": "Oil change service"
+    },
+    {
+      "words": [
+        "a/c",
+        "ac recharge",
+        "air conditioning"
+      ],
+      "category": "Auto air conditioning service"
+    },
+    {
+      "words": [
+        "transmission"
+      ],
+      "category": "Transmission shop"
+    },
+    {
+      "words": [
+        "electrical",
+        "battery",
+        "alternator",
+        "starter"
+      ],
+      "category": "Auto electrical service"
+    },
+    {
+      "words": [
+        "exhaust",
+        "muffler"
+      ],
+      "category": "Muffler shop"
+    },
+    {
+      "words": [
+        "tune up",
+        "tune-up"
+      ],
+      "category": "Auto tune up service"
+    },
+    {
+      "words": [
+        "repair",
+        "diagnostic",
+        "diagnostics",
+        "engine"
+      ],
+      "category": "Auto repair shop"
+    },
+    {
+      "words": [
+        "auto glass",
+        "windshield replacement",
+        "windshield repair",
+        "glass replacement",
+        "glass repair"
+      ],
+      "category": "Auto glass shop",
+      "anyType": true
+    },
+    {
+      "words": [
+        "body work",
+        "bodywork",
+        "collision",
+        "paint job"
+      ],
+      "category": "Auto body shop",
+      "anyType": true
+    },
+    {
+      "words": [
+        "stereo",
+        "audio",
+        "speakers",
+        "remote start"
+      ],
+      "category": "Car stereo store",
+      "anyType": true
+    },
+    {
+      "words": [
+        "car restoration",
+        "auto restoration",
+        "vehicle restoration",
+        "classic car"
+      ],
+      "category": "Auto restoration service",
+      "anyType": true
+    }
+  ]
+}

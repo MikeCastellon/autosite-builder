@@ -1,0 +1,54 @@
+{
+  "about": "Shots a site for each business type needs, for the shot list (the customer's next job). Pick the ones their photos are missing, most important first, and rewrite each for this customer (their van, their bay, the work they listed); leave out a shot of equipment or a service the intake doesn't mention. Keys are the intake's businessType values; 'any' applies to every type. 'fills' is the site role the shot fills.",
+  "how": [
+    "Hold the phone sideways (landscape) for anything that could be the hero; upright is fine for the about photo and details.",
+    "Shoot in open shade or on an overcast day: no harsh sun spots or deep shadows on the paint.",
+    "Get the whole car in frame with some space around it, at headlight height.",
+    "Wipe the phone lens first.",
+    "Turn the front wheels a little toward the camera on 3/4 shots.",
+    "Before and after: same spot, same angle, same distance, same time of day.",
+    "Turn the plate away, or shoot from an angle that hides it.",
+    "Ask before a customer or passer-by is in the picture."
+  ],
+  "shots": {
+    "any": [
+      { "id": "hero-wide", "fills": "hero", "shot": "A finished car from the front corner (3/4 view), the whole car in frame, phone sideways, in open shade, nothing busy behind it" },
+      { "id": "before-after", "fills": "before/after", "shot": "Before and after of the same car from the same spot and angle" },
+      { "id": "owner-at-work", "fills": "about", "shot": "You at work: hands on a car, your face visible, your van or shop behind you" },
+      { "id": "detail-close", "fills": "gallery", "shot": "A close-up of finished work: a wheel, a headlight or a gloss reflection, filling the frame" },
+      { "id": "interior", "fills": "gallery", "shot": "A finished interior from the open driver's door: seats, dash and carpet in one frame" },
+      { "id": "variety", "fills": "gallery", "shot": "Different cars (color, size, type) so the gallery doesn't repeat one car" }
+    ],
+    "detailing_shop": [
+      { "id": "shop-front", "fills": "about", "shot": "The shop from the street with the sign readable, doors open" },
+      { "id": "bay", "fills": "gallery", "shot": "A car in the bay under the lights, mid-job (polisher or foam on the paint)" },
+      { "id": "paint-reflection", "fills": "gallery", "shot": "A close reflection in the finished paint (a light bar or the shop sign)" }
+    ],
+    "mobile_detailing": [
+      { "id": "van-setup", "fills": "about", "shot": "Your van or trailer set up at a customer's driveway, logo visible, equipment out" },
+      { "id": "on-site", "fills": "gallery", "shot": "Working at a customer's home or office lot (no house numbers or plates in frame)" },
+      { "id": "water-power", "fills": "gallery", "shot": "Your water tank, pressure washer or generator, if you bring your own water or power" }
+    ],
+    "tint_shop": [
+      { "id": "tint-side", "fills": "hero", "shot": "A finished car from the side at eye level, so the tinted windows read clearly" },
+      { "id": "install", "fills": "gallery", "shot": "Film going on: hands, squeegee and the window, sharp and close" },
+      { "id": "ppf-edge", "fills": "gallery", "shot": "If you install PPF: a clean film edge on a bumper or hood, close enough to see the edge" }
+    ],
+    "wheel_shop": [
+      { "id": "wheel-close", "fills": "gallery", "shot": "A finished wheel straight on, filling the frame, the tire lettering readable" },
+      { "id": "stance", "fills": "hero", "shot": "A car from low at the front corner, wheels turned toward the camera" },
+      { "id": "machine", "fills": "gallery", "shot": "The tire machine or balancer in use, your hands on it" }
+    ],
+    "mechanic_shop": [
+      { "id": "lift", "fills": "gallery", "shot": "A car up on the lift with the work area clean and well lit" },
+      { "id": "under-hood", "fills": "gallery", "shot": "Hands working under the hood, sharp, no customer paperwork in frame" },
+      { "id": "front-desk", "fills": "about", "shot": "The front counter or waiting area, tidy, with your sign" }
+    ],
+    "car_wash": [
+      { "id": "tunnel", "fills": "hero", "shot": "A car coming out of the wash, wet and shining, phone sideways" },
+      { "id": "entrance", "fills": "about", "shot": "The entrance with the sign and the menu board readable" },
+      { "id": "foam", "fills": "gallery", "shot": "Foam or brushes on a car, from a safe spot, sharp" }
+    ],
+    "other": []
+  }
+}

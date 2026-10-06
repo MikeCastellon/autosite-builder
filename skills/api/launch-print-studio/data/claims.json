@@ -1,0 +1,42 @@
+{
+  "_doc": "What validate_print.py checks every printed line against. patterns = src/lib/kit/print.js PRINT_CLAIM_PATTERNS (print.test.js keeps them equal): a phrase they match may only be printed when the customer's answers or the site's confirmed facts (print-inputs.json facts) contain it. reviewBanned = PRINT_REVIEW_BANNED_PATTERNS: never on a review piece, and never on a line that mentions a review on any piece, whatever the facts say (Google's review policy: no incentives for reviews, no asking only happy customers). Python re and JavaScript RegExp read them alike, case-insensitive.",
+  "patterns": [
+    "\\b\\d+\\s*\\+?\\s*(?:years?|yrs)\\b",
+    "\\b(?:since|est\\.?|established)\\s+(?:in\\s+)?(?:19|20)\\d{2}\\b",
+    "\\b\\d[\\d,]*\\s*\\+",
+    "\\d+(?:\\.\\d+)?\\s*%",
+    "#\\s*1\\b",
+    "\\b(?:number one|no\\.\\s*1)\\b",
+    "\\b(?:best|top[- ]rated|highest[- ]rated|award[- ]winning|awards?|certified|certification|licensed|insured|bonded|guaranteed?|guarantees|warrant(?:y|ies|ied)|five[- ]star|5[- ]star|rated)\\b",
+    "[\\u2605\\u2B50]",
+    "\\$\\s*\\d",
+    "\\b(?:cheapest|lowest price)\\b",
+    "\\bfree\\s+(?:quotes?|estimates?|inspections?|pick-?ups?|delivery|washes|wash|consultations?)\\b"
+  ],
+  "reviewBanned": [
+    "\\b(?:discount|coupon|voucher|gift\\s*card|giveaway|raffle|prize|reward|cash\\s*back|rebate)s?\\b",
+    "\\b(?:\\d+\\s*%|\\$\\s*\\d+)\\s*off\\b",
+    "\\bin\\s+exchange\\s+for\\b",
+    "\\b(?:free|win|earn|get)\\b[^.!?]{0,40}\\b(?:review|reviews|reviewing)\\b",
+    "\\b(?:review|reviews|reviewing)\\b[^.!?]{0,40}\\b(?:free|win|earn|entry|entered)\\b",
+    "\\bif\\s+you\\s+(?:were|are|felt|feel)\\s+(?:happy|satisfied|pleased)\\b",
+    "\\bif\\s+you\\s+(?:loved|liked|enjoyed)\\b",
+    "\\b(?:5|five)[- ]stars?\\b",
+    "\\bleave\\s+(?:us\\s+)?(?:a\\s+)?(?:positive|good|great|glowing)\\s+review\\b"
+  ],
+  "limits": {
+    "name": 80,
+    "label": 60,
+    "note": 300,
+    "reason": 200,
+    "text": 200,
+    "textLines": 40,
+    "qr": 3,
+    "vcard": 400,
+    "url": 600,
+    "font": 60,
+    "notes": 8,
+    "risk": 5,
+    "tagline": 48
+  }
+}

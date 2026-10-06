@@ -1,0 +1,19 @@
+{
+  "_doc": "Limits for words.json. Lengths count like JavaScript's String length (UTF-16 code units: most emoji count 2), which is how the server measures them. min values are soft (a warning), max values and counts are hard (an error). The server's sanitizer (src/lib/kit/words.js WORDS_LIMITS) holds the same numbers; a test keeps them equal.",
+  "gbp": {
+    "description": { "min": 250, "max": 750 },
+    "services": { "max": 30, "name": 120, "description": 300 },
+    "categories": { "min": 1, "max": 10, "name": 100 },
+    "posts": { "count": 12, "title": 58, "bodyMin": 150, "body": 1500, "imageHint": 200 }
+  },
+  "seo": {
+    "title": { "min": 20, "max": 60 },
+    "description": { "min": 110, "max": 160 },
+    "keywords": { "min": 4, "max": 12, "each": 60 }
+  },
+  "reviews": { "requestSms": 300, "subject": 80, "emailBody": 1500, "replies": 5, "reply": 1000 },
+  "social": { "bio": 150, "captions": 3, "caption": 2200, "hashtags": 30 },
+  "notes": { "max": 8, "each": 300 },
+  "ctas": ["BOOK", "CALL", "LEARN_MORE"],
+  "placeholders": { "name": "[name]", "reviewLink": "[review link]" }
+}

@@ -1,0 +1,14 @@
+{
+  "_doc": "The fixed words on the pieces. copy.json may pick another entry from each list (the exact text), never free text: these are checked against Google's review policy (no incentives, no asking only happy customers) and carry no claims. {name} is the business name.",
+  "reviewHeadline": ["How did we do?", "Tell us how we did", "Share your experience"],
+  "reviewAsk": ["Scan to leave a Google review", "Scan to review us on Google"],
+  "reviewHelp": ["Point your phone's camera at the code.", "Open your camera and point it at the code."],
+  "reviewThanks": ["Thank you for choosing {name}", "Thanks for choosing {name}"],
+  "rebookHeadline": ["Book your next visit", "Ready for your next visit?", "See you next time"],
+  "rebookAsk": { "booking": "Scan to book online", "site": "Scan to visit our site", "call": "Scan to call us" },
+  "contactHeadline": ["Save our contact", "Keep us in your phone"],
+  "contactAsk": "Scan to save our contact",
+  "gloveboxKeep": ["Keep this card in your glovebox.", "Keep this card in your car."],
+  "siteAsk": "Scan for our site",
+  "removeBeforeDriving": "Please remove before driving."
+}

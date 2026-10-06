@@ -1,0 +1,78 @@
+{
+  "_doc": "The seven images, their exact sizes and where text and the logo may sit. Boxes are [x0, y0, x1, y1] in pixels of the image. safe: everything that must be read (text, logo) stays inside it. avoid: parts of the safe box a platform covers. layouts: the ones scripts/compose.py draws for this image (references/plan.md). text: per role [largest px, smallest px, most lines] (items: most items). src/lib/kit/social.js SOCIAL_FORMATS mirrors file, kind, size, required, purpose and the roles; its test fails when they differ. See references/formats.md for where each number comes from.",
+  "version": 1,
+  "order": ["share-1200x630.png", "facebook-cover.png", "profile-800.png", "post-1.png", "post-2.png", "post-3.png", "story-1080x1920.png"],
+  "formats": {
+    "share-1200x630.png": {
+      "kind": "share",
+      "size": [1200, 630],
+      "required": true,
+      "purpose": "Link preview when the site is shared (also the site's og:image later)",
+      "safe": [60, 48, 1140, 582],
+      "avoid": [],
+      "layouts": ["photo-left", "photo-right", "photo-full", "brand"],
+      "text": { "eyebrow": [22, 16, 1], "headline": [64, 36, 3], "sub": [30, 22, 2], "items": [28, 20, 4], "quote": [40, 26, 4], "cite": [24, 18, 1], "cta": [26, 20, 1], "footer": [24, 18, 1] }
+    },
+    "facebook-cover.png": {
+      "kind": "cover",
+      "size": [1640, 624],
+      "required": false,
+      "purpose": "Facebook page cover photo",
+      "safe": [300, 80, 1340, 544],
+      "avoid": [[0, 384, 560, 624]],
+      "layouts": ["photo-left", "photo-right", "photo-full", "photo-only", "brand"],
+      "text": { "eyebrow": [24, 18, 1], "headline": [64, 38, 2], "sub": [30, 22, 2], "items": [28, 20, 3], "quote": [38, 26, 3], "cite": [24, 18, 1], "cta": [28, 20, 1], "footer": [26, 18, 1] }
+    },
+    "profile-800.png": {
+      "kind": "profile",
+      "size": [800, 800],
+      "required": false,
+      "purpose": "Profile picture for Facebook, Instagram and Google (shown as a circle)",
+      "safe": [40, 40, 760, 760],
+      "circle": [400, 400, 360],
+      "avoid": [],
+      "layouts": ["logo"],
+      "text": {}
+    },
+    "post-1.png": {
+      "kind": "post",
+      "size": [1080, 1080],
+      "required": false,
+      "purpose": "Launch post 1 (Instagram and Facebook feed)",
+      "safe": [150, 72, 930, 1008],
+      "avoid": [],
+      "layouts": ["photo-overlay", "photo-band", "brand", "quote", "services"],
+      "text": { "eyebrow": [28, 20, 1], "headline": [80, 44, 4], "sub": [36, 26, 3], "items": [38, 28, 5], "quote": [56, 32, 6], "cite": [30, 22, 1], "cta": [32, 24, 1], "footer": [30, 22, 1] }
+    },
+    "post-2.png": {
+      "kind": "post",
+      "size": [1080, 1080],
+      "required": false,
+      "purpose": "Launch post 2 (Instagram and Facebook feed)",
+      "safe": [150, 72, 930, 1008],
+      "avoid": [],
+      "layouts": ["photo-overlay", "photo-band", "brand", "quote", "services"],
+      "text": { "eyebrow": [28, 20, 1], "headline": [80, 44, 4], "sub": [36, 26, 3], "items": [38, 28, 5], "quote": [56, 32, 6], "cite": [30, 22, 1], "cta": [32, 24, 1], "footer": [30, 22, 1] }
+    },
+    "post-3.png": {
+      "kind": "post",
+      "size": [1080, 1080],
+      "required": false,
+      "purpose": "Launch post 3 (Instagram and Facebook feed)",
+      "safe": [150, 72, 930, 1008],
+      "avoid": [],
+      "layouts": ["photo-overlay", "photo-band", "brand", "quote", "services"],
+      "text": { "eyebrow": [28, 20, 1], "headline": [80, 44, 4], "sub": [36, 26, 3], "items": [38, 28, 5], "quote": [56, 32, 6], "cite": [30, 22, 1], "cta": [32, 24, 1], "footer": [30, 22, 1] }
+    },
+    "story-1080x1920.png": {
+      "kind": "story",
+      "size": [1080, 1920],
+      "required": false,
+      "purpose": "Instagram and Facebook story",
+      "safe": [64, 270, 1016, 1650],
+      "avoid": [],
+      "layouts": ["photo-top", "photo-full", "brand"],
+      "text": { "eyebrow": [32, 22, 1], "headline": [96, 52, 4], "sub": [42, 30, 3], "items": [42, 30, 5], "quote": [64, 36, 6], "cite": [34, 24, 1], "cta": [40, 28, 1], "footer": [34, 24, 1] }
+    }
+  }
+}

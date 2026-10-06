@@ -453,6 +453,10 @@ export function describeEvent(evt) {
     case 'brand_started': return 'Started building the brand system';
     case 'brand_ready': return 'Brand system ready';
     case 'brand_failed': return `Brand system failed${d.error ? `: ${d.error}` : ''}`;
+    // Launch kit runs (custom-site-kit*): the event carries the skill's label.
+    case 'kit_started': return `Started building the launch kit's ${d.label || d.skill || 'item'}`;
+    case 'kit_ready': return `Launch kit: ${d.label || d.skill || 'item'} ready`;
+    case 'kit_failed': return `Launch kit: ${d.label || d.skill || 'item'} failed${d.error ? `: ${d.error}` : ''}`;
     default: return evt?.type || 'Update';
   }
 }

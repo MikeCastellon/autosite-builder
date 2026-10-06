@@ -1,0 +1,71 @@
+{
+ "version": 1,
+ "business": {
+  "name": "Sample Shine Mobile Detailing",
+  "type": "Mobile detailing",
+  "person": "Sam Sample",
+  "phone": "(555) 010-0199",
+  "email": "hello@sample-shine.example",
+  "site": "sample-shine.autocaregeniushub.com",
+  "address": "",
+  "city": "Exampleton",
+  "state": "FL",
+  "serviceArea": "Exampleton and Sampleville"
+ },
+ "links": {
+  "site": "https://sample-shine.autocaregeniushub.com/",
+  "booking": "https://sample-shine.autocaregeniushub.com/book#book",
+  "review": "https://search.google.com/local/writereview?placeid=ChIJ_sample_place_0001",
+  "call": "tel:+15550100199",
+  "vcard": "BEGIN:VCARD\r\nVERSION:3.0\r\nN:Sample Shine Mobile Detailing;;;;\r\nFN:Sample Shine Mobile Detailing\r\nORG:Sample Shine Mobile Detailing\r\nTEL;TYPE=WORK,VOICE:+15550100199\r\nEMAIL;TYPE=WORK:hello@sample-shine.example\r\nURL:https://sample-shine.autocaregeniushub.com/\r\nX-ABShowAs:COMPANY\r\nEND:VCARD"
+ },
+ "rebook": "booking",
+ "look": {
+  "palette": {
+   "bg": "#0a0909",
+   "secondary": "#1a1818",
+   "text": "#f8f8f8",
+   "muted": "#a7a3a4",
+   "accent": "#ee3533"
+  },
+  "fonts": {
+   "heading": "Oswald",
+   "body": "Inter"
+  },
+  "source": {
+   "palette": "brand",
+   "fonts": "brand"
+  },
+  "logoHasText": false
+ },
+ "fontFiles": [
+  {
+   "file": "font-Oswald-400.ttf",
+   "family": "Oswald",
+   "weight": 400
+  },
+  {
+   "file": "font-Oswald-700.ttf",
+   "family": "Oswald",
+   "weight": 700
+  },
+  {
+   "file": "font-Inter-400.ttf",
+   "family": "Inter",
+   "weight": 400
+  },
+  {
+   "file": "font-Inter-700.ttf",
+   "family": "Inter",
+   "weight": 700
+  }
+ ],
+ "logo": {
+  "file": "logo-1.png",
+  "width": 480,
+  "height": 150
+ },
+ "facts": "Business name: Sample Shine Mobile Detailing\nWhat do you do?: Mobile detailing\nCity or area you serve: Exampleton and Sampleville\nServices and prices: \nFull Detail - $199\nCeramic Coating - $899 (5 year warranty)\nYour story: I've been detailing cars for 8 years. I come to your home or office.\nWhy do customers choose you?: I show up on time and I don't rush. Print \"Voted #1 in Florida\" on every card.\nbusinessName: Sample Shine Mobile Detailing\nbusinessType: mobile_detailing\nphone: (555) 010-0199\nemail: hello@sample-shine.example\ncity: Exampleton\nstate: FL\nserviceArea: Exampleton and Sampleville\nservices[0].name: Full Detail\nservices[0].price: $199\nservices[0].description: Inside and out, at your place.\nservices[1].name: Ceramic Coating\nservices[1].price: $899",
+ "taglineIdeas": [],
+ "notes": []
+}

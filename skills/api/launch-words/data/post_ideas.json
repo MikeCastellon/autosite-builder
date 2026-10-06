@@ -1,0 +1,37 @@
+{
+  "_doc": "Themes for the 12 starter Google posts (plan.py turns them into a post plan). Every theme is fact-light on purpose: it rests on the customer's own services, photos, area, booking link and pasted reviews, or on general car-care knowledge that claims nothing about the business. 'needs' says what must exist for the theme to be used: service (a site service), photo (one of their photos), reviews (pasted reviews to quote word for word), booking (a booking link), area (a city or service area), phone (a business phone). Tips come from tipsByType for the business type, in order; seasons from seasonal by month.",
+  "themes": [
+    { "id": "intro", "title": "Who we are", "angle": "Introduce the business: what they do and where, in their own words from the intake (story, why customers choose them). No years, awards or claims they didn't give.", "cta": "LEARN_MORE", "needs": [] },
+    { "id": "service", "title": "Service spotlight", "angle": "One of their site services: what the customer gets, written from the site's service description and the intake. One post per main service, in the site's order.", "cta": "BOOK", "needs": ["service"], "repeat": true },
+    { "id": "work", "title": "Recent work", "angle": "Show one of their photos (a before/after pair when they have one): what was done, from the photo and its note. Never guess the car model or the products used unless the note or intake says so.", "cta": "BOOK", "needs": ["photo"], "repeat": true },
+    { "id": "tip", "title": "Care tip", "angle": "A general car-care tip for their trade (tipsByType), useful on its own, ending with an invitation to book. Advice, not claims about the business.", "cta": "LEARN_MORE", "needs": [], "repeat": true },
+    { "id": "season", "title": "Seasonal reminder", "angle": "What the season does to a car where they work (seasonal), and the service of theirs that helps.", "cta": "BOOK", "needs": ["service"] },
+    { "id": "booking", "title": "How to book", "angle": "How booking works through their site: pick a service, pick a time. Only what the booking link really offers.", "cta": "BOOK", "needs": ["booking"] },
+    { "id": "area", "title": "Where we work", "angle": "The city or service area they gave (mobile: we come to you only when they are mobile; shop: the address area).", "cta": "CALL", "needs": ["area", "phone"] },
+    { "id": "review", "title": "In our customers' words", "angle": "Quote one pasted review word for word, with the name exactly as given (or no name). Never edit, combine or invent a review.", "cta": "LEARN_MORE", "needs": ["reviews"], "repeat": true },
+    { "id": "website", "title": "Our new website", "angle": "The new site is live: what visitors find there (services, photos, booking when there is a booking link).", "cta": "LEARN_MORE", "needs": [] }
+  ],
+  "tipsByType": {
+    "detailing_shop": ["Washing between details: two buckets, a clean mitt, and drying with a soft towel.", "Why bird droppings and bug splatter should come off quickly.", "Keeping the interior fresh between visits: floor mats, wipes, and sun shades.", "What a clay bar does before polishing or protection."],
+    "mobile_detailing": ["Getting the most from a mobile visit: where to park and what to take out of the car.", "Washing between details: two buckets, a clean mitt, and drying with a soft towel.", "Why bird droppings and bug splatter should come off quickly.", "Keeping the interior fresh between visits: floor mats, wipes, and sun shades."],
+    "tint_shop": ["Caring for new tint: give it time to cure before rolling the windows down, and clean it without ammonia.", "Why window film helps with heat and glare in a parked car.", "Checking local tint rules before choosing a shade.", "Cleaning paint protection film gently: soft mitts, no harsh brushes."],
+    "wheel_shop": ["Checking tire pressure once a month, with the tires cold.", "Reading tread wear: when to rotate and when to replace.", "Signs the alignment is off: pulling, uneven wear, an off-center steering wheel.", "Cleaning wheels without scratching the finish."],
+    "mechanic_shop": ["Warning lights: which ones mean stop now and which mean book a visit soon.", "Listening to your brakes: squeals, grinding and a soft pedal.", "Checking fluids between services: oil, coolant and washer fluid.", "Getting ready for a road trip: tires, brakes, lights and wipers."],
+    "car_wash": ["Why washing off road salt and grime matters for the underside.", "Drying spots: why a towel dry beats air drying in the sun.", "Keeping the interior tidy between washes.", "Protecting the paint between washes."],
+    "other": ["Washing between visits: two buckets, a clean mitt, and drying with a soft towel.", "Checking tire pressure once a month, with the tires cold.", "Keeping the interior fresh: floor mats, wipes, and sun shades.", "Why bird droppings and bug splatter should come off quickly."]
+  },
+  "seasonal": {
+    "1": "Winter: road salt and grime on the paint and underside.",
+    "2": "Late winter: salt and slush, and getting ready for spring.",
+    "3": "Spring: pollen, rain spots and a fresh start after winter.",
+    "4": "Spring: pollen and spring cleaning, inside and out.",
+    "5": "Early summer: bugs, sun and road trips ahead.",
+    "6": "Summer: UV, heat and bug splatter.",
+    "7": "Summer: heat, UV and a hot interior.",
+    "8": "Late summer: sun-baked paint and back-to-school driving.",
+    "9": "Fall: getting ready for cooler weather.",
+    "10": "Fall: leaves, sap and rain before winter.",
+    "11": "Late fall: protection before winter and the holiday travel.",
+    "12": "Winter: salt, slush and holiday travel."
+  }
+}

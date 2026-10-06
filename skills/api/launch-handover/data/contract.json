@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "inputsVersion": 1,
+  "inputsFile": "handover-inputs.json",
+  "files": { "data": "handover.json", "pdf": "handover.pdf", "zip": "launch-kit.zip" },
+  "limits": {
+    "summary": 600,
+    "section": 80,
+    "sections": 16,
+    "pages": 80,
+    "files": 80,
+    "path": 120,
+    "left": 30,
+    "reason": 200,
+    "link": 500,
+    "thisWeek": 5,
+    "title": 80,
+    "detail": 240,
+    "checklistMin": 4,
+    "checklist": 24,
+    "task": 200,
+    "weeks": 4,
+    "notes": 8,
+    "note": 300
+  },
+  "content": {
+    "intro": 700,
+    "whyMin": 2,
+    "why": 5,
+    "whyItem": 260,
+    "brandNote": 300,
+    "closing": 300
+  },
+  "sections": [
+    { "id": "built", "title": "What we built and why" },
+    { "id": "brand", "title": "Your brand" },
+    { "id": "links", "title": "Your links" },
+    { "id": "edit", "title": "How to edit your site" },
+    { "id": "kit", "title": "Your Launch Kit" },
+    { "id": "claims", "title": "Claims sign-off" },
+    { "id": "week", "title": "Do these 5 things this week" },
+    { "id": "month", "title": "Your first 30 days" }
+  ],
+  "rootFiles": ["handover.pdf", "README.txt"],
+  "brandBoard": "brand-board.png",
+  "generated": { "brand": "brand-colors.txt", "words": "paste-ready.txt", "social": "captions.txt" },
+  "zipParts": [
+    { "key": "brand", "folder": "01-brand", "label": "Brand" },
+    { "key": "photos", "folder": "02-photos", "label": "Photo desk" },
+    { "key": "mobile", "folder": "03-mobile", "label": "Mobile kit" },
+    { "key": "words", "folder": "04-words", "label": "Words" },
+    { "key": "print", "folder": "05-print", "label": "Print studio" },
+    { "key": "social", "folder": "06-social", "label": "Social kit" }
+  ],
+  "zipPathPattern": "^(?:\\d{2}-[a-z]+/)?[A-Za-z0-9][A-Za-z0-9._()+-]{0,99}$"
+}

@@ -1,0 +1,211 @@
+{
+  "_doc": "The no-invented-facts check (scripts/words_lib.py, mirrored in src/lib/kit/words.js CLAIM_TERMS; a test keeps them equal). Text is lowercased, curly quotes made straight and unicode hyphens made '-', and the neutral phrases (figures of speech that only look like claims, 'feel free') are blanked before matching. A term matches as a whole word: no letter, digit or hyphen right before or after it, so 'swirl-free' is not 'free' and 'award-winning' is not 'award'. Each group lists spellings of one claim: when a spelling appears in the copy and no spelling of its group appears in the customer's answers, the business facts, the site copy or the pasted reviews, the claim is unsourced. hard = an error to fix (or leave out), soft = a warning to judge. Patterns are regular expressions that work the same in Python and JavaScript. onlineBooking: copy that says customers can book online, an error when the request has no booking link.",
+  "neutral": [
+    "feel free",
+    "worry free",
+    "hassle free",
+    "stress free",
+    "spot free",
+    "swirl free",
+    "scratch free",
+    "streak free",
+    "lint free",
+    "residue free",
+    "license plate",
+    "license plates"
+  ],
+  "hard": [
+    [
+      "#1",
+      "no. 1",
+      "number one",
+      "number 1"
+    ],
+    [
+      "top-rated",
+      "top rated",
+      "highest-rated",
+      "highest rated",
+      "best-rated",
+      "best rated"
+    ],
+    [
+      "5-star",
+      "5 star",
+      "five-star",
+      "five star",
+      "5-stars",
+      "5 stars",
+      "five stars"
+    ],
+    [
+      "award",
+      "awards",
+      "award-winning",
+      "award winning"
+    ],
+    [
+      "voted"
+    ],
+    [
+      "certified",
+      "certification",
+      "certifications",
+      "accredited"
+    ],
+    [
+      "licensed",
+      "license"
+    ],
+    [
+      "insured",
+      "insurance"
+    ],
+    [
+      "bonded"
+    ],
+    [
+      "guarantee",
+      "guarantees",
+      "guaranteed"
+    ],
+    [
+      "warranty",
+      "warranties",
+      "warrantied"
+    ],
+    [
+      "lifetime"
+    ],
+    [
+      "family-owned",
+      "family owned",
+      "family-run",
+      "family run"
+    ],
+    [
+      "veteran-owned",
+      "veteran owned"
+    ],
+    [
+      "woman-owned",
+      "woman owned",
+      "women-owned",
+      "women owned"
+    ],
+    [
+      "locally owned",
+      "locally-owned"
+    ],
+    [
+      "trusted by"
+    ],
+    [
+      "same-day",
+      "same day"
+    ],
+    [
+      "24/7",
+      "24-7",
+      "around the clock"
+    ],
+    [
+      "open now"
+    ],
+    [
+      "fastest"
+    ],
+    [
+      "cheapest",
+      "lowest price",
+      "lowest prices",
+      "best price",
+      "best prices"
+    ],
+    [
+      "eco-friendly",
+      "eco friendly",
+      "environmentally friendly",
+      "biodegradable",
+      "non-toxic",
+      "non toxic"
+    ],
+    [
+      "free"
+    ],
+    [
+      "financing"
+    ]
+  ],
+  "soft": [
+    [
+      "best"
+    ],
+    [
+      "expert",
+      "experts",
+      "expertise"
+    ],
+    [
+      "experienced",
+      "years of experience"
+    ],
+    [
+      "premium"
+    ],
+    [
+      "professional-grade",
+      "pro-grade"
+    ],
+    [
+      "satisfaction"
+    ],
+    [
+      "we come to you",
+      "come to you",
+      "mobile"
+    ],
+    [
+      "affordable"
+    ],
+    [
+      "leading"
+    ]
+  ],
+  "numbers": {
+    "money": "\\$\\s?\\d[\\d,]*(?:\\.\\d{1,2})?",
+    "percent": "\\d+(?:\\.\\d+)?\\s?(?:%|percent\\b)",
+    "count": "\\b(\\d[\\d,]*)\\+?\\s*(?:years?|yrs?|cars?|vehicles?|customers?|clients?|reviews?|jobs?|details?|trucks?|boats?|happy|satisfied|locations?|employees?|technicians?)\\b",
+    "since": "\\b(?:since|established|est\\.?|founded|serving\\s+\\S+(?:\\s+\\S+)?\\s+since)\\s+((?:19|20)\\d\\d)\\b",
+    "rating": "\\b([1-5](?:\\.\\d)?)\\s*(?:-\\s*)?(?:stars?\\b|★)|\\brated\\s+([1-5](?:\\.\\d)?)\\b"
+  },
+  "incentives": [
+    "\\bdiscounts?\\b",
+    "\\bcoupons?\\b",
+    "\\bpromo(?:tion(?:al)?)?\\s+codes?\\b",
+    "\\bgift\\s*cards?\\b",
+    "\\bgifts?\\b",
+    "\\bgiveaways?\\b",
+    "\\braffles?\\b",
+    "\\bprizes?\\b",
+    "\\brewards?\\b",
+    "(?<![a-z0-9-])free(?![a-z0-9-])",
+    "\\b\\d+\\s*%\\s*off\\b",
+    "\\$\\s*\\d+\\s*off\\b",
+    "\\b(?:chance|entry|entered|enter)\\s+to\\s+win\\b",
+    "\\bin\\s+exchange\\b",
+    "\\bstore\\s+credit\\b",
+    "\\bcash\\b"
+  ],
+  "gating": [
+    "\\b(?:5|five)[- ]?stars?\\b",
+    "\\bif\\s+you\\s+(?:were|are|felt|feel)\\s+(?:happy|satisfied|pleased)\\b",
+    "\\bif\\s+you\\s+(?:loved|liked|enjoyed)\\b",
+    "\\bonly\\s+if\\b",
+    "\\b(?:positive|good|great|glowing)\\s+reviews?\\b",
+    "\\bbefore\\s+(?:leaving|writing|posting)\\s+(?:a|your)\\s+review\\b"
+  ],
+  "phone": "(?:\\+?1[\\s.-]?)?(?:\\(\\d{3}\\)|\\b\\d{3})[\\s.-]?\\d{3}[\\s.-]?\\d{4}\\b",
+  "url": "(?:https?://|www\\.)[^\\s)\\]]+|\\b[a-z0-9][a-z0-9-]*\\.(?:com|net|org|co|us|biz|info|io|app|site|shop|auto|cars)\\b(?:/[^\\s)\\]]*)?",
+  "onlineBooking": "\\b(?:book(?:ing)?\\s+(?:a\\s+time\\s+|a\\s+detail\\s+|one\\s+|it\\s+)?online|online\\s+booking|book\\s+on\\s+(?:our|the)\\s+(?:web)?site)\\b"
+}
