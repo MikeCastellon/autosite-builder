@@ -66,6 +66,7 @@ import {
   brandContrast, sanitizeBrand,
 } from '../src/lib/brandSpec.js';
 import { KIT_BUDGET_MS, KIT_KEYS, KIT_SKILLS, isKitKey, kitEnvNames, kitSkill } from '../src/lib/launchKit.js';
+import { apiKeyFrom, redactKey } from './skills-key.mjs';
 
 const SDK_URL = new URL('../netlify/functions/node_modules/@anthropic-ai/sdk/index.mjs', import.meta.url);
 const BRAND_FN_URL = new URL('../netlify/functions/custom-site-brand-background.js', import.meta.url);
@@ -550,9 +551,10 @@ function usageLines(turns, model = BRAND_MODEL) {
 // The brand skill's smoke test (no --skill, or --skill brand): unchanged
 // since the brand skill shipped.
 async function brandMain(args, { env, createClient, runner, log, now }) {
-  const apiKey = typeof env?.ANTHROPIC_API_KEY === 'string' ? env.ANTHROPIC_API_KEY.trim() : '';
-  if (!apiKey) {
-    log('ANTHROPIC_API_KEY is not set in the environment. Nothing sent.');
+  // The pasted key, cleaned (skills-key.mjs): an unusable one is named, never printed.
+  const { key: apiKey, problem: keyProblem } = apiKeyFrom(env);
+  if (keyProblem) {
+    log(`${keyProblem} Nothing sent.`);
     return 1;
   }
 
@@ -643,7 +645,7 @@ async function brandMain(args, { env, createClient, runner, log, now }) {
   const runs = codeRuns(rec.turns);
   log(`${failure ? 'FAILED' : 'Finished'} after ${seconds} s (budget ${Math.round(BRAND_RUN_BUDGET_MS / 1000)} s).`);
   if (failure) {
-    log(`  error:          ${failure?.status ? `${failure.status} ` : ''}${failure?.message || failure}`);
+    log(`  error:          ${failure?.status ? `${failure.status} ` : ''}${redactKey(failure?.message || failure, env)}`);
     if (STATUS_HINTS[failure?.status]) log(`  likely cause:   ${STATUS_HINTS[failure.status]}`);
   }
   log(`  model:          ${last?.model || failure?.model || 'unknown'}`);
@@ -660,7 +662,7 @@ async function brandMain(args, { env, createClient, runner, log, now }) {
   // brand.json as the skill wrote it, and the board (what buildBrand stored,
   // or the download when it stopped before storing it).
   const problems = [];
-  if (failure) problems.push(`the run failed: ${failure?.message || failure}`);
+  if (failure) problems.push(`the run failed: ${redactKey(failure?.message || failure, env)}`);
   if (last?.stop_reason === 'pause_turn') problems.push(`the run stopped while paused (turn cap ${run.maxTurns} or the ${Math.round(BRAND_RUN_BUDGET_MS / 60000)} min budget)`);
   const spec = downloaded(rec, BRAND_FILES.spec, run.pickOutput);
   const board = downloaded(rec, BRAND_FILES.board, run.pickOutput);
@@ -869,9 +871,10 @@ async function kitMain(key, args, { env, createClient, kitRunner, log, now }) {
     return 2;
   }
 
-  const apiKey = typeof env?.ANTHROPIC_API_KEY === 'string' ? env.ANTHROPIC_API_KEY.trim() : '';
-  if (!apiKey) {
-    log('ANTHROPIC_API_KEY is not set in the environment. Nothing sent.');
+  // The pasted key, cleaned (skills-key.mjs): an unusable one is named, never printed.
+  const { key: apiKey, problem: keyProblem } = apiKeyFrom(env);
+  if (keyProblem) {
+    log(`${keyProblem} Nothing sent.`);
     return 1;
   }
   if (!skillId) {
@@ -926,7 +929,7 @@ async function kitMain(key, args, { env, createClient, kitRunner, log, now }) {
   const runs = codeRuns(rec.turns);
   log(`${failure ? 'FAILED' : 'Finished'} after ${seconds} s (budget ${Math.round(KIT_BUDGET_MS / 1000)} s).`);
   if (failure) {
-    log(`  error:          ${failure?.status ? `${failure.status} ` : ''}${failure?.message || failure}`);
+    log(`  error:          ${failure?.status ? `${failure.status} ` : ''}${redactKey(failure?.message || failure, env)}`);
     if (STATUS_HINTS[failure?.status]) log(`  likely cause:   ${STATUS_HINTS[failure.status]}`);
   }
   log(`  model:          ${last?.model || failure?.model || 'unknown'}`);
@@ -940,7 +943,7 @@ async function kitMain(key, args, { env, createClient, kitRunner, log, now }) {
   if (rec.kept.length) log(`  kept in the Files API (--keep-files): ${rec.kept.join(', ')}`);
 
   const problems = [];
-  if (failure) problems.push(`the run failed: ${failure?.message || failure}`);
+  if (failure) problems.push(`the run failed: ${redactKey(failure?.message || failure, env)}`);
   if (last?.stop_reason === 'pause_turn') problems.push(`the run stopped while paused (turn cap ${spec.maxTurns} or the ${Math.round(KIT_BUDGET_MS / 60000)} min budget)`);
   // What the skill wrote, as downloaded (the raw JSON too), and what
   // production would store (the sanitized JSON in its place).

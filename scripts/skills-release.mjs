@@ -37,6 +37,7 @@ import { lstatSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { KIT_SKILLS } from '../src/lib/launchKit.js';
+import { apiKeyFrom, connectionCause, redactKey } from './skills-key.mjs';
 
 const SKILLS_ROOT = fileURLToPath(new URL('../skills/api/', import.meta.url));
 const SDK_URL = new URL('../netlify/functions/node_modules/@anthropic-ai/sdk/index.mjs', import.meta.url);
@@ -405,9 +406,17 @@ const STATUS_HINTS = {
   429: 'rate limited: wait a minute and run it again',
 };
 
-function logApiError(log, err) {
-  log(`FAILED: ${err?.status ?? 'no status'} ${err?.message || err}`.trimEnd());
+// releaseOne's code for a request that never reached the API.
+const OFFLINE = 3;
+
+// The key never reaches the output: some fetch errors quote the header.
+function logApiError(log, err, env) {
+  log(redactKey(`FAILED: ${err?.status ?? 'no status'} ${err?.message || err}`.trimEnd(), env));
   if (STATUS_HINTS[err?.status]) log(`  likely cause:  ${STATUS_HINTS[err.status]}`);
+  if (err?.status == null) {
+    const cause = connectionCause(err);
+    log(`  likely cause:  the request never reached the API${cause ? ` (${cause})` : ''}: check the internet connection, a VPN or proxy, and that the key was pasted once as plain text`);
+  }
   if (err?.requestID) log(`  request id:    ${err.requestID}`);
 }
 
@@ -530,8 +539,10 @@ async function releaseOne(name, { dir, env, log, dryRun, forceNew, skillIdFlag, 
       version = skill.latest_version_id;
     }
   } catch (err) {
-    logApiError(log, err);
-    return 1;
+    logApiError(log, err, env);
+    // No HTTP status: the API was never reached, and the next skill would
+    // fail the same way (main stops there).
+    return err?.status == null ? OFFLINE : 1;
   }
 
   const id = skill?.id || skillId;
@@ -600,10 +611,15 @@ export async function main(argv = process.argv.slice(2), {
 
   // The key and the SDK are only needed for an upload: each skill asks for
   // the client after its checks pass, and the first one creates it.
-  const apiKey = typeof env?.ANTHROPIC_API_KEY === 'string' ? env.ANTHROPIC_API_KEY.trim() : '';
+  // The pasted key, cleaned (skills-key.mjs): an unusable one stops the run
+  // once, up front, instead of failing every skill the same way.
+  const { key: apiKey, problem: keyProblem } = apiKeyFrom(env);
+  if (!dryRun && keyProblem) {
+    log(`${keyProblem} Nothing uploaded.`);
+    return 1;
+  }
   let sdk = null;
   const getClient = async () => {
-    if (!apiKey) throw new Error('ANTHROPIC_API_KEY is not set in the environment. Nothing uploaded.');
     if (!sdk) sdk = await createClient({ apiKey });
     return sdk;
   };
@@ -615,7 +631,13 @@ export async function main(argv = process.argv.slice(2), {
       log('─'.repeat(60));
     }
     // One at a time, in order: uploads are never retried or raced.
-    codes.push(await releaseOne(name, { dir: join(skillsRoot, name), env, log, dryRun, forceNew, skillIdFlag, getClient }));
+    const code = await releaseOne(name, { dir: join(skillsRoot, name), env, log, dryRun, forceNew, skillIdFlag, getClient });
+    codes.push(code === OFFLINE ? 1 : code);
+    if (code === OFFLINE && i < names.length - 1) {
+      log('');
+      log(`Stopped: the API could not be reached, so the other ${names.length - i - 1} were not tried. Nothing was uploaded for them.`);
+      break;
+    }
   }
   if (names.length > 1) {
     log('');
