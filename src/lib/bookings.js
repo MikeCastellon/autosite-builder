@@ -39,6 +39,21 @@ export function bookingDayKey(iso) {
   return d.toISOString().slice(0, 10);
 }
 
+// Request-form bookings (booking_mode 'simple'): the customer's own words
+// about when, stored first in notes behind this prefix by create-booking
+// (netlify/functions/_lib/booking-request.js). Their preferred_at is only a
+// placeholder until the owner confirms with a real time. Null otherwise.
+const REQUESTED_TIME_PREFIX = 'Preferred time: ';
+export function requestedTimeText(notes) {
+  if (typeof notes !== 'string' || !notes.startsWith(REQUESTED_TIME_PREFIX)) return null;
+  return notes.slice(REQUESTED_TIME_PREFIX.length).split('\n')[0].trim() || null;
+}
+
+// A pending request whose time the owner hasn't set yet.
+export function isUnscheduledRequest(booking) {
+  return booking?.status === 'pending' && !!requestedTimeText(booking?.notes);
+}
+
 // <input type="datetime-local"> value ("2026-10-06T09:00", seconds optional)
 // -> the preferred_at to store. The owner types shop time, so it is kept as
 // wall-clock time; new Date(value) would read it in the browser's zone.
@@ -78,7 +93,11 @@ export async function listAllBookings({ statusIn, from, to, search, ownerUserId 
   return data || [];
 }
 
-export async function updateBooking({ bookingId, action, reason, owner_notes }) {
+// shopPreferredAt: a datetime-local value, sent with 'confirm' to set the
+// appointment time (wall clock, see wallTimeToBookingIso). force: confirm
+// even though it overlaps another confirmed booking. Errors carry the
+// server's `code` ('time_required', 'overlap', 'stale') and `conflicts`.
+export async function updateBooking({ bookingId, action, reason, owner_notes, shopPreferredAt, force }) {
   const { data: sessionData } = await supabase.auth.getSession();
   const token = sessionData?.session?.access_token;
   if (!token) throw new Error('Not signed in');
@@ -86,10 +105,19 @@ export async function updateBooking({ bookingId, action, reason, owner_notes }) 
   const res = await fetch('/.netlify/functions/update-booking', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ bookingId, action, reason, owner_notes }),
+    body: JSON.stringify({
+      bookingId, action, reason, owner_notes,
+      ...(shopPreferredAt ? { shop_preferred_at: shopPreferredAt } : {}),
+      ...(force ? { force: true } : {}),
+    }),
   });
-  const body = await res.json();
-  if (!res.ok) throw new Error(body.error || 'Update failed');
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(body.error || 'Update failed');
+    err.code = body.code || null;
+    err.conflicts = Array.isArray(body.conflicts) ? body.conflicts : [];
+    throw err;
+  }
   return body.booking;
 }
 

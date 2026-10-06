@@ -1,7 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
-import { computeSlots } from './_lib/slot-math.js';
-import { isEffectiveSchedulerActive } from './_lib/subscription-gating.js';
+import { computeSlots, normalizeGranularity, normalizeLeadHours } from './_lib/slot-math.js';
+import { isEffectiveSchedulerActive, GATING_PROFILE_COLUMNS } from './_lib/subscription-gating.js';
 import { resolveVariant } from './_lib/vehicle-pricing.js';
+import { resolveShopTimeZone, shopNowWallMs } from './_lib/shop-time.js';
 
 // Public widget endpoint — called from scheduler.js injected on every
 // customer's published site (each on a different domain). Wide-open
@@ -15,6 +16,9 @@ const CORS = {
 };
 
 const WEEKDAY_KEYS = ['sun','mon','tue','wed','thu','fri','sat'];
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const noSlots = () => ({ statusCode: 200, headers: CORS, body: JSON.stringify({ slots: [] }) });
 
 export const handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: CORS };
@@ -26,9 +30,10 @@ export const handler = async (event) => {
   if (!siteId || !date) {
     return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Missing siteId or date' }) };
   }
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(`${date}T00:00:00.000Z`))) {
     return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Invalid date (YYYY-MM-DD)' }) };
   }
+  if (!UUID_RE.test(siteId)) return noSlots();
 
   const supabase = createClient(
     process.env.VITE_SUPABASE_URL,
@@ -37,26 +42,22 @@ export const handler = async (event) => {
 
   const { data: site } = await supabase
     .from('sites')
-    .select('id, user_id, scheduler_enabled, scheduler_config')
+    .select('id, user_id, business_info, scheduler_enabled, scheduler_config')
     .eq('id', siteId)
     .maybeSingle();
 
-  if (!site || !site.scheduler_enabled) {
-    return { statusCode: 200, headers: CORS, body: JSON.stringify({ slots: [] }) };
-  }
+  if (!site || !site.scheduler_enabled) return noSlots();
 
   const { data: owner } = await supabase
     .from('profiles')
-    .select('is_super_admin, scheduler_enabled, subscription_status, subscription_ends_at')
+    .select(GATING_PROFILE_COLUMNS)
     .eq('id', site.user_id)
     .maybeSingle();
-  if (!isEffectiveSchedulerActive(owner)) {
-    return { statusCode: 200, headers: CORS, body: JSON.stringify({ slots: [] }) };
-  }
+  if (!isEffectiveSchedulerActive(owner)) return noSlots();
 
   const cfg = site.scheduler_config || {};
-  const leadMs = (cfg.lead_time_hours ?? 24) * 3600 * 1000;
-  const granularityMin = cfg.slot_granularity_minutes ?? 30;
+  const leadMs = normalizeLeadHours(cfg.lead_time_hours) * 3600 * 1000;
+  const granularityMin = normalizeGranularity(cfg.slot_granularity_minutes);
 
   const service = (cfg.services || []).find((s) => s.id === serviceId && s.enabled !== false)
     ?? (cfg.services || []).find((s) => s.enabled !== false)
@@ -64,10 +65,14 @@ export const handler = async (event) => {
   const variant = resolveVariant(service, vehicleTypeId);
   // A not-offered service/vehicle combination has no bookable slots — agree
   // with create-booking's 400 instead of silently quoting 60-minute slots.
-  if (service && vehicleTypeId && !variant) {
-    return { statusCode: 200, headers: CORS, body: JSON.stringify({ slots: [] }) };
-  }
+  if (service && vehicleTypeId && !variant) return noSlots();
   const durationMin = variant?.duration_minutes ?? 60;
+
+  // Lead time counts from the shop's wall clock: slots are wall-clock times
+  // written as UTC (see _lib/shop-time.js). create-booking checks the same.
+  const earliest = shopNowWallMs(resolveShopTimeZone(cfg, site.business_info)) + leadMs;
+  // A whole day before the lead-time boundary: nothing to compute or query.
+  if (Date.parse(`${date}T23:59:59.999Z`) < earliest) return noSlots();
 
   const weekday = WEEKDAY_KEYS[new Date(`${date}T00:00:00.000Z`).getUTCDay()];
   const availability = (cfg.availability || {})[weekday] || [];
@@ -98,7 +103,6 @@ export const handler = async (event) => {
     confirmedBookings,
   });
 
-  const earliest = Date.now() + leadMs;
   slots = slots.filter((iso) => Date.parse(iso) >= earliest);
 
   return { statusCode: 200, headers: CORS, body: JSON.stringify({ slots }) };

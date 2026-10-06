@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import StatusPill from './StatusPill.jsx';
-import { updateBooking, saveOwnerNotes, sendBookingReminder, buildSmsReminderHref, defaultReminderMessage, formatBookingTime } from '../../../lib/bookings.js';
+import { updateBooking, saveOwnerNotes, sendBookingReminder, buildSmsReminderHref, defaultReminderMessage, formatBookingTime, requestedTimeText, isUnscheduledRequest } from '../../../lib/bookings.js';
 import { supabase } from '../../../lib/supabase.js';
 
 // Real instants (created_at) in the viewer's time zone. The appointment
@@ -36,8 +36,12 @@ export default function BookingDetailDrawer({ booking, onClose, onUpdated }) {
   const [showDecline, setShowDecline] = useState(false);
   const [site, setSite] = useState(null);
   const [reminderState, setReminderState] = useState({ status: 'idle', error: null });
+  // Confirming a request-form booking sets its real time (datetime-local).
+  const [confirmTime, setConfirmTime] = useState('');
+  // Confirmed bookings this one would overlap; shown before "Confirm anyway".
+  const [overlaps, setOverlaps] = useState(null);
 
-  useEffect(() => { setB(booking); setNotes(booking?.owner_notes || ''); setShowDecline(false); setErr(null); setReminderState({ status: 'idle', error: null }); }, [booking?.id]);
+  useEffect(() => { setB(booking); setNotes(booking?.owner_notes || ''); setShowDecline(false); setErr(null); setReminderState({ status: 'idle', error: null }); setConfirmTime(''); setOverlaps(null); }, [booking?.id]);
 
   // Pull the site so reminder copy + email footer can use the business name.
   useEffect(() => {
@@ -54,18 +58,34 @@ export default function BookingDetailDrawer({ booking, onClose, onUpdated }) {
 
   if (!b) return null;
 
-  async function run(action) {
+  async function run(action, { force = false } = {}) {
     if (action === 'decline' && !showDecline) { setShowDecline(true); return; }
+    if (action === 'confirm' && unscheduled && !confirmTime) {
+      setErr('Pick the appointment time first.');
+      return;
+    }
     setBusy(true); setErr(null);
     try {
       const updated = await updateBooking({
         bookingId: b.id,
         action,
         reason: action === 'decline' ? (declineReason.trim() || undefined) : undefined,
+        shopPreferredAt: action === 'confirm' && confirmTime ? confirmTime : undefined,
+        force,
       });
       setB(updated);
+      setOverlaps(null);
       onUpdated && onUpdated(updated);
-    } catch (e) { setErr(e.message); }
+    } catch (e) {
+      if (e.code === 'overlap') {
+        setOverlaps(e.conflicts || []);
+        setErr('This overlaps a booking you already confirmed.');
+      } else if (e.code === 'time_required') {
+        setErr('Pick the appointment time first.');
+      } else {
+        setErr(e.message);
+      }
+    }
     finally { setBusy(false); }
   }
 
@@ -93,6 +113,8 @@ export default function BookingDetailDrawer({ booking, onClose, onUpdated }) {
   const remindable = ['pending', 'confirmed'].includes(b.status);
 
   const actions = ACTIONS_FOR[b.status] || [];
+  const requested = requestedTimeText(b.notes);
+  const unscheduled = isUnscheduledRequest(b);
 
   return (
     <div className="fixed inset-0 z-[60] flex" onClick={onClose}>
@@ -119,7 +141,7 @@ export default function BookingDetailDrawer({ booking, onClose, onUpdated }) {
         </p>
 
         <dl className="text-sm space-y-2 mb-6">
-          <Row term="When"     def={formatBookingTime(b.preferred_at)} />
+          <Row term="When"     def={unscheduled ? `Not set yet (asked for: ${requested})` : formatBookingTime(b.preferred_at)} />
           <Row term="Vehicle"  def={`${b.vehicle_year} ${b.vehicle_make} ${b.vehicle_model} (${b.vehicle_type_name || b.vehicle_size})`} />
           {b.service_name     && <Row term="Service" def={b.service_name} />}
           {b.service_address  && <Row term="Address" def={b.service_address} />}
@@ -249,7 +271,41 @@ export default function BookingDetailDrawer({ booking, onClose, onUpdated }) {
           </div>
         )}
 
-        {err && <p className="mt-3 text-sm text-red-600">{err}</p>}
+        {unscheduled && (
+          <div className="mt-4">
+            <label className="block text-xs font-semibold text-gray-600 mb-1">
+              Appointment time (needed to confirm)
+            </label>
+            <input
+              type="datetime-local"
+              value={confirmTime}
+              onChange={(e) => setConfirmTime(e.target.value)}
+              className="w-full border border-gray-200 rounded-lg p-2 text-sm focus:outline-none focus:border-gray-400"
+            />
+            <p className="text-xs text-gray-500 mt-1">The customer gets this time in their confirmation email.</p>
+          </div>
+        )}
+
+        {err && <p className="mt-3 text-sm text-red-600" role="alert">{err}</p>}
+
+        {overlaps && overlaps.length > 0 && (
+          <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+            <p className="mb-1">It overlaps:</p>
+            <ul className="list-disc pl-5 mb-2">
+              {overlaps.map((o) => (
+                <li key={o.id}>{o.customer_name} at {formatBookingTime(o.preferred_at)}</li>
+              ))}
+            </ul>
+            <button
+              type="button"
+              onClick={() => run('confirm', { force: true })}
+              disabled={busy}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#cc0000] hover:bg-[#aa0000] text-white disabled:opacity-50"
+            >
+              Confirm anyway
+            </button>
+          </div>
+        )}
 
         {actions.length > 0 && (
           <div className="mt-5 flex flex-wrap gap-2">

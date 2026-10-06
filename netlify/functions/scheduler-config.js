@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { isEffectiveSchedulerActive } from './_lib/subscription-gating.js';
+import { isEffectiveSchedulerActive, GATING_PROFILE_COLUMNS } from './_lib/subscription-gating.js';
 import { buildSchedulerPayload } from './_lib/scheduler-payload.js';
 
 // Public widget endpoint — called from scheduler.js injected on every
@@ -16,6 +16,8 @@ const CORS = {
   'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
 };
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function disabled() {
   return { statusCode: 200, headers: CORS, body: JSON.stringify({ enabled: false }) };
 }
@@ -30,6 +32,8 @@ export const handler = async (event) => {
   if (!siteId) {
     return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Missing siteId' }) };
   }
+  // Not a site id: nothing to look up (and no Postgres cast error to log).
+  if (!UUID_RE.test(siteId)) return disabled();
 
   const supabase = createClient(
     process.env.VITE_SUPABASE_URL,
@@ -44,9 +48,11 @@ export const handler = async (event) => {
 
   if (!site || !site.scheduler_enabled) return disabled();
 
+  // Same columns create-booking gates on, so the widget never offers a
+  // booking the server then refuses.
   const { data: profile } = await supabase
     .from('profiles')
-    .select('is_super_admin, scheduler_enabled, subscription_status, subscription_ends_at')
+    .select(GATING_PROFILE_COLUMNS)
     .eq('id', site.user_id)
     .maybeSingle();
 

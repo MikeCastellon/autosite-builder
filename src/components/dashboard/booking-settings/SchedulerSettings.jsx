@@ -14,11 +14,21 @@ import ServicesTab from './ServicesTab.jsx';
 import AvailabilityTab from './AvailabilityTab.jsx';
 import ShareBookingCard from '../booking-only/ShareBookingCard.jsx';
 import { bookingShareUrl } from '../../../lib/bookingUrl.js';
+import { useAuth } from '../../../lib/AuthContext.jsx';
+import { isEffectiveSchedulerActive } from '../../../lib/subscriptionGating.js';
+import UpgradeProDialog from '../../ui/UpgradeProDialog.jsx';
 
 export default function SchedulerSettings({ siteId, onExit }) {
+  const { profile } = useAuth();
+  // The public widget only takes bookings for a Pro owner
+  // (scheduler-config); the switch alone doesn't.
+  const isPro = isEffectiveSchedulerActive(profile);
   const [tab, setTab] = useState('general');
   const [site, setSite] = useState(null);
   const [err, setErr] = useState(null);
+  const [toggleErr, setToggleErr] = useState(null);
+  const [toggling, setToggling] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
   // The website's /book page (see publishBookPage): null | 'offer' |
   // 'publishing' | 'published' | 'failed' | 'republish'.
   const [bookPage, setBookPage] = useState(null);
@@ -66,14 +76,23 @@ export default function SchedulerSettings({ siteId, onExit }) {
   }
 
   async function toggleEnabled(next) {
-    await setSchedulerEnabled(siteId, next);
-    if (next) await initializeSchedulerConfig(siteId);
-    if (!next) setBookPage(null);
-    // Let refresh's config writes (service sync) land before publishBookPage
-    // saves its marker: saveSchedulerConfig is read-merge-write, so the two
-    // running at once could drop one of them.
-    await refresh();
-    if (next) publishBookPage();
+    if (toggling) return;
+    setToggling(true);
+    setToggleErr(null);
+    try {
+      await setSchedulerEnabled(siteId, next);
+      if (next) await initializeSchedulerConfig(siteId);
+      if (!next) setBookPage(null);
+      // Let refresh's config writes (service sync) land before publishBookPage
+      // saves its marker: saveSchedulerConfig is read-merge-write, so the two
+      // running at once could drop one of them.
+      await refresh();
+      if (next) publishBookPage();
+    } catch (e) {
+      setToggleErr(e?.message || 'Could not change bookings. Please try again.');
+    } finally {
+      setToggling(false);
+    }
   }
 
   // A published website only gets its /book page when it is published with
@@ -131,6 +150,9 @@ export default function SchedulerSettings({ siteId, onExit }) {
   if (!site) return <div className="p-16 text-center text-gray-500 bg-white rounded-2xl border border-black/[0.07] shadow-sm">Loading…</div>;
 
   const isEnabled = !!site.scheduler_enabled;
+  const isBookingPage = site.site_type === 'booking_only';
+  // What customers actually get: the switch AND a Pro plan.
+  const isLive = isEnabled && isPro;
 
   // Canonical public booking link, used both for the share card and to decide
   // whether to prompt the owner to publish their site first.
@@ -150,21 +172,39 @@ export default function SchedulerSettings({ siteId, onExit }) {
             role="switch"
             aria-checked={isEnabled}
             onClick={() => toggleEnabled(!isEnabled)}
-            className={`relative w-12 h-7 rounded-full transition-colors shrink-0 ${isEnabled ? 'bg-[#cc0000]' : 'bg-gray-300'}`}
+            disabled={toggling}
+            aria-label="Take bookings"
+            className={`relative w-12 h-7 rounded-full transition-colors shrink-0 disabled:opacity-60 ${isEnabled ? 'bg-[#cc0000]' : 'bg-gray-300'}`}
           >
             <span className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform ${isEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
           </button>
           <div className="min-w-0">
             <p className="text-[15px] font-bold text-[#1a1a1a] tracking-[-0.2px]">
-              {isEnabled ? 'Bookings are live' : 'Bookings are off'}
+              {isLive ? 'Bookings are live' : isEnabled ? 'Bookings are not live yet' : 'Bookings are off'}
             </p>
             <p className="text-[12px] text-[#888] mt-0.5">
-              {isEnabled
-                ? 'Customers see your Book Now button on the published site.'
-                : 'Turn on to enable the Book Now button on your published site.'}
+              {isLive
+                ? (isBookingPage
+                  ? 'Customers can book on your booking page.'
+                  : 'Customers see your Book Now button on the published site.')
+                : isEnabled
+                  ? 'Your settings are saved, but customers can\u2019t book until you upgrade to Pro.'
+                  : (isBookingPage
+                    ? 'Turn on to take bookings on your booking page.'
+                    : 'Turn on to enable the Book Now button on your published site.')}
             </p>
+            {toggleErr && <p className="text-[12px] text-[#cc0000] mt-1" role="alert">{toggleErr}</p>}
           </div>
         </div>
+        {isEnabled && !isPro && (
+          <button
+            type="button"
+            onClick={() => setUpgradeOpen(true)}
+            className="inline-flex items-center text-[13px] font-semibold px-4 py-2 rounded-lg bg-[#cc0000] text-white hover:bg-[#b30000] transition-colors shrink-0"
+          >
+            Upgrade to go live
+          </button>
+        )}
         {isEnabled && (
           <button
             onClick={openCustomerPreview}
@@ -222,9 +262,15 @@ export default function SchedulerSettings({ siteId, onExit }) {
           {tab === 'general' && <GeneralTab siteId={siteId} config={site.scheduler_config} siteImages={site.generated_content?._images} onSaved={onSaved} />}
           {tab === 'appearance' && <AppearanceTab siteId={siteId} config={site.scheduler_config} onSaved={onSaved} />}
           {tab === 'services' && <ServicesTab siteId={siteId} config={site.scheduler_config} onSaved={onSaved} />}
-          {tab === 'availability' && <AvailabilityTab siteId={siteId} config={site.scheduler_config} onSaved={onSaved} />}
+          {tab === 'availability' && <AvailabilityTab siteId={siteId} config={site.scheduler_config} businessInfo={site.business_info} onSaved={onSaved} />}
         </div>
       </div>
+      <UpgradeProDialog
+        open={upgradeOpen}
+        onClose={() => setUpgradeOpen(false)}
+        heading="Take bookings with Pro"
+        subheading="Your booking settings are saved. Upgrade to let customers book online."
+      />
     </div>
   );
 }

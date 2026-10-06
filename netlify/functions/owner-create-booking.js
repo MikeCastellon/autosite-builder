@@ -8,7 +8,7 @@
 // reject if the caller doesn't own the target site.
 import { createClient } from '@supabase/supabase-js';
 import { bookingReceivedToCustomer } from './_lib/postmark.js';
-import { isEffectiveSchedulerActive } from './_lib/subscription-gating.js';
+import { isEffectiveSchedulerActive, GATING_PROFILE_COLUMNS } from './_lib/subscription-gating.js';
 import { corsHeaders, jsonHeaders } from './_shared/cors.js';
 import { computeTotalCents } from './_lib/deposit-math.js';
 import {
@@ -34,6 +34,13 @@ import {
 // current dialog after a rollback books the right time there too.
 const STALE_DASHBOARD_ERROR =
   'The dashboard was updated. Please reload the page, then create this booking again (it was not saved).';
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Same caps as the public form (booking-validation.js FIELD_LIMITS).
+const TEXT_LIMITS = {
+  customer_name: 100, customer_email: 254, customer_phone: 40,
+  vehicle_make: 60, vehicle_model: 60, notes: 2000,
+};
 
 export const handler = async (event) => {
   const cors = corsHeaders(event.headers);
@@ -77,6 +84,24 @@ export const handler = async (event) => {
   if (typeof shop_preferred_at !== 'string' || !shop_preferred_at) {
     return fail(409, { error: STALE_DASHBOARD_ERROR, code: 'reload_required' });
   }
+  if (Number.isNaN(Date.parse(shop_preferred_at))) {
+    return fail(400, { error: 'Pick a valid date and time.' });
+  }
+  for (const [key, max] of Object.entries(TEXT_LIMITS)) {
+    const v = payload[key];
+    if (v == null || v === '') continue;
+    if (typeof v !== 'string') return fail(400, { error: `Invalid ${key}` });
+    if (v.length > max) return fail(400, { error: `${key.replace(/_/g, ' ')} is too long (${max} characters at most).` });
+  }
+  if (customer_email && !EMAIL_RE.test(customer_email)) {
+    return fail(400, { error: 'Enter a valid email address, or leave it empty.' });
+  }
+  // bookings.vehicle_year is NOT NULL: a blank year used to fail the insert
+  // with a bare "Failed to create booking".
+  const year = Number(vehicle_year);
+  if (vehicle_year == null || vehicle_year === '' || !Number.isInteger(year) || year < 1900 || year > 2100) {
+    return fail(400, { error: "Enter the vehicle's year (1900 to 2100)." });
+  }
 
   const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
   const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
@@ -93,7 +118,7 @@ export const handler = async (event) => {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('email, is_super_admin, scheduler_enabled, subscription_status, subscription_ends_at, stripe_first_failed_payment_at')
+    .select(`email, ${GATING_PROFILE_COLUMNS}`)
     .eq('id', user.id)
     .maybeSingle();
   if (!isEffectiveSchedulerActive(profile)) return fail(403, { error: 'Pro subscription required' });
@@ -138,13 +163,13 @@ export const handler = async (event) => {
       preferred_at: shop_preferred_at,
       vehicle_make: vehicle_make || '',
       vehicle_model: vehicle_model || '',
-      vehicle_year: vehicle_year ? Number(vehicle_year) : null,
+      vehicle_year: year,
       vehicle_size: chosenVehicleType ? vehicleSizeFromTypeName(chosenVehicleType.name) : (vehicle_size || 'other'),
       service_address: null,
       notes: notes || null,
       referral_source: 'owner-dashboard',
-      service_id: service_id || null,
-      service_name: service_name || null,
+      service_id: chosenService?.id || service_id || null,
+      service_name: chosenService?.name || service_name || null,
       vehicle_type_id: chosenVehicleType?.id || null,
       vehicle_type_name: chosenVehicleType?.name || null,
       duration_minutes: variant?.duration_minutes ?? null,
@@ -162,7 +187,8 @@ export const handler = async (event) => {
 
   if (send_email && customer_email) {
     try {
-      await bookingReceivedToCustomer({ booking: inserted, site, isSimple: false });
+      // Already confirmed: the email says "you're booked", not "we'll confirm".
+      await bookingReceivedToCustomer({ booking: inserted, site, isSimple: false, confirmed: true });
     } catch (err) {
       console.error('owner-create-booking customer email failed:', err);
       // non-fatal: booking is saved

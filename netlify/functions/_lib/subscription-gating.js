@@ -2,6 +2,14 @@
 // Mirrored in src/lib/subscriptionGating.js — keep the two in sync.
 const GRACE_MS = 7 * 24 * 60 * 60 * 1000;
 
+// Every profiles column isEffectiveSchedulerActive reads. Select exactly
+// these: a missing stripe_first_failed_payment_at reads as "Shopify, no
+// failure clock", which keeps a Stripe owner Pro forever after the grace
+// period ends. scheduler-config and scheduler-slots once left it out, so the
+// widget offered slots that create-booking (which had it) then refused.
+export const GATING_PROFILE_COLUMNS =
+  'is_super_admin, scheduler_enabled, subscription_status, subscription_ends_at, stripe_first_failed_payment_at';
+
 export function isEffectiveSchedulerActive(profile) {
   if (!profile) return false;
   if (profile.is_super_admin) return true;
