@@ -3,7 +3,19 @@ import InquiriesList from './InquiriesList.jsx';
 import InquiryDetailDrawer from './InquiryDetailDrawer.jsx';
 import { listInquiriesForOwner, listAllInquiries } from '../../../lib/inquiries.js';
 
-export default function InquiriesView({ userId, isAdmin = false }) {
+// Which inquiries a view lists. Every shop's only when the caller asks for
+// allShops (Admin > All inquiries); otherwise strictly the owner's, so a
+// super admin's own Inquiries page never shows other shops' leads. No userId
+// in owner mode means nothing to list, never "everything".
+export async function loadInquiries({ userId, allShops = false }) {
+  if (allShops) return listAllInquiries({});
+  if (!userId) return [];
+  return listInquiriesForOwner({ userId });
+}
+
+// shopFor(inquiry) -> { business, owner, ownerEmail, siteUrl, ownerIsAdmin }
+// names the shop an inquiry belongs to; only the all-shops view passes it.
+export default function InquiriesView({ userId, allShops = false, shopFor = null }) {
   const [inquiries, setInquiries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
@@ -12,15 +24,12 @@ export default function InquiriesView({ userId, isAdmin = false }) {
   async function refresh() {
     setLoading(true); setErr(null);
     try {
-      const rows = isAdmin
-        ? await listAllInquiries({})
-        : await listInquiriesForOwner({ userId });
-      setInquiries(rows);
+      setInquiries(await loadInquiries({ userId, allShops }));
     } catch (e) { setErr(e.message); }
     finally { setLoading(false); }
   }
 
-  useEffect(() => { refresh(); /* eslint-disable-next-line */ }, [userId, isAdmin]);
+  useEffect(() => { refresh(); /* eslint-disable-next-line */ }, [userId, allShops]);
 
   function onUpdated(updated) {
     setInquiries((prev) => prev.map((x) => x.id === updated.id ? updated : x));
@@ -33,7 +42,7 @@ export default function InquiriesView({ userId, isAdmin = false }) {
       {err && <p className="text-sm text-red-600">{err}</p>}
 
       {!loading && !err && (
-        <InquiriesList inquiries={inquiries} onSelect={setSelected} />
+        <InquiriesList inquiries={inquiries} onSelect={setSelected} shopFor={shopFor} />
       )}
 
       {selected && (
@@ -41,6 +50,10 @@ export default function InquiriesView({ userId, isAdmin = false }) {
           inquiry={selected}
           onClose={() => setSelected(null)}
           onUpdated={onUpdated}
+          // These are other owners' leads: reading one must not mark it read
+          // or touch their notes, same as a "View as user" tab.
+          readOnly={allShops}
+          shop={shopFor ? shopFor(selected) : null}
         />
       )}
     </div>

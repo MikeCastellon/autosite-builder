@@ -1,47 +1,28 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase.js';
 import { useAlert } from '../ui/AlertProvider.jsx';
-import { listAllUsers, listAllAdminTags, subStatusBucket } from '../../lib/adminUsers.js';
+import { listAllUsers, listAllAdminTags } from '../../lib/adminUsers.js';
+import { ACCOUNT_FILTERS, billingStatusOf, isAccountFilter, matchesAccountFilter } from '../../lib/adminStats.js';
+import { BillingBadge, formatShortDate } from './billingUi.jsx';
 import AdminUserDrawer from './AdminUserDrawer.jsx';
 
-const FILTERS = [
-  { id: 'all',     label: 'All',         match: () => true },
-  { id: 'pro',     label: 'Pro',         match: (u) => ['pro', 'pro-comp'].includes(subStatusBucket(u)) },
-  { id: 'free',    label: 'Free',        match: (u) => subStatusBucket(u) === 'free' },
-  { id: 'cancelled', label: 'Cancelled', match: (u) => ['cancelled', 'cancelled-grace'].includes(subStatusBucket(u)) },
-  { id: 'past_due', label: 'Past Due',   match: (u) => subStatusBucket(u) === 'past_due' },
-  { id: 'has_site', label: 'Has Site',   match: (u) => u.publishedSiteCount > 0 },
-  { id: 'stripe',   label: 'Stripe',     match: (u) => !!u.stripe_connect_charges_enabled },
-];
-
-function SubBadge({ bucket }) {
-  const map = {
-    'admin':           ['Admin',       'bg-[#1a1a1a] text-white'],
-    'pro':             ['Pro',         'bg-[#cc0000] text-white'],
-    'pro-comp':        ['Pro (comp)',  'bg-[#cc0000]/15 text-[#cc0000]'],
-    'past_due':        ['Past Due',    'bg-amber-100 text-amber-800'],
-    'cancelled-grace': ['Cancelled',   'bg-amber-100 text-amber-800'],
-    'cancelled':       ['Cancelled',   'bg-gray-200 text-gray-700'],
-    'free':            ['Free',        'bg-gray-100 text-gray-600'],
-  };
-  const [label, cls] = map[bucket] || ['—', 'bg-gray-100 text-gray-600'];
-  return <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ${cls}`}>{label}</span>;
+// The chip a link asked for (the dashboard's tiles pass one), else All.
+function startFilter(id) {
+  return isAccountFilter(id) ? id : 'all';
 }
 
-function formatDate(iso) {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
-}
-
-export default function AdminAccountsTab() {
+export default function AdminAccountsTab({ initialFilter } = {}) {
   const { toast, confirm: confirmDialog } = useAlert();
   const [users, setUsers] = useState([]);
   const [allTags, setAllTags] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
   const [search, setSearch] = useState('');
-  const [activeFilter, setActiveFilter] = useState('all');
+  const [activeFilter, setActiveFilter] = useState(() => startFilter(initialFilter));
   const [selectedUserId, setSelectedUserId] = useState(null);
+
+  // A dashboard tile can ask for another chip while this tab stays mounted.
+  useEffect(() => { setActiveFilter(startFilter(initialFilter)); }, [initialFilter]);
 
   async function refresh() {
     setLoading(true); setErr(null);
@@ -69,11 +50,13 @@ export default function AdminAccountsTab() {
     });
   }
 
+  // One billing status per user, shared by the chips, the rows and the counts.
+  const statusById = useMemo(() => new Map(users.map((u) => [u.id, billingStatusOf(u)])), [users]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const filterFn = (FILTERS.find((f) => f.id === activeFilter) || FILTERS[0]).match;
     return users
-      .filter(filterFn)
+      .filter((u) => matchesAccountFilter(activeFilter, u, statusById.get(u.id)))
       .filter((u) => {
         if (!q) return true;
         return (u.email || '').toLowerCase().includes(q)
@@ -83,14 +66,18 @@ export default function AdminAccountsTab() {
           || (u.firstSiteName || '').toLowerCase().includes(q)
           || (u.adminTags || []).some((t) => t.toLowerCase().includes(q));
       });
-  }, [users, search, activeFilter]);
+  }, [users, statusById, search, activeFilter]);
 
   // Bucket counts for the chip labels — gives the admin a sense of scale at a glance.
   const counts = useMemo(() => {
     const out = {};
-    for (const f of FILTERS) out[f.id] = users.filter(f.match).length;
+    for (const f of ACCOUNT_FILTERS) out[f.id] = users.filter((u) => matchesAccountFilter(f.id, u, statusById.get(u.id))).length;
     return out;
-  }, [users]);
+  }, [users, statusById]);
+
+  // An empty chip is noise, except All and the one in use (a dashboard link
+  // may land on a filter that is empty right now).
+  const visibleFilters = ACCOUNT_FILTERS.filter((f) => f.id === 'all' || f.id === activeFilter || counts[f.id] > 0);
 
   async function toggleField(id, field, current) {
     if (field === 'is_super_admin' && !current) {
@@ -120,7 +107,7 @@ export default function AdminAccountsTab() {
       </div>
 
       <div className="flex flex-wrap gap-1.5 mb-4">
-        {FILTERS.map((f) => (
+        {visibleFilters.map((f) => (
           <button
             key={f.id}
             type="button"
@@ -143,8 +130,10 @@ export default function AdminAccountsTab() {
       ) : filtered.length === 0 ? (
         <p className="text-sm text-ink-tertiary text-center py-10">No users match.</p>
       ) : (
-        <div className="bg-white border border-black/[0.07] rounded-xl overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="bg-white border border-black/[0.07] rounded-xl overflow-x-auto">
+          {/* Scrolls inside the card on narrow screens instead of cutting
+              off the last columns. */}
+          <table className="w-full text-sm min-w-[760px]">
             <thead className="bg-[#faf9f7] text-left text-[10px] text-ink-tertiary uppercase tracking-wider">
               <tr>
                 <th className="px-4 py-3">User</th>
@@ -181,7 +170,7 @@ export default function AdminAccountsTab() {
                       {u.business_name || u.firstSiteName || <span className="text-ink-tertiary">—</span>}
                     </td>
                     <td className="px-4 py-3">
-                      <SubBadge bucket={subStatusBucket(u)} />
+                      <BillingBadge status={statusById.get(u.id)} />
                     </td>
                     <td className="px-4 py-3">
                       {u.firstPublishedUrl ? (
@@ -211,7 +200,7 @@ export default function AdminAccountsTab() {
                         {(u.adminTags || []).length === 0 && <span className="text-ink-tertiary text-[12px]">—</span>}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-ink-tertiary text-[12px] whitespace-nowrap">{formatDate(u.created_at)}</td>
+                    <td className="px-4 py-3 text-ink-tertiary text-[12px] whitespace-nowrap">{formatShortDate(u.created_at)}</td>
                     <td className="px-4 py-3 text-right">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="9 18 15 12 9 6" />

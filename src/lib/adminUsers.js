@@ -3,6 +3,7 @@
 // non-admin who somehow renders the admin UI still can't read or write
 // anything sensitive.
 import { supabase } from './supabase.js';
+import { isLiveWebsite } from './adminStats.js';
 
 // Pull every signed-up user with the bits the admin list needs.
 // Rather than join in SQL (Supabase doesn't expose a clean cross-table
@@ -11,7 +12,7 @@ import { supabase } from './supabase.js';
 export async function listAllUsers() {
   const [profilesRes, sitesRes, metaRes] = await Promise.all([
     supabase.from('profiles').select('*'),
-    supabase.from('sites').select('id, user_id, business_info, slug, published_url, custom_domain, custom_domain_status, scheduler_enabled, created_at'),
+    supabase.from('sites').select('id, user_id, business_info, slug, published_url, custom_domain, custom_domain_status, scheduler_enabled, created_at, site_type, published_at'),
     supabase.from('admin_user_metadata').select('*'),
   ]);
   if (profilesRes.error) throw profilesRes.error;
@@ -33,7 +34,10 @@ export async function listAllUsers() {
       sites,
       siteCount: sites.length,
       publishedSiteCount: sites.filter((s) => s.published_url).length,
-      firstPublishedUrl: sites.find((s) => s.published_url)?.published_url || null,
+      // The live website when there is one, else any published page (a
+      // booking-only page): sites come back unordered, and the booking
+      // page is not the site the admin means by "live site".
+      firstPublishedUrl: (sites.find(isLiveWebsite) || sites.find((s) => s.published_url))?.published_url || null,
       firstSiteName: sites[0]?.business_info?.businessName || null,
       adminNotes: meta.notes || '',
       adminTags: meta.tags || [],
@@ -87,19 +91,4 @@ export async function listAllAdminTags() {
     }
   }
   return [...set].sort();
-}
-
-// Convenience: human-friendly subscription status bucket. Used by both the
-// list filter and the detail badge.
-export function subStatusBucket(profile) {
-  if (profile?.is_super_admin) return 'admin';
-  if (profile?.scheduler_enabled && profile?.subscription_status !== 'active') return 'pro-comp';
-  const s = profile?.subscription_status;
-  if (s === 'active') return 'pro';
-  if (s === 'past_due') return 'past_due';
-  if (s === 'cancelled') {
-    if (profile?.subscription_ends_at && new Date(profile.subscription_ends_at) > new Date()) return 'cancelled-grace';
-    return 'cancelled';
-  }
-  return 'free';
 }

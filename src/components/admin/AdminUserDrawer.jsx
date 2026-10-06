@@ -1,22 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { getUserActivityCounts, saveAdminUserMetadata, subStatusBucket } from '../../lib/adminUsers.js';
+import { getUserActivityCounts, saveAdminUserMetadata } from '../../lib/adminUsers.js';
+import { billingStatusOf } from '../../lib/adminStats.js';
+import { BillingBadge } from './billingUi.jsx';
 import { useAuth } from '../../lib/AuthContext.jsx';
 import { useAlert } from '../ui/AlertProvider.jsx';
 import { supabase } from '../../lib/supabase.js';
-
-function SubBadge({ bucket }) {
-  const map = {
-    'admin':           ['Admin',           'bg-[#1a1a1a] text-white'],
-    'pro':             ['Pro',             'bg-[#cc0000] text-white'],
-    'pro-comp':        ['Pro (comp)',      'bg-[#cc0000]/15 text-[#cc0000]'],
-    'past_due':        ['Past Due',        'bg-amber-100 text-amber-800'],
-    'cancelled-grace': ['Cancelled (grace)', 'bg-amber-100 text-amber-800'],
-    'cancelled':       ['Cancelled',       'bg-gray-200 text-gray-700'],
-    'free':            ['Free',            'bg-gray-100 text-gray-600'],
-  };
-  const [label, cls] = map[bucket] || ['—', 'bg-gray-100 text-gray-600'];
-  return <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold ${cls}`}>{label}</span>;
-}
 
 function Field({ label, value, mono }) {
   return (
@@ -36,6 +24,9 @@ function Section({ title, children }) {
   );
 }
 
+// Where the Pro subscription is billed; no source shows '—' (Field's empty value).
+const BILLING_SOURCE_LABELS = { stripe: 'Stripe', shopify: 'Shopify' };
+
 function formatDate(iso) {
   if (!iso) return null;
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -53,7 +44,7 @@ export default function AdminUserDrawer({ user, allTags, onClose, onRefresh }) {
   const [showTagSuggestions, setShowTagSuggestions] = useState(false);
   const skipFirstNotesAutosave = useRef(true);
 
-  const bucket = subStatusBucket(user);
+  const billing = billingStatusOf(user);
 
   // Activity counts on mount
   useEffect(() => {
@@ -236,7 +227,7 @@ export default function AdminUserDrawer({ user, allTags, onClose, onRefresh }) {
 
         <div className="flex-1 overflow-y-auto px-6 pb-6">
           <div className="flex items-center gap-2 pt-4 pb-2">
-            <SubBadge bucket={bucket} />
+            <BillingBadge status={billing} />
             {stripeConnected && (
               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#635bff]/10 text-[#635bff]">
                 Stripe Connected
@@ -259,6 +250,7 @@ export default function AdminUserDrawer({ user, allTags, onClose, onRefresh }) {
 
           <Section title="Subscription">
             <Field label="Status" value={user.subscription_status || (user.scheduler_enabled ? 'comp' : 'none')} />
+            <Field label="Billing" value={BILLING_SOURCE_LABELS[billing.source]} />
             {user.subscription_status === 'active' && user.subscription_current_period_end && (
               <Field label="Next bill" value={formatNextBill(user.subscription_current_period_end)} />
             )}

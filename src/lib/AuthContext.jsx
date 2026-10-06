@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { supabase } from './supabase.js';
+import { supabase, isImpersonationTab } from './supabase.js';
 
 const AuthContext = createContext(null);
 
@@ -7,8 +7,12 @@ const AuthContext = createContext(null);
 // header nav (Bookings, Customers, Charges, Charge button, etc.) on first
 // paint instead of waiting for the profile fetch to resolve and watching
 // items pop in. Background refresh keeps it fresh.
+// A "View as user" tab never touches it: localStorage is shared with the
+// admin's own tabs, which would then start from the customer's profile (and
+// an admin link opened next would be treated as a non-admin's).
 const PROFILE_CACHE_KEY = 'genius-profile-cache:v1';
-function readCachedProfile() {
+export function readCachedProfile() {
+  if (isImpersonationTab) return null;
   try {
     const raw = localStorage.getItem(PROFILE_CACHE_KEY);
     if (!raw) return null;
@@ -17,7 +21,8 @@ function readCachedProfile() {
     return parsed;
   } catch { return null; }
 }
-function writeCachedProfile(profile) {
+export function writeCachedProfile(profile) {
+  if (isImpersonationTab) return;
   try {
     if (profile && profile.id) localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(profile));
     else localStorage.removeItem(PROFILE_CACHE_KEY);
@@ -39,6 +44,9 @@ export function AuthProvider({ children }) {
   const [isRecovery, setIsRecovery] = useState(false);
   // Hydrate from cache so returning users get a populated header on first paint.
   const [profile, setProfile] = useState(() => readCachedProfile());
+  // The user id whose profile fetch last finished (with or without a row).
+  // Until it matches the session, `profile` may still be the cached one.
+  const [profileLoadedFor, setProfileLoadedFor] = useState(null);
 
   useEffect(() => {
     console.log('[Auth] Initializing... URL hash:', window.location.hash.substring(0, 80));
@@ -77,7 +85,7 @@ export function AuthProvider({ children }) {
   console.log('[Auth] Render — loading:', loading, 'session:', session ? 'yes' : 'no');
 
   const refreshProfile = useCallback(async () => {
-    if (!session?.user?.id) { setProfile(null); writeCachedProfile(null); return; }
+    if (!session?.user?.id) { setProfile(null); writeCachedProfile(null); setProfileLoadedFor(null); return; }
     const { data } = await supabase
       .from('profiles')
       .select('id, email, first_name, last_name, business_name, phone, photo_url, is_super_admin, scheduler_enabled, subscription_status, subscription_ends_at, subscription_current_period_end, stripe_first_failed_payment_at, shopify_customer_id, stripe_customer_id, stripe_connect_account_id, stripe_connect_charges_enabled, stripe_connect_payouts_enabled, stripe_connect_details_submitted')
@@ -85,6 +93,7 @@ export function AuthProvider({ children }) {
       .maybeSingle();
     setProfile(data || null);
     writeCachedProfile(data || null);
+    setProfileLoadedFor(session.user.id);
   }, [session?.user?.id]);
 
   // If the cached profile doesn't match the active session user, drop it
@@ -103,7 +112,17 @@ export function AuthProvider({ children }) {
   useEffect(() => { refreshProfile(); }, [refreshProfile]);
 
   return (
-    <AuthContext.Provider value={{ session: loading ? null : session, loading, isRecovery, clearRecovery: () => setIsRecovery(false), profile, refreshProfile }}>
+    <AuthContext.Provider value={{
+      session: loading ? null : session,
+      loading,
+      isRecovery,
+      clearRecovery: () => setIsRecovery(false),
+      profile,
+      // True once the signed-in user's own profile has been fetched (it may
+      // still be null: no row, or the fetch failed).
+      profileReady: !loading && !!session?.user?.id && profileLoadedFor === session.user.id,
+      refreshProfile,
+    }}>
       {children}
     </AuthContext.Provider>
   );

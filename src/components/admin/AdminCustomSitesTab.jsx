@@ -5,7 +5,7 @@ import { useAlert } from '../ui/AlertProvider.jsx';
 import CustomSiteProjectPage from './CustomSiteProjectPage.jsx';
 import { StageBadge, copyText, duration, formatDateTime, timeAgo } from './customSiteUi.jsx';
 
-// Custom websites (header nav): add a customer,
+// Admin > Custom websites (an AdminShell tab, rendered by AdminPage): add a customer,
 // email them the intake form link and track the build from "Form sent" to
 // "Live". A project opens as a full page (CustomSiteProjectPage). The
 // customer's side is /custom-site?t=<token> (CustomSiteFormPage).

@@ -1,20 +1,21 @@
 import { useState } from 'react';
 import ProgressBar from '../ui/ProgressBar.jsx';
 import { canSeeBookingsNav } from '../../lib/subscriptionGating.js';
+import { AdminSwitchButton } from '../ui/AppHeader.jsx';
 
 const STEP_LABELS = ['Business Type', 'Your Info', 'Template', 'Generating', 'Preview', 'Export'];
 
-export default function WizardShell({ step, onBack, children, userEmail, onMySites, onSignOut, profile, onOpenBookings, onOpenAdmin }) {
+// onSwitchToAdmin: super admins only (App passes it when the Admin
+// workspace is allowed); shown as the same "Admin" switch as AppHeader.
+export default function WizardShell({ step, onBack, children, userEmail, onMySites, onSignOut, profile, onOpenBookings, onSwitchToAdmin }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const showBookingsNav = canSeeBookingsNav(profile);
-  const isAdmin = !!profile?.is_super_admin;
   const initial = userEmail ? userEmail[0].toUpperCase() : '?';
 
   const navItems = [
     onMySites && { label: 'Dashboard', onClick: onMySites },
     showBookingsNav && onOpenBookings && { label: 'Bookings', onClick: onOpenBookings },
-    isAdmin && onOpenAdmin && { label: 'Admin', onClick: onOpenAdmin },
   ].filter(Boolean);
 
   return (
@@ -47,7 +48,8 @@ export default function WizardShell({ step, onBack, children, userEmail, onMySit
         </nav>
 
         {/* Right: desktop avatar dropdown */}
-        <div className="hidden md:flex items-center">
+        <div className="hidden md:flex items-center gap-3">
+          {onSwitchToAdmin && <AdminSwitchButton onClick={onSwitchToAdmin} />}
           {userEmail && (
             <div className="relative">
               <button
@@ -105,6 +107,14 @@ export default function WizardShell({ step, onBack, children, userEmail, onMySit
             </div>
           )}
           <nav className="flex flex-col gap-1">
+            {onSwitchToAdmin && (
+              <button
+                onClick={() => { setMobileOpen(false); onSwitchToAdmin(); }}
+                className="w-full text-left px-3 py-2.5 mb-1 rounded-lg text-[14px] font-semibold border border-black/[0.10] text-ink-primary hover:bg-surface-secondary"
+              >
+                Switch to Admin
+              </button>
+            )}
             {navItems.map((item) => (
               <button
                 key={item.label}

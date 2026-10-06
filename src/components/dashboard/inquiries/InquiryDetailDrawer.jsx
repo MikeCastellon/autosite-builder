@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import InquiryStatusPill from './InquiryStatusPill.jsx';
+import { shopLines } from './InquiriesList.jsx';
 import { isImpersonationTab } from '../../../lib/supabase.js';
 import { updateInquiryStatus, saveInquiryOwnerNotes } from '../../../lib/inquiries.js';
 
@@ -18,7 +19,14 @@ const ACTIONS_FOR = {
   archived: [{ to: 'read',     label: 'Restore',     primary: true }],
 };
 
-export default function InquiryDetailDrawer({ inquiry, onClose, onUpdated }) {
+function hostOf(url) {
+  return String(url || '').replace(/^https?:\/\/(www\.)?/, '').split('/')[0];
+}
+
+// readOnly: someone other than the owner is looking (Admin > All inquiries),
+// so no status changes and no note edits. A "View as user" tab is always
+// read-only. shop (all-shops view only) names whose inquiry this is.
+export default function InquiryDetailDrawer({ inquiry, onClose, onUpdated, readOnly = false, shop = null }) {
   const [i, setI] = useState(inquiry);
   const [notes, setNotes] = useState(inquiry?.owner_notes || '');
   const [busy, setBusy] = useState(false);
@@ -28,7 +36,10 @@ export default function InquiryDetailDrawer({ inquiry, onClose, onUpdated }) {
 
   if (!i) return null;
 
+  const locked = readOnly || isImpersonationTab;
+
   async function setStatus(to) {
+    if (locked) return;
     setBusy(true); setErr(null);
     try {
       const updated = await updateInquiryStatus(i.id, to);
@@ -39,7 +50,7 @@ export default function InquiryDetailDrawer({ inquiry, onClose, onUpdated }) {
   }
 
   async function onNotesBlur() {
-    if (notes === (i.owner_notes || '')) return;
+    if (locked || notes === (i.owner_notes || '')) return;
     try {
       const updated = await saveInquiryOwnerNotes(i.id, notes);
       setI(updated);
@@ -73,6 +84,7 @@ export default function InquiryDetailDrawer({ inquiry, onClose, onUpdated }) {
         </p>
 
         <dl className="text-sm space-y-2 mb-6">
+          {shop && <ShopRow shop={shop} />}
           <div className="flex gap-2">
             <dt className="w-20 text-gray-500 shrink-0">Message</dt>
             <dd className="text-gray-800 break-words whitespace-pre-wrap">{i.message}</dd>
@@ -89,13 +101,17 @@ export default function InquiryDetailDrawer({ inquiry, onClose, onUpdated }) {
           onChange={(e) => setNotes(e.target.value)}
           onBlur={onNotesBlur}
           rows={3}
-          readOnly={isImpersonationTab}
+          readOnly={locked}
           className="w-full border border-gray-200 rounded-lg p-2 text-sm focus:outline-none focus:border-gray-400 read-only:opacity-60 read-only:cursor-not-allowed"
         />
 
+        {readOnly && !isImpersonationTab && (
+          <p className="mt-2 text-xs text-gray-500">Read-only: the status and notes belong to the shop owner.</p>
+        )}
+
         {err && <p className="mt-3 text-sm text-red-600">{err}</p>}
 
-        {!isImpersonationTab && actions.length > 0 && (
+        {!locked && actions.length > 0 && (
           <div className="mt-5 flex flex-wrap gap-2">
             {actions.map((a) => (
               <button
@@ -114,6 +130,29 @@ export default function InquiryDetailDrawer({ inquiry, onClose, onUpdated }) {
           </div>
         )}
       </aside>
+    </div>
+  );
+}
+
+function ShopRow({ shop }) {
+  const { title } = shopLines(shop);
+  // Name and email both, minus whichever one already is the title.
+  const owner = [shop.ownerName, shop.ownerEmail].filter((x) => x && x !== title).join(' · ');
+  return (
+    <div className="flex gap-2">
+      <dt className="w-20 text-gray-500 shrink-0">Shop</dt>
+      <dd className="text-gray-800 min-w-0">
+        <span className="font-semibold">{title}</span>
+        {shop.ownerIsAdmin && (
+          <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-[#1a1a1a] text-white align-middle">ADMIN</span>
+        )}
+        {owner && <span className="block text-xs text-gray-500 break-words">{owner}</span>}
+        {shop.siteUrl && (
+          <a href={shop.siteUrl} target="_blank" rel="noopener noreferrer" className="block text-xs text-[#cc0000] hover:underline break-all">
+            {hostOf(shop.siteUrl)}
+          </a>
+        )}
+      </dd>
     </div>
   );
 }
