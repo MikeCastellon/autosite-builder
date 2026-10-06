@@ -363,6 +363,41 @@ export function sanitizeAssets(list, projectId) {
   return out;
 }
 
+// ─── Uploads the team added ───────────────────────────────────────────
+//
+// project.assets also holds the reference screenshots the team adds in the
+// Design step (custom-site-admin reference-add), marked addedBy: 'admin'.
+// They belong to the team: the customer's form never lists them, never
+// counts them against the customer's upload limits, and can never change
+// or remove them.
+
+export function isTeamAsset(a) {
+  return !!a && typeof a === 'object' && a.addedBy === 'admin';
+}
+
+// The customer's own uploads in a stored list: the files their form shows
+// and counts.
+export function customerAssets(stored) {
+  return (Array.isArray(stored) ? stored : []).filter((a) => a && typeof a === 'object' && !isTeamAsset(a));
+}
+
+// What the form's save and submit store: the customer's list, sanitized,
+// then every team upload already stored, exactly as stored (its note,
+// group and part included). The browser's list only ever speaks for the
+// customer's own files, so an entry on a team path (a page loaded before
+// the form stopped listing them still holds them) and any entry that
+// claims addedBy at all are dropped before sanitizing: a customer can
+// neither pass a file off as the team's nor edit, remove or bring back a
+// team upload, and the stale entries don't use up the customer's
+// per-kind room.
+export function mergeFormAssets(stored, list, projectId) {
+  const team = (Array.isArray(stored) ? stored : []).filter(isTeamAsset);
+  const teamPaths = new Set(team.map((a) => a.path));
+  const sent = (Array.isArray(list) ? list : [])
+    .filter((a) => !(a && typeof a === 'object' && (a.addedBy != null || teamPaths.has(a.path))));
+  return [...sanitizeAssets(sent, projectId), ...team];
+}
+
 // A link for an address someone typed ("mysite.com", "https://…"), or null.
 // Only http(s): a "javascript:" address typed into the form must never
 // become a clickable link in the admin.
@@ -447,9 +482,13 @@ export function describeEvent(evt) {
       if (d.notes) parts.push('launch notes edited');
       return parts.length ? `Launch: ${parts.join(', ')}` : 'Launch list updated';
     }
-    case 'design_suggest_started': return 'Asked Claude to suggest a design';
-    case 'design_suggest_ready': return 'Design suggestion ready';
-    case 'design_suggest_failed': return `Design suggestion failed${d.error ? `: ${d.error}` : ''}`;
+    // Same wording as designSuggest.js describeSuggestEvent, which isn't
+    // imported here: this module is in the customer's form bundle, and that
+    // one carries the whole template catalog.
+    case 'design_suggest_started': return d.mode === 'match' ? 'Asked Claude to match a reference site\'s layout' : 'Asked Claude to suggest a design';
+    case 'design_suggest_ready': return d.mode === 'match' ? 'Layout match ready' : 'Design suggestion ready';
+    case 'design_suggest_failed': return `${d.mode === 'match' ? 'Layout match' : 'Design suggestion'} failed${d.error ? `: ${d.error}` : ''}`;
+    case 'reference_added': return `Reference screenshot added${d.name ? `: ${d.name}` : ''}`;
     case 'brand_started': return 'Started building the brand system';
     case 'brand_ready': return 'Brand system ready';
     case 'brand_failed': return `Brand system failed${d.error ? `: ${d.error}` : ''}`;

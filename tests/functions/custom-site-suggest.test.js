@@ -583,3 +583,305 @@ describe('custom-site-suggest', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });
+
+// ─── "Match its layout" ───────────────────────────────────────────────
+
+const SHOT = { path: path('reference', 30, 'png'), kind: 'reference', name: 'home.png', size: 64, type: 'image/png', note: 'Screenshot of https://refshop.test/', addedBy: 'admin' };
+const SHOT_FILES = { ...FILES, [SHOT.path]: png(1440, 900) };
+const MATCH_REF = { mode: 'match', source: { kind: 'url', url: 'https://refshop.test/' } };
+const MATCH_JSON = {
+  ...SUGGESTION_JSON,
+  reasons: { ...SUGGESTION_JSON.reasons, palette: 'Took their teal', reference: 'Full-width photo hero, three service cards, condensed all-caps headings' },
+};
+
+describe('loadSuggestImages for a match', () => {
+  it('sends the screenshots to match first and leaves the other inspiration out', async () => {
+    const assets = [...ASSETS, SHOT];
+    const db = fakeDb({ files: SHOT_FILES });
+    const { images, skipped } = await loadSuggestImages(db, { assets }, { matchShots: [SHOT] });
+    expect(images.map((i) => [i.name, !!i.match])).toEqual([['home.png', true], ['logo.png', false], ['car1.jpg', false], ['car2.jpg', false]]);
+    expect(images[0].data).toBe(png(1440, 900).toString('base64'));
+    expect(skipped.map((x) => [x.name, x.reason])).toEqual([
+      ['IMG_5.HEIC', expect.stringMatching(/HEIC files/)],
+      ['ref.jpg', 'Not sent: this run matches the chosen reference\'s layout'],
+    ]);
+    expect(db.state.downloads.map((d) => d.path)).not.toContain(path('reference', 2));
+  });
+});
+
+describe('custom-site-suggest start with a reference choice', () => {
+  it('claims a match run with the checked choice and the Studio\'s colors', async () => {
+    h.db = fakeDb({ projects: [project({ assets: [...ASSETS, SHOT] }, null)] });
+    const res = await handler(post({
+      action: 'start', id: PID,
+      reference: { mode: 'match', source: { kind: 'url', url: 'refshop.test' }, replica: { status: 'none' } },
+      palette: { accent: '#ABCDEF', bg: 'red' },
+    }));
+    expect(res.statusCode).toBe(200);
+    const { startedAt, suggestion } = json(res);
+    const claim = { status: 'running', startedAt, reference: MATCH_REF, studioPalette: { accent: '#abcdef' } };
+    expect(suggestion).toEqual(claim);
+    const { suggestion: stored, ...rest } = h.db.state.projects[0].design;
+    expect(stored).toEqual(claim);
+    expect(rest).toEqual(OTHER_DESIGN);
+    // The background function only gets the run's name; it reads the choice from the claim.
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ id: PID, startedAt });
+    expect(h.db.state.events).toEqual([expect.objectContaining({ type: 'design_suggest_started', data: { mode: 'match' } })]);
+  });
+
+  it('runs an inspiration choice as before', async () => {
+    h.db = fakeDb({ projects: [project({}, null)] });
+    const res = await handler(post({ action: 'start', id: PID, reference: { mode: 'inspire', source: { kind: 'url', url: 'javascript:x' } }, palette: { bg: '#000000' } }));
+    expect(res.statusCode).toBe(200);
+    expect(h.db.state.projects[0].design.suggestion).toEqual({ status: 'running', startedAt: json(res).startedAt });
+    expect(h.db.state.events[0].data).toEqual({});
+  });
+
+  it('refuses a match it can\'t run, before claiming anything', async () => {
+    const cases = [
+      [{ mode: 'match', source: { kind: 'url', url: 'https://elsewhere.test' } }, 'Add a screenshot of this site to match it', 'no-shot'],
+      [{ mode: 'match', source: { kind: 'asset', path: SHOT.path.replace(PID, '99999999-2222-4333-8444-555555555555') } }, /isn't one of this project's reference images/, 'source'],
+      [{ mode: 'match', source: { kind: 'asset', path: path('photo', 3) } }, /isn't one of this project's reference images/, 'source'],
+      [{ mode: 'match', source: { kind: 'asset', path: path('photo', 5, 'heic') } }, /isn't one of this project's reference images/, 'source'],
+      [{ mode: 'match', source: null }, 'Pick the reference site to match', 'pick'],
+      [{ mode: 'copy-it' }, 'Unknown reference choice', 'choice'],
+    ];
+    for (const [reference, error, problem] of cases) {
+      h.db = fakeDb({ projects: [project({ assets: [...ASSETS, SHOT] }, null)] });
+      const res = await handler(post({ action: 'start', id: PID, reference }));
+      expect(res.statusCode).toBe(400);
+      expect(json(res)).toEqual({ error: typeof error === 'string' ? error : expect.stringMatching(error), problem });
+      expect(h.db.state.projects[0].design.suggestion).toBeUndefined();
+      expect(h.db.state.events).toEqual([]);
+    }
+    expect(fetchMock).not.toHaveBeenCalled();
+    h.db = fakeDb({ projects: [] });
+    expect((await handler(post({ action: 'start', id: PID, reference: MATCH_REF }))).statusCode).toBe(404);
+  });
+});
+
+describe('custom-site-suggest-background runSuggest for a match', () => {
+  const claim = (extra = {}) => ({ status: 'running', startedAt: STARTED, reference: MATCH_REF, studioPalette: { accent: '#abcdef' }, ...extra });
+
+  it('mirrors the screenshot, keeps our colors and says what it mirrored', async () => {
+    const db = fakeDb({ projects: [project({ assets: [...ASSETS, SHOT] }, claim())], files: SHOT_FILES });
+    const client = fakeClient([ok(MATCH_JSON)]);
+    const res = await runSuggest({ db, client, projectId: PID, startedAt: STARTED, actor: 'admin@acg.test', now: () => '2026-10-05T12:03:00.000Z' });
+    expect(res.status).toBe(200);
+
+    const { body } = client.calls[0];
+    const blocks = body.messages[0].content;
+    const first = blocks.findIndex((b) => b.type === 'image');
+    expect(blocks[first].source).toEqual({ type: 'base64', media_type: 'image/png', data: png(1440, 900).toString('base64') });
+    expect(blocks[first - 1].text).toBe('Image 1: layout to match, file "home.png". Note: "Screenshot of https://refshop.test/"');
+    expect(blocks.filter((b) => b.type === 'image')).toHaveLength(4);
+    expect(body.system).toContain('This run is "Match its layout"');
+    expect(body.output_config.format.schema.properties.reasons.required).toContain('reference');
+
+    const { suggestion, ...rest } = db.state.projects[0].design;
+    expect(rest).toEqual(OTHER_DESIGN);
+    expect(suggestion.status).toBe('ready');
+    // No brand colors or brand system here: the chosen template's colors,
+    // with the Studio's accent. Never the model's palette.
+    expect(suggestion.levers.palette).toEqual(expect.objectContaining({ bg: '#fffbeb', secondary: '#fef3c7', accent: '#abcdef' }));
+    expect(suggestion.reasons.palette).toBe('The template\'s own colors, with your Studio colors on top: they gave no brand colors yet (build the brand system or set the Studio palette to change them). The reference\'s colors are never used.');
+    expect(suggestion.reasons.reference).toBe(MATCH_JSON.reasons.reference);
+    expect(suggestion.reference).toEqual({
+      mode: 'match', source: MATCH_REF.source, label: 'refshop.test', shots: [{ path: SHOT.path, name: 'home.png' }], paletteFrom: 'template',
+    });
+    expect(suggestion.skipped).toEqual(expect.arrayContaining([expect.objectContaining({ name: 'ref.jpg', reason: expect.stringMatching(/^Not sent/) })]));
+    expect(db.state.events).toEqual([expect.objectContaining({ type: 'design_suggest_ready', data: expect.objectContaining({ mode: 'match', images: 4 }) })]);
+  });
+
+  it('fails without asking Claude when the screenshot can\'t be sent', async () => {
+    const db = fakeDb({ projects: [project({ assets: [...ASSETS, SHOT] }, claim())], files: FILES });
+    const client = fakeClient([ok(MATCH_JSON)]);
+    const res = await runSuggest({ db, client, projectId: PID, startedAt: STARTED, actor: 'a' });
+    expect(res.status).toBe(500);
+    expect(client.calls).toHaveLength(0);
+    expect(db.state.projects[0].design.suggestion).toEqual(expect.objectContaining({
+      status: 'failed', error: 'The screenshot to match couldn\'t be sent (Could not be downloaded). Add a PNG, JPEG or WebP screenshot and try again.',
+    }));
+  });
+
+  it('checks the choice again: a screenshot gone since the start fails the run', async () => {
+    const db = fakeDb({ projects: [project({}, claim())], files: SHOT_FILES });
+    const client = fakeClient([ok(MATCH_JSON)]);
+    const res = await runSuggest({ db, client, projectId: PID, startedAt: STARTED, actor: 'a' });
+    expect(res.status).toBe(500);
+    expect(client.calls).toHaveLength(0);
+    expect(db.state.downloads).toHaveLength(0);
+    expect(db.state.projects[0].design.suggestion).toEqual(expect.objectContaining({ status: 'failed', error: 'Add a screenshot of this site to match it' }));
+    expect(db.state.events.map((e) => e.type)).toEqual(['design_suggest_failed']);
+  });
+});
+
+describe('"Match its layout" with a cut-up screenshot', () => {
+  const GROUP = 'rs-home-1a2b3c4d';
+  const TILES = [1, 2, 3].map((part) => ({
+    path: path('reference', 80 + part, 'png'), kind: 'reference', name: `home-${part}.png`, size: 64, type: 'image/png',
+    note: 'Screenshot of https://refshop.test/', addedBy: 'admin', group: GROUP, part,
+  }));
+  const tileFiles = (...parts) => ({ ...FILES, ...Object.fromEntries(parts.map((n) => [TILES[n - 1].path, png(1440, 2400)])) });
+  // Recorded out of order, and the bottom tile picked: the run still goes top first.
+  const withTiles = () => project(
+    { assets: [...ASSETS, TILES[2], TILES[0], TILES[1]] },
+    { status: 'running', startedAt: STARTED, reference: { mode: 'match', source: { kind: 'asset', path: TILES[2].path } } },
+  );
+  const labels = (client) => client.calls[0].body.messages[0].content.filter((b) => b.type === 'text' && /layout to match/.test(b.text)).map((b) => b.text);
+  const NOTE = 'Note: "Screenshot of https://refshop.test/"';
+
+  it('sends every tile, top first, whichever one was picked', async () => {
+    const db = fakeDb({ projects: [withTiles()], files: tileFiles(1, 2, 3) });
+    const client = fakeClient([ok(MATCH_JSON)]);
+    expect((await runSuggest({ db, client, projectId: PID, startedAt: STARTED, actor: 'a' })).status).toBe(200);
+    expect(labels(client)).toEqual([
+      'Image 1: layout to match, screenshot 1 of 3, file "home-1.png". ' + NOTE,
+      'Image 2: layout to match, screenshot 2 of 3, file "home-2.png". ' + NOTE,
+      'Image 3: layout to match, screenshot 3 of 3, file "home-3.png". ' + NOTE,
+    ]);
+    expect(db.state.projects[0].design.suggestion.reference.shots).toEqual(TILES.map((t) => ({ path: t.path, name: t.name })));
+  });
+
+  it('a lower tile that can\'t be sent is left out, and the others still go in order', async () => {
+    const db = fakeDb({ projects: [withTiles()], files: tileFiles(1, 3) });
+    const client = fakeClient([ok(MATCH_JSON)]);
+    expect((await runSuggest({ db, client, projectId: PID, startedAt: STARTED, actor: 'a' })).status).toBe(200);
+    expect(labels(client)).toEqual([
+      'Image 1: layout to match, screenshot 1 of 2, file "home-1.png". ' + NOTE,
+      'Image 2: layout to match, screenshot 2 of 2, file "home-3.png". ' + NOTE,
+    ]);
+    const { suggestion } = db.state.projects[0].design;
+    expect(suggestion.reference.shots.map((s) => s.name)).toEqual(['home-1.png', 'home-3.png']);
+    expect(suggestion.skipped).toEqual(expect.arrayContaining([expect.objectContaining({ name: 'home-2.png', reason: 'Could not be downloaded' })]));
+  });
+
+  it('without its top tile nothing of the screenshot goes, and the run fails before asking Claude', async () => {
+    const db = fakeDb({ projects: [withTiles()], files: tileFiles(2, 3) });
+    const client = fakeClient([ok(MATCH_JSON)]);
+    expect((await runSuggest({ db, client, projectId: PID, startedAt: STARTED, actor: 'a' })).status).toBe(500);
+    expect(client.calls).toHaveLength(0);
+    expect(db.state.projects[0].design.suggestion).toEqual(expect.objectContaining({
+      status: 'failed', error: 'The screenshot to match couldn\'t be sent (Could not be downloaded). Add a PNG, JPEG or WebP screenshot and try again.',
+    }));
+    expect(db.state.events).toEqual([expect.objectContaining({ type: 'design_suggest_failed', data: expect.objectContaining({ mode: 'match' }) })]);
+
+    // What loadSuggestImages says about each tile.
+    const { images, skipped } = await loadSuggestImages(fakeDb({ files: tileFiles(2, 3) }), { assets: [...ASSETS, ...TILES] }, { matchShots: TILES });
+    expect(images.filter((i) => i.match)).toEqual([]);
+    expect(skipped.filter((s) => s.path.includes('/reference/') && s.name.startsWith('home-')).map((s) => [s.name, s.reason])).toEqual([
+      ['home-1.png', 'Could not be downloaded'],
+      ['home-2.png', 'Not sent: the top of this screenshot couldn\'t be sent'],
+      ['home-3.png', 'Not sent: the top of this screenshot couldn\'t be sent'],
+    ]);
+  });
+});
+
+describe('the "Use their brand color" toggle on a match run', () => {
+  const BRAND_FORM = { ...project().form, colorMode: 'mine', colors: ['#cc0000'] };
+  const withShot = (suggestion, { form, useBrand } = {}) => {
+    const p = project({ assets: [...ASSETS, SHOT], ...(form ? { form } : {}) }, suggestion);
+    if (useBrand !== undefined) p.design.useBrand = useBrand;
+    return p;
+  };
+
+  it('start keeps the page\'s toggle on a match claim, true or false only', async () => {
+    h.db = fakeDb({ projects: [withShot(null)] });
+    const res = await handler(post({ action: 'start', id: PID, reference: MATCH_REF, useBrand: false }));
+    expect(res.statusCode).toBe(200);
+    const claim = { status: 'running', startedAt: json(res).startedAt, reference: MATCH_REF, useBrand: false };
+    expect(json(res).suggestion).toEqual(claim);
+    expect(h.db.state.projects[0].design.suggestion).toEqual(claim);
+
+    // Anything but a boolean is refused before anything is claimed, for an
+    // inspiration run too.
+    for (const body of [
+      { reference: MATCH_REF, useBrand: 'false' }, { reference: MATCH_REF, useBrand: 0 }, { reference: MATCH_REF, useBrand: {} },
+      { useBrand: 'yes' },
+    ]) {
+      h.db = fakeDb({ projects: [withShot(null)] });
+      const bad = await handler(post({ action: 'start', id: PID, ...body }));
+      expect(bad.statusCode).toBe(400);
+      expect(json(bad).error).toBe('Unknown "Use their brand color" setting');
+      expect(h.db.state.projects[0].design.suggestion).toBeUndefined();
+      expect(h.db.state.events).toEqual([]);
+    }
+
+    // Absent (or null): nothing on the claim, the run takes the saved
+    // setting. An inspiration run never carries it.
+    for (const [body, stored] of [
+      [{ reference: MATCH_REF }, { reference: MATCH_REF }],
+      [{ reference: MATCH_REF, useBrand: null }, { reference: MATCH_REF }],
+      [{ useBrand: true }, {}],
+    ]) {
+      h.db = fakeDb({ projects: [withShot(null)] });
+      const r = await handler(post({ action: 'start', id: PID, ...body }));
+      expect(r.statusCode).toBe(200);
+      expect(h.db.state.projects[0].design.suggestion).toEqual({ status: 'running', startedAt: json(r).startedAt, ...stored });
+    }
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+  });
+
+  it('the run follows the toggle it was started with over the saved setting', async () => {
+    const run = async (p) => {
+      const db = fakeDb({ projects: [p], files: SHOT_FILES });
+      const client = fakeClient([ok(MATCH_JSON)]);
+      expect((await runSuggest({ db, client, projectId: PID, startedAt: STARTED, actor: 'a' })).status).toBe(200);
+      const text = client.calls[0].body.messages[0].content.map((b) => b.text || '').join('\n');
+      return { suggestion: db.state.projects[0].design.suggestion, text };
+    };
+    const claim = (extra = {}) => ({ status: 'running', startedAt: STARTED, reference: MATCH_REF, ...extra });
+
+    // Saved off, started on: their brand color is the accent.
+    const on = await run(withShot(claim({ useBrand: true }), { form: BRAND_FORM, useBrand: false }));
+    expect(on.suggestion.reference.paletteFrom).toBe('brandColors');
+    expect(on.suggestion.reasons.palette).toMatch(/^Their brand color as the accent \(#[0-9a-f]{6}\) on the template's colors\./);
+
+    // Saved on (the default), started off: the template's own colors, and
+    // the reason never says they gave none.
+    const off = await run(withShot(claim({ useBrand: false }), { form: BRAND_FORM }));
+    expect(off.suggestion.reference.paletteFrom).toBe('template');
+    expect(off.suggestion.levers.palette).toEqual(expect.objectContaining({ bg: '#fffbeb', accent: '#f59e0b' }));
+    expect(off.suggestion.reasons.palette).toBe('The template\'s own colors: "Use their brand color" is off. The reference\'s colors are never used.');
+    expect(off.text).toContain('the designer turned the customer\'s brand colors off');
+
+    // No toggle on the claim: the saved setting decides, as before.
+    expect((await run(withShot(claim(), { form: BRAND_FORM, useBrand: false }))).suggestion.reference.paletteFrom).toBe('template');
+    expect((await run(withShot(claim(), { form: BRAND_FORM }))).suggestion.reference.paletteFrom).toBe('brandColors');
+  });
+});
+
+describe('a failed match says so in the log', () => {
+  const matchClaim = (startedAt = STARTED) => ({ status: 'running', startedAt, reference: MATCH_REF });
+
+  it('when the run fails, can\'t start, is released or timed out', async () => {
+    const db = fakeDb({ projects: [project({ assets: [...ASSETS, SHOT] }, matchClaim())], files: SHOT_FILES });
+    await runSuggest({ db, client: fakeClient([{ stop_reason: 'refusal', content: [] }]), projectId: PID, startedAt: STARTED, actor: 'a' });
+    expect(db.state.events).toEqual([expect.objectContaining({
+      type: 'design_suggest_failed', data: { error: expect.stringMatching(/declined/), mode: 'match' },
+    })]);
+
+    h.db = fakeDb({ projects: [project({ assets: [...ASSETS, SHOT] }, null)] });
+    fetchMock.mockResolvedValueOnce({ ok: false, status: 404 });
+    expect((await handler(post({ action: 'start', id: PID, reference: MATCH_REF }))).statusCode).toBe(502);
+    expect(h.db.state.events.map((e) => [e.type, e.data.mode])).toEqual([['design_suggest_started', 'match'], ['design_suggest_failed', 'match']]);
+
+    h.db = fakeDb({ projects: [project({ assets: [...ASSETS, SHOT] }, null)] });
+    const { startedAt } = json(await handler(post({ action: 'start', id: PID, reference: MATCH_REF, invoke: false })));
+    await handler(post({ action: 'release', id: PID, startedAt, error: 'Network down' }));
+    expect(h.db.state.events.at(-1)).toEqual(expect.objectContaining({
+      type: 'design_suggest_failed', data: { error: expect.stringContaining('Network down'), mode: 'match' },
+    }));
+
+    const old = new Date(Date.now() - 11 * 60 * 1000).toISOString();
+    h.db = fakeDb({ projects: [project({ assets: [...ASSETS, SHOT] }, matchClaim(old))] });
+    await handler(post({ action: 'get', id: PID }));
+    expect(h.db.state.events).toEqual([expect.objectContaining({ type: 'design_suggest_failed', actor: 'system', data: { error: 'timed out', mode: 'match' } })]);
+  });
+
+  it('an inspiration run\'s failure is logged as before', async () => {
+    const db = fakeDb({ projects: [project()], files: FILES });
+    await runSuggest({ db, client: fakeClient([{ stop_reason: 'refusal', content: [] }]), projectId: PID, startedAt: STARTED, actor: 'a' });
+    expect(db.state.events).toEqual([expect.objectContaining({ type: 'design_suggest_failed', data: { error: expect.stringMatching(/declined/) } })]);
+  });
+});

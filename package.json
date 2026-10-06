@@ -12,6 +12,7 @@
     "test:watch": "vitest",
     "theme:check": "vitest run src/components/preview/templates src/lib/fontCatalog.test.js",
     "theme:render": "vitest run --config vitest.render.config.js",
+    "replica:test": "vitest run tests/replica",
     "site:upgrade": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/site-upgrade/cli.mjs",
     "skills:release": "node scripts/skills-release.mjs",
     "skills:smoke": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/skills-smoke.mjs"

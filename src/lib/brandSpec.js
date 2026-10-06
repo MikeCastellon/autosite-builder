@@ -30,7 +30,7 @@ import { FONT_CATALOG, catalogFamily, familyFromStack } from './fontCatalog.js';
 import { isBodyFamily } from '../data/fontPairings.js';
 import { COLOR_ROLES } from './designLevers.js';
 import { DESIGN_EFFORT, DESIGN_MODEL } from './customSiteDesign.js';
-import { FORM_FIELDS, answerText, isFieldShown, safeHref } from './customSiteForm.js';
+import { FORM_FIELDS, answerText, isFieldShown, isTeamAsset, safeHref } from './customSiteForm.js';
 import { contrastRatio, deriveTheme, ensureContrast, hexToRgb, isDark, mix, rgbToHex } from '../components/preview/templates/kit/theme.js';
 
 export const BRAND_VERSION = 1;
@@ -142,6 +142,11 @@ export function brandInputCandidates(assets) {
   for (const a of Array.isArray(assets) ? assets : []) {
     // Own keys of BRAND_INPUT_LIMITS only: a kind like 'toString' is no input.
     if (!a || typeof a.path !== 'string' || !Object.prototype.hasOwnProperty.call(BRAND_INPUT_LIMITS, a.kind)) continue;
+    // A screenshot the team added (addedBy: 'admin') is a reference site
+    // to match the layout of, never a source of colors or taste: the brand
+    // system's palette is what a match run colors the site with, so the
+    // reference's colors must not reach it this way.
+    if (isTeamAsset(a)) continue;
     const name = String(a.name || a.path);
     if (!IMAGE_NAME.test(name)) {
       const ext = (/\.([a-z0-9]{1,5})$/i.exec(name)?.[1] || 'This').toUpperCase();

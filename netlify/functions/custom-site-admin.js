@@ -22,6 +22,18 @@
 //   handover     { id, compPro, sendEmail } → moves the site to the customer's
 //                                   account (created if needed) and emails them
 //   handover-email { id }         → sends the access email again
+//   reference-upload-url { id, fileName, size, type }
+//                                 → { path, uploadToken, signedUrl, type }: a
+//                                   signed upload to <id>/reference/<uuid>.<ext>
+//                                   (PNG, JPEG or WebP, at most 10 MB)
+//   reference-add { id, path, name, size, type, note, group?, part? }
+//                                 → records that upload on project.assets as a
+//                                   reference image (addedBy: 'admin');
+//                                   { project, asset } (asset with signed URLs).
+//                                   group + part: one tile (part 1..4, from
+//                                   the top) of a tall screenshot cut up in
+//                                   the browser (designSuggest.js
+//                                   checkReferenceGroup)
 //
 // The tables have RLS on with no policies (see the migration), so this
 // function, with the service role, is the only way in.
@@ -32,9 +44,10 @@ import { requireSuperAdmin } from './_lib/custom-site-auth.js';
 import { accessLink, findCustomerAccount, handOverSite } from './_lib/custom-site-handover.js';
 import { customSiteDraft, customSiteHandover, customSiteLive, customSiteWelcome } from './_lib/postmark.js';
 import {
-  ASSET_BUCKET, ASSET_KINDS, STAGE_IDS, fullName, isEmail, safeHref, sanitizeForm, stageAfterInvite,
+  ASSET_BUCKET, ASSET_KINDS, STAGE_IDS, assetPath, fullName, isEmail, isTeamAsset, safeHref, sanitizeForm, stageAfterInvite,
 } from '../../src/lib/customSiteForm.js';
-import { designProblems, isRunStale, sanitizeDesign } from '../../src/lib/customSiteDesign.js';
+import { designProblems, isRunStale, sanitizeDesign, sanitizeReference } from '../../src/lib/customSiteDesign.js';
+import { REFERENCE_SHOT_MAX_BYTES, checkReferenceGroup, checkReferenceShot, referenceShotPath } from '../../src/lib/designSuggest.js';
 import { applyLaunchPatch } from '../../src/lib/customSiteLaunch.js';
 import { KIT_KEYS } from '../../src/lib/launchKit.js';
 
@@ -233,6 +246,75 @@ async function saveLaunch(db, id, patch, actor) {
     if (!data) continue;
     if (event) await logEvent(db, current.id, 'launch', event, actor);
     return [200, { project: forAdmin(data) }];
+  }
+  return [409, { error: 'The project changed while saving. Try again.' }];
+}
+
+// ─── Reference screenshots the admin adds ───────────────────────────
+//
+// "Match its layout" (Suggest a design) only ever looks at screenshots: it
+// never fetches a website. When the customer gave a reference site's
+// address but no picture of it, the admin adds one from the Design step
+// (ReferenceShotUpload). As with the customer's form, the file goes from
+// the browser straight to the private bucket through a signed URL minted
+// for <id>/reference/<uuid>.<ext> (function bodies cap at ~6 MB), then
+// reference-add records it on project.assets as a reference image, marked
+// addedBy: 'admin'. A screenshot is only used to match layout and
+// structure; nothing of it is ever put on the customer's site. A tall
+// screenshot arrives as up to four tiles, each its own upload, sharing a
+// `group` and numbered from the top by `part`, so a match sends them
+// together and in order (designSuggest.js referenceShots).
+
+const REFERENCE_NOTE_MAX = 500;
+
+// The stored object at `path` ({ name, metadata }) or null: an upload is
+// recorded only once it has landed.
+async function storedObject(db, path) {
+  const slash = path.lastIndexOf('/');
+  const name = path.slice(slash + 1);
+  const { data, error } = await db.storage.from(ASSET_BUCKET).list(path.slice(0, slash), { limit: 10, search: name });
+  if (error) throw Object.assign(new Error('Could not check the upload'), { status: 500 });
+  return (data || []).find((f) => f?.name === name) || null;
+}
+
+// The team's screenshots have their own room, as the customer's uploads
+// have theirs (custom-site-form counts only the customer's own,
+// customerAssets): a customer who filled their inspiration slots must not
+// keep the team from adding the screenshot a match needs, and the other
+// way round.
+const referenceCount = (assets) => (Array.isArray(assets) ? assets : []).filter((a) => a?.kind === 'reference' && isTeamAsset(a)).length;
+const REFERENCE_FULL = `The team already added ${ASSET_KINDS.reference.max} reference screenshots to this project, the most it can hold.`;
+
+// Appends `asset` to project.assets and keeps every other upload. The
+// customer's form writes assets too (autosave), so the write only lands
+// while the row is still the one read (updated_at moves on every write,
+// via the trigger); otherwise it reads again. Recording the same path
+// twice changes nothing, and neither does recording a tile whose group
+// already has that part (a retried tile is a new upload with a new path:
+// the first one stays, so a group never holds two of one part; the spare
+// file stays in storage until the project goes, like a customer's
+// removed upload). Returns [status, body].
+async function addReferenceAsset(db, id, asset, actor) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const current = await loadProject(db, id);
+    if (!current) return [404, { error: 'Project not found' }];
+    const assets = Array.isArray(current.assets) ? current.assets : [];
+    const existing = assets.find((a) => a?.path === asset.path)
+      || (asset.group ? assets.find((a) => a?.kind === 'reference' && a.group === asset.group && a.part === asset.part) : null);
+    if (existing) return [200, { project: forAdmin(current), asset: (await withFileUrls(db, [existing]))[0] }];
+    if (referenceCount(assets) >= ASSET_KINDS.reference.max) return [400, { error: REFERENCE_FULL }];
+    let q = db.from(TABLE).update({ assets: [...assets, asset] }).eq('id', current.id);
+    if (current.updated_at) q = q.eq('updated_at', current.updated_at);
+    const { data, error } = await q.select('*').maybeSingle();
+    if (error) {
+      console.error('[custom-site-admin] reference save failed:', error.message);
+      return [500, { error: 'Could not save the screenshot' }];
+    }
+    if (!data) continue;
+    await logEvent(db, current.id, 'reference_added', {
+      name: asset.name, path: asset.path, ...(asset.group ? { group: asset.group, part: asset.part } : {}),
+    }, actor);
+    return [200, { project: forAdmin(data), asset: (await withFileUrls(db, [asset]))[0] }];
   }
   return [409, { error: 'The project changed while saving. Try again.' }];
 }
@@ -442,7 +524,6 @@ export const handler = async (event) => {
       }
 
       case 'design-save': {
-        const design = sanitizeDesign(body.design, { imageUrlPrefix: siteImagesPrefix() });
         // The launch list, a "Suggest a design" result and a brand-system run
         // are written by their own actions and background functions, never
         // by the setup form: carry them over. updated_at guards against one
@@ -451,9 +532,21 @@ export const handler = async (event) => {
           const current = await loadProject(db, body.id);
           if (!current) return reply(404, { error: 'Project not found' });
           if (runLive(current)) return reply(409, { error: 'Wait for the copy to finish first' });
+          // projectId pins design.reference's screenshot to this project's
+          // own reference folder: a path from another project is dropped
+          // (and a match without its source falls back to inspiration).
+          // The stored id, not the request's: the database would find the
+          // row by an upper-case id too, and the folder check would then
+          // drop this project's own screenshot.
+          const design = sanitizeDesign(body.design, { imageUrlPrefix: siteImagesPrefix(), projectId: current.id });
           const prev = current.design && typeof current.design === 'object' && !Array.isArray(current.design) ? current.design : {};
           const next = { ...design };
           for (const key of SERVER_DESIGN_KEYS) if (prev[key] !== undefined) next[key] = prev[key];
+          // The page always sends its reference choice; a save without one
+          // (a tab opened before the choice existed) keeps the stored one
+          // rather than wiping a match or a replica request.
+          const sent = body.design && typeof body.design === 'object' ? body.design : {};
+          if (sent.reference === undefined && prev.reference !== undefined) next.reference = sanitizeReference(prev.reference, { projectId: current.id });
           // A site, once created, keeps its id.
           if (current.site_id) next.siteId = current.site_id;
           let q = db.from(TABLE).update({ design: next }).eq('id', current.id);
@@ -551,6 +644,73 @@ export const handler = async (event) => {
         const emailError = await sendAccessEmail(db, current, { newAccount: neverSignedIn, site, actor });
         if (emailError) return reply(502, { error: emailError });
         return reply(200, { ok: true });
+      }
+
+      case 'reference-upload-url': {
+        const current = await loadProject(db, body.id);
+        if (!current) return reply(404, { error: 'Project not found' });
+        const check = checkReferenceShot({ fileName: body.fileName, size: Number(body.size), type: body.type });
+        if (check.error) return reply(400, { error: check.error });
+        if (referenceCount(current.assets) >= ASSET_KINDS.reference.max) return reply(400, { error: REFERENCE_FULL });
+        const path = assetPath(current.id, 'reference', crypto.randomUUID(), check.ext);
+        const { data, error } = await db.storage.from(ASSET_BUCKET).createSignedUploadUrl(path);
+        if (error || !data?.token) {
+          console.error('[custom-site-admin] signed upload failed:', error?.message);
+          return reply(500, { error: 'Could not start the upload. Try again.' });
+        }
+        return reply(200, { path, uploadToken: data.token, signedUrl: data.signedUrl || null, type: check.type });
+      }
+
+      case 'reference-add': {
+        const current = await loadProject(db, body.id);
+        if (!current) return reply(404, { error: 'Project not found' });
+        // Only a file reference-upload-url could have minted for this
+        // project: its reference folder, a screenshot format.
+        const path = typeof body.path === 'string' ? body.path : '';
+        const ext = referenceShotPath(current.id, path);
+        const check = ext ? checkReferenceShot({ fileName: `screenshot.${ext}`, size: 1, type: body.type }) : null;
+        if (!check || check.error) return reply(400, { error: 'That upload isn\'t a screenshot in this project\'s reference folder' });
+        // A tile's place in its screenshot (both or neither): checked
+        // before storage is asked anything.
+        const tile = checkReferenceGroup({ group: body.group, part: body.part });
+        if (tile.error) return reply(400, { error: tile.error });
+        // A file the project already holds (recorded before, or one of the
+        // customer's own uploads, which share this folder and may be up to
+        // 25 MB) is answered as recorded, before storage is asked anything:
+        // the size check below must never remove a file the project uses.
+        const recorded = (Array.isArray(current.assets) ? current.assets : []).find((a) => a?.path === path);
+        if (recorded) return reply(200, { project: forAdmin(current), asset: (await withFileUrls(db, [recorded]))[0] });
+        const stored = await storedObject(db, path);
+        if (!stored) return reply(400, { error: 'The screenshot didn\'t finish uploading. Try again.' });
+        // The signed URL doesn't cap the size: the stored file's own size
+        // decides, and an oversized one is removed again. (Its real format
+        // is checked when a run downloads it.)
+        const storedSize = Number(stored.metadata?.size);
+        const size = Number.isFinite(storedSize) && storedSize > 0 ? storedSize : Number(body.size) || 0;
+        if (size > REFERENCE_SHOT_MAX_BYTES) {
+          const { error } = await db.storage.from(ASSET_BUCKET).remove([path]);
+          if (error) console.error('[custom-site-admin] oversized screenshot not removed:', error.message);
+          return reply(400, { error: 'That screenshot is over 10 MB. Save a smaller one (or a few screen-height ones).' });
+        }
+        const note = clean(body.note, REFERENCE_NOTE_MAX).replace(/\s+/g, ' ');
+        // The name must end in a screenshot extension: a match only takes
+        // a reference whose name and path Claude can view
+        // (designSuggest.js referenceShots), so "Home page" alone would
+        // leave the admin's own upload unmatchable.
+        const given = clean(body.name, 190);
+        const name = !given ? `screenshot.${check.ext}` : /\.(png|jpe?g|webp)$/i.test(given) ? given : `${given}.${check.ext}`;
+        const asset = {
+          path,
+          kind: 'reference',
+          name,
+          size: Math.round(size),
+          type: check.type,
+          ...(note ? { note } : {}),
+          ...(tile.group ? { group: tile.group, part: tile.part } : {}),
+          addedBy: 'admin',
+        };
+        const [status, out] = await addReferenceAsset(db, current.id, asset, actor);
+        return reply(status, out);
       }
 
       case 'reset-link': {

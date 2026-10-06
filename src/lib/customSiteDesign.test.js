@@ -1,8 +1,10 @@
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
 import {
   DESIGN_MODEL, DESIGN_STALE_MS, fillPackageDescriptions, isRunStale, rewriteSite, showsPrices, brandAccent, briefText, buildDesignPrompt, contrast, designFromIntake, designProblems, guessCityState,
   isImportable, joinHours, normalizeDesignCopy, parseCopyJson, parseServices, rankTemplates, sanitizeDesign,
   servicesForType, siteBusinessInfo, schemaTypeFor,
+  REFERENCE_MODES, REPLICA_LABEL, canMatchReference, isReplicaFor, isReplicaTemplate, replicaTemplatesFor, sameReferenceSource, sanitizeReference,
 } from './customSiteDesign.js';
 import { TEMPLATES } from '../data/templates.js';
 
@@ -176,6 +178,18 @@ describe('prompt', () => {
     expect(user).toContain('- Wash ($40)');
     expect(briefText({}, [])).toBe('');
   });
+
+  it('keeps the team\'s screenshot notes out of the customer\'s brief', () => {
+    // A screenshot the team added for "Match its layout" (addedBy: 'admin')
+    // carries the team's note, not something the customer wrote.
+    const text = briefText({}, [
+      { kind: 'reference', name: 'mine.png', note: 'love the hero' },
+      { kind: 'reference', name: 'home (part 1 of 2).jpg', note: 'Screenshot of https://ref.test/ - the nav', addedBy: 'admin' },
+      null,
+    ]);
+    expect(text).toContain('mine.png: love the hero');
+    expect(text).not.toContain('ref.test');
+  });
 });
 
 describe('model output', () => {
@@ -331,5 +345,158 @@ describe('Design Studio plumbing', () => {
     expect(info.awards).toEqual(['Best of Miami']);
     expect(info.insured).toBe(true);
     expect(info.googlePlace).toEqual({ placeId: 'p1', placeName: 'A', rating: 4.9, reviewCount: 88, url: 'https://maps.google.com/?cid=1' });
+  });
+});
+
+describe('reference sites (design.reference)', () => {
+  const OTHER = '99999999-2222-4333-8444-555555555555';
+  const SHOT = `${PROJECT}/reference/${FILE}.png`;
+  const NONE = { status: 'none', requestedAt: '', templateId: '', note: '' };
+
+  it('defaults to inspiration with nothing matched and no replica', () => {
+    expect(sanitizeDesign({}).reference).toEqual({ mode: 'inspire', source: null, replica: NONE });
+    expect(sanitizeReference('nope')).toEqual({ mode: 'inspire', source: null, replica: NONE });
+  });
+
+  it('matches one of the project\'s own reference screenshots', () => {
+    const ref = { mode: 'match', source: { kind: 'asset', path: SHOT, extra: 1 } };
+    expect(sanitizeDesign({ reference: ref }, { projectId: PROJECT }).reference)
+      .toEqual({ mode: 'match', source: { kind: 'asset', path: SHOT }, replica: NONE });
+    // Without the project id the path still has to be a reference upload.
+    expect(sanitizeReference(ref).source).toEqual({ kind: 'asset', path: SHOT });
+  });
+
+  it('refuses other kinds, other projects and made-up paths, and then matches nothing', () => {
+    for (const path of [
+      `${PROJECT}/photo/${FILE}.png`,
+      `${PROJECT}/logo/${FILE}.png`,
+      `${OTHER}/reference/${FILE}.png`,
+      `${PROJECT}/reference/../photo/${FILE}.png`,
+      'https://evil.test/x.png',
+      42,
+    ]) {
+      const out = sanitizeReference({ mode: 'match', source: { kind: 'asset', path } }, { projectId: PROJECT });
+      expect(out).toEqual({ mode: 'inspire', source: null, replica: NONE });
+    }
+    expect(sanitizeReference({ mode: 'match', source: { kind: 'file', path: SHOT } }).source).toBeNull();
+  });
+
+  it('keeps a listed site as an http(s) link only', () => {
+    expect(sanitizeReference({ mode: 'match', source: { kind: 'url', url: 'cool.com' } }).source).toEqual({ kind: 'url', url: 'https://cool.com/' });
+    for (const url of ['javascript:alert(1)', 'data:text/html,x', 'ftp://cool.com/', `https://cool.com/${'a'.repeat(600)}`, { href: 'x' }]) {
+      expect(sanitizeReference({ mode: 'match', source: { kind: 'url', url } })).toEqual({ mode: 'inspire', source: null, replica: NONE });
+    }
+  });
+
+  it('knows only the two modes', () => {
+    // The shared list (referenceModes.js), so this and "Suggest a design" agree.
+    expect(REFERENCE_MODES).toEqual(['inspire', 'match']);
+    const source = { kind: 'asset', path: SHOT };
+    expect(sanitizeReference({ mode: 'copy', source }).mode).toBe('inspire');
+    expect(sanitizeReference({ mode: 'inspire', source }).source).toEqual(source);
+  });
+
+  it('keeps a replica request with a real date, a template id and a short note', () => {
+    const out = sanitizeReference({
+      replica: { status: 'requested', requestedAt: '2026-10-06T10:00:00Z', templateId: 'replica_11111111', note: `  Hero and services grid ${'x'.repeat(2000)}`, evil: 1 },
+    });
+    expect(out.replica.status).toBe('requested');
+    expect(out.replica.requestedAt).toBe('2026-10-06T10:00:00.000Z');
+    expect(out.replica.templateId).toBe('replica_11111111');
+    expect(out.replica.note.startsWith('Hero and services grid')).toBe(true);
+    expect(out.replica.note.length).toBe(1000);
+    expect(out.replica.evil).toBeUndefined();
+
+    const bad = sanitizeReference({ replica: { status: 'building', requestedAt: 'yesterday', templateId: '../evil', note: 5 } }).replica;
+    expect(bad).toEqual({ status: 'building', requestedAt: '', templateId: '', note: '' });
+    // Unknown status, or a cancelled request, keeps nothing.
+    expect(sanitizeReference({ replica: { status: 'shipped', templateId: 'x_y' } }).replica).toEqual(NONE);
+    expect(sanitizeReference({ replica: { status: 'none', requestedAt: '2026-10-06T10:00:00Z', note: 'old' } }).replica).toEqual(NONE);
+  });
+
+  it('small helpers', () => {
+    expect(canMatchReference('shot.PNG')).toBe(true);
+    expect(canMatchReference('shot.webp')).toBe(true);
+    expect(canMatchReference('shot.heic')).toBe(false);
+    expect(canMatchReference('brief.pdf')).toBe(false);
+    expect(sameReferenceSource({ kind: 'asset', path: SHOT }, { kind: 'asset', path: SHOT })).toBe(true);
+    expect(sameReferenceSource({ kind: 'url', url: 'https://a.com/' }, { kind: 'asset', path: 'https://a.com/' })).toBe(false);
+    expect(sameReferenceSource(null, null)).toBe(false);
+  });
+});
+
+describe('replica templates in the Design step', () => {
+  const OTHER = '99999999-2222-4333-8444-555555555555';
+  const colors = { bg: '#ffffff', accent: '#cc0000', text: '#111111', secondary: '#eeeeee', muted: '#666666' };
+  const LIST = [
+    { id: 'tint_a', label: 'Tint A', businessType: 'tint_shop', mood: 'luxury', colors },
+    { id: 'wash_b', label: 'Wash B', businessType: 'car_wash', mood: 'friendly', colors },
+    { id: 'old_hidden', label: 'Old', businessType: 'tint_shop', mood: 'luxury', colors, hidden: true },
+    { id: 'replica_11111111', label: 'Exact replica', businessType: 'car_wash', mood: 'clean', colors, hidden: true, customFor: [PROJECT] },
+    // A replica entry that forgot hidden: still only for its project.
+    { id: 'replica_99999999', label: 'Exact replica', businessType: 'tint_shop', mood: 'luxury', colors, customFor: [OTHER] },
+  ];
+
+  it('lists a hidden replica first, labeled, only for its own project', () => {
+    const mine = rankTemplates(LIST, 'tint_shop', ['Luxury & high-end'], PROJECT);
+    expect(mine.map((r) => r.id)).toEqual(['replica_11111111', 'tint_a', 'wash_b']);
+    expect(mine[0]).toEqual(expect.objectContaining({ replica: true, reasons: [REPLICA_LABEL], label: 'Exact replica' }));
+    expect(mine[1].replica).toBeUndefined();
+
+    expect(rankTemplates(LIST, 'tint_shop', [], OTHER).map((r) => r.id)).toEqual(['replica_99999999', 'tint_a', 'wash_b']);
+    expect(rankTemplates(LIST, 'tint_shop', [], '99999999-0000-4333-8444-555555555555').map((r) => r.id)).toEqual(['tint_a', 'wash_b']);
+    expect(rankTemplates(LIST, 'tint_shop').map((r) => r.id)).toEqual(['tint_a', 'wash_b']);
+  });
+
+  it('knows which replicas a project may use', () => {
+    expect(replicaTemplatesFor(LIST, PROJECT).map((t) => t.id)).toEqual(['replica_11111111']);
+    expect(replicaTemplatesFor(LIST, '')).toEqual([]);
+    expect(isReplicaFor(LIST[3], PROJECT)).toBe(true);
+    expect(isReplicaFor(LIST[3], OTHER)).toBe(false);
+    expect(isReplicaFor(LIST[0], PROJECT)).toBe(false);
+  });
+
+  it('leaves the real registry ranking as it was for projects without a replica', () => {
+    const all = Object.values(TEMPLATES);
+    const plain = rankTemplates(all, 'tint_shop', ['Luxury & high-end']);
+    const forProject = rankTemplates(all, 'tint_shop', ['Luxury & high-end'], '99999999-0000-4333-8444-555555555555');
+    expect(forProject).toEqual(plain);
+    expect(plain.some((r) => r.replica)).toBe(false);
+  });
+
+  // The free wizard, the landing page and the editor's template switcher
+  // list only entries without hidden: true. A replica stays out of them
+  // (and away from free users) only while its entry says so: checked for
+  // every replica the registry holds, now and once replicas get added.
+  it('keeps every replica in the registry hidden, for real project ids only', () => {
+    const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+    for (const t of Object.values(TEMPLATES).filter(isReplicaTemplate)) {
+      expect(t.hidden, t.id).toBe(true);
+      expect(t.customFor.length > 0 && t.customFor.every((id) => UUID.test(id)), t.id).toBe(true);
+    }
+  });
+
+  // The registry and the module ship in the public bundle, so a replica
+  // is named after its project's id, never the customer: id
+  // replica_<first 8 of the project id>, module Replica<SAME 8 UPPERCASED>.jsx,
+  // and the same label and description for every one (the Design step
+  // says whose it is). Checked for every replica the registry holds.
+  it('names every replica in the registry after its project id, never the customer', () => {
+    const registry = readFileSync(new URL('../data/templates.js', import.meta.url), 'utf8');
+    const id8 = (pid) => String(pid).replace(/-/g, '').toLowerCase().slice(0, 8);
+    for (const t of Object.values(TEMPLATES).filter(isReplicaTemplate)) {
+      const own = t.customFor.map(id8).find((short) => t.id === `replica_${short}`);
+      expect(own, `${t.id}: replica_<first 8 of a customFor id>`).toBeTruthy();
+      expect(t.label, t.id).toBe('Exact replica');
+      expect(t.description, t.id).toBe('Built from a reference site for one customer.');
+      expect(registry, t.id).toMatch(new RegExp(`\\b${t.id}:\\s*\\(\\) => import\\('[^']*/Replica${own.toUpperCase()}\\.jsx'\\)`));
+    }
+  });
+
+  it('still has the free wizard, landing page and editor switcher skip hidden templates', () => {
+    for (const file of ['../components/wizard/StepTemplatePicker.jsx', '../components/LandingPage.jsx', '../components/preview/ContentEditor.jsx']) {
+      const src = readFileSync(new URL(file, import.meta.url), 'utf8');
+      expect(src, file).toMatch(/Object\.values\(TEMPLATES\)\s*\.filter\(\(t\) => t && !t\.hidden\)/);
+    }
   });
 });

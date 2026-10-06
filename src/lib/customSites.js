@@ -50,6 +50,38 @@ export async function customSiteSuggest(action, payload = {}) {
   });
 }
 
+// A reference screenshot the admin adds in the Design step ("Match its
+// layout" only looks at screenshots, never at a live site): a signed
+// upload to the project's reference folder (custom-site-admin
+// reference-upload-url), the file straight to storage, then reference-add
+// records it. `note` is kept with it ("Screenshot of <url>" links it to a
+// reference address); `onProgress(phase)` hears 'upload' then 'save'.
+// One part of a cut-up screenshot also sends `group` (shared by its
+// parts) and `part` (1 = the top), so a match sends the whole page in
+// order (designSuggest.js referenceShots); a single screenshot sends
+// neither. The server checks the format (PNG, JPEG, WebP), the 10 MB
+// limit and the group. Returns { asset, project }: asset carries signed
+// url/downloadUrl like the project page's files, project is the saved row
+// (without files).
+export async function uploadReferenceShot(projectId, file, { note = '', group = '', part, onProgress } = {}) {
+  // Some systems hand a file over without a type: the server takes the
+  // name's extension then.
+  const type = typeof file?.type === 'string' ? file.type : '';
+  onProgress?.('upload');
+  const { path, uploadToken, type: storedType } = await customSiteAdmin('reference-upload-url', {
+    id: projectId, fileName: file.name, size: file.size, type,
+  });
+  const { error } = await supabase.storage.from(ASSET_BUCKET)
+    .uploadToSignedUrl(path, uploadToken, file, { contentType: storedType || type || undefined });
+  if (error) throw new Error(error.message || 'Upload failed');
+  onProgress?.('save');
+  const { asset, project } = await customSiteAdmin('reference-add', {
+    id: projectId, path, name: file.name, size: file.size, type: storedType || type, note,
+    ...(group ? { group, part } : {}),
+  });
+  return { asset, project };
+}
+
 // ─── Customer form ────────────────────────────────────────────────────
 
 const json = (body) => ({
