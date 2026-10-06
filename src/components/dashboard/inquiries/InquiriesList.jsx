@@ -7,6 +7,19 @@ function fmt(iso) {
   });
 }
 
+// Shop line for the all-shops view: the site's business name (inquiries come
+// in through one site's contact form, and an owner can have several sites),
+// falling back to the owner when the site is unknown.
+export function shopLines(shop) {
+  const business = shop?.business || null;
+  const owner = shop?.owner || null;
+  return { title: business || owner || 'Unknown shop', sub: business ? owner : null };
+}
+
+function shopText(shop) {
+  return [shop?.business, shop?.owner, shop?.ownerEmail].filter(Boolean).join(' ').toLowerCase();
+}
+
 const FILTERS = [
   { key: 'active',   label: 'Inbox',    statuses: ['new', 'read'] },
   { key: 'new',      label: 'New',      statuses: ['new'] },
@@ -15,7 +28,7 @@ const FILTERS = [
   { key: 'all',      label: 'All',      statuses: ['new', 'read', 'archived'] },
 ];
 
-export default function InquiriesList({ inquiries, onSelect }) {
+export default function InquiriesList({ inquiries, onSelect, shopFor = null }) {
   const [filterKey, setFilterKey] = useState('active');
   const [search, setSearch] = useState('');
 
@@ -29,8 +42,11 @@ export default function InquiriesList({ inquiries, onSelect }) {
     const q = search.trim().toLowerCase();
     return inquiries
       .filter((i) => f.statuses.includes(i.status))
-      .filter((i) => !q || i.name.toLowerCase().includes(q) || i.email.toLowerCase().includes(q));
-  }, [inquiries, filterKey, search]);
+      .filter((i) => !q
+        || i.name.toLowerCase().includes(q)
+        || i.email.toLowerCase().includes(q)
+        || (shopFor && shopText(shopFor(i)).includes(q)));
+  }, [inquiries, filterKey, search, shopFor]);
 
   return (
     <div>
@@ -56,7 +72,7 @@ export default function InquiriesList({ inquiries, onSelect }) {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search name or email…"
+          placeholder={shopFor ? 'Search name, email or shop…' : 'Search name or email…'}
           className="ml-auto border border-black/[0.1] rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-gray-400"
         />
       </div>
@@ -66,11 +82,12 @@ export default function InquiriesList({ inquiries, onSelect }) {
           No inquiries match these filters.
         </div>
       ) : (
-        <div className="bg-white border border-black/[0.07] rounded-xl overflow-hidden">
+        <div className="bg-white border border-black/[0.07] rounded-xl overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-left text-xs text-gray-500 uppercase tracking-wide">
               <tr>
                 <th className="px-4 py-3">Status</th>
+                {shopFor && <th className="px-4 py-3">Shop</th>}
                 <th className="px-4 py-3">From</th>
                 <th className="px-4 py-3">Message</th>
                 <th className="px-4 py-3">Received</th>
@@ -84,6 +101,7 @@ export default function InquiriesList({ inquiries, onSelect }) {
                   className={`border-t border-gray-100 hover:bg-gray-50 cursor-pointer ${i.status === 'new' ? 'font-medium' : ''}`}
                 >
                   <td className="px-4 py-3"><InquiryStatusPill status={i.status} /></td>
+                  {shopFor && <ShopCell shop={shopFor(i)} />}
                   <td className="px-4 py-3">
                     <div className="font-semibold text-gray-900">{i.name}</div>
                     <div className="text-xs text-gray-500">{i.email}</div>
@@ -97,5 +115,21 @@ export default function InquiriesList({ inquiries, onSelect }) {
         </div>
       )}
     </div>
+  );
+}
+
+function ShopCell({ shop }) {
+  const { title, sub } = shopLines(shop);
+  return (
+    <td className="px-4 py-3">
+      <div className="font-semibold text-gray-900 flex items-center gap-1.5">
+        <span className="truncate max-w-[200px]">{title}</span>
+        {/* Admin-owned sites (demos, custom websites not handed over yet) are not a customer's. */}
+        {shop?.ownerIsAdmin && (
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-[#1a1a1a] text-white">ADMIN</span>
+        )}
+      </div>
+      {sub && <div className="text-xs text-gray-500 truncate max-w-[200px]">{sub}</div>}
+    </td>
   );
 }

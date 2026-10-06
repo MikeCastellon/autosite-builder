@@ -37,10 +37,11 @@ describe('parkEditorState / stateAfterDemo', () => {
     expect(view).toBeNull();
   });
 
-  it('returns to the Sites page when opened from there', () => {
-    const { state, view } = stateAfterDemo(parkEditorState(REAL, 'dashboard'), 'detailing_sporty');
-    expect(view).toBe('dashboard');
-    expect(state.siteId).toBe('site-1');
+  it('returns to the Admin workspace when opened from there, with the real site parked', () => {
+    const { state, view } = stateAfterDemo(parkEditorState(REAL, 'admin'), 'detailing_sporty');
+    expect(view).toBe('admin');
+    expect(state).toEqual(REAL);
+    expect(DEMO_BACK_LABELS.admin).toBe('Back to Admin');
   });
 
   it('template picker: keeps the chosen template, or selects the previewed one when none was chosen', () => {
@@ -60,6 +61,6 @@ describe('parkEditorState / stateAfterDemo', () => {
   });
 
   it('labels Back for every entry point', () => {
-    expect(Object.keys(DEMO_BACK_LABELS).sort()).toEqual(['dashboard', 'editor', 'templates']);
+    expect(Object.keys(DEMO_BACK_LABELS).sort()).toEqual(['admin', 'editor', 'templates']);
   });
 });

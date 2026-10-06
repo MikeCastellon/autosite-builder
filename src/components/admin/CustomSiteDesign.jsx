@@ -141,7 +141,7 @@ export function DesignCard({ project, onReload, onSetup, onOpenEditor, onOpenBoo
           </p>
           {handedOver ? (
             <p className="mt-3 text-[12px] text-[#4a4a4a]">
-              To change it now, sign in as them: Admin › Accounts › their account › View as user. Edits made from your own account would move the site back to you.
+              To change it now, sign in as them: Admin › Customers › their account › View as user. Edits made from your own account would move the site back to you.
             </p>
           ) : (
             <div className="mt-4 flex flex-wrap gap-2">
@@ -703,7 +703,7 @@ export function HandoverCard({ project, onDone }) {
       {handedOver ? (
         <div className="text-[13px]">
           <p className="text-[#1a1a1a]">In <strong>{site?.ownerEmail || project.client_email}</strong>'s account since {formatDateTime(project.handed_over_at)}.</p>
-          <p className="mt-1 text-[12px] text-ink-tertiary">To make changes now, use Admin › Accounts › View as user.</p>
+          <p className="mt-1 text-[12px] text-ink-tertiary">To make changes now, use Admin › Customers › View as user.</p>
           <button type="button" onClick={resend} disabled={!!busy} className={`${BTN} mt-3`}>{busy === 'email' ? 'Sending…' : 'Resend access email'}</button>
         </div>
       ) : !site ? (

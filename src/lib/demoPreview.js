@@ -18,8 +18,8 @@ export const PARKED_EDITOR_KEYS = [
 ];
 
 // Snapshot of the real editor state. returnTo is where the demo's Back leads:
-// 'dashboard' (Sites page), 'editor' (editor toolbar) or 'templates'
-// (wizard template picker).
+// 'admin' (the Admin dashboard's "Open editor demo"), 'editor' (editor
+// toolbar) or 'templates' (wizard template picker).
 export function parkEditorState(current, returnTo) {
   const parked = { returnTo };
   for (const key of PARKED_EDITOR_KEYS) parked[key] = current[key];
@@ -42,8 +42,9 @@ export function demoEditorState(templateId, demoCopy) {
 }
 
 // State to restore when the demo closes, and the view to switch to (null =
-// stay in the wizard). Back on the template picker with nothing chosen yet,
-// the previewed template becomes the selection, as it did before parking.
+// stay in the wizard; 'admin' leaves the editor for the Admin workspace).
+// Back on the template picker with nothing chosen yet, the previewed template
+// becomes the selection, as it did before parking.
 export function stateAfterDemo(parked, previewedTemplate) {
   if (!parked) {
     // Nothing parked (shouldn't happen): leave the demo for the template
@@ -55,11 +56,12 @@ export function stateAfterDemo(parked, previewedTemplate) {
   }
   const { returnTo, ...state } = parked;
   if (returnTo === 'templates' && !state.selectedTemplate) state.selectedTemplate = previewedTemplate;
-  return { state, view: returnTo === 'dashboard' ? 'dashboard' : null };
+  const view = returnTo === 'admin' ? 'admin' : null;
+  return { state, view };
 }
 
 export const DEMO_BACK_LABELS = {
-  dashboard: 'Back to Sites',
+  admin: 'Back to Admin',
   editor: 'Back to Editor',
   templates: 'Back to Templates',
 };

@@ -20,8 +20,8 @@ import InquiriesPage from './components/dashboard/inquiries-page/InquiriesPage.j
 import CustomersPage from './components/dashboard/customers-page/CustomersPage.jsx';
 import CustomerDetailPage from './components/dashboard/customers-page/CustomerDetailPage.jsx';
 import AdminPage from './components/admin/AdminPage.jsx';
+import AdminShell from './components/admin/AdminShell.jsx';
 import CustomSiteFormPage from './components/customSite/CustomSiteFormPage.jsx';
-import CustomSitesPage from './components/admin/CustomSitesPage.jsx';
 import ProfilePage from './components/profile/ProfilePage.jsx';
 import PaymentsConnectPage from './components/dashboard/payments-connect/PaymentsConnectPage.jsx';
 import ChargesPage from './components/dashboard/charges/ChargesPage.jsx';
@@ -35,9 +35,13 @@ import { buildTemplateMeta, unpackGeneratedContent, withWidgetKeys } from './lib
 import { supabase, isImpersonationTab } from './lib/supabase.js';
 import { useAlert } from './components/ui/AlertProvider.jsx';
 import { isEffectiveSchedulerActive } from './lib/subscriptionGating.js';
+import {
+  initialLanding, canUseAdmin, readWorkspace, writeWorkspace, adminSearch, stripAdminParams,
+  isAdminSection, DEFAULT_ADMIN_SECTION,
+} from './lib/adminWorkspace.js';
 
 export default function App() {
-  const { session, loading, isRecovery, clearRecovery, profile } = useAuth();
+  const { session, loading, isRecovery, clearRecovery, profile, profileReady } = useAuth();
   const { toast } = useAlert();
   const isPro = isEffectiveSchedulerActive(profile);
 
@@ -52,21 +56,30 @@ export default function App() {
   const [customColors, setCustomColors] = useState({});
   const [showLogin, setShowLogin] = useState(null); // null | 'signin' | 'signup'
   const [customFonts, setCustomFonts] = useState({});
-  // Default landing view for an authenticated user is the Overview dashboard so
-  // returning users see how their booking page is performing. New users with zero
-  // sites see a "Build My Site" empty-state CTA on the Overview instead.
-  // ?admin=custom-sites (links in the custom website emails) opens the
-  // Custom websites page, any other ?admin= the Admin page; those pages
-  // read the rest of the link.
-  const [view, setView] = useState(() => {
-    const admin = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('admin') : null;
-    return admin === 'custom-sites' ? 'custom-sites' : admin ? 'admin' : 'overview';
-  }); // 'wizard' | 'overview' | 'dashboard' | 'admin' | 'bookings-page' | 'customers' | 'customer-detail' | 'booking-settings' | 'profile' | 'payments-connect' | 'charges'
+  // Super admins have two workspaces: Admin (its own shell, view 'admin' +
+  // adminSection) and their business, the same app every owner sees
+  // (Overview, Sites, ...). Owners land on Overview so returning users see
+  // how their booking page is performing (new users get a "Build My Site"
+  // CTA there). An ?admin= link opens that Admin section (the custom website
+  // emails link to ?admin=custom-sites&project=<id>), and a super admin
+  // otherwise lands in Admin unless they last used their business view in
+  // this browser. The profile here is the cached one, if any.
+  const [landing] = useState(() => initialLanding({
+    search: typeof window !== 'undefined' ? window.location.search : '',
+    profile,
+    impersonating: isImpersonationTab,
+    remembered: readWorkspace(),
+  }));
+  const [view, setView] = useState(landing.view); // 'wizard' | 'overview' | 'dashboard' | 'admin' | 'bookings-page' | 'customers' | 'customer-detail' | 'booking-settings' | 'profile' | 'payments-connect' | 'charges'
+  const [adminSection, setAdminSection] = useState(landing.section);
+  // Bumped by every Admin tab click: clicking "Custom websites" while a
+  // project is open goes back to the list.
+  const [adminNavKey, setAdminNavKey] = useState(0);
   const [settingsSiteId, setSettingsSiteId] = useState(null);
   // A custom-website project's site opened in the editor or its booking
-  // settings: Back returns to that project (Custom websites page).
+  // settings: Back returns to that project (Admin > Custom websites).
   const [returnToProject, setReturnToProject] = useState(null);
-  const [customSitesProjectId, setCustomSitesProjectId] = useState(null);
+  const [customSitesProjectId, setCustomSitesProjectId] = useState(landing.projectId);
   const [selectedCustomerKey, setSelectedCustomerKey] = useState(null);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [selectedWidgetIds, setSelectedWidgetIds] = useState([]);
@@ -152,7 +165,7 @@ export default function App() {
   // borrows the editor's state slots, so entering it parks the real editor
   // state in demoReturn (siteId included: a demo has no site to save to) and
   // leaving it puts that state back. returnTo is where Back leads:
-  // 'dashboard' | 'editor' | 'templates'.
+  // 'admin' | 'editor' | 'templates'.
   const [isDemoPreview, setIsDemoPreview] = useState(false);
   const [demoReturn, setDemoReturn] = useState(null);
 
@@ -318,6 +331,55 @@ export default function App() {
     if (view !== 'charges') setChargesAutoOpen(false);
   }, [view]);
 
+  // Only a profile that belongs to the signed-in user counts: the cached one
+  // can be someone else's until AuthContext replaces it. Never in a "View as
+  // user" tab, which shows the customer's app only.
+  const ownProfile = session && profile && profile.id === session.user.id ? profile : null;
+  const adminAllowed = canUseAdmin(ownProfile, isImpersonationTab);
+
+  // The landing above used the cached profile, if any. When the signed-in
+  // user's own profile arrives and says something else (a first sign-in
+  // with no cache, a cache left by another user, a new super admin), land
+  // again, unless they already opened something. Signing out re-arms it for
+  // whoever signs in next in this tab.
+  const landingKey = (p) => (p ? `${p.id}|${canUseAdmin(p, isImpersonationTab)}` : null);
+  const landedForRef = useRef(landingKey(profile));
+  useEffect(() => {
+    if (!loading && !session) landedForRef.current = null;
+  }, [loading, session]);
+  useEffect(() => {
+    if (!ownProfile) return;
+    const key = landingKey(ownProfile);
+    if (landedForRef.current === key) return;
+    landedForRef.current = key;
+    if (view !== 'overview') return;
+    const next = initialLanding({
+      search: window.location.search,
+      profile: ownProfile,
+      impersonating: isImpersonationTab,
+      remembered: readWorkspace(),
+    });
+    if (next.view === 'admin') { setAdminSection(next.section); setView('admin'); }
+  }, [ownProfile]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ?admin= links, and the Admin view left behind by an admin who signed
+  // out, never show the Admin workspace to anyone else: Overview instead.
+  // Waits for the user's own profile (a cached one may be stale); a missing
+  // profile also lands on Overview rather than an endless spinner.
+  useEffect(() => {
+    if (view === 'admin' && profileReady && !adminAllowed) setView('overview');
+  }, [view, profileReady, adminAllowed]);
+
+  // The address bar follows the Admin section, so a reload or a copied link
+  // comes back to it; leaving Admin drops the admin params (other params,
+  // e.g. ?help=, stay).
+  useEffect(() => {
+    if (typeof window === 'undefined' || !session) return;
+    const { pathname, search, hash } = window.location;
+    const next = view === 'admin' && adminAllowed ? adminSearch(adminSection) : stripAdminParams(search);
+    if (next !== search) window.history.replaceState(window.history.state, '', pathname + next + hash);
+  }, [view, adminSection, adminAllowed, session]);
+
 
   // Domain Connect callback: close popup, notify opener
   if (typeof window !== 'undefined' && window.location.pathname === '/domain-connected') {
@@ -422,9 +484,40 @@ export default function App() {
     await supabase.auth.signOut(isImpersonationTab ? { scope: 'local' } : undefined);
   };
 
-  // Single source of truth for header navigation, spread into <AppShell> so
-  // every authenticated page renders the identical nav. The active item is
-  // driven by AppShell's `active` prop, not by which handler a page omits.
+  // Open the Admin workspace, by default on the section the admin was last
+  // in. `projectId` opens that custom website project.
+  const openAdmin = (section = adminSection, { projectId = null } = {}) => {
+    setCustomSitesProjectId(projectId);
+    setAdminSection(isAdminSection(section) ? section : DEFAULT_ADMIN_SECTION);
+    setView('admin');
+    writeWorkspace('admin');
+  };
+  const switchToBusiness = () => {
+    writeWorkspace('business');
+    setView('overview');
+  };
+  // Sections opened from inside Admin (dashboard cards, Leads -> Pipeline).
+  const goAdminSection = (section) => {
+    setCustomSitesProjectId(null);
+    setAdminSection(section);
+  };
+  // The Admin tabs: also start the section over and scroll to the top.
+  const handleAdminNav = (section) => {
+    goAdminSection(section);
+    setAdminNavKey((k) => k + 1);
+    window.scrollTo(0, 0);
+  };
+  // Back from a custom website project's site (editor, booking settings).
+  const backToProject = () => {
+    const projectId = returnToProject;
+    setReturnToProject(null);
+    openAdmin('custom-sites', { projectId });
+  };
+
+  // Single source of truth for the business header navigation, spread into
+  // <AppShell> so every customer page renders the identical nav. The active
+  // item is driven by AppShell's `active` prop, not by which handler a page
+  // omits. Admin pages are not in it: super admins get one "Admin" switch.
   const navHandlers = {
     onOpenOverview: () => setView('overview'),
     onMySites: () => setView('dashboard'),
@@ -434,8 +527,7 @@ export default function App() {
     onOpenCharges: onOpenChargesProp,
     onCharge: onChargeProp,
     onOpenPaymentsConnect: onOpenPaymentsConnectProp,
-    onOpenAdmin: () => setView('admin'),
-    onOpenCustomSites: () => { setCustomSitesProjectId(null); setView('custom-sites'); },
+    onSwitchToAdmin: adminAllowed ? () => openAdmin() : undefined,
     onOpenProfile: () => setView('profile'),
     onSignOut: handleSignOut,
   };
@@ -550,13 +642,16 @@ export default function App() {
   }
 
   if (view === 'booking-settings' && settingsSiteId) {
-    return (
-      <AppShell active={returnToProject ? 'custom-sites' : 'bookings'} nav={navHandlers} userEmail={session?.user?.email} profile={profile}>
-        {returnToProject && (
+    // Opened from a custom website project: it is Admin work, so it keeps
+    // the Admin shell and leads back to the project.
+    const fromProject = !!returnToProject && adminAllowed;
+    const body = (
+      <>
+        {fromProject && (
           <div className="max-w-5xl mx-auto px-4 pt-6">
             <button
               type="button"
-              onClick={() => { setSettingsSiteId(null); setCustomSitesProjectId(returnToProject); setReturnToProject(null); setView('custom-sites'); }}
+              onClick={() => { setSettingsSiteId(null); backToProject(); }}
               className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink-tertiary hover:text-[#1a1a1a]"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6" /></svg>
@@ -568,51 +663,30 @@ export default function App() {
           siteId={settingsSiteId}
           onExit={() => {
             setSettingsSiteId(null);
-            if (returnToProject) {
-              setCustomSitesProjectId(returnToProject);
-              setReturnToProject(null);
-              setView('custom-sites');
-            } else {
-              setView('dashboard');
-            }
+            if (fromProject) backToProject();
+            else { setReturnToProject(null); setView('dashboard'); }
           }}
         />
-      </AppShell>
+      </>
     );
-  }
-
-  if (view === 'custom-sites') {
+    if (fromProject) {
+      return (
+        <AdminShell
+          section="custom-sites"
+          onSection={(section) => { setSettingsSiteId(null); setReturnToProject(null); openAdmin(section); }}
+          onSwitchToBusiness={() => { setSettingsSiteId(null); setReturnToProject(null); switchToBusiness(); }}
+          onOpenProfile={() => { setSettingsSiteId(null); setReturnToProject(null); setView('profile'); }}
+          onSignOut={handleSignOut}
+          userEmail={session?.user?.email}
+          profile={profile}
+        >
+          {body}
+        </AdminShell>
+      );
+    }
     return (
-      <AppShell active="custom-sites" nav={navHandlers} userEmail={session?.user?.email} profile={profile}>
-        <CustomSitesPage
-          key={customSitesProjectId || 'list'}
-          projectId={customSitesProjectId}
-          onExit={() => setView('dashboard')}
-          onOpenSiteEditor={async (siteId, projectId) => {
-            const { data: site, error: siteError } = await supabase.from('sites').select('*').eq('id', siteId).maybeSingle();
-            if (siteError || !site) { toast('Could not open the site', 'error'); return; }
-            // Saving from this session would make the signed-in admin the
-            // site's owner: someone else's site is edited as them (View as user).
-            if (site.user_id !== session?.user?.id) {
-              toast('This site is in the customer\'s account. Edit it with Admin › Accounts › View as user.', 'error');
-              return;
-            }
-            await handleEditSite(site, { returnTo: projectId });
-          }}
-          onOpenBookingSettings={(siteId, projectId) => {
-            setReturnToProject(projectId);
-            setSettingsSiteId(siteId);
-            setView('booking-settings');
-          }}
-        />
-      </AppShell>
-    );
-  }
-
-  if (view === 'admin') {
-    return (
-      <AppShell active="admin" nav={navHandlers} userEmail={session?.user?.email} profile={profile}>
-        <AdminPage onExit={() => setView('dashboard')} />
+      <AppShell active="bookings" nav={navHandlers} userEmail={session?.user?.email} profile={profile}>
+        {body}
       </AppShell>
     );
   }
@@ -684,12 +758,63 @@ export default function App() {
   // editor to prospects without spinning up real data. Resets
   // editingExistingSite (so WebsitePreview's tour-suppression effect won't
   // fire) and clears the tour flag (so the tour actually shows).
-  // returnTo: 'dashboard' (Sites page button) or 'editor' (editor toolbar).
+  // returnTo: 'admin' (Admin dashboard quick action) or 'editor' (editor
+  // toolbar).
   const handleDashboardDemo = (returnTo) => {
     try { localStorage.removeItem('editor_tour_done_v3'); } catch { /* ignore */ }
     startDemo('detailing_sporty', returnTo);
     setView('wizard');
   };
+
+  // The Admin workspace. Declared after handleDashboardDemo: its handlers
+  // call it.
+  if (view === 'admin') {
+    // Not (yet) known to be a super admin: the profile is still loading, or
+    // the guard effect above is moving this tab to Overview.
+    if (!adminAllowed) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-[#faf9f7]">
+          <div className="w-8 h-8 border-4 border-gray-300 border-t-[#cc0000] rounded-full animate-spin" />
+        </div>
+      );
+    }
+    return (
+      <AdminShell
+        section={adminSection}
+        onSection={handleAdminNav}
+        onSwitchToBusiness={switchToBusiness}
+        onOpenProfile={() => setView('profile')}
+        onSignOut={handleSignOut}
+        userEmail={session?.user?.email}
+        profile={profile}
+      >
+        <AdminPage
+          section={adminSection}
+          onSection={goAdminSection}
+          navKey={adminNavKey}
+          projectId={customSitesProjectId}
+          onOpenProject={(projectId) => openAdmin('custom-sites', { projectId })}
+          onOpenSiteEditor={async (siteId, projectId) => {
+            const { data: site, error: siteError } = await supabase.from('sites').select('*').eq('id', siteId).maybeSingle();
+            if (siteError || !site) { toast('Could not open the site', 'error'); return; }
+            // Saving from this session would make the signed-in admin the
+            // site's owner: someone else's site is edited as them (View as user).
+            if (site.user_id !== session?.user?.id) {
+              toast('This site is in the customer\'s account. Edit it from Admin › Customers › View as user.', 'error');
+              return;
+            }
+            await handleEditSite(site, { returnTo: projectId });
+          }}
+          onOpenBookingSettings={(siteId, projectId) => {
+            setReturnToProject(projectId);
+            setSettingsSiteId(siteId);
+            setView('booking-settings');
+          }}
+          onOpenDemo={() => handleDashboardDemo('admin')}
+        />
+      </AdminShell>
+    );
+  }
 
   // Flush any debounced autoSave and persist the latest edits synchronously.
   // Returns true on success so callers (Save Draft / Publish) can chain on it.
@@ -798,7 +923,6 @@ export default function App() {
           onEditSite={handleEditSite}
           profile={profile}
           onOpenBookingSettings={(siteId) => { setReturnToProject(null); setSettingsSiteId(siteId); setView('booking-settings'); }}
-          onPreviewDemo={() => handleDashboardDemo('dashboard')}
         />
       </AppShell>
     );
@@ -859,7 +983,7 @@ export default function App() {
           isDemoPreview
             ? handleBackFromDemo
             : editingExistingSite && returnToProject
-              ? () => { setCustomSitesProjectId(returnToProject); setReturnToProject(null); setView('custom-sites'); }
+              ? backToProject
               : editingExistingSite
                 ? () => setView('dashboard')
                 : () => goTo(3)
@@ -928,7 +1052,7 @@ export default function App() {
 
   return (
     <>
-      <WizardShell step={step} onBack={goBack} userEmail={session?.user?.email} profile={profile} onMySites={() => setView('dashboard')} onOpenBookings={() => setView('bookings-page')} onOpenAdmin={() => setView('admin')} onSignOut={handleSignOut}>
+      <WizardShell step={step} onBack={goBack} userEmail={session?.user?.email} profile={profile} onMySites={() => setView('dashboard')} onOpenBookings={() => setView('bookings-page')} onSwitchToAdmin={navHandlers.onSwitchToAdmin} onSignOut={handleSignOut}>
         {step === 1 && (
           <StepBusinessType onSelect={handleBusinessTypeSelect} />
         )}

@@ -120,7 +120,7 @@ function DashboardNewsBanner() {
   );
 }
 
-export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite, profile, onOpenBookingSettings, onPreviewDemo }) {
+export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite, profile, onOpenBookingSettings }) {
   const { toast, confirm: confirmDialog } = useAlert();
   const { session } = useAuth();
   const userId = session?.user?.id;
@@ -442,16 +442,6 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
         <div className="flex items-center justify-between mb-3 mt-8">
           <h2 className="text-3xl sm:text-4xl font-black text-[#1a1a1a] tracking-tight">Your Site</h2>
           <div className="flex items-center gap-2">
-            {isAdmin && onPreviewDemo && (
-              <button
-                type="button"
-                onClick={() => onPreviewDemo()}
-                title="Open the editor with stub data — testing & demoing only, admin-only"
-                className="text-xs font-semibold text-[#1a1a1a] bg-white border border-black/[0.12] hover:bg-black/5 px-4 py-2 rounded-lg transition-colors"
-              >
-                Preview Demo
-              </button>
-            )}
             {canCreateSite && sites.length > 0 && (
               <button
                 type="button"
