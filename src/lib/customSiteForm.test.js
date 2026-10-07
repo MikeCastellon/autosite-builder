@@ -290,4 +290,18 @@ describe('iPhone photos (HEIC)', () => {
       .toBe('iPhone photo conversion failed: Couldn\'t start the conversion: network error');
     expect(describeEvent({ type: 'heic_failed' })).toBe('iPhone photo conversion failed');
   });
+
+  // The data as custom-site-capture-background logs it (capture-run.test.js),
+  // and as custom-site-admin logs a start Netlify refused.
+  it('describes screenshots of a reference address taken on the server', () => {
+    expect(describeEvent({ type: 'reference_captured', data: { url: 'https://www.shop.test/', parts: 3, replaced: 0 } }))
+      .toBe('Screenshots taken of shop.test (3 parts)');
+    expect(describeEvent({ type: 'reference_captured', data: { url: 'https://shop.test/services', parts: 1, replaced: 2 } }))
+      .toBe('Screenshots taken of shop.test/services (1 part), replacing the earlier ones');
+    expect(describeEvent({ type: 'reference_capture_failed', data: { url: 'http://shop.test/', error: 'That site blocked our browser', code: 'blocked' } }))
+      .toBe('Screenshots of shop.test failed: That site blocked our browser');
+    expect(describeEvent({ type: 'reference_capture_failed', data: { url: `https://shop.test/${'a'.repeat(200)}` } }))
+      .toBe(`Screenshots of shop.test/${'a'.repeat(69)}… failed`);
+    expect(describeEvent({ type: 'reference_captured' })).toBe('Screenshots taken of a reference site');
+  });
 });

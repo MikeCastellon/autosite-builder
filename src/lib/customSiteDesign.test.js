@@ -5,7 +5,10 @@ import {
   isImportable, joinHours, normalizeDesignCopy, parseCopyJson, parseServices, rankTemplates, sanitizeDesign,
   servicesForType, siteBusinessInfo, schemaTypeFor,
   REFERENCE_MODES, REPLICA_LABEL, canMatchReference, isReplicaFor, isReplicaTemplate, replicaTemplatesFor, sameReferenceSource, sanitizeReference,
+  CAPTURE_LIVE_MS, REFERENCE_SITES_MAX, REFERENCE_SITE_NOTE_MAX, REFERENCE_SITE_URL_MAX, captureViewFor, capturedShotKey, isCaptureLive, newerCapture,
+  referenceSiteKey, referenceSiteUrl, replacedShotSource, sanitizeReferenceSites,
 } from './customSiteDesign.js';
+import { referenceUrlKey } from './designSuggest.js';
 import { TEMPLATES } from '../data/templates.js';
 
 const PROJECT = '11111111-2222-4333-8444-555555555555';
@@ -422,6 +425,192 @@ describe('reference sites (design.reference)', () => {
     expect(sameReferenceSource({ kind: 'asset', path: SHOT }, { kind: 'asset', path: SHOT })).toBe(true);
     expect(sameReferenceSource({ kind: 'url', url: 'https://a.com/' }, { kind: 'asset', path: 'https://a.com/' })).toBe(false);
     expect(sameReferenceSource(null, null)).toBe(false);
+  });
+});
+
+describe('sites the team adds (design.referenceSites)', () => {
+  const AT = '2026-10-07T12:00:00.000Z';
+
+  it('is an empty list by default, and never takes design.capture from the page', () => {
+    expect(sanitizeDesign({}).referenceSites).toEqual([]);
+    expect(sanitizeDesign({ referenceSites: 'shop.test' }).referenceSites).toEqual([]);
+    // The server owns the capture: a save can't set or fake one.
+    expect(sanitizeDesign({ capture: { status: 'ready', url: 'https://shop.test/', parts: 4 } }).capture).toBeUndefined();
+  });
+
+  it('keeps http(s) addresses as links, with a one-line note and the date added', () => {
+    const out = sanitizeDesign({
+      referenceSites: [
+        { url: ' shop.test/pricing ', note: '  the hero\n and   the services grid ', addedAt: '2026-10-07T12:00:00Z', evil: 1 },
+        { url: 'http://other.test', note: 5, addedAt: 'yesterday' },
+      ],
+    }).referenceSites;
+    expect(out).toEqual([
+      { url: 'https://shop.test/pricing', note: 'the hero and the services grid', addedAt: AT },
+      { url: 'http://other.test/', note: '', addedAt: '' },
+    ]);
+  });
+
+  it('drops what isn\'t a web address, and addresses over 500 characters before or after the "https://"', () => {
+    const long = (n) => `shop.test/${'a'.repeat(n - 'shop.test/'.length)}`;
+    const out = sanitizeReferenceSites([
+      { url: 'javascript:alert(1)' }, { url: 'data:text/html,x' }, { url: 'ftp://shop.test/' }, { url: 'file:///etc/passwd' },
+      { url: 'localhost' }, { url: 'two words.com' }, { url: { href: 'https://shop.test/' } }, { note: 'no address' },
+      null, 'https://shop.test/', ['https://shop.test/'],
+      { url: `https://${long(492)}` }, // 500 characters as typed
+      { url: long(495) }, // 495 typed, 503 once "https://" is added
+      { url: `https://${long(493)}` }, // 501 typed
+    ]);
+    expect(out.map((s) => s.url)).toEqual([`https://${long(492)}`]);
+    expect(referenceSiteUrl(long(495))).toBeNull();
+  });
+
+  it('keeps one entry per address (www, case and a trailing slash don\'t count) and at most 10', () => {
+    const out = sanitizeReferenceSites([
+      { url: 'https://www.Shop.test/', note: 'first' },
+      { url: 'shop.test', note: 'same site' },
+      { url: 'https://shop.test/pricing/' },
+      { url: 'https://shop.test/pricing?tab=2' },
+    ]);
+    expect(out.map((s) => [s.url, s.note])).toEqual([
+      ['https://www.shop.test/', 'first'], ['https://shop.test/pricing/', ''], ['https://shop.test/pricing?tab=2', ''],
+    ]);
+    const many = Array.from({ length: 14 }, (_, i) => ({ url: `site${i}.test` }));
+    const kept = sanitizeReferenceSites(many);
+    expect(kept).toHaveLength(REFERENCE_SITES_MAX);
+    expect(kept.at(-1).url).toBe('https://site9.test/');
+  });
+
+  it('caps the note at 300 characters', () => {
+    const [site] = sanitizeReferenceSites([{ url: 'shop.test', note: `hero ${'x'.repeat(400)}` }]);
+    expect(site.note).toHaveLength(300);
+    expect(site.note.startsWith('hero x')).toBe(true);
+  });
+
+  it('keys an address exactly as "Suggest a design" finds its screenshots', () => {
+    // designSuggest.js referenceUrlKey is the rule a match uses; this copy
+    // (the import back would be a cycle) must never drift from it.
+    for (const input of [
+      'https://www.Shop.test/', 'shop.test', 'http://shop.test/a/b/', 'https://shop.test/a?b=1', 'https://shop.test/a#hero',
+      '//shop.test/x', 'shop.test:8080/x', 'javascript:alert(1)', '', null, 'not a url', 'https://xn--bcher-kva.test/', 'HTTPS://SHOP.TEST/PATH',
+    ]) {
+      expect(referenceSiteKey(input), String(input)).toBe(referenceUrlKey(input));
+    }
+  });
+});
+
+describe('server captures (design.capture)', () => {
+  const START = '2026-10-07T12:00:00.000Z';
+  const now = Date.parse(START);
+  const RUN = { status: 'running', url: 'https://shop.test/', startedAt: START, finishedAt: '', parts: 0, error: '' };
+
+  it('is live while running inside the window', () => {
+    expect(isCaptureLive(RUN, now + 30_000)).toBe(true);
+    expect(isCaptureLive(RUN, now + CAPTURE_LIVE_MS - 1)).toBe(true);
+    expect(isCaptureLive(RUN, now + CAPTURE_LIVE_MS)).toBe(false);
+    // Postgres hands the time back as '+00:00'.
+    expect(isCaptureLive({ ...RUN, startedAt: '2026-10-07 12:00:00+00:00' }, now + 1000)).toBe(true);
+    for (const run of [null, 'running', { ...RUN, status: 'ready' }, { ...RUN, startedAt: 'soon' }, { ...RUN, startedAt: undefined }]) {
+      expect(isCaptureLive(run, now)).toBe(false);
+    }
+  });
+
+  it('shows the later run, and the finished record of the same run', () => {
+    const ready = { ...RUN, status: 'ready', finishedAt: '2026-10-07T12:00:40.000Z', parts: 3 };
+    const later = { ...RUN, url: 'https://other.test/', startedAt: '2026-10-07T12:05:00.000Z' };
+    expect(newerCapture(RUN, ready)).toBe(ready);
+    expect(newerCapture(ready, RUN)).toBe(ready);
+    expect(newerCapture(ready, later)).toBe(later);
+    expect(newerCapture(later, ready)).toBe(later);
+    expect(newerCapture(null, RUN)).toBe(RUN);
+    expect(newerCapture({ nope: 1 }, undefined)).toBeNull();
+  });
+
+  it('says what one address shows', () => {
+    const at = now + 30_000;
+    expect(captureViewFor(RUN, 'www.shop.test', at)).toEqual({ state: 'running', parts: 0, error: '', finishedAt: '' });
+    expect(captureViewFor(RUN, 'https://other.test/', at).state).toBe('none');
+    expect(captureViewFor(null, 'https://shop.test/', at).state).toBe('none');
+    expect(captureViewFor(RUN, 'https://shop.test/', now + CAPTURE_LIVE_MS + 1).state).toBe('stale');
+    expect(captureViewFor({ ...RUN, status: 'ready', parts: 3, finishedAt: '2026-10-07T12:00:40.000Z' }, 'https://shop.test', at))
+      .toEqual({ state: 'ready', parts: 3, error: '', finishedAt: '2026-10-07T12:00:40.000Z' });
+    expect(captureViewFor({ ...RUN, status: 'failed', error: 'That site didn\'t load in 25 seconds' }, 'https://shop.test/', at))
+      .toMatchObject({ state: 'failed', error: 'That site didn\'t load in 25 seconds' });
+    expect(captureViewFor({ ...RUN, status: 'queued' }, 'https://shop.test/', at).state).toBe('none');
+    expect(captureViewFor({ ...RUN, status: 'ready', parts: -2 }, 'https://shop.test/', at).parts).toBe(0);
+  });
+
+  // A part as custom-site-capture-background stores it.
+  const ref = (n) => `${PROJECT}/reference/aaaaaaaa-bbbb-4ccc-8ddd-${String(n).padStart(12, '0')}.jpg`;
+  const part = (n, of, { group = 'g-old-0001', path = ref(n), url = 'https://shop.test/', note = '' } = {}) => ({
+    path, kind: 'reference', name: `shop.test (part ${n} of ${of}).jpg`, size: 10, type: 'image/jpeg',
+    note: `Screenshot of ${url}${note ? ` - ${note}` : ''}`, addedBy: 'admin', group, part: n, captured: true,
+  });
+
+  it('knows a captured screenshot\'s address by the first word of its note', () => {
+    expect(capturedShotKey(part(1, 2))).toBe('shop.test');
+    // The team's note may name other sites: only the captured address counts.
+    expect(capturedShotKey(part(1, 2, { note: 'the hero, like https://other.test' }))).toBe('shop.test');
+    expect(capturedShotKey(part(1, 2, { url: 'https://www.Shop.test/pricing/' }))).toBe('shop.test/pricing');
+    // An upload of the same site (no captured mark), the customer's, other kinds, other notes.
+    const { captured, ...upload } = part(1, 2);
+    void captured;
+    expect(capturedShotKey(upload)).toBe('');
+    expect(capturedShotKey({ ...part(1, 2), addedBy: undefined })).toBe('');
+    expect(capturedShotKey({ ...part(1, 2), kind: 'photo' })).toBe('');
+    expect(capturedShotKey({ ...part(1, 2), captured: 'true' })).toBe('');
+    expect(capturedShotKey({ ...part(1, 2), note: 'A screenshot of https://shop.test/' })).toBe('');
+    expect(capturedShotKey({ ...part(1, 2), note: 'Screenshot of javascript:alert(1)' })).toBe('');
+    for (const x of [null, undefined, 'x', [], {}]) expect(capturedShotKey(x)).toBe('');
+  });
+
+  it('moves a reference picked from a capture\'s parts to the new capture\'s part in its place', () => {
+    const before = [part(1, 3), part(2, 3), part(3, 3)];
+    const fresh = (n, of) => part(n, of, { group: 'g-new-0002', path: ref(20 + n) });
+    const after2 = [fresh(2, 2), fresh(1, 2)];
+    // Same part number; past the new count, the last one.
+    expect(replacedShotSource({ kind: 'asset', path: ref(1) }, before, after2)).toEqual({ kind: 'asset', path: ref(21) });
+    expect(replacedShotSource({ kind: 'asset', path: ref(2) }, before, after2)).toEqual({ kind: 'asset', path: ref(22) });
+    expect(replacedShotSource({ kind: 'asset', path: ref(3) }, before, after2)).toEqual({ kind: 'asset', path: ref(22) });
+    // Still there, not a capture's part, another address's capture, no new parts: unchanged.
+    expect(replacedShotSource({ kind: 'asset', path: ref(1) }, before, [...before, ...after2])).toBeNull();
+    const upload = { ...part(1, 1), path: ref(9), captured: undefined };
+    expect(replacedShotSource({ kind: 'asset', path: ref(9) }, [upload], after2)).toBeNull();
+    const other = [part(1, 1, { url: 'https://other.test/', group: 'g-oth-0003', path: ref(30) })];
+    expect(replacedShotSource({ kind: 'asset', path: ref(1) }, before, other)).toBeNull();
+    expect(replacedShotSource({ kind: 'asset', path: ref(1) }, before, [])).toBeNull();
+    // Parts that were already there before are not the new capture.
+    expect(replacedShotSource({ kind: 'asset', path: ref(1) }, [...before, fresh(1, 2)], [fresh(1, 2)])).toBeNull();
+    // Not an asset source, or nothing known.
+    expect(replacedShotSource({ kind: 'url', url: 'https://shop.test/' }, before, after2)).toBeNull();
+    expect(replacedShotSource(null, before, after2)).toBeNull();
+    expect(replacedShotSource({ kind: 'asset', path: ref(1) }, undefined, after2)).toBeNull();
+  });
+
+  it('agrees with the server\'s own rules (capture-run.js, capture.js)', async () => {
+    // The page can't import the functions' code: it repeats these rules, and
+    // they must not drift (a run the page calls dead while the server still
+    // refuses another, a note the box keeps that the capture cuts, a part the
+    // page thinks a recapture leaves alone).
+    const server = await import('../../netlify/functions/_lib/capture-run.js');
+    const guard = await import('../../netlify/functions/_lib/capture.js');
+    expect(CAPTURE_LIVE_MS).toBe(server.CAPTURE_RUN_LIVE_MS);
+    expect(REFERENCE_SITE_NOTE_MAX).toBe(server.CAPTURE_NOTE_MAX);
+    expect(REFERENCE_SITE_URL_MAX).toBe(guard.CAPTURE_URL_MAX);
+    for (const run of [
+      RUN, { ...RUN, startedAt: '2026-10-07 12:00:00+00:00' }, { ...RUN, status: 'ready' }, { ...RUN, startedAt: 'soon' }, null, [], 'running',
+    ]) {
+      for (const at of [now - 1000, now, now + CAPTURE_LIVE_MS - 1, now + CAPTURE_LIVE_MS]) {
+        expect(isCaptureLive(run, at), JSON.stringify([run, at])).toBe(server.isCaptureLive(run, at));
+      }
+    }
+    const notes = [server.captureNote('https://shop.test/', ''), server.captureNote('https://www.shop.test/a?b=1', 'hero, like https://other.test'),
+      'Screenshot of https://shop.test/', 'Screenshot of  https://shop.test/', 'Screenshot of', 'Screenshots of https://shop.test/', 'https://shop.test/'];
+    for (const note of notes) {
+      for (const asset of [{ ...part(1, 1), note }, { ...part(1, 1), note, captured: false }, { ...part(1, 1), note, addedBy: 'customer' }]) {
+        expect(capturedShotKey(asset), JSON.stringify(asset)).toBe(server.capturedUrlKey(asset));
+      }
+    }
   });
 });
 

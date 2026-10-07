@@ -93,6 +93,20 @@ export async function uploadReferenceShot(projectId, file, { note = '', group = 
   return { asset, project };
 }
 
+// Screenshots of a reference address taken on our server, for a site
+// nobody took a screenshot of (Design step > Reference sites: adding a site
+// by its address, or "Capture again"). custom-site-admin reference-capture
+// checks the address (public http(s) sites only), claims the run on
+// project.design.capture and starts the background function, which opens
+// the site in a headless browser and stores up to 4 parts, top first, as
+// team reference uploads noted "Screenshot of <url> - <note>" (how a match
+// on the address finds them). Returns { capture }. While a capture is
+// going the call fails with status 409 and that run on error.data.capture
+// (watch it instead). The page polls `get` while the run is live.
+export function captureReference(projectId, url, note = '') {
+  return customSiteAdmin('reference-capture', { id: projectId, url, note });
+}
+
 // ─── Customer form ────────────────────────────────────────────────────
 
 const json = (body) => ({

@@ -42,6 +42,18 @@
 //                                   400 "Nothing to convert" without HEIC
 //                                   uploads. The page polls `get`
 //                                   (project.design.heic) while it runs.
+//   reference-capture { id, url, note? }
+//                                 → screenshots of a reference site taken
+//                                   by our own browser: checks the address
+//                                   (_lib/capture.js: public http(s) only),
+//                                   claims design.capture (_lib/capture-run.js)
+//                                   and starts custom-site-capture-background:
+//                                   { capture }. 400 { error } for an address
+//                                   it won't open, or when the team's
+//                                   screenshots fill the project; 409
+//                                   { error, capture } while a capture is
+//                                   live. The page polls `get`
+//                                   (project.design.capture) while it runs.
 //
 // The tables have RLS on with no policies (see the migration), so this
 // function, with the service role, is the only way in.
@@ -52,13 +64,16 @@ import { requireSuperAdmin } from './_lib/custom-site-auth.js';
 import { accessLink, findCustomerAccount, handOverSite } from './_lib/custom-site-handover.js';
 import { customSiteDraft, customSiteHandover, customSiteLive, customSiteWelcome } from './_lib/postmark.js';
 import {
-  ASSET_BUCKET, ASSET_KINDS, STAGE_IDS, assetPath, fullName, isEmail, isTeamAsset, safeHref, sanitizeForm, stageAfterInvite,
+  ASSET_BUCKET, ASSET_KINDS, STAGE_IDS, assetPath, fullName, isEmail, safeHref, sanitizeForm, stageAfterInvite,
 } from '../../src/lib/customSiteForm.js';
-import { designProblems, isRunStale, sanitizeDesign, sanitizeReference } from '../../src/lib/customSiteDesign.js';
+import { designProblems, isRunStale, sanitizeDesign, sanitizeReference, sanitizeReferenceSites } from '../../src/lib/customSiteDesign.js';
 import { REFERENCE_SHOT_MAX_BYTES, checkReferenceGroup, checkReferenceShot, referenceShotPath } from '../../src/lib/designSuggest.js';
 import { applyLaunchPatch } from '../../src/lib/customSiteLaunch.js';
 import { KIT_KEYS } from '../../src/lib/launchKit.js';
 import { claimHeicRun, invokeHeicBackground, isHeicRunLive, releaseHeicRun } from './_lib/heic-run.js';
+import { REFERENCE_FULL, REFERENCE_TEAM_MAX, recordedReference, referenceCount } from './_lib/reference-assets.js';
+import { CAPTURE_MESSAGES, CAPTURE_URL_MAX, checkCaptureUrl } from './_lib/capture.js';
+import { CAPTURE_NOTE_MAX, claimCapture, invokeCaptureBackground, releaseCapture } from './_lib/capture-run.js';
 
 const TABLE = 'custom_site_projects';
 const EVENTS = 'custom_site_project_events';
@@ -236,8 +251,10 @@ async function removeProjectFiles(db, projectId) {
 // trigger); otherwise it reads again and re-applies the patch, so a save
 // landing in between is never undone. Returns [status, body].
 // design keys only server actions write (see design-save). heic: the HEIC
-// to JPEG run (heic-convert, custom-site-heic-background).
-const SERVER_DESIGN_KEYS = ['launch', 'suggestion', 'brand', 'kit', 'heic'];
+// to JPEG run (heic-convert, custom-site-heic-background). capture: the
+// last screenshot run of a reference address (reference-capture,
+// custom-site-capture-background).
+const SERVER_DESIGN_KEYS = ['launch', 'suggestion', 'brand', 'kit', 'heic', 'capture'];
 
 async function saveLaunch(db, id, patch, actor) {
   for (let attempt = 0; attempt < 3; attempt += 1) {
@@ -287,13 +304,9 @@ async function storedObject(db, path) {
   return (data || []).find((f) => f?.name === name) || null;
 }
 
-// The team's screenshots have their own room, as the customer's uploads
-// have theirs (custom-site-form counts only the customer's own,
-// customerAssets): a customer who filled their inspiration slots must not
-// keep the team from adding the screenshot a match needs, and the other
-// way round.
-const referenceCount = (assets) => (Array.isArray(assets) ? assets : []).filter((a) => a?.kind === 'reference' && isTeamAsset(a)).length;
-const REFERENCE_FULL = `The team already added ${ASSET_KINDS.reference.max} reference screenshots to this project, the most it can hold.`;
+// The team's screenshots have their own room (referenceCount,
+// REFERENCE_FULL: _lib/reference-assets.js, shared with the screenshots
+// custom-site-capture-background takes).
 
 // Appends `asset` to project.assets and keeps every other upload. The
 // customer's form writes assets too (autosave), so the write only lands
@@ -309,10 +322,9 @@ async function addReferenceAsset(db, id, asset, actor) {
     const current = await loadProject(db, id);
     if (!current) return [404, { error: 'Project not found' }];
     const assets = Array.isArray(current.assets) ? current.assets : [];
-    const existing = assets.find((a) => a?.path === asset.path)
-      || (asset.group ? assets.find((a) => a?.kind === 'reference' && a.group === asset.group && a.part === asset.part) : null);
+    const existing = recordedReference(assets, asset);
     if (existing) return [200, { project: forAdmin(current), asset: (await withFileUrls(db, [existing]))[0] }];
-    if (referenceCount(assets) >= ASSET_KINDS.reference.max) return [400, { error: REFERENCE_FULL }];
+    if (referenceCount(assets) >= REFERENCE_TEAM_MAX) return [400, { error: REFERENCE_FULL }];
     let q = db.from(TABLE).update({ assets: [...assets, asset] }).eq('id', current.id);
     if (current.updated_at) q = q.eq('updated_at', current.updated_at);
     const { data, error } = await q.select('*').maybeSingle();
@@ -557,6 +569,9 @@ export const handler = async (event) => {
           // rather than wiping a match or a replica request.
           const sent = body.design && typeof body.design === 'object' ? body.design : {};
           if (sent.reference === undefined && prev.reference !== undefined) next.reference = sanitizeReference(prev.reference, { projectId: current.id });
+          // The same for the sites the team added by address: a tab opened
+          // before that list existed sends none, and must not empty it.
+          if (sent.referenceSites === undefined && prev.referenceSites !== undefined) next.referenceSites = sanitizeReferenceSites(prev.referenceSites);
           // A site, once created, keeps its id.
           if (current.site_id) next.siteId = current.site_id;
           let q = db.from(TABLE).update({ design: next }).eq('id', current.id);
@@ -687,7 +702,7 @@ export const handler = async (event) => {
         if (!current) return reply(404, { error: 'Project not found' });
         const check = checkReferenceShot({ fileName: body.fileName, size: Number(body.size), type: body.type });
         if (check.error) return reply(400, { error: check.error });
-        if (referenceCount(current.assets) >= ASSET_KINDS.reference.max) return reply(400, { error: REFERENCE_FULL });
+        if (referenceCount(current.assets) >= REFERENCE_TEAM_MAX) return reply(400, { error: REFERENCE_FULL });
         const path = assetPath(current.id, 'reference', crypto.randomUUID(), check.ext);
         const { data, error } = await db.storage.from(ASSET_BUCKET).createSignedUploadUrl(path);
         if (error || !data?.token) {
@@ -747,6 +762,45 @@ export const handler = async (event) => {
         };
         const [status, out] = await addReferenceAsset(db, current.id, asset, actor);
         return reply(status, out);
+      }
+
+      case 'reference-capture': {
+        // The address as the Design step stores it (safeHref, at most 500
+        // characters before and after), then the guard: a site our browser
+        // may open (public http(s), every address the name resolves to).
+        // The background function checks it again, and every request the
+        // page makes.
+        const raw = typeof body.url === 'string' ? body.url.trim() : '';
+        if (raw.length > CAPTURE_URL_MAX) return reply(400, { error: CAPTURE_MESSAGES.too_long });
+        const href = raw ? safeHref(raw) : null;
+        if (!href) return reply(400, { error: CAPTURE_MESSAGES.invalid });
+        if (href.length > CAPTURE_URL_MAX) return reply(400, { error: CAPTURE_MESSAGES.too_long });
+        const current = await loadProject(db, body.id);
+        if (!current) return reply(404, { error: 'Project not found' });
+        const target = await checkCaptureUrl(href);
+        if (!target.ok) return reply(400, { error: target.error, code: target.code });
+        // "What to copy": one line of at most CAPTURE_NOTE_MAX (claimCapture).
+        const note = typeof body.note === 'string' ? body.note.slice(0, 4 * CAPTURE_NOTE_MAX) : '';
+        const { claimed, capture, project, reason } = await claimCapture(db, current.id, { url: target.url, note });
+        if (!project) return reply(404, { error: 'Project not found' });
+        if (!claimed) {
+          if (reason === 'full') return reply(400, { error: REFERENCE_FULL, capture });
+          return reply(409, { error: 'A screenshot is already being taken for this project. Wait for it to finish.', capture });
+        }
+        try {
+          await invokeCaptureBackground(event, { id: project.id, startedAt: capture.startedAt, actor });
+        } catch (e) {
+          const message = `Couldn't start the capture: ${clean(e?.message, 200) || 'unknown error'}`;
+          // Given up at once, so "Capture again" works without waiting for
+          // the claim to go stale. Best effort, as for heic-convert.
+          const released = await releaseCapture(db, project.id, capture.startedAt, message).catch((err) => {
+            console.error('[custom-site-admin] capture claim not released:', err?.message || err);
+            return false;
+          });
+          if (released) await logEvent(db, project.id, 'reference_capture_failed', { url: capture.url, error: message.slice(0, 200) }, actor);
+          return reply(502, { error: message });
+        }
+        return reply(200, { capture });
       }
 
       case 'reset-link': {

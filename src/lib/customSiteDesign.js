@@ -294,8 +294,11 @@ const TEMPLATE_ID_RE = /^[a-z0-9_]{2,40}$/;
 //            colors and logo still come from the customer's side).
 //   source   the ONE reference matched: { kind: 'asset', path } (a
 //            screenshot in this project's reference folder) or
-//            { kind: 'url', url } (a site they listed). Nothing fetches
-//            web pages, so a url can only be matched through a screenshot.
+//            { kind: 'url', url } (a site they listed, or one the team
+//            added: design.referenceSites below). Claude never opens a web
+//            page, so a url is only ever matched through its screenshots:
+//            ones the team uploaded, or ones our server took of it
+//            (design.capture below).
 //   replica  the "Exact replica" request: a custom-only template built in
 //            the repo, modeled on the reference, for this customer alone.
 // A reference only ever lends layout, structure, spacing, type feel and
@@ -362,6 +365,163 @@ export function sanitizeReference(input, { projectId } = {}) {
   };
 }
 
+// ─── Sites the team adds (design.referenceSites) ─────────────────────
+//
+// The customer lists the sites they like in the form (form.referenceSites);
+// the team can add more in the Design step by pasting an address, so a site
+// can be matched without anyone taking screenshots by hand. Each one is
+// { url, note, addedAt }: note says what to copy from it (layout only).
+// Client-owned: saved with the rest of the setup (design-save). Adding one
+// also asks the server to screenshot it (design.capture below).
+export const REFERENCE_SITES_MAX = 10;
+export const REFERENCE_SITE_URL_MAX = 500;
+export const REFERENCE_SITE_NOTE_MAX = 300;
+
+// A web address as a comparable key: host without "www.", path without the
+// trailing slash, query kept, lower case ('' when it isn't one). The same
+// rule as designSuggest.js referenceUrlKey, which finds a site's screenshots
+// by it; repeated here because designSuggest.js imports this module (the
+// import back would be a cycle) and the Design page loads designSuggest.js
+// only on demand. customSiteDesign.test.js checks that the two agree.
+export function referenceSiteKey(input) {
+  const href = safeHref(input);
+  if (!href) return '';
+  const u = new URL(href);
+  return `${u.hostname.replace(/^www\./, '')}${u.pathname.replace(/\/+$/, '')}${u.search}`.toLowerCase();
+}
+
+// An address as the list stores it (http(s) only, "https://" added when
+// left out), or null. At most 500 characters before and after, as
+// sanitizeReference keeps a matched address, so any listed site can be
+// matched.
+export function referenceSiteUrl(raw) {
+  const s = typeof raw === 'string' ? raw.trim() : '';
+  const url = s && s.length <= REFERENCE_SITE_URL_MAX ? safeHref(s) : null;
+  return url && url.length <= REFERENCE_SITE_URL_MAX ? url : null;
+}
+
+// design.referenceSites kept to usable addresses: the first 10, one per
+// address (referenceSiteKey), each { url, note, addedAt }. The note is one
+// line (it ends up in the screenshots' note, "Screenshot of <url> - <note>").
+export function sanitizeReferenceSites(input) {
+  const out = [];
+  const seen = new Set();
+  for (const s of Array.isArray(input) ? input : []) {
+    if (out.length >= REFERENCE_SITES_MAX) break;
+    if (!s || typeof s !== 'object' || Array.isArray(s)) continue;
+    const url = referenceSiteUrl(s.url);
+    const key = url ? referenceSiteKey(url) : '';
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    const at = typeof s.addedAt === 'string' && s.addedAt.length <= 40 ? Date.parse(s.addedAt) : NaN;
+    out.push({
+      url,
+      note: typeof s.note === 'string' ? s.note.replace(/\s+/g, ' ').trim().slice(0, REFERENCE_SITE_NOTE_MAX).trim() : '',
+      addedAt: Number.isFinite(at) ? new Date(at).toISOString() : '',
+    });
+  }
+  return out;
+}
+
+// ─── Screenshots our server takes (design.capture) ───────────────────
+//
+// The project's last capture of a reference address: custom-site-admin
+// reference-capture claims it and custom-site-capture-background opens the
+// site in a headless browser and stores up to 4 screenshot parts as team
+// reference uploads (captured: true, note "Screenshot of <url>", which is
+// how a match on the address finds them, like an upload's). One at a time
+// per project. Server-owned: the setup never saves it.
+//   { status: 'running'|'ready'|'failed', url, startedAt, finishedAt,
+//     parts, error }
+// While one is live the server refuses another (409). Date.parse, because
+// Postgres hands times back as '+00:00', not 'Z'. The live window is the
+// server's (capture-run.js CAPTURE_RUN_LIVE_MS; the test checks they
+// agree): past it, the page shows the run as dead and offers it again, and
+// the server lets another one start.
+export const CAPTURE_LIVE_MS = 10 * 60 * 1000;
+export const CAPTURE_POLL_MS = 4000;
+
+const isCapture = (c) => !!c && typeof c === 'object' && !Array.isArray(c) && typeof c.status === 'string';
+const timeOf = (iso) => Date.parse(iso || '') || 0;
+
+export function isCaptureLive(capture, nowMs = Date.now()) {
+  if (!isCapture(capture) || capture.status !== 'running') return false;
+  const started = Date.parse(capture.startedAt || '');
+  return Number.isFinite(started) && nowMs - started < CAPTURE_LIVE_MS;
+}
+
+// Of two records of the capture (the page's project, a poll, the answer to
+// a start), the one to show: the later start, and for the same run the
+// finished record (a run only goes from running to ready or failed).
+export function newerCapture(a, b) {
+  const x = isCapture(a) ? a : null;
+  const y = isCapture(b) ? b : null;
+  if (!x || !y) return x || y;
+  if (timeOf(x.startedAt) !== timeOf(y.startedAt)) return timeOf(y.startedAt) > timeOf(x.startedAt) ? y : x;
+  return x.status === 'running' && y.status !== 'running' ? y : x;
+}
+
+// What the Design step shows for one address: { state, parts, error,
+// finishedAt }, state 'none' (the last capture was of another address, or
+// there was none), 'running', 'stale' (marked running past the live window:
+// it died), 'ready' or 'failed'.
+export function captureViewFor(capture, url, nowMs = Date.now()) {
+  const none = { state: 'none', parts: 0, error: '', finishedAt: '' };
+  const key = referenceSiteKey(url);
+  if (!key || !isCapture(capture) || referenceSiteKey(capture.url) !== key) return none;
+  const { status } = capture;
+  const state = status === 'running' ? (isCaptureLive(capture, nowMs) ? 'running' : 'stale')
+    : status === 'ready' || status === 'failed' ? status : 'none';
+  if (state === 'none') return none;
+  return {
+    state,
+    parts: Number.isInteger(capture.parts) && capture.parts > 0 ? capture.parts : 0,
+    error: state === 'failed' && typeof capture.error === 'string' ? capture.error.slice(0, 300) : '',
+    finishedAt: typeof capture.finishedAt === 'string' ? capture.finishedAt : '',
+  };
+}
+
+// The address a screenshot our server took pictures (its referenceSiteKey),
+// or '' for any other file: a team reference marked captured: true whose
+// note starts "Screenshot of <url>". Only that first word counts (the
+// team's note after " - " may name other sites), the rule by which a new
+// capture of an address replaces the earlier one's screenshots
+// (netlify/functions/_lib/capture-run.js capturedUrlKey: the test checks
+// the two agree; the page can't import the functions' code).
+const CAPTURED_NOTE_PREFIX = 'Screenshot of ';
+export function capturedShotKey(asset) {
+  if (!asset || typeof asset !== 'object' || Array.isArray(asset)) return '';
+  if (asset.kind !== 'reference' || asset.addedBy !== 'admin' || asset.captured !== true) return '';
+  const note = typeof asset.note === 'string' ? asset.note : '';
+  if (!note.startsWith(CAPTURED_NOTE_PREFIX)) return '';
+  return referenceSiteKey(note.slice(CAPTURED_NOTE_PREFIX.length).split(/\s+/)[0]);
+}
+
+// Capturing an address again replaces its earlier screenshots, so a
+// reference picked from those (a match or a replica request on one of the
+// parts) would point at a file that's gone. The capture moves the saved
+// design.reference to the new part in the same place (the same part
+// number, else the last one: custom-site-capture-background storeParts);
+// the page's own copy follows by the same rule. `before` and `after` are
+// project.assets before and after the capture. Returns the moved source,
+// or null when `source` stays as it is.
+export function replacedShotSource(source, before, after) {
+  if (!source || typeof source !== 'object' || source.kind !== 'asset' || typeof source.path !== 'string') return null;
+  const now = Array.isArray(after) ? after : [];
+  if (now.some((a) => a?.path === source.path)) return null;
+  const old = Array.isArray(before) ? before : [];
+  const was = old.find((a) => a?.path === source.path);
+  const key = capturedShotKey(was);
+  if (!key) return null;
+  const known = new Set(old.map((a) => a?.path));
+  const parts = now
+    .filter((a) => capturedShotKey(a) === key && !known.has(a.path) && Number.isInteger(a.part))
+    .sort((x, y) => x.part - y.part);
+  if (!parts.length) return null;
+  const to = parts[Math.min(Math.max(1, Number(was.part) || 1), parts.length) - 1];
+  return { kind: 'asset', path: to.path };
+}
+
 // What the admin saves from the setup form, kept to known keys and shapes.
 // `imageUrlPrefix` is the public site-images URL prefix: imported images
 // must live there (customer uploads are private and their links expire).
@@ -417,6 +577,10 @@ export function sanitizeDesign(input, { imageUrlPrefix, projectId } = {}) {
     // Inspire / match / replica (sanitizeReference above). Client-owned:
     // saved with the rest of the setup.
     reference: sanitizeReference(src.reference, { projectId }),
+    // The sites the team added by address (sanitizeReferenceSites above).
+    // Client-owned too; design.capture is the server's and never comes
+    // from here.
+    referenceSites: sanitizeReferenceSites(src.referenceSites),
   };
   if (Array.isArray(src.imagesChanged)) {
     out.imagesChanged = [...new Set(src.imagesChanged.filter((k) => IMAGE_KEY_RE.test(String(k))))];

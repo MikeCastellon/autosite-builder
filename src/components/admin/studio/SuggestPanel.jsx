@@ -32,9 +32,10 @@ import { paletteSourceText, wholeShotName } from './referenceMatch.js';
 //             the saved design.useBrand decides (designSuggest.js
 //             matchPalettePlan).
 //   uploading optional: screenshots are being uploaded elsewhere on the
-//             page. A match waits for them (and for this panel's own
-//             upload): a tall screenshot goes up in parts, and a run
-//             started after the first one would see only the top.
+//             page, or our server is taking the matched site's (Reference
+//             sites, design.capture). A match waits for them (and for this
+//             panel's own upload): a tall screenshot goes up in parts, and a
+//             run started after the first one would see only the top.
 
 const POLL_MS = 5000;
 const BTN = 'inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-white border border-black/[0.12] text-[13px] font-semibold text-[#1a1a1a] hover:border-[#cc0000]/40 disabled:opacity-50 transition-colors';
@@ -206,7 +207,7 @@ export default function SuggestPanel({
           {live ? 'Thinking…' : starting ? 'Starting…' : idleLabel}
         </button>
         {waiting && !live && (
-          <span role="status" className="text-[12px] text-ink-tertiary">Waiting for the screenshots to finish uploading, so the match sees every part.</span>
+          <span role="status" className="text-[12px] text-ink-tertiary">Waiting for the screenshots to finish, so the match sees every part.</span>
         )}
         {live && (
           <span role="status" className="text-[12px] text-ink-tertiary">
