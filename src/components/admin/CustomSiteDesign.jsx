@@ -1,9 +1,11 @@
 import { Suspense, lazy, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { TEMPLATES } from '../../data/templates.js';
-import { customSiteAdmin, importAssetToSite, startDesignRun } from '../../lib/customSites.js';
+import { captureReference, customSiteAdmin, importAssetToSite, startDesignRun } from '../../lib/customSites.js';
 import {
-  DESIGN_MODEL, DESIGN_STALE_MS, REPLICA_LABEL, SITE_BUSINESS_TYPES, brandAccent, canMatchReference, designFromIntake, designProblems, isImportable,
-  rankTemplates, replicaTemplatesFor, sameReferenceSource, sanitizeReference, showsPrices,
+  CAPTURE_POLL_MS, DESIGN_MODEL, DESIGN_STALE_MS, REFERENCE_SITES_MAX, REFERENCE_SITE_NOTE_MAX, REFERENCE_SITE_URL_MAX, REPLICA_LABEL,
+  SITE_BUSINESS_TYPES, brandAccent, canMatchReference, captureViewFor, capturedShotKey, designFromIntake, designProblems, isCaptureLive,
+  isImportable, newerCapture, rankTemplates, referenceSiteKey, referenceSiteUrl, replacedShotSource, replicaTemplatesFor, sameReferenceSource,
+  sanitizeReference, sanitizeReferenceSites, showsPrices,
 } from '../../lib/customSiteDesign.js';
 import { formatBytes, safeHref } from '../../lib/customSiteForm.js';
 import { changedLeverGroups, leverGroupsChanged, sanitizeLevers } from '../../lib/designLevers.js';
@@ -237,38 +239,106 @@ function urlShotsText(shots) {
   return `${screenshots} in ${n} parts, top first`;
 }
 
+// ─── Server screenshots of an address (design.capture) ───────────────
+
+// Asks `load` every `intervalMs` until the returned stop is called, and
+// hands each answer to `onResult`, never after the stop (a request still
+// out when the page goes lands nowhere). One ask at a time: a slow answer
+// skips the ticks it overlaps. A failed ask (a network blip) is dropped and
+// the next tick asks again. `onTick` hears every tick, answered or not: the
+// page judges a run against its clock, so a run nobody can reach any more
+// (offline, signed out, the project deleted) still turns stale after the
+// live window and the polls stop.
+export function watchCapture({ load, onResult, onTick, intervalMs = CAPTURE_POLL_MS }) {
+  let stopped = false;
+  let asking = false;
+  const timer = setInterval(() => {
+    onTick?.();
+    if (asking) return;
+    asking = true;
+    Promise.resolve()
+      .then(load)
+      .then((result) => { if (!stopped) onResult(result); })
+      .catch(() => {})
+      .finally(() => { asking = false; });
+  }, intervalMs);
+  return () => {
+    stopped = true;
+    clearInterval(timer);
+  };
+}
+
+// Polls while a capture is live: the page renders it only then, so the
+// polls stop when the run ends or the page goes. Each tick uses the page's
+// latest handlers (they read its current state).
+function CaptureWatch({ load, onResult, onTick }) {
+  const latest = useRef({ load, onResult, onTick });
+  latest.current = { load, onResult, onTick };
+  useEffect(() => watchCapture({
+    load: () => latest.current.load(),
+    onResult: (result) => latest.current.onResult(result),
+    onTick: () => latest.current.onTick?.(),
+  }), []);
+  return null;
+}
+
+const BTN_SMALL = 'inline-flex items-center justify-center px-2.5 py-1 rounded-md bg-white border border-black/[0.12] text-[12px] font-semibold text-[#1a1a1a] hover:border-[#cc0000]/40 disabled:opacity-50 transition-colors';
+const LINK_BTN = 'text-[12px] font-semibold text-[#cc0000] hover:underline disabled:opacity-50';
+
 // The customer typed the business name: in the prompt the admin pastes
 // into Claude Code it stays a plain label (letters, digits, simple
 // punctuation), never text that could read as an instruction.
 const promptName = (name) => String(name || '').replace(/[^\p{L}\p{N} &'.,-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 60);
 
-// The sites they listed and the reference screenshots (theirs and ones the
-// team added), each used as inspiration or, for one at a time, matched:
-// "Suggest a design" then mirrors that reference's layout. Below it, the
-// exact-replica request (a custom-only template built in the repo).
+// The sites they listed, the ones the team added by address, and the
+// reference screenshots (theirs and ones the team added), each used as
+// inspiration or, for one at a time, matched: "Suggest a design" then
+// mirrors that reference's layout. Any address can be screenshotted on our
+// server (design.capture), so a site can be matched without anyone taking
+// screenshots by hand. Below it, the exact-replica request (a custom-only
+// template built in the repo).
 //
 //   files       the project's files (assets with signed links), fresh
 //   reference   design.reference as it will be saved (sanitized)
 //   urlShots    (source) => the screenshots that picture a matched web
 //               address (designSuggest.js referenceShots, the rule the
 //               run uses), or null while that module loads
+//   teamSites   design.referenceSites as saved (sanitized)
+//   capture     the project's last server capture (design.capture), newest
+//               record, and nowMs the time it is judged at
+//   captureStarting  the address key of a start in progress, or ''
+//   captureErrors    { address key: why its last start failed }
 //   onChange    (reference) => void, kept in the page until Save
 //   onSave      (reference, message) => Promise, saves the page right away
+//   onAddSite   (url, note) => Promise<{ ok } | { error }>, saves the page
+//               with the site and starts its capture
+//   onRemoveSite (url) => Promise, saves the page without it
+//   onCapture   (url, note) => Promise, captures an address (again)
 //   onShotAdded (asset, row) => void, per screenshot (or part) recorded
 //   onShotBusy  (busy) => void, while a pick of screenshots uploads
 //   replicas    this project's replica templates in this build
 function ReferenceSection({
   project, files, reference, urlShots, replicas, templateId, busy, onChange, onSave, onShotAdded, onShotBusy, onPickTemplate,
+  teamSites = [], capture = null, nowMs = Date.now(), captureStarting = '', captureErrors = {}, onAddSite, onRemoveSite, onCapture,
 }) {
   const { toast } = useAlert();
   const first = project.client_first_name || 'the customer';
   const form = project.form || {};
   // The note for a request not yet made (a saved request keeps its own).
   const [note, setNote] = useState(reference.replica.note || '');
+  // The add-a-site box.
+  const [siteUrl, setSiteUrl] = useState('');
+  const [siteNote, setSiteNote] = useState('');
+  const [siteError, setSiteError] = useState('');
+  const [adding, setAdding] = useState(false);
+  // "Upload a screenshot instead" on a site: the uploader labels what it
+  // adds as that site's screenshots (else as the matched address's).
+  const [uploadFor, setUploadFor] = useState('');
   // Each item's radio pair is its own group; one id keeps the names unique.
   const group = useId();
+  const uploaderId = `${group}-upload`;
 
-  const sites = (Array.isArray(form.referenceSites) ? form.referenceSites : [])
+  const intakeSites = (Array.isArray(form.referenceSites) ? form.referenceSites : [])
     .filter((r) => r && (r.url || r.note))
     .map((r, i) => {
       const href = safeHref(r.url);
@@ -276,8 +346,25 @@ function ReferenceSection({
         key: `site-${i}`, kind: 'url', title: href ? shortUrl(href) : String(r.url || 'No address given'), href, note: r.note || '',
         source: href ? { kind: 'url', url: href } : null,
         why: href ? '' : 'Not a usable web address, so it can only inspire.',
+        // The customer's note stays theirs: a capture's screenshots carry
+        // only the team's words.
+        siteKey: href ? referenceSiteKey(href) : '', captureNote: '',
       };
     });
+  const intakeKeys = new Set(intakeSites.map((s) => s.siteKey).filter(Boolean));
+  // Sites the team added, after the customer's. One the customer listed
+  // too shows once, as theirs (the add box refuses those anyway).
+  const addedSites = teamSites
+    .map((s) => ({
+      key: `team-${referenceSiteKey(s.url)}`, kind: 'url', title: shortUrl(s.url), href: s.url, note: s.note,
+      source: { kind: 'url', url: s.url }, why: '', byTeam: true, removable: true,
+      siteKey: referenceSiteKey(s.url), captureNote: s.note,
+    }))
+    .filter((s) => s.siteKey && !intakeKeys.has(s.siteKey));
+  const sites = [...intakeSites, ...addedSites];
+  const full = teamSites.length >= REFERENCE_SITES_MAX;
+  // A capture is going (one at a time per project): no other can start.
+  const anyCapturing = isCaptureLive(capture, nowMs);
   const shots = shotGroups(files).map((parts) => {
     const f = parts[0];
     // As the run decides (designSuggest.js): both the name and the stored
@@ -302,8 +389,8 @@ function ReferenceSection({
       : sameReferenceSource(it.source, reference.source))) || null
     : null;
   // A matched address is matched through its screenshots (their note names
-  // it: ReferenceShotUpload writes "Screenshot of <url>" when given the
-  // address). Nothing ever opens the site itself.
+  // it: ReferenceShotUpload and the server's capture write "Screenshot of
+  // <url>"). Claude never opens the site itself.
   const matchedUrl = reference.mode === 'match' && reference.source?.kind === 'url' ? reference.source.url : '';
   const matchedUrlShots = matchedUrl && urlShots ? urlShots(reference.source) : null;
   const sourceLabel = (src) => {
@@ -312,6 +399,86 @@ function ReferenceSection({
     const f = files.find((x) => x.path === src.path);
     return f ? (f.group ? wholeName(f.name) : f.name || 'a screenshot') : 'a screenshot';
   };
+
+  // One add, and one capture start, at a time: a start still waiting for
+  // its answer would otherwise lose track of which site it is starting.
+  const addBlocked = adding || !!busy || full || !!captureStarting || !siteUrl.trim();
+  async function addSite() {
+    setSiteError('');
+    setAdding(true);
+    try {
+      const res = await onAddSite?.(siteUrl, siteNote);
+      if (res?.error) setSiteError(res.error);
+      else if (res?.ok) { setSiteUrl(''); setSiteNote(''); }
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  // The uploader is further down this section: point it at the site and
+  // bring it into view.
+  function uploadInstead(href) {
+    setUploadFor(href);
+    if (typeof document !== 'undefined') document.getElementById(uploaderId)?.scrollIntoView({ block: 'center' });
+  }
+
+  // Under an address: its capture (going, taken, failed) and the button to
+  // take (or retake) its screenshots. A failed one points at the uploader.
+  //   view       captureViewFor this address
+  //   siteShots  its screenshots (urlShots), or null while those load
+  function captureBlock(item, view, siteShots) {
+    const failedStart = view.state === 'running' ? '' : captureErrors[item.siteKey] || '';
+    const starting = captureStarting === item.siteKey;
+    // Taken of this address: a screenshot found by its note may be another
+    // site's capture whose note only mentions this one.
+    const captured = view.state !== 'none' || (siteShots || []).some((s) => capturedShotKey(s) === item.siteKey);
+    const captureButton = (label) => (
+      <button
+        type="button"
+        onClick={() => onCapture?.(item.href, item.captureNote)}
+        disabled={!!busy || anyCapturing || !!captureStarting}
+        title={anyCapturing ? 'Another capture is going. Wait for it to finish.' : undefined}
+        className={BTN_SMALL}
+      >
+        {starting ? 'Starting…' : label}
+      </button>
+    );
+    if (view.state === 'running') {
+      return (
+        <div className="mt-2 flex items-center gap-2.5" role="status">
+          <span className="w-4 h-4 border-2 border-black/10 border-t-[#cc0000] rounded-full motion-safe:animate-spin shrink-0" aria-hidden="true" />
+          <p className="text-[12px] text-[#4a4a4a]">
+            <strong className="text-[#1a1a1a]">Capturing…</strong> Our server is taking screenshots of this site, top first. Usually under a minute; you can leave this page.
+          </p>
+        </div>
+      );
+    }
+    if (failedStart || view.state === 'failed' || view.state === 'stale') {
+      const why = failedStart || (view.state === 'stale' ? 'The capture didn\'t finish (it may have timed out).' : view.error || 'Something went wrong.');
+      return (
+        <div className="mt-2 rounded-lg bg-[#fff5f5] border border-[#cc0000]/20 px-3 py-2">
+          <p className="text-[12px] text-[#4a4a4a]"><strong className="text-[#cc0000]">Couldn't capture it.</strong> {why}</p>
+          <div className="mt-1.5 flex flex-wrap items-center gap-3">
+            {captureButton('Capture again')}
+            <button type="button" onClick={() => uploadInstead(item.href)} className={LINK_BTN}>Upload a screenshot instead</button>
+          </div>
+        </div>
+      );
+    }
+    if (view.state === 'ready') {
+      return (
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+          <p className="text-[12px] text-emerald-800">
+            <strong>Screenshots ready</strong>
+            {view.parts > 0 && ` · ${view.parts === 1 ? '1 part' : `${view.parts} parts, top first`}`}
+            {view.finishedAt && <span className="text-ink-tertiary"> · {formatDateTime(view.finishedAt)}</span>}
+          </p>
+          {captureButton('Capture again')}
+        </div>
+      );
+    }
+    return <div className="mt-2">{captureButton(captured ? 'Capture again' : 'Capture screenshots')}</div>;
+  }
 
   const replica = reference.replica;
   const name = promptName(project.business_name);
@@ -330,7 +497,7 @@ function ReferenceSection({
   }
 
   return (
-    <Section title="Reference sites" intro={`Sites and screenshots ${first} likes. Use each one as inspiration, or match one's layout.`}>
+    <Section title="Reference sites" intro={`Sites and screenshots ${first} likes, and ones the team added. Use each one as inspiration, or match one's layout.`}>
       <p className="rounded-lg bg-[#faf9f7] border border-black/[0.06] px-3 py-2 text-[12px] text-[#4a4a4a]">
         <strong className="text-[#1a1a1a]">Layout only.</strong> Matching or replicating a site copies its structure, spacing, type feel and the style of
         its parts. Never its words, photos, logo, icons, business name or anything else that identifies that business: {first}'s own content,
@@ -338,17 +505,24 @@ function ReferenceSection({
       </p>
 
       {items.length === 0 ? (
-        <p className="mt-3 text-[13px] text-ink-tertiary">They didn't list a site or send a screenshot. Add a screenshot below to match a site's layout.</p>
+        <p className="mt-3 text-[13px] text-ink-tertiary">They didn't list a site or send a screenshot. Add a site's address or a screenshot below to match its layout.</p>
       ) : (
         <ul className="mt-3 space-y-2">
           {items.map((item, i) => {
             const on = !!matched && matched.key === item.key;
+            // An address: its capture, and its screenshots (the top one
+            // shows as its picture).
+            const web = item.kind === 'url' && !!item.href;
+            const view = web ? captureViewFor(capture, item.href, nowMs) : null;
+            const siteShots = web && urlShots ? urlShots(item.source) : null;
+            const top = siteShots?.length ? files.find((f) => f.path === siteShots[0].path && f.url) : null;
+            const thumb = item.thumb || top?.url || null;
             return (
               <li key={item.key} className={`rounded-xl border p-3 ${on ? 'border-[#cc0000] bg-[#cc0000]/[0.03]' : 'border-black/[0.08]'}`}>
                 <div className="flex gap-3">
-                  {item.thumb ? (
-                    <a href={item.open} target="_blank" rel="noreferrer" className="shrink-0">
-                      <img src={item.thumb} alt={`Screenshot: ${item.title}`} className="w-20 h-14 rounded-md object-cover object-top border border-black/10" />
+                  {thumb ? (
+                    <a href={item.open || thumb} target="_blank" rel="noreferrer" className="shrink-0">
+                      <img src={thumb} alt={`Screenshot: ${item.title}`} className="w-20 h-14 rounded-md object-cover object-top border border-black/10" />
                     </a>
                   ) : (
                     <span className="w-20 h-14 shrink-0 rounded-md bg-black/[0.04] flex items-center justify-center text-ink-tertiary" aria-hidden="true">
@@ -366,6 +540,13 @@ function ReferenceSection({
                         : item.open ? <a href={item.open} target="_blank" rel="noreferrer" className="hover:underline">{item.title}</a> : item.title}
                       {item.parts > 1 && <span className="ml-2 inline-block whitespace-nowrap text-[11px] font-normal text-ink-tertiary">{item.parts} parts, top first</span>}
                       {item.byTeam && <span className="ml-2 inline-block whitespace-nowrap text-[10px] font-bold uppercase tracking-wider text-ink-tertiary">Added by the team</span>}
+                      {/* Its screenshots stay (listed below as the team's)
+                          until someone deletes them. */}
+                      {item.removable && (
+                        <button type="button" onClick={() => onRemoveSite?.(item.href)} disabled={!!busy} aria-label={`Remove ${item.title}`} className={`ml-2 ${LINK_BTN} font-normal`}>
+                          Remove
+                        </button>
+                      )}
                     </p>
                     {item.note && <p className="mt-0.5 text-[12px] text-[#4a4a4a]">{item.byTeam ? 'Note' : 'They wrote'}: "{item.note}"</p>}
                     <fieldset className="mt-2">
@@ -396,11 +577,13 @@ function ReferenceSection({
                       </div>
                     </fieldset>
                     {item.why && <p className="mt-1 text-[11px] text-ink-tertiary">{item.why}</p>}
+                    {web && captureBlock(item, view, siteShots)}
                     {on && item.kind === 'url' && matchedUrlShots && (
                       matchedUrlShots.length === 0 ? (
                         <p className="mt-2 text-[12px] text-amber-800">
-                          <strong>Add a screenshot of this site to match it.</strong> Claude never opens other websites: the screenshots you add below are
-                          labeled as this site's and are what it matches.
+                          <strong>{view?.state === 'running' ? 'Its screenshots are being taken.' : 'No screenshots of this site yet.'}</strong>{' '}
+                          {view?.state === 'running' ? 'It can be matched once they\'re in.' : 'Capture them above, or add one below.'} Claude only ever sees
+                          screenshots, never the site itself.
                         </p>
                       ) : (
                         <p className="mt-2 text-[12px] text-[#4a4a4a]">
@@ -426,19 +609,62 @@ function ReferenceSection({
       )}
       {reference.mode === 'match' && !matched && (
         <p className="mt-3 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-[12px] text-amber-900">
-          The reference being matched ({sourceLabel(reference.source)}) isn't in their answers or the project's files anymore.{' '}
+          The reference being matched ({sourceLabel(reference.source)}) isn't in the list or the project's files anymore.{' '}
           <button type="button" onClick={() => onChange({ ...reference, mode: 'inspire', source: null })} className="font-semibold underline">Stop matching it</button>
         </p>
       )}
 
-      <div className="mt-4">
-        <p className="text-[12px] font-semibold text-[#1a1a1a] mb-2">Add a screenshot</p>
+      <div className="mt-4 rounded-xl border border-black/[0.08] p-4">
+        <p className="text-[13px] font-bold text-[#1a1a1a]">Add a site by its address</p>
+        <p className="mt-0.5 text-[12px] text-ink-tertiary">
+          Our server opens it and takes screenshots of the page from the top (up to four parts), so you can match it. Only its layout and how
+          things work are used, never its words, photos, logo or brand.
+        </p>
+        <div className="mt-3 flex flex-col sm:flex-row gap-2">
+          <input
+            type="url"
+            inputMode="url"
+            value={siteUrl}
+            onChange={(e) => { setSiteUrl(e.target.value); setSiteError(''); }}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (!addBlocked) addSite(); } }}
+            placeholder="shopname.com"
+            aria-label="Site address"
+            maxLength={REFERENCE_SITE_URL_MAX}
+            disabled={full}
+            className={`${INPUT} sm:flex-[3]`}
+          />
+          <input
+            value={siteNote}
+            onChange={(e) => setSiteNote(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (!addBlocked) addSite(); } }}
+            placeholder="What to copy (optional), like the hero"
+            aria-label="What to copy from it (optional)"
+            maxLength={REFERENCE_SITE_NOTE_MAX}
+            disabled={full}
+            className={`${INPUT} sm:flex-[2]`}
+          />
+          <button type="button" onClick={addSite} disabled={addBlocked} className={BTN}>
+            {adding ? 'Adding…' : 'Add'}
+          </button>
+        </div>
+        {siteError && <p role="alert" className="mt-2 text-[12px] font-medium text-[#cc0000]">{siteError}</p>}
+        <p className="mt-1.5 text-[11px] text-ink-tertiary">
+          {full ? `The team can add up to ${REFERENCE_SITES_MAX} sites: remove one to add another.` : 'Adding saves this page.'}
+        </p>
+      </div>
+
+      <div className="mt-4" id={uploaderId}>
+        <p className="text-[12px] font-semibold text-[#1a1a1a] mb-2">
+          {uploadFor ? `Add a screenshot of ${shortUrl(uploadFor)}` : 'Add a screenshot'}
+          {uploadFor && <button type="button" onClick={() => setUploadFor('')} className={`ml-2 ${LINK_BTN} font-normal`}>Not of this site</button>}
+        </p>
         <Suspense fallback={<Loading />}>
-          {/* With an address matched, the upload labels its screenshots as
-              that site's ("Screenshot of <url>"), which is how the match
-              finds them (a tall one is cut into up to four parts, top
-              first, kept together as one group). */}
-          <ReferenceShotUpload projectId={project.id} sourceUrl={matchedUrl} onAdded={onShotAdded} onBusy={onShotBusy} disabled={!!busy} />
+          {/* For a site (its "Upload a screenshot instead"), else with an
+              address matched, the upload labels its screenshots as that
+              site's ("Screenshot of <url>"), which is how the match finds
+              them (a tall one is cut into up to four parts, top first, kept
+              together as one group). */}
+          <ReferenceShotUpload projectId={project.id} sourceUrl={uploadFor || matchedUrl} onAdded={onShotAdded} onBusy={onShotBusy} disabled={!!busy} />
         </Suspense>
       </div>
 
@@ -578,6 +804,22 @@ export function DesignSetup({ project, onBack, onStarted }) {
   }, []);
   const [busy, setBusy] = useState('');
   const [error, setError] = useState('');
+  // Sites the team added by address (design.referenceSites), saved with the
+  // page as soon as one is added or removed.
+  const [teamSites, setTeamSites] = useState(() => sanitizeReferenceSites(project.design?.referenceSites));
+  // The server's last screenshot run of an address (design.capture): the
+  // newest record of the page's project, the polls and the answers to a
+  // start. Every poll tick also moves the clock (captureTick), answered or
+  // not, so a run that never finishes turns stale and the polls stop.
+  const [captureSeen, setCaptureSeen] = useState(null);
+  const [, setCaptureTick] = useState(0);
+  // The address key of a start waiting for its answer, and why the last
+  // start of each address failed ({ key: message }).
+  const [captureStarting, setCaptureStarting] = useState('');
+  const [captureErrors, setCaptureErrors] = useState({});
+  const capture = newerCapture(project.design?.capture, captureSeen);
+  const nowMs = Date.now();
+  const captureLive = isCaptureLive(capture, nowMs);
 
   // Default to the best match once the business type is known (the one
   // labeled so: a replica leads the list but is picked on purpose).
@@ -657,9 +899,150 @@ export function DesignSetup({ project, onBack, onStarted }) {
       imported: saved?.imported || {},
       siteId: saved?.siteId || project.site_id || '',
       reference: cleanReference,
+      referenceSites: teamSites,
       ...extra,
     };
   }
+
+  const forgetCaptureError = (key) => setCaptureErrors((m) => {
+    if (!key || !(key in m)) return m;
+    const next = { ...m };
+    delete next[key];
+    return next;
+  });
+  // A record of the capture (a start's answer, a refusal, a poll): the
+  // newest one shows, and it moves the page's clock. A run of an address
+  // seen going replaces why its last start failed (it was started since,
+  // here or in another tab).
+  const seeCapture = (run) => {
+    setCaptureSeen((prev) => newerCapture(prev, run));
+    setCaptureTick((n) => n + 1);
+    if (isCaptureLive(run)) forgetCaptureError(referenceSiteKey(run.url));
+  };
+
+  // Screenshots of `url` taken on our server (adding a site, or Capture
+  // again). A start that fails says why on that site; one refused because
+  // a capture is already going watches that one instead.
+  async function startCapture(url, note = '') {
+    const key = referenceSiteKey(url);
+    if (!key) return;
+    setCaptureStarting(key);
+    forgetCaptureError(key);
+    try {
+      const res = await captureReference(project.id, url, note);
+      const run = res?.capture || res?.project?.design?.capture;
+      if (run) seeCapture(run);
+    } catch (e) {
+      // Only a live run is one to watch: a 409 for any other reason (the
+      // project kept changing while claiming) says its own message.
+      const going = e?.status === 409 && isCaptureLive(e.data?.capture) ? e.data.capture : null;
+      if (going) seeCapture(going);
+      // Refused because this same site is being captured: nothing to add.
+      if (!going || referenceSiteKey(going.url) !== key) {
+        // Worded to stay true once that other capture is done: the message
+        // stays until this site is captured.
+        const why = going ? 'Another site was being captured. Capture this one once that\'s done.' : e?.message || 'Could not start the capture.';
+        setCaptureErrors((m) => ({ ...m, [key]: why }));
+      }
+    } finally {
+      setCaptureStarting('');
+    }
+  }
+
+  // The fresh project.assets (after a capture, or a screenshot the team
+  // added). A capture of an address again replaces its earlier parts: a
+  // reference picked from one of them follows to the new part in its
+  // place, as the capture moved the saved one, so a later Save can't put
+  // back a file that's gone. `before` is the list as this page has it.
+  function takeAssets(fresh, before = projectAssets) {
+    setReference((r) => {
+      const moved = replacedShotSource(r?.source, before, fresh);
+      return moved ? { ...r, source: moved } : r;
+    });
+    setProjectAssets(fresh);
+  }
+
+  // While a capture is live: `get` every few seconds (CaptureWatch). Only
+  // the run is taken from an answer while it goes (every answer signs the
+  // file links again, and new links would reload every thumbnail); once it
+  // has ended, the files too, so its screenshots show (and can be matched)
+  // at once. A screenshot refresh started after this poll is newer and
+  // wins (filesRefresh, as in onShotAdded); this one in turn drops older
+  // refreshes still out.
+  async function pollCapture() {
+    const seq = filesRefresh.current;
+    const res = await customSiteAdmin('get', { id: project.id });
+    return { project: res?.project || null, seq };
+  }
+  function onCapturePolled({ project: fresh, seq } = {}) {
+    const run = fresh?.design?.capture;
+    if (!run) return;
+    seeCapture(run);
+    if (isCaptureLive(run) || seq !== filesRefresh.current) return;
+    filesRefresh.current += 1;
+    if (Array.isArray(fresh.files)) setProjectFiles(fresh.files);
+    if (Array.isArray(fresh.assets)) takeAssets(fresh.assets);
+  }
+
+  // A site the team adds by its address: saved with the page at once (like
+  // a replica request), then captured. Returns { error } for the add box
+  // (a bad or listed address), { ok: false } when the save failed (said at
+  // the bottom like any save) or { ok: true }.
+  async function addSite(rawUrl, rawNote) {
+    const url = referenceSiteUrl(rawUrl);
+    if (!url) {
+      // The box takes 500 characters, and "https://" may be added to them.
+      const tooLong = !!safeHref(String(rawUrl || '').trim());
+      return { error: tooLong ? `That address is too long (${REFERENCE_SITE_URL_MAX} characters at most).` : 'Enter a web address, like shopname.com.' };
+    }
+    const key = referenceSiteKey(url);
+    const listed = [...(Array.isArray(form.referenceSites) ? form.referenceSites : []).map((r) => r?.url), ...teamSites.map((s) => s.url)];
+    if (listed.some((u) => referenceSiteKey(u) === key)) return { error: 'That site is already in the list.' };
+    if (teamSites.length >= REFERENCE_SITES_MAX) return { error: `The team can add up to ${REFERENCE_SITES_MAX} sites.` };
+    const site = sanitizeReferenceSites([{ url, note: rawNote, addedAt: new Date().toISOString() }])[0];
+    const next = [...teamSites, site];
+    setBusy('save');
+    setError('');
+    try {
+      await customSiteAdmin('design-save', { id: project.id, design: buildDesign({ referenceSites: next }) });
+    } catch (e) {
+      setError(e.message || 'Could not save');
+      return { ok: false };
+    } finally {
+      setBusy('');
+    }
+    setTeamSites(next);
+    await startCapture(site.url, site.note);
+    return { ok: true };
+  }
+
+  // Takes a site the team added off the list (saved at once). Its
+  // screenshots stay in the project's files until someone deletes them.
+  async function removeSite(url) {
+    const key = referenceSiteKey(url);
+    const next = teamSites.filter((s) => referenceSiteKey(s.url) !== key);
+    setBusy('save');
+    setError('');
+    try {
+      await customSiteAdmin('design-save', { id: project.id, design: buildDesign({ referenceSites: next }) });
+      setTeamSites(next);
+    } catch (e) {
+      setError(e.message || 'Could not save');
+    } finally {
+      setBusy('');
+    }
+  }
+
+  // A capture of the matched address is still going: its parts aren't all
+  // in yet (and a new capture replaces the old parts), so Suggest a design
+  // holds a match as it does while screenshots upload. The same for a
+  // match on one of the parts an earlier capture of that address took:
+  // they are about to be replaced.
+  const capturingKey = captureLive ? referenceSiteKey(capture.url) : '';
+  const matchSource = cleanReference.mode === 'match' ? cleanReference.source : null;
+  const matchCapturing = !!capturingKey && !!matchSource && (matchSource.kind === 'url'
+    ? referenceSiteKey(matchSource.url) === capturingKey
+    : capturedShotKey(projectAssets.find((a) => a?.path === matchSource.path)) === capturingKey);
 
   // A replica request (or its cancel) saves the page at once, so the
   // request is on the project when someone asks Claude to build it.
@@ -688,7 +1071,7 @@ export function DesignSetup({ project, onBack, onStarted }) {
   async function onShotAdded(asset, row) {
     if (asset?.path) {
       setProjectFiles((list) => (list.some((f) => f.path === asset.path) ? list : [...list, asset]));
-      if (Array.isArray(row?.assets)) setProjectAssets(row.assets);
+      if (Array.isArray(row?.assets)) takeAssets(row.assets);
       else {
         const stored = { ...asset };
         delete stored.url;
@@ -701,7 +1084,7 @@ export function DesignSetup({ project, onBack, onStarted }) {
       const res = await customSiteAdmin('get', { id: project.id });
       if (seq !== filesRefresh.current) return;
       if (Array.isArray(res.project?.files)) setProjectFiles(res.project.files);
-      if (Array.isArray(res.project?.assets)) setProjectAssets(res.project.assets);
+      if (Array.isArray(res.project?.assets)) takeAssets(res.project.assets);
     } catch (e) {
       if (seq === filesRefresh.current) toast(`Added, but the list didn't refresh (${e.message || 'reload the page'})`, 'error');
     }
@@ -777,6 +1160,9 @@ export function DesignSetup({ project, onBack, onStarted }) {
 
   return (
     <div>
+      {/* Outside the Suspense below: a Studio panel still loading must not
+          hold the polls back. */}
+      {captureLive && <CaptureWatch load={pollCapture} onResult={onCapturePolled} onTick={() => setCaptureTick((n) => n + 1)} />}
       <button type="button" onClick={onBack} className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink-tertiary hover:text-[#1a1a1a]">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6" /></svg>
         Back to the project
@@ -917,6 +1303,14 @@ export function DesignSetup({ project, onBack, onStarted }) {
           onShotAdded={onShotAdded}
           onShotBusy={onShotBusy}
           onPickTemplate={setTemplateId}
+          teamSites={teamSites}
+          capture={capture}
+          nowMs={nowMs}
+          captureStarting={captureStarting}
+          captureErrors={captureErrors}
+          onAddSite={addSite}
+          onRemoveSite={removeSite}
+          onCapture={startCapture}
         />
 
         <Section title="Suggest a design" intro={`Let ${MODEL_NAME} propose the whole look from their files and answers. You review every part.`}>
@@ -927,7 +1321,7 @@ export function DesignSetup({ project, onBack, onStarted }) {
             // A match takes their brand color only when this page does,
             // saved or not.
             useBrand={useBrand}
-            uploading={shotUploads > 0}
+            uploading={shotUploads > 0 || matchCapturing}
             current={{ templateId, levers: cleanLevers, slots }}
             modelName={MODEL_NAME}
             disabled={!!busy}

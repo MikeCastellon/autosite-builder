@@ -12,6 +12,15 @@
 [functions."domain-sweep"]
   schedule = "*/2 * * * *"
 
+# Screenshots of a reference site (custom-site-capture-background) drive a
+# headless Chromium with puppeteer-core. esbuild can't bundle either
+# package (dynamic requires, files read from the package at run time), so
+# Netlify ships them as node_modules beside the function, with their
+# dependencies. The Chromium binary itself is too big for a function: it
+# is downloaded to /tmp at run time (@sparticuz/chromium-min).
+[functions."custom-site-capture-background"]
+  external_node_modules = ["puppeteer-core", "@sparticuz/chromium-min"]
+
 # Edge function that resolves Host-based requests for customer custom
 # domains and proxies them to the R2-backed site behind .autocaregeniushub.com.
 [[edge_functions]]

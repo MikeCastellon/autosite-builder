@@ -484,6 +484,14 @@ function countOf(v) {
 
 const iphonePhotos = (n) => `${n} iPhone photo${n === 1 ? '' : 's'}`;
 
+// A web address an event names, short: no "https://", "www." or trailing
+// slash, at most 80 characters (an address may hold 500).
+function shortSite(url) {
+  const s = String(url || '').trim().replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '');
+  if (!s) return 'a reference site';
+  return s.length > 80 ? `${s.slice(0, 79)}…` : s;
+}
+
 // Activity entries, newest first in the admin.
 export function describeEvent(evt) {
   const d = evt?.data || {};
@@ -527,6 +535,16 @@ export function describeEvent(evt) {
     case 'design_suggest_ready': return d.mode === 'match' ? 'Layout match ready' : 'Design suggestion ready';
     case 'design_suggest_failed': return `${d.mode === 'match' ? 'Layout match' : 'Design suggestion'} failed${d.error ? `: ${d.error}` : ''}`;
     case 'reference_added': return `Reference screenshot added${d.name ? `: ${d.name}` : ''}`;
+    // Screenshots of a reference address taken by our browser, logged by
+    // custom-site-capture-background: reference_captured { url, parts,
+    // replaced } (replaced: the earlier capture's parts it took the place
+    // of), reference_capture_failed { url, error, code }. A start Netlify
+    // refused logs reference_capture_failed { url, error } (custom-site-admin).
+    case 'reference_captured': {
+      const n = countOf(d.parts);
+      return `Screenshots taken of ${shortSite(d.url)}${n ? ` (${n} part${n === 1 ? '' : 's'})` : ''}${countOf(d.replaced) ? ', replacing the earlier ones' : ''}`;
+    }
+    case 'reference_capture_failed': return `Screenshots of ${shortSite(d.url)} failed${d.error ? `: ${d.error}` : ''}`;
     case 'brand_started': return 'Started building the brand system';
     case 'brand_ready': return 'Brand system ready';
     case 'brand_failed': return `Brand system failed${d.error ? `: ${d.error}` : ''}`;

@@ -33,6 +33,7 @@ Owners pick one of 21 React templates, customize it in the editor, and publish a
 | `npm run theme:render` | Writes every template x fixture as a published page to `$RENDER_OUT` (default `<tmpdir>/theme-renders`); filter with `THEMES=id1,id2` |
 | `npx vite build` | Production build |
 | `node scripts/replica/capture.mjs` / `compare.mjs render\|leak-check\|palette` | "Exact replica" dev tools (`scripts/replica/README.md`): headless Chrome captures, side-by-side review, leak check, registry-safe palette. `npm run replica:test` also runs their ~18 s headless Chrome part, which `npx vitest run` skips unless `REPLICA_CHROME=1` |
+| `CAPTURE_CHROME=1 npx vitest run tests/functions/capture-chrome.test.js` | Real-Chrome test of the reference-site capture (`custom-site-capture-background`: headless Chromium via `@sparticuz/chromium-min` + `puppeteer-core`, pinned together, shipped as `external_node_modules`; every request goes through the SSRF guard in `_lib/capture.js`). Skipped by default |
 
 ## How a site renders
 
