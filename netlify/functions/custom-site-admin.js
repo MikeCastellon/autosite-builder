@@ -34,6 +34,14 @@
 //                                   the top) of a tall screenshot cut up in
 //                                   the browser (designSuggest.js
 //                                   checkReferenceGroup)
+//   heic-convert { id }           → claims a run that converts the project's
+//                                   iPhone photos (HEIC/HEIF) to JPEG
+//                                   (_lib/heic-run.js) and starts
+//                                   custom-site-heic-background: { heic: run }.
+//                                   409 { error, heic } while a run is live;
+//                                   400 "Nothing to convert" without HEIC
+//                                   uploads. The page polls `get`
+//                                   (project.design.heic) while it runs.
 //
 // The tables have RLS on with no policies (see the migration), so this
 // function, with the service role, is the only way in.
@@ -50,6 +58,7 @@ import { designProblems, isRunStale, sanitizeDesign, sanitizeReference } from '.
 import { REFERENCE_SHOT_MAX_BYTES, checkReferenceGroup, checkReferenceShot, referenceShotPath } from '../../src/lib/designSuggest.js';
 import { applyLaunchPatch } from '../../src/lib/customSiteLaunch.js';
 import { KIT_KEYS } from '../../src/lib/launchKit.js';
+import { claimHeicRun, invokeHeicBackground, isHeicRunLive, releaseHeicRun } from './_lib/heic-run.js';
 
 const TABLE = 'custom_site_projects';
 const EVENTS = 'custom_site_project_events';
@@ -226,8 +235,9 @@ async function removeProjectFiles(db, projectId) {
 // the row is still the one read (updated_at moves on every write, via the
 // trigger); otherwise it reads again and re-applies the patch, so a save
 // landing in between is never undone. Returns [status, body].
-// design keys only server actions write (see design-save).
-const SERVER_DESIGN_KEYS = ['launch', 'suggestion', 'brand', 'kit'];
+// design keys only server actions write (see design-save). heic: the HEIC
+// to JPEG run (heic-convert, custom-site-heic-background).
+const SERVER_DESIGN_KEYS = ['launch', 'suggestion', 'brand', 'kit', 'heic'];
 
 async function saveLaunch(db, id, patch, actor) {
   for (let attempt = 0; attempt < 3; attempt += 1) {
@@ -599,6 +609,32 @@ export const handler = async (event) => {
         }
         const [status, out] = await saveLaunch(db, body.id, body.launch, actor);
         return reply(status, out);
+      }
+
+      case 'heic-convert': {
+        // The claim refuses while a run is live (the customer's save may
+        // have started one) and when nothing is left to convert.
+        const { claimed, run, project, reason } = await claimHeicRun(db, body.id, { by: 'admin' });
+        if (!project) return reply(404, { error: 'Project not found' });
+        if (!claimed) {
+          if (reason === 'live' || isHeicRunLive(run)) return reply(409, { error: 'The photos are already being converted', heic: run });
+          return reply(400, { error: 'Nothing to convert', heic: run });
+        }
+        try {
+          await invokeHeicBackground(event, { id: project.id, startedAt: run.startedAt, actor });
+        } catch (e) {
+          const message = `Couldn't start converting the photos: ${clean(e?.message, 200) || 'unknown error'}`;
+          // Given up at once, so the button works again without waiting for
+          // the claim to go stale. Best effort: the answer is about the
+          // start, and a claim left behind goes stale on its own.
+          const released = await releaseHeicRun(db, project.id, run.startedAt, message).catch((err) => {
+            console.error('[custom-site-admin] HEIC claim not released:', err?.message || err);
+            return false;
+          });
+          if (released) await logEvent(db, project.id, 'heic_failed', { error: message.slice(0, 200), by: 'admin' }, actor);
+          return reply(502, { error: message });
+        }
+        return reply(200, { heic: run });
       }
 
       case 'handover-check': {

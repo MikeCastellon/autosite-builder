@@ -106,7 +106,11 @@ export function suggestImageCandidates(assets) {
       continue;
     } else if (!VIEWABLE_EXT.test(String(a.name || a.path))) {
       const ext = (/\.([a-z0-9]{1,5})$/i.exec(String(a.name || a.path))?.[1] || 'this').toUpperCase();
-      out.unviewable.push({ ...a, reason: `${ext} files can't be viewed; only JPEG, PNG, GIF and WebP are sent` });
+      // iPhone photos have a fix the admin can run: the project page
+      // converts them to JPEG (HeicConvertCard), and the next run sees them.
+      // Not in parentheses: skippedGroups drops those from the group label.
+      const fix = ext === 'HEIC' || ext === 'HEIF' ? '. Convert them on the project page' : '';
+      out.unviewable.push({ ...a, reason: `${ext} files can't be viewed; only JPEG, PNG, GIF and WebP are sent${fix}` });
     } else {
       out[a.kind].push(a);
     }

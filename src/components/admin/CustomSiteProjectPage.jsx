@@ -7,6 +7,7 @@ import {
 import { useAlert } from '../ui/AlertProvider.jsx';
 import { StageBadge, copyText, duration, formatDateTime, timeAgo } from './customSiteUi.jsx';
 import { DesignCard, DesignSetup, HandoverCard } from './CustomSiteDesign.jsx';
+import HeicConvertCard from './HeicConvertCard.jsx';
 import { LaunchCard } from './LaunchCard.jsx';
 import LaunchKitPanel from './LaunchKitPanel.jsx';
 
@@ -388,6 +389,9 @@ export default function CustomSiteProjectPage({ projectId, onBack, onChanged, on
 
       <div className="mt-6 grid lg:grid-cols-[minmax(0,1fr)_360px] gap-6 items-start">
         <div className="space-y-6 min-w-0">
+          {/* First: Claude (Design, Suggest, Launch Kit) can't see iPhone
+              photos until they are JPEGs. Renders nothing without any. */}
+          <HeicConvertCard key={project.id} project={project} onRefresh={refresh} />
           <DesignCard
             project={project}
             onReload={refresh}
@@ -739,6 +743,7 @@ function Files({ project }) {
                         {formatBytes(f.size)}
                         {f.downloadUrl && <> · <a href={f.downloadUrl} className="font-semibold text-[#cc0000] hover:underline">Download</a></>}
                       </p>
+                      {f.convertedFrom && <p className="text-[11px] text-ink-tertiary">Converted from an iPhone photo (HEIC)</p>}
                       {f.note && <p className="mt-1 text-[12px] text-[#4a4a4a] leading-snug">“{f.note}”</p>}
                     </li>
                   ))}

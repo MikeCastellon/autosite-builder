@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { UPLOAD_ACCEPT, fileExtension, formatBytes, isPreviewable } from '../../lib/customSiteForm.js';
+import { UPLOAD_ACCEPT, fileExtension, formatBytes, isHeicName, isPreviewable } from '../../lib/customSiteForm.js';
 
 // Controls for the custom website intake form (CustomSiteFormPage). Each
 // field in customSiteForm.js FORM_SECTIONS renders through IntakeField.
@@ -302,6 +302,13 @@ function SitesField({ field, id, hintId, value, onChange }) {
 
 // ─── Uploads ──────────────────────────────────────────────────────────
 
+// iPhone photos (HEIC/HEIF): most browsers can't draw them, and a save
+// starts converting them to JPEG (custom-site-form), so the file says so
+// instead of showing a broken or blank thumbnail. A page opened after the
+// conversion gets the JPEG, with its thumbnail; one opened before keeps
+// the note until it reloads (its saves store the JPEG: mergeFormAssets).
+const HEIC_NOTE = 'iPhone photo: we\'ll convert it to JPEG so it works on the web.';
+
 function FilesField({ field, id, hintId, assets = [], uploads = [], onAdd, onRemove, onNote, onDismiss }) {
   const [drag, setDrag] = useState(false);
   const inputRef = useRef(null);
@@ -354,12 +361,14 @@ function FilesField({ field, id, hintId, assets = [], uploads = [], onAdd, onRem
           <ul className="mt-3 space-y-2.5">
             {mine.map((a) => (
               <li key={a.path} className="flex gap-3 rounded-xl border border-black/[0.10] bg-white p-2.5">
-                <Thumb asset={a} className="w-20 h-20 sm:w-24 sm:h-24" />
+                <Thumb asset={a} className="w-20 h-20 sm:w-24 sm:h-24" heicNote={false} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start gap-2">
                     <p className="min-w-0 flex-1 truncate text-[13px] font-semibold text-[#1a1a1a]" title={a.name}>{a.name}</p>
                     <RemoveButton name={a.name} onClick={() => onRemove(a)} />
                   </div>
+                  {/* The thumbnail here is too small for the note. */}
+                  {isHeicName(a.name) && <p className="text-[12px] leading-snug text-ink-tertiary">{HEIC_NOTE}</p>}
                   <textarea
                     rows={2}
                     value={a.note || ''}
@@ -394,9 +403,10 @@ function FilesField({ field, id, hintId, assets = [], uploads = [], onAdd, onRem
   );
 }
 
-function Thumb({ asset, className = '', contain }) {
+function Thumb({ asset, className = '', contain, heicNote = true }) {
   const [broken, setBroken] = useState(false);
   const showImg = asset.url && isPreviewable(asset.name) && !broken;
+  const note = heicNote && isHeicName(asset.name) ? HEIC_NOTE : null;
   return (
     <div
       className={`${className} shrink-0 rounded-lg overflow-hidden border border-black/[0.08] flex items-center justify-center`}
@@ -411,19 +421,20 @@ function Thumb({ asset, className = '', contain }) {
           className={`w-full h-full ${contain ? 'object-contain p-2' : 'object-cover'}`}
         />
       ) : (
-        <FileBadge name={asset.name} size={asset.size} />
+        <FileBadge name={asset.name} size={asset.size} note={note} />
       )}
     </div>
   );
 }
 
-function FileBadge({ name, size }) {
+function FileBadge({ name, size, note }) {
   return (
     <div className="text-center px-2">
       <span className="inline-block px-2 py-1 rounded-md bg-[#1a1a1a] text-white text-[11px] font-bold uppercase tracking-wider">
         {fileExtension(name) || 'file'}
       </span>
       {size > 0 && <p className="mt-1 text-[11px] text-ink-tertiary">{formatBytes(size)}</p>}
+      {note && <p className="mt-1.5 text-[11px] leading-snug text-ink-secondary">{note}</p>}
     </div>
   );
 }

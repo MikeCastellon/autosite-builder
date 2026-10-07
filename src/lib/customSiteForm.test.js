@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
   FORM_FIELDS, STAGES, ASSET_KINDS, answerText, assetPath, checkUpload, describeEvent, isFieldShown,
-  missingRecommended, missingRequired, safeHref, sanitizeAssets, sanitizeForm, stageAfterInvite,
-  stageAfterSave, stageAfterSubmit,
+  isHeicName, isPreviewable, mergeFormAssets, missingRecommended, missingRequired, safeHref, sanitizeAssets,
+  sanitizeForm, stageAfterInvite, stageAfterSave, stageAfterSubmit,
 } from './customSiteForm.js';
 
 const PROJECT = '11111111-2222-4333-8444-555555555555';
@@ -201,5 +201,93 @@ describe('answerText / describeEvent', () => {
     expect(describeEvent({ type: 'stage', data: { to: 'designing' } })).toBe('Moved to Designing');
     expect(describeEvent({ type: 'email', data: { template: 'welcome', to: 'a@b.co' } })).toBe('Welcome email sent to a@b.co');
     expect(describeEvent({ type: 'email', data: { template: 'draft', to: 'a@b.co' } })).toBe('Draft link emailed to a@b.co');
+  });
+});
+
+describe('iPhone photos (HEIC)', () => {
+  const file = (n) => `aaaaaaaa-bbbb-4ccc-8ddd-${String(n).padStart(12, '0')}`;
+  const HEIC = { path: assetPath(PROJECT, 'photo', file(1), 'heic'), kind: 'photo', name: 'IMG_0001.HEIC', size: 2400000, type: 'image/heic' };
+  // What heic-run stores in its place: same slot, the JPEG's own path,
+  // name, size and type, and the HEIC path it replaced.
+  const JPEG = {
+    path: assetPath(PROJECT, 'photo', file(2), 'jpg'), kind: 'photo', name: 'IMG_0001.jpg', size: 900000, type: 'image/jpeg',
+    convertedFrom: HEIC.path,
+  };
+  const LOGO = { path: assetPath(PROJECT, 'logo', file(3), 'png'), kind: 'logo', name: 'logo.png', size: 100, type: 'image/png' };
+  const PHOTO = { path: assetPath(PROJECT, 'photo', file(4), 'jpg'), kind: 'photo', name: 'shop.jpg', size: 100, type: 'image/jpeg' };
+
+  it('isHeicName knows .heic and .heif in any case, and they get no thumbnail', () => {
+    for (const name of ['IMG_1.HEIC', 'a.heic', 'b.HEIF', 'c.heif']) {
+      expect(isHeicName(name)).toBe(true);
+      expect(isPreviewable(name)).toBe(false);
+    }
+    for (const name of ['a.jpg', 'heic.png', 'heic', '', null, undefined]) expect(isHeicName(name)).toBe(false);
+  });
+
+  it('a browser entry on a converted HEIC path stands for the JPEG, in its place', () => {
+    // The customer's page was opened before the conversion: it still lists
+    // the HEIC, and they wrote a note on it meanwhile.
+    const sent = [LOGO, { ...HEIC, note: 'our best one' }, PHOTO];
+    const out = mergeFormAssets([LOGO, JPEG, PHOTO], sent, PROJECT);
+    expect(out).toEqual([LOGO, { ...JPEG, note: 'our best one' }, PHOTO]);
+    expect(out.some((a) => a.path === HEIC.path)).toBe(false);
+  });
+
+  it('keeps the customer\'s order for the converted file', () => {
+    const out = mergeFormAssets([LOGO, JPEG, PHOTO], [PHOTO, HEIC, LOGO], PROJECT);
+    expect(out.map((a) => a.path)).toEqual([PHOTO.path, JPEG.path, LOGO.path]);
+  });
+
+  it('removing the HEIC entry removes the converted file too', () => {
+    expect(mergeFormAssets([LOGO, JPEG], [LOGO], PROJECT)).toEqual([LOGO]);
+  });
+
+  it('a page that lists both the HEIC and the JPEG stores the JPEG once', () => {
+    const out = mergeFormAssets([JPEG], [HEIC, { ...JPEG }], PROJECT);
+    expect(out).toEqual([JPEG]);
+  });
+
+  it('a reloaded page sending the JPEG keeps convertedFrom from the stored asset', () => {
+    const { convertedFrom, ...fromBrowser } = JPEG;
+    expect(convertedFrom).toBe(HEIC.path);
+    expect(mergeFormAssets([JPEG], [{ ...fromBrowser, url: 'https://files.test/x' }], PROJECT)).toEqual([JPEG]);
+  });
+
+  it('never takes convertedFrom, or a converted file\'s name, size or type, from the browser', () => {
+    const forged = { ...PHOTO, convertedFrom: LOGO.path };
+    expect(mergeFormAssets([PHOTO], [forged], PROJECT)).toEqual([PHOTO]);
+    const renamed = { ...JPEG, name: 'evil.heic', size: 1, type: 'image/heic', convertedFrom: 'x' };
+    expect(mergeFormAssets([JPEG], [renamed], PROJECT)).toEqual([JPEG]);
+  });
+
+  it('a HEIC path no stored file was converted from is kept as sent (a new upload)', () => {
+    expect(mergeFormAssets([LOGO], [LOGO, HEIC], PROJECT)).toEqual([LOGO, HEIC]);
+  });
+
+  it('a team file\'s old HEIC path can\'t come back as the customer\'s file', () => {
+    const teamHeicPath = assetPath(PROJECT, 'reference', file(9), 'heic');
+    const team = {
+      path: assetPath(PROJECT, 'reference', file(10), 'jpg'), kind: 'reference', name: 'shot.jpg', size: 5, type: 'image/jpeg',
+      addedBy: 'admin', convertedFrom: teamHeicPath,
+    };
+    const stale = { path: teamHeicPath, kind: 'reference', name: 'shot.heic', size: 5, type: 'image/heic' };
+    expect(mergeFormAssets([LOGO, team], [LOGO, stale], PROJECT)).toEqual([LOGO, team]);
+  });
+
+  // The data as custom-site-heic-background logs it (heic-run.test.js), and
+  // as custom-site-admin / custom-site-form log a start Netlify refused.
+  it('describes conversion runs with their counts', () => {
+    expect(describeEvent({ type: 'heic_started', data: { files: 18, by: 'customer' } })).toBe('Converting 18 iPhone photos to JPEG');
+    expect(describeEvent({ type: 'heic_started', data: { files: 1, by: 'admin' } })).toBe('Converting 1 iPhone photo to JPEG');
+    expect(describeEvent({ type: 'heic_started' })).toBe('Converting iPhone photos to JPEG');
+    expect(describeEvent({ type: 'heic_ready', data: { converted: 18, failed: 0, left: 0, by: 'admin' } }))
+      .toBe('Converted 18 iPhone photos to JPEG');
+    expect(describeEvent({ type: 'heic_ready', data: { converted: 1, failed: 2, left: 3, by: 'customer' } }))
+      .toBe('Converted 1 iPhone photo to JPEG, 2 couldn\'t be converted, 3 still to convert');
+    expect(describeEvent({ type: 'heic_failed', data: { converted: 4, failed: 0, left: 0, by: 'admin', error: 'Could not load the project' } }))
+      .toBe('iPhone photo conversion failed: Could not load the project (4 converted before it stopped)');
+    expect(describeEvent({ type: 'heic_failed', data: { error: 'Couldn\'t start the conversion: network error', by: 'customer' } }))
+      .toBe('iPhone photo conversion failed: Couldn\'t start the conversion: network error');
+    expect(describeEvent({ type: 'heic_failed' })).toBe('iPhone photo conversion failed');
   });
 });
