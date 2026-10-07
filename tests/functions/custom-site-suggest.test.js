@@ -716,6 +716,47 @@ describe('custom-site-suggest-background runSuggest for a match', () => {
   });
 });
 
+describe('a captured site\'s outline on a match run', () => {
+  // Our server's capture of refshop.test: two parts, the outline (what it
+  // measured from the page's code) on part 1.
+  const OUTLINE = {
+    v: 1, title: 'Refshop', width: 1140, stickyHeader: true,
+    fonts: { heading: { family: 'Oswald', weight: 700, size: 52 }, body: { family: 'Inter', weight: 400, size: 16 }, button: null },
+    sections: [{ kind: 'hero', heading: 'Shine', height: 700, layout: 'full', cards: 0 }, { kind: 'services', heading: 'Packages', height: 800, layout: 'grid-3', cards: 3 }],
+    nav: { items: 5, labels: [], cta: '' }, spacing: { sectionGap: 80 }, features: [{ id: 'booking-widget', provider: 'Square' }],
+  };
+  const PARTS = [1, 2].map((part) => ({
+    path: path('reference', 40 + part), kind: 'reference', name: `refshop.test (part ${part} of 2).jpg`, size: 64, type: 'image/jpeg',
+    note: 'Screenshot of https://refshop.test/', addedBy: 'admin', group: 'capture-0001', part, captured: true, ...(part === 1 ? { outline: OUTLINE } : {}),
+  }));
+  const files = { ...FILES, [PARTS[0].path]: jpeg(1440, 2400), [PARTS[1].path]: jpeg(1440, 2400) };
+
+  it('goes into the request right after its screenshots, and the result says it was read', async () => {
+    const db = fakeDb({ projects: [project({ assets: [...ASSETS, ...PARTS] }, { status: 'running', startedAt: STARTED, reference: MATCH_REF })], files });
+    const client = fakeClient([ok(MATCH_JSON)]);
+    expect((await runSuggest({ db, client, projectId: PID, startedAt: STARTED, actor: 'a' })).status).toBe(200);
+    const { body } = client.calls[0];
+    const blocks = body.messages[0].content;
+    const at = blocks.findIndex((b) => b.type === 'text' && b.text.startsWith('<reference_outline>'));
+    expect(blocks[at - 1].type).toBe('image');
+    expect(blocks.slice(0, at).filter((b) => b.type === 'image')).toHaveLength(2);
+    expect(blocks[at].text).toContain('- headings: Oswald, weight 700, 52 px (available in our catalog: use it exactly)');
+    expect(blocks[at].text).toContain('Features found in its code: sticky-header, booking-widget (Square).');
+    expect(blocks[at].text).not.toContain('Refshop');
+    expect(body.system).toContain('<reference_outline> gives what our server measured');
+    expect(db.state.projects[0].design.suggestion.reference.fromCode).toBe(true);
+  });
+
+  it('a match on a site without one asks as before', async () => {
+    const plain = PARTS.map(({ outline, ...a }) => a);
+    const db = fakeDb({ projects: [project({ assets: [...ASSETS, ...plain] }, { status: 'running', startedAt: STARTED, reference: MATCH_REF })], files });
+    const client = fakeClient([ok(MATCH_JSON)]);
+    expect((await runSuggest({ db, client, projectId: PID, startedAt: STARTED, actor: 'a' })).status).toBe(200);
+    expect(JSON.stringify(client.calls[0].body)).not.toContain('reference_outline');
+    expect(db.state.projects[0].design.suggestion.reference).not.toHaveProperty('fromCode');
+  });
+});
+
 describe('"Match its layout" with a cut-up screenshot', () => {
   const GROUP = 'rs-home-1a2b3c4d';
   const TILES = [1, 2, 3].map((part) => ({

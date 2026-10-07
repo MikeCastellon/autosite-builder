@@ -36,6 +36,14 @@ import { paletteSourceText, wholeShotName } from './referenceMatch.js';
 //             sites, design.capture). A match waits for them (and for this
 //             panel's own upload): a tall screenshot goes up in parts, and a
 //             run started after the first one would see only the top.
+//   startToken optional: "Copy this site's layout" on the page bumps it
+//             (after saving the match) to run this panel's own start once,
+//             as the button would, so the run, its polls and the review
+//             stay here. Nothing is applied by it.
+//   onAutoRun optional: ({ token, status, error }) => void, how the start
+//             a token asked for went ('refused' with the reason, else the
+//             run's status) and then, from the polls, how that run ended
+//             ('ready' or 'failed').
 
 const POLL_MS = 5000;
 const BTN = 'inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-white border border-black/[0.12] text-[13px] font-semibold text-[#1a1a1a] hover:border-[#cc0000]/40 disabled:opacity-50 transition-colors';
@@ -49,6 +57,7 @@ const FACT_LABELS = {
 
 export default function SuggestPanel({
   project, current, onApply, modelName = 'Claude', disabled = false, reference = null, onReferenceAdded, useBrand, uploading = false,
+  startToken = 0, onAutoRun,
 }) {
   const [suggestion, setSuggestion] = useState(project.design?.suggestion || null);
   const [error, setError] = useState('');
@@ -61,6 +70,23 @@ export default function SuggestPanel({
   // Bumped after every check, so a failed check (a network blip) still
   // schedules the next one.
   const [polls, setPolls] = useState(0);
+  // The last startToken handled, and the run it started ({ token,
+  // startedAt }) until the page has heard how that run ended.
+  const autoToken = useRef(0);
+  const autoRun = useRef(null);
+
+  // The run a startToken began, seen in a poll: once it has ended (or is
+  // gone: replaced, or past its live window), the page hears it, once.
+  function followAutoRun(s) {
+    const run = autoRun.current;
+    if (!run) return;
+    const same = !!s && Date.parse(s.startedAt || '') === Date.parse(run.startedAt || '');
+    if (same && isSuggestRunLive(s)) return;
+    autoRun.current = null;
+    const ended = same && s.status !== 'running';
+    const why = same ? 'It didn\'t finish (it may have timed out). Try again.' : 'Another run replaced it.';
+    onAutoRun?.({ token: run.token, status: ended ? s.status : 'failed', error: ended ? s.error || '' : why });
+  }
 
   // Poll while a run is live; stop on unmount.
   useEffect(() => {
@@ -70,6 +96,7 @@ export default function SuggestPanel({
         const res = await customSiteSuggest('get', { id: project.id });
         setSuggestion(res.suggestion || null);
         setError('');
+        followAutoRun(res.suggestion || null);
       } catch (e) {
         setError(e.message || 'Could not check the suggestion');
       } finally {
@@ -77,7 +104,20 @@ export default function SuggestPanel({
       }
     }, POLL_MS);
     return () => clearTimeout(timer.current);
-  }, [live, polls, project.id]);
+  }, [live, polls, project.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // "Copy this site's layout": each new token runs start() once, with the
+  // reference, colors and toggle of the render that brought it (the page
+  // saved the match before bumping it).
+  useEffect(() => {
+    if (!startToken || startToken === autoToken.current) return;
+    const token = startToken;
+    autoToken.current = token;
+    start().then(({ ok, error: why, suggestion: s }) => {
+      autoRun.current = ok && s?.status === 'running' ? { token, startedAt: s.startedAt } : null;
+      onAutoRun?.({ token, status: ok ? s?.status || 'running' : 'refused', error: ok ? '' : why });
+    });
+  }, [startToken]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // "Match its layout": what it will look at, where the colors come from,
   // and what's missing before it can run (the server checks the same).
@@ -130,6 +170,7 @@ export default function SuggestPanel({
     setApplied(false);
   }, [resultKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Returns { ok, error, suggestion } (what a startToken reports).
   async function start() {
     setError('');
     setStarting(true);
@@ -144,9 +185,12 @@ export default function SuggestPanel({
       }
       const res = await customSiteSuggest('start', payload);
       setSuggestion(res.suggestion || null);
+      return { ok: true, error: '', suggestion: res.suggestion || null };
     } catch (e) {
       if (e.data?.suggestion) setSuggestion(e.data.suggestion);
-      setError(e.message || 'Could not start');
+      const why = e.message || 'Could not start';
+      setError(why);
+      return { ok: false, error: why, suggestion: e.data?.suggestion || null };
     } finally {
       setStarting(false);
     }
@@ -173,7 +217,8 @@ export default function SuggestPanel({
     <div>
       {matching ? (
         <p className="text-[13px] text-[#4a4a4a]">
-          {modelName} looks at {shotCount > 1 ? 'the screenshots' : shotCount === 1 ? 'the screenshot' : 'a screenshot'} of <span className="font-semibold">{matchLabel}</span> and
+          {modelName} looks at {shotCount > 1 ? 'the screenshots' : shotCount === 1 ? 'the screenshot' : 'a screenshot'} of <span className="font-semibold">{matchLabel}</span>
+          {matchInfo?.match?.outline ? ', plus what our server read from its code (its sections in order and its fonts),' : ''} and
           lays their site out like it: the closest template, the section order, the hero and about layouts, and fonts with the same feel.
           Colors come from {paletteSourceText(palettePlan)}, and the logo, photos and words stay theirs.
           Only layout and type feel are copied, never its text, photos, logo or brand.
@@ -272,6 +317,7 @@ function MatchSummary({ suggestion, files }) {
         </span>
       )}
       <p className="mt-1.5 text-[11px] text-ink-tertiary">
+        {ref.fromCode ? 'Read from its screenshots and its code (sections in order, fonts). ' : ''}
         Only its layout and type feel were used: the colors are from our side, and its text, photos, logo and brand stay out.
       </p>
     </div>

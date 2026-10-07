@@ -9,7 +9,11 @@
 // (design-save, then reference-capture), the capture's statuses while the
 // page polls (and the poller's clock and cleanup), matching one like a site
 // the customer listed, a match on a captured part following a recapture,
-// and removing one.
+// and removing one. Then what our server read from a captured site's code
+// ("From its code": fonts, sections, features against the template) and
+// "Copy this site's layout", the one click that captures (when needed),
+// saves the match and starts Suggest a design through SuggestPanel's own
+// start (its startToken).
 //
 // The tests run in node without a DOM: the React hooks are replaced by a
 // tiny hook store (one per component), each component is called as a
@@ -80,8 +84,10 @@ vi.mock('../ui/AlertProvider.jsx', () => ({
   useAlert: () => ({ toast: (...a) => h.toast(...a), confirm: async () => true }),
 }));
 
-const { DesignSetup, watchCapture } = await import('./CustomSiteDesign.jsx');
-const { checkReferenceChoice, referenceShots } = await import('../../lib/designSuggest.js');
+const { DesignSetup, copyCapturePlan, watchCapture } = await import('./CustomSiteDesign.jsx');
+const { checkReferenceChoice, referenceOutlineOf, referenceShots } = await import('../../lib/designSuggest.js');
+const { default: SuggestPanel } = await import('./studio/SuggestPanel.jsx');
+const sites = await import('../../lib/customSites.js');
 
 const PID = h.PID;
 const OTHER = '99999999-2222-4333-8444-555555555555';
@@ -1024,5 +1030,472 @@ describe('captureReference (customSites.js)', () => {
     fetch.mockResolvedValueOnce({ ok: false, status: 409, json: async () => ({ error: 'A capture is already running', capture }) });
     await expect(real.captureReference(PID, 'https://other.test/')).rejects.toMatchObject({ status: 409, data: { capture } });
     expect(JSON.parse(fetch.mock.calls[1][1].body).note).toBe('');
+  });
+});
+
+// ─── What our server read from a site's code, and the one-click copy ──
+
+const { sanitizeOutline } = await import('../../lib/referenceOutline.js');
+
+const COPY_NOW = '2026-10-07T12:00:30.000Z';
+const SHOP_SRC = { kind: 'url', url: 'https://shop.test/' };
+const SHOP_SITE = { url: 'https://shop.test/', note: 'the hero', addedAt: '2026-10-07T11:00:00.000Z' };
+const RUN = { status: 'running', url: 'https://shop.test/', startedAt: '2026-10-07T12:00:00.000Z', finishedAt: '', parts: 0, error: '' };
+const RUN_READY = { ...RUN, status: 'ready', finishedAt: '2026-10-07T12:00:40.000Z', parts: 2 };
+const RUN_FAILED = { ...RUN, status: 'failed', finishedAt: '2026-10-07T12:00:40.000Z', error: 'That site didn\'t load in 25 seconds' };
+// What our capture measured from shop.test's code (referenceOutline.js v1).
+const OUTLINE = {
+  v: 1, title: 'Shop Test | Detailing', width: 1200, stickyHeader: true,
+  fonts: { heading: { family: 'Oswald', weight: 700, size: 48 }, body: { family: 'Inter', weight: 400, size: 16 }, button: null },
+  sections: [
+    { kind: 'header', heading: '', height: 80, layout: 'full', cards: 0 },
+    { kind: 'hero', heading: 'Showroom shine', height: 700, layout: 'full', cards: 0 },
+    { kind: 'services', heading: 'Packages', height: 900, layout: 'grid-3', cards: 3 },
+    { kind: 'reviews', heading: 'Happy drivers', height: 500, layout: 'carousel', cards: 6 },
+    { kind: 'faq', heading: 'Questions', height: 400, layout: 'list', cards: 0 },
+    { kind: 'booking', heading: 'Book now', height: 600, layout: '', cards: 0 },
+    { kind: 'footer', heading: '', height: 300, layout: '', cards: 0 },
+  ],
+  nav: { items: 5, labels: ['Home'], cta: 'Call us' },
+  spacing: { sectionGap: 96 },
+  features: [{ id: 'booking-widget', provider: 'Square' }, { id: 'faq', provider: '' }, { id: 'stats', provider: '' }],
+};
+// A part of our server's capture of shop.test: part 1 carries the outline.
+const shopPart = (n, extra = {}) => ({
+  path: refPath(PID, 30 + n, 'jpg'), kind: 'reference', name: `shop.test (part ${n} of 2).jpg`, size: 10, type: 'image/jpeg',
+  note: 'Screenshot of https://shop.test/ - the hero', addedBy: 'admin', group: 'capture-0001', part: n, captured: true,
+  ...(n === 1 ? { outline: OUTLINE } : {}), ...extra,
+});
+const teamProject = (design = {}, opts = {}) => makeProject({
+  ...opts, design: { referenceSites: [SHOP_SITE], reference: { mode: 'inspire', source: null, replica: { status: 'none' } }, ...design },
+});
+const itemsOf = (refs, props = {}) => section({ ...refs, props: { ...refs.props, ...props } }).filter((e) => e.type === 'li');
+const itemNamed = (refs, title, props) => itemsOf(refs, props).find((li) => textOf(li).includes(title));
+const copyButton = (li) => elements(li).find((e) => e.type === 'button' && textOf(e) === 'Copy this site\'s layout');
+// The copy's line under its button.
+const copyLine = (li) => textOf(elements(li).find((e) => e.type === 'p' && (e.props.role === 'status' || e.props.role === 'alert')));
+const pollWatch = (els) => els.find((e) => typeof e.type === 'function' && e.type.name === 'CaptureWatch');
+const codeBlock = (li) => elements(li).find((e) => e.props && 'data-code-outline' in e.props);
+const settle = () => new Promise((r) => { setTimeout(r, 0); });
+
+describe('"From its code": what our server read from a captured site', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(COPY_NOW));
+  });
+  const assets = [SHOT, shopPart(1), shopPart(2)];
+  const outlineOf = (source) => referenceOutlineOf(source, assets);
+
+  it('shows its fonts, sections and features under the address and under its screenshot', () => {
+    const { refs } = page(teamProject({ capture: RUN_READY }, { assets }));
+    const site = codeBlock(itemNamed(refs, 'shop.test', { outlineOf }));
+    const shot = codeBlock(itemNamed(refs, 'shop.test.jpg', { outlineOf }));
+    for (const b of [site, shot]) {
+      const text = textOf(b);
+      expect(text).toContain('From its code');
+      expect(text).toContain('Fonts: Oswald 700 / Inter 400 (both in our catalog)');
+      expect(text).toContain('Sections: Hero → Services (3 cards) → Reviews (carousel) → FAQ → Booking → Footer');
+      expect(text).toContain('Features on this site');
+    }
+    // Each feature against the setup's template (Chrome Elite here).
+    expect(elements(site).filter((e) => e.type === 'p' && e.key).map(textOf)).toEqual([
+      '✓We cover it: Header that stays on top while scrolling · every template we offer keeps its nav on top as the page scrolls',
+      '✗Not yet: FAQ (questions that open and close) · not in our templates yet',
+      '✓We cover it: Online booking widget (Square) · our booking widget, once booking is on (the Book buttons open it)',
+      '✓We have it: Numbers band (stats) · its stats bar, with only numbers they give (none made up)',
+    ]);
+    // None of its words: the page title, the menu, the headings.
+    expect(textOf(site)).not.toMatch(/Shop Test|Showroom shine|Packages|Happy drivers|Book now|Call us/);
+    // The customer's own listed site has no capture, so nothing.
+    expect(codeBlock(itemNamed(refs, 'ref.test', { outlineOf }))).toBeUndefined();
+  });
+
+  it('follows the setup\'s template, and keeps a long list short', () => {
+    const many = { ...OUTLINE, features: ['carousel', 'gallery', 'before-after', 'reviews', 'faq', 'booking-widget', 'map', 'chat'].map((id) => ({ id, provider: '' })) };
+    const list = [SHOT, shopPart(1, { outline: many }), shopPart(2)];
+    const { refs } = page(teamProject({ capture: RUN_READY, templateId: 'mobile_sudsy' }, { assets: list }));
+    expect(refs.props.templateId).toBe('mobile_sudsy');
+    const b = codeBlock(itemNamed(refs, 'shop.test', { outlineOf: (src) => referenceOutlineOf(src, list) }));
+    // Bright & Bubbly's gallery wraps: other templates slide.
+    expect(textOf(b)).toContain('↗In another template: Carousel (a row that slides sideways) · in Bold & Sporty, Industrial and 7 more');
+    // Nine features (the sticky header too): six, then the rest behind a toggle.
+    const details = elements(b).find((e) => e.type === 'details');
+    expect(textOf(elements(details).find((e) => e.type === 'summary'))).toBe('Show 3 more');
+    expect(elements(details).filter((e) => e.type === 'p' && e.key).map((e) => e.key)).toEqual(['booking-widget', 'map', 'chat']);
+  });
+
+  it('shows nothing without an outline, or while the page loads the rule', () => {
+    const plain = [SHOT, shopPart(1, { outline: undefined }), shopPart(2)];
+    const { refs } = page(teamProject({ capture: RUN_READY }, { assets: plain }));
+    expect(itemsOf(refs, { outlineOf: (src) => referenceOutlineOf(src, plain) }).some((li) => codeBlock(li))).toBe(false);
+    // designSuggest.js loads on demand; until then there is no rule.
+    expect(refs.props.outlineOf).toBeNull();
+    expect(itemsOf({ ...refs, props: { ...refs.props, files: assets.map(withLink) } }).some((li) => codeBlock(li))).toBe(false);
+  });
+
+  it('reads the outline from the files when the assets list lacks it', async () => {
+    const project = teamProject({ capture: RUN_READY }, { assets: [SHOT, shopPart(1, { outline: undefined }), shopPart(2)] });
+    project.files = assets.map(withLink);
+    // The page's effects, as React runs them: one loads designSuggest.js.
+    h.effects = [];
+    page(project);
+    const effects = h.effects;
+    h.effects = null;
+    effects.forEach((fn) => fn());
+    await vi.waitFor(() => expect(page(project).refs.props.outlineOf).toBeTypeOf('function'));
+    const { refs } = page(project);
+    expect(refs.props.outlineOf(SHOP_SRC)).toEqual(sanitizeOutline(OUTLINE));
+    expect(textOf(codeBlock(itemNamed(refs, 'shop.test')))).toContain('Fonts: Oswald 700 / Inter 400 (both in our catalog)');
+  });
+});
+
+describe('"Copy this site\'s layout"', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(COPY_NOW));
+  });
+
+  it('an address without screenshots: captures it, waits for the polls, saves the match, then starts Suggest a design', async () => {
+    const project = teamProject();
+    const { refs } = page(project);
+    const li = itemNamed(refs, 'shop.test');
+    expect(copyButton(li).props.disabled).toBe(false);
+    expect(copyButton(li).props.title).toBe('Copies its layout only: never its words, photos, logo or brand.');
+    h.capture.mockResolvedValueOnce({ capture: RUN });
+    const chain = copyButton(li).props.onClick();
+    await settle();
+    // As "Capture screenshots" does: with the team's note.
+    expect(h.capture).toHaveBeenCalledWith(PID, 'https://shop.test/', 'the hero');
+    let now = page(project);
+    expect(copyLine(itemNamed(now.refs, 'shop.test'))).toBe('Taking screenshots and reading its code…');
+    // One copy at a time; the reference controls and Suggest a design wait for it.
+    expect(copyButton(itemNamed(now.refs, 'ref.test')).props.disabled).toBe(true);
+    expect(elements(itemNamed(now.refs, 'shop.test')).filter((e) => e.type === 'input' && e.props.type === 'radio').every((r) => r.props.disabled)).toBe(true);
+    expect(buttonNamed(section(now.refs), 'Remove') || elements(itemNamed(now.refs, 'shop.test')).find((e) => e.type === 'button' && textOf(e).trim() === 'Remove')).toMatchObject({ props: { disabled: true } });
+    expect(now.suggest.props.disabled).toBe(true);
+    // The page's polls see the run end, with its parts.
+    const assets = [SHOT, shopPart(1), shopPart(2)];
+    h.admin.mockResolvedValueOnce({ project: { id: PID, design: { capture: RUN_READY }, files: assets.map(withLink), assets } });
+    const watch = pollWatch(now.els);
+    watch.props.onResult(await watch.props.load());
+    await chain;
+    // The match is saved as the "Match its layout" choice would set it, with the whole page.
+    expect(h.admin.mock.calls.map(([a]) => a)).toEqual(['get', 'design-save']);
+    expect(h.admin.mock.calls[1][1].design).toMatchObject({ templateId: 'mobile_chrome', referenceSites: [SHOP_SITE], reference: { mode: 'match', source: SHOP_SRC } });
+    expect(h.toast).not.toHaveBeenCalled();
+    now = page(project);
+    expect(now.refs.props.reference).toMatchObject({ mode: 'match', source: SHOP_SRC });
+    // Suggest a design gets the match, and a token to run its own start once.
+    expect(now.suggest.props.reference).toBe(now.refs.props.reference);
+    expect(now.suggest.props.project.assets).toBe(assets);
+    const token = now.suggest.props.startToken;
+    expect(token).toBeGreaterThan(0);
+    expect(copyLine(itemNamed(now.refs, 'shop.test'))).toBe('Claude is matching its layout (1–3 min)…');
+    // Its start answered: the token is spent, the page is usable again.
+    now.suggest.props.onAutoRun({ token, status: 'running', error: '' });
+    now = page(project);
+    expect(now.suggest.props.startToken).toBe(0);
+    expect(now.suggest.props.disabled).toBe(false);
+    expect(copyLine(itemNamed(now.refs, 'shop.test'))).toBe('Claude is matching its layout (1–3 min)…');
+    // Ready: nothing applied; the admin reviews it in Suggest a design.
+    const levers = now.suggest.props.current.levers;
+    now.suggest.props.onAutoRun({ token, status: 'ready', error: '' });
+    now = page(project);
+    expect(copyLine(itemNamed(now.refs, 'shop.test'))).toBe('Ready below: check it and press Apply');
+    expect(now.suggest.props.current.levers).toEqual(levers);
+  });
+
+  it('an address our server already captured goes straight to the match', async () => {
+    const assets = [SHOT, shopPart(1), shopPart(2)];
+    const project = teamProject({ capture: RUN_READY }, { assets });
+    await copyButton(itemNamed(page(project).refs, 'shop.test')).props.onClick();
+    expect(h.capture).not.toHaveBeenCalled();
+    expect(h.admin.mock.calls.map(([a]) => a)).toEqual(['design-save']);
+    expect(h.admin.mock.calls[0][1].design.reference).toMatchObject({ mode: 'match', source: SHOP_SRC });
+    expect(page(project).suggest.props.startToken).toBeGreaterThan(0);
+    // Also when the project's last capture was of another site.
+    h.store = {};
+    h.admin.mockClear();
+    const elsewhere = teamProject({ capture: { ...RUN_READY, url: 'https://other.test/' } }, { assets });
+    await copyButton(itemNamed(page(elsewhere).refs, 'shop.test')).props.onClick();
+    expect(h.capture).not.toHaveBeenCalled();
+    expect(h.admin.mock.calls.map(([a]) => a)).toEqual(['design-save']);
+  });
+
+  it('a capture that fails stops it: nothing saved or started, and the site says why, with the upload instead', async () => {
+    const project = teamProject();
+    h.capture.mockResolvedValueOnce({ capture: RUN });
+    const chain = copyButton(itemNamed(page(project).refs, 'shop.test')).props.onClick();
+    await settle();
+    const now = page(project);
+    h.admin.mockResolvedValueOnce({ project: { id: PID, design: { capture: RUN_FAILED }, files: [withLink(SHOT)], assets: [SHOT] } });
+    const watch = pollWatch(now.els);
+    watch.props.onResult(await watch.props.load());
+    await chain;
+    expect(h.admin.mock.calls.map(([a]) => a)).toEqual(['get']);
+    const after = page(project);
+    expect(after.suggest.props.startToken).toBe(0);
+    expect(after.refs.props.reference.mode).toBe('inspire');
+    const li = itemNamed(after.refs, 'shop.test');
+    expect(copyLine(li)).toBe('Stopped: its screenshots couldn\'t be taken.');
+    expect(textOf(li)).toContain('Couldn\'t capture it. That site didn\'t load in 25 seconds');
+    expect(elements(li).some((e) => e.type === 'button' && textOf(e) === 'Upload a screenshot instead')).toBe(true);
+    // Everything works again.
+    expect(copyButton(li).props.disabled).toBe(false);
+    expect(after.suggest.props.disabled).toBe(false);
+  });
+
+  it('a capture that never ends stops it once the page counts it as dead', async () => {
+    const project = teamProject();
+    h.capture.mockResolvedValueOnce({ capture: RUN });
+    const chain = copyButton(itemNamed(page(project).refs, 'shop.test')).props.onClick();
+    await settle();
+    const watch = pollWatch(page(project).els);
+    // Ten minutes of polls that never answer: only the ticks arrive.
+    vi.setSystemTime(new Date('2026-10-07T12:10:01.000Z'));
+    watch.props.onTick();
+    await chain;
+    expect(h.admin).not.toHaveBeenCalled();
+    const li = itemNamed(page(project).refs, 'shop.test');
+    expect(copyLine(li)).toBe('Stopped: its screenshots couldn\'t be taken.');
+    expect(textOf(li)).toContain('The capture didn\'t finish (it may have timed out).');
+  });
+
+  it('another site being captured stops it with the server\'s reason; this same site is waited for', async () => {
+    const project = teamProject();
+    const other = { ...RUN, url: 'https://other.test/', startedAt: COPY_NOW };
+    h.capture.mockRejectedValueOnce(Object.assign(new Error('A screenshot is already being taken for this project. Wait for it to finish.'), { status: 409, data: { capture: other } }));
+    await copyButton(itemNamed(page(project).refs, 'shop.test')).props.onClick();
+    expect(h.admin).not.toHaveBeenCalled();
+    let li = itemNamed(page(project).refs, 'shop.test');
+    expect(copyLine(li)).toBe('Stopped: its screenshots couldn\'t be taken.');
+    expect(textOf(li)).toContain('Another site was being captured. Capture this one once that\'s done.');
+    // While that one goes, a copy that would capture waits for it.
+    expect(copyButton(li).props).toMatchObject({ disabled: true, title: 'Another capture is going. Wait for it to finish.' });
+
+    // Refused because this very site is being captured (another tab): wait for that run.
+    h.store = {};
+    const second = teamProject();
+    const going = { ...RUN, startedAt: COPY_NOW };
+    h.capture.mockRejectedValueOnce(Object.assign(new Error('A screenshot is already being taken'), { status: 409, data: { capture: going } }));
+    const chain = copyButton(itemNamed(page(second).refs, 'shop.test')).props.onClick();
+    await settle();
+    let now = page(second);
+    expect(copyLine(itemNamed(now.refs, 'shop.test'))).toBe('Taking screenshots and reading its code…');
+    const assets = [SHOT, shopPart(1), shopPart(2)];
+    h.admin.mockResolvedValueOnce({ project: { id: PID, design: { capture: { ...going, status: 'ready', parts: 2 } }, files: assets.map(withLink), assets } });
+    const watch = pollWatch(now.els);
+    watch.props.onResult(await watch.props.load());
+    await chain;
+    now = page(second);
+    expect(h.admin.mock.calls.map(([a]) => a)).toEqual(['get', 'design-save']);
+    expect(now.suggest.props.startToken).toBeGreaterThan(0);
+  });
+
+  it('after a failed capture, a screenshot uploaded instead is matched without capturing again', async () => {
+    const upload = { ...SHOT, path: refPath(PID, 7), name: 'shop.png', note: 'Screenshot of https://shop.test/' };
+    const project = teamProject({ capture: RUN_FAILED }, { assets: [SHOT, upload] });
+    await copyButton(itemNamed(page(project).refs, 'shop.test')).props.onClick();
+    expect(h.capture).not.toHaveBeenCalled();
+    expect(h.admin.mock.calls[0][1].design.reference).toMatchObject({ mode: 'match', source: SHOP_SRC });
+    // Without one, it tries the capture again.
+    h.store = {};
+    const bare = teamProject({ capture: RUN_FAILED });
+    h.capture.mockResolvedValueOnce({ capture: { ...RUN, startedAt: COPY_NOW } });
+    copyButton(itemNamed(page(bare).refs, 'shop.test')).props.onClick();
+    await settle();
+    expect(h.capture).toHaveBeenCalledWith(PID, 'https://shop.test/', 'the hero');
+  });
+
+  it('decides how an address gets its screenshots (copyCapturePlan)', () => {
+    const key = 'shop.test';
+    const captured = [shopPart(1), shopPart(2)];
+    const uploaded = [{ ...SHOT, note: 'Screenshot of https://shop.test/ - the hero' }];
+    expect(copyCapturePlan({ view: { state: 'running' }, assets: [], key })).toBe('wait');
+    expect(copyCapturePlan({ view: { state: 'none' }, assets: [], key })).toBe('capture');
+    expect(copyCapturePlan({ view: { state: 'ready' }, assets: captured, key })).toBe('match');
+    expect(copyCapturePlan({ view: { state: 'none' }, assets: captured, key })).toBe('match');
+    // Its parts are gone, or only an upload pictures it: capture (and read its code).
+    expect(copyCapturePlan({ view: { state: 'ready' }, assets: [], key })).toBe('capture');
+    expect(copyCapturePlan({ view: { state: 'none' }, assets: uploaded, key })).toBe('capture');
+    // The last capture failed: again, unless a screenshot was uploaded instead.
+    for (const failed of [{ view: { state: 'failed' } }, { view: { state: 'stale' } }, { view: { state: 'none' }, failedStart: 'offline' }]) {
+      expect(copyCapturePlan({ ...failed, assets: captured, key })).toBe('capture');
+      expect(copyCapturePlan({ ...failed, assets: [...captured, ...uploaded], key })).toBe('match');
+    }
+    // Another site's capture whose note only mentions this one isn't this one's.
+    expect(copyCapturePlan({ view: { state: 'none' }, assets: [shopPart(1, { note: 'Screenshot of https://other.test/ - like https://shop.test/' })], key })).toBe('capture');
+  });
+
+  it('a screenshot goes straight to the match and Suggest a design', async () => {
+    const project = teamProject();
+    await copyButton(itemNamed(page(project).refs, 'home.png')).props.onClick();
+    expect(h.capture).not.toHaveBeenCalled();
+    expect(h.admin.mock.calls.map(([a, b]) => [a, b.design.reference.mode, b.design.reference.source])).toEqual([
+      ['design-save', 'match', { kind: 'asset', path: SHOT.path }],
+    ]);
+    const now = page(project);
+    expect(now.suggest.props.reference.source).toEqual({ kind: 'asset', path: SHOT.path });
+    expect(now.suggest.props.startToken).toBeGreaterThan(0);
+    expect(copyLine(itemNamed(now.refs, 'home.png'))).toBe('Claude is matching its layout (1–3 min)…');
+    // A site with an unusable address has nothing to copy.
+    h.store = {};
+    const bad = page(makeProject({ form: { referenceSites: [{ url: 'not a site', note: '' }] }, design: { reference: { mode: 'inspire', source: null, replica: { status: 'none' } } } }));
+    expect(copyButton(itemNamed(bad.refs, 'not a site'))).toBeUndefined();
+  });
+
+  it('a suggestion already running, a failed run or a failed save stop it with their reason', async () => {
+    const project = teamProject();
+    await copyButton(itemNamed(page(project).refs, 'home.png')).props.onClick();
+    let now = page(project);
+    const first = now.suggest.props.startToken;
+    // Suggest a design's start was refused (409).
+    now.suggest.props.onAutoRun({ token: first, status: 'refused', error: 'A design is already being suggested' });
+    now = page(project);
+    expect(now.suggest.props.startToken).toBe(0);
+    expect(copyLine(itemNamed(now.refs, 'home.png'))).toBe('Stopped: A design is already being suggested');
+    // Again: it runs, then fails. An older copy's news changes nothing.
+    await copyButton(itemNamed(now.refs, 'home.png')).props.onClick();
+    now = page(project);
+    const second = now.suggest.props.startToken;
+    expect(second).toBeGreaterThan(first);
+    now.suggest.props.onAutoRun({ token: second, status: 'running', error: '' });
+    now.suggest.props.onAutoRun({ token: first, status: 'ready', error: '' });
+    expect(copyLine(itemNamed(page(project).refs, 'home.png'))).toBe('Claude is matching its layout (1–3 min)…');
+    now.suggest.props.onAutoRun({ token: second, status: 'failed', error: 'Claude declined to suggest a design.' });
+    expect(copyLine(itemNamed(page(project).refs, 'home.png'))).toBe('The match didn\'t finish: Claude declined to suggest a design.');
+    // A save that fails: nothing starts, and the page says why at the bottom.
+    h.admin.mockRejectedValueOnce(new Error('Could not save the design'));
+    await copyButton(itemNamed(page(project).refs, 'home.png')).props.onClick();
+    now = page(project);
+    expect(copyLine(itemNamed(now.refs, 'home.png'))).toBe('Stopped: the page didn\'t save, so nothing was started.');
+    expect(now.alert).toBe('Could not save the design');
+    expect(now.suggest.props.startToken).toBe(0);
+  });
+
+  it('runs one copy at a time, and waits for screenshots still uploading', async () => {
+    const project = teamProject();
+    h.capture.mockResolvedValueOnce({ capture: RUN });
+    copyButton(itemNamed(page(project).refs, 'shop.test')).props.onClick();
+    await settle();
+    // A second click while the first one captures does nothing.
+    await copyButton(itemNamed(page(project).refs, 'home.png')).props.onClick();
+    expect(h.admin).not.toHaveBeenCalled();
+    expect(h.capture).toHaveBeenCalledTimes(1);
+    // Uploads going: the copy waits for them, as Suggest a design does.
+    h.store = {};
+    const other = teamProject();
+    const { refs } = page(other);
+    refs.props.onShotBusy(true);
+    expect(copyButton(itemNamed(page(other).refs, 'home.png')).props).toMatchObject({ disabled: true, title: 'Wait for the screenshots to finish uploading.' });
+  });
+});
+
+describe('SuggestPanel\'s start from a token ("Copy this site\'s layout")', () => {
+  const STARTED = '2026-10-07T12:00:00.000Z';
+  const reference = { mode: 'match', source: BY_URL, replica: { status: 'none' } };
+  const base = {
+    project: makeProject(), onApply: () => {}, reference, useBrand: false,
+    current: { templateId: 'mobile_chrome', levers: { palette: { accent: '#abcdef' } }, slots: { logo: '', hero: '', about: '', gallery: [] } },
+  };
+  // Renders the panel and runs its effects, as React does after a render.
+  const renderPanel = (props) => {
+    h.effects = [];
+    const els = call('panel', SuggestPanel, { ...base, ...props });
+    const effects = h.effects;
+    h.effects = null;
+    effects.forEach((fn) => fn());
+    return els;
+  };
+  const flush = async () => { for (let i = 0; i < 6; i += 1) await Promise.resolve(); };
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(COPY_NOW));
+    sites.customSiteSuggest.mockReset();
+  });
+
+  it('runs its own start once per new token, as its button would, then says how the run ended', async () => {
+    const onAutoRun = vi.fn();
+    renderPanel({ startToken: 0, onAutoRun });
+    expect(sites.customSiteSuggest).not.toHaveBeenCalled();
+    sites.customSiteSuggest.mockResolvedValueOnce({ suggestion: { status: 'running', startedAt: STARTED } });
+    renderPanel({ startToken: 2, onAutoRun });
+    await flush();
+    // The request its button sends: the match, the Studio's colors, the toggle.
+    expect(sites.customSiteSuggest).toHaveBeenCalledWith('start', {
+      id: PID, reference: { mode: 'match', source: BY_URL }, palette: { accent: '#abcdef' }, useBrand: false,
+    });
+    expect(onAutoRun).toHaveBeenCalledWith({ token: 2, status: 'running', error: '' });
+    // Rendered again with that token: no second start. A poll sees the run end.
+    sites.customSiteSuggest.mockResolvedValueOnce({ suggestion: { status: 'ready', startedAt: '2026-10-07T12:00:00+00:00', finishedAt: COPY_NOW, levers: {}, reasons: {}, facts: [] } });
+    renderPanel({ startToken: 2, onAutoRun });
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(sites.customSiteSuggest.mock.calls.map(([a]) => a)).toEqual(['start', 'get']);
+    expect(onAutoRun).toHaveBeenCalledTimes(2);
+    expect(onAutoRun).toHaveBeenLastCalledWith({ token: 2, status: 'ready', error: '' });
+  });
+
+  it('says when its start is refused, with the reason the panel shows', async () => {
+    const onAutoRun = vi.fn();
+    sites.customSiteSuggest.mockRejectedValueOnce(Object.assign(new Error('A design is already being suggested'), {
+      status: 409, data: { suggestion: { status: 'running', startedAt: STARTED } },
+    }));
+    renderPanel({ startToken: 5, onAutoRun });
+    await flush();
+    expect(onAutoRun).toHaveBeenCalledWith({ token: 5, status: 'refused', error: 'A design is already being suggested' });
+    const els = call('panel', SuggestPanel, { ...base, startToken: 5, onAutoRun });
+    expect(textOf(els.find((e) => e.props?.role === 'alert'))).toBe('A design is already being suggested');
+  });
+
+  it('a run that fails, or gives way to another, ends the copy', async () => {
+    const onAutoRun = vi.fn();
+    sites.customSiteSuggest.mockResolvedValueOnce({ suggestion: { status: 'running', startedAt: STARTED } });
+    renderPanel({ startToken: 7, onAutoRun });
+    await flush();
+    sites.customSiteSuggest.mockResolvedValueOnce({ suggestion: { status: 'failed', startedAt: STARTED, error: 'Claude declined to suggest a design.' } });
+    renderPanel({ startToken: 7, onAutoRun });
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(onAutoRun).toHaveBeenLastCalledWith({ token: 7, status: 'failed', error: 'Claude declined to suggest a design.' });
+    // Another tab's run replaced it.
+    h.store = {};
+    const replaced = vi.fn();
+    sites.customSiteSuggest.mockResolvedValueOnce({ suggestion: { status: 'running', startedAt: STARTED } });
+    renderPanel({ startToken: 8, onAutoRun: replaced });
+    await flush();
+    sites.customSiteSuggest.mockResolvedValueOnce({ suggestion: { status: 'running', startedAt: COPY_NOW } });
+    renderPanel({ startToken: 8, onAutoRun: replaced });
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(replaced).toHaveBeenLastCalledWith({ token: 8, status: 'failed', error: 'Another run replaced it.' });
+    // One still marked running past its live window died.
+    h.store = {};
+    const died = vi.fn();
+    sites.customSiteSuggest.mockResolvedValueOnce({ suggestion: { status: 'running', startedAt: STARTED } });
+    renderPanel({ startToken: 9, onAutoRun: died });
+    await flush();
+    vi.setSystemTime(new Date('2026-10-07T12:09:58.000Z'));
+    sites.customSiteSuggest.mockResolvedValueOnce({ suggestion: { status: 'running', startedAt: STARTED } });
+    renderPanel({ startToken: 9, onAutoRun: died });
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(died).toHaveBeenLastCalledWith({ token: 9, status: 'failed', error: 'It didn\'t finish (it may have timed out). Try again.' });
+  });
+
+  it('says when it reads the outline our server measured, and that the result used it', () => {
+    const parts = [shopPart(1), shopPart(2)];
+    const project = makeProject({ assets: parts });
+    const els = call('panel', SuggestPanel, { ...base, project, reference: { mode: 'match', source: SHOP_SRC } });
+    expect(textOf(els.find((e) => e.type === 'p'))).toContain('plus what our server read from its code (its sections in order and its fonts), and lays their site out like it');
+    const without = call('outline-less', SuggestPanel, { ...base, project: makeProject({ assets: parts.map(({ outline, ...a }) => a) }), reference: { mode: 'match', source: SHOP_SRC } });
+    expect(textOf(without.find((e) => e.type === 'p'))).not.toContain('from its code');
+    // The result: its summary says the run read the code too.
+    const summary = (fromCode) => {
+      const ready = { status: 'ready', startedAt: STARTED, finishedAt: COPY_NOW, templateId: 'mobile_chrome', levers: {}, reasons: {}, facts: [], photoPlan: {},
+        reference: { mode: 'match', source: SHOP_SRC, label: 'shop.test', shots: [], paletteFrom: 'template', ...(fromCode ? { fromCode: true } : {}) } };
+      const tree = call(`ready-${fromCode}`, SuggestPanel, { ...base, project: { ...project, design: { ...project.design, suggestion: ready } }, reference: { mode: 'match', source: SHOP_SRC } });
+      const el = tree.find((e) => typeof e.type === 'function' && e.type.name === 'MatchSummary');
+      return textOf(elements(el.type(el.props)));
+    };
+    expect(summary(true)).toContain('Read from its screenshots and its code (sections in order, fonts).');
+    expect(summary(false)).not.toContain('its code');
   });
 });
