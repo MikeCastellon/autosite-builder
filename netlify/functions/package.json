@@ -4,6 +4,8 @@
     "@netlify/blobs": "^10.7.13",
     "@supabase/supabase-js": "^2.49.4",
     "jose": "^5.10.0",
+    "jpeg-js": "^0.4.4",
+    "libheif-js": "^1.23.5",
     "postmark": "^4.0.7",
     "stripe": "^22.1.0",
     "website-creator": "file:../.."

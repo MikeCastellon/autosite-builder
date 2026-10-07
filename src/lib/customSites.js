@@ -37,6 +37,17 @@ export async function customSiteAdmin(action, payload = {}) {
   });
 }
 
+// iPhone photos (HEIC/HEIF) to JPEG: custom-site-admin heic-convert claims
+// a run on project.design.heic and starts the background function that
+// converts every HEIC upload of the project. Returns { heic: run }. While a
+// run is going the call fails with status 409 and that run on
+// error.data.heic (watch it instead); with nothing left to convert it fails
+// with 400 "Nothing to convert". The project page polls `get` while the run
+// is live (HeicConvertCard.jsx).
+export function convertHeic(projectId) {
+  return customSiteAdmin('heic-convert', { id: projectId });
+}
+
 // "Suggest a design" (custom-site-suggest): start { id } claims a run and
 // starts the background function; get { id } returns { suggestion }.
 export async function customSiteSuggest(action, payload = {}) {

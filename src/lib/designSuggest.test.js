@@ -90,8 +90,21 @@ describe('suggestImageCandidates', () => {
     expect(c.photo.map((a) => a.name)).toEqual(['car1.jpg', 'car2.jpg', 'van.jpg']);
     expect(c.unviewable.map((a) => [a.name, a.reason])).toEqual([
       ['logo.svg', expect.stringContaining('SVG files can\'t be viewed')],
-      ['IMG_1.HEIC', expect.stringContaining('HEIC files')],
+      ['IMG_1.HEIC', 'HEIC files can\'t be viewed; only JPEG, PNG, GIF and WebP are sent. Convert them on the project page'],
       ['guide.pdf', expect.stringContaining('Brand files are not sent')],
+    ]);
+  });
+
+  it('points iPhone photos (HEIC, HEIF) at the project page\'s converter, and only those', () => {
+    const c = suggestImageCandidates([
+      { path: path('photo', 30, 'heif'), kind: 'photo', name: 'IMG_2.heif' },
+      { path: path('reference', 31, 'heic'), kind: 'reference', name: 'shot.heic' },
+      { path: path('photo', 32, 'tif'), kind: 'photo', name: 'scan.tif' },
+    ]);
+    expect(c.unviewable.map((a) => a.reason)).toEqual([
+      'HEIF files can\'t be viewed; only JPEG, PNG, GIF and WebP are sent. Convert them on the project page',
+      'HEIC files can\'t be viewed; only JPEG, PNG, GIF and WebP are sent. Convert them on the project page',
+      'TIF files can\'t be viewed; only JPEG, PNG, GIF and WebP are sent',
     ]);
   });
 
@@ -870,7 +883,7 @@ describe('the page\'s "Use their brand color" toggle (useBrand)', () => {
 describe('skippedGroups', () => {
   it('groups the skipped files by reason, biggest group first', () => {
     const skipped = [
-      ...Array.from({ length: 3 }, (_, i) => ({ path: `p/${i}.heic`, name: `IMG_${i}.HEIC`, kind: 'photo', reason: "HEIC files can't be viewed; only JPEG, PNG, GIF and WebP are sent" })),
+      ...Array.from({ length: 3 }, (_, i) => ({ path: `p/${i}.heic`, name: `IMG_${i}.HEIC`, kind: 'photo', reason: "HEIC files can't be viewed; only JPEG, PNG, GIF and WebP are sent. Convert them on the project page" })),
       ...Array.from({ length: 5 }, (_, i) => ({ path: `p/${i}.jpg`, name: `${i}.jpg`, kind: 'photo', reason: 'Only the first 8 photos are sent' })),
       { path: 'p/big.png', name: 'big.png', kind: 'photo', reason: 'Too large to send (12.0 MB; the limit is 5.0 MB)' },
       { path: 'p/big2.png', name: '', kind: 'photo', reason: 'Too large to send (9.1 MB; the limit is 5.0 MB)' },
@@ -879,7 +892,8 @@ describe('skippedGroups', () => {
     const groups = skippedGroups(skipped);
     expect(groups.map((g) => [g.reason, g.files.length])).toEqual([
       ['Only the first 8 photos are sent', 5],
-      ["HEIC files can't be viewed; only JPEG, PNG, GIF and WebP are sent", 3],
+      // The pointer to the converter stays in the label.
+      ["HEIC files can't be viewed; only JPEG, PNG, GIF and WebP are sent. Convert them on the project page", 3],
       ['Too large to send', 2],
     ]);
     // The exact reason stays on each file, and a file without a name shows its path.

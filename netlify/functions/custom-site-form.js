@@ -16,11 +16,17 @@
 // 'admin', custom-site-admin reference-add): the form never lists or
 // counts them, and a save keeps them whatever the browser sends
 // (mergeFormAssets).
+// iPhone photos (HEIC) can't be shown on a website or seen by Claude: a
+// save or submit that stores any starts the background run that converts
+// them to JPEG (startHeicRun).
 import crypto from 'node:crypto';
 import { supabaseAdmin } from './_shared/auth.js';
 import { corsHeaders, jsonHeaders } from './_shared/cors.js';
 import { checkAndRecordRateLimit } from './_shared/rateLimit.js';
 import { customSiteFormToAdmin, customSiteReceivedToCustomer } from './_lib/postmark.js';
+import {
+  HEIC_FAILED_MAX, claimHeicRun, heicAssetsOf, invokeHeicBackground, isHeicRunLive, releaseHeicRun,
+} from './_lib/heic-run.js';
 import {
   ASSET_BUCKET, ASSET_KINDS, assetPath, checkUpload, customerAssets, firstName, isEmail, mergeFormAssets,
   missingRequired, sanitizeForm, stageAfterSave, stageAfterSubmit,
@@ -34,6 +40,18 @@ const TOKEN_RE = /^[A-Za-z0-9_-]{20,64}$/;
 const MAX_BODY = 400_000;
 // File links in the team email.
 const EMAIL_LINK_SECONDS = 7 * 24 * 60 * 60;
+// After a conversion run that broke as a whole (not one bad file), or
+// failed on more files than it lists (heicRunWanted), the customer's saves
+// leave it alone this long; the admin's button can retry at once.
+const HEIC_RETRY_AFTER_MS = 30 * 60 * 1000;
+// Netlify answers a background function with 202 at once. A save waits no
+// longer than this for that answer: invokeHeicBackground's own limit is
+// 10 s, the whole time this function gets, so a slow start could otherwise
+// hold the customer's save past it. The answers are already stored, and a
+// start still on its way either reaches the background function or leaves
+// a claim that goes stale in 15 minutes (a later save takes it over). It
+// isn't given up, since the run may well have started.
+const HEIC_START_WAIT_MS = 4000;
 
 const NOT_ACTIVE = 'This form link isn\'t active. Check the latest email from us, or reply to it and we\'ll send a new link.';
 
@@ -48,8 +66,8 @@ async function findProject(db, token) {
   return data;
 }
 
-async function logEvent(db, projectId, type, data = {}) {
-  const { error } = await db.from(EVENTS).insert({ project_id: projectId, type, data, actor: 'customer' });
+async function logEvent(db, projectId, type, data = {}, actor = 'customer') {
+  const { error } = await db.from(EVENTS).insert({ project_id: projectId, type, data, actor });
   if (error) console.error(`[custom-site-form] event ${type} not logged:`, error.message);
 }
 
@@ -126,6 +144,78 @@ async function withEmailLinks(db, assets) {
   const { data } = await db.storage.from(ASSET_BUCKET).createSignedUrls(assets.map((a) => a.path), EMAIL_LINK_SECONDS);
   const byPath = new Map((data || []).map((d) => [d.path, d.signedUrl]));
   return assets.map((a) => ({ ...a, url: byPath.get(a.path) || null }));
+}
+
+// ─── iPhone photos (HEIC) ─────────────────────────────────────────────
+//
+// Autosave runs a second or so after every change, so a save starts a
+// conversion run only when it has something new to do: never while one
+// runs (one at a time per project), never again for files the last run
+// already failed on, and not for HEIC_RETRY_AFTER_MS after a run that broke
+// as a whole or whose failure list is full (HEIC_FAILED_MAX: the files past
+// it aren't listed, so they would count as new). Each run logs events, and
+// a bad file would otherwise start one (and fill the activity log) on
+// every keystroke. The admin's "Convert them to JPEG" button retries
+// those. `last` is design.heic.
+function heicRunWanted(last, waiting, nowMs) {
+  if (!waiting.length || isHeicRunLive(last, nowMs)) return false;
+  if (!last || typeof last !== 'object') return true;
+  const failed = Array.isArray(last.failed) ? last.failed : [];
+  if (last.status === 'failed' || failed.length >= HEIC_FAILED_MAX) {
+    const at = Date.parse(last.finishedAt || last.startedAt || '');
+    if (Number.isFinite(at) && nowMs - at < HEIC_RETRY_AFTER_MS) return false;
+  }
+  const tried = new Set(failed.map((f) => f?.path));
+  return waiting.some((a) => !tried.has(a.path));
+}
+
+// true once `promise` resolves within `ms`, false when the wait runs out
+// first; a rejection within the wait is thrown. The race has a handler on
+// `promise`, so one that rejects after the wait is dropped, never left
+// unhandled.
+async function settlesWithin(promise, ms) {
+  let timer;
+  const late = new Promise((resolve) => { timer = setTimeout(resolve, ms, false); });
+  try {
+    return await Promise.race([promise.then(() => true), late]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// Starts converting the HEIC files in the list just stored, as the
+// customer. Best effort: the answers are saved whatever happens here, so
+// nothing in it fails the save, and it waits at most HEIC_START_WAIT_MS for
+// the start. The background function logs the run's heic_started /
+// heic_ready / heic_failed; this only logs a start Netlify refused.
+async function startHeicRun(db, event, projectId, assets) {
+  try {
+    const waiting = heicAssetsOf(assets);
+    if (!waiting.length) return;
+    const nowMs = Date.now();
+    // Only the run record, not the whole design.
+    const { data, error } = await db.from(TABLE).select('heic:design->heic').eq('id', projectId).maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!heicRunWanted(data?.heic ?? null, waiting, nowMs)) return;
+    // The claim checks again on the row it writes: two saves at once start
+    // one run.
+    const { claimed, run } = await claimHeicRun(db, projectId, { by: 'customer', nowMs });
+    if (!claimed) return;
+    try {
+      const started = await settlesWithin(invokeHeicBackground(event, { id: projectId, startedAt: run.startedAt }), HEIC_START_WAIT_MS);
+      if (!started) console.warn('[custom-site-form] HEIC conversion start still pending; the claim stays as it is');
+    } catch (e) {
+      // Refused: given up at once, like the admin's button does, so the
+      // button works again without waiting for the claim to go stale.
+      const message = `Couldn't start the conversion: ${e?.message || e}`.slice(0, 200);
+      console.error('[custom-site-form]', message);
+      if (await releaseHeicRun(db, projectId, run.startedAt, message)) {
+        await logEvent(db, projectId, 'heic_failed', { error: message, by: 'customer' }, 'system');
+      }
+    }
+  } catch (e) {
+    console.error('[custom-site-form] HEIC conversion not started:', e?.message || e);
+  }
 }
 
 function clientIp(event) {
@@ -228,6 +318,8 @@ export const handler = async (event) => {
         const firstSave = !current.form_started_at;
         const resubmitted = !!current.form_submitted_at;
         if (firstSave) await logEvent(db, current.id, 'form_started');
+        // Awaited: Netlify stops the function once the handler returns.
+        await startHeicRun(db, event, current.id, written.assets);
 
         if (!submitting) {
           await advanceStage(db, current.id, fromStage, stageAfterSave(fromStage), ['new', 'invited']);

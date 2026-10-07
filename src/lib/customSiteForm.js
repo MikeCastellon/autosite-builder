@@ -211,6 +211,14 @@ export function isPreviewable(name) {
   return PREVIEWABLE.includes(fileExtension(name));
 }
 
+// iPhone photos. Most browsers can't draw them and a website can't show
+// them, so a save that stores one starts a background run that converts it
+// to JPEG (custom-site-form, netlify/functions/_lib/heic-run.js), and the
+// form shows a note on the file instead of a thumbnail.
+export function isHeicName(name) {
+  return ['heic', 'heif'].includes(fileExtension(name));
+}
+
 // Server-side check for a requested upload. Returns { ext } or { error }.
 export function checkUpload({ kind, fileName, size }) {
   if (!ASSET_KINDS[kind]) return { error: 'Unknown upload type' };
@@ -390,12 +398,35 @@ export function customerAssets(stored) {
 // neither pass a file off as the team's nor edit, remove or bring back a
 // team upload, and the stale entries don't use up the customer's
 // per-kind room.
+//
+// iPhone photos converted to JPEG (heic-run replaces the asset in place,
+// with convertedFrom: the HEIC path, and deletes the HEIC file) while the
+// customer's page is open: that page still lists the HEIC path. Such an
+// entry stands for the converted file, so the JPEG keeps the customer's
+// order and note, and the HEIC path, whose file is gone, never comes back.
+// The converted file's path, name, size, type and convertedFrom always
+// come from the stored asset, never from the browser. A team file's old
+// HEIC path is the team's like its new one.
 export function mergeFormAssets(stored, list, projectId) {
-  const team = (Array.isArray(stored) ? stored : []).filter(isTeamAsset);
-  const teamPaths = new Set(team.map((a) => a.path));
+  const storedList = Array.isArray(stored) ? stored : [];
+  const team = storedList.filter(isTeamAsset);
+  const teamPaths = new Set(team.flatMap((a) => [a.path, a.convertedFrom]).filter(Boolean));
+  const converted = customerAssets(storedList)
+    .filter((a) => typeof a.path === 'string' && typeof a.convertedFrom === 'string' && a.convertedFrom);
+  const byOldPath = new Map(converted.map((a) => [a.convertedFrom, a]));
+  const byPath = new Map(converted.map((a) => [a.path, a]));
   const sent = (Array.isArray(list) ? list : [])
-    .filter((a) => !(a && typeof a === 'object' && (a.addedBy != null || teamPaths.has(a.path))));
-  return [...sanitizeAssets(sent, projectId), ...team];
+    .filter((a) => !(a && typeof a === 'object' && (a.addedBy != null || teamPaths.has(a.path))))
+    .map((a) => (a && byOldPath.has(a.path) ? { ...a, path: byOldPath.get(a.path).path } : a));
+  const own = sanitizeAssets(sent, projectId).map((a) => {
+    const done = byPath.get(a.path);
+    if (!done) return a;
+    const out = { ...a, name: cleanString(done.name, 200) || a.name, type: cleanString(done.type, 100) || a.type };
+    if (Number.isFinite(done.size) && done.size > 0) out.size = Math.round(done.size);
+    out.convertedFrom = done.convertedFrom;
+    return out;
+  });
+  return [...own, ...team];
 }
 
 // A link for an address someone typed ("mysite.com", "https://…"), or null.
@@ -445,6 +476,13 @@ export function firstName(name) {
 export function fullName(first, last) {
   return [first, last].map((s) => String(s || '').trim()).filter(Boolean).join(' ');
 }
+
+// A count an event carries; 0 for anything else.
+function countOf(v) {
+  return Number.isFinite(v) && v > 0 ? Math.floor(v) : 0;
+}
+
+const iphonePhotos = (n) => `${n} iPhone photo${n === 1 ? '' : 's'}`;
 
 // Activity entries, newest first in the admin.
 export function describeEvent(evt) {
@@ -496,6 +534,28 @@ export function describeEvent(evt) {
     case 'kit_started': return `Started building the launch kit's ${d.label || d.skill || 'item'}`;
     case 'kit_ready': return `Launch kit: ${d.label || d.skill || 'item'} ready`;
     case 'kit_failed': return `Launch kit: ${d.label || d.skill || 'item'} failed${d.error ? `: ${d.error}` : ''}`;
+    // iPhone photo (HEIC) runs, started by the admin's button or the
+    // customer's save, logged by custom-site-heic-background: heic_started
+    // { files } (HEIC files waiting), heic_ready { converted, failed, left }
+    // (counts; left: files it had no time for), heic_failed { error } plus
+    // those counts when the run broke partway. A start Netlify refused logs
+    // heic_failed { error } only.
+    case 'heic_started': {
+      const n = countOf(d.files);
+      return n ? `Converting ${iphonePhotos(n)} to JPEG` : 'Converting iPhone photos to JPEG';
+    }
+    case 'heic_ready': {
+      const failed = countOf(d.failed);
+      const left = countOf(d.left);
+      const parts = [`Converted ${iphonePhotos(countOf(d.converted))} to JPEG`];
+      if (failed) parts.push(`${failed} couldn't be converted`);
+      if (left) parts.push(`${left} still to convert`);
+      return parts.join(', ');
+    }
+    case 'heic_failed': {
+      const n = countOf(d.converted);
+      return `iPhone photo conversion failed${d.error ? `: ${d.error}` : ''}${n ? ` (${n} converted before it stopped)` : ''}`;
+    }
     default: return evt?.type || 'Update';
   }
 }
