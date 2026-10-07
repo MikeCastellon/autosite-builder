@@ -23,6 +23,9 @@
 // project.assets as team reference screenshots in one guarded write that
 // also takes out an earlier capture of the same address (its files are
 // deleted once the list no longer points at them) and marks the run ready.
+// Part 1 also carries the page's outline (asset.outline: fonts, sections,
+// spacing and features the browser measured from the page's code, shape in
+// src/lib/referenceOutline.js), when the page gave one.
 // A screenshot is only ever used to match layout and structure: nothing of
 // it goes on the customer's site.
 import crypto from 'node:crypto';
@@ -34,6 +37,7 @@ import {
 import { updateProjectRow } from './_lib/heic-run.js';
 import { REFERENCE_FULL, REFERENCE_TEAM_MAX, referenceCount } from './_lib/reference-assets.js';
 import { ASSET_BUCKET } from '../../src/lib/customSiteForm.js';
+import { sanitizeOutline } from '../../src/lib/referenceOutline.js';
 
 const TABLE = 'custom_site_projects';
 const EVENTS = 'custom_site_project_events';
@@ -213,11 +217,14 @@ async function listsPath(db, projectId, path) {
 // Uploads the parts, then records them (see the top). Returns { parts,
 // replaced, recorded } (recorded: the run's record was marked ready in the
 // same write) or throws a CaptureError for the admin. Nothing it uploaded
-// stays behind unless the list may point at it.
-async function storeParts({ db, projectId, claim, startedAt, parts, newId, now, storageTimeoutMs = STORAGE_TIMEOUT_MS }) {
+// stays behind unless the list may point at it. `outline`: the page's
+// (capturePage), kept on part 1 only, the part a match always sends (and
+// the one the Design step reads it from).
+async function storeParts({ db, projectId, claim, startedAt, parts, outline = null, newId, now, storageTimeoutMs = STORAGE_TIMEOUT_MS }) {
   const url = claim.url;
   const group = newId();
   const note = captureNote(url, claim.note);
+  const pageOutline = sanitizeOutline(outline);
   const tried = [];
   const stored = [];
   try {
@@ -237,6 +244,7 @@ async function storeParts({ db, projectId, claim, startedAt, parts, newId, now, 
         group,
         part: p.part,
         captured: true,
+        ...(p.part === 1 && pageOutline ? { outline: pageOutline } : {}),
       });
     }
   } catch (err) {
@@ -357,7 +365,7 @@ export async function runCapture({
   try {
     const shot = await capturePage({ ...captureOptions, url: claim.url, launch, lookup });
     if (shot.refused?.length) console.log(`${TAG} requests refused by the guard:`, shot.refused.length);
-    stored = await storeParts({ db, projectId: id, claim, startedAt, parts: shot.parts, newId, now, storageTimeoutMs });
+    stored = await storeParts({ db, projectId: id, claim, startedAt, parts: shot.parts, outline: shot.outline, newId, now, storageTimeoutMs });
   } catch (err) {
     if (!(err instanceof CaptureError)) console.error(`${TAG} capture failed:`, err?.message || err);
     failure = err instanceof CaptureError ? err : new CaptureError('failed');

@@ -5,21 +5,29 @@
 // capturePage) driving a fake browser and page, and the background
 // function (custom-site-capture-background) storing the parts as team
 // reference screenshots on an in-memory database and bucket
-// (tests/fixtures/heic/fakes.js). DNS is a fake too: nothing here reaches
-// a database, a bucket, a browser or the network.
+// (tests/fixtures/heic/fakes.js), with the page's outline on part 1, as the
+// admin's project page then reads it (custom-site-admin `get`). DNS is a
+// fake too: nothing here reaches a database, a bucket, a browser or the
+// network.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { fakeDb } from '../fixtures/heic/fakes.js';
 
-const h = vi.hoisted(() => ({ db: null }));
+const h = vi.hoisted(() => ({ db: null, user: null }));
 
 vi.mock('../../netlify/functions/_shared/auth.js', () => ({
   supabaseAdmin: () => h.db,
-  requireUser: async () => { throw Object.assign(new Error('Not signed in'), { status: 401 }); },
+  requireUser: async () => {
+    if (!h.user) throw Object.assign(new Error('Not signed in'), { status: 401 });
+    return h.user;
+  },
 }));
 
 const {
   CAPTURE_MESSAGES, CAPTURE_USER_AGENT, PAGE_SCRIPTS, capturePage, jpegSize, planCaptureTiles,
 } = await import('../../netlify/functions/_lib/capture.js');
+const { sanitizeOutline } = await import('../../src/lib/referenceOutline.js');
+const { mergeFormAssets } = await import('../../src/lib/customSiteForm.js');
+const { handler: adminHandler } = await import('../../netlify/functions/custom-site-admin.js');
 const {
   CAPTURE_BACKGROUND_PATH, CAPTURE_RUN_LIVE_MS, CAPTURE_SIGNATURE_HEADER, captureNote, captureSignature, capturedAssetsFor, capturedUrlKey,
   claimCapture, invokeCaptureBackground, isCaptureLive, isSameCaptureClaim, releaseCapture, verifyCaptureSignature,
@@ -79,8 +87,11 @@ function lookup(host) {
 //   status, headers  the main document's answer
 //   gotoError     what page.goto throws once the requests are through
 //   launchError   what launching throws
+//   outline       what PAGE_SCRIPTS.outline answers (default null: a page
+//                 that gave none); 'throw' and 'hang' break the script
 // Each request goes through the page's interception handler; an aborted
-// navigation fails page.goto the way Chromium does.
+// navigation fails page.goto the way Chromium does. log.scripts lists the
+// page scripts and the shots in the order they ran.
 function fakeBrowser(scene = {}) {
   const log = { launches: [], screenshots: [], scrolls: [], requests: [], closed: 0, interception: false };
   const handlers = {};
@@ -127,9 +138,19 @@ function fakeBrowser(scene = {}) {
     evaluate: async (fn, ...args) => {
       if (fn === PAGE_SCRIPTS.measure) return scene.height ?? 5000;
       if (fn === PAGE_SCRIPTS.readyState) return scene.readyState ?? 'loading';
+      if (fn === PAGE_SCRIPTS.unscroll) {
+        (log.scripts ||= []).push('unscroll');
+        return 0;
+      }
       if (fn === PAGE_SCRIPTS.reveal || fn === PAGE_SCRIPTS.hideOverlays) {
         (log.scripts ||= []).push(fn === PAGE_SCRIPTS.reveal ? 'reveal' : 'hideOverlays');
         return 0;
+      }
+      if (fn === PAGE_SCRIPTS.outline) {
+        (log.scripts ||= []).push('outline');
+        if (scene.outline === 'throw') throw new Error('Evaluation failed: TypeError: Cannot read properties of null');
+        if (scene.outline === 'hang') return new Promise(() => {});
+        return scene.outline === undefined ? null : structuredClone(scene.outline);
       }
       if (fn === PAGE_SCRIPTS.scrollTo) {
         log.scrolls.push(args[0]);
@@ -139,6 +160,7 @@ function fakeBrowser(scene = {}) {
     },
     screenshot: async (opts) => {
       log.screenshots.push(opts);
+      (log.scripts ||= []).push('shot');
       return new Uint8Array(fakeJpeg(opts.clip.width, opts.clip.height));
     },
   };
@@ -156,6 +178,40 @@ function fakeBrowser(scene = {}) {
 }
 
 const QUICK = { sleep: async () => {} };
+
+// What PAGE_SCRIPTS.outline answers on the shop's page: raw, with what the
+// sanitizer drops (a color, an image address, a feature it doesn't know).
+const RAW_OUTLINE = {
+  v: 1,
+  title: 'Shop\nTest',
+  width: 1200.4,
+  stickyHeader: true,
+  fonts: { heading: { family: 'Poppins', weight: 800, size: 64 }, body: { family: 'Inter', weight: 400, size: 17 }, button: null },
+  sections: [
+    { kind: 'header', heading: '', height: 80, layout: '', cards: 0 },
+    { kind: 'hero', heading: 'Shine', height: 720, layout: 'full', cards: 0, color: '#123456' },
+    { kind: 'services', heading: 'Our Services', height: 601, layout: 'grid-3', cards: 3 },
+  ],
+  nav: { items: 4, labels: ['Services', 'Gallery', 'FAQ', 'Contact'], cta: 'Book Now' },
+  spacing: { sectionGap: 192 },
+  features: [{ id: 'booking-widget', provider: 'Calendly' }, { id: 'teleporter', provider: 'x' }],
+  images: ['https://www.shop.test/hero.jpg'],
+};
+const OUTLINE = {
+  v: 1,
+  title: 'Shop Test',
+  width: 1200,
+  stickyHeader: true,
+  fonts: { heading: { family: 'Poppins', weight: 800, size: 64 }, body: { family: 'Inter', weight: 400, size: 17 }, button: null },
+  sections: [
+    { kind: 'header', heading: '', height: 80, layout: '', cards: 0 },
+    { kind: 'hero', heading: 'Shine', height: 720, layout: 'full', cards: 0 },
+    { kind: 'services', heading: 'Our Services', height: 601, layout: 'grid-3', cards: 3 },
+  ],
+  nav: { items: 4, labels: ['Services', 'Gallery', 'FAQ', 'Contact'], cta: 'Book Now' },
+  spacing: { sectionGap: 192 },
+  features: [{ id: 'sticky-header', provider: '' }, { id: 'booking-widget', provider: 'Calendly' }],
+};
 
 // ─── The project ──────────────────────────────────────────────────────
 
@@ -188,7 +244,7 @@ function db(opts = {}) {
   const p = project(opts);
   const files = {};
   for (const a of p.assets) files[a.path] = Buffer.from('x');
-  return fakeDb({ projects: [p], files });
+  return fakeDb({ projects: [p], files, profiles: opts.profiles || [] });
 }
 const row = (d) => d.state.projects[0];
 const run = (d, browser, extra = {}) => runCapture({
@@ -207,6 +263,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
   h.db = null;
+  h.user = null;
 });
 
 // ─── Pure parts ───────────────────────────────────────────────────────
@@ -399,10 +456,33 @@ describe('capturePage', () => {
     }
   });
 
-  it('shows sections that wait to be scrolled to and hides consent and chat boxes before the shots', async () => {
+  it('shows sections that wait to be scrolled to and hides consent and chat boxes before the outline and the shots', async () => {
     const b = fakeBrowser({ height: 2400 });
-    await capturePage({ url: URL_, launch: b.launch, lookup, ...QUICK });
-    expect(b.log.scripts).toEqual(['reveal', 'hideOverlays']);
+    const out = await capturePage({ url: URL_, launch: b.launch, lookup, ...QUICK });
+    expect(b.log.scripts).toEqual(['unscroll', 'reveal', 'hideOverlays', 'outline', 'shot']);
+    // A page that gave no outline is shot all the same.
+    expect(out.outline).toBe(null);
+    expect(out.parts).toHaveLength(1);
+  });
+
+  it('reads the page\'s outline from the page as it is shot, and returns it sanitized', async () => {
+    const b = fakeBrowser({ height: 5000, outline: RAW_OUTLINE });
+    const out = await capturePage({ url: URL_, launch: b.launch, lookup, ...QUICK });
+    expect(out.outline).toEqual(OUTLINE);
+    expect(sanitizeOutline(RAW_OUTLINE)).toEqual(OUTLINE);
+    // No color, image address or unknown feature gets through.
+    expect(JSON.stringify(out.outline)).not.toMatch(/#123456|hero\.jpg|teleporter/);
+    expect(b.log.scripts).toEqual(['unscroll', 'reveal', 'hideOverlays', 'outline', 'shot', 'shot', 'shot']);
+  });
+
+  it('never fails a capture over its outline: a script that throws, hangs or answers junk leaves it out', async () => {
+    for (const outline of ['throw', 'hang', 'not an outline', [RAW_OUTLINE], 42, { ...RAW_OUTLINE, v: 7 }]) {
+      const b = fakeBrowser({ height: 2500, outline });
+      const out = await capturePage({ url: URL_, launch: b.launch, lookup, ...QUICK, outlineTimeoutMs: 20 });
+      expect(out.outline, JSON.stringify(outline)).toBe(null);
+      expect(out.parts.map((p) => p.height)).toEqual([2400, 100]);
+      expect(b.log.closed).toBe(1);
+    }
   });
 
   it('shoots a page whose load event never comes once its document is parsed, but not one that never parsed', async () => {
@@ -508,6 +588,66 @@ describe('runCapture', () => {
     const choice = checkReferenceChoice({ mode: 'match', source: { kind: 'url', url: 'https://shop.test' } }, row(d));
     expect(choice.error).toBe('');
     expect(choice.shots.map((s) => s.path)).toEqual(parts.map((p) => p.path));
+  });
+
+  it('keeps the page\'s outline on part 1 only, and an outline that broke never fails the run', async () => {
+    const d = db();
+    const result = await run(d, fakeBrowser({ height: 5000, outline: RAW_OUTLINE }));
+    expect(result).toEqual({ status: 200, ok: true, parts: 3, dropped: 0, replaced: 0, recorded: true });
+    const fresh = row(d).assets.filter((a) => a.group === GROUP);
+    expect(fresh.map((a) => [a.part, a.outline])).toEqual([[1, OUTLINE], [2, undefined], [3, undefined]]);
+    expect(fresh.slice(1).some((a) => 'outline' in a)).toBe(false);
+    // The rest of the asset and the activity log are as without one.
+    expect(fresh[0]).toMatchObject({ kind: 'reference', name: 'shop.test (part 1 of 3).jpg', addedBy: 'admin', captured: true, part: 1 });
+    expect(d.state.events.map((e) => [e.type, e.data])).toEqual([['reference_captured', { url: URL_, parts: 3, replaced: 0 }]]);
+
+    // The script broke on the page: the parts are stored, without one.
+    const broken = db();
+    expect(await run(broken, fakeBrowser({ height: 2500, outline: 'throw' }))).toMatchObject({ ok: true, parts: 2 });
+    expect(row(broken).assets.filter((a) => a.group === GROUP).map((a) => [a.part, 'outline' in a])).toEqual([[1, false], [2, false]]);
+    expect(row(broken).design.capture).toMatchObject({ status: 'ready', parts: 2 });
+  });
+
+  it('replaces an earlier capture\'s outline with the new parts\' (or none when the page gave none)', async () => {
+    const old = OLD.map((a) => (a.part === 1 ? { ...a, outline: { ...OUTLINE, title: 'Old' } } : a));
+    const d = db({ assets: [PHOTO, ...old] });
+    expect((await run(d, fakeBrowser({ height: 900, outline: { ...RAW_OUTLINE, title: 'New' } }))).replaced).toBe(2);
+    expect(row(d).assets.filter((a) => a.outline).map((a) => [a.group, a.part, a.outline.title])).toEqual([[GROUP, 1, 'New']]);
+
+    const d2 = db({ assets: [PHOTO, ...old] });
+    expect((await run(d2, fakeBrowser({ height: 900 }))).replaced).toBe(2);
+    expect(row(d2).assets.some((a) => 'outline' in a)).toBe(false);
+  });
+
+  it('reaches the admin\'s project page, survives the customer\'s save and goes with a match', async () => {
+    const admin = { id: 'admin-1', email: 'admin@acg.test', is_super_admin: true };
+    const d = db({ profiles: [admin] });
+    await run(d, fakeBrowser({ height: 5000, outline: RAW_OUTLINE }));
+    const top = row(d).assets.find((a) => a.group === GROUP && a.part === 1);
+
+    // custom-site-admin `get`: on the part's file (beside its signed
+    // links) and on the stored list alike.
+    h.db = d;
+    h.user = { id: admin.id, email: admin.email };
+    const res = await adminHandler({ httpMethod: 'POST', headers: { authorization: 'Bearer admin-token' }, body: JSON.stringify({ action: 'get', id: PID }) });
+    expect(res.statusCode).toBe(200);
+    const { project } = JSON.parse(res.body);
+    const file = project.files.find((f) => f.path === top.path);
+    expect(file).toMatchObject({ part: 1, captured: true, outline: OUTLINE });
+    expect(file.url).toMatch(/^https:\/\/files\.test\//);
+    expect(project.files.filter((f) => f.outline)).toHaveLength(1);
+    expect(project.assets.find((a) => a.path === top.path).outline).toEqual(OUTLINE);
+
+    // The customer's autosave (custom-site-form, mergeFormAssets) from a
+    // page that still lists the team's part, without its outline: the
+    // team's parts stay exactly as stored.
+    const stale = { path: top.path, kind: 'reference', name: top.name, size: top.size, type: top.type };
+    const saved = mergeFormAssets(row(d).assets, [PHOTO, CUSTOMER_REF, stale], PID);
+    expect(saved.find((a) => a.path === top.path).outline).toEqual(OUTLINE);
+
+    // A match on the address sends part 1 first, outline and all.
+    const choice = checkReferenceChoice({ mode: 'match', source: { kind: 'url', url: 'https://shop.test' } }, row(d));
+    expect(choice.shots[0]).toMatchObject({ path: top.path, outline: OUTLINE });
   });
 
   it('replaces an earlier capture of the same address once the new parts are in, and keeps everything else', async () => {

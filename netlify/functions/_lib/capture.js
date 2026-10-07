@@ -29,10 +29,15 @@
 // Loopback is allowed only through the explicit test-only option
 // (testOnly.allowLoopback), which no function passes: the local capture
 // test serves its page from 127.0.0.1.
+//
+// Besides the screenshots, the page's outline (PAGE_SCRIPTS.outline, shape
+// in src/lib/referenceOutline.js): fonts, sections, spacing and features
+// measured from the rendered page, never its colors, images or words.
 import http from 'node:http';
 import net from 'node:net';
 import { lookup as dnsLookup } from 'node:dns/promises';
 import { MATCH_SHOT_LIMIT } from '../../../src/lib/designSuggest.js';
+import { sanitizeOutline } from '../../../src/lib/referenceOutline.js';
 
 // ─── What a capture is ───────────────────────────────────────────────
 
@@ -53,6 +58,9 @@ export const CAPTURE_NAV_TIMEOUT_MS = 25_000;
 export const CAPTURE_IDLE_MAX_MS = 8_000;
 // After scrolling to the bottom: lazy images that started loading land.
 export const CAPTURE_SETTLE_MS = 1_000;
+// The outline script stops itself after ~4 s of work; a page whose own
+// scripts keep the browser busy past this is shot without an outline.
+export const CAPTURE_OUTLINE_TIMEOUT_MS = 10_000;
 // The whole capture (start the browser, load, scroll, shoot): a page that
 // keeps the browser busy past this is given up, so the run always ends and
 // records why. Starting the browser may download it first (~65 MB).
@@ -546,6 +554,41 @@ export const PAGE_SCRIPTS = Object.freeze({
   // layout the site means: every such element goes there, with no
   // transition. Inline styles through the CSSOM: a strict content security
   // policy blocks an injected <style>, not these.
+  // Some site builders (Durable, some Wix and app-style pages) keep the
+  // page one screen tall and scroll an inner box instead, so the window
+  // never scrolls: lazy content never loads and the screenshots would hold
+  // one screen. When the page itself doesn't scroll, the tallest inner
+  // scroller and everything above it are let out to their full height.
+  unscroll: function unscrollForCapture() {
+    const d = globalThis.document;
+    const root = d.scrollingElement || d.documentElement;
+    const vh = globalThis.innerHeight || 900;
+    if (!root || !d.body || root.scrollHeight > vh + 50) return 0;
+    let best = null;
+    let bestExtra = 200;
+    let seen = 0;
+    for (const el of d.body.querySelectorAll('*')) {
+      seen += 1;
+      if (seen > 6000) break;
+      if (el.clientHeight < vh * 0.6) continue;
+      const extra = el.scrollHeight - el.clientHeight;
+      if (extra <= bestExtra) continue;
+      const oy = globalThis.getComputedStyle(el).overflowY;
+      if (oy !== 'auto' && oy !== 'scroll' && oy !== 'overlay') continue;
+      best = el;
+      bestExtra = extra;
+    }
+    if (!best) return 0;
+    const free = (el) => {
+      const s = el.style;
+      s.setProperty('height', 'auto', 'important');
+      s.setProperty('max-height', 'none', 'important');
+      s.setProperty('overflow', 'visible', 'important');
+    };
+    if (globalThis.getComputedStyle(best).position === 'fixed') best.style.setProperty('position', 'relative', 'important');
+    for (let el = best; el; el = el.parentElement) free(el);
+    return root.scrollHeight;
+  },
   reveal: function revealForCapture() {
     const d = globalThis.document;
     const els = d.querySelectorAll('[data-aos], [data-sal], .wow, [data-scroll-reveal], [data-sr-id]');
@@ -577,6 +620,7 @@ export const PAGE_SCRIPTS = Object.freeze({
       '#drift-frame-controller', '#drift-frame-chat', '#tidio-chat', '#crisp-chatbox', '.crisp-client', '#chat-widget-container',
       '#podium-website-widget', '#podium-bubble', '#podium-prompt', '.zsiq_floatmain', '#zsiq_float', 'iframe#launcher',
       '#birdeye-widget', '#tawk-bubble-container', '#gorgias-chat-container',
+      '#chatbase-bubble-button', '#chatbase-bubble-window', '#chatbase-message-bubbles',
     ];
     let hidden = 0;
     const hide = (el) => {
@@ -595,6 +639,1280 @@ export const PAGE_SCRIPTS = Object.freeze({
       hide(el);
     }
     return hidden;
+  },
+  // The page's structure in numbers, read next to its screenshots: a
+  // picture shows the look, this gives the exact fonts, the sections top
+  // to bottom with their layout, the spacing, the header's menu and the
+  // features a picture can't show (a booking widget, a form's fields, the
+  // chat button the capture hides). From the rendered DOM and computed
+  // styles. It returns no color (a reference's colors are never taken), no
+  // image or other address and no text but the title, headings and labels,
+  // and it changes nothing on the page (the shots come after it). Bounded
+  // (elements looked at, 4 s) and never throws: a part that fails is left
+  // out. The raw result goes through sanitizeOutline
+  // (src/lib/referenceOutline.js), which documents the shape.
+  outline: function outlineForCapture() {
+    const out = {
+      v: 1,
+      title: '',
+      width: 0,
+      stickyHeader: false,
+      fonts: { heading: null, body: null, button: null },
+      sections: [],
+      nav: { items: 0, labels: [], cta: '' },
+      spacing: { sectionGap: 0 },
+      features: [],
+    };
+    const d = globalThis.document;
+    const body = d ? d.body : null;
+    if (!body) return out;
+    const vw = globalThis.innerWidth || 1440;
+    const pageW = (d.documentElement && d.documentElement.clientWidth) || vw;
+    const vh = globalThis.innerHeight || 900;
+    const sy = globalThis.scrollY || 0;
+    const started = Date.now();
+    // Every element looked at spends one: past the budget or 4 s, what is
+    // left is skipped, so a giant page still answers in time.
+    let budget = 60000;
+    const spend = () => {
+      budget -= 1;
+      return budget > 0 && Date.now() - started < 4000;
+    };
+    const attempt = (part) => {
+      try {
+        part();
+      } catch {
+        // This part is left out; the others still answer.
+      }
+    };
+    let navEl = null;
+    let footEl = null;
+    // The footer proper: footEl, or its last part when it holds sections.
+    let footPart = null;
+    let heroEl = null;
+    let blocks = [];
+    const recs = [];
+    const sliders = [];
+    const headings = [];
+    const found = new Map();
+    const feature = (id, provider) => {
+      if (!found.has(id)) found.set(id, provider || '');
+    };
+
+    // ── Reading the page
+    const styles = new WeakMap();
+    const boxes = new WeakMap();
+    const cs = (el) => {
+      let s = styles.get(el);
+      if (!s) {
+        s = globalThis.getComputedStyle(el);
+        styles.set(el, s);
+      }
+      return s;
+    };
+    // Page coordinates (the page is at its top when this runs).
+    const rect = (el) => {
+      let r = boxes.get(el);
+      if (!r) {
+        const b = el.getBoundingClientRect();
+        r = { top: b.top + sy, bottom: b.bottom + sy, left: b.left, right: b.right, width: b.width, height: b.height };
+        boxes.set(el, r);
+      }
+      return r;
+    };
+    const num = (v) => {
+      const n = parseFloat(v);
+      return Number.isFinite(n) ? n : 0;
+    };
+    const SKIP = /^(SCRIPT|STYLE|NOSCRIPT|TEMPLATE|LINK|META|BR|HEAD|TITLE)$/;
+    // Drawn, and on the page (a skip link parked at -9999px is not).
+    const shown = (el) => {
+      if (!el || el.nodeType !== 1 || SKIP.test(el.tagName)) return false;
+      const r = rect(el);
+      if (r.width < 2 || r.height < 2 || r.bottom <= 0 || r.right <= 0 || r.left >= vw + 50) return false;
+      const s = cs(el);
+      return s.display !== 'none' && s.visibility !== 'hidden' && s.visibility !== 'collapse' && num(s.opacity) > 0.05;
+    };
+    // Shown, and not inside a faded-out or hidden box either (a slider's
+    // other slides, a closed tab).
+    const seen = (el) => {
+      if (!shown(el)) return false;
+      for (let e = el.parentElement, i = 0; e && e !== body && i < 12; e = e.parentElement, i += 1) {
+        const s = cs(e);
+        if (num(s.opacity) <= 0.05 || s.visibility === 'hidden') return false;
+      }
+      return true;
+    };
+    // An element's children as laid out: a display: contents wrapper (a
+    // framework's island) stands for its own children.
+    const childrenOf = (el) => {
+      const list = [];
+      for (const c of el.children) {
+        if (SKIP.test(c.tagName)) continue;
+        if (cs(c).display === 'contents') {
+          for (const g of c.children) if (!SKIP.test(g.tagName) && list.length < 200) list.push(g);
+        } else if (list.length < 200) list.push(c);
+      }
+      return list;
+    };
+    const oneLine = (v) => String(v || '').replace(/\s+/g, ' ').trim();
+    const textOf = (el) => oneLine(el ? el.innerText || el.textContent : '');
+    // The words a visitor sees in `el`: text in boxes drawn at least 2 px
+    // wide and tall (screen-reader-only text is clipped to 1 px, a closed
+    // dropdown's isn't drawn), as written (before text-transform).
+    const seenText = (el, max) => {
+      let s = '';
+      const walk = d.createTreeWalker(el, 4);
+      for (let n = walk.nextNode(), i = 0; n && i < 80 && s.length < max; n = walk.nextNode(), i += 1) {
+        if (!n.textContent.trim()) continue;
+        const p = n.parentElement;
+        if (p && shown(p)) s += ` ${n.textContent}`;
+      }
+      return oneLine(s).slice(0, max);
+    };
+    const rawText = (el, max) => oneLine(el && el.textContent ? el.textContent.slice(0, max) : '');
+    const lower = (v) => String(v || '').toLowerCase();
+    const tokensOf = (el) => lower(`${el.tagName} ${el.id || ''} ${el.getAttribute('class') || ''}`);
+    const srcOf = (el) => lower(el.getAttribute('src') || el.getAttribute('data-src') || el.getAttribute('data-lazy-src') || '');
+    const inside = (outer, el) => !!outer && !!el && (outer === el || outer.contains(el));
+    const inChrome = (el) => inside(navEl, el) || inside(footPart || footEl, el);
+    const blockOf = (el) => recs.find((r) => inside(r.el, el)) || null;
+    const firstFamily = (stack) => String(stack || '').split(',')[0].replace(/["']/g, '').trim();
+    const fontOf = (el) => {
+      const s = cs(el);
+      return { family: firstFamily(s.fontFamily), weight: num(s.fontWeight) || 400, size: Math.round(num(s.fontSize) * 10) / 10 };
+    };
+    // Colors are read only to tell a filled box from a plain one: none
+    // leaves this function.
+    const filled = (el) => {
+      const c = cs(el).backgroundColor || '';
+      if (!c || c === 'transparent') return false;
+      const m = /\(([^)]*)\)/.exec(c);
+      if (!m) return true;
+      const parts = m[1].split(/[\s,/]+/).filter(Boolean);
+      return parts.length < 4 || num(parts[3]) > 0.05;
+    };
+    const behind = (el) => {
+      for (let e = el, i = 0; e && i < 12; e = e.parentElement, i += 1) if (filled(e)) return cs(e).backgroundColor;
+      return '';
+    };
+    const bgImage = (el) => {
+      const b = cs(el).backgroundImage || 'none';
+      if (b === 'none') return '';
+      return /url\(/.test(b) ? 'image' : 'gradient';
+    };
+    const standsOut = (el) => (filled(el) && cs(el).backgroundColor !== behind(el.parentElement)) || bgImage(el) === 'gradient';
+    const bordered = (el) => {
+      const s = cs(el);
+      return num(s.borderTopWidth) >= 1 && s.borderTopStyle !== 'none' && num(s.borderBottomWidth) >= 1 && s.borderBottomStyle !== 'none';
+    };
+    const cardish = (el) => {
+      const s = cs(el);
+      return filled(el) || bgImage(el) !== '' || s.boxShadow !== 'none' || bordered(el) || num(s.borderTopLeftRadius) > 2;
+    };
+    // A link or button drawn as one: button-sized, padded, a short label,
+    // filled or outlined.
+    const labelOf = (el) => (el.tagName === 'INPUT' ? oneLine(el.value).slice(0, 60) : seenText(el, 60));
+    const buttonKind = (el) => {
+      const r = rect(el);
+      if (r.height < 28 || r.height > 96 || r.width < 40 || r.width > 520 || !shown(el)) return '';
+      const label = labelOf(el);
+      if (label.length < 2 || label.length > 40) return '';
+      const s = cs(el);
+      if (num(s.paddingLeft) < 8 && num(s.paddingRight) < 8) return '';
+      if (standsOut(el)) return 'filled';
+      return bordered(el) ? 'bordered' : '';
+    };
+    // The first filled button in `root`, else the first outlined one (an
+    // outlined button is most often the second style). Across the page the
+    // header's own button is passed over: the content's buttons show the
+    // site's style, the header's is the fallback.
+    const firstButton = (root, max) => {
+      let outlined = null;
+      const list = root.querySelectorAll('a, button, [role="button"], input[type="submit"], input[type="button"]');
+      for (let i = 0; i < list.length && i < max; i += 1) {
+        if (!spend()) break;
+        if (inside(navEl, list[i]) && root === body) continue;
+        const kind = buttonKind(list[i]);
+        if (kind === 'filled') return list[i];
+        if (kind === 'bordered' && !outlined) outlined = list[i];
+      }
+      return outlined;
+    };
+    const vendorOf = (table, texts) => {
+      for (const [re, name] of table) if (texts.some((t) => re.test(t))) return name;
+      return null;
+    };
+
+    // Who serves a widget, by its addresses and class names.
+    const BOOKING = [
+      [/squareup\.com\/(appointments|book)|book\.squareup\.com|square\.site/, 'Square'],
+      [/calendly\.com|calendly-(inline|badge|popup)/, 'Calendly'],
+      [/acuityscheduling\.com|\.as\.me(?:[/?#:]|$)/, 'Acuity'],
+      [/squarespacescheduling\.com/, 'Squarespace Scheduling'],
+      [/booksy\.com/, 'Booksy'],
+      [/urable\.com/, 'Urable'],
+      [/vagaro\.com/, 'Vagaro'],
+      [/setmore\.com/, 'Setmore'],
+      [/housecallpro\.com/, 'Housecall Pro'],
+      [/getjobber\.com/, 'Jobber'],
+      [/mindbodyonline\.com|mindbody\.io/, 'Mindbody'],
+      [/schedulicity\.com/, 'Schedulicity'],
+      [/bookingkoala\.com/, 'BookingKoala'],
+      [/orbisx\.(ca|com)/, 'OrbisX'],
+      [/fresha\.com/, 'Fresha'],
+      [/simplybook\.(me|it)/, 'SimplyBook.me'],
+      [/youcanbook\.me/, 'YouCanBookMe'],
+      [/appointy\.com/, 'Appointy'],
+      [/tidycal\.com/, 'TidyCal'],
+      [/zohobookings|bookings\.zoho/, 'Zoho Bookings'],
+      [/meetings\.hubspot\.com/, 'HubSpot Meetings'],
+      [/calendar\.app\.google|calendar\.google\.com\/calendar\/appointments/, 'Google Calendar'],
+      [/servicetitan\.com/, 'ServiceTitan'],
+      [/workiz\.com/, 'Workiz'],
+      [/shopmonkey\.(io|com)/, 'Shopmonkey'],
+      [/tekmetric\.com/, 'Tekmetric'],
+      [/gettimely\.com/, 'Timely'],
+      [/(^|[/.])cal\.com\//, 'Cal.com'],
+      [/leadconnectorhq\.com\/widget\/booking|\/widget\/booking\//, 'LeadConnector'],
+    ];
+    const CHAT = [
+      [/intercom\.io|intercomcdn|intercom-(container|lightweight|frame|launcher|app)/, 'Intercom'],
+      [/tidio/, 'Tidio'],
+      [/podium\.com|podium-(website-widget|bubble|prompt|modal)/, 'Podium'],
+      [/driftt\.com|drift-(widget|frame)/, 'Drift'],
+      [/usemessages\.com|hubspot-messages/, 'HubSpot'],
+      [/crisp\.chat|crisp-client/, 'Crisp'],
+      [/tawk\.to/, 'Tawk.to'],
+      [/zdassets\.com|zopim|ze-snippet/, 'Zendesk'],
+      [/livechatinc\.com|chat-widget-container/, 'LiveChat'],
+      [/customerchat/, 'Messenger'],
+      [/salesiq|zsiq/, 'Zoho SalesIQ'],
+      [/olark/, 'Olark'],
+      [/jivosite|jivochat|jivo-/, 'JivoChat'],
+      [/smartsupp/, 'Smartsupp'],
+      [/birdeye\.com\/embed\/webchat|birdeye-widget/, 'Birdeye'],
+      [/gorgias/, 'Gorgias'],
+      [/freshchat|fc_frame/, 'Freshchat'],
+      [/chatra/, 'Chatra'],
+      [/kenect/, 'Kenect'],
+      [/widgets\.leadconnectorhq\.com|(^|\s)chat-widget(\s|$)|lc_text-widget/, 'LeadConnector'],
+      [/chatbase/, 'Chatbase'],
+      [/chatwoot/, 'Chatwoot'],
+      [/userlike/, 'Userlike'],
+      [/purechat/, 'Pure Chat'],
+      [/snapengage/, 'SnapEngage'],
+      [/botpress/, 'Botpress'],
+      [/voiceflow/, 'Voiceflow'],
+      [/getweave\.com|weave-(chat|text)/, 'Weave'],
+    ];
+    const CHAT_SEL = '[id*="intercom"], [class*="intercom"], [id*="tidio"], [id*="podium"], [id*="drift"], [id*="hubspot-messages"], '
+      + '[class*="crisp"], [id*="ze-snippet"], [id*="chat-widget"], [class*="zsiq"], [id*="zsiq"], [class*="fb-customerchat"], '
+      + '[id*="birdeye"], [id*="gorgias"], [id*="jivo"], [class*="jivo"], [id*="smartsupp"], [id*="chatra"], [class*="chatra"], '
+      + '[id*="kenect"], [class*="kenect"], [id*="olark"], [class*="olark"], [id*="fc_frame"], chat-widget, [id*="lc_text-widget"], '
+      + '[id*="chatbase"], [class*="woot-"], [id*="userlike"], [id*="purechat"], [class*="purechat"]';
+    const REVIEWS = [
+      [/trustindex|ti-widget|ti-reviews/, 'Trustindex'],
+      [/eapps-google-reviews|eapps-reviews|elfsight[^\s]*review/, 'Elfsight'],
+      [/birdeye\.com(?!\/embed\/webchat)|bf-review|birdeye-review/, 'Birdeye'],
+      [/embedsocial[^\s]*review|reviews-widget-embedsocial/, 'EmbedSocial'],
+      [/reviewsonmywebsite/, 'Reviews on my Website'],
+      [/sk-ww-google-reviews|sk-google-reviews|sociablekit[^\s]*review/, 'SociableKIT'],
+      [/podium[^\s]*review|review[^\s]*podium/, 'Podium'],
+      [/nicejob/, 'NiceJob'],
+      [/grade\.us|gradeus|grade-us-/, 'Grade.us'],
+      [/trustpilot/, 'Trustpilot'],
+      [/reviews\.io|reviewsio/, 'REVIEWS.io'],
+      [/featurable/, 'Featurable'],
+      [/shapo\.io|shapo-widget/, 'Shapo'],
+      [/repuso/, 'Repuso'],
+      [/trustmary/, 'Trustmary'],
+      [/endorsal/, 'Endorsal'],
+      [/(^|[\s.#])wp-gr(\s|$)|richplugins|(^|\s)grw-/, 'Rich Plugins'],
+      [/yelp\.com\/(embed|biz_attribution)|yelp-review/, 'Yelp'],
+    ];
+    const INSTAGRAM = [
+      [/(^|[\s#._-])sbi[_-]|sb_instagram|smash-?balloon/, 'Smash Balloon'],
+      [/lightwidget/, 'LightWidget'],
+      [/snapwidget/, 'SnapWidget'],
+      [/eapps-instagram|elfsight[^\s]*insta/, 'Elfsight'],
+      [/behold\.so|behold-widget/, 'Behold'],
+      [/curator\.io|crt-feed|crt-widget/, 'Curator'],
+      [/juicer\.io|juicer-feed/, 'Juicer'],
+      [/embedsocial-(instagram|hashtag)|embedsocial[^\s]*insta/, 'EmbedSocial'],
+      [/sk-instagram|sociablekit[^\s]*insta/, 'SociableKIT'],
+      [/tagembed/, 'Tagembed'],
+      [/taggbox/, 'Taggbox'],
+      [/spotlight-instagram|spotlight-feed/, 'Spotlight'],
+      [/instagram-media|instagram\.com\/(p|reel|tv)\/[^\s]*embed|instagram\.com\/embed/, 'Instagram'],
+      [/instagram-feed|insta-feed|instafeed|insta-gallery|instagram-gallery|instagram-widget|ig-feed/, ''],
+    ];
+    const MAPS = [
+      [/google\.[a-z.]+\/maps|maps\.google\.|gm-style|google-map|googlemap|gmap|gmp-map/, 'Google Maps'],
+      [/mapbox/, 'Mapbox'],
+      [/leaflet/, 'Leaflet'],
+      [/openstreetmap\.org/, 'OpenStreetMap'],
+      [/mapkit|maps\.apple\.com/, 'Apple Maps'],
+      [/bing\.com\/maps/, 'Bing Maps'],
+    ];
+    const MAP_SEL = 'iframe, .gm-style, .mapboxgl-map, .leaflet-container, [class*="google-map"], [class*="googlemap"], [class*="gmap"], gmp-map, mapkit-map';
+    const VIDEOS = [
+      [/youtube\.com|youtube-nocookie\.com|youtu\.be/, 'YouTube'],
+      [/vimeo\.com/, 'Vimeo'],
+      [/wistia\.(com|net)|wi\.st\//, 'Wistia'],
+      [/loom\.com/, 'Loom'],
+      [/facebook\.com\/plugins\/video/, 'Facebook'],
+      [/tiktok\.com\/embed/, 'TikTok'],
+      [/vidyard/, 'Vidyard'],
+    ];
+    const FORMS = [
+      [/wpcf7/, 'Contact Form 7'],
+      [/gform/, 'Gravity Forms'],
+      [/wpforms/, 'WPForms'],
+      [/elementor-form/, 'Elementor'],
+      [/hs-form|hbspt|hsforms/, 'HubSpot'],
+      [/nf-form|ninja-forms/, 'Ninja Forms'],
+      [/frm_forms|frm-show-form/, 'Formidable'],
+      [/fluentform|ff-el-form/, 'Fluent Forms'],
+      [/jotform/, 'Jotform'],
+      [/sqs-block-form|squarespace/, 'Squarespace'],
+      [/mc-embedded|mc4wp|list-manage\.com|mailchimp/, 'Mailchimp'],
+      [/klaviyo/, 'Klaviyo'],
+      [/ctct|constantcontact/, 'Constant Contact'],
+      [/ml-embedded|mailerlite/, 'MailerLite'],
+      [/convertkit|formkit/, 'ConvertKit'],
+      [/formspree/, 'Formspree'],
+      [/leadconnectorhq|msgsndr/, 'LeadConnector'],
+    ];
+    const FORM_FRAMES = [
+      [/jotform/, 'Jotform'],
+      [/typeform/, 'Typeform'],
+      [/docs\.google\.com\/forms|forms\.gle/, 'Google Forms'],
+      [/wufoo/, 'Wufoo'],
+      [/cognitoforms/, 'Cognito Forms'],
+      [/formstack/, 'Formstack'],
+      [/123formbuilder/, '123FormBuilder'],
+      [/paperform/, 'Paperform'],
+      [/tally\.so/, 'Tally'],
+      [/hsforms|hubspot\.com\/forms/, 'HubSpot'],
+      [/leadconnectorhq\.com\/widget\/(form|survey)/, 'LeadConnector'],
+    ];
+    const SLIDER_RE = /(^|[\s_-])(swiper|slick|splide|glide|carousel|owl|flickity|keen-slider|embla|slider|slides|slideshow|revslider|rev_slider|rs-module|n2-ss|metaslider|soliloquy|bxslider)([\s_-]|$)/;
+    const BEFORE_AFTER_RE = /before[-_ ]?after|twentytwenty|beer-slider|beer-handle|img-comp-(container|img|slider|overlay)|juxtapose|image-compare|img-comparison|ba-slider|cocoen|comparison-slider|compare-slider/;
+    const SLIDES = '.swiper-slide:not(.swiper-slide-duplicate), .slick-slide:not(.slick-cloned), .splide__slide:not(.splide__slide--clone), '
+      + '.glide__slide:not(.glide__slide--clone), .owl-item:not(.cloned), .carousel-item, .keen-slider__slide, .flickity-slider > *, '
+      + '.elementor-slide, .n2-ss-slide, .embla__slide, rs-slide, [aria-roledescription="slide"]';
+    // The slider's library, by its own classes or its parts'.
+    const sliderLib = (s) => {
+      const parts = s.querySelectorAll('[class*="swiper"], [class*="slick"], [class*="splide"], [class*="glide"], [class*="owl"], [class*="flickity"], [class*="keen-slider"]');
+      let t = tokensOf(s);
+      for (let i = 0; i < parts.length && i < 3; i += 1) t += ` ${tokensOf(parts[i])}`;
+      const libs = [
+        [/swiper/, 'Swiper'], [/slick/, 'Slick'], [/splide/, 'Splide'], [/glide/, 'Glide'], [/owl/, 'Owl Carousel'],
+        [/flickity/, 'Flickity'], [/keen-slider/, 'Keen Slider'], [/embla/, 'Embla'], [/rev_?slider|rs-module/, 'Slider Revolution'],
+        [/n2-ss|smart-slider/, 'Smart Slider'],
+      ];
+      return vendorOf(libs, [t]) || '';
+    };
+
+    // ── Sections: how they are laid out
+    const MEDIA = /^(IMG|PICTURE|FIGURE|VIDEO|IFRAME)$/;
+    const NOT_ITEM = /^(P|H[1-6]|SPAN|LABEL|B|STRONG|EM|I|SMALL|BR|BUTTON|INPUT|SELECT|TEXTAREA|OPTION|SCRIPT|STYLE|NOSCRIPT|TEMPLATE|svg|path|g|use)$/;
+    // A card, tile, photo, figure or question: a box with a picture, a
+    // title, a card's look or parts of its own (never a bare paragraph).
+    const itemOk = (c) => {
+      if (MEDIA.test(c.tagName)) return true;
+      if (NOT_ITEM.test(c.tagName) || !c.firstElementChild) return false;
+      return c.childElementCount >= 2 || cardish(c)
+        || !!c.querySelector('img, picture, video, svg, iframe, h2, h3, h4, h5, h6, summary, [aria-expanded], [class*="icon"]');
+    };
+    const sigOf = (c) => {
+      if (!c || !c.classList) return '';
+      const keep = [];
+      for (const k of c.classList) if (!/\d|active|current|selected|first|last|odd|even|show|visible|animat|aos|fade|in-view|loaded|lazy|hover/i.test(k)) keep.push(k);
+      return `${c.tagName}.${keep.sort().join('.')}`;
+    };
+    // The biggest set of repeated similar items in `root`: the same tag and
+    // classes under same-looking parents (a grid's rows hold one set), about
+    // the same width (one row of siblings: any width, as content-sized flex
+    // items are), outermost only. { items, area, cover } or null; cover: the
+    // share of `root` the set spans.
+    const groupIn = (root) => {
+      const rr = rect(root);
+      const rootArea = Math.max(1, rr.width * rr.height);
+      const groups = new Map();
+      const all = root.getElementsByTagName('*');
+      for (let i = 0; i < all.length && i < 1200; i += 1) {
+        if (!spend()) break;
+        const c = all[i];
+        const r = rect(c);
+        if (r.width < 60 || r.height < 40 || !itemOk(c) || !shown(c)) continue;
+        const key = `${sigOf(c)}<${sigOf(c.parentElement)}`;
+        const list = groups.get(key);
+        if (!list) groups.set(key, [c]);
+        else if (list.length < 120) list.push(c);
+      }
+      let best = null;
+      for (const list of groups.values()) {
+        if (list.length < 2) continue;
+        const top = rect(list[0]).top;
+        let same = [];
+        if (list.every((c) => c.parentElement === list[0].parentElement && Math.abs(rect(c).top - top) <= 8)) same = list.slice();
+        else {
+          for (const a of list) {
+            const w = rect(a).width;
+            const near = list.filter((b) => Math.abs(rect(b).width - w) <= w * 0.12);
+            if (near.length > same.length) same = near;
+          }
+        }
+        same = same.filter((a) => !same.some((b) => b !== a && b.contains(a)));
+        if (same.length < 2) continue;
+        const area = same.reduce((sum, c) => sum + rect(c).width * rect(c).height, 0);
+        if (area < rootArea * 0.05) continue;
+        // Plain rows as wide as the section are its structure: the cards in
+        // them say more (an FAQ's rows still win where nothing else repeats).
+        const card = cardish(same[0]);
+        const rows = !card && same.every((c) => rect(c).width >= rr.width * 0.6);
+        const score = area * Math.sqrt(Math.min(same.length, 16)) * (card ? 1.3 : 1) * (rows ? 0.3 : 1);
+        if (best && score <= best.score) continue;
+        let x0 = Infinity;
+        let y0 = Infinity;
+        let x1 = -Infinity;
+        let y1 = -Infinity;
+        for (const c of same) {
+          const r = rect(c);
+          x0 = Math.min(x0, Math.max(r.left, rr.left));
+          x1 = Math.max(x1, Math.min(r.right, rr.right));
+          y0 = Math.min(y0, r.top);
+          y1 = Math.max(y1, r.bottom);
+        }
+        best = { items: same, area, score, cover: (Math.max(0, x1 - x0) * Math.max(0, y1 - y0)) / rootArea };
+      }
+      return best;
+    };
+    // Columns: the most items one horizontal line crosses (a grid's row, a
+    // masonry's staggered columns; 1 for items stacked in a list).
+    const colsOf = (items) => {
+      const boxes = items.map(rect).filter((r) => r.left >= -10 && r.right <= vw + 10);
+      let cols = 0;
+      for (const a of boxes) {
+        const y = (a.top + a.bottom) / 2;
+        cols = Math.max(cols, boxes.filter((b) => b.top <= y && b.bottom >= y).length);
+      }
+      return cols;
+    };
+    // Two blocks side by side, each 30 to 70% of their row, that aren't a
+    // pair of like cards: text beside a photo, a form or a map.
+    const splitIn = (root) => {
+      const rr = rect(root);
+      const scope = [root];
+      const desc = root.getElementsByTagName('*');
+      for (let i = 0; i < desc.length && i < 300; i += 1) scope.push(desc[i]);
+      const media = (c) => MEDIA.test(c.tagName) || !!c.querySelector('img, picture, video, iframe, form') || bgImage(c) === 'image';
+      for (const el of scope) {
+        if (!spend()) break;
+        const r = rect(el);
+        if (r.width < rr.width * 0.5 || r.height < 80 || !el.firstElementChild) continue;
+        const k = [];
+        for (const c of childrenOf(el)) {
+          const cr = rect(c);
+          if (cr.width < 80 || cr.height < 40 || !shown(c)) continue;
+          const p = cs(c).position;
+          if (p === 'absolute' || p === 'fixed') continue;
+          k.push(c);
+          if (k.length > 2) break;
+        }
+        if (k.length !== 2) continue;
+        const a = rect(k[0]);
+        const b = rect(k[1]);
+        if (Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) < Math.min(a.height, b.height) * 0.5) continue;
+        const fa = a.width / r.width;
+        const fb = b.width / r.width;
+        if (fa < 0.3 || fa > 0.7 || fb < 0.3 || fb > 0.7) continue;
+        if (sigOf(k[0]) === sigOf(k[1]) && media(k[0]) === media(k[1]) && cardish(k[0]) && cardish(k[1])) continue;
+        return true;
+      }
+      return false;
+    };
+    // A photo or video behind the whole band, edge to edge.
+    const fullIn = (root) => {
+      const rr = rect(root);
+      if (rr.width < pageW * 0.9) return false;
+      if (bgImage(root) === 'image') return true;
+      const covers = (el) => {
+        const r = rect(el);
+        return r.width >= rr.width * 0.9 && r.height >= rr.height * 0.6;
+      };
+      const media = root.querySelectorAll('img, video, picture, iframe');
+      for (let i = 0; i < media.length && i < 40; i += 1) if (covers(media[i]) && shown(media[i])) return true;
+      const near = root.querySelectorAll(':scope > *, :scope > * > *');
+      for (let i = 0; i < near.length && i < 40; i += 1) if (covers(near[i]) && bgImage(near[i]) === 'image') return true;
+      return false;
+    };
+    // A section's layout and its repeated items. A set lays the section out
+    // when it spans enough of it (a hero's few badges don't make a grid).
+    const layoutOf = (el, hero) => {
+      const rr = rect(el);
+      const slider = sliders.find((s) => inside(el, s) && rect(s).width >= rr.width * 0.5) || null;
+      const group = groupIn(el);
+      const cards = group ? Math.min(group.items.length, 50) : 0;
+      const gridOf = (g) => {
+        const cols = colsOf(g.items);
+        return cols >= 2 ? `grid-${Math.min(cols, 4)}` : 'list';
+      };
+      if (slider) return { layout: 'carousel', cards: Math.min(slider.querySelectorAll(SLIDES).length, 50) || cards, group };
+      if (group && group.items.length >= 3 && group.cover >= (hero ? 0.4 : 0.2)) return { layout: gridOf(group), cards, group };
+      // (A pair is the split's own two halves, not cards.)
+      if (splitIn(el)) return { layout: 'split', cards: cards >= 3 ? cards : 0, group };
+      if (group && group.cover >= (hero ? 0.4 : 0.15)) return { layout: gridOf(group), cards, group };
+      if (fullIn(el)) return { layout: 'full', cards, group };
+      return { layout: '', cards, group };
+    };
+
+    // ── Sections: what they are
+    // Whole words: "Preview" is not a review, "Facebook" not a booking.
+    const HEADING_KINDS = [
+      ['faq', /\bfaqs?\b|frequently asked|common questions|questions? (and|&) answers|\bq\s?&\s?a\b/i],
+      ['reviews', /\breviews?\b|\btestimonials?\b|\bwhat .{0,40}\b(say|said|saying)\b|happy (customers|clients)|customers love|kind words|client love/i],
+      ['contact', /\bservice areas?\b|\bareas? (we )?serv(e|ed|ing)?\b|\bserving .{0,40}\barea|\bwhere we (serve|go|work)\b/i],
+      ['pricing', /\bpric(e|es|ing)\b|\bpackages?\b|\bplans?\b|\bmemberships?\b|\brates\b/i],
+      ['gallery', /\bgallery\b|\bour work\b|\bportfolio\b|\brecent (work|projects|jobs)\b|\bbefore\s*(&|and|\+|\/|-)?\s*after\b|\bshowcase\b|\bphotos?\b/i],
+      ['process', /\bhow it works\b|\bprocess\b|\bsteps?\b|\bhow we work\b/i],
+      ['booking', /\bbook(ing)?\b|\bappointments?\b|\bschedul|\breserv/i],
+      ['contact', /\bcontact\b|\bget in touch\b|\bquotes?\b|\bestimates?\b|\breach (us|out)\b|\bvisit us\b|\bfind us\b|\blocations?\b|\bdirections\b|\bhours\b/i],
+      ['about', /\babout\b|\bour story\b|\bwho we are\b|\bmeet (the|our)\b|\bmission\b|\bwhy (choose|us)\b|\bour team\b|\bfamily.owned\b/i],
+      ['services', /\bservices?\b|\bwhat we (do|offer)\b|\bwe offer\b|\bspecialt|\bdetailing\b|\bcoatings?\b|\btint(ing)?\b|\bppf\b|\bprotection\b|\brepairs?\b|\bwash(es|ing)?\b|\bcorrection\b|\binterior\b|\bexterior\b/i],
+      ['cta', /\bready to\b|\bget started\b|\bcall (us|now|today)\b|\blet'?s (talk|go|get)\b|\bdon'?t wait\b|\btoday\b|\bnow\b/i],
+    ];
+    const kindOfHeading = (t) => {
+      for (const [kind, re] of HEADING_KINDS) if (re.test(t)) return kind;
+      return '';
+    };
+    const STAR = String.fromCharCode(9733);
+    const PRICE = /[$€£]\s?\d|\d\s?[$€£]/;
+    const STAT = /^\d[\d.,]*\s*(\+|%|k\+?|m\+?|x|\/\d+)?$/i;
+    // Big numbers ("500+", "98%", "24/7"): a stats band has three or more.
+    const statsIn = (el) => {
+      let n = 0;
+      const all = el.getElementsByTagName('*');
+      for (let i = 0; i < all.length && i < 400 && n < 6; i += 1) {
+        if (!spend()) break;
+        const c = all[i];
+        if (c.childElementCount) continue;
+        const t = oneLine(c.textContent);
+        if (!t || t.length > 8 || !STAT.test(t) || /^0\d/.test(t)) continue;
+        if (num(t.replace(/,/g, '')) < 10 && !/[+%kmx/]/i.test(t)) continue;
+        if (c.parentElement && PRICE.test(rawText(c.parentElement, 60))) continue;
+        if (num(cs(c).fontSize) >= 28 && shown(c)) n += 1;
+      }
+      return n;
+    };
+    const imagesIn = (el) => {
+      let n = 0;
+      const list = el.querySelectorAll('img, video');
+      for (let i = 0; i < list.length && i < 120; i += 1) {
+        const r = rect(list[i]);
+        if (r.width >= 60 && r.height >= 40) n += 1;
+      }
+      return n;
+    };
+    const urlsIn = (el) => {
+      const urls = [];
+      const list = el.querySelectorAll('a[href], iframe');
+      for (let i = 0; i < list.length && i < 150; i += 1) urls.push(list[i].tagName === 'IFRAME' ? srcOf(list[i]) : lower(list[i].getAttribute('href')));
+      return urls;
+    };
+    const mapIn = (root) => {
+      const list = root.querySelectorAll(MAP_SEL);
+      for (let i = 0; i < list.length && i < 60; i += 1) {
+        const el = list[i];
+        if (el.tagName !== 'IFRAME') {
+          const r = rect(el);
+          if (r.width < 100 || r.height < 80) continue;
+        }
+        const v = vendorOf(MAPS, [el.tagName === 'IFRAME' ? srcOf(el) : tokensOf(el)]);
+        if (v !== null) return v;
+      }
+      return null;
+    };
+    const analyse = (el) => {
+      const hero = el === heroEl;
+      // The section's own heading (h1-h3); the kind may also read an
+      // eyebrow or a card title (h4-h6) when that one says nothing.
+      let heading = '';
+      let first = null;
+      const titles = [];
+      const hl = el.querySelectorAll('h1, h2, h3, h4, h5, h6, [role="heading"]');
+      // Fully visible headings first; a slider caught between two slides
+      // still has its slides' headings.
+      for (const ok of [seen, shown]) {
+        for (let i = 0; i < hl.length && i < 16 && titles.length < 2; i += 1) {
+          if (!ok(hl[i])) continue;
+          const t = textOf(hl[i]).slice(0, 200);
+          if (!t) continue;
+          titles.push(t);
+          if (!first) first = hl[i];
+          if (!heading && /^H[1-3]$/.test(hl[i].tagName)) heading = t;
+        }
+        if (titles.length) break;
+      }
+      // An eyebrow ("HOW IT WORKS" over the heading) names the section too.
+      const eyebrow = first ? first.previousElementSibling : null;
+      if (eyebrow && eyebrow.getElementsByTagName('*').length <= 2 && shown(eyebrow)) {
+        const t = textOf(eyebrow);
+        if (t && t.length <= 40) titles.splice(1, 0, t);
+      }
+      const lay = layoutOf(el, hero);
+      const group = lay.group;
+      const words = rawText(el, 6000).split(' ').filter(Boolean).length;
+      const priced = !!group && group.items.filter((c) => PRICE.test(rawText(c, 800))).length >= 2;
+      const imageGrid = !!group && group.items.length >= 6
+        && group.items.filter((c) => MEDIA.test(c.tagName) || (!!c.querySelector('img, picture, video') && rawText(c, 200).length <= 60)).length >= group.items.length * 0.7;
+      const bigNumbers = statsIn(el);
+      const t = rawText(el, 4000);
+      let kind = hero ? 'hero' : '';
+      // A quote with a name after it ("- Kaden R.") is a testimonial,
+      // whatever it says; a quoted slogan has no name.
+      if (!kind && /^["“”„«]/.test(titles[0] || '') && /(^|[\s"“”'’.!?])[-–—]\s?[A-Z][\w.'’]*(\s[A-Z][\w.'’]*)?(\s|$)/.test(t)) kind = 'reviews';
+      for (const title of titles) if (!kind) kind = kindOfHeading(title);
+      if (!kind) {
+        const urls = urlsIn(el);
+        if (el.querySelectorAll('details > summary').length >= 2 || el.querySelectorAll('[aria-expanded]').length >= 3) kind = 'faq';
+        else if (vendorOf(BOOKING, urls) !== null) kind = 'booking';
+        else if (el.querySelectorAll('input:not([type="hidden"]):not([type="submit"]):not([type="button"]), textarea, select').length >= 2) kind = 'contact';
+        else if (mapIn(el) !== null) kind = 'contact';
+        else if (bigNumbers >= 3) kind = 'stats';
+        else if (imageGrid || (imagesIn(el) >= 6 && words < 120)) kind = 'gallery';
+        else if (priced) kind = 'pricing';
+        else if (/testimonial/i.test(t) || t.includes(STAR) || (words < 150 && el.querySelector('blockquote'))
+          || el.querySelectorAll('[class*="star"], [aria-label*="star" i], [class*="rating"], [data-rating]').length >= 3) kind = 'reviews';
+        else if (rect(el).height < vh * 0.6 && words <= 40 && firstButton(el, 30)) kind = 'cta';
+        else kind = 'other';
+      }
+      return { el, kind, heading, height: Math.round(rect(el).height), layout: lay.layout, cards: lay.cards, priced, imageGrid, bigNumbers };
+    };
+
+    attempt(() => {
+      out.title = oneLine(d.title).slice(0, 300);
+    });
+
+    // ── The header and the footer
+    attempt(() => {
+      const cands = [];
+      const named = d.querySelectorAll('header, [role="banner"], nav, #header, #masthead, #site-header, .site-header, .main-header, .header, .navbar, '
+        + '#SITE_HEADER, [data-elementor-type="header"], .elementor-location-header');
+      for (let i = 0; i < named.length && i < 60; i += 1) cands.push(named[i]);
+      // A bar fixed or stuck to the top, whatever it is called.
+      const all = body.getElementsByTagName('*');
+      for (let i = 0; i < all.length && i < 1500; i += 1) {
+        if (!spend()) break;
+        const r = rect(all[i]);
+        if (r.top > 10 || r.height < 30 || r.height > 220 || r.width < vw * 0.8) continue;
+        const p = cs(all[i]).position;
+        if (p === 'fixed' || p === 'sticky') cands.push(all[i]);
+      }
+      const ok = cands.filter((el) => {
+        if (!shown(el)) return false;
+        const r = rect(el);
+        return r.top < 160 && r.height >= 30 && r.height < 300 && r.width >= vw * 0.5;
+      });
+      const outer = ok.filter((el) => !ok.some((o) => o !== el && o.contains(el)));
+      outer.sort((a, b) => rect(a).top - rect(b).top);
+      navEl = outer[0] || null;
+    });
+    attempt(() => {
+      const docHeight = Math.max(body.scrollHeight, d.documentElement ? d.documentElement.scrollHeight : 0);
+      const named = d.querySelectorAll('footer, [role="contentinfo"], #footer, #colophon, .site-footer, #SITE_FOOTER, [data-elementor-type="footer"], '
+        + '.elementor-location-footer');
+      const ok = [];
+      for (let i = 0; i < named.length && i < 40; i += 1) {
+        const el = named[i];
+        if (shown(el) && rect(el).height >= 40 && !inside(navEl, el) && rect(el).bottom >= docHeight * 0.6) ok.push(el);
+      }
+      const outer = ok.filter((el) => !ok.some((o) => o !== el && o.contains(el)));
+      outer.sort((a, b) => rect(b).bottom - rect(a).bottom);
+      footEl = outer[0] || null;
+    });
+    attempt(() => {
+      if (!navEl) return;
+      let sticky = false;
+      for (let e = navEl, i = 0; e && e !== body && i < 8 && !sticky; e = e.parentElement, i += 1) {
+        const p = cs(e).position;
+        sticky = p === 'fixed' || p === 'sticky';
+      }
+      // The bar inside a header that keeps its place in the flow.
+      for (let e = navEl.firstElementChild, i = 0; e && i < 2 && !sticky; e = e.firstElementChild, i += 1) {
+        const p = cs(e).position;
+        sticky = (p === 'fixed' || p === 'sticky') && rect(e).width >= vw * 0.5;
+      }
+      // Made sticky by a script once scrolled (the page is at its top now).
+      if (!sticky) sticky = /(^|[\s_-])(sticky|is-sticky|fixed-top|navbar-fixed|headroom|affix)([\s_-]|$)/.test(tokensOf(navEl));
+      out.stickyHeader = sticky;
+    });
+    attempt(() => {
+      if (!navEl) return;
+      const nb = rect(navEl);
+      const cta = firstButton(navEl, 200);
+      if (cta) out.nav.cta = labelOf(cta);
+      // The menu: the header's <nav>s when it has any (the logo and a top
+      // bar's links sit outside them), else the whole header. Its entries:
+      // the outermost list items when the menu is a list (a dropdown's own
+      // entries are hidden, its trigger is often a button beside the
+      // words), else its links and buttons. Never the header's button, a
+      // phone or email link, the logo or an icon without words.
+      const menus = navEl.matches('nav, [role="navigation"]') ? [navEl] : Array.from(navEl.querySelectorAll('nav, [role="navigation"]'));
+      const pick = (sel) => {
+        const list = [];
+        for (const m of menus.length ? menus : [navEl]) {
+          for (const el of m.querySelectorAll(sel)) {
+            if (list.length >= 300 || !spend()) break;
+            if (!list.includes(el)) list.push(el);
+          }
+        }
+        return list.filter((el) => !list.some((o) => o !== el && o.contains(el)));
+      };
+      const entries = [];
+      const add = (el) => {
+        if (cta && (el === cta || el.contains(cta) || cta.contains(el))) return;
+        if (!shown(el)) return;
+        const r = rect(el);
+        if (r.right < 0 || r.left > vw || r.top > nb.bottom + 10) return;
+        const link = el.matches('a[href]') ? el : el.querySelector('a[href]');
+        if (link && /^(tel|mailto|sms):/.test(lower(link.getAttribute('href')))) return;
+        if (/logo|brand|site-title|site-name/.test(`${tokensOf(el)} ${el.parentElement ? tokensOf(el.parentElement) : ''}`)) return;
+        const label = seenText(el, 60);
+        if (!label || label.length > 40) return;
+        // The logo as words: a link to the home page saying what the title
+        // says ("Caramics Detailing"), never a plain "Home".
+        if (link && label.length >= 3 && !/^home$/i.test(label) && lower(d.title).includes(lower(label))) {
+          let home = false;
+          try {
+            const u = new URL(link.getAttribute('href') || '', globalThis.location.href);
+            home = u.origin === globalThis.location.origin && /^\/?(index\.html?)?$/i.test(u.pathname) && !u.hash;
+          } catch {
+            home = false;
+          }
+          if (home) return;
+        }
+        entries.push({ label, top: r.top, left: r.left });
+      };
+      const items = pick('li');
+      for (const el of items.length >= 2 ? items : pick('a[href], button, [role="button"]')) add(el);
+      // In reading order: top row first, left to right.
+      entries.sort((a, b) => (Math.round(a.top / 24) - Math.round(b.top / 24)) || (a.left - b.left));
+      out.nav.items = entries.length;
+      for (const e of entries) if (out.nav.labels.length < 12 && !out.nav.labels.includes(e.label)) out.nav.labels.push(e.label);
+    });
+
+    // ── Fonts
+    attempt(() => {
+      const firstShown = (sel) => {
+        const list = d.querySelectorAll(sel);
+        let spare = null;
+        for (let i = 0; i < list.length && i < 200; i += 1) {
+          if (!seen(list[i]) || !textOf(list[i])) continue;
+          if (!inChrome(list[i])) return list[i];
+          if (!spare) spare = list[i];
+        }
+        return spare;
+      };
+      const h = firstShown('h1') || firstShown('h2');
+      if (h) out.fonts.heading = fontOf(h);
+    });
+    attempt(() => {
+      // The most common look among real paragraphs.
+      const counts = new Map();
+      const ps = d.querySelectorAll('p');
+      for (let i = 0, n = 0; i < ps.length && i < 600 && n < 60; i += 1) {
+        const p = ps[i];
+        if (inChrome(p) || rawText(p, 400).length < 40 || !shown(p)) continue;
+        n += 1;
+        const f = fontOf(p);
+        const key = `${f.family}|${f.weight}|${f.size}`;
+        const entry = counts.get(key);
+        if (entry) entry.n += 1;
+        else counts.set(key, { n: 1, f });
+      }
+      let best = null;
+      for (const c of counts.values()) if (!best || c.n > best.n) best = c;
+      out.fonts.body = best ? best.f : fontOf(body);
+    });
+    attempt(() => {
+      const b = firstButton(body, 800) || (navEl ? firstButton(navEl, 200) : null);
+      if (!b) return;
+      const s = cs(b);
+      const r = rect(b);
+      const label = labelOf(b);
+      let radius = num(s.borderTopLeftRadius);
+      if (/%/.test(String(s.borderTopLeftRadius))) radius = (radius / 100) * Math.min(r.width, r.height);
+      const f = fontOf(b);
+      out.fonts.button = {
+        family: f.family,
+        weight: f.weight,
+        size: f.size,
+        uppercase: s.textTransform === 'uppercase' || (/[A-Z]{3}/.test(label) && label === label.toUpperCase()),
+        radius: radius >= r.height / 2 - 1 ? 999 : Math.round(radius),
+      };
+    });
+
+    // ── Sliders (the layouts and the features both need them)
+    attempt(() => {
+      // By class, or by the carousel role a slider declares for screen
+      // readers (Embla, shadcn/ui and others carry no slider class).
+      const list = d.querySelectorAll('[aria-roledescription="carousel"], [class*="swiper"], [class*="slick"], [class*="splide"], [class*="glide"], '
+        + '[class*="carousel"], [class*="owl"], [class*="flickity"], [class*="keen-slider"], [class*="embla"], [class*="slide"], [class*="rev_slider"], '
+        + 'rs-module-wrap, rs-module, [class*="n2-ss"]');
+      for (let i = 0; i < list.length && i < 400 && sliders.length < 40; i += 1) {
+        if (!spend()) break;
+        const el = list[i];
+        const t = tokensOf(el);
+        const named = SLIDER_RE.test(t) || lower(el.getAttribute('aria-roledescription')) === 'carousel';
+        if (!named || BEFORE_AFTER_RE.test(t) || inside(navEl, el)) continue;
+        if (sliders.some((s) => s.contains(el))) continue;
+        const r = rect(el);
+        if (r.width >= 200 && r.height >= 80 && shown(el)) sliders.push(el);
+      }
+    });
+
+    // ── Sections, top to bottom
+    attempt(() => {
+      const kidsOf = (el) => childrenOf(el).filter((c) => {
+        if (!shown(c)) return false;
+        const p = cs(c).position;
+        return p !== 'fixed' && p !== 'absolute';
+      });
+      const stacked = (list) => {
+        const s = list.slice().sort((a, b) => rect(a).top - rect(b).top);
+        for (let i = 1; i < s.length; i += 1) if (rect(s[i]).top < rect(s[i - 1]).bottom - 24) return false;
+        return true;
+      };
+      // A section by its tag, or by the class a site builder gives its
+      // top-level sections (Divi, Elementor, Beaver Builder, WPBakery,
+      // Gutenberg, Squarespace, Shopify, Bricks, Avada, X, Kadence).
+      const SECTION_CLASS = /(^|\s)(et_pb_section|elementor-top-section|e-parent|fl-row|vc_section|wp-block-cover|page-section|shopify-section|brxe-section|fusion-fullwidth|x-section|kb-row-layout-wrap)(\s|$)/;
+      const sectionLike = (c) => c.tagName === 'SECTION' || SECTION_CLASS.test(lower(c.getAttribute('class')));
+      const ownBg = (c) => filled(c) || bgImage(c) !== '';
+      // Whether `el` holds several sections (and not one section's rows).
+      const splittable = (el, k) => {
+        if (k.length < 2 || !stacked(k)) return false;
+        const tag = el.tagName;
+        if (tag === 'BODY' || tag === 'MAIN' || tag === 'ARTICLE') return true;
+        if (/^(HEADER|NAV|FORM|ASIDE|UL|OL|DL|DETAILS|TABLE|FIGURE)$/.test(tag) || (tag === 'FOOTER' && el !== footEl)) return false;
+        if (k.filter(sectionLike).length >= 2) return true;
+        if (sectionLike(el) || rect(el).height < vh * 1.2) return false;
+        // A band with a background of its own is one section: its rows
+        // share that background.
+        if (ownBg(el) && rect(el).height < vh * 2.5 && k.filter(ownBg).length < 2) return false;
+        return k.filter((c) => c.querySelector('h1, h2') || ownBg(c)).length >= 2;
+      };
+      // The sections inside `el`, or null when `el` is one (a wrapper with
+      // one block in it is looked through).
+      const splitInto = (el, depth) => {
+        if (depth > 14 || !spend()) return null;
+        const width = rect(el).width;
+        const k = kidsOf(el).filter((c) => rect(c).height >= 80 && rect(c).width >= Math.max(240, width * 0.45));
+        if (k.length === 1) return splitInto(k[0], depth + 1);
+        if (!splittable(el, k)) return null;
+        const list = [];
+        for (const c of k) list.push(...(splitInto(c, depth + 1) || [c]));
+        return list;
+      };
+      let list = (splitInto(body, 0) || []).filter((el) => {
+        if (navEl && (inside(navEl, el) || (el.contains(navEl) && rect(el).height < 300))) return false;
+        return !inside(footEl, el);
+      });
+      // A theme whose <footer> also holds sections (a blog carousel, a map,
+      // a call to action) above the footer itself: those are sections.
+      footPart = footEl;
+      if (footEl && rect(footEl).height >= vh * 1.2) {
+        const parts = splitInto(footEl, 0);
+        if (parts && parts.length >= 2) {
+          list.push(...parts.slice(0, -1));
+          footPart = parts[parts.length - 1];
+        }
+      }
+      if (list.length < 2) {
+        // A page whose structure didn't split: its <section>s, outermost.
+        const secs = [];
+        const sl = d.querySelectorAll('section');
+        for (let i = 0; i < sl.length && i < 200; i += 1) {
+          const s = sl[i];
+          if (shown(s) && rect(s).height >= 80 && !inChrome(s)) secs.push(s);
+        }
+        const outer = secs.filter((s) => !secs.some((o) => o !== s && o.contains(s)));
+        if (outer.length >= 2) list = outer;
+      }
+      list.sort((a, b) => rect(a).top - rect(b).top);
+      blocks = list.slice(0, 28);
+      heroEl = blocks.find((el, i) => i < 3 && rect(el).top < vh && rect(el).height >= vh * 0.4) || null;
+    });
+    attempt(() => {
+      for (const el of blocks) {
+        let rec = null;
+        try {
+          if (spend()) rec = analyse(el);
+        } catch {
+          rec = null;
+        }
+        recs.push(rec || { el, kind: el === heroEl ? 'hero' : 'other', heading: '', height: Math.round(rect(el).height), layout: '', cards: 0 });
+      }
+    });
+    attempt(() => {
+      const list = [];
+      if (navEl) list.push({ kind: 'header', heading: '', height: Math.round(rect(navEl).height), layout: '', cards: 0 });
+      for (const r of recs) list.push({ kind: r.kind, heading: r.heading, height: r.height, layout: r.layout, cards: r.cards });
+      const foot = footPart || footEl;
+      if (foot) {
+        let lay = { layout: '', cards: 0 };
+        try {
+          if (spend()) lay = layoutOf(foot, false);
+        } catch {
+          lay = { layout: '', cards: 0 };
+        }
+        list.push({ kind: 'footer', heading: '', height: Math.round(rect(foot).height), layout: lay.layout, cards: lay.cards });
+      }
+      out.sections = list;
+    });
+    // The content's width: in each section the outermost box centered on
+    // the page and narrower than it (a max-width, auto side margins or a
+    // grid's middle column), the most common one, to 10 px.
+    attempt(() => {
+      const widths = new Map();
+      for (const b of blocks) {
+        const scope = [b];
+        const desc = b.getElementsByTagName('*');
+        for (let i = 0; i < desc.length && i < 150; i += 1) scope.push(desc[i]);
+        for (const el of scope) {
+          if (!spend()) break;
+          const r = rect(el);
+          if (r.width < 480 || r.width > pageW - 40 || r.height < 40 || Math.abs(r.left - (pageW - r.right)) > 4 || !shown(el)) continue;
+          const w = Math.round(r.width / 10) * 10;
+          widths.set(w, (widths.get(w) || 0) + 1);
+          break;
+        }
+      }
+      let n = 0;
+      for (const [w, c] of widths) {
+        if (c > n) {
+          out.width = w;
+          n = c;
+        }
+      }
+    });
+    // The whitespace between one section's content and the next one's:
+    // the median over the sections below the hero.
+    attempt(() => {
+      const LEAF = /^(IMG|VIDEO|IFRAME|svg|SVG|PICTURE|INPUT|TEXTAREA|SELECT|BUTTON|CANVAS)$/;
+      const leafy = (el) => {
+        if (LEAF.test(el.tagName)) return true;
+        for (const n of el.childNodes) if (n.nodeType === 3 && n.textContent.trim()) return true;
+        return false;
+      };
+      const contentTop = (b) => {
+        const all = b.getElementsByTagName('*');
+        for (let i = 0; i < all.length && i < 300; i += 1) {
+          if (!leafy(all[i])) continue;
+          const r = rect(all[i]);
+          if (r.width >= 2 && r.height >= 2) return r.top;
+        }
+        return null;
+      };
+      const contentBottom = (b) => {
+        const all = b.getElementsByTagName('*');
+        let bottom = null;
+        let seen = 0;
+        for (let i = all.length - 1, n = 0; i >= 0 && n < 300 && seen < 30; i -= 1, n += 1) {
+          if (!leafy(all[i])) continue;
+          const r = rect(all[i]);
+          if (r.width < 2 || r.height < 2) continue;
+          seen += 1;
+          bottom = bottom === null ? r.bottom : Math.max(bottom, r.bottom);
+        }
+        return bottom;
+      };
+      const gaps = [];
+      for (let i = 0; i + 1 < recs.length; i += 1) {
+        if (!spend()) break;
+        if (recs[i].el === heroEl) continue;
+        const above = contentBottom(recs[i].el);
+        const below = contentTop(recs[i + 1].el);
+        if (above === null || below === null) continue;
+        const gap = below - above;
+        if (gap >= 0 && gap <= 600) gaps.push(gap);
+      }
+      gaps.sort((a, b) => a - b);
+      const m = gaps.length >> 1;
+      if (gaps.length) out.spacing.sectionGap = Math.round(gaps.length % 2 ? gaps[m] : (gaps[m - 1] + gaps[m]) / 2);
+    });
+
+    // ── Features. Where a widget shows itself: the page's scripts, frames,
+    // links, form targets and the ids and classes of its elements.
+    const scripts = [];
+    const frames = [];
+    const links = [];
+    const targets = [];
+    let blob = '';
+    attempt(() => {
+      for (const s of d.scripts) {
+        if (scripts.length >= 300) break;
+        if (s.src) scripts.push(lower(s.src));
+      }
+      const fl = d.querySelectorAll('iframe');
+      for (let i = 0; i < fl.length && i < 100; i += 1) frames.push(srcOf(fl[i]));
+      const al = d.querySelectorAll('a[href]');
+      for (let i = 0; i < al.length && i < 1500; i += 1) links.push(lower(al[i].getAttribute('href')));
+      for (const f of d.forms) {
+        if (targets.length >= 30) break;
+        targets.push(lower(f.getAttribute('action')));
+      }
+      const dl = d.querySelectorAll('[data-url], [data-href], [onclick]');
+      for (let i = 0; i < dl.length && i < 200; i += 1) {
+        const e = dl[i];
+        targets.push(lower(`${e.getAttribute('data-url') || ''} ${e.getAttribute('data-href') || ''} ${(e.getAttribute('onclick') || '').slice(0, 300)}`));
+      }
+      const all = body.getElementsByTagName('*');
+      const parts = [];
+      let size = 0;
+      for (let i = 0; i < all.length && i < 5000 && size < 400000; i += 1) {
+        const el = all[i];
+        const c = el.getAttribute('class');
+        if (!el.id && !c && !el.tagName.includes('-')) continue;
+        const t = `${el.tagName} ${el.id || ''} ${c || ''}`;
+        parts.push(t);
+        size += t.length;
+      }
+      blob = lower(parts.join('\n'));
+    });
+    attempt(() => {
+      const hl = d.querySelectorAll('h1, h2, h3, h4, [role="heading"]');
+      for (let i = 0; i < hl.length && i < 200; i += 1) {
+        const t = oneLine(hl[i].textContent).slice(0, 200);
+        if (t) headings.push(t);
+      }
+    });
+    attempt(() => {
+      if (out.stickyHeader) feature('sticky-header', '');
+    });
+    // A video: a <video>, or a player's frame or tag ('' for one the site
+    // serves itself). `accept` picks which ones count.
+    const videoIn = (root, accept) => {
+      const list = root.querySelectorAll('video, iframe, lite-youtube, lite-vimeo, wistia-player, [data-youtube-id], [data-vimeo-id]');
+      for (let i = 0; i < list.length && i < 80; i += 1) {
+        const el = list[i];
+        if (!accept(el)) continue;
+        const tag = el.tagName;
+        if (tag === 'VIDEO') return '';
+        if (tag === 'LITE-YOUTUBE' || el.hasAttribute('data-youtube-id')) return 'YouTube';
+        if (tag === 'LITE-VIMEO' || el.hasAttribute('data-vimeo-id')) return 'Vimeo';
+        if (tag === 'WISTIA-PLAYER') return 'Wistia';
+        const v = vendorOf(VIDEOS, [srcOf(el)]);
+        if (v !== null) return v;
+      }
+      return null;
+    };
+    attempt(() => {
+      if (heroEl) {
+        // On the hero itself, never a player waiting in a closed popup.
+        const v = videoIn(heroEl, (el) => {
+          const r = rect(el);
+          return r.width >= 200 && r.height >= 100 && shown(el);
+        });
+        if (v !== null) feature('hero-video', v);
+        const s = sliders.find((x) => inside(heroEl, x) && rect(x).width >= rect(heroEl).width * 0.5);
+        if (s) feature('hero-slider', sliderLib(s));
+      }
+      const other = sliders.find((x) => !inside(heroEl, x) && !inChrome(x));
+      if (other) feature('carousel', sliderLib(other));
+      const v = videoIn(body, (el) => !inside(heroEl, el) && !inside(navEl, el));
+      if (v !== null) feature('video', v);
+    });
+    attempt(() => {
+      if (recs.some((r) => r.kind === 'gallery' || r.imageGrid)) {
+        feature('gallery', '');
+        return;
+      }
+      const list = d.querySelectorAll('[class*="gallery"], [class*="masonry"], [class*="lightbox"], [class*="fancybox"], [class*="photoswipe"], '
+        + '[class*="glightbox"], [class*="lightgallery"], [class*="envira"], [class*="foogallery"], [class*="ngg-"]');
+      for (let i = 0; i < list.length && i < 80; i += 1) {
+        const el = list[i];
+        if (inChrome(el)) continue;
+        const r = rect(el);
+        if (r.width >= 200 && r.height >= 150 && shown(el) && el.querySelectorAll('img').length >= 3) {
+          feature('gallery', '');
+          return;
+        }
+      }
+      if (d.querySelectorAll('[data-fancybox], [data-lightbox], [data-elementor-lightbox-slideshow], [data-lightbox-gallery]').length >= 3) feature('gallery', '');
+    });
+    attempt(() => {
+      const list = d.querySelectorAll('[class*="before"], [id*="before"], [class*="twentytwenty"], [class*="beer"], [class*="img-comp"], '
+        + '[class*="juxtapose"], [class*="compar"], [class*="cocoen"], [class*="ba-slider"], img-comparison-slider');
+      for (let i = 0; i < list.length && i < 100; i += 1) {
+        const t = tokensOf(list[i]);
+        if (!BEFORE_AFTER_RE.test(t)) continue;
+        const libs = [[/twentytwenty/, 'TwentyTwenty'], [/beer-/, 'Beer Slider'], [/juxtapose/, 'Juxtapose'], [/img-comparison/, 'img-comparison-slider'], [/cocoen/, 'Cocoen']];
+        feature('before-after', vendorOf(libs, [t]) || '');
+        return;
+      }
+      if (headings.some((h) => /before\s*(&|and|\+|\/|-)?\s*after/i.test(h))) feature('before-after', '');
+    });
+    attempt(() => {
+      let vendor = vendorOf(REVIEWS, [blob, scripts.join('\n'), frames.join('\n')]);
+      // Elfsight serves every kind of widget from one script: the widget's
+      // own words, or the section it sits in, say which.
+      const apps = d.querySelectorAll('[class*="elfsight-app"]');
+      for (let i = 0; i < apps.length && i < 10 && vendor === null; i += 1) {
+        const rec = blockOf(apps[i]);
+        if (/review|rating|testimonial/i.test(rawText(apps[i], 3000)) || (rec && rec.kind === 'reviews')) vendor = 'Elfsight';
+      }
+      if (vendor === null) {
+        const list = d.querySelectorAll('[class*="google-review"], [class*="google_review"], [class*="googlereview"], [id*="google-review"]');
+        for (let i = 0; i < list.length && i < 20 && vendor === null; i += 1) {
+          const r = rect(list[i]);
+          if (r.width >= 200 && r.height >= 100 && !inChrome(list[i])) vendor = 'Google';
+        }
+      }
+      if (vendor !== null) feature('reviews-widget', vendor);
+      if (vendor !== null || recs.some((r) => r.kind === 'reviews')) feature('reviews', '');
+    });
+    attempt(() => {
+      let n = 0;
+      const dl = d.querySelectorAll('details');
+      for (let i = 0; i < dl.length && i < 60; i += 1) if (dl[i].querySelector('summary') && !inChrome(dl[i])) n += 1;
+      if (n >= 2 || recs.some((r) => r.kind === 'faq')) {
+        feature('faq', '');
+        return;
+      }
+      const list = d.querySelectorAll('[class*="accordion"], [class*="faq"], [id*="faq"]');
+      for (let i = 0; i < list.length && i < 60; i += 1) {
+        const el = list[i];
+        if (inChrome(el)) continue;
+        const r = rect(el);
+        if (r.width >= 200 && r.height >= 40 && shown(el)) {
+          feature('faq', '');
+          return;
+        }
+      }
+    });
+    attempt(() => {
+      // Tabs with names (a slider's numbered dots are a tablist too).
+      const lists = d.querySelectorAll('[role="tablist"]');
+      for (let i = 0; i < lists.length && i < 20; i += 1) {
+        const tl = lists[i];
+        if (inChrome(tl) || !shown(tl) || sliders.some((s) => inside(s, tl))) continue;
+        const named = Array.from(tl.querySelectorAll('[role="tab"]')).filter((t) => {
+          const x = textOf(t);
+          return x.length >= 2 && !/^\d+$/.test(x);
+        });
+        if (named.length >= 2) {
+          feature('tabs', '');
+          return;
+        }
+      }
+      const list = d.querySelectorAll('.nav-tabs, .elementor-tabs, .e-n-tabs, .et_pb_tabs, .wp-block-kadence-tabs, .tabs-nav, .tab-nav');
+      for (let i = 0; i < list.length && i < 20; i += 1) {
+        if (!inChrome(list[i]) && shown(list[i])) {
+          feature('tabs', '');
+          return;
+        }
+      }
+    });
+    attempt(() => {
+      if (recs.some((r) => r.kind === 'pricing' || r.priced)) feature('pricing', '');
+    });
+    attempt(() => {
+      let vendor = vendorOf(BOOKING, [links.join('\n'), frames.join('\n'), scripts.join('\n'), targets.join('\n'), blob]);
+      if (vendor === null && d.querySelector('meta[name="generator"][content*="wix" i]') && links.some((h) => /\/book-online|\/booking-calendar|\/service-page\//.test(h))) {
+        vendor = 'Wix Bookings';
+      }
+      if (vendor !== null) feature('booking-widget', vendor);
+    });
+    attempt(() => {
+      // Each form once: a quote request (the vehicle, the service), a
+      // newsletter (one email field) or a contact form. Sign-in and search
+      // forms aren't features.
+      const typeOf = (x) => (x.tagName === 'INPUT' ? lower(x.getAttribute('type') || 'text') : lower(x.tagName));
+      const describe = (x) => lower(`${x.name || ''} ${x.id || ''} ${x.getAttribute('placeholder') || ''} ${x.getAttribute('aria-label') || ''} `
+        + `${x.labels && x.labels[0] ? x.labels[0].textContent : ''}`).slice(0, 300);
+      const fl = d.querySelectorAll('form');
+      for (let i = 0; i < fl.length && i < 30; i += 1) {
+        if (!spend()) break;
+        const f = fl[i];
+        if (inside(navEl, f)) continue;
+        // The fields a person fills in: on a form that shows, the ones that
+        // show (a captcha's or a honeypot's are hidden); on one waiting in a
+        // closed popup, all but those.
+        const open = shown(f);
+        const all = Array.from(f.querySelectorAll('input, textarea, select')).slice(0, 40)
+          .filter((x) => !/captcha|honeypot|_gotcha|hp_|ak_hp|website_url|fax/.test(lower(`${x.name || ''} ${x.id || ''}`)) && (!open || shown(x)));
+        if (all.some((x) => typeOf(x) === 'password')) continue;
+        const texts = all.filter((x) => /^(text|email|tel|number|url|search|date|datetime-local|time|textarea|select)$/.test(typeOf(x)));
+        if (!texts.length) continue;
+        if (f.getAttribute('role') === 'search' || (texts.length <= 2 && texts.some((x) => typeOf(x) === 'search' || /^(s|q|search|query|keyword)$/.test(lower(x.name))))) continue;
+        const words = `${texts.map(describe).join(' | ')} | ${all.filter((x) => /^(checkbox|radio)$/.test(typeOf(x))).map((x) => lower(x.name)).join(' ')}`;
+        const rec = blockOf(f);
+        const title = lower(`${Array.from(f.querySelectorAll('h1, h2, h3, h4, legend')).slice(0, 3).map((h) => h.textContent).join(' ')} ${rec ? rec.heading : ''}`);
+        const up = f.parentElement;
+        const tokens = `${tokensOf(f)} ${up ? tokensOf(up) : ''} ${up && up.parentElement ? tokensOf(up.parentElement) : ''} ${lower(f.getAttribute('action'))}`;
+        const vendor = vendorOf(FORMS, [tokens]) || '';
+        const emails = texts.filter((x) => typeOf(x) === 'email' || /e-?mail/.test(describe(x)));
+        if (/vehicle|\bmake\b|\bmodel\b|\byear\b|\bvin\b|service|package|quote|estimate/.test(words) || /quote|estimate/.test(title)) feature('quote-form', vendor);
+        else if (texts.length === 1 && emails.length === 1) feature('newsletter', vendor);
+        else if (emails.length || texts.some((x) => /^(tel|textarea)$/.test(typeOf(x))) || /phone|message|comment/.test(words)) feature('contact-form', vendor);
+      }
+      // A form a builder serves in a frame.
+      const fr = d.querySelectorAll('iframe');
+      for (let i = 0; i < fr.length && i < 100; i += 1) {
+        const v = vendorOf(FORM_FRAMES, [srcOf(fr[i])]);
+        if (v === null) continue;
+        const rec = blockOf(fr[i]);
+        feature(rec && /quote|estimate/i.test(rec.heading) ? 'quote-form' : 'contact-form', v);
+      }
+    });
+    attempt(() => {
+      const v = mapIn(body);
+      if (v !== null) feature('map', v);
+    });
+    attempt(() => {
+      let v = vendorOf(INSTAGRAM, [blob, frames.join('\n'), scripts.join('\n')]);
+      const apps = d.querySelectorAll('[class*="elfsight-app"]');
+      for (let i = 0; i < apps.length && i < 10 && v === null; i += 1) if (/instagram|followers/i.test(rawText(apps[i], 3000))) v = 'Elfsight';
+      if (v !== null) feature('instagram-feed', v);
+    });
+    attempt(() => {
+      // The capture hid the chat button; its script and box are still
+      // there.
+      const tokens = [];
+      const list = d.querySelectorAll(CHAT_SEL);
+      for (let i = 0; i < list.length && i < 50; i += 1) tokens.push(tokensOf(list[i]));
+      const v = vendorOf(CHAT, [scripts.join('\n'), frames.join('\n'), tokens.join('\n')]);
+      if (v !== null) feature('chat', v);
+    });
+    attempt(() => {
+      if (recs.some((r) => r.kind === 'stats' || r.bigNumbers >= 3)) {
+        feature('stats', '');
+        return;
+      }
+      const list = d.querySelectorAll('[class*="counter"], [class*="odometer"], [class*="countup"], [class*="count-up"], [class*="numscroller"], '
+        + '[data-count], [data-counter], [data-countup], [data-to]');
+      for (let i = 0; i < list.length && i < 60; i += 1) {
+        const el = list[i];
+        if (inChrome(el) || !shown(el)) continue;
+        const target = el.getAttribute('data-count') || el.getAttribute('data-counter') || el.getAttribute('data-countup') || el.getAttribute('data-to') || '';
+        const named = /(^|[\s_-])(counter|odometer|count-?up|numscroller)/.test(tokensOf(el));
+        if (/^\s*\d/.test(target) || (named && /\d/.test(textOf(el)))) {
+          feature('stats', '');
+          return;
+        }
+      }
+    });
+    attempt(() => {
+      const AREA = /service areas?\b|areas? (we )?serv(e|ed|ing)?\b|cities (we )?serv|serving .{0,40}\barea|where we (serve|go|work)\b|locations? we serve|coverage area/i;
+      if (headings.some((h) => AREA.test(h))) feature('service-area', '');
+    });
+
+    out.features = Array.from(found, ([id, provider]) => ({ id, provider }));
+    return out;
   },
 });
 
@@ -635,7 +1953,23 @@ function responseError(response) {
   return null;
 }
 
-async function shoot(browser, { url, guard, sleep, navigationTimeoutMs, idleMaxMs, settleMs }) {
+// The page's outline (PAGE_SCRIPTS.outline), sanitized, or null. Never
+// throws: a page that breaks the script, or keeps the browser too busy to
+// run it, is still shot.
+async function readOutline(page, timeoutMs) {
+  try {
+    const raw = await withTimeout(
+      Promise.resolve().then(() => page.evaluate(PAGE_SCRIPTS.outline)).catch(() => null),
+      timeoutMs,
+      () => null,
+    );
+    return sanitizeOutline(raw);
+  } catch {
+    return null;
+  }
+}
+
+async function shoot(browser, { url, guard, sleep, navigationTimeoutMs, idleMaxMs, settleMs, outlineTimeoutMs }) {
   const page = await browser.newPage();
   await page.setUserAgent(CAPTURE_USER_AGENT);
   await page.setExtraHTTPHeaders({ 'Accept-Language': 'en-US,en;q=0.9' });
@@ -699,6 +2033,9 @@ async function shoot(browser, { url, guard, sleep, navigationTimeoutMs, idleMaxM
   if (bad) throw bad;
 
   await page.waitForNetworkIdle({ idleTime: 500, timeout: idleMaxMs }).catch(() => {});
+  // A page that scrolls an inner box gets its full height first (see
+  // PAGE_SCRIPTS.unscroll). Best effort, like the steps below.
+  await page.evaluate(PAGE_SCRIPTS.unscroll).catch(() => 0);
   // Down the page a screen at a time, so lazy images and reveal-on-scroll
   // sections load and show, then back to the top for the header's resting
   // state.
@@ -717,6 +2054,8 @@ async function shoot(browser, { url, guard, sleep, navigationTimeoutMs, idleMaxM
   await page.evaluate(PAGE_SCRIPTS.hideOverlays).catch(() => 0);
   await sleep(REVEAL_SETTLE_MS);
   const pageHeight = Number(await page.evaluate(PAGE_SCRIPTS.measure)) || firstHeight;
+  // Read from the page as it is shot: sections shown, overlays hidden.
+  const outline = await readOutline(page, outlineTimeoutMs);
 
   const parts = [];
   for (const tile of planCaptureTiles(pageHeight)) {
@@ -731,7 +2070,7 @@ async function shoot(browser, { url, guard, sleep, navigationTimeoutMs, idleMaxM
     if (!size) throw new CaptureError('failed');
     parts.push({ part: tile.part, y: tile.y, width: size.width, height: size.height, buffer });
   }
-  return { parts, pageHeight, finalUrl: typeof page.url === 'function' ? page.url() : url, status: Number(response?.status?.()) || 0 };
+  return { parts, pageHeight, finalUrl: typeof page.url === 'function' ? page.url() : url, status: Number(response?.status?.()) || 0, outline };
 }
 
 // Closes the browser, and kills it when it doesn't close in 5 s: a run
@@ -754,7 +2093,8 @@ async function closeBrowser(browser) {
 }
 
 // Captures `url`: { parts: [{ part, y, width, height, buffer }], pageHeight,
-// finalUrl, status, refused } (refused: what the guard stopped, for the
+// finalUrl, status, outline, refused } (outline: sanitizeOutline's, or null
+// when the page didn't give one; refused: what the guard stopped, for the
 // log), or throws a CaptureError whose message is for the admin.
 //   launch({ args })  starts the browser (custom-site-capture-background
 //                     launchBrowser; tests pass a fake), given the flags
@@ -763,7 +2103,7 @@ async function closeBrowser(browser) {
 export async function capturePage({
   url, launch, lookup, testOnly = null, sleep = defaultSleep,
   navigationTimeoutMs = CAPTURE_NAV_TIMEOUT_MS, idleMaxMs = CAPTURE_IDLE_MAX_MS, settleMs = CAPTURE_SETTLE_MS,
-  budgetMs = CAPTURE_BUDGET_MS,
+  outlineTimeoutMs = CAPTURE_OUTLINE_TIMEOUT_MS, budgetMs = CAPTURE_BUDGET_MS,
 } = {}) {
   if (typeof launch !== 'function') throw new CaptureError('browser');
   const guard = createCaptureGuard({ lookup, testOnly });
@@ -787,7 +2127,7 @@ export async function capturePage({
       throw new CaptureError('too_slow');
     }
     browser = started;
-    return shoot(browser, { url: first.url, guard, sleep, navigationTimeoutMs, idleMaxMs, settleMs });
+    return shoot(browser, { url: first.url, guard, sleep, navigationTimeoutMs, idleMaxMs, settleMs, outlineTimeoutMs });
   })();
   // Out of time before the browser even started (its download or launch
   // hung): that's our side, not the site, and the admin is told so.

@@ -9,6 +9,7 @@ import {
 } from '../../lib/customSiteDesign.js';
 import { formatBytes, safeHref } from '../../lib/customSiteForm.js';
 import { changedLeverGroups, leverGroupsChanged, sanitizeLevers } from '../../lib/designLevers.js';
+import { featureRows, outlineFontsText, outlineSectionsText } from '../../lib/referenceFeatures.js';
 import { unpackGeneratedContent } from '../../lib/siteRender.js';
 import { supabase } from '../../lib/supabase.js';
 import { useAlert } from '../ui/AlertProvider.jsx';
@@ -180,9 +181,9 @@ function Field({ label, hint, children, className = '' }) {
   );
 }
 
-function Section({ title, intro, children }) {
+function Section({ title, intro, children, id }) {
   return (
-    <section className="bg-white rounded-2xl border border-black/[0.07] p-5 sm:p-6">
+    <section id={id} className="bg-white rounded-2xl border border-black/[0.07] p-5 sm:p-6">
       <h3 className="text-[16px] font-[800] text-[#1a1a1a]">{title}</h3>
       {intro && <p className="mt-0.5 text-[13px] text-ink-tertiary">{intro}</p>}
       <div className="mt-4">{children}</div>
@@ -191,6 +192,8 @@ function Section({ title, intro, children }) {
 }
 
 const SLOT_LABELS = { logo: 'Logo', hero: 'Hero (top of the page)', about: 'About section' };
+// Suggest a design's section, which a copy brings into view.
+const SUGGEST_SECTION_ID = 'design-suggest';
 
 // ─── Reference sites (design.reference, customSiteDesign.js) ─────────
 
@@ -283,7 +286,104 @@ function CaptureWatch({ load, onResult, onTick }) {
 }
 
 const BTN_SMALL = 'inline-flex items-center justify-center px-2.5 py-1 rounded-md bg-white border border-black/[0.12] text-[12px] font-semibold text-[#1a1a1a] hover:border-[#cc0000]/40 disabled:opacity-50 transition-colors';
+const BTN_SMALL_PRIMARY = 'inline-flex items-center justify-center px-2.5 py-1 rounded-md bg-[#cc0000] hover:bg-[#a80000] text-[12px] font-bold text-white disabled:opacity-50 transition-colors';
 const LINK_BTN = 'text-[12px] font-semibold text-[#cc0000] hover:underline disabled:opacity-50';
+
+// ─── What our server read from a reference's code (its outline) ──────
+
+const SUPPORT_MARKS = {
+  have: { mark: '✓', sr: 'We have it:', className: 'text-emerald-700' },
+  covered: { mark: '✓', sr: 'We cover it:', className: 'text-emerald-700' },
+  'other-template': { mark: '↗', sr: 'In another template:', className: 'text-amber-700' },
+  missing: { mark: '✗', sr: 'Not yet:', className: 'text-ink-tertiary' },
+};
+// Features listed before "Show N more".
+const FEATURES_SHOWN = 6;
+
+function featureLine(row) {
+  const m = SUPPORT_MARKS[row.status] || SUPPORT_MARKS.missing;
+  return (
+    <p key={row.id} className="flex gap-1.5">
+      <span aria-hidden="true" className={`w-3 shrink-0 font-bold ${m.className}`}>{m.mark}</span>
+      <span>
+        <span className="sr-only">{m.sr} </span>
+        {row.label}{row.provider ? ` (${row.provider})` : ''}
+        <span className="text-ink-tertiary"> · {row.text}</span>
+      </span>
+    </p>
+  );
+}
+
+// Under a reference our server captured: its fonts, its sections top to
+// bottom and the features found in its code, each against what we do for
+// the setup's template (referenceFeatures.js). Measured data: none of its
+// words go into the site. Nothing without an outline.
+function codeOutline(outline, templateId) {
+  if (!outline) return null;
+  const fonts = outlineFontsText(outline);
+  const sections = outlineSectionsText(outline);
+  const rows = featureRows(outline.features, templateId);
+  if (!fonts && !sections && !rows.length) return null;
+  return (
+    <div className="mt-2 rounded-lg bg-[#faf9f7] border border-black/[0.06] px-3 py-2 text-[12px] text-[#4a4a4a] space-y-0.5" data-code-outline="">
+      <p className="text-[10px] font-bold uppercase tracking-wider text-ink-tertiary">From its code</p>
+      {fonts && <p><span className="font-semibold text-[#1a1a1a]">Fonts:</span> {fonts}</p>}
+      {sections && <p><span className="font-semibold text-[#1a1a1a]">Sections:</span> {sections}</p>}
+      {rows.length > 0 && (
+        <div>
+          <p className="font-semibold text-[#1a1a1a]">Features on this site</p>
+          {rows.slice(0, FEATURES_SHOWN).map(featureLine)}
+          {rows.length > FEATURES_SHOWN && (
+            <details>
+              <summary className="cursor-pointer select-none font-semibold text-[#4a4a4a] hover:text-[#1a1a1a]">Show {rows.length - FEATURES_SHOWN} more</summary>
+              {rows.slice(FEATURES_SHOWN).map(featureLine)}
+            </details>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── "Copy this site's layout" (one click per reference) ─────────────
+
+// The note's address ("Screenshot of <url>", as our capture and
+// ReferenceShotUpload write it) of a reference file, as a site key, or ''.
+function shotNoteKey(asset) {
+  const note = typeof asset?.note === 'string' ? asset.note : '';
+  return note.startsWith('Screenshot of ') ? referenceSiteKey(note.slice(14).split(/\s+/)[0]) : '';
+}
+
+// How a copy of an address gets its screenshots: 'wait' (our server is
+// taking them now), 'match' (it has some: from a capture whose last run
+// didn't fail, or, after a failed one, ones the admin uploaded instead, so
+// a site our server can't open never loops) or 'capture' (none yet, or
+// the last capture failed). `view` is captureViewFor the address,
+// `failedStart` why its last start failed, `assets` the project's files.
+export function copyCapturePlan({ view, failedStart = '', assets = [], key }) {
+  if (view?.state === 'running') return 'wait';
+  const shots = (Array.isArray(assets) ? assets : []).filter((a) => a?.kind === 'reference');
+  if (failedStart || view?.state === 'failed' || view?.state === 'stale') {
+    return shots.some((a) => !capturedShotKey(a) && shotNoteKey(a) === key) ? 'match' : 'capture';
+  }
+  return shots.some((a) => capturedShotKey(a) === key) ? 'match' : 'capture';
+}
+
+const COPY_MATCHING = 'Claude is matching its layout (1–3 min)…';
+// The line under the button, per step of the copy (DesignSetup copyRun).
+function copyStatus(run) {
+  switch (run.step) {
+    case 'capture': return { busy: true, text: 'Taking screenshots and reading its code…' };
+    case 'save': case 'start': case 'matching': return { busy: true, text: COPY_MATCHING };
+    case 'ready': return { done: true, text: 'Ready below: check it and press Apply' };
+    default:
+      // The capture block just below says why the screenshots failed, with
+      // "Capture again" and "Upload a screenshot instead".
+      if (run.at === 'capture') return { failed: true, text: 'Stopped: its screenshots couldn\'t be taken.' };
+      if (run.at === 'matching') return { failed: true, text: `The match didn't finish: ${run.error || 'something went wrong'}` };
+      return { failed: true, text: `Stopped: ${run.error || 'something went wrong'}` };
+  }
+}
 
 // The customer typed the business name: in the prompt the admin pastes
 // into Claude Code it stays a plain label (letters, digits, simple
@@ -317,11 +417,22 @@ const promptName = (name) => String(name || '').replace(/[^\p{L}\p{N} &'.,-]/gu,
 //   onShotAdded (asset, row) => void, per screenshot (or part) recorded
 //   onShotBusy  (busy) => void, while a pick of screenshots uploads
 //   replicas    this project's replica templates in this build
+//   outlineOf   (source) => the outline our server read from that
+//               reference's code (designSuggest.js referenceOutlineOf), or
+//               null while that module loads
+//   copyRun     the "Copy this site's layout" run (DesignSetup), or null;
+//               copyLocked while one of its steps runs
+//   onCopy      (item) => void, starts one
+//   uploading   screenshots are uploading on the page
 function ReferenceSection({
   project, files, reference, urlShots, replicas, templateId, busy, onChange, onSave, onShotAdded, onShotBusy, onPickTemplate,
   teamSites = [], capture = null, nowMs = Date.now(), captureStarting = '', captureErrors = {}, onAddSite, onRemoveSite, onCapture,
+  outlineOf = null, copyRun = null, copyLocked = false, onCopy, uploading = false,
 }) {
   const { toast } = useAlert();
+  // A copy's steps change the reference and the page: the controls here
+  // wait for them as they wait for a save.
+  const locked = !!busy || copyLocked;
   const first = project.client_first_name || 'the customer';
   const form = project.form || {};
   // The note for a request not yet made (a saved request keeps its own).
@@ -402,7 +513,7 @@ function ReferenceSection({
 
   // One add, and one capture start, at a time: a start still waiting for
   // its answer would otherwise lose track of which site it is starting.
-  const addBlocked = adding || !!busy || full || !!captureStarting || !siteUrl.trim();
+  const addBlocked = adding || locked || full || !!captureStarting || !siteUrl.trim();
   async function addSite() {
     setSiteError('');
     setAdding(true);
@@ -422,6 +533,39 @@ function ReferenceSection({
     if (typeof document !== 'undefined') document.getElementById(uploaderId)?.scrollIntoView({ block: 'center' });
   }
 
+  // "Copy this site's layout": one click that takes its screenshots when it
+  // needs them, saves the match and starts Suggest a design, with the
+  // copy's progress under it (DesignSetup copyLayout). Off while a copy's
+  // step runs, while screenshots upload and, when it would capture, while
+  // another capture goes (the server takes one at a time).
+  function copyBlock(item, view) {
+    const run = copyRun?.key === item.key ? copyRun : null;
+    const status = run ? copyStatus(run) : null;
+    const plan = item.kind === 'url'
+      ? copyCapturePlan({ view, failedStart: view?.state === 'running' ? '' : captureErrors[item.siteKey] || '', assets: files, key: item.siteKey })
+      : 'match';
+    const captureBusy = plan === 'capture' && (anyCapturing || !!captureStarting);
+    const title = uploading ? 'Wait for the screenshots to finish uploading.'
+      : captureBusy ? 'Another capture is going. Wait for it to finish.'
+        : 'Copies its layout only: never its words, photos, logo or brand.';
+    return (
+      <div className="mt-2">
+        <button type="button" onClick={() => onCopy?.(item)} disabled={locked || uploading || captureBusy} title={title} className={BTN_SMALL_PRIMARY}>
+          Copy this site's layout
+        </button>
+        {status && (
+          <p
+            role={status.failed ? 'alert' : 'status'}
+            className={`mt-1.5 flex items-center gap-2 text-[12px] ${status.failed ? 'font-medium text-[#cc0000]' : status.done ? 'font-semibold text-emerald-800' : 'text-[#4a4a4a]'}`}
+          >
+            {status.busy && <span className="w-3.5 h-3.5 border-2 border-black/10 border-t-[#cc0000] rounded-full motion-safe:animate-spin shrink-0" aria-hidden="true" />}
+            {status.text}
+          </p>
+        )}
+      </div>
+    );
+  }
+
   // Under an address: its capture (going, taken, failed) and the button to
   // take (or retake) its screenshots. A failed one points at the uploader.
   //   view       captureViewFor this address
@@ -436,7 +580,7 @@ function ReferenceSection({
       <button
         type="button"
         onClick={() => onCapture?.(item.href, item.captureNote)}
-        disabled={!!busy || anyCapturing || !!captureStarting}
+        disabled={locked || anyCapturing || !!captureStarting}
         title={anyCapturing ? 'Another capture is going. Wait for it to finish.' : undefined}
         className={BTN_SMALL}
       >
@@ -543,7 +687,7 @@ function ReferenceSection({
                       {/* Its screenshots stay (listed below as the team's)
                           until someone deletes them. */}
                       {item.removable && (
-                        <button type="button" onClick={() => onRemoveSite?.(item.href)} disabled={!!busy} aria-label={`Remove ${item.title}`} className={`ml-2 ${LINK_BTN} font-normal`}>
+                        <button type="button" onClick={() => onRemoveSite?.(item.href)} disabled={locked} aria-label={`Remove ${item.title}`} className={`ml-2 ${LINK_BTN} font-normal`}>
                           Remove
                         </button>
                       )}
@@ -557,6 +701,7 @@ function ReferenceSection({
                             type="radio"
                             name={`${group}-${i}`}
                             checked={!on}
+                            disabled={copyLocked}
                             onChange={() => { if (on) onChange({ ...reference, mode: 'inspire', source: null }); }}
                             className="w-3.5 h-3.5 accent-[#cc0000]"
                           />
@@ -567,7 +712,7 @@ function ReferenceSection({
                             type="radio"
                             name={`${group}-${i}`}
                             checked={on}
-                            disabled={!item.source}
+                            disabled={!item.source || copyLocked}
                             // One reference is matched at a time: this replaces any other.
                             onChange={() => onChange({ ...reference, mode: 'match', source: item.source })}
                             className="w-3.5 h-3.5 accent-[#cc0000]"
@@ -577,7 +722,11 @@ function ReferenceSection({
                       </div>
                     </fieldset>
                     {item.why && <p className="mt-1 text-[11px] text-ink-tertiary">{item.why}</p>}
+                    {item.source && copyBlock(item, view)}
                     {web && captureBlock(item, view, siteShots)}
+                    {/* What our server read from its code: an address's
+                        newest capture, or this captured screenshot's. */}
+                    {item.source && outlineOf && codeOutline(outlineOf(item.source), templateId)}
                     {on && item.kind === 'url' && matchedUrlShots && (
                       matchedUrlShots.length === 0 ? (
                         <p className="mt-2 text-[12px] text-amber-800">
@@ -610,7 +759,7 @@ function ReferenceSection({
       {reference.mode === 'match' && !matched && (
         <p className="mt-3 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-[12px] text-amber-900">
           The reference being matched ({sourceLabel(reference.source)}) isn't in the list or the project's files anymore.{' '}
-          <button type="button" onClick={() => onChange({ ...reference, mode: 'inspire', source: null })} className="font-semibold underline">Stop matching it</button>
+          <button type="button" onClick={() => onChange({ ...reference, mode: 'inspire', source: null })} disabled={copyLocked} className="font-semibold underline disabled:opacity-50">Stop matching it</button>
         </p>
       )}
 
@@ -664,7 +813,7 @@ function ReferenceSection({
               site's ("Screenshot of <url>"), which is how the match finds
               them (a tall one is cut into up to four parts, top first, kept
               together as one group). */}
-          <ReferenceShotUpload projectId={project.id} sourceUrl={uploadFor || matchedUrl} onAdded={onShotAdded} onBusy={onShotBusy} disabled={!!busy} />
+          <ReferenceShotUpload projectId={project.id} sourceUrl={uploadFor || matchedUrl} onAdded={onShotAdded} onBusy={onShotBusy} disabled={locked} />
         </Suspense>
       </div>
 
@@ -682,7 +831,7 @@ function ReferenceSection({
                 <span className="text-[13px] text-[#1a1a1a]"><strong>Ready:</strong> {t.label} <span className="text-ink-tertiary">({REPLICA_LABEL})</span></span>
                 {templateId === t.id
                   ? <span className="ml-auto text-[12px] font-semibold text-emerald-800">In use</span>
-                  : <button type="button" onClick={() => onPickTemplate(t.id)} disabled={!!busy} className={`${BTN} ml-auto`}>Use this template</button>}
+                  : <button type="button" onClick={() => onPickTemplate(t.id)} disabled={locked} className={`${BTN} ml-auto`}>Use this template</button>}
               </div>
             ))}
             <p className="text-[11px] text-ink-tertiary">It's also first under Look. Save or write the site to keep a switch.</p>
@@ -695,7 +844,7 @@ function ReferenceSection({
             {!reference.source && <p className="mt-2 text-[12px] text-ink-tertiary">First choose Match its layout on the reference to replicate.</p>}
             <button
               type="button"
-              disabled={!!busy || !reference.source}
+              disabled={locked || !reference.source}
               onClick={() => onSave({ ...reference, replica: { status: 'requested', requestedAt: new Date().toISOString(), templateId: '', note } }, 'Replica requested')}
               className={`${BTN} mt-3`}
             >
@@ -728,13 +877,13 @@ function ReferenceSection({
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
               {replica.status === 'requested' && (
-                <button type="button" disabled={!!busy} onClick={() => onSave({ ...reference, replica: { ...replica, status: 'building' } }, 'Marked as being built')} className={BTN}>
+                <button type="button" disabled={locked} onClick={() => onSave({ ...reference, replica: { ...replica, status: 'building' } }, 'Marked as being built')} className={BTN}>
                   Mark as being built
                 </button>
               )}
               <button
                 type="button"
-                disabled={!!busy}
+                disabled={locked}
                 onClick={() => { setNote(replica.note || ''); onSave({ ...reference, replica: { status: 'none' } }, 'Replica request cancelled'); }}
                 className={BTN}
               >
@@ -795,10 +944,17 @@ export function DesignSetup({ project, onBack, onStarted }) {
   // (the rule the run uses). Loaded on demand, like the Studio's panels,
   // so it stays out of the bundle every visitor downloads.
   const [urlShots, setUrlShots] = useState(null);
+  // The same module's rule for the outline our server read from a
+  // reference's code (referenceOutlineOf), for the "From its code" block.
+  const [outlineRule, setOutlineRule] = useState(null);
   useEffect(() => {
     let live = true;
     import('../../lib/designSuggest.js')
-      .then((m) => { if (live) setUrlShots(() => m.referenceShots); })
+      .then((m) => {
+        if (!live) return;
+        setUrlShots(() => m.referenceShots);
+        setOutlineRule(() => m.referenceOutlineOf);
+      })
       .catch(() => {});
     return () => { live = false; };
   }, []);
@@ -820,6 +976,25 @@ export function DesignSetup({ project, onBack, onStarted }) {
   const capture = newerCapture(project.design?.capture, captureSeen);
   const nowMs = Date.now();
   const captureLive = isCaptureLive(capture, nowMs);
+  // "Copy this site's layout" (Reference sites): one click per reference
+  // does in order what the admin would do by hand: screenshots of an
+  // address that needs them (captured, then waited for with the polls
+  // below), the match saved, then Suggest a design's own start. One copy
+  // at a time; a step that fails stops it and says why. Nothing is
+  // applied: the admin still ticks the parts and presses Apply.
+  //   { key (the list item), token, step: 'capture' | 'save' | 'start' |
+  //     'matching' | 'ready' | 'failed', error, at (the step that failed) }
+  const [copyRun, setCopyRun] = useState(null);
+  // Bumped to run SuggestPanel's own start once (0: nothing to start).
+  const [suggestToken, setSuggestToken] = useState(0);
+  const copySeq = useRef(0);
+  // A copy waiting for a capture to end: { key, since, resolve }.
+  const captureWait = useRef(null);
+  // The page as last rendered, for a copy's steps after a wait: the admin
+  // keeps working while a capture runs, and the save must send the page
+  // as it is then, not as it was at the click.
+  const pageNow = useRef(null);
+  const copyLocked = !!copyRun && ['capture', 'save', 'start'].includes(copyRun.step);
 
   // Default to the best match once the business type is known (the one
   // labeled so: a replica leads the list but is picked on purpose).
@@ -918,32 +1093,49 @@ export function DesignSetup({ project, onBack, onStarted }) {
     setCaptureSeen((prev) => newerCapture(prev, run));
     setCaptureTick((n) => n + 1);
     if (isCaptureLive(run)) forgetCaptureError(referenceSiteKey(run.url));
+    settleCaptureWait(run);
   };
+
+  // Ends a copy's wait once the capture it waits for has ended: ready,
+  // failed, or past its live window by this page's clock (stale; the polls
+  // stop then). Only a run of that address that started no earlier than
+  // the one it waits for. The page takes the poll's files before the copy
+  // goes on (the copy resumes after this handler returns).
+  function settleCaptureWait(run, now = Date.now()) {
+    const w = captureWait.current;
+    if (!w || !run || referenceSiteKey(run.url) !== w.key || isCaptureLive(run, now)) return;
+    if ((Date.parse(run.startedAt || '') || 0) < w.since) return;
+    captureWait.current = null;
+    w.resolve(run);
+  }
 
   // Screenshots of `url` taken on our server (adding a site, or Capture
   // again). A start that fails says why on that site; one refused because
   // a capture is already going watches that one instead.
+  // Returns { ok, run } (the run to watch: this one, or this same site's
+  // capture already going) or { ok: false, error }.
   async function startCapture(url, note = '') {
     const key = referenceSiteKey(url);
-    if (!key) return;
+    if (!key) return { ok: false, error: 'That isn\'t a web address.' };
     setCaptureStarting(key);
     forgetCaptureError(key);
     try {
       const res = await captureReference(project.id, url, note);
       const run = res?.capture || res?.project?.design?.capture;
       if (run) seeCapture(run);
+      return { ok: true, run: run || null };
     } catch (e) {
       // Only a live run is one to watch: a 409 for any other reason (the
       // project kept changing while claiming) says its own message.
       const going = e?.status === 409 && isCaptureLive(e.data?.capture) ? e.data.capture : null;
       if (going) seeCapture(going);
       // Refused because this same site is being captured: nothing to add.
-      if (!going || referenceSiteKey(going.url) !== key) {
-        // Worded to stay true once that other capture is done: the message
-        // stays until this site is captured.
-        const why = going ? 'Another site was being captured. Capture this one once that\'s done.' : e?.message || 'Could not start the capture.';
-        setCaptureErrors((m) => ({ ...m, [key]: why }));
-      }
+      if (going && referenceSiteKey(going.url) === key) return { ok: true, run: going };
+      // Worded to stay true once that other capture is done: the message
+      // stays until this site is captured.
+      const why = going ? 'Another site was being captured. Capture this one once that\'s done.' : e?.message || 'Could not start the capture.';
+      setCaptureErrors((m) => ({ ...m, [key]: why }));
+      return { ok: false, error: why };
     } finally {
       setCaptureStarting('');
     }
@@ -1047,7 +1239,8 @@ export function DesignSetup({ project, onBack, onStarted }) {
   // A replica request (or its cancel) saves the page at once, so the
   // request is on the project when someone asks Claude to build it.
   // The page shows the request only once it is saved: a failed save must
-  // not look like a request someone could act on.
+  // not look like a request someone could act on. Returns whether it saved
+  // (a copy goes on only then); no toast without a message.
   async function saveReference(next, message) {
     setBusy('save');
     setError('');
@@ -1055,12 +1248,83 @@ export function DesignSetup({ project, onBack, onStarted }) {
       const ref = withBuiltReplica(sanitizeReference(next, { projectId: project.id }), replicas, templateId);
       await customSiteAdmin('design-save', { id: project.id, design: buildDesign({ reference: ref }) });
       setReference(next);
-      toast(message, 'success');
+      if (message) toast(message, 'success');
+      return true;
     } catch (e) {
       setError(e.message || 'Could not save');
+      return false;
     } finally {
       setBusy('');
     }
+  }
+
+  // "Copy this site's layout" on one reference (ReferenceSection's item).
+  // An address first gets its screenshots (copyCapturePlan: taken now,
+  // waited for, or the ones it has); then the match is saved as the "Match
+  // its layout" choice would be, and Suggest a design starts exactly as its
+  // own button does (SuggestPanel startToken), which keeps the run, its
+  // polls and the review. The 409s (another capture going, a suggestion
+  // already running) stop it with their message.
+  async function copyLayout(item) {
+    if (!item?.source || copyLocked) return;
+    copySeq.current += 1;
+    const token = copySeq.current;
+    const move = (patch) => setCopyRun((c) => (c?.token === token ? { ...c, ...patch } : c));
+    const view = item.kind === 'url' ? captureViewFor(capture, item.href, Date.now()) : null;
+    const failedStart = view && view.state !== 'running' ? captureErrors[item.siteKey] || '' : '';
+    const plan = view ? copyCapturePlan({ view, failedStart, assets: projectAssets, key: item.siteKey }) : 'match';
+    setCopyRun({ key: item.key, token, step: plan === 'match' ? 'save' : 'capture', error: '', at: '' });
+    if (plan !== 'match') {
+      const shots = await copyScreenshots(item, plan);
+      if (!shots.ok) {
+        move({ step: 'failed', error: shots.error, at: 'capture' });
+        return;
+      }
+      move({ step: 'save' });
+    }
+    // The page as it is now (a capture takes a while), with this reference matched.
+    const page = pageNow.current;
+    const saved = await page.saveReference({ ...page.reference, mode: 'match', source: item.source }, '');
+    if (!saved) {
+      move({ step: 'failed', error: 'the page didn\'t save, so nothing was started.', at: 'save' });
+      return;
+    }
+    move({ step: 'start' });
+    setSuggestToken(token);
+    if (typeof document !== 'undefined') document.getElementById(SUGGEST_SECTION_ID)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // An address's screenshots for a copy: started now ('capture') or
+  // already going ('wait'), then waited for until the run ends (the page's
+  // polls see it: settleCaptureWait). { ok } once they are in, else { ok:
+  // false, error } (the capture block under the site says why too, with
+  // "Upload a screenshot instead").
+  async function copyScreenshots(item, plan) {
+    let since = Date.parse(capture?.startedAt || '') || 0;
+    if (plan === 'capture') {
+      const started = await startCapture(item.href, item.captureNote);
+      if (!started.ok) return { ok: false, error: started.error };
+      if (!started.run) return { ok: false, error: 'The capture didn\'t start. Try again.' };
+      since = Date.parse(started.run.startedAt || '') || 0;
+    }
+    const run = await new Promise((resolve) => { captureWait.current = { key: item.siteKey, since, resolve }; });
+    if (run.status === 'ready') return { ok: true };
+    return { ok: false, error: run.status === 'failed' ? run.error || 'The capture failed.' : 'The capture didn\'t finish (it may have timed out).' };
+  }
+
+  // How Suggest a design's start for a copy went, and then how its run
+  // ended (SuggestPanel onAutoRun). Only the copy that sent the token
+  // moves; once the start has answered, the token is spent (0), so a
+  // remounted panel never starts it again.
+  function onAutoRun({ token, status, error: why = '' } = {}) {
+    if (status === 'refused' || status === 'running') setSuggestToken((t) => (t === token ? 0 : t));
+    setCopyRun((c) => {
+      if (!c || c.token !== token) return c;
+      if (status === 'refused') return { ...c, step: 'failed', error: why || 'Suggest a design didn\'t start.', at: 'start' };
+      if (status === 'ready') return { ...c, step: 'ready', error: '', at: '' };
+      if (status === 'failed') return { ...c, step: 'failed', error: why, at: 'matching' };
+      return { ...c, step: 'matching' };
+    });
   }
 
   // A screenshot the team just added (ReferenceShotUpload, here or in
@@ -1153,6 +1417,8 @@ export function DesignSetup({ project, onBack, onStarted }) {
     }
   }
 
+  pageNow.current = { reference: cleanReference, saveReference };
+
   const toggleGallery = (path) => setSlots((prev) => {
     const has = prev.gallery.includes(path);
     return { ...prev, gallery: has ? prev.gallery.filter((p) => p !== path) : [...prev.gallery, path].slice(0, 12) };
@@ -1162,7 +1428,13 @@ export function DesignSetup({ project, onBack, onStarted }) {
     <div>
       {/* Outside the Suspense below: a Studio panel still loading must not
           hold the polls back. */}
-      {captureLive && <CaptureWatch load={pollCapture} onResult={onCapturePolled} onTick={() => setCaptureTick((n) => n + 1)} />}
+      {captureLive && (
+        <CaptureWatch
+          load={pollCapture}
+          onResult={onCapturePolled}
+          onTick={() => { setCaptureTick((n) => n + 1); settleCaptureWait(capture); }}
+        />
+      )}
       <button type="button" onClick={onBack} className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink-tertiary hover:text-[#1a1a1a]">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6" /></svg>
         Back to the project
@@ -1311,9 +1583,16 @@ export function DesignSetup({ project, onBack, onStarted }) {
           onAddSite={addSite}
           onRemoveSite={removeSite}
           onCapture={startCapture}
+          // The outline sits on the stored asset: the admin's answer keeps
+          // it in project.assets and in the signed files list alike.
+          outlineOf={outlineRule ? (source) => outlineRule(source, projectAssets) || outlineRule(source, projectFiles) : null}
+          copyRun={copyRun}
+          copyLocked={copyLocked}
+          onCopy={copyLayout}
+          uploading={shotUploads > 0}
         />
 
-        <Section title="Suggest a design" intro={`Let ${MODEL_NAME} propose the whole look from their files and answers. You review every part.`}>
+        <Section id={SUGGEST_SECTION_ID} title="Suggest a design" intro={`Let ${MODEL_NAME} propose the whole look from their files and answers. You review every part.`}>
           <SuggestPanel
             project={suggestProject}
             reference={cleanReference}
@@ -1324,7 +1603,11 @@ export function DesignSetup({ project, onBack, onStarted }) {
             uploading={shotUploads > 0 || matchCapturing}
             current={{ templateId, levers: cleanLevers, slots }}
             modelName={MODEL_NAME}
-            disabled={!!busy}
+            // A copy's steps change the reference it would send.
+            disabled={!!busy || copyLocked}
+            // "Copy this site's layout": its own start, once per token.
+            startToken={suggestToken}
+            onAutoRun={onAutoRun}
             onApply={(next) => {
               // The suggestion's sections are made for its template: move the
               // levers' template marker first so the switch keeps them.
