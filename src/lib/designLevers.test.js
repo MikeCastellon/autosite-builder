@@ -21,11 +21,14 @@ describe('sections', () => {
   it('completes a partial order: template order for the rest, added sections beside their neighbor', () => {
     expect(fullSectionOrder(['gallery', 'hero', 'nope', 'gallery'], 'carwash_bubble'))
       .toEqual(['gallery', 'beforeAfter', 'hero', 'services', 'process', 'about', 'testimonials', 'cta']);
-    // A look written before Sporty gained 'brands', 'featured' and
-    // 'beforeAfter' keeps them at their default spots, never below the
-    // contact section.
+    // A look written before Sporty gained 'brands', 'featured',
+    // 'beforeAfter' and the reference-site bands keeps them at their default
+    // spots, never below the contact section.
     expect(fullSectionOrder(['hero', 'statsBar', 'services', 'about', 'gallery', 'testimonials', 'cta', 'awards'], 'detailing_sporty'))
-      .toEqual(['hero', 'statsBar', 'brands', 'services', 'featured', 'about', 'gallery', 'beforeAfter', 'testimonials', 'cta', 'awards']);
+      .toEqual([
+        'hero', 'statsBar', 'brands', 'services', 'featured', 'vehicleTypes', 'process', 'about', 'gallery', 'beforeAfter',
+        'showcase', 'comparison', 'testimonials', 'faq', 'cta', 'awards',
+      ]);
     expect(fullSectionOrder([], 'carwash_bubble')).toEqual([]);
     expect(fullSectionOrder(['hero'], 'detailing_coastal')).toEqual([]);
   });
@@ -88,7 +91,10 @@ describe('leverPatch', () => {
   it('maps every lever to the keys the templates read', () => {
     const p = leverPatch(levers, 'detailing_sporty');
     expect(p.copy).toEqual({
-      sectionOrder: ['about', 'services', 'featured', 'hero', 'statsBar', 'brands', 'gallery', 'beforeAfter', 'testimonials', 'cta', 'awards'],
+      sectionOrder: [
+        'about', 'services', 'featured', 'vehicleTypes', 'process', 'hero', 'statsBar', 'brands', 'gallery', 'beforeAfter',
+        'showcase', 'comparison', 'testimonials', 'faq', 'cta', 'awards',
+      ],
       hiddenSections: ['statsBar'],
       heroLayout: 'split',
       aboutLayout: 'stats',

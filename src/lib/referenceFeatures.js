@@ -67,6 +67,8 @@ const reads = (templateId, key) => typeof templateId === 'string'
 //   sections  template section ids that do it: 'have' on a template with
 //             one, else 'other-template' naming visible ones that have it
 //   templates the same by template id, for a feature that isn't a section
+//   test      the same by a check of the template (an editor capability:
+//             the template reads the copy key the feature needs)
 //   have      (templateId) => the 'have' line
 //   other     extra words after the template names
 //   covered   (templateId) => the line, for a product feature that does it
@@ -118,6 +120,13 @@ const SUPPORT = {
   // Redline's Service Area section embeds a Google map of the city or area.
   map: { sections: ['locations'], have: (t) => `its ${sectionLabel(t, 'locations')} section shows a Google map` },
   stats: { sections: ['statsBar'], have: () => `its stats bar, ${OWN_NUMBERS}`, other: OWN_NUMBERS },
+  // The FAQ band (kit Faq.jsx, Bold & Sporty first): the owner's questions,
+  // each one opening and closing; the Design step drafts them from their
+  // own facts only.
+  faq: { sections: ['faq'], have: (t) => `its ${sectionLabel(t, 'faq')} section, answered from their own facts` },
+  // Service tabs (kit ServiceTabs.jsx): where a template reads
+  // copy.serviceTabs, its services can sit under one tab per category.
+  tabs: { test: (t) => reads(t, 'serviceTabs'), have: () => 'its services can sit under tabs, one per category (like Cars, Boats)' },
   // Every template shows the Service area field (Business details).
   'service-area': { covered: () => 'the Service area field (Business details) shows on every template' },
 };
@@ -148,7 +157,7 @@ export function featureSupport(featureId, templateId) {
   const s = Object.prototype.hasOwnProperty.call(SUPPORT, featureId) ? SUPPORT[featureId] : null;
   if (!s) return { status: 'missing', text: MISSING };
   if (s.covered) return { status: 'covered', text: s.covered(templateId) };
-  const test = s.sections ? (id) => has(id, s.sections) : (id) => s.templates.includes(id);
+  const test = s.test || (s.sections ? (id) => has(id, s.sections) : (id) => s.templates.includes(id));
   if (typeof templateId === 'string' && test(templateId)) return { status: 'have', text: s.have(templateId) };
   const names = namesFor(test, templateId);
   if (names) return { status: 'other-template', text: s.other ? `${names}, ${s.other}` : names };

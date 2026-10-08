@@ -147,9 +147,12 @@ describe('detailing_sporty features: section order', () => {
   const ALL = { ...FEATURES.featured.copy, ...FEATURES.makes.copy };
 
   it('declares the added ids, and only ids it has', () => {
-    expect(mod.addedSections).toEqual(['brands', 'featured', 'beforeAfter']);
+    expect(mod.addedSections).toEqual(['brands', 'featured', 'beforeAfter', 'vehicleTypes', 'process', 'showcase', 'comparison', 'faq']);
     expect(legacyIds).toEqual(['hero', 'statsBar', 'services', 'about', 'gallery', 'testimonials', 'cta', 'awards']);
-    expect(mod.sections.map((s) => s.id)).toEqual(['hero', 'statsBar', 'brands', 'services', 'featured', 'about', 'gallery', 'beforeAfter', 'testimonials', 'cta', 'awards']);
+    expect(mod.sections.map((s) => s.id)).toEqual([
+      'hero', 'statsBar', 'brands', 'services', 'featured', 'vehicleTypes', 'process', 'about', 'gallery', 'beforeAfter',
+      'showcase', 'comparison', 'testimonials', 'faq', 'cta', 'awards',
+    ]);
   });
 
   it('puts an unsaved band right after the section before it (same order, next in the DOM)', () => {

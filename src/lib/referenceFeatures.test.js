@@ -1,10 +1,10 @@
 // "Features on this site" (referenceFeatures.js): a label for every feature
 // the capture can find, and what our product does about each one for the
 // setup's template. The claims that rest on a template's code are checked
-// against the sources here (Before & After against the published page,
-// given what the Design step writes), so a template that changes fails this
-// file until the table follows; anything we don't do says "not in our
-// templates yet".
+// against the sources here (Before & After, the FAQ and service tabs
+// against the published page, given what the Design step writes), so a
+// template that changes fails this file until the table follows; anything
+// we don't do says "not in our templates yet".
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -49,12 +49,45 @@ async function renderWithPair(id) {
   }));
 }
 
+// A template's published page with one FAQ question and the services in two
+// categories under tabs, in the shapes the Design step writes (copy.faq,
+// copy.serviceTabs, and a category on each service). Each band is opt-in,
+// so a template without it renders as if the keys weren't there.
+async function renderWithSections(id) {
+  const { default: Template } = await TEMPLATE_COMPONENT_MAP[id]();
+  const services = [
+    { name: 'Hand Wash', price: '$40', description: '', category: 'Cars' },
+    { name: 'Interior Detail', price: '$120', description: '', category: 'Cars' },
+    { name: 'Hull Wash', price: '$200', description: '', category: 'Boats' },
+  ];
+  return renderToStaticMarkup(createElement(Template, {
+    businessInfo: normalizeBusinessInfo({
+      businessName: 'Tab Test Detailing', businessType: TEMPLATES[id].businessType, city: 'Austin', state: 'TX', phone: '(512) 555-0100',
+      services, packages: services,
+    }),
+    generatedCopy: {
+      headline: 'Headline', subheadline: 'Subheadline', aboutText: 'About text',
+      faq: { items: [{ q: 'Do you come to me?', a: 'Yes, anywhere in Austin.' }] },
+      serviceTabs: { enabled: true },
+    },
+    templateMeta: buildTemplateMeta(id),
+    images: {},
+  }));
+}
+
 // The templates with a Before & After section (sections id 'beforeAfter'),
 // as the sections list has them: none until a template adds one, then
-// "have" there and "in <that template>" elsewhere.
+// "have" there and "in <that template>" elsewhere. The same for the FAQ
+// (section id 'faq') and service tabs (the templates reading
+// copy.serviceTabs).
+const statusAmong = (list) => (templateId) => (list.includes(templateId) ? 'have'
+  : list.some((id) => VISIBLE.includes(id)) ? 'other-template' : 'missing');
 const WITH_PAIRS = THEME_READY.filter((id) => sectionIdsFor(id).includes('beforeAfter'));
-const pairsStatus = (templateId) => (WITH_PAIRS.includes(templateId) ? 'have'
-  : WITH_PAIRS.some((id) => VISIBLE.includes(id)) ? 'other-template' : 'missing');
+const pairsStatus = statusAmong(WITH_PAIRS);
+const WITH_FAQ = THEME_READY.filter((id) => sectionIdsFor(id).includes('faq'));
+const faqStatus = statusAmong(WITH_FAQ);
+const WITH_TABS = THEME_READY.filter((id) => templateReads(id, 'serviceTabs'));
+const tabsStatus = statusAmong(WITH_TABS);
 
 describe('feature labels', () => {
   it('name every feature the capture can find, in plain words', () => {
@@ -92,12 +125,14 @@ describe('featureSupport', () => {
 
   it('says what Bold & Sporty, Bright & Bubbly, Forge Studio and Redline do', () => {
     const table = (templateId) => Object.fromEntries(FEATURE_IDS.map((id) => [id, featureSupport(id, templateId).status]));
-    const missing = ['hero-video', 'hero-slider', 'faq', 'tabs', 'video', 'instagram-feed', 'chat', 'newsletter'];
+    const missing = ['hero-video', 'hero-slider', 'video', 'instagram-feed', 'chat', 'newsletter'];
     const covered = ['sticky-header', 'reviews-widget', 'booking-widget', 'quote-form', 'contact-form', 'service-area'];
     const base = { ...Object.fromEntries(missing.map((id) => [id, 'missing'])), ...Object.fromEntries(covered.map((id) => [id, 'covered'])) };
-    // Before & After follows the templates' sections (checked against their
-    // code below).
-    const row = (templateId, rest) => ({ ...base, 'before-after': pairsStatus(templateId), ...rest });
+    // Before & After, the FAQ and service tabs follow the templates (checked
+    // against their code below).
+    const row = (templateId, rest) => ({
+      ...base, 'before-after': pairsStatus(templateId), faq: faqStatus(templateId), tabs: tabsStatus(templateId), ...rest,
+    });
     expect(table('detailing_sporty')).toEqual(row('detailing_sporty', { carousel: 'have', gallery: 'have', reviews: 'have', pricing: 'have', map: 'missing', stats: 'have' }));
     expect(table('mobile_sudsy')).toEqual(row('mobile_sudsy', { carousel: 'other-template', gallery: 'have', reviews: 'have', pricing: 'have', map: 'missing', stats: 'other-template' }));
     expect(table('wheel_apex')).toEqual(row('wheel_apex', { carousel: 'have', gallery: 'have', reviews: 'have', pricing: 'have', map: 'missing', stats: 'other-template' }));
@@ -120,6 +155,26 @@ describe('featureSupport', () => {
     const named = WITH_PAIRS.filter((id) => VISIBLE.includes(id)).map((id) => TEMPLATES[id].label);
     expect(featureSupport('before-after', without)).toEqual({ status: 'other-template', text: expect.stringMatching(/^in /) });
     expect(featureSupport('before-after', without).text).toContain(named[0]);
+  });
+
+  it('says FAQ and service tabs where a template has them, and names them elsewhere', () => {
+    for (const [feature, list, have] of [
+      ['faq', WITH_FAQ, (id) => `its ${TEMPLATE_SECTIONS[id].sections.find((s) => s.id === 'faq').label} section, answered from their own facts`],
+      ['tabs', WITH_TABS, () => 'its services can sit under tabs, one per category (like Cars, Boats)'],
+    ]) {
+      if (!list.length) {
+        // No template has it yet: nothing promised anywhere.
+        for (const id of [...THEME_READY, 'mobile_bold', '']) expect(featureSupport(feature, id)).toEqual({ status: 'missing', text: 'not in our templates yet' });
+        continue;
+      }
+      for (const id of list) expect(featureSupport(feature, id)).toEqual({ status: 'have', text: have(id) });
+      const without = THEME_READY.find((id) => !list.includes(id));
+      const named = list.filter((id) => VISIBLE.includes(id)).map((id) => TEMPLATES[id].label);
+      expect(featureSupport(feature, without).status).toBe('other-template');
+      expect(featureSupport(feature, without).text).toContain(named[0]);
+      // An unknown template, or none, is told where to find it.
+      expect(featureSupport(feature, 'constructor').status).toBe('other-template');
+    }
   });
 
   it('words each answer for the template', () => {
@@ -166,14 +221,36 @@ describe('the claims match the templates\' code', () => {
     expect(source('mobile_sudsy')).toContain('aria-label="Photo gallery"');
   });
 
-  it('only Redline embeds a map, and nothing plays video or holds an FAQ, tabs, a chat or a sign-up', () => {
+  it('only Redline embeds a map, and nothing plays video or holds a chat or a sign-up', () => {
     for (const id of THEME_READY) {
       const src = source(id);
       expect({ id, map: /<iframe[\s\S]{0,200}output=embed/.test(src) }).toEqual({ id, map: featureSupport('map', id).status === 'have' });
-      expect(src).not.toMatch(/<video|youtube\.com\/embed|player\.vimeo|\bfaq\b|role="tab|newsletter|subscribe/i);
+      expect(src).not.toMatch(/<video|youtube\.com\/embed|player\.vimeo|newsletter|subscribe/i);
       if (id !== 'mobile_redline') expect(src).not.toMatch(/<iframe/);
     }
     expect(sectionIdsFor('mobile_redline')).toContain('locations');
+  });
+
+  it('an FAQ is a template\'s own section showing the owner\'s questions, and only there', async () => {
+    // "Have" exactly where the published page, given what the Design step
+    // writes (copy.faq), shows the question in a section of its own.
+    for (const id of THEME_READY) {
+      const html = await renderWithSections(id);
+      const shows = html.includes('data-section="faq"') && html.includes('Do you come to me?') && html.includes('Yes, anywhere in Austin.');
+      expect({ id, have: featureSupport('faq', id).status === 'have' }).toEqual({ id, have: shows });
+    }
+  });
+
+  it('service tabs group a template\'s own services by category, and only there', async () => {
+    // "Have" exactly where the page, given the switch and two categories,
+    // shows a tab per category (kit ServiceTabs: one radio per tab, a label
+    // for each) over the services.
+    for (const id of THEME_READY) {
+      const html = await renderWithSections(id);
+      const tab = (name) => new RegExp(`<label[^>]*for="[^"]+"[^>]*>${name}</label>`).test(html);
+      const shows = /<input[^>]*type="radio"[^>]*aria-controls="/.test(html) && tab('Cars') && tab('Boats');
+      expect({ id, have: featureSupport('tabs', id).status === 'have' }).toEqual({ id, have: shows });
+    }
   });
 
   it('a Before & After is a template\'s own section showing the owner\'s photo pairs, and only there', async () => {
@@ -219,7 +296,7 @@ describe('featureRows', () => {
     const outline = sanitizeOutline({ v: 1, features: [{ id: 'faq' }, { id: 'booking-widget', provider: 'Square' }, 'sticky-header', { id: 'made-up' }] });
     expect(featureRows(outline.features, 'mobile_chrome')).toEqual([
       { id: 'sticky-header', provider: '', label: FEATURE_LABELS['sticky-header'], status: 'covered', text: featureSupport('sticky-header', 'mobile_chrome').text },
-      { id: 'faq', provider: '', label: 'FAQ (questions that open and close)', status: 'missing', text: 'not in our templates yet' },
+      { id: 'faq', provider: '', label: 'FAQ (questions that open and close)', status: faqStatus('mobile_chrome'), text: featureSupport('faq', 'mobile_chrome').text },
       { id: 'booking-widget', provider: 'Square', label: 'Online booking widget', status: 'covered', text: featureSupport('booking-widget', 'mobile_chrome').text },
     ]);
     expect(featureRows(null, 'mobile_chrome')).toEqual([]);

@@ -35,6 +35,18 @@ import { MakesBand, makesBandCss } from '../kit/MakesBand.jsx';
 import { vehicleMakesFor } from '../kit/vehicleMakes.js';
 import { BeforeAfterBand, beforeAfterCss } from '../kit/BeforeAfter.jsx';
 import { beforeAfterPairs, BA_DEFAULTS } from '../kit/beforeAfter.js';
+import { FaqBand, faqCss } from '../kit/Faq.jsx';
+import { faqItems, faqHeading, FAQ_DEFAULTS, FAQ_HINTS } from '../kit/faq.js';
+import { HowItWorksBand, howItWorksCss } from '../kit/HowItWorks.jsx';
+import { howItWorksSteps, howItWorksHeading, HOW_DEFAULTS, HOW_HINTS } from '../kit/howItWorks.js';
+import { VehicleTypesBand, vehicleTypesCss } from '../kit/VehicleTypes.jsx';
+import { vehicleTypesOf, vehicleTypesHeading, VT_DEFAULTS, VT_HINTS } from '../kit/vehicleTypes.js';
+import { ComparisonBand, comparisonCss } from '../kit/Comparison.jsx';
+import { comparisonOf, comparisonHeading, CMP_DEFAULTS, CMP_HINTS } from '../kit/comparison.js';
+import { ShowcaseBand, showcaseCss } from '../kit/Showcase.jsx';
+import { showcaseItems, SHOWCASE_DEFAULTS } from '../kit/showcase.js';
+import { ServiceTabs, serviceTabsCss } from '../kit/ServiceTabs.jsx';
+import { serviceTabsOf, serviceTabsStatus, SERVICE_TABS_HINTS } from '../kit/serviceTabs.js';
 import {
   GoogleRatingBadge, StarRow, GOOGLE_STAR_GOLD, googleRatingOf, googlePlaceUrl, googleBadgePlacements,
 } from '../kit/GoogleRatingBadge.jsx';
@@ -44,18 +56,28 @@ export const themeReady = true;
 // The ids of ContentEditor's TOGGLEABLE._default (and the template's old
 // buildSectionOrder call), so saved orders keep working and the editor's
 // Sections list matches what renders. Never rename an id. 'brands' (the
-// vehicle-makes band), 'featured' (the featured-service band) and
-// 'beforeAfter' (the Before & After band) came later: see addedSections.
+// vehicle-makes band), 'featured' (the featured-service band),
+// 'beforeAfter' (the Before & After band) and the reference-site bands
+// ('vehicleTypes', 'process' = How It Works, 'showcase' = Detail Showcase,
+// 'comparison', 'faq') came later: see addedSections. The later bands sit
+// where the reference design has them: what you work on and how it goes
+// right after the services, the showcase and the comparison after the
+// before & after photos, the questions after the reviews.
 export const sections = [
   { id: 'hero', label: 'Hero' },
   { id: 'statsBar', label: 'Stats Bar' },
   { id: 'brands', label: 'Vehicle Makes' },
   { id: 'services', label: 'Services' },
   { id: 'featured', label: 'Featured Service' },
+  { id: 'vehicleTypes', label: 'Vehicle Types' },
+  { id: 'process', label: 'How It Works' },
   { id: 'about', label: 'About' },
   { id: 'gallery', label: 'Gallery' },
   { id: 'beforeAfter', label: 'Before & After' },
+  { id: 'showcase', label: 'Detail Showcase' },
+  { id: 'comparison', label: 'Comparison' },
   { id: 'testimonials', label: 'Reviews' },
+  { id: 'faq', label: 'FAQ' },
   { id: 'cta', label: 'Contact / CTA' },
   { id: 'awards', label: 'Awards' },
 ];
@@ -64,25 +86,32 @@ export const sections = [
 // copy.sectionOrder without them, so the page orders them itself
 // (buildSectionOrderAdded): every older section keeps exactly its saved
 // order value, and an added band without a saved slot shares the value of
-// the section before it, rendering right after it in the DOM.
-export const addedSections = ['brands', 'featured', 'beforeAfter'];
+// the section before it, rendering right after it in the DOM (so each band
+// below is placed in the markup right after its predecessor in `sections`).
+export const addedSections = ['brands', 'featured', 'beforeAfter', 'vehicleTypes', 'process', 'showcase', 'comparison', 'faq'];
 
 export const extraFonts = [];
 
 // Edit > Headings: the copy.sectionTitles fields each section uses. The hero
-// headline, the services heading / intro, the Before & After heading /
-// intro and the contact headline / subtext keep their own copy keys
-// (titleFrom / introFrom); headingDefaults() below gives the design's own
-// text. Stats bar and awards have no heading.
+// headline, the services heading / intro, the Before & After, Vehicle Types,
+// Detail Showcase, Comparison and FAQ heading / intro and the contact
+// headline / subtext keep their own copy keys (titleFrom / introFrom);
+// headingDefaults() below gives the design's own text. Stats bar and awards
+// have no heading.
 export const headingFields = {
   hero: { fields: ['eyebrow', 'title', 'accent'], titleFrom: 'headline' },
   brands: { fields: ['eyebrow'] },
   services: { fields: ['eyebrow', 'title', 'accent', 'intro'], titleFrom: 'servicesSection.title', introFrom: 'servicesSection.intro' },
   featured: { fields: ['eyebrow', 'title', 'accent', 'intro'] },
+  vehicleTypes: { fields: ['eyebrow', 'title', 'accent', 'intro'], titleFrom: 'vehicleTypes.title', introFrom: 'vehicleTypes.intro' },
+  process: { fields: ['eyebrow', 'title', 'accent', 'intro'] },
   about: { fields: ['eyebrow', 'title', 'accent'] },
   gallery: { fields: ['eyebrow', 'title', 'accent'] },
   beforeAfter: { fields: ['eyebrow', 'title', 'accent', 'intro'], titleFrom: 'beforeAfter.title', introFrom: 'beforeAfter.intro', placeholder: { intro: BA_DEFAULTS.intro } },
+  showcase: { fields: ['eyebrow', 'title', 'accent', 'intro'], titleFrom: 'showcase.title', introFrom: 'showcase.intro' },
+  comparison: { fields: ['eyebrow', 'title', 'accent', 'intro'], titleFrom: 'comparison.title', introFrom: 'comparison.intro' },
   testimonials: { fields: ['eyebrow', 'title', 'accent'] },
+  faq: { fields: ['eyebrow', 'title', 'accent', 'intro'], titleFrom: 'faq.title', introFrom: 'faq.intro' },
   cta: { fields: ['eyebrow', 'title', 'accent', 'intro'], titleFrom: 'ctaHeadline', introFrom: 'ctaSubtext' },
 };
 
@@ -587,6 +616,79 @@ const BA_CSS = `
 }
 `;
 
+// The reference-site bands (kit Faq / HowItWorks / VehicleTypes /
+// Comparison / Showcase / ServiceTabs) in this design's look: square
+// corners, heavy caps, the red bars of the service cards and the photo
+// frame. Each string is appended after its kit block's CSS (faqCss('ds-faq')
+// & co.) only while that band renders, so a site without the band's copy key
+// gets none of it (and the strings above don't change). The --ds-<ns>-*
+// block variables alias tokens deriveTheme / sportyTokens already repair for
+// the background they sit on: the page (--ds-text, --ds-pg-*), a surface
+// box (--ds-sf-*), the accent fill (--ds-on-accent). Bands print this
+// design's own heading (.ds-head), so the blocks' heading variables only
+// back up their fallbacks. The comparison's tinted column is the one
+// computed color: comparisonTokens() puts it on the root while it renders.
+
+// Vehicle Types: an alternate (surface) section with page-colored cards,
+// the service cards' red bar down each card's edge.
+const VT_CSS = `
+.ds-vt-band{--ds-vt-text:var(--ds-text);--ds-vt-muted:var(--ds-muted);--ds-vt-accent:var(--ds-accent-text);--ds-vt-card-bg:var(--ds-pg-bg);--ds-vt-card-text:var(--ds-pg-text);--ds-vt-card-muted:var(--ds-pg-muted);--ds-vt-line:var(--ds-pg-border);--ds-vt-icon-bg:var(--ds-accent-soft);--ds-vt-icon:var(--ds-pg-accent);--ds-vt-head-font:var(--ds-head);--ds-vt-head-w:var(--ds-head-w);--ds-vt-head-case:uppercase;--ds-vt-name-w:var(--ds-head-w2);--ds-vt-name-case:uppercase;--ds-vt-r:0px;--ds-vt-icon-r:0px}
+.ds-vt-card{position:relative;overflow:hidden}
+.ds-vt-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--ds-brand)}
+.ds-vt-todo::before{display:none}
+.ds-vt-name{letter-spacing:.02em}
+`;
+
+// How It Works: each step a surface card with the photo frame's red bar on
+// top, the big number in the accent and a red speed line beside it.
+const HOW_CSS = `
+.ds-how-band{--ds-how-text:var(--ds-text);--ds-how-muted:var(--ds-muted);--ds-how-accent:var(--ds-accent-text);--ds-how-line:var(--ds-brand);--ds-how-card-bg:var(--ds-sf-bg);--ds-how-card-line:var(--ds-sf-border);--ds-how-card-text:var(--ds-sf-text);--ds-how-card-muted:var(--ds-sf-muted);--ds-how-card-accent:var(--ds-sf-accent);--ds-how-pad:clamp(26px,3cqi,38px);--ds-how-r:0px;--ds-how-head:var(--ds-head);--ds-how-head-w:var(--ds-head-w);--ds-how-title-case:uppercase}
+.ds-how-step{position:relative}
+.ds-how-step::before{content:'';position:absolute;left:0;top:0;width:38%;height:4px;background:var(--ds-brand)}
+.ds-how-num{letter-spacing:-.04em}
+`;
+
+// Detail Showcase: an alternate (surface) section; each photo carries the
+// red bar of the About photo frame (left off an editor placeholder).
+const SC_CSS = `
+.ds-sc-band{--ds-sc-text:var(--ds-text);--ds-sc-muted:var(--ds-muted);--ds-sc-accent:var(--ds-accent-text);--ds-sc-photo-bg:var(--ds-bg);--ds-sc-head:var(--ds-head);--ds-sc-head-w:var(--ds-head-w2);--ds-sc-case:uppercase;--ds-sc-r:0px}
+.ds-sc-photo::after{content:'';position:absolute;left:0;top:0;z-index:1;width:38%;height:6px;background:var(--ds-brand);pointer-events:none}
+.ds-sc-todo .ds-sc-photo::after{display:none}
+.ds-sc-num{font-size:14px;letter-spacing:.18em}
+`;
+
+// Comparison: the business's column in the accent fill (header) over a
+// tint of it (comparisonTokens), outlined in the brand red. The heading
+// sits in the table's caption, which then needs no gap of its own.
+const CMP_CSS = `
+.ds-cmp-band{--ds-cmp-text:var(--ds-text);--ds-cmp-muted:var(--ds-muted);--ds-cmp-accent:var(--ds-accent-text);--ds-cmp-line:var(--ds-border);--ds-cmp-us-head-bg:var(--ds-accent);--ds-cmp-us-head-text:var(--ds-on-accent);--ds-cmp-us-line:var(--ds-brand);--ds-cmp-us-sep:var(--ds-border);--ds-cmp-yes:var(--ds-text);--ds-cmp-no:var(--ds-muted);--ds-cmp-head-font:var(--ds-head);--ds-cmp-head-w:var(--ds-head-w);--ds-cmp-head-case:uppercase;--ds-cmp-col-w:var(--ds-head-w2);--ds-cmp-col-case:uppercase;--ds-cmp-r:0px;--ds-cmp-max:1040px}
+.ds-cmp-caption{padding-bottom:0}
+.ds-cmp-col{letter-spacing:.12em}
+`;
+
+// FAQ: questions on surface boxes; an open one gets the red bar on its
+// edge (not an editor draft, which stays open to show what it needs). The
+// kit's focus ring sits inside the box: Sporty's own summary ring
+// (.ds-root summary:focus-visible) would draw it outside, over the border.
+const FAQ_CSS = `
+.ds-faq-band{--ds-faq-text:var(--ds-text);--ds-faq-muted:var(--ds-muted);--ds-faq-accent:var(--ds-accent-text);--ds-faq-item-bg:var(--ds-sf-bg);--ds-faq-open-bg:var(--ds-sf-bg);--ds-faq-item-text:var(--ds-sf-text);--ds-faq-item-muted:var(--ds-sf-muted);--ds-faq-item-accent:var(--ds-sf-accent);--ds-faq-hover:var(--ds-sf-accent);--ds-faq-line:var(--ds-sf-border);--ds-faq-line-open:var(--ds-sf-border-strong);--ds-faq-focus:var(--ds-sf-accent);--ds-faq-r:0px;--ds-faq-q-font:var(--ds-head);--ds-faq-q-w:var(--ds-head-w2);--ds-faq-head:var(--ds-head);--ds-faq-head-w:var(--ds-head-w);--ds-faq-title-case:uppercase}
+.ds-faq-item[open]:not(.ds-faq-todo){box-shadow:inset 4px 0 0 var(--ds-brand)}
+.ds-root .ds-faq-q:focus-visible{outline:2px solid var(--ds-faq-focus);outline-offset:-3px}
+`;
+
+// Service tabs: slanted chips (the buttons' parallelogram) in the surface
+// color, the picked one in the accent fill; the kit drops the clip while a
+// tab shows its focus ring. A group's name (shown under "All") leads with
+// the eyebrow's red slash.
+const ST_CSS = `
+.ds-st-tabs{--ds-st-text:var(--ds-sf-text);--ds-st-muted:var(--ds-muted);--ds-st-line:transparent;--ds-st-tab-bg:var(--ds-sf-bg);--ds-st-pick-bg:var(--ds-accent);--ds-st-pick-text:var(--ds-on-accent);--ds-st-pick-line:var(--ds-accent);--ds-st-pick-shadow:0 14px 28px -16px var(--ds-glow);--ds-st-focus:var(--ds-focus);--ds-st-font:var(--ds-body);--ds-st-head:var(--ds-head);--ds-st-case:uppercase;--ds-st-tab-r:0px}
+.ds-st-tab{padding-left:26px;padding-right:26px;letter-spacing:.14em;clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%)}
+.ds-st-panel-h::before{content:'';display:inline-block;width:26px;height:6px;margin-right:12px;vertical-align:middle;background:var(--ds-brand);transform:skewX(-24deg)}
+@media (hover:hover){
+.ds-st-tab:hover{border-color:transparent;color:var(--ds-sf-accent)}
+}
+`;
+
 const txt = (v) => (typeof v === 'string' ? v.trim() : typeof v === 'number' ? String(v) : '');
 const list = (v) => (Array.isArray(v) ? v : []);
 
@@ -786,6 +888,19 @@ function ctaPhotoTokens(tokens) {
   };
 }
 
+// The comparison table's business column (kit Comparison.jsx, CMP_CSS): a
+// tint of the brand color over the page, its text repaired to 4.5:1 for that
+// tint and its check marks (graphics) to 3:1. Root variables only while the
+// band renders, so theme:check pairs --ds-cmp-us-text with --ds-cmp-us-bg.
+function comparisonTokens(t) {
+  const usBg = mix(t.bg, t.accent, t.isDark ? 0.14 : 0.08);
+  return {
+    '--ds-cmp-us-bg': usBg,
+    '--ds-cmp-us-text': ensureContrast(t.text, usBg, 4.5),
+    '--ds-cmp-us-yes': ensureContrast(t.accentText, usBg, 3),
+  };
+}
+
 const Icon = ({ d, size = 18, stroke = 1.8 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d={d} />
@@ -866,10 +981,16 @@ export function headingDefaults(businessInfo, generatedCopy) {
     brands: { eyebrow: makesEyebrowDefault(businessKindOf(biz.businessType)) },
     services: { eyebrow: 'What We Do', title: 'Our Services', accent: '' },
     featured: featuredTitleDefaults(txt(fs.serviceName), Boolean(sectionTitle(copy.sectionTitles, 'featured').title)),
+    // The reference-site bands use the kit's own words (no claims).
+    vehicleTypes: { eyebrow: VT_DEFAULTS.eyebrow, title: VT_DEFAULTS.title, accent: '' },
+    process: { eyebrow: HOW_DEFAULTS.eyebrow, title: HOW_DEFAULTS.title, accent: '' },
     about: { eyebrow: 'About Us', title: aboutTitleOf(biz), accent: '' },
     gallery: { eyebrow: 'Gallery', title: 'Our Work', accent: '' },
     beforeAfter: { eyebrow: BA_DEFAULTS.eyebrow, title: BA_DEFAULTS.title, accent: '' },
+    showcase: { eyebrow: SHOWCASE_DEFAULTS.eyebrow, title: SHOWCASE_DEFAULTS.title, accent: '' },
+    comparison: { eyebrow: CMP_DEFAULTS.eyebrow, title: CMP_DEFAULTS.title, accent: '' },
     testimonials: { eyebrow: 'Testimonials', title: 'What Clients Say', accent: '' },
+    faq: { eyebrow: FAQ_DEFAULTS.eyebrow, title: FAQ_DEFAULTS.title, accent: '' },
     cta: { eyebrow: 'Contact', title: fb.ctaHeadline, accent: '' },
   };
 }
@@ -929,18 +1050,22 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
       badge: txt(s.badge),
       image: txt(s.image),
       includes: serviceIncludes(s.includes),
+      // Edit > Services > Category: the tab the card sits under while the
+      // owner shows the services in tabs (kit serviceTabs.js reads it here).
+      category: txt(s.category),
     }))
     .filter((s) => s.name || s.description || s.price);
   const svcT = st('services');
   const servicesTitle = txt(copy.servicesSection?.title) || svcT.title || 'Our Services';
   // The owner's intro prints as typed (raw), like it always has.
   const servicesIntro = txt(copy.servicesSection?.intro) ? copy.servicesSection.intro : svcT.intro;
-  const svcCols = services.length === 1 ? 'ds-c1' : services.length === 2 || services.length === 4 ? 'ds-c2' : 'ds-c3';
-  const anyServicePhoto = services.some((s) => s.image);
-  // Where cards share a row, a package badge sits in a strip every card
-  // keeps free, so photos and titles stay level across the row.
-  const badgeRow = svcCols !== 'ds-c1' && services.some((s) => s.badge);
   const pkgOn = show('services') && services.some((s) => s.badge || s.image || s.includes.length > 0);
+  // Services in tabs by category (Edit > Services): only once the owner
+  // switched the tabs on (copy.serviceTabs) and the services name two
+  // categories or more; otherwise the one grid it always was. The editor
+  // says why tabs it asked for don't show (too few or too many groups).
+  const serviceTabs = show('services') && services.length > 0 ? serviceTabsOf(services, copy.serviceTabs) : null;
+  const serviceTabsWhyNot = editor && !serviceTabs ? SERVICE_TABS_HINTS[serviceTabsStatus(services, copy.serviceTabs)] : null;
 
   // Services in the hero (Edit > Hero): copy.heroCard 'quote' (price card) or
   // 'list'; unset is 'off', so a site that never chose keeps today's hero.
@@ -981,6 +1106,31 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
   const baT = st('beforeAfter');
   const baTitle = ba?.title || baT.title || hd.beforeAfter.title;
   const baIntro = ba?.intro || baT.intro || BA_DEFAULTS.intro;
+
+  // The reference-site bands (kit blocks), each opt-in like the bands
+  // above: on only once its copy key holds the owner's content (an object;
+  // How It Works: a non-empty copy.howSteps, never starter steps), and on
+  // the published page only with something complete to show (the editor
+  // shows every entry, saying what each still needs). Headings: the
+  // owner's title / intro on the band's own key (which Edit > Headings
+  // edits too), else Edit > Headings, else the design's own (hd).
+  // Edit > Vehicle Types: the kinds of vehicle the owner works on.
+  const vt = vehicleTypesOf(copy.vehicleTypes, { editor });
+  const vtOn = show('vehicleTypes') && Boolean(vt) && (vt.items.length > 0 || editor);
+  // Edit > How It Works: the owner's steps (copy.howSteps, shared with the
+  // designs that show starter steps).
+  const how = howItWorksSteps(copy.howSteps);
+  const howOn = show('process') && Boolean(how) && (how.steps.length > 0 || editor);
+  // Edit > Detail Showcase: photo cards (images.showcase0..5) with titles.
+  const sc = showcaseItems(copy.showcase, images, { editor });
+  const scOn = show('showcase') && Boolean(sc) && (sc.items.length > 0 || editor);
+  const scT = st('showcase');
+  // Edit > Comparison: the business next to an alternative, row by row.
+  const cmp = comparisonOf(copy.comparison, { editor, businessName: name });
+  const cmpOn = show('comparison') && Boolean(cmp) && (cmp.rows.length > 0 || editor);
+  // Edit > FAQ: questions that open and close (FAQPage data when published).
+  const faq = faqItems(copy.faq, { editor });
+  const faqOn = show('faq') && Boolean(faq) && (faq.items.length > 0 || editor);
 
   // Business Info > Areas served (the list only, never split from the
   // free-text service area) and the Fully insured switch (only when on).
@@ -1060,6 +1210,23 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
   // The same fit for every other heading that can print owner words;
   // card titles are untracked, so a capital runs ~0.03em wider there.
   const fit = (text, extra = 0) => ({ '--ds-lw': fitLw(text, capEm + extra) });
+  // A kit band's heading in this design's look (h: { eyebrow, title, accent,
+  // intro }), the markup the services and Before & After sections print.
+  // The comparison's goes inside its table caption, which reveals with the
+  // table, so it carries no reveal of its own.
+  const bandHead = (h, id, reveal = true) => (
+    <div className={`ds-head${h.intro ? '' : ' ds-head-solo'}`} {...(reveal ? { 'data-acg-reveal': '' } : {})}>
+      <div>
+        {h.eyebrow && <p className="ds-eyebrow">{h.eyebrow}</p>}
+        <div className="ds-fit ds-fit-h2">
+          <h2 id={id} className="ds-h2" style={fit(h.title)}>
+            <Accented title={h.title} accent={h.accent} className="ds-em" />
+          </h2>
+        </div>
+      </div>
+      {h.intro && <p className="ds-intro">{h.intro}</p>}
+    </div>
+  );
 
   const vars = {
     '--ds-bg': t.bg,
@@ -1255,13 +1422,65 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
     </div>
   );
 
+  // The service cards of one grid: every service (no tabs), or one tab's
+  // group. items: [{ service, index }], index being the service's place in
+  // `services`, which keeps each Read more toggle's id unique on the page;
+  // the card number and reveal stagger follow the card's place in this
+  // grid. The columns, the badge strip and the photo wells are worked out
+  // per grid, for the cards that share its rows. Without tabs this is the
+  // markup the section always had.
+  const serviceGrid = (items) => {
+    const list = items.map((it) => it.service);
+    const cols = list.length === 1 ? 'ds-c1' : list.length === 2 || list.length === 4 ? 'ds-c2' : 'ds-c3';
+    const anyPhoto = list.some((s) => s.image);
+    // Where cards share a row, a package badge sits in a strip every card
+    // keeps free, so photos and titles stay level across the row.
+    const badgeRow = cols !== 'ds-c1' && list.some((s) => s.badge);
+    return (
+      <div className={`ds-grid ${cols}${badgeRow ? ' ds-pk-row' : ''}`}>
+        {items.map(({ service: s, index }, i) => (
+          <div key={`${s.name}-${index}`} className="ds-cell" data-acg-reveal="" style={{ '--acg-delay': `${(i % 3) * 90}ms` }}>
+            <article className={`acg-svc-card ds-card${s.badge ? ' ds-card-feat' : ''}${anyPhoto ? ' ds-card-ph' : ''}`}>
+              <span className="ds-card-num" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+              {s.badge && <PackageBadge ns="ds-pk" text={s.badge} />}
+              <PackagePhoto ns="ds-pk" src={s.image} alt={s.name} anyPhoto={anyPhoto} editor={editor} />
+              {s.name && (
+                <div className="ds-fit ds-card-head">
+                  <h3 className="ds-card-title" style={fit(s.name, 0.03)}>{s.name}</h3>
+                </div>
+              )}
+              {s.price && <p className="ds-price">{s.price}</p>}
+              <ServiceDescription
+                id={`svc-more-${fromPackages ? 'pkg' : 'ai'}-${index}`}
+                text={s.description}
+                style={{ position: 'relative', marginTop: 14, color: 'var(--ds-muted)', fontSize: 15.5, lineHeight: 1.7 }}
+                accentColor="var(--ds-accent-text)"
+              />
+              {s.includes.length > 0 && <PackageIncludes ns="ds-pk" items={s.includes} label="What's Included" checkStroke={2.5} />}
+              <div className="acg-svc-foot">
+                <div className="ds-card-foot">
+                  <BookNowLink serviceName={s.name} phone={phone} label={<>Book now <Icon d={ICONS.arrow} size={16} stroke={2} /></>} />
+                </div>
+              </div>
+            </article>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div
       id="top"
       className="ds-root"
-      style={{ ...vars, containerType: 'inline-size', display: 'flex', flexDirection: 'column', minHeight: '100vh', overflowX: 'clip', background: t.bg, color: t.text, fontFamily: body, lineHeight: 1.6, ...(ctaPhoto ? ctaPhotoTokens(tokens) : {}) }}
+      style={{ ...vars, containerType: 'inline-size', display: 'flex', flexDirection: 'column', minHeight: '100vh', overflowX: 'clip', background: t.bg, color: t.text, fontFamily: body, lineHeight: 1.6, ...(ctaPhoto ? ctaPhotoTokens(tokens) : {}), ...(cmpOn ? comparisonTokens(t) : {}) }}
     >
-      <style>{CSS + (heroOn ? heroOfferCss('ds-hq', { stackFrom: 1024 }) : '') + (pkgOn ? packageDetailsCss('ds-pk') : '') + (featuredOn ? featuredBandCss('ds-ft') : '') + (makesOn ? makesBandCss('ds-mk') : '') + (featureOn ? FEATURE_CSS : '') + (baOn ? beforeAfterCss('ds-ba') + BA_CSS : '') + navBadgeCss}</style>
+      <style>
+        {CSS + (heroOn ? heroOfferCss('ds-hq', { stackFrom: 1024 }) : '') + (pkgOn ? packageDetailsCss('ds-pk') : '') + (featuredOn ? featuredBandCss('ds-ft') : '') + (makesOn ? makesBandCss('ds-mk') : '') + (featureOn ? FEATURE_CSS : '') + (baOn ? beforeAfterCss('ds-ba') + BA_CSS : '') + navBadgeCss
+          // The reference-site bands: kit CSS, then this design's aliases.
+          + (serviceTabs ? serviceTabsCss('ds-st') + ST_CSS : '') + (vtOn ? vehicleTypesCss('ds-vt') + VT_CSS : '') + (howOn ? howItWorksCss('ds-how') + HOW_CSS : '')
+          + (scOn ? showcaseCss('ds-sc') + SC_CSS : '') + (cmpOn ? comparisonCss('ds-cmp') + CMP_CSS : '') + (faqOn ? faqCss('ds-faq') + FAQ_CSS : '')}
+      </style>
       <a className="ds-skip" href="#main">Skip to content</a>
 
       <nav className="ds-nav" aria-label="Main" style={{ order: -1 }}>
@@ -1384,35 +1603,15 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
                 </div>
                 {servicesIntro && <p className="ds-intro">{servicesIntro}</p>}
               </div>
-              <div className={`ds-grid ${svcCols}${badgeRow ? ' ds-pk-row' : ''}`}>
-                {services.map((s, i) => (
-                  <div key={`${s.name}-${i}`} className="ds-cell" data-acg-reveal="" style={{ '--acg-delay': `${(i % 3) * 90}ms` }}>
-                    <article className={`acg-svc-card ds-card${s.badge ? ' ds-card-feat' : ''}${anyServicePhoto ? ' ds-card-ph' : ''}`}>
-                      <span className="ds-card-num" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
-                      {s.badge && <PackageBadge ns="ds-pk" text={s.badge} />}
-                      <PackagePhoto ns="ds-pk" src={s.image} alt={s.name} anyPhoto={anyServicePhoto} editor={editor} />
-                      {s.name && (
-                        <div className="ds-fit ds-card-head">
-                          <h3 className="ds-card-title" style={fit(s.name, 0.03)}>{s.name}</h3>
-                        </div>
-                      )}
-                      {s.price && <p className="ds-price">{s.price}</p>}
-                      <ServiceDescription
-                        id={`svc-more-${fromPackages ? 'pkg' : 'ai'}-${i}`}
-                        text={s.description}
-                        style={{ position: 'relative', marginTop: 14, color: 'var(--ds-muted)', fontSize: 15.5, lineHeight: 1.7 }}
-                        accentColor="var(--ds-accent-text)"
-                      />
-                      {s.includes.length > 0 && <PackageIncludes ns="ds-pk" items={s.includes} label="What's Included" checkStroke={2.5} />}
-                      <div className="acg-svc-foot">
-                        <div className="ds-card-foot">
-                          <BookNowLink serviceName={s.name} phone={phone} label={<>Book now <Icon d={ICONS.arrow} size={16} stroke={2} /></>} />
-                        </div>
-                      </div>
-                    </article>
-                  </div>
-                ))}
-              </div>
+              {serviceTabs ? (
+                // One tab per category; each panel is the same grid, for
+                // its group's cards (kit ServiceTabs: CSS only, so the
+                // published page switches tabs with no script).
+                <ServiceTabs ns="ds-st" tabs={serviceTabs}>{(g) => serviceGrid(g.items)}</ServiceTabs>
+              ) : (
+                serviceGrid(services.map((service, index) => ({ service, index })))
+              )}
+              {serviceTabsWhyNot && <EditorHint>{serviceTabsWhyNot}</EditorHint>}
             </div>
           </section>
         )}
@@ -1458,6 +1657,34 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
               />
             </div>
           </section>
+        )}
+
+        {vtOn && (
+          <VehicleTypesBand
+            ns="ds-vt"
+            vehicleTypes={copy.vehicleTypes}
+            editor={editor}
+            order={order('vehicleTypes')}
+            className="ds-section ds-alt"
+            wrapClassName="ds-wrap"
+            labelledBy="ds-vt-h"
+            heading={bandHead(vehicleTypesHeading(copy.vehicleTypes, copy.sectionTitles, hd.vehicleTypes), 'ds-vt-h')}
+            hints={vt.items.length === 0 && <EditorHint>{VT_HINTS.empty}</EditorHint>}
+          />
+        )}
+
+        {howOn && (
+          <HowItWorksBand
+            ns="ds-how"
+            howSteps={copy.howSteps}
+            editor={editor}
+            order={order('process')}
+            className="ds-section"
+            wrapClassName="ds-wrap"
+            labelledBy="ds-how-h"
+            heading={bandHead(howItWorksHeading(copy.sectionTitles, hd.process), 'ds-how-h')}
+            hints={how.steps.length === 0 && <EditorHint>{HOW_HINTS.empty}</EditorHint>}
+          />
         )}
 
         {show('about') && (
@@ -1584,6 +1811,42 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
           />
         )}
 
+        {scOn && (
+          // No hints: with no item yet the band shows the kit's photo
+          // placeholder naming Edit > Detail Showcase (like the gallery's).
+          <ShowcaseBand
+            ns="ds-sc"
+            showcase={copy.showcase}
+            images={images}
+            editor={editor}
+            order={order('showcase')}
+            className="ds-section ds-alt"
+            wrapClassName="ds-wrap"
+            labelledBy="ds-sc-h"
+            heading={bandHead({
+              eyebrow: scT.eyebrow || hd.showcase.eyebrow,
+              title: sc.title || scT.title || hd.showcase.title,
+              accent: scT.accent || hd.showcase.accent,
+              intro: sc.intro || scT.intro,
+            }, 'ds-sc-h')}
+          />
+        )}
+
+        {cmpOn && (
+          <ComparisonBand
+            ns="ds-cmp"
+            comparison={copy.comparison}
+            businessName={name}
+            editor={editor}
+            order={order('comparison')}
+            className="ds-section"
+            wrapClassName="ds-wrap"
+            labelledBy="ds-cmp-h"
+            heading={bandHead(comparisonHeading(copy.comparison, copy.sectionTitles, hd.comparison), 'ds-cmp-h', false)}
+            hints={cmp.rows.length === 0 && <EditorHint>{CMP_HINTS.empty}</EditorHint>}
+          />
+        )}
+
         {show('testimonials') && reviews === 'google' && (
           <section data-section="testimonials" id="reviews" className="ds-section" aria-label={txt(copy.googleReviewsTitle) || reviewsT.title || 'Reviews'} style={{ order: order('testimonials') }}>
             <div className="ds-wrap">
@@ -1669,6 +1932,22 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
               )}
             </div>
           </section>
+        )}
+
+        {faqOn && (
+          // The published band also carries the questions as FAQPage
+          // JSON-LD (the kit builds it from exactly the printed items).
+          <FaqBand
+            ns="ds-faq"
+            faq={copy.faq}
+            editor={editor}
+            order={order('faq')}
+            className="ds-section"
+            wrapClassName="ds-wrap"
+            labelledBy="ds-faq-h"
+            heading={bandHead(faqHeading(copy.faq, copy.sectionTitles, hd.faq), 'ds-faq-h')}
+            hints={faq.items.length === 0 && <EditorHint>{FAQ_HINTS.empty}</EditorHint>}
+          />
         )}
 
         {show('cta') && (

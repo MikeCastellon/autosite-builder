@@ -197,6 +197,15 @@ describe('answerText / describeEvent', () => {
     expect(answerText(sites, [{ url: 'a.com', note: 'colors' }, { url: 'b.com' }])).toBe('a.com: colors\nb.com');
   });
 
+  it('names the More sections a run wrote, by the Design step\'s names', async () => {
+    const { EXTRA_SECTIONS } = await import('./customSiteSections.js');
+    expect(describeEvent({ type: 'design_ready', data: { regenerated: false } })).toBe('Site written and created');
+    expect(describeEvent({ type: 'design_ready', data: { regenerated: true, sections: { comparison: 3, faq: 6, nope: 2, process: 0 } } }))
+      .toBe('Site rewritten, with FAQ, Comparison');
+    const all = Object.fromEntries(EXTRA_SECTIONS.map((x) => [x.id, 1]));
+    expect(describeEvent({ type: 'design_ready', data: { sections: all } })).toBe(`Site written and created, with ${EXTRA_SECTIONS.map((x) => x.label).join(', ')}`);
+  });
+
   it('describes activity in plain words', () => {
     expect(describeEvent({ type: 'stage', data: { to: 'designing' } })).toBe('Moved to Designing');
     expect(describeEvent({ type: 'email', data: { template: 'welcome', to: 'a@b.co' } })).toBe('Welcome email sent to a@b.co');

@@ -492,6 +492,13 @@ function shortSite(url) {
   return s.length > 80 ? `${s.slice(0, 79)}…` : s;
 }
 
+// The More sections by the names the Design step gives them
+// (customSiteSections.js EXTRA_SECTIONS, not imported: this module is in the
+// customer's form bundle).
+const SECTION_NAMES = Object.freeze({
+  faq: 'FAQ', process: 'How it works', vehicleTypes: 'Vehicle types', comparison: 'Comparison', showcase: 'Detail showcase', serviceTabs: 'Service tabs',
+});
+
 // Activity entries, newest first in the admin.
 export function describeEvent(evt) {
   const d = evt?.data || {};
@@ -515,7 +522,15 @@ export function describeEvent(evt) {
     case 'details': return 'Customer details edited';
     case 'link_reset': return 'Form link replaced (the old link stopped working)';
     case 'design_started': return 'Started writing the site';
-    case 'design_ready': return d.regenerated ? 'Site rewritten' : 'Site written and created';
+    case 'design_ready': {
+      // The More sections the run wrote (custom-site-design-background
+      // logs { sections: { id: items } }); one with nothing usable isn't
+      // there, and the site kept its own.
+      const base = d.regenerated ? 'Site rewritten' : 'Site written and created';
+      const sections = d.sections && typeof d.sections === 'object' ? d.sections : {};
+      const written = Object.keys(SECTION_NAMES).filter((k) => Number(sections[k]) > 0).map((k) => SECTION_NAMES[k]);
+      return written.length ? `${base}, with ${written.join(', ')}` : base;
+    }
     case 'design_failed': return `Writing the site failed${d.error ? `: ${d.error}` : ''}`;
     case 'handover': return `Site handed over to ${d.to || 'the customer'}${d.newAccount ? ' (new account)' : ''}${d.compPro ? ', with Pro' : ''}`;
     case 'launch': {

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
@@ -6,26 +7,36 @@ import { renderToStaticMarkup } from 'react-dom/server';
 // preview never makes (it passes no widget ids).
 vi.mock('../../../lib/supabase.js', () => ({ supabase: {}, isImpersonationTab: false }));
 
-// Bold & Sporty with its Before & After section (a no-op once
-// templateSections.js lists it) and Chrome Elite without.
+// Bold & Sporty with its Before & After section and the More sections (a
+// no-op once templateSections.js lists them; service tabs through the
+// editor's capability table) and Chrome Elite without.
+const { MORE } = vi.hoisted(() => ({ MORE: ['faq', 'process', 'vehicleTypes', 'comparison', 'showcase'] }));
 vi.mock('../../../data/templateSections.js', async (importOriginal) => {
   const m = await importOriginal();
   const sectionIdsFor = (id) => {
     const real = m.sectionIdsFor(id);
-    if (id === 'detailing_sporty') return real.includes('beforeAfter') ? real : [...real, 'beforeAfter'];
-    return id === 'mobile_chrome' ? real.filter((s) => s !== 'beforeAfter') : real;
+    if (id === 'detailing_sporty') return [...real, ...['beforeAfter', ...MORE].filter((s) => !real.includes(s))];
+    return id === 'mobile_chrome' ? real.filter((s) => s !== 'beforeAfter' && !MORE.includes(s)) : real;
   };
   return { ...m, sectionIdsFor };
+});
+vi.mock('../../preview/editorCapabilities.js', async (importOriginal) => {
+  const m = await importOriginal();
+  const templateReads = (id, key) => (key === 'serviceTabs' && ['detailing_sporty', 'mobile_chrome'].includes(id)
+    ? id === 'detailing_sporty' : m.templateReads(id, key));
+  return { ...m, templateReads };
 });
 
 const {
   PREVIEW_SANDBOX, PREVIEW_SCROLL_MESSAGE, SAMPLE_TAG,
-  buildPreviewInput, framePreviewHtml, hasWrittenCopy, previewBeforeAfter, publishedTabHtml, renderPreviewHtml, sampleCopy, slotImages,
+  buildPreviewInput, framePreviewHtml, hasWrittenCopy, previewBeforeAfter, previewExtraSections, publishedTabHtml, renderPreviewHtml, sampleCopy,
+  slotImages,
 } = await import('./designPreview.js');
 const { TEMPLATE_COMPONENT_MAP } = await import('../../../data/templates.js');
 const { default: DesignPreview } = await import('./DesignPreview.jsx');
 const { leverPatch } = await import('../../../lib/designLevers.js');
-const { sanitizeDesign, siteBusinessInfo } = await import('../../../lib/customSiteDesign.js');
+const { extraSectionsWrite, sanitizeDesign, siteBusinessInfo, withServiceCategories } = await import('../../../lib/customSiteDesign.js');
+const { normalizeExtraSections, groundingText } = await import('../../../lib/customSiteSections.js');
 const { TEMPLATES } = await import('../../../data/templates.js');
 
 // The setup page's details (design.businessInfo shape).
@@ -279,6 +290,150 @@ describe('the Before & After pairs in the preview', () => {
       const html = await renderPreviewHtml(input);
       expect(html, id).toContain('data-section="beforeAfter"');
       for (const link of Object.values(pairs.images)) expect(html, id).toContain(link);
+    }
+  });
+});
+
+describe('the More sections in the preview', () => {
+  const P = (n) => `11111111-1111-1111-1111-111111111111/photo/${String(n).padStart(8, '0')}-2222-2222-2222-222222222222.jpg`;
+  const files = [1, 2, 3].map((n) => ({ path: P(n), url: `https://signed.example/${n}` }));
+  const ALL = ['faq', 'process', 'vehicleTypes', 'comparison', 'showcase', 'serviceTabs'];
+  const services = [
+    { name: 'Hand Wash', price: '$40', description: '', category: 'Cars' },
+    { name: 'Hull Wash', price: '$200', description: '', category: 'Boats' },
+    { name: 'RV Wash', price: '', description: '' },
+  ];
+  const info = { ...detailer, businessType: 'mobile_detailing', services };
+  const design = (extra = {}) => ({
+    templateId: 'detailing_sporty',
+    businessInfo: info,
+    extraSections: { faq: true, showcase: true, serviceTabs: true },
+    slots: { showcase: [{ path: P(1), title: 'Ceramic coating', caption: 'Two coats' }, { path: P(2), title: '', caption: '' }, { path: P(9), title: 'No link' }] },
+    ...extra,
+  });
+  // The site as the editor left it.
+  const own = {
+    ...written,
+    faq: { items: [{ q: 'Owner\'s question?', a: 'Owner\'s answer.' }] },
+    howSteps: [{ title: 'Owner step', desc: 'Theirs.' }],
+    showcase: { items: [{ title: 'Owner card' }] },
+    serviceTabs: { enabled: true, all: true },
+  };
+  const siteImages = { hero: 'https://public.example/hero.webp', showcase0: 'https://public.example/sc0.webp' };
+  const existingInfo = { services: [{ name: 'RV Wash', category: 'RVs' }], packages: [{ name: 'RV Wash', category: 'RVs' }] };
+
+  it('applies every section the template has before the first write, the changed ones on a rewrite', () => {
+    const first = previewExtraSections({ design: design(), files });
+    expect(first.applies).toEqual(ALL);
+    expect(first.on).toEqual({ faq: true, process: false, vehicleTypes: false, comparison: false, showcase: true, serviceTabs: true });
+    // The showcase as the setup has it: linked picks in order, the admin's words only.
+    expect(first.showcase).toEqual({
+      images: { showcase0: 'https://signed.example/1', showcase1: 'https://signed.example/2' },
+      copy: { items: [{ title: 'Ceramic coating', caption: 'Two coats' }, {}] },
+    });
+    // A pick already copied from the same upload shows the public copy.
+    const copied = previewExtraSections({ design: design(), files, images: { showcase1: 'https://public.example/sc1.webp' }, imported: { showcase1: P(2) } });
+    expect(copied.showcase.images.showcase1).toBe('https://public.example/sc1.webp');
+    const rewrite = previewExtraSections({ design: design({ extraSectionsChanged: ['process'] }), existing: true, files });
+    expect(rewrite.applies).toEqual(['process']);
+    expect(rewrite.showcase).toBeNull();
+    expect(previewExtraSections({ design: design({ templateId: 'mobile_chrome' }), files }).applies).toEqual([]);
+    expect(previewExtraSections()).toEqual({ applies: [], on: Object.fromEntries(ALL.map((id) => [id, false])), showcase: null });
+  });
+
+  it('buildPreviewInput: an applied section off comes off; an applied showcase and service tabs show the setup\'s; drafts never show as placeholders', () => {
+    const sections = previewExtraSections({ design: design(), files });
+    const input = buildPreviewInput({ templateId: 'detailing_sporty', businessInfo: info, copy: own, images: siteImages, existingInfo, extraSections: sections });
+    // Off and applied: off the page (How it works).
+    expect(input.generatedCopy).not.toHaveProperty('howSteps');
+    // On, but Claude drafts it on the run: as the site has it now.
+    expect(input.generatedCopy.faq).toEqual(own.faq);
+    expect(input.generatedCopy.showcase).toEqual(sections.showcase.copy);
+    // On, as the run writes them; the editor's "All" tab kept.
+    expect(input.generatedCopy.serviceTabs).toEqual({ enabled: true, all: true });
+    expect(input.images).toEqual({ hero: 'https://public.example/hero.webp', ...sections.showcase.images });
+    // Applied service tabs: the setup's categories.
+    expect(input.businessInfo.services.map((x) => x.category)).toEqual(['Cars', 'Boats', undefined]);
+    // Before the first write the sample copy has nothing to show for a draft.
+    const sample = buildPreviewInput({ templateId: 'detailing_sporty', businessInfo: info, extraSections: sections });
+    expect(sample.sample).toBe(true);
+    expect(sample.generatedCopy).not.toHaveProperty('faq');
+    expect(sample.generatedCopy.showcase).toEqual(sections.showcase.copy);
+    expect(sample.generatedCopy.serviceTabs).toEqual({ enabled: true });
+  });
+
+  it('buildPreviewInput: what the write doesn\'t apply stays as the site has it, categories too', () => {
+    const sections = previewExtraSections({ design: design({ extraSectionsChanged: [] }), existing: true, files });
+    const input = buildPreviewInput({ templateId: 'detailing_sporty', businessInfo: info, copy: own, images: siteImages, existingInfo, extraSections: sections });
+    expect(input.generatedCopy.howSteps).toEqual(own.howSteps);
+    expect(input.generatedCopy.showcase).toEqual(own.showcase);
+    expect(input.generatedCopy.serviceTabs).toEqual(own.serviceTabs);
+    expect(input.images).toEqual(siteImages);
+    expect(input.businessInfo.services.map((x) => x.category)).toEqual([undefined, undefined, 'RVs']);
+    // A showcase switched off (and changed): its photos come off too.
+    const off = previewExtraSections({ design: design({ extraSections: { faq: true }, extraSectionsChanged: ['showcase'] }), existing: true, files });
+    const gone = buildPreviewInput({ templateId: 'detailing_sporty', businessInfo: info, copy: own, images: siteImages, existingInfo, extraSections: off });
+    expect(gone.generatedCopy).not.toHaveProperty('showcase');
+    expect(gone.images).toEqual({ hero: 'https://public.example/hero.webp' });
+  });
+
+  it('a site the run writes shows every section on the page of a template whose module has them', async () => {
+    // What the run keeps of Claude's answer (checked), and what it writes.
+    const source = groundingText(['Gloss Boss', 'Mobile detailing', 'Austin', 'Hand Wash $40', 'Hull Wash $200', 'Cash or Zelle'], {});
+    const fields = ['faqItems', 'howSteps', 'vehicleTypes', 'comparisonRows', 'showcaseTitles', 'serviceCategories'];
+    const drafted = normalizeExtraSections({
+      faqItems: [{ q: 'How do I pay?', a: 'Cash or Zelle.' }],
+      howSteps: [{ title: 'Book', desc: 'Call or send a request.' }, { title: 'We come to you', desc: 'Anywhere in Austin.' }, { title: 'Enjoy', desc: 'Drive off clean.' }],
+      vehicleTypes: { title: 'Vehicles We Detail', items: [{ name: 'Cars', desc: '', icon: 'car' }, { name: 'Boats', desc: '', icon: 'boat' }] },
+      comparisonRows: [{ label: 'Comes to you', us: 'Yes', them: '—' }, { label: 'Hand wash', us: 'Yes', them: '—' }],
+      showcaseTitles: [{ photo: 1, title: 'Hull Wash' }],
+      serviceCategories: [],
+    }, { fields, services, source, photos: [1] });
+    const PUBLIC = 'https://public.example/';
+    const d = design({
+      extraSections: Object.fromEntries(ALL.map((id) => [id, true])),
+      images: { showcase0: `${PUBLIC}sc0.webp`, showcase1: `${PUBLIC}sc1.webp` },
+      imported: { showcase0: P(1), showcase1: P(2) },
+    });
+    const extra = extraSectionsWrite(d, drafted, { photos: [{ number: 1, index: 1 }] });
+    expect(extra.applied).toEqual(ALL);
+    const businessInfo = withServiceCategories(info, extra.categories);
+    const input = buildPreviewInput({ templateId: 'detailing_sporty', businessInfo, copy: { ...written, ...extra.copy }, images: extra.images });
+    const html = await renderPreviewHtml(input);
+    const mod = await TEMPLATE_COMPONENT_MAP.detailing_sporty();
+    const listed = [...(mod.sections || []).map((x) => x.id), ...(mod.addedSections || [])];
+    const shows = {
+      faq: () => html.includes('data-section="faq"') && html.includes('How do I pay?'),
+      process: () => html.includes('data-section="process"') && html.includes('We come to you'),
+      vehicleTypes: () => html.includes('data-section="vehicleTypes"') && html.includes('Vehicles We Detail'),
+      comparison: () => html.includes('data-section="comparison"') && html.includes('Automated car wash'),
+      showcase: () => html.includes('data-section="showcase"') && html.includes(`${PUBLIC}sc1.webp`) && html.includes('Hull Wash'),
+    };
+    for (const [id, check] of Object.entries(shows)) {
+      if (listed.includes(id)) expect(check(), id).toBe(true);
+    }
+    expect(html).not.toContain('data-acg-editor-only');
+  });
+
+  it('shows the showcase\'s photos and the service tabs on the page of a template whose module has them', async () => {
+    const mod = await TEMPLATE_COMPONENT_MAP.detailing_sporty();
+    const listed = [...(mod.sections || []).map((x) => x.id), ...(mod.addedSections || [])];
+    const sections = previewExtraSections({ design: design(), files });
+    const input = buildPreviewInput({ templateId: 'detailing_sporty', businessInfo: info, copy: written, extraSections: sections });
+    const html = await renderPreviewHtml(input);
+    expect(html).not.toContain('data-acg-editor-only');
+    if (listed.includes('showcase')) {
+      expect(html).toContain('data-section="showcase"');
+      expect(html).toContain('https://signed.example/1');
+      expect(html).toContain('Ceramic coating');
+      // An untitled card waits for Claude's title: not on the page yet.
+      expect(html).not.toContain('https://signed.example/2');
+    }
+    // The template groups its services where its source calls the kit's serviceTabsOf.
+    const source = readFileSync(new URL('../../preview/templates/detailing/DetailingSporty.jsx', import.meta.url), 'utf8');
+    if (/\bserviceTabsOf\(/.test(source)) {
+      expect(html).toMatch(/<label[^>]*for="[^"]+"[^>]*>Cars<\/label>/);
+      expect(html).toMatch(/<label[^>]*for="[^"]+"[^>]*>Boats<\/label>/);
     }
   });
 });
