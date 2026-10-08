@@ -20,7 +20,7 @@ vi.mock('../../netlify/functions/_shared/auth.js', () => ({
 const {
   MAX_IMAGE_BYTES, MAX_IMAGE_SIDE, SUGGEST_MAX_TOKENS, loadSuggestImages, requestSuggestion, sniffImage,
 } = await import('../../netlify/functions/_lib/custom-site-suggest-ai.js');
-const { SUGGEST_STALE_MS } = await import('../../src/lib/designSuggest.js');
+const { SUGGEST_STALE_MS, SUGGEST_TEMPLATES } = await import('../../src/lib/designSuggest.js');
 const { runSuggest, handler: backgroundHandler } = await import('../../netlify/functions/custom-site-suggest-background.js');
 const { handler } = await import('../../netlify/functions/custom-site-suggest.js');
 
@@ -754,6 +754,25 @@ describe('a captured site\'s outline on a match run', () => {
     expect((await runSuggest({ db, client, projectId: PID, startedAt: STARTED, actor: 'a' })).status).toBe(200);
     expect(JSON.stringify(client.calls[0].body)).not.toContain('reference_outline');
     expect(db.state.projects[0].design.suggestion.reference).not.toHaveProperty('fromCode');
+  });
+
+  const offered = (client) => [...JSON.stringify(client.calls[0].body).matchAll(/- ([a-z_]+): \\\"/g)].map((m) => m[1]);
+
+  it('a match may pick any template, the business\'s own type first; an inspire run keeps to its type', async () => {
+    const plain = PARTS.map(({ outline, ...a }) => a);
+    const matchDb = fakeDb({ projects: [project({ assets: [...ASSETS, ...plain] }, { status: 'running', startedAt: STARTED, reference: MATCH_REF })], files });
+    const matchClient = fakeClient([ok(MATCH_JSON)]);
+    expect((await runSuggest({ db: matchDb, client: matchClient, projectId: PID, startedAt: STARTED, actor: 'a' })).status).toBe(200);
+    const all = offered(matchClient);
+    expect(new Set(all)).toEqual(new Set(SUGGEST_TEMPLATES.map((t) => t.id)));
+    // Gloss Boss is a mobile detailer: its own type's templates come first.
+    expect(all.slice(0, 2).sort()).toEqual(['mobile_chrome', 'mobile_sudsy']);
+    expect(JSON.stringify(matchClient.calls[0].body)).toContain('Every template is offered here, also ones made for another business type');
+
+    const inspireDb = fakeDb({ projects: [project({}, { status: 'running', startedAt: STARTED })], files });
+    const inspireClient = fakeClient([ok(MATCH_JSON)]);
+    await runSuggest({ db: inspireDb, client: inspireClient, projectId: PID, startedAt: STARTED, actor: 'a' });
+    expect(offered(inspireClient).sort()).toEqual(['mobile_chrome', 'mobile_sudsy']);
   });
 });
 

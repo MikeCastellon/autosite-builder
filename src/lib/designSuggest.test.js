@@ -12,7 +12,7 @@ import {
   FACT_FIELDS, MATCH_SHOT_LIMIT, REASON_KEYS, REFERENCE_MODES, REFERENCE_SHOT_MAX_BYTES, SUGGEST_SCHEMA, SUGGEST_STALE_MS, SUGGEST_TEMPLATES,
   applySuggestion, buildSuggestPrompt, changedParts, checkReferenceChoice, checkReferenceGroup, checkReferenceShot, describeSuggestEvent,
   factSources, isSuggestRunLive, isSuggestRunStale, matchContextFor, matchPaletteFor, matchPalettePlan, matchPaletteReason,
-  normalizeSuggestion, outlinePromptText, quoteInText, referenceLabel, referenceOutlineOf, referenceShotGroup, referenceShotPath, referenceShots,
+  matchTemplateIds, normalizeSuggestion, outlinePromptText, quoteInText, referenceLabel, referenceOutlineOf, referenceShotGroup, referenceShotPath, referenceShots,
   referenceUrlKey, skippedGroups, studioPaletteOf, suggestBusinessType, suggestImageCandidates, suggestIntakeText, suggestSchema, suggestTemplateIds,
   verifiedFacts,
 } from './designSuggest.js';
@@ -879,6 +879,19 @@ describe('the page\'s "Use their brand color" toggle (useBrand)', () => {
     expect(out.levers.palette).toEqual(expect.objectContaining({ bg: t.colors.bg, accent: t.colors.accent }));
     expect(out.reasons.palette).toMatch(/"Use their brand color" is off/);
     expect(out.reference.paletteFrom).toBe('template');
+  });
+});
+
+describe('matchTemplateIds', () => {
+  it('offers every template to a match, the business\'s own type first', () => {
+    const ids = matchTemplateIds('detailing_shop');
+    expect(ids[0]).toBe('detailing_sporty');
+    expect(new Set(ids)).toEqual(new Set(SUGGEST_TEMPLATES.map((t) => t.id)));
+    expect(ids).toHaveLength(SUGGEST_TEMPLATES.length);
+    // An unknown type gets every template too.
+    expect(new Set(matchTemplateIds('nope'))).toEqual(new Set(SUGGEST_TEMPLATES.map((t) => t.id)));
+    // An inspire run still keeps to the type.
+    expect(suggestTemplateIds('detailing_shop')).toEqual(['detailing_sporty']);
   });
 });
 
