@@ -12,6 +12,7 @@ import { useAuth } from './lib/AuthContext.jsx';
 import LoginPage from './components/auth/LoginPage.jsx';
 import LandingPage from './components/LandingPage.jsx';
 import ResetPasswordPage from './components/auth/ResetPasswordPage.jsx';
+import AuthSso from './components/auth/AuthSso.jsx';
 import DashboardPage from './components/dashboard/DashboardPage.jsx';
 import BookingOnlySetup from './components/dashboard/booking-only/BookingOnlySetup.jsx';
 import BookingSettingsPage from './components/dashboard/booking-settings/BookingSettingsPage.jsx';
@@ -402,6 +403,12 @@ export default function App() {
         </div>
       </div>
     );
+  }
+
+  // One-click sign-in from the Genius HQ tile. Ahead of the auth gate: the
+  // page itself creates the session.
+  if (typeof window !== 'undefined' && window.location.pathname === '/auth/sso') {
+    return <AuthSso />;
   }
 
   // Custom website intake form: public, the token in the link is the key.

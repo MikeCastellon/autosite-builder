@@ -43,6 +43,13 @@
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
 
+# The HQ SSO landing carries a one-time sign-in token in its URL; never leak
+# it to another origin in a Referer header.
+[[headers]]
+  for = "/auth/sso"
+  [headers.values]
+    Referrer-Policy = "no-referrer"
+
 # Serve /.well-known/* directly from public/ (no SPA rewrite)
 [[redirects]]
   from = "/.well-known/*"
