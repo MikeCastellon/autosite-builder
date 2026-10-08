@@ -4,8 +4,13 @@
 // static-export safe:
 //   - every color is a deriveTheme() token exposed as a --wa-* variable. The
 //     default palette (alloy #F0F1F3, bronze #A8813A, ink #1C1E24) gives the
-//     mockup's look; an owner palette repaints all of it, including the
-//     rendered alloy rim that stands in for missing photos;
+//     mockup's look; an owner palette repaints all of it;
+//   - a missing photo leaves its slot blank on the published page (no
+//     stand-in graphic; owners did not want a drawn wheel where their own
+//     picture goes), and the editor shows a PhotoSlot placeholder naming
+//     where to upload it. Hero Layout "Full Background" (the default)
+//     always renders the full-width hero: over the hero photo, or, until
+//     there is one, on a plain ink band with its own repaired text colors;
 //   - one prefixed <style>: @container layout, hover inside (hover:hover),
 //     motion inside prefers-reduced-motion; no hooks, no window; the nav is
 //     opaque and only gains a shadow from html[data-acg-scrolled];
@@ -22,7 +27,7 @@ import { formatHours } from '../../../../lib/formatHours.js';
 import { HOURS_DAYS } from '../../../../lib/businessHours.js';
 import { FONT_CATALOG, catalogFamily, familiesFromStack } from '../../../../lib/fontCatalog.js';
 import { TEMPLATES } from '../../../../data/templates.js';
-import { deriveTheme, mix, alpha, ensureContrast, readableOn, hexToRgb, rgbToHex, luminance } from '../kit/theme.js';
+import { deriveTheme, mix, alpha, ensureContrast, readableOn, hexToRgb, rgbToHex } from '../kit/theme.js';
 import { PhotoSlot, PHOTO_HINTS } from '../kit/PhotoSlot.jsx';
 import { MobileMenu, MobileActionBar } from '../kit/MobileMenu.jsx';
 import { EditorOnly, useEditorMode } from '../kit/EditorMode.jsx';
@@ -115,20 +120,13 @@ html[data-acg-scrolled] .wa-nav{box-shadow:0 12px 32px -20px var(--wa-shadow)}
 .wa-hero-photo .wa-stat{border-left-color:var(--wa-on-hero-line)}
 .wa-hero-photo .wa-stat dd{color:var(--wa-on-hero)}
 .wa-hero-photo .wa-stat dt{color:var(--wa-on-hero-muted)}
-
-.wa-rimstage{position:absolute;inset:0;display:grid;place-items:center;overflow:hidden;background:radial-gradient(58% 58% at 50% 46%,var(--wa-stage-glow),transparent 72%),var(--wa-bg)}
-.wa-rimstage::before{content:'';position:absolute;top:50%;left:50%;width:min(94%,600px);aspect-ratio:1;border:1px dashed var(--wa-border-strong);border-radius:50%;translate:-50% -50%}
-.wa-rimstage::after{content:'';position:absolute;inset:0;background:linear-gradient(var(--wa-border),var(--wa-border)) center / 100% 1px no-repeat,linear-gradient(var(--wa-border),var(--wa-border)) center / 1px 100% no-repeat}
-.wa-rim{position:relative;z-index:1;width:min(74%,470px);height:auto;filter:drop-shadow(0 30px 34px var(--wa-rim-shadow))}
-.wa-rimstage-sm .wa-rim{width:min(62%,220px);filter:drop-shadow(0 16px 18px var(--wa-rim-shadow))}
-.wa-rimstage-sm::before{width:min(80%,280px)}
-.wa-rim-tire{fill:var(--wa-tire)}
-.wa-rim-wall{fill:none;stroke:var(--wa-tire-line);stroke-width:1.2}
-.wa-rim-barrel{fill:var(--wa-barrel)}
-.wa-rim-ring{fill:none;stroke:rgba(0,0,0,.2);stroke-width:1}
-.wa-rim-lug{fill:var(--wa-tire)}
-.wa-rim-cap{fill:var(--wa-accent)}
-.wa-rim-sheen{fill:none;stroke:rgba(255,255,255,.55);stroke-width:2.4;stroke-linecap:round}
+.wa-hero-plain{background:var(--wa-hero-plain-bg);color:var(--wa-hero-plain-text)}
+.wa-hero-plain .wa-h1,.wa-hero-plain .wa-eyebrow,.wa-hero-plain .wa-stat dd{color:var(--wa-hero-plain-text)}
+.wa-hero-plain .wa-tone,.wa-hero-plain .wa-lead,.wa-hero-plain .wa-stat dt{color:var(--wa-hero-plain-muted)}
+.wa-hero-plain .wa-h1,.wa-hero-plain .wa-lead{text-shadow:none}
+.wa-hero-plain .wa-btn-line{color:var(--wa-hero-plain-text);border-bottom-color:var(--wa-hero-plain-line)}
+.wa-hero-plain .wa-stats{background:none;border-top-color:var(--wa-hero-plain-line);-webkit-backdrop-filter:none;backdrop-filter:none}
+.wa-hero-plain .wa-stat{border-left-color:var(--wa-hero-plain-line)}
 
 .wa-trust{background:var(--wa-surface);border-bottom:1px solid var(--wa-border)}
 .wa-trust-grid{display:flex;flex-wrap:wrap;gap:1px;background:var(--wa-border)}
@@ -277,11 +275,11 @@ html[data-acg-scrolled] .wa-nav{box-shadow:0 12px 32px -20px var(--wa-shadow)}
 .wa-hero-photo .wa-btn:hover{background:var(--wa-on-hero);border-color:var(--wa-on-hero);color:var(--wa-on-white)}
 .wa-btn-line:hover{color:var(--wa-accent-text);border-bottom-color:var(--wa-accent-text)}
 .wa-hero-photo .wa-btn-line:hover{color:var(--wa-on-hero);border-bottom-color:var(--wa-on-hero)}
+.wa-hero-plain .wa-btn-line:hover{color:var(--wa-hero-plain-text);border-bottom-color:var(--wa-hero-plain-text)}
 .wa-contact .wa-btn-line:hover{color:var(--wa-soft-accent);border-bottom-color:var(--wa-soft-accent)}
 .wa-card:hover{border-color:var(--wa-border-strong);transform:translateY(-3px);box-shadow:0 26px 50px -30px var(--wa-shadow)}
 .wa-card:hover::before{transform:scaleX(1)}
 .wa-card:hover .wa-card-media>img{transform:scale(1.04)}
-.wa-card:hover .wa-rim{rotate:24deg}
 .wa-card .acg-svc-book:hover .wa-arrow,.wa-more:hover .wa-arrow{background:var(--wa-ink);border-color:var(--wa-ink);color:var(--wa-on-ink)}
 .wa-brand-cell:hover{color:var(--wa-text)}
 .wa-shot:hover img{transform:scale(1.04)}
@@ -299,10 +297,7 @@ html[data-acg-scrolled] .wa-nav{box-shadow:0 12px 32px -20px var(--wa-shadow)}
 .wa-card{transition:transform .35s cubic-bezier(.2,.7,.2,1),border-color .25s ease,box-shadow .35s ease}
 .wa-card::before{transition:transform .45s cubic-bezier(.2,.7,.2,1)}
 .wa-card-media>img,.wa-shot img{transition:transform .9s cubic-bezier(.2,.7,.2,1)}
-.wa-card .wa-rim{transition:rotate 1.2s cubic-bezier(.2,.7,.2,1)}
 .wa-arrow,.wa-quote,.wa-social a{transition:background-color .2s ease,border-color .2s ease,color .2s ease}
-.wa-hero .wa-rim{animation:wa-rim-in 1.6s cubic-bezier(.2,.7,.2,1) both}
-@keyframes wa-rim-in{from{opacity:0;rotate:-50deg;scale:.94}to{opacity:1;rotate:0deg;scale:1}}
 .wa-tick-track{flex-wrap:nowrap;justify-content:flex-start;width:max-content;padding:15px 0;animation:wa-tick var(--wa-tick-dur,40s) linear infinite}
 .wa-tick-group{flex-wrap:nowrap}
 .wa-tick-dup,.wa-tick-rep{display:flex}
@@ -336,10 +331,9 @@ html[data-acg-scrolled] .wa-nav{box-shadow:0 12px 32px -20px var(--wa-shadow)}
 .wa-actions{flex-direction:column;align-items:stretch;gap:12px;margin-top:32px}
 .wa-actions .wa-btn-line{justify-content:center;min-height:50px;padding:0 20px;border:1px solid var(--wa-border-strong)}
 .wa-hero-photo .wa-actions .wa-btn-line{border-color:var(--wa-on-hero-line)}
+.wa-hero-plain .wa-actions .wa-btn-line{border-color:var(--wa-hero-plain-line)}
 .wa-contact .wa-actions .wa-btn-line{border-color:var(--wa-soft-muted)}
 .wa-stage-media{aspect-ratio:5/4}
-.wa-hero .wa-rim{width:min(66%,300px)}
-.wa-hero .wa-rimstage::before{width:min(86%,380px)}
 .wa-hero-photo{min-height:clamp(540px,86vh,760px)}
 .wa-hero-scrim{background:var(--wa-scrim)}
 .wa-hero-body{padding-top:88px;padding-bottom:48px}
@@ -516,8 +510,7 @@ const onBoth = (fg, a, b, min) => ensureContrast(ensureContrast(fg, a, min), b, 
 
 // Everything the alloy & bronze look needs, derived from the owner's
 // palette. Default: ink buttons and ticker, white cards on an alloy-gray
-// page, a bronze-tinted contact band; a dark palette gets a deeper band
-// and a light metal rim.
+// page, a bronze-tinted contact band; a dark palette gets a deeper band.
 //
 // The soft tint (contact band, awards box, icon tiles) mixes the accent
 // into a light surface only. On a dark surface an RGB mix with the accent
@@ -528,9 +521,11 @@ function forgeTokens(t) {
   const band = t.isDark ? mix(t.bg, '#000000', 0.45) : t.text;
   const bandFg = readableOn(band);
   const soft = t.isDark ? mix(t.surface, t.text, 0.07) : mix(t.accent, t.surface, 0.9);
-  const [lite, deep] = luminance(t.surface) >= luminance(t.text) ? [t.surface, t.text] : [t.text, t.surface];
-  const alloyLo = mix(lite, deep, 0.5);
-  const tire = t.isDark ? mix(t.bg, '#000000', 0.55) : mix(t.text, '#000000', 0.2);
+  // Full Background hero before the owner adds a photo: the same ink band
+  // as the ticker and footer, so the layout still reads as a full-width
+  // dark header (light text, as over the photo it is waiting for). Its
+  // text is repaired against the band itself; no scrim is painted.
+  const heroPlainText = ensureContrast(t.onHero, band, 4.5);
   return {
     '--wa-ink': t.text,
     '--wa-on-ink': readableOn(t.text),
@@ -539,13 +534,6 @@ function forgeTokens(t) {
     // Large display text only (3:1 is AA for text this size).
     '--wa-alloy': onBoth(mix(t.text, t.surface, 0.5), t.surface, t.bg, 3),
     '--wa-accent-lg': onBoth(t.accent, t.surface, t.bg, 3),
-    '--wa-alloy-hi': mix(lite, deep, 0.05),
-    '--wa-alloy-mid': mix(lite, deep, 0.24),
-    '--wa-alloy-lo': alloyLo,
-    '--wa-tire': tire,
-    '--wa-tire-line': alpha(readableOn(tire), 0.1),
-    '--wa-barrel': mix(tire, alloyLo, 0.28),
-    '--wa-rim-shadow': alpha('#000000', t.isDark ? 0.5 : 0.22),
     '--wa-stage-glow': alpha(t.surface, t.isDark ? 0.35 : 0.95),
     '--wa-soft-bg': soft,
     '--wa-soft-line': t.isDark ? alpha(t.accent, 0.45) : mix(t.accent, t.surface, 0.7),
@@ -563,6 +551,12 @@ function forgeTokens(t) {
     '--wa-shadow': alpha('#000000', t.isDark ? 0.6 : 0.2),
     '--wa-on-hero-muted': alpha(t.onHero, 0.86),
     '--wa-on-hero-line': alpha(t.onHero, 0.42),
+    '--wa-hero-plain-bg': band,
+    '--wa-hero-plain-text': heroPlainText,
+    // Lead and tail tone: the photo hero's 86% white, mixed into the band
+    // as a solid color (an alpha could not be contrast-checked).
+    '--wa-hero-plain-muted': ensureContrast(mix(heroPlainText, band, 0.14), band, 4.5),
+    '--wa-hero-plain-line': alpha(heroPlainText, 0.42),
   };
 }
 
@@ -581,58 +575,7 @@ const ICONS = {
   arrow: 'M5 12h14M13 6l6 6-6 6',
   award: 'M12 15a6 6 0 1 0 0-12 6 6 0 0 0 0 12zM8.5 13.8 7 21l5-2.5 5 2.5-1.5-7.2',
   calendar: 'M4 5h16v15H4zM4 10h16M8 3v4M16 3v4',
-  rim: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM12 9V3.5M14.9 11.1l5.2-1.9M13.8 14.4l3.4 4.4M10.2 14.4l-3.4 4.4M9.1 11.1 3.9 9.2',
 };
-
-// The signature graphic: a five-twin-spoke alloy rim drawn in the owner's
-// palette (alloy lip, dark tire, accent center cap). It stands in for a
-// missing hero or product photo, so a published page never shows an empty
-// "Image" box. `id` keeps the gradient ids unique on the page.
-const SPOKES = [0, 72, 144, 216, 288];
-const LUGS = [36, 108, 180, 252, 324].map((a) => {
-  const r = (a * Math.PI) / 180;
-  return [Math.round(15 * Math.sin(r) * 100) / 100, Math.round(-15 * Math.cos(r) * 100) / 100];
-});
-function Rim({ id }) {
-  return (
-    <svg className="wa-rim" viewBox="-100 -100 200 200" aria-hidden="true" focusable="false">
-      <defs>
-        <linearGradient id={`${id}-lip`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" style={{ stopColor: 'var(--wa-alloy-hi)' }} />
-          <stop offset="0.55" style={{ stopColor: 'var(--wa-alloy-mid)' }} />
-          <stop offset="1" style={{ stopColor: 'var(--wa-alloy-lo)' }} />
-        </linearGradient>
-        <linearGradient id={`${id}-spoke`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" style={{ stopColor: 'var(--wa-alloy-mid)' }} />
-          <stop offset="1" style={{ stopColor: 'var(--wa-alloy-hi)' }} />
-        </linearGradient>
-      </defs>
-      <circle r="99" className="wa-rim-tire" />
-      <circle r="90" className="wa-rim-wall" />
-      <circle r="81" fill={`url(#${id}-lip)`} />
-      <circle r="74" className="wa-rim-barrel" />
-      {SPOKES.map((a) => (
-        <g key={a} transform={`rotate(${a})`}>
-          <path d="M-8.5-22L-14.5-73.5L-4.2-75L-1.8-22Z" fill={`url(#${id}-spoke)`} />
-          <path d="M1.8-22L4.2-75L14.5-73.5L8.5-22Z" fill={`url(#${id}-spoke)`} />
-        </g>
-      ))}
-      <circle r="25" fill={`url(#${id}-lip)`} />
-      <circle r="25" className="wa-rim-ring" />
-      {LUGS.map(([x, y]) => <circle key={`${x},${y}`} cx={x} cy={y} r="3.2" className="wa-rim-lug" />)}
-      <circle r="8.5" className="wa-rim-cap" />
-      <path d="M-55.2-55.2A78 78 0 0 1-20.2-75.3" className="wa-rim-sheen" />
-    </svg>
-  );
-}
-
-function RimStage({ id, small = false }) {
-  return (
-    <div className={`wa-rimstage${small ? ' wa-rimstage-sm' : ''}`} aria-hidden="true">
-      <Rim id={id} />
-    </div>
-  );
-}
 
 // About photo stand-in on the published page: the business initial as a
 // forged stamp (never an "upload a photo" box).
@@ -674,6 +617,10 @@ const SEEDED_TRUST = new Set([
 const SEEDED_SUBS = new Set(['0% for 12 months', 'or free return', 'or we make it right']);
 
 const fill = { position: 'absolute', inset: 0, height: '100%' };
+// The editor's upload placeholder over the plain Full Background band: it
+// fills the band, with its hint along the top, clear of the hero copy
+// (which sits at the bottom).
+const heroSlotStyle = { height: '100%', minHeight: 0, flexDirection: 'row', alignItems: 'flex-start', paddingTop: 28 };
 const pad2 = (n) => String(n).padStart(2, '0');
 const colsFor = (n) => (n === 1 ? 'wa-c1' : n === 2 || n === 4 ? 'wa-c2' : 'wa-c3');
 
@@ -847,8 +794,11 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
   const heroSecondaryHref = ownerHref(copy.ctaSecondaryUrl) || (rendered.products ? '#services' : rendered.cta ? '#contact' : null);
   const heroSecondaryLabel = txt(copy.ctaSecondary)
     || (!rendered.products ? 'Get in Touch' : services.length > 0 ? 'View Services' : 'View Products');
+  // Edit > Hero > Hero Layout. "Full Background" (the default) renders
+  // the full-width hero with or without a photo: it used to need one and
+  // quietly fell back to the split layout, so the setting did nothing
+  // until a photo was uploaded.
   const splitHero = copy.heroLayout === 'split';
-  const photoHero = !splitHero && !!images.hero;
   const [lead, tail] = splitHeadline(txt(copy.headline) || name || fb.headline);
   const subheadline = txt(copy.subheadline) || txt(biz.tagline) || fb.subheadline;
 
@@ -913,7 +863,6 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
           )}
         </div>
       )}
-      {!images.hero && <EditorHint>{PHOTO_HINTS.hero}</EditorHint>}
     </>
   );
   const statsBand = heroStats.length > 0 && (
@@ -990,12 +939,17 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
       <main id="main" style={{ display: 'flex', flexDirection: 'column' }}>
         {!show('hero') && <h1 className="wa-sr">{name}</h1>}
 
-        {show('hero') && photoHero && (
-          <header data-section="hero" className="wa-hero wa-hero-photo" style={{ order: order('hero') }}>
+        {/* Full Background (wa-hero-photo): over the hero photo, or a
+            plain band (wa-hero-plain) until there is one. The editor
+            fills the band with the upload placeholder. */}
+        {show('hero') && !splitHero && (
+          <header data-section="hero" className={`wa-hero wa-hero-photo${images.hero ? '' : ' wa-hero-plain'}`} style={{ order: order('hero') }}>
             <div className="wa-hero-bg">
-              <PhotoSlot src={images.hero} alt="" loading="eager" fetchPriority="high" />
+              {images.hero
+                ? <PhotoSlot src={images.hero} alt="" loading="eager" fetchPriority="high" />
+                : <PhotoSlot slot="hero" style={heroSlotStyle} />}
             </div>
-            <div className="wa-hero-scrim" />
+            {images.hero && <div className="wa-hero-scrim" />}
             <div className="wa-wrap wa-hero-body">
               <div>{heroText}</div>
             </div>
@@ -1003,14 +957,14 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
           </header>
         )}
 
-        {show('hero') && !photoHero && (
+        {show('hero') && splitHero && (
           <header data-section="hero" className="wa-hero wa-hero-split" style={{ order: order('hero') }}>
             <div className="wa-hero-text">{heroText}</div>
             <div className="wa-stage">
               <div className="wa-stage-media">
-                {images.hero
-                  ? <PhotoSlot src={images.hero} alt="" loading="eager" fetchPriority="high" style={fill} />
-                  : <RimStage id="wa-hero-rim" />}
+                {/* No photo: a blank panel (the editor shows where to
+                    upload one). */}
+                <PhotoSlot src={images.hero} slot="hero" alt="" loading="eager" fetchPriority="high" style={fill} />
               </div>
               {statsBand}
             </div>
@@ -1024,9 +978,10 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
                 <ul className="wa-trust-grid">
                   {trustItems.map((it, i) => (
                     <li key={`${it.label}-${i}`} className="wa-trust-item" data-acg-reveal="fade" style={{ '--acg-delay': `${i * 80}ms` }}>
-                      {(it.icon || it.emoji || it.emoji === undefined || it.emoji === null) && (
+                      {/* An owner item without an icon or emoji shows none. */}
+                      {(it.icon || txt(it.emoji)) && (
                         <span className="wa-ticon" aria-hidden="true">
-                          {it.icon ? <Icon d={it.icon} size={18} /> : txt(it.emoji) ? <IconOrEmoji value={txt(it.emoji)} size={16} /> : <Icon d={ICONS.rim} size={18} />}
+                          {it.icon ? <Icon d={it.icon} size={18} /> : <IconOrEmoji value={txt(it.emoji)} size={16} />}
                         </span>
                       )}
                       <span>
@@ -1096,7 +1051,6 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
                               slot="product"
                               alt={p.name || `${name || 'Our'} product photo`}
                               style={fill}
-                              fallback={<RimStage id={`wa-prod-rim-${i}`} small />}
                             />
                           </div>
                         )}
