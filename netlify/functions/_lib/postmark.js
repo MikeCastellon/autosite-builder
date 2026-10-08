@@ -914,10 +914,19 @@ const HANDOVER_TIPS = [
   'Need a change? Just reply to this email.',
 ];
 
+// A free website goes to a free account: no bookings or payments to point at.
+const FREE_HANDOVER_TIPS = [
+  'Change your text, photos and colors any time, then press Publish.',
+  'Messages from your site\'s contact form show up in your dashboard.',
+  'Need a change? Just reply to this email.',
+];
+
 // Hand-over: the custom website now lives in the customer's own account.
 // newAccount: the link sets their password (first sign-in); otherwise it
 // opens the sign-in page.
-export function customSiteHandoverEmail({ firstName: givenName, businessName, siteUrl, actionUrl, newAccount, email }) {
+// eyebrow / tips: a free website's hand-over (freeSiteHandover) shares this
+// email with its own heading and free-plan tips.
+export function customSiteHandoverEmail({ firstName: givenName, businessName, siteUrl, actionUrl, newAccount, email, eyebrow = 'Custom Websites', tips = HANDOVER_TIPS }) {
   const first = String(givenName || '').trim();
   const whose = businessName ? `the ${esc(businessName)} website` : 'your new website';
   const intro = newAccount
@@ -928,11 +937,11 @@ export function customSiteHandoverEmail({ firstName: givenName, businessName, si
     : '';
   const html = renderEmailShell({
     icon: null,
-    eyebrow: 'Custom Websites',
+    eyebrow,
     title: first ? `It's all yours, ${esc(first)}!` : 'It\'s all yours!',
     intro,
     cta: { label: newAccount ? 'Set my password' : 'Sign in', href: actionUrl },
-    body: `${site}${tipList('What you can do now', HANDOVER_TIPS)}
+    body: `${site}${tipList('What you can do now', tips)}
       <p style="margin:16px 0 0;font-size:12px;color:#a1a1aa;text-align:center;line-height:1.6;">Your sign-in email is <strong style="color:#52525b;">${esc(email)}</strong>.${newAccount ? ' If the button has expired, use "Forgot password" on the sign-in page.' : ''}</p>
       ${linkFallback(actionUrl)}`,
   });
@@ -946,7 +955,7 @@ export function customSiteHandoverEmail({ firstName: givenName, businessName, si
     ...(siteUrl ? ['', `Your site: ${siteUrl}`] : []),
     '',
     'What you can do now:',
-    ...HANDOVER_TIPS.map((t) => `- ${t}`),
+    ...tips.map((t) => `- ${t}`),
     '',
     `Your sign-in email is ${email}.${newAccount ? ' If the link has expired, use "Forgot password" on the sign-in page.' : ''}`,
   ].join('\n');
@@ -1013,6 +1022,21 @@ export function customSiteHandover({ to, replyTo, ...message }) {
     to,
     replyTo: replyTo || CUSTOM_SITES_REPLY_TO,
     ...customSiteHandoverEmail(message),
+  });
+}
+
+// Admin > Free websites: the same access email for a site the team built
+// with the normal builder. `pro`: the hand-over included Pro, so the
+// bookings and payments tips apply.
+export function freeSiteHandoverEmail({ pro, ...message }) {
+  return customSiteHandoverEmail({ ...message, eyebrow: 'Genius Websites', tips: pro ? HANDOVER_TIPS : FREE_HANDOVER_TIPS });
+}
+
+export function freeSiteHandover({ to, replyTo, ...message }) {
+  return sendCustomSiteEmail('freeSiteHandover', {
+    to,
+    replyTo: replyTo || CUSTOM_SITES_REPLY_TO,
+    ...freeSiteHandoverEmail(message),
   });
 }
 

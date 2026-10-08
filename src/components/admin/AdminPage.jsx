@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import AdminDashboard from './AdminDashboard.jsx';
 import AdminCustomSitesTab from './AdminCustomSitesTab.jsx';
+import AdminFreeSitesTab from './AdminFreeSitesTab.jsx';
 import AdminAccountsTab from './AdminAccountsTab.jsx';
 import AdminAllBookingsTab from './AdminAllBookingsTab.jsx';
 import AdminAllInquiriesTab from './AdminAllInquiriesTab.jsx';
@@ -11,7 +12,7 @@ import { useAuth } from '../../lib/AuthContext.jsx';
 import { ADMIN_SECTIONS, DEFAULT_ADMIN_SECTION, isAdminSection } from '../../lib/adminWorkspace.js';
 
 // One line under each section title, so a section says what it is for.
-// Custom websites, Leads, All inquiries and Site upgrades are left out:
+// Custom websites, Free websites, Leads, All inquiries and Site upgrades are left out:
 // their tabs open with their own line.
 const SECTION_INTROS = {
   dashboard: 'Who is paying, custom websites in progress and what needs a look.',
@@ -35,6 +36,8 @@ export default function AdminPage({
   onOpenSiteEditor,
   onOpenBookingSettings,
   onOpenDemo,
+  onBuildFreeSite,
+  onOpenFreeSiteEditor,
 }) {
   const { profile } = useAuth();
   // Held here rather than in the Pipeline tab, so "Open lead" on the Leads
@@ -79,6 +82,9 @@ export default function AdminPage({
           onOpenSiteEditor={onOpenSiteEditor}
           onOpenBookingSettings={onOpenBookingSettings}
         />
+      )}
+      {current === 'free-sites' && (
+        <AdminFreeSitesTab key={navKey} onBuildSite={onBuildFreeSite} onOpenSiteEditor={onOpenFreeSiteEditor} />
       )}
       {current === 'accounts' && <AdminAccountsTab key={`${accountsFilter}:${navKey}`} initialFilter={accountsFilter} />}
       {current === 'pipeline' && <PipelineTab userId={profile.id} openLeadId={openLeadId} onOpenLead={setOpenLeadId} />}
