@@ -2,7 +2,7 @@ import { ASSET_BUCKET, isTeamAsset } from '../../../src/lib/customSiteForm.js';
 import { parseCopyJson } from '../../../src/lib/customSiteDesign.js';
 import {
   MATCH_SHOT_LIMIT, SUGGEST_EFFORT, SUGGEST_IMAGE_LIMITS, SUGGEST_MODEL, buildSuggestPrompt, matchContextFor, normalizeSuggestion,
-  referenceShotGroup, suggestBusinessType, suggestImageCandidates, suggestTemplateIds,
+  matchTemplateIds, referenceShotGroup, suggestBusinessType, suggestImageCandidates, suggestTemplateIds,
 } from '../../../src/lib/designSuggest.js';
 
 // "Suggest a design" on the server: the customer's images from the private
@@ -229,9 +229,12 @@ export async function requestSuggestion(client, prompt, { deadlineMs } = {}) {
 // fails before the request (the reference is never fetched from the web,
 // and a match never quietly turns into an inspiration run).
 export async function suggestDesign({ db, client, project, deadlineMs, reference = null, studioPalette = null, useBrand }) {
-  const templateIds = suggestTemplateIds(suggestBusinessType(project));
   const { error, match: context } = matchContextFor(project, { reference, studioPalette, useBrand });
   if (error) throw Object.assign(new Error(error), { code: 'reference' });
+  // A match may pick any template (matchTemplateIds); an inspire run keeps
+  // to the business type.
+  const type = suggestBusinessType(project);
+  const templateIds = context ? matchTemplateIds(type) : suggestTemplateIds(type);
   const { images, skipped } = await loadSuggestImages(db, project, { matchShots: context?.shots });
   let match = null;
   if (context) {

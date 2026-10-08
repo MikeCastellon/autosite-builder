@@ -82,6 +82,15 @@ export function suggestTemplateIds(businessType) {
   return forType.length ? forType : SUGGEST_TEMPLATES.map((t) => t.id);
 }
 
+// The templates a "Match its layout" run may pick: every one, the
+// business's own type first. A match is about layout, and limiting it to
+// the business type left a detailing shop with one template (the one it
+// already had), so the match could only shuffle fonts and sections.
+export function matchTemplateIds(businessType) {
+  const own = SUGGEST_TEMPLATES.filter((t) => t.businessType === businessType).map((t) => t.id);
+  return [...own, ...SUGGEST_TEMPLATES.map((t) => t.id).filter((id) => !own.includes(id))];
+}
+
 // ─── Images the request may show ─────────────────────────────────────
 
 // At most this many of each kind go into the request. Brand files are not
@@ -649,7 +658,7 @@ Write each reason as one plain-English line for the designer.`;
 // Appended in a "Match its layout" run only, so an inspiration run's
 // request stays exactly as it was.
 const MATCH_PROMPT = `This run is "Match its layout": the designer picked one reference website and wants the customer's site laid out like it. Its screenshots come first, labeled "Layout to match". That site belongs to another business.
-- Mirror its layout as closely as the templates allow. templateId: the template whose structure is closest (hero style, how the sections stack, how dense or airy, card, button and navigation style). sections.order: the reference's top-to-bottom order for the section types it has; hidden: sections it doesn't have, when hiding them keeps the page closer to it (never the hero or the contact section, and never one the customer asked for). heroLayout: "full" when its headline sits over a full-width photo, "split" when the text sits beside the image. aboutLayout: how it presents the business ("stats" only under the usual rule). fonts: the closest faces in the lists to its type feel (serif or sans, weight, width, all caps or not).
+- Mirror its layout as closely as the templates allow. Every template is offered here, also ones made for another business type: a template's type only shows in its own extra sections (a tint shade guide, wheel product cards), which you hide when the business doesn't need them, and its text is written for this business either way. templateId: the template whose structure is closest (hero style, how the sections stack, how dense or airy, card, button and navigation style). sections.order: the reference's top-to-bottom order for the section types it has; hidden: sections it doesn't have, when hiding them keeps the page closer to it (never the hero or the contact section, and never one the customer asked for). heroLayout: "full" when its headline sits over a full-width photo, "split" when the text sits beside the image. aboutLayout: how it presents the business ("stats" only under the usual rule). fonts: the closest faces in the lists to its type feel (serif or sans, weight, width, all caps or not).
 - Take only layout, structure, spacing, type feel and component style. Never copy its text, headlines, photos, logo, icons that are brand marks, business name, slogan, colors or anything else that identifies that business. The customer's own words, photos, logo and colors go in.
 - Colors are not yours to choose in this run: the request says which palette to return. It comes from the customer's side; the reference's colors are never used.
 - Photos and facts follow the usual rules: only the customer's own photos and words.
