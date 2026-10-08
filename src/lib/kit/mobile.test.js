@@ -377,7 +377,7 @@ describe('facts from the written site', () => {
     expect(redline.order).toEqual(['hero', 'about', 'brands', 'services', 'featured', 'testimonials', 'locations', 'cta']);
 
     const sporty = siteSections({ templateId: 'detailing_sporty', copy: { sectionOrder: ['hero', 'about', 'services'] }, businessInfo: { awards: ['Best of Miami'] } });
-    expect(sporty.sections.filter((s) => s.hidden).map((s) => s.id)).toEqual(['brands', 'featured']);
+    expect(sporty.sections.filter((s) => s.hidden).map((s) => s.id)).toEqual(['brands', 'featured', 'beforeAfter']);
     // The saved ids keep their order; one the save lacks takes its default
     // slot after its predecessor (the editor's repair, mergeSectionOrder).
     const at = (id) => sporty.order.indexOf(id);
@@ -385,8 +385,16 @@ describe('facts from the written site', () => {
     expect(sporty.order.slice(0, 2)).toEqual(['hero', 'statsBar']);
     expect(sporty.order).toContain('awards');
 
-    const optedIn = siteSections({ templateId: 'detailing_sporty', copy: { vehicleMakes: ['BMW'], featuredService: { serviceName: 'Ceramic Coating' } } });
+    const optedIn = siteSections({
+      templateId: 'detailing_sporty',
+      copy: { vehicleMakes: ['BMW'], featuredService: { serviceName: 'Ceramic Coating' }, beforeAfter: { pairs: [{}] } },
+      images: { baBefore0: 'https://img.example/b.jpg', baAfter0: 'https://img.example/a.jpg' },
+    });
     expect(optedIn.sections.filter((s) => s.hidden).map((s) => s.id)).toEqual(['awards']);
+    expect(optedIn.order.indexOf('beforeAfter')).toBe(optedIn.order.indexOf('gallery') + 1);
+    // Before & After shows only with a pair that has both photos.
+    const half = siteSections({ templateId: 'detailing_sporty', copy: { beforeAfter: { pairs: [{}] } }, images: { baBefore0: 'https://img.example/b.jpg' } });
+    expect(half.sections.find((s) => s.id === 'beforeAfter').hidden).toBe(true);
   });
 
   it('takes contact details from the site only, never the intake', () => {

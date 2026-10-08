@@ -10,6 +10,7 @@ import { isImpersonationTab } from '../../lib/supabase.js';
 import { IMPERSONATION_BAR_HEIGHT } from '../admin/ImpersonationBanner.jsx';
 import { EditorModeProvider } from './templates/kit/EditorMode.jsx';
 import { SITE_BASE_CSS } from '../../lib/siteRuntime.js';
+import { attachBeforeAfter } from './beforeAfterPreview.js';
 import { buildFontHref } from '../../lib/fontCatalog.js';
 
 const ACG_LOGO = 'https://www.autocaregenius.com/cdn/shop/files/v11_1.svg?v=1760731533&width=160';
@@ -45,11 +46,13 @@ export default function WebsitePreview({ siteId, businessInfo, onBusinessInfoCha
   }, [templateId]);
 
   // Preview twin of the published runtime (siteRuntime.js): the scrolled
-  // flag templates style their nav with (html[data-acg-scrolled]), and the
-  // phone menu (details.acg-menu) closing on a link tap or outside click.
+  // flag templates style their nav with (html[data-acg-scrolled]), the
+  // phone menu (details.acg-menu) closing on a link tap or outside click,
+  // and the Before & After sliders (SITE_BA_JS, beforeAfterPreview.js).
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
     const root = document.documentElement;
+    const detachBeforeAfter = attachBeforeAfter(document);
     let last = null;
     const onScroll = () => {
       const scrolled = window.scrollY > 20;
@@ -73,6 +76,7 @@ export default function WebsitePreview({ siteId, businessInfo, onBusinessInfoCha
     return () => {
       window.removeEventListener('scroll', onScroll);
       document.removeEventListener('click', onClick);
+      detachBeforeAfter();
       root.removeAttribute('data-acg-scrolled');
     };
   }, []);

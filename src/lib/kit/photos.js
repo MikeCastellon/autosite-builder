@@ -381,10 +381,11 @@ export function pairAfters(data) {
 }
 
 // What "Use these picks" hands the Design setup: { hero, about, gallery }
-// as stored paths ('' / [] where the desk picked none). No template has a
-// before/after section yet, so the "after" photos of the pairs (finished
-// work) fill the gallery slots the gallery picks leave free; a "before"
-// photo never goes in on its own.
+// as stored paths ('' / [] where the desk picked none). The pairs
+// themselves go to a template's Before & After section from the Design
+// step ("Use the photo desk's pairs", most templates have none), so here
+// the "after" photos of the pairs (finished work) fill the gallery slots
+// the gallery picks leave free; a "before" photo never goes in on its own.
 export function photoSlots(data) {
   const by = picksByRole(data);
   const gallery = by.gallery.map((p) => p.path);

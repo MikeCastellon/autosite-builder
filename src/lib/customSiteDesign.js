@@ -11,6 +11,7 @@ import { FORM_FIELDS, answerText, isFieldShown, isTeamAsset, safeHref } from './
 import { formatPrice } from './formatPrice.js';
 import { GROUP_COPY_KEYS, GROUP_INFO_KEYS, LEVER_GROUPS, leverGroupsChanged, leverPatch, sanitizeLevers } from './designLevers.js';
 import { REFERENCE_MODES } from './referenceModes.js';
+import { sectionIdsFor } from '../data/templateSections.js';
 
 // The model custom sites are written with: one tier above the free builder.
 export const DESIGN_MODEL = 'claude-opus-5-5';
@@ -136,12 +137,15 @@ export function designFromIntake(project) {
     templateId: '',
     colorMode: form.colorMode || '',
     brandHexes: form.colorMode === 'mine' ? (form.colors || []) : [],
-    // Asset paths (custom-site-assets) chosen for each image slot.
+    // Asset paths (custom-site-assets) chosen for each image slot. Before &
+    // After pairs are picked by hand (or from the photo desk's pairs): which
+    // two photos show the same car can't be told from the uploads alone.
     slots: {
       logo: pick('logo')[0] || '',
       hero: photos[0] || '',
       about: photos[1] || '',
       gallery: photos.slice(2, 14),
+      beforeAfter: [],
     },
   };
 }
@@ -282,7 +286,9 @@ function clean(v, max) {
 
 const PATH_RE = /^[0-9a-f-]{36}\/(logo|brand|reference|photo)\/[0-9a-f-]{36}\.[a-z0-9]{1,5}$/;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
-const IMAGE_KEY_RE = /^(logo|hero|about|gallery(?:[0-9]|1[01]))$/;
+// The site's image keys a design copies photos to: the slots, and the
+// Before & After pairs (baBefore0..5 / baAfter0..5, below).
+const IMAGE_KEY_RE = /^(logo|hero|about|gallery(?:[0-9]|1[01])|ba(?:Before|After)[0-5])$/;
 const TEMPLATE_ID_RE = /^[a-z0-9_]{2,40}$/;
 
 // ─── Reference sites ─────────────────────────────────────────────────
@@ -522,6 +528,199 @@ export function replacedShotSource(source, before, after) {
   return { kind: 'asset', path: to.path };
 }
 
+// ─── Before & After (design.slots.beforeAfter, design.beforeAfter) ───
+//
+// Pairs of the customer's own photos, for the templates with a "Before &
+// After" section (section id 'beforeAfter' in templateSections.js; Bold &
+// Sporty first). The setup picks each pair's two photos from the project's
+// photo uploads, with an optional caption, and may give the section a
+// heading and an intro:
+//   design.slots.beforeAfter  [{ before, after, caption }], at most 6, in
+//                             order. A pair still missing a photo is kept
+//                             (the setup's work in progress) but never
+//                             reaches the site.
+//   design.beforeAfter        { title, intro }, only what the admin typed:
+//                             the template has its own neutral defaults.
+//   design.beforeAfterChanged the setup changed them since the last write
+//                             (sticky until a run applies them, like the
+//                             Studio's groups; the run clears it).
+// A write turns them into what the template reads: images baBefore{i} /
+// baAfter{i}, copied from the uploads like every slot, and
+// copy.beforeAfter = { title?, intro?, pairs: [{ caption? }] } where pair i
+// is the i-th complete pair. The section is on while that object is there,
+// so a site gets it only with a pair whose two photos were copied.
+export const BEFORE_AFTER_SECTION = 'beforeAfter';
+export const BEFORE_AFTER_MAX = 6;
+export const BEFORE_AFTER_CAPTION_MAX = 80;
+export const BEFORE_AFTER_TITLE_MAX = 80;
+export const BEFORE_AFTER_INTRO_MAX = 200;
+const BA_KEY_RE = /^ba(?:Before|After)[0-5]$/;
+
+// Text that goes on the site in one line: no line breaks or control
+// characters, single spaces, capped.
+function oneLine(v, max) {
+  return typeof v === 'string' ? v.replace(/[\u0000-\u001f\u007f\u2028\u2029]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max).trim() : '';
+}
+
+// Does this template have the Before & After section? Read from the
+// sections list, so the setup offers it (and a write applies it) on
+// exactly the templates that render it.
+export function hasBeforeAfter(templateId) {
+  return sectionIdsFor(templateId).includes(BEFORE_AFTER_SECTION);
+}
+
+export function isBeforeAfterKey(key) {
+  return BA_KEY_RE.test(String(key));
+}
+
+// One of the project's photo uploads, as the gallery slots take them
+// (PATH_RE), of the photo kind, and in this project's own folder when the
+// caller knows the project. '' for anything else.
+function pairPhoto(v, projectId) {
+  const path = typeof v === 'string' ? v : '';
+  const m = PATH_RE.exec(path);
+  if (!m || m[1] !== 'photo') return '';
+  if (projectId && !path.startsWith(`${projectId}/photo/`)) return '';
+  return path;
+}
+
+// design.slots.beforeAfter kept to known shapes: at most 6 pairs of photo
+// paths with a one-line caption of 80 characters. A missing (or refused)
+// photo stays '' so a half-picked pair keeps its place; a pair with
+// neither photo nor caption goes, and an "after" that repeats its "before"
+// is dropped (a pair is two different photos).
+export function sanitizeBeforeAfterPairs(input, { projectId } = {}) {
+  const out = [];
+  for (const p of Array.isArray(input) ? input : []) {
+    if (out.length >= BEFORE_AFTER_MAX) break;
+    if (!p || typeof p !== 'object' || Array.isArray(p)) continue;
+    const before = pairPhoto(p.before, projectId);
+    let after = pairPhoto(p.after, projectId);
+    if (after && after === before) after = '';
+    const caption = oneLine(p.caption, BEFORE_AFTER_CAPTION_MAX);
+    if (before || after || caption) out.push({ before, after, caption });
+  }
+  return out;
+}
+
+// design.beforeAfter: the section's heading (80) and intro (200) as the
+// admin typed them, one line each; null when both are empty.
+export function sanitizeBeforeAfterText(input) {
+  const src = input && typeof input === 'object' && !Array.isArray(input) ? input : {};
+  const title = oneLine(src.title, BEFORE_AFTER_TITLE_MAX);
+  const intro = oneLine(src.intro, BEFORE_AFTER_INTRO_MAX);
+  return title || intro ? { title, intro } : null;
+}
+
+// A note (the photo desk's pair note) as a caption: one line within 80
+// characters, cut at a word when it is longer.
+export function beforeAfterCaption(text) {
+  const s = oneLine(text, 1000);
+  if (s.length <= BEFORE_AFTER_CAPTION_MAX) return s;
+  const cut = s.slice(0, BEFORE_AFTER_CAPTION_MAX + 1);
+  const at = cut.lastIndexOf(' ');
+  return (at >= BEFORE_AFTER_CAPTION_MAX / 2 ? cut.slice(0, at) : s.slice(0, BEFORE_AFTER_CAPTION_MAX)).replace(/[\s,;:–—-]+$/, '');
+}
+
+// The pairs a site gets: the complete ones, in order, after the same
+// checks a save makes (so the page, the preview and the run number them
+// alike). Pair i becomes images baBefore{i} / baAfter{i}.
+export function completeBeforeAfterPairs(slots, { projectId } = {}) {
+  return sanitizeBeforeAfterPairs(slots?.beforeAfter, { projectId }).filter((p) => p.before && p.after);
+}
+
+// The image keys a write copies the pairs' photos to, with the upload each
+// one comes from: { baBefore0: path, baAfter0: path, ... }.
+export function beforeAfterSlots(slots, opts) {
+  const out = {};
+  completeBeforeAfterPairs(slots, opts).forEach((p, i) => {
+    out[`baBefore${i}`] = p.before;
+    out[`baAfter${i}`] = p.after;
+  });
+  return out;
+}
+
+// The pairs' copied photos a write may use: only where design.imported
+// says the copy was made from the very upload the pair names now, so a
+// pair changed after the last copy never shows another photo.
+export function beforeAfterImages(design) {
+  const out = {};
+  const imported = design?.imported && typeof design.imported === 'object' ? design.imported : {};
+  const images = design?.images && typeof design.images === 'object' ? design.images : {};
+  for (const [key, path] of Object.entries(beforeAfterSlots(design?.slots))) {
+    if (imported[key] === path && typeof images[key] === 'string' && images[key]) out[key] = images[key];
+  }
+  return out;
+}
+
+// copy.beforeAfter for a write: { title?, intro?, pairs: [{ caption? }] },
+// one entry per complete pair (index-aligned with the images, so a pair
+// whose photo didn't copy keeps the others in place), title and intro only
+// when the admin typed them. null (the section stays off) on a template
+// without the section, or when no pair has both photos in `images`.
+export function beforeAfterCopy(design, images = design?.images) {
+  if (!hasBeforeAfter(design?.templateId)) return null;
+  const pairs = completeBeforeAfterPairs(design?.slots);
+  const have = images && typeof images === 'object' ? images : {};
+  if (!pairs.some((_, i) => have[`baBefore${i}`] && have[`baAfter${i}`])) return null;
+  const text = sanitizeBeforeAfterText(design?.beforeAfter);
+  return {
+    ...(text?.title ? { title: text.title } : {}),
+    ...(text?.intro ? { intro: text.intro } : {}),
+    pairs: pairs.map((p) => (p.caption ? { caption: p.caption } : {})),
+  };
+}
+
+// Everything a write takes from the setup's Before & After, as one
+// comparable value: the complete pairs with their captions, and the text.
+function beforeAfterKey(design) {
+  const text = sanitizeBeforeAfterText(design?.beforeAfter);
+  return JSON.stringify([completeBeforeAfterPairs(design?.slots), text?.title || '', text?.intro || '']);
+}
+
+// Has the setup changed its Before & After since `saved` (the design as
+// the page loaded it)? Sticky: a saved mark stays until a run applies it.
+// Half-picked pairs don't count: they never reach the site.
+export function beforeAfterChangedSince(design, saved) {
+  return saved?.beforeAfterChanged === true || beforeAfterKey(design) !== beforeAfterKey(saved);
+}
+
+// Do the pairs' photos differ from the ones the last write copied
+// (`imported`)? Then the next write applies the pairs, flag or not: e.g.
+// pairs picked before the last write but never copied with it.
+export function beforeAfterImportsChanged(slots, imported, opts) {
+  const wanted = beforeAfterSlots(slots, opts);
+  const had = imported && typeof imported === 'object' ? imported : {};
+  const keys = new Set([...Object.keys(wanted), ...Object.keys(had).filter(isBeforeAfterKey)]);
+  return [...keys].some((k) => (wanted[k] || '') !== (had[k] || ''));
+}
+
+// Does this write apply the setup's Before & After (photos, captions,
+// heading and intro, as one unit)? Only on a template with the section,
+// and on a rewrite only when the setup changed them (the sticky mark, or a
+// pair's photo among imagesChanged); otherwise the site keeps the pairs it
+// has, the editor's work included. Pairs none of whose photos were copied
+// (a page from before the pairs existed started the write, or their
+// uploads are gone) could only take the section off: the site keeps its
+// own then too, and the next write from the page copies them.
+export function appliesBeforeAfter(design) {
+  if (!hasBeforeAfter(design?.templateId)) return false;
+  const changed = design?.beforeAfterChanged === true || (Array.isArray(design?.imagesChanged) && design.imagesChanged.some(isBeforeAfterKey));
+  if (!changed) return false;
+  return !completeBeforeAfterPairs(design?.slots).length || Object.keys(beforeAfterImages(design)).length > 0;
+}
+
+// The images a first write puts on the site: every slot's copy, and the
+// pairs' photos only on a template with the section and only where they
+// were copied from the upload the pair names now.
+export function designSiteImages(design) {
+  const out = {};
+  for (const [key, url] of Object.entries(design?.images && typeof design.images === 'object' ? design.images : {})) {
+    if (!isBeforeAfterKey(key)) out[key] = url;
+  }
+  return hasBeforeAfter(design?.templateId) ? { ...out, ...beforeAfterImages(design) } : out;
+}
+
 // What the admin saves from the setup form, kept to known keys and shapes.
 // `imageUrlPrefix` is the public site-images URL prefix: imported images
 // must live there (customer uploads are private and their links expire).
@@ -566,6 +765,9 @@ export function sanitizeDesign(input, { imageUrlPrefix, projectId } = {}) {
     // the site (the editor's own changes win otherwise).
     imagesChanged: [],
     colorsChanged: src.colorsChanged === true,
+    // The Before & After pairs changed since the last write (sticky until a
+    // run applies them; see appliesBeforeAfter).
+    beforeAfterChanged: src.beforeAfterChanged === true,
     useBrand: src.useBrand !== false,
     // The Design Studio's settings (designLevers.js), and whether this setup
     // session changed them: a rewrite re-applies them only then, so the
@@ -592,6 +794,12 @@ export function sanitizeDesign(input, { imageUrlPrefix, projectId } = {}) {
   const slots = src.slots || {};
   for (const k of ['logo', 'hero', 'about']) if (PATH_RE.test(String(slots[k] || ''))) out.slots[k] = slots[k];
   if (Array.isArray(slots.gallery)) out.slots.gallery = slots.gallery.filter((p) => PATH_RE.test(String(p))).slice(0, 12);
+  // Before & After: kept only when there is something, so a design without
+  // pairs stores exactly what it stored before they existed.
+  const pairs = sanitizeBeforeAfterPairs(slots.beforeAfter, { projectId });
+  if (pairs.length) out.slots.beforeAfter = pairs;
+  const pairText = sanitizeBeforeAfterText(src.beforeAfter);
+  if (pairText) out.beforeAfter = pairText;
   if (src.imported && typeof src.imported === 'object') {
     for (const [key, path] of Object.entries(src.imported)) {
       if (IMAGE_KEY_RE.test(key) && PATH_RE.test(String(path))) out.imported[key] = path;
@@ -678,7 +886,8 @@ export function fillPackageDescriptions(info, copy) {
 
 // generated_content and business_info for rewriting an existing site:
 // new copy and business facts; photos and colors only where this setup
-// session changed them; a different template resets colors and fonts.
+// session changed them (the Before & After pairs, photos and words, as one
+// unit: appliesBeforeAfter); a different template resets colors and fonts.
 export function rewriteSite({ existing, copy: written, businessInfo, design }) {
   const prev = existing?.generated_content || {};
   const prevInfo = existing?.business_info || {};
@@ -703,8 +912,17 @@ export function rewriteSite({ existing, copy: written, businessInfo, design }) {
 
   const images = { ...(prev._images || {}) };
   for (const key of design.imagesChanged || []) {
+    // The pairs' photos go with their captions, as one unit (below).
+    if (isBeforeAfterKey(key)) continue;
     if (design.images?.[key]) images[key] = design.images[key];
     else delete images[key];
+  }
+  // Before & After: the setup's pairs replace the site's whole set (a
+  // removed pair goes), or the site keeps its own, the editor's included.
+  const beforeAfter = appliesBeforeAfter(design);
+  if (beforeAfter) {
+    for (const key of Object.keys(images)) if (isBeforeAfterKey(key)) delete images[key];
+    Object.assign(images, beforeAfterImages(design));
   }
   let colors = { ...(prev._customColors || {}) };
   let fonts = prev._customFonts;
@@ -724,6 +942,12 @@ export function rewriteSite({ existing, copy: written, businessInfo, design }) {
     if (!groups.includes(group)) continue;
     for (const k of keys) delete content[k];
     for (const k of keys) if (patch.copy[k] !== undefined) content[k] = patch.copy[k];
+  }
+  if (beforeAfter) {
+    // No complete pair left (or none copied): the section goes off.
+    const pairs = beforeAfterCopy(design, images);
+    if (pairs) content.beforeAfter = pairs;
+    else delete content.beforeAfter;
   }
   delete content._images; delete content._customColors; delete content._customFonts;
   if (Object.keys(images).length) content._images = images;

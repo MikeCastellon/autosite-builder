@@ -33,6 +33,8 @@ import { PackageBadge, PackagePhoto, PackageIncludes, packageDetailsCss } from '
 import { FeaturedBand, featuredBandCss } from '../kit/FeaturedBand.jsx';
 import { MakesBand, makesBandCss } from '../kit/MakesBand.jsx';
 import { vehicleMakesFor } from '../kit/vehicleMakes.js';
+import { BeforeAfterBand, beforeAfterCss } from '../kit/BeforeAfter.jsx';
+import { beforeAfterPairs, BA_DEFAULTS } from '../kit/beforeAfter.js';
 import {
   GoogleRatingBadge, StarRow, GOOGLE_STAR_GOLD, googleRatingOf, googlePlaceUrl, googleBadgePlacements,
 } from '../kit/GoogleRatingBadge.jsx';
@@ -42,8 +44,8 @@ export const themeReady = true;
 // The ids of ContentEditor's TOGGLEABLE._default (and the template's old
 // buildSectionOrder call), so saved orders keep working and the editor's
 // Sections list matches what renders. Never rename an id. 'brands' (the
-// vehicle-makes band) and 'featured' (the featured-service band) came later:
-// see addedSections.
+// vehicle-makes band), 'featured' (the featured-service band) and
+// 'beforeAfter' (the Before & After band) came later: see addedSections.
 export const sections = [
   { id: 'hero', label: 'Hero' },
   { id: 'statsBar', label: 'Stats Bar' },
@@ -52,6 +54,7 @@ export const sections = [
   { id: 'featured', label: 'Featured Service' },
   { id: 'about', label: 'About' },
   { id: 'gallery', label: 'Gallery' },
+  { id: 'beforeAfter', label: 'Before & After' },
   { id: 'testimonials', label: 'Reviews' },
   { id: 'cta', label: 'Contact / CTA' },
   { id: 'awards', label: 'Awards' },
@@ -62,14 +65,15 @@ export const sections = [
 // (buildSectionOrderAdded): every older section keeps exactly its saved
 // order value, and an added band without a saved slot shares the value of
 // the section before it, rendering right after it in the DOM.
-export const addedSections = ['brands', 'featured'];
+export const addedSections = ['brands', 'featured', 'beforeAfter'];
 
 export const extraFonts = [];
 
 // Edit > Headings: the copy.sectionTitles fields each section uses. The hero
-// headline, the services heading / intro and the contact headline / subtext
-// keep their own copy keys (titleFrom / introFrom); headingDefaults() below
-// gives the design's own text. Stats bar and awards have no heading.
+// headline, the services heading / intro, the Before & After heading /
+// intro and the contact headline / subtext keep their own copy keys
+// (titleFrom / introFrom); headingDefaults() below gives the design's own
+// text. Stats bar and awards have no heading.
 export const headingFields = {
   hero: { fields: ['eyebrow', 'title', 'accent'], titleFrom: 'headline' },
   brands: { fields: ['eyebrow'] },
@@ -77,6 +81,7 @@ export const headingFields = {
   featured: { fields: ['eyebrow', 'title', 'accent', 'intro'] },
   about: { fields: ['eyebrow', 'title', 'accent'] },
   gallery: { fields: ['eyebrow', 'title', 'accent'] },
+  beforeAfter: { fields: ['eyebrow', 'title', 'accent', 'intro'], titleFrom: 'beforeAfter.title', introFrom: 'beforeAfter.intro', placeholder: { intro: BA_DEFAULTS.intro } },
   testimonials: { fields: ['eyebrow', 'title', 'accent'] },
   cta: { fields: ['eyebrow', 'title', 'accent', 'intro'], titleFrom: 'ctaHeadline', introFrom: 'ctaSubtext' },
 };
@@ -559,6 +564,29 @@ const FEATURE_CSS = `
 }
 `;
 
+// The Before & After band (kit BeforeAfter.jsx) in this design's look:
+// square corners, skewed tags, the red bar on the photo frame, the counter
+// in heavy caps with the arrows beside it. Appended after the kit's
+// beforeAfterCss('ds-ba') only while the band renders, so a site without
+// copy.beforeAfter gets none of it (and FEATURE_CSS doesn't change). The
+// --ds-ba-* block variables alias tokens deriveTheme / sportyTokens
+// already contrast-repair: the Before tag is the page's text on its
+// background, the After tag and the handle the accent fill with its ink.
+const BA_CSS = `
+.ds-ba-band{--ds-ba-text:var(--ds-text);--ds-ba-muted:var(--ds-muted);--ds-ba-line:var(--ds-border-strong);--ds-ba-focus:var(--ds-focus);--ds-ba-tag-bg:var(--ds-bg);--ds-ba-tag-text:var(--ds-text);--ds-ba-tag2-bg:var(--ds-accent);--ds-ba-tag2-text:var(--ds-on-accent);--ds-ba-knob-bg:var(--ds-accent);--ds-ba-knob-text:var(--ds-on-accent);--ds-ba-r:0px;--ds-ba-tag-r:0px;--ds-ba-btn-r:0px}
+.ds-ba-frame{box-shadow:0 30px 60px -34px var(--ds-shadow)}
+.ds-ba-frame::after{content:'';position:absolute;left:0;top:0;z-index:4;width:38%;height:6px;background:var(--ds-brand);pointer-events:none}
+.ds-ba-todo .ds-ba-frame::after{display:none}
+.ds-ba-tag{padding:6px 16px;clip-path:polygon(7px 0,100% 0,calc(100% - 7px) 100%,0 100%);font-size:11.5px;letter-spacing:.2em}
+.ds-ba-cap{padding-left:16px;border-left:3px solid var(--ds-brand);font-size:16px;line-height:1.55}
+.ds-ba-nav{justify-content:flex-start;gap:12px;margin-top:28px}
+.ds-ba-count{order:-1;margin-right:auto;font-family:var(--ds-head);font-size:15px;font-weight:var(--ds-head-w);letter-spacing:.14em;text-align:left}
+.ds-ba-btn{width:52px;height:52px;border-width:2px}
+@media (hover:hover){
+.ds-ba-btn:hover{border-color:var(--ds-brand);background:var(--ds-accent-soft)}
+}
+`;
+
 const txt = (v) => (typeof v === 'string' ? v.trim() : typeof v === 'number' ? String(v) : '');
 const list = (v) => (Array.isArray(v) ? v : []);
 
@@ -840,6 +868,7 @@ export function headingDefaults(businessInfo, generatedCopy) {
     featured: featuredTitleDefaults(txt(fs.serviceName), Boolean(sectionTitle(copy.sectionTitles, 'featured').title)),
     about: { eyebrow: 'About Us', title: aboutTitleOf(biz), accent: '' },
     gallery: { eyebrow: 'Gallery', title: 'Our Work', accent: '' },
+    beforeAfter: { eyebrow: BA_DEFAULTS.eyebrow, title: BA_DEFAULTS.title, accent: '' },
     testimonials: { eyebrow: 'Testimonials', title: 'What Clients Say', accent: '' },
     cta: { eyebrow: 'Contact', title: fb.ctaHeadline, accent: '' },
   };
@@ -941,6 +970,17 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
   // Vehicle-makes band (Edit > Vehicle Makes): only the makes the owner ticked.
   const makes = vehicleMakesFor(copy.vehicleMakes, []);
   const makesOn = show('brands') && makes.length > 0;
+
+  // Before & After band (Edit > Before & After): only once copy.beforeAfter
+  // exists, and on the published page only with a pair that has both
+  // photos (the editor shows every pair, and says what each still needs).
+  // Heading and intro: the owner's (copy.beforeAfter, which Edit > Headings
+  // edits too), else the design's own.
+  const ba = beforeAfterPairs(copy.beforeAfter, images, { editor });
+  const baOn = show('beforeAfter') && Boolean(ba) && (ba.pairs.length > 0 || editor);
+  const baT = st('beforeAfter');
+  const baTitle = ba?.title || baT.title || hd.beforeAfter.title;
+  const baIntro = ba?.intro || baT.intro || BA_DEFAULTS.intro;
 
   // Business Info > Areas served (the list only, never split from the
   // free-text service area) and the Fully insured switch (only when on).
@@ -1221,7 +1261,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
       className="ds-root"
       style={{ ...vars, containerType: 'inline-size', display: 'flex', flexDirection: 'column', minHeight: '100vh', overflowX: 'clip', background: t.bg, color: t.text, fontFamily: body, lineHeight: 1.6, ...(ctaPhoto ? ctaPhotoTokens(tokens) : {}) }}
     >
-      <style>{CSS + (heroOn ? heroOfferCss('ds-hq', { stackFrom: 1024 }) : '') + (pkgOn ? packageDetailsCss('ds-pk') : '') + (featuredOn ? featuredBandCss('ds-ft') : '') + (makesOn ? makesBandCss('ds-mk') : '') + (featureOn ? FEATURE_CSS : '') + navBadgeCss}</style>
+      <style>{CSS + (heroOn ? heroOfferCss('ds-hq', { stackFrom: 1024 }) : '') + (pkgOn ? packageDetailsCss('ds-pk') : '') + (featuredOn ? featuredBandCss('ds-ft') : '') + (makesOn ? makesBandCss('ds-mk') : '') + (featureOn ? FEATURE_CSS : '') + (baOn ? beforeAfterCss('ds-ba') + BA_CSS : '') + navBadgeCss}</style>
       <a className="ds-skip" href="#main">Skip to content</a>
 
       <nav className="ds-nav" aria-label="Main" style={{ order: -1 }}>
@@ -1515,6 +1555,33 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
               )}
             </div>
           </section>
+        )}
+
+        {baOn && (
+          <BeforeAfterBand
+            ns="ds-ba"
+            beforeAfter={copy.beforeAfter}
+            images={images}
+            editor={editor}
+            order={order('beforeAfter')}
+            className="ds-section"
+            wrapClassName="ds-wrap"
+            labelledBy="ds-ba-h"
+            heading={(
+              <div className={`ds-head${baIntro ? '' : ' ds-head-solo'}`} data-acg-reveal="">
+                <div>
+                  <p className="ds-eyebrow">{baT.eyebrow || hd.beforeAfter.eyebrow}</p>
+                  <div className="ds-fit ds-fit-h2">
+                    <h2 id="ds-ba-h" className="ds-h2" style={fit(baTitle)}>
+                      <Accented title={baTitle} accent={baT.accent || hd.beforeAfter.accent} className="ds-em" />
+                    </h2>
+                  </div>
+                </div>
+                {baIntro && <p className="ds-intro">{baIntro}</p>}
+              </div>
+            )}
+            hints={ba.pairs.length === 0 && <EditorHint>{'Add a before and an after photo in Edit > Before & After.'}</EditorHint>}
+          />
         )}
 
         {show('testimonials') && reviews === 'google' && (

@@ -20,6 +20,7 @@ export const LUCIDE = {
   arrowLeft: <><path d="m12 19-7-7 7-7" /><path d="M19 12H5" /></>,
   check: <path d="M20 6 9 17l-5-5" />,
   chevronUp: <path d="m18 15-6-6-6 6" />,
+  chevronsLeftRight: <><path d="m9 7-5 5 5 5" /><path d="m15 7 5 5-5 5" /></>,
   clock: <><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></>,
   mail: <><path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7" /><rect x="2" y="4" width="20" height="16" rx="2" /></>,
   instagram: <><rect width="20" height="20" x="2" y="2" rx="5" ry="5" /><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" /><line x1="17.5" x2="17.51" y1="6.5" y2="6.5" /></>,

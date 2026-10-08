@@ -13,7 +13,9 @@
 // ("From its code": fonts, sections, features against the template) and
 // "Copy this site's layout", the one click that captures (when needed),
 // saves the match and starts Suggest a design through SuggestPanel's own
-// start (its startToken).
+// start (its startToken). Last, the Before & After pairs under Photos
+// (BeforeAfterPicker): picking, the photo desk's pairs, what Save and the
+// write send, and what the preview gets.
 //
 // The tests run in node without a DOM: the React hooks are replaced by a
 // tiny hook store (one per component), each component is called as a
@@ -65,6 +67,19 @@ vi.mock('../../data/templates.js', async (importOriginal) => {
     ...m.TEMPLATES.mobile_chrome, id, label: 'Exact replica', description: 'Built from a reference site for one customer.', hidden: true, customFor: [h.PID],
   });
   return { ...m, TEMPLATES: { ...m.TEMPLATES, replica_11111111: replica('replica_11111111'), replica_11111111_v2: replica('replica_11111111_v2') } };
+});
+
+// Bold & Sporty with its Before & After section (a no-op once
+// templateSections.js lists it) and Chrome Elite without, whatever the
+// templates do later.
+vi.mock('../../data/templateSections.js', async (importOriginal) => {
+  const m = await importOriginal();
+  const sectionIdsFor = (id) => {
+    const real = m.sectionIdsFor(id);
+    if (id === 'detailing_sporty') return real.includes('beforeAfter') ? real : [...real, 'beforeAfter'];
+    return id === 'mobile_chrome' ? real.filter((s) => s !== 'beforeAfter') : real;
+  };
+  return { ...m, sectionIdsFor };
 });
 
 vi.mock('../../lib/customSites.js', () => ({
@@ -1507,5 +1522,227 @@ describe('SuggestPanel\'s start from a token ("Copy this site\'s layout")', () =
     };
     expect(summary(true)).toContain('Read from its screenshots and its code (sections in order, fonts).');
     expect(summary(false)).not.toContain('its code');
+  });
+});
+
+// ─── Before & After pairs (Photos) ───────────────────────────────────
+
+const { photoDeskPairs } = await import('./CustomSiteDesign.jsx');
+
+describe('the Before & After pairs under Photos', () => {
+  const photoPath = (n) => `${PID}/photo/aaaaaaaa-bbbb-4ccc-8ddd-${String(n).padStart(12, '0')}.jpg`;
+  const PHOTO = (n) => ({ path: photoPath(n), kind: 'photo', name: `car-${n}.jpg`, size: 10, type: 'image/jpeg' });
+  const PHOTOS = [1, 2, 3, 4, 5, 6].map(PHOTO);
+  const link = (n) => `https://files.test/car-${n}.jpg`;
+  const INFO = { businessName: 'Gloss Boss', businessType: 'mobile_detailing', city: 'Austin', state: 'TX' };
+  const sporty = (design = {}, extra = {}) => ({
+    ...makeProject({ assets: [SHOT, ...PHOTOS], design: { templateId: 'detailing_sporty', businessInfo: INFO, ...design } }),
+    ...extra,
+  });
+  const SAVED_PAIRS = [
+    { before: photoPath(1), after: photoPath(2), caption: 'Paint correction' },
+    { before: photoPath(3), after: '', caption: 'Half picked' },
+  ];
+  const pickerEl = (els) => els.find((e) => typeof e.type === 'function' && e.type.name === 'BeforeAfterPicker');
+  // The picker as it renders with the page's props now.
+  const picker = (project) => {
+    const el = pickerEl(page(project).els);
+    return call('pairs', el.type, el.props);
+  };
+  const thumb = (els, n) => els.find((e) => e.type === 'button' && elements(e.props.children).some((c) => c.type === 'img' && c.props.alt === `car-${n}.jpg`));
+  const half = (els, label) => els.find((e) => e.type === 'button' && e.props['aria-label']?.startsWith(label));
+  const previewOf = (els) => els.find((e) => e.props && 'existingInfo' in e.props);
+  const pairsNow = (project) => pickerEl(page(project).els).props.pairs;
+
+  it('shows under Photos only for a template with the section, offering the photos alone', () => {
+    const el = pickerEl(page(sporty()).els);
+    expect(el.props.pairs).toEqual([]);
+    expect(el.props.photos.map((f) => f.path)).toEqual(PHOTOS.map((f) => f.path));
+    expect(el.props.deskPairs).toEqual([]);
+    expect(el.props.asked).toBe(false);
+    expect(el.props.hidden).toBe(false);
+    // Chrome Elite has none: saved pairs stay, and the page says so.
+    h.store = {};
+    const chrome = page(sporty({ templateId: 'mobile_chrome', slots: { beforeAfter: SAVED_PAIRS } }));
+    expect(pickerEl(chrome.els)).toBeUndefined();
+    expect(chrome.els.some((e) => e.type === 'p' && textOf(e).includes('Chrome Elite has no Before & After section'))).toBe(true);
+  });
+
+  it('notes the customer asked for them, and a section hidden under Sections', () => {
+    const el = pickerEl(page(sporty({ levers: { sections: { order: [], hidden: ['beforeAfter'] } } }, { form: { ...makeProject().form, features: ['Before & after photos'] } })).els);
+    expect(el.props.asked).toBe(true);
+    expect(el.props.hidden).toBe(true);
+    const text = textOf(call('pairs', el.type, el.props));
+    expect(text).toContain('They asked for before & after photos.');
+    expect(text).toContain('Hidden under Sections');
+  });
+
+  it('picks each pair\'s two photos one half at a time, with a caption, and Save sends them', async () => {
+    const project = sporty();
+    buttonNamed(picker(project), '+ Add a pair').props.onClick();
+    // A new pair opens on its "before" half.
+    let els = picker(project);
+    expect(textOf(els)).toContain('Pick the before photo of pair 1');
+    thumb(els, 2).props.onClick();
+    // Then its empty "after" half; the photo it just took can't be both.
+    els = picker(project);
+    expect(textOf(els)).toContain('Pick the after photo of pair 1');
+    expect(thumb(els, 2).props).toMatchObject({ disabled: true, title: 'Already the before photo of this pair' });
+    thumb(els, 3).props.onClick();
+    els = picker(project);
+    expect(textOf(els)).not.toContain('Pick the');
+    expect(textOf(els)).not.toContain('Needs both photos');
+    expect(half(els, 'Before photo of pair 1').props['aria-label']).toBe('Before photo of pair 1: car-2.jpg');
+    els.find((e) => e.type === 'input' && e.props.maxLength === 80 && e.props.placeholder).props.onChange({ target: { value: 'Paint correction' } });
+    expect(pairsNow(project)).toEqual([{ before: photoPath(2), after: photoPath(3), caption: 'Paint correction' }]);
+
+    await buttonNamed(page(project).els, 'Save').props.onClick();
+    const [action, body] = h.admin.mock.calls[0];
+    expect(action).toBe('design-save');
+    expect(body.design.slots.beforeAfter).toEqual([{ before: photoPath(2), after: photoPath(3), caption: 'Paint correction' }]);
+    expect(body.design.beforeAfter).toEqual({ title: '', intro: '' });
+    // Changed since the page loaded: a later write applies them.
+    expect(body.design.beforeAfterChanged).toBe(true);
+  });
+
+  it('a second click takes a photo off, None empties a half, Remove drops a pair', () => {
+    const project = sporty({ slots: { beforeAfter: SAVED_PAIRS } });
+    let els = picker(project);
+    expect(textOf(els)).toContain('(1 of 6 pairs)');
+    expect(textOf(els)).toContain('Needs both photos');
+    half(els, 'Before photo of pair 2').props.onClick();
+    els = picker(project);
+    expect(textOf(els)).toContain('Pick the before photo of pair 2');
+    thumb(els, 3).props.onClick();
+    expect(pairsNow(project)[1]).toEqual({ before: '', after: '', caption: 'Half picked' });
+    half(picker(project), 'Before photo of pair 1').props.onClick();
+    buttonNamed(picker(project), 'None').props.onClick();
+    expect(pairsNow(project)[0]).toEqual({ before: '', after: photoPath(2), caption: 'Paint correction' });
+    // Removing the first pair keeps the second one open where it moved.
+    half(picker(project), 'After photo of pair 2').props.onClick();
+    picker(project).find((e) => e.type === 'button' && e.props['aria-label'] === 'Remove pair 1').props.onClick();
+    expect(pairsNow(project)).toEqual([{ before: '', after: '', caption: 'Half picked' }]);
+    expect(textOf(picker(project))).toContain('Pick the after photo of pair 1');
+  });
+
+  it('stops at 6 pairs, and takes a heading and an intro', () => {
+    const six = Array.from({ length: 6 }, (_, i) => ({ before: photoPath(1), after: photoPath(2), caption: `Pair ${i}` }));
+    const project = sporty({ slots: { beforeAfter: six }, beforeAfter: { title: 'Real work', intro: '' } });
+    const els = picker(project);
+    expect(buttonNamed(els, '+ Add a pair')).toBeUndefined();
+    expect(els.find((e) => e.type === 'input' && e.props.maxLength === 80 && !e.props.placeholder).props.value).toBe('Real work');
+    els.find((e) => e.type === 'textarea' && e.props.maxLength === 200).props.onChange({ target: { value: 'Cars we did this year.' } });
+    expect(pickerEl(page(project).els).props.text).toEqual({ title: 'Real work', intro: 'Cars we did this year.' });
+  });
+
+  describe('the photo desk\'s pairs', () => {
+    const pick = (n, role) => ({ path: photoPath(n), role, score: 8, reason: '', alt: '', focal: { x: 0.5, y: 0.5 }, crops: {}, blur: [] });
+    const desk = (pairs) => ({
+      kit: {
+        photos: {
+          status: 'ready',
+          data: { version: 1, picks: [pick(1, 'before'), pick(2, 'after'), pick(3, 'before'), pick(9, 'after'), pick(4, 'gallery')], pairs, shotList: [], notes: [] },
+        },
+      },
+    });
+    const PAIRS = [
+      { before: photoPath(1), after: photoPath(2), note: 'Mud washed off the doors and wheels' },
+      // Its after photo isn't among the project's usable uploads.
+      { before: photoPath(3), after: photoPath(9), note: '' },
+    ];
+
+    it('fills the pairs with the desk\'s, notes as captions', () => {
+      const project = sporty({ ...desk(PAIRS), slots: { beforeAfter: SAVED_PAIRS } });
+      const els = picker(project);
+      const button = buttonNamed(els, 'Use the photo desk\'s pairs (1)');
+      button.props.onClick();
+      expect(pairsNow(project)).toEqual([{ before: photoPath(1), after: photoPath(2), caption: 'Mud washed off the doors and wheels' }]);
+      expect(textOf(picker(project))).toContain('Filled from the photo desk: check each pair.');
+    });
+
+    it('re-checks the stored data, and needs a finished run', () => {
+      const files = PHOTOS.map(withLink);
+      expect(photoDeskPairs(sporty(desk(PAIRS)), files)).toEqual([{ before: photoPath(1), after: photoPath(2), caption: 'Mud washed off the doors and wheels' }]);
+      // A note with a claim never becomes a caption; a pair of two "before" photos isn't one.
+      expect(photoDeskPairs(sporty(desk([{ before: photoPath(1), after: photoPath(2), note: 'The best detail in Austin' }])), files)).toEqual([
+        { before: photoPath(1), after: photoPath(2), caption: '' },
+      ]);
+      expect(photoDeskPairs(sporty(desk([{ before: photoPath(1), after: photoPath(3), note: 'x' }])), files)).toEqual([]);
+      const running = sporty(desk(PAIRS));
+      running.design.kit.photos.status = 'running';
+      expect(photoDeskPairs(running, files)).toEqual([]);
+      expect(photoDeskPairs(sporty(), files)).toEqual([]);
+      expect(buttonNamed(picker(sporty()), 'Use the photo desk\'s pairs (1)')).toBeUndefined();
+    });
+  });
+
+  describe('the preview', () => {
+    const COPIED = { baBefore0: photoPath(1), baAfter0: photoPath(2) };
+    const PUBLIC = { baBefore0: 'https://public.test/b0.jpg', baAfter0: 'https://public.test/a0.jpg' };
+
+    it('shows the setup\'s pairs before the first write', () => {
+      const { beforeAfter } = previewOf(page(sporty({ slots: { beforeAfter: SAVED_PAIRS }, beforeAfter: { title: 'Real work', intro: '' } })).els).props;
+      expect(beforeAfter).toEqual({ images: { baBefore0: link(1), baAfter0: link(2) }, copy: { title: 'Real work', pairs: [{ caption: 'Paint correction' }] } });
+    });
+
+    it('on a rewrite: the site\'s own until the pairs change here', () => {
+      const project = sporty(
+        { slots: { beforeAfter: SAVED_PAIRS }, siteId: '22222222-3333-4444-8555-666666666666', images: PUBLIC, imported: COPIED, beforeAfterChanged: false },
+        { site_id: '22222222-3333-4444-8555-666666666666' },
+      );
+      expect(previewOf(page(project).els).props.beforeAfter).toBeUndefined();
+      // A caption changed here: the setup's pairs, with the copies already made.
+      picker(project).find((e) => e.type === 'input' && e.props.maxLength === 80 && e.props.placeholder).props.onChange({ target: { value: 'Hood' } });
+      expect(previewOf(page(project).els).props.beforeAfter).toEqual({ images: PUBLIC, copy: { pairs: [{ caption: 'Hood' }] } });
+      // Marked by an earlier save: the same.
+      h.store = {};
+      const marked = sporty({ ...project.design, beforeAfterChanged: true }, { site_id: project.site_id });
+      expect(previewOf(page(marked).els).props.beforeAfter.copy).toEqual({ pairs: [{ caption: 'Paint correction' }] });
+    });
+  });
+
+  describe('writing the site', () => {
+    const run = async (project) => {
+      sites.importAssetToSite.mockImplementation(async ({ imageKey }) => `https://public.test/${imageKey}.jpg`);
+      h.admin.mockImplementation(async (action) => {
+        if (action === 'get') return { project: { files: [SHOT, ...PHOTOS].map(withLink) } };
+        if (action === 'design-generate') return { startedAt: '2026-10-08T10:00:00.000Z', project: {} };
+        return {};
+      });
+      await buttonNamed(page(project).els, 'Write the site with Claude Opus 5.5').props.onClick();
+      return h.admin.mock.calls.find(([a]) => a === 'design-save')[1].design;
+    };
+    const PAIRS3 = [...SAVED_PAIRS, { before: photoPath(4), after: photoPath(5), caption: '' }];
+    // No hero, about or gallery picks (the intake would pick some), so only the pairs copy.
+    const ONLY = { logo: '', hero: '', about: '', gallery: [] };
+
+    it('copies the complete pairs\' photos to baBefore{i} / baAfter{i}, like the gallery', async () => {
+      sites.importAssetToSite.mockReset();
+      const design = await run(sporty({ slots: { ...ONLY, beforeAfter: PAIRS3 } }));
+      const keys = ['baBefore0', 'baAfter0', 'baBefore1', 'baAfter1'];
+      expect(sites.importAssetToSite.mock.calls.map(([a]) => a.imageKey)).toEqual(keys);
+      expect(sites.importAssetToSite.mock.calls.map(([a]) => a.url)).toEqual([link(1), link(2), link(4), link(5)]);
+      expect(design.imported).toEqual({ baBefore0: photoPath(1), baAfter0: photoPath(2), baBefore1: photoPath(4), baAfter1: photoPath(5) });
+      expect(design.images).toEqual(Object.fromEntries(keys.map((k) => [k, `https://public.test/${k}.jpg`])));
+      // Never copied before: they count as changed, so the write applies
+      // them, though the pairs are as the page loaded them (no mark).
+      expect(design.imagesChanged).toEqual(keys);
+      expect(design.beforeAfterChanged).toBe(false);
+      // The half-picked pair stays in the setup.
+      expect(design.slots.beforeAfter).toEqual(PAIRS3);
+    });
+
+    it('copies none on a template without the section, and leaves the site\'s as they are', async () => {
+      sites.importAssetToSite.mockReset();
+      const design = await run(sporty({
+        templateId: 'mobile_chrome', slots: { ...ONLY, beforeAfter: PAIRS3 }, imported: { baBefore0: photoPath(1) }, images: { baBefore0: 'https://public.test/old.jpg' },
+      }));
+      expect(sites.importAssetToSite).not.toHaveBeenCalled();
+      expect(design.imagesChanged).toEqual([]);
+      // Their last copies stay on record: a switch back finds them unchanged.
+      expect(design.imported).toEqual({ baBefore0: photoPath(1) });
+      expect(design.images).toEqual({ baBefore0: 'https://public.test/old.jpg' });
+      expect(design.slots.beforeAfter).toEqual(PAIRS3);
+    });
   });
 });

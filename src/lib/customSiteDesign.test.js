@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import {
   DESIGN_MODEL, DESIGN_STALE_MS, fillPackageDescriptions, isRunStale, rewriteSite, showsPrices, brandAccent, briefText, buildDesignPrompt, contrast, designFromIntake, designProblems, guessCityState,
@@ -7,9 +7,25 @@ import {
   REFERENCE_MODES, REPLICA_LABEL, canMatchReference, isReplicaFor, isReplicaTemplate, replicaTemplatesFor, sameReferenceSource, sanitizeReference,
   CAPTURE_LIVE_MS, REFERENCE_SITES_MAX, REFERENCE_SITE_NOTE_MAX, REFERENCE_SITE_URL_MAX, captureViewFor, capturedShotKey, isCaptureLive, newerCapture,
   referenceSiteKey, referenceSiteUrl, replacedShotSource, sanitizeReferenceSites,
+  BEFORE_AFTER_MAX, appliesBeforeAfter, beforeAfterCaption, beforeAfterChangedSince, beforeAfterCopy, beforeAfterImages, beforeAfterImportsChanged,
+  completeBeforeAfterPairs, beforeAfterSlots, designSiteImages, hasBeforeAfter, isBeforeAfterKey, sanitizeBeforeAfterPairs, sanitizeBeforeAfterText,
 } from './customSiteDesign.js';
 import { referenceUrlKey } from './designSuggest.js';
 import { TEMPLATES } from '../data/templates.js';
+
+// The Before & After rules need a template with the section and one
+// without: Bold & Sporty has it (as its template work adds it; a no-op
+// once templateSections.js lists it) and Chrome Elite doesn't, whatever
+// the templates do later.
+vi.mock('../data/templateSections.js', async (importOriginal) => {
+  const m = await importOriginal();
+  const sectionIdsFor = (id) => {
+    const real = m.sectionIdsFor(id);
+    if (id === 'detailing_sporty') return real.includes('beforeAfter') ? real : [...real, 'beforeAfter'];
+    return id === 'mobile_chrome' ? real.filter((s) => s !== 'beforeAfter') : real;
+  };
+  return { ...m, sectionIdsFor };
+});
 
 const PROJECT = '11111111-2222-4333-8444-555555555555';
 const FILE = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
@@ -687,5 +703,214 @@ describe('replica templates in the Design step', () => {
       const src = readFileSync(new URL(file, import.meta.url), 'utf8');
       expect(src, file).toMatch(/Object\.values\(TEMPLATES\)\s*\.filter\(\(t\) => t && !t\.hidden\)/);
     }
+  });
+});
+
+describe('Before & After pairs (design.slots.beforeAfter, design.beforeAfter)', () => {
+  const OTHER = '99999999-2222-4333-8444-555555555555';
+  const photo = (n, project = PROJECT) => `${project}/photo/aaaaaaaa-bbbb-4ccc-8ddd-${String(n).padStart(12, '0')}.jpg`;
+  const url = (key) => `${PREFIX}${SITE}/${key}-abc.jpg`;
+  // A setup with two complete pairs around a half-picked one, as saved.
+  const slots = {
+    logo: '', hero: '', about: '', gallery: [],
+    beforeAfter: [
+      { before: photo(1), after: photo(2), caption: 'Paint correction on the hood' },
+      { before: photo(3), after: '', caption: 'Still picking' },
+      { before: photo(4), after: photo(5), caption: '' },
+    ],
+  };
+  // The images the setup copied for them (generate: imported + images).
+  const copied = { baBefore0: photo(1), baAfter0: photo(2), baBefore1: photo(4), baAfter1: photo(5) };
+  const imagesOf = (keys) => Object.fromEntries(Object.keys(keys).map((k) => [k, url(k)]));
+  const design = (extra = {}) => ({
+    templateId: 'detailing_sporty', slots, beforeAfter: { title: 'Real cars, real work', intro: '' },
+    images: { hero: url('hero'), ...imagesOf(copied) }, imported: { ...copied }, imagesChanged: [], beforeAfterChanged: false, ...extra,
+  });
+
+  it('knows the templates with the section and its image keys', () => {
+    expect(hasBeforeAfter('detailing_sporty')).toBe(true);
+    for (const id of ['mobile_chrome', 'mobile_bold', '', undefined, 'constructor']) expect(hasBeforeAfter(id)).toBe(false);
+    for (const k of ['baBefore0', 'baAfter5']) expect(isBeforeAfterKey(k)).toBe(true);
+    for (const k of ['baBefore6', 'baMiddle0', 'gallery0', 'baBefore', 'xbaBefore0']) expect(isBeforeAfterKey(k)).toBe(false);
+  });
+
+  it('keeps this project\'s photos in at most 6 pairs, one-line captions of 80, half-picked pairs too', () => {
+    const out = sanitizeDesign({
+      slots: {
+        beforeAfter: [
+          { before: photo(1), after: photo(2), caption: '  Swirls\n removed   from the hood ', evil: 1 },
+          { before: photo(3), after: '', caption: '' },
+          { before: photo(9, OTHER), after: photo(4), caption: 'Another project\'s before' },
+          { before: `${PROJECT}/logo/${FILE}.png`, after: photo(5) },
+          { before: photo(6), after: photo(6), caption: 'Same photo twice' },
+          { before: '', after: '', caption: '   ' },
+          'nope', null, [photo(1), photo(2)],
+          { before: photo(7), after: photo(8), caption: 'x'.repeat(200) },
+          { before: photo(10), after: photo(11) },
+        ],
+      },
+    }, { projectId: PROJECT });
+    expect(out.slots.beforeAfter).toEqual([
+      { before: photo(1), after: photo(2), caption: 'Swirls removed from the hood' },
+      { before: photo(3), after: '', caption: '' },
+      { before: '', after: photo(4), caption: 'Another project\'s before' },
+      { before: '', after: photo(5), caption: '' },
+      { before: photo(6), after: '', caption: 'Same photo twice' },
+      { before: photo(7), after: photo(8), caption: 'x'.repeat(80) },
+    ]);
+    expect(out.slots.beforeAfter).toHaveLength(BEFORE_AFTER_MAX);
+    // The gallery's own rule without a project to pin to (the preview's sanitize).
+    expect(sanitizeBeforeAfterPairs([{ before: photo(9, OTHER), after: photo(1) }])).toEqual([{ before: photo(9, OTHER), after: photo(1), caption: '' }]);
+    expect(sanitizeBeforeAfterPairs([{ before: 'https://evil.test/x.jpg', after: `../${photo(1)}` }])).toEqual([]);
+  });
+
+  it('stores nothing new for a design without pairs or text', () => {
+    const out = sanitizeDesign({ slots: { beforeAfter: [] }, beforeAfter: { title: ' ', intro: '' } });
+    expect(out.slots).toEqual({ logo: '', hero: '', about: '', gallery: [] });
+    expect(out.beforeAfter).toBeUndefined();
+    expect(out.beforeAfterChanged).toBe(false);
+    expect(sanitizeDesign({}).slots).not.toHaveProperty('beforeAfter');
+  });
+
+  it('keeps the heading and intro as typed, one line each, and the changed mark', () => {
+    const out = sanitizeDesign({ beforeAfter: { title: '  Real cars,\nreal work ', intro: `Every car ${'x'.repeat(300)}`, evil: 1 }, beforeAfterChanged: true });
+    expect(out.beforeAfter).toEqual({ title: 'Real cars, real work', intro: `Every car ${'x'.repeat(190)}` });
+    expect(out.beforeAfterChanged).toBe(true);
+    expect(sanitizeDesign({ beforeAfterChanged: 'yes' }).beforeAfterChanged).toBe(false);
+    expect(sanitizeBeforeAfterText({ title: '', intro: 'Only an intro' })).toEqual({ title: '', intro: 'Only an intro' });
+    expect(sanitizeBeforeAfterText('nope')).toBeNull();
+  });
+
+  it('takes the pairs\' image keys in images, imported and imagesChanged', () => {
+    const out = sanitizeDesign({
+      images: { baBefore0: url('baBefore0'), baAfter0: 'https://evil.test/x.jpg', baBefore6: url('baBefore6') },
+      imported: { baBefore0: photo(1), baAfter5: 'nope', baMiddle0: photo(2) },
+      imagesChanged: ['baBefore0', 'baAfter5', 'baBefore6', 'gallery0'],
+    }, { imageUrlPrefix: PREFIX });
+    expect(out.images).toEqual({ baBefore0: url('baBefore0') });
+    expect(out.imported).toEqual({ baBefore0: photo(1) });
+    expect(out.imagesChanged).toEqual(['baBefore0', 'baAfter5', 'gallery0']);
+  });
+
+  it('numbers the complete pairs for the site, in order', () => {
+    expect(completeBeforeAfterPairs(slots)).toEqual([
+      { before: photo(1), after: photo(2), caption: 'Paint correction on the hood' },
+      { before: photo(4), after: photo(5), caption: '' },
+    ]);
+    expect(beforeAfterSlots(slots)).toEqual(copied);
+    // The page passes its project: another project's photo never counts.
+    expect(beforeAfterSlots({ beforeAfter: [{ before: photo(1, OTHER), after: photo(2) }] }, { projectId: PROJECT })).toEqual({});
+    expect(beforeAfterSlots(null)).toEqual({});
+  });
+
+  it('writes copy.beforeAfter from the pairs and what was typed, never more', () => {
+    expect(beforeAfterCopy(design())).toEqual({ title: 'Real cars, real work', pairs: [{ caption: 'Paint correction on the hood' }, {}] });
+    // Nothing typed: the template's own heading.
+    expect(beforeAfterCopy(design({ beforeAfter: undefined }))).toEqual({ pairs: [{ caption: 'Paint correction on the hood' }, {}] });
+    // A pair whose photo didn't copy keeps its place, so the others' captions stay with their photos.
+    expect(beforeAfterCopy(design(), { baBefore1: 'b', baAfter1: 'a' })).toEqual({ title: 'Real cars, real work', pairs: [{ caption: 'Paint correction on the hood' }, {}] });
+    // Off: no pair with both photos, no complete pair, or a template without the section.
+    expect(beforeAfterCopy(design(), { baBefore0: 'b', baAfter1: 'a' })).toBeNull();
+    expect(beforeAfterCopy(design({ slots: { beforeAfter: [{ before: photo(1), after: '' }] } }))).toBeNull();
+    expect(beforeAfterCopy(design({ templateId: 'mobile_chrome' }))).toBeNull();
+  });
+
+  it('uses a copied photo only when it was copied from the upload the pair names now', () => {
+    const moved = design({ imported: { ...copied, baAfter0: photo(9) } });
+    expect(beforeAfterImages(moved)).toEqual(imagesOf({ baBefore0: 1, baBefore1: 1, baAfter1: 1 }));
+    // A first write: the other slots as they are; the pairs only on a template with the section.
+    expect(designSiteImages(moved)).toEqual({ hero: url('hero'), ...imagesOf({ baBefore0: 1, baBefore1: 1, baAfter1: 1 }) });
+    expect(designSiteImages(design({ templateId: 'mobile_chrome' }))).toEqual({ hero: url('hero') });
+  });
+
+  it('knows when the setup changed them: what reaches the site, or the sticky mark', () => {
+    const saved = design();
+    expect(beforeAfterChangedSince(design(), saved)).toBe(false);
+    expect(beforeAfterChangedSince(design({ beforeAfter: { title: 'Before and after' } }), saved)).toBe(true);
+    const recaptioned = { ...slots, beforeAfter: slots.beforeAfter.map((p, i) => (i === 2 ? { ...p, caption: 'Wheels' } : p)) };
+    expect(beforeAfterChangedSince(design({ slots: recaptioned }), saved)).toBe(true);
+    // A half-picked pair never reaches the site.
+    const more = { ...slots, beforeAfter: [...slots.beforeAfter, { before: photo(6), after: '', caption: '' }] };
+    expect(beforeAfterChangedSince(design({ slots: more }), saved)).toBe(false);
+    expect(beforeAfterChangedSince(design(), { ...saved, beforeAfterChanged: true })).toBe(true);
+    expect(beforeAfterChangedSince(design(), null)).toBe(true);
+    expect(beforeAfterChangedSince({ slots: { beforeAfter: [] } }, null)).toBe(false);
+    // Photos against what the last write copied.
+    expect(beforeAfterImportsChanged(slots, copied)).toBe(false);
+    expect(beforeAfterImportsChanged(slots, { ...copied, baAfter1: photo(9) })).toBe(true);
+    expect(beforeAfterImportsChanged(slots, { ...copied, baBefore2: photo(7) })).toBe(true);
+    expect(beforeAfterImportsChanged(slots, {})).toBe(true);
+    expect(beforeAfterImportsChanged({ beforeAfter: [] }, { hero: photo(1) })).toBe(false);
+  });
+
+  it('a write applies them only on a template with the section, and when the setup changed them', () => {
+    expect(appliesBeforeAfter(design({ beforeAfterChanged: true }))).toBe(true);
+    expect(appliesBeforeAfter(design({ imagesChanged: ['hero', 'baAfter1'] }))).toBe(true);
+    expect(appliesBeforeAfter(design({ imagesChanged: ['hero'] }))).toBe(false);
+    expect(appliesBeforeAfter(design({ templateId: 'mobile_chrome', beforeAfterChanged: true }))).toBe(false);
+    // Pairs none of whose photos were copied would only take the section off.
+    expect(appliesBeforeAfter(design({ imported: {}, beforeAfterChanged: true }))).toBe(false);
+    expect(appliesBeforeAfter(design({ imported: { baAfter1: copied.baAfter1 }, beforeAfterChanged: true }))).toBe(true);
+    // Removing every pair is a change like any other.
+    expect(appliesBeforeAfter(design({ slots: { beforeAfter: [] }, imported: {}, beforeAfterChanged: true }))).toBe(true);
+  });
+
+  it('cuts a photo-desk note to a caption at a word', () => {
+    expect(beforeAfterCaption(' Mud washed off\nthe doors ')).toBe('Mud washed off the doors');
+    const long = 'Clay bar and two-step polish took the swirls out of the hood, roof and trunk lid before the ceramic coat';
+    const cut = beforeAfterCaption(long);
+    expect(cut.length).toBeLessThanOrEqual(80);
+    expect(long.startsWith(cut)).toBe(true);
+    expect(long[cut.length]).toBe(' ');
+    expect(cut).not.toMatch(/[\s,]$/);
+    expect(beforeAfterCaption(null)).toBe('');
+  });
+
+  describe('a rewrite', () => {
+    // The site as the editor left it: its own pair (photos and caption), more photos.
+    const existing = {
+      template_id: 'detailing_sporty',
+      business_info: {},
+      generated_content: {
+        headline: 'Old',
+        beforeAfter: { title: 'Owner\'s heading', pairs: [{ caption: 'Owner\'s caption' }, {}, {}] },
+        _images: { hero: 'editor-hero.jpg', baBefore0: 'editor-b0.jpg', baAfter0: 'editor-a0.jpg', baBefore2: 'editor-b2.jpg', baAfter2: 'editor-a2.jpg' },
+      },
+    };
+    const rewrite = (d) => rewriteSite({ existing, copy: { headline: 'New' }, businessInfo: {}, design: d }).generated_content;
+
+    it('keeps the site\'s own pairs when the setup didn\'t change them', () => {
+      const out = rewrite(design());
+      expect(out.beforeAfter).toEqual(existing.generated_content.beforeAfter);
+      expect(out._images).toEqual(existing.generated_content._images);
+      expect(out.headline).toBe('New');
+    });
+
+    it('replaces the whole set when it did: photos, captions, heading', () => {
+      for (const d of [design({ beforeAfterChanged: true }), design({ imagesChanged: ['baBefore1'] })]) {
+        const out = rewrite(d);
+        expect(out.beforeAfter).toEqual({ title: 'Real cars, real work', pairs: [{ caption: 'Paint correction on the hood' }, {}] });
+        // The editor's third pair goes; the other photos stay as the editor left them.
+        expect(out._images).toEqual({ hero: 'editor-hero.jpg', ...imagesOf(copied) });
+      }
+    });
+
+    it('takes the section off when the setup removed every pair', () => {
+      const out = rewrite(design({ slots: { ...slots, beforeAfter: [] }, images: { hero: url('hero') }, imported: {}, beforeAfterChanged: true }));
+      expect(out).not.toHaveProperty('beforeAfter');
+      expect(out._images).toEqual({ hero: 'editor-hero.jpg' });
+    });
+
+    it('keeps the site\'s own when none of the pairs\' photos were copied (a page from before the pairs)', () => {
+      const out = rewrite(design({ imported: {}, beforeAfterChanged: true, imagesChanged: ['baBefore0', 'baAfter0'] }));
+      expect(out.beforeAfter).toEqual(existing.generated_content.beforeAfter);
+      expect(out._images).toEqual(existing.generated_content._images);
+    });
+
+    it('leaves them alone on a template without the section, whatever changed', () => {
+      const out = rewrite(design({ templateId: 'mobile_chrome', beforeAfterChanged: true, imagesChanged: ['baBefore0', 'baAfter0'] }));
+      expect(out.beforeAfter).toEqual(existing.generated_content.beforeAfter);
+      expect(out._images).toEqual(existing.generated_content._images);
+    });
   });
 });

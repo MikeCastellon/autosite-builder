@@ -2,19 +2,22 @@ import { Suspense, lazy, useEffect, useId, useMemo, useRef, useState } from 'rea
 import { TEMPLATES } from '../../data/templates.js';
 import { captureReference, customSiteAdmin, importAssetToSite, startDesignRun } from '../../lib/customSites.js';
 import {
+  BEFORE_AFTER_CAPTION_MAX, BEFORE_AFTER_INTRO_MAX, BEFORE_AFTER_MAX, BEFORE_AFTER_SECTION, BEFORE_AFTER_TITLE_MAX,
   CAPTURE_POLL_MS, DESIGN_MODEL, DESIGN_STALE_MS, REFERENCE_SITES_MAX, REFERENCE_SITE_NOTE_MAX, REFERENCE_SITE_URL_MAX, REPLICA_LABEL,
-  SITE_BUSINESS_TYPES, brandAccent, canMatchReference, captureViewFor, capturedShotKey, designFromIntake, designProblems, isCaptureLive,
+  SITE_BUSINESS_TYPES, beforeAfterCaption, beforeAfterChangedSince, beforeAfterImportsChanged, beforeAfterSlots, brandAccent,
+  canMatchReference, captureViewFor, capturedShotKey, designFromIntake, designProblems, hasBeforeAfter, isBeforeAfterKey, isCaptureLive,
   isImportable, newerCapture, rankTemplates, referenceSiteKey, referenceSiteUrl, replacedShotSource, replicaTemplatesFor, sameReferenceSource,
   sanitizeReference, sanitizeReferenceSites, showsPrices,
 } from '../../lib/customSiteDesign.js';
 import { formatBytes, safeHref } from '../../lib/customSiteForm.js';
 import { changedLeverGroups, leverGroupsChanged, sanitizeLevers } from '../../lib/designLevers.js';
+import { sanitizePhotos } from '../../lib/kit/photos.js';
 import { featureRows, outlineFontsText, outlineSectionsText } from '../../lib/referenceFeatures.js';
 import { unpackGeneratedContent } from '../../lib/siteRender.js';
 import { supabase } from '../../lib/supabase.js';
 import { useAlert } from '../ui/AlertProvider.jsx';
 import { formatDateTime } from './customSiteUi.jsx';
-import { slotImages } from './studio/designPreview.js';
+import { previewBeforeAfter, slotImages } from './studio/designPreview.js';
 
 // The Design Studio loads only when an admin opens the setup page: these
 // stay out of the bundle every visitor downloads.
@@ -907,6 +910,189 @@ function ReferenceSection({
   );
 }
 
+// ─── Before & After pairs (design.slots.beforeAfter) ─────────────────
+
+// What the customer ticked in the form's "What should your site have?".
+const ASKED_FOR_PAIRS = 'Before & after photos';
+
+// The photo desk's before/after pairs (Launch kit > Photo desk,
+// design.kit.photos) for "Use the photo desk's pairs": the stored data
+// re-checked with the desk's own sanitizer, as its result view does (an
+// older run's record can't bring another project's file, or a claim, onto
+// the site), only pairs whose two photos the picker offers (`photos`: the
+// project's usable photo uploads), each with its note as the caption.
+export function photoDeskPairs(project, photos) {
+  const run = project?.design?.kit?.photos;
+  if (!run || run.status !== 'ready') return [];
+  const data = sanitizePhotos(run.data, { projectId: project.id });
+  const offered = new Set((Array.isArray(photos) ? photos : []).map((f) => f?.path).filter(Boolean));
+  return (data?.pairs || [])
+    .filter((p) => offered.has(p.before) && offered.has(p.after))
+    .slice(0, BEFORE_AFTER_MAX)
+    .map((p) => ({ before: p.before, after: p.after, caption: beforeAfterCaption(p.note) }));
+}
+
+const PAIR_SIDES = [{ id: 'before', label: 'Before' }, { id: 'after', label: 'After' }];
+
+// The Before & After pairs under Photos, for a template with that section:
+// each pair's two photos picked with the gallery's thumbnails (one half at
+// a time), a caption each, and the section's optional heading and intro.
+// Nothing here is written by Claude: the run puts exactly this on the site
+// (customSiteDesign.js beforeAfterCopy), the template's own neutral
+// heading where none is typed.
+//   pairs      slots.beforeAfter as the page has it: [{ before, after, caption }]
+//   onChange   (pairs) => void
+//   photos     the project's usable photo uploads (files with signed links)
+//   text       { title, intro } as typed; onText (text) => void
+//   deskPairs  photoDeskPairs(): the photo desk's pairs, [] without a run
+//   asked      the customer asked for before & after photos in the form
+//   hidden     the Sections setting above hides the section
+function BeforeAfterPicker({ pairs, onChange, photos, text, onText, deskPairs = [], asked = false, hidden = false }) {
+  // The half being picked ({ pair, side }), or null.
+  const [active, setActive] = useState(null);
+  const [filled, setFilled] = useState(false);
+  const byPath = new Map(photos.map((f) => [f.path, f]));
+  const complete = pairs.filter((p) => p.before && p.after).length;
+  const update = (i, patch) => onChange(pairs.map((p, j) => (j === i ? { ...p, ...patch } : p)));
+
+  // A new pair opens on its "before" half.
+  function add() {
+    if (pairs.length >= BEFORE_AFTER_MAX) return;
+    onChange([...pairs, { before: '', after: '', caption: '' }]);
+    setActive({ pair: pairs.length, side: 'before' });
+  }
+  function remove(i) {
+    onChange(pairs.filter((_, j) => j !== i));
+    setActive((a) => (!a || a.pair < i ? a : a.pair === i ? null : { ...a, pair: a.pair - 1 }));
+  }
+  // A thumbnail for the half being picked: a second click takes it off
+  // again (as in the gallery); a pick moves on to the pair's other half
+  // while that is empty. A pair is two different photos.
+  function pick(path) {
+    const pair = active ? pairs[active.pair] : null;
+    if (!pair) return;
+    const other = active.side === 'before' ? 'after' : 'before';
+    if (path && pair[other] === path) return;
+    const next = pair[active.side] === path ? '' : path;
+    update(active.pair, { [active.side]: next });
+    if (next && !pair[other]) setActive({ pair: active.pair, side: other });
+    else if (next) setActive(null);
+  }
+  function useDesk() {
+    onChange(deskPairs.map((p) => ({ ...p })));
+    setActive(null);
+    setFilled(true);
+  }
+
+  return (
+    <div data-before-after="">
+      <p className="text-[12px] font-semibold text-[#1a1a1a] mb-1">
+        Before &amp; After <span className="font-normal text-ink-tertiary">({complete} of {BEFORE_AFTER_MAX} pairs)</span>
+      </p>
+      <p className="text-[11px] text-ink-tertiary">
+        Two of their own photos of the same job, before and after. A pair goes on the site once it has both.
+        {asked ? ' They asked for before & after photos.' : ''}
+      </p>
+      {hidden && (
+        <p className="mt-1 text-[12px] text-amber-800">Hidden under Sections: show the section there, or these pairs stay off the site.</p>
+      )}
+      {deskPairs.length > 0 && (
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <button type="button" onClick={useDesk} className={BTN_SMALL}>Use the photo desk's pairs ({deskPairs.length})</button>
+          {filled && <span role="status" className="text-[12px] font-semibold text-emerald-800">Filled from the photo desk: check each pair.</span>}
+        </div>
+      )}
+      {pairs.length > 0 && (
+        <ol className="mt-3 space-y-3">
+          {pairs.map((p, i) => {
+            const open = active?.pair === i ? active.side : '';
+            const other = open === 'before' ? 'after' : 'before';
+            return (
+              <li key={i} className="rounded-xl border border-black/[0.08] p-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-[12px] font-semibold text-[#1a1a1a]">Pair {i + 1}</span>
+                  {!(p.before && p.after) && <span className="text-[11px] text-amber-800">Needs both photos</span>}
+                  <button type="button" onClick={() => remove(i)} aria-label={`Remove pair ${i + 1}`} className="ml-auto text-[12px] font-semibold text-ink-tertiary hover:text-[#cc0000]">
+                    Remove
+                  </button>
+                </div>
+                <div className="mt-2 flex flex-wrap items-start gap-3">
+                  {PAIR_SIDES.map((s) => {
+                    const f = byPath.get(p[s.id]);
+                    const on = open === s.id;
+                    return (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => setActive(on ? null : { pair: i, side: s.id })}
+                        aria-pressed={on}
+                        aria-label={`${s.label} photo of pair ${i + 1}${f ? `: ${f.name}` : ''}`}
+                        className={`relative w-20 h-20 rounded-lg overflow-hidden border-2 flex items-center justify-center bg-[#faf9f7] ${on ? 'border-[#cc0000]' : 'border-black/[0.10]'}`}
+                      >
+                        {f
+                          ? <img src={f.url} alt="" className="w-full h-full object-cover" />
+                          : <span className="text-[11px] font-semibold text-ink-tertiary">{p[s.id] ? 'Not found' : 'Pick'}</span>}
+                        <span className="absolute inset-x-0 bottom-0 bg-black/60 text-white text-[10px] font-bold uppercase tracking-wide text-center">{s.label}</span>
+                      </button>
+                    );
+                  })}
+                  <Field label="Caption" hint="Optional: what was done, plainly." className="min-w-[180px] flex-1">
+                    <input
+                      value={p.caption || ''}
+                      onChange={(e) => update(i, { caption: e.target.value })}
+                      maxLength={BEFORE_AFTER_CAPTION_MAX}
+                      placeholder="e.g. Interior shampoo"
+                      className={INPUT}
+                    />
+                  </Field>
+                </div>
+                {open && (
+                  <div className="mt-3">
+                    <p className="text-[11px] font-semibold text-[#4a4a4a] mb-1.5">Pick the {open} photo of pair {i + 1}</p>
+                    <div className="flex flex-wrap gap-2">
+                      <button type="button" onClick={() => update(i, { [open]: '' })} aria-pressed={!p[open]}
+                        className={`w-20 h-20 rounded-lg border text-[11px] font-semibold ${!p[open] ? 'border-[#cc0000] text-[#cc0000]' : 'border-black/[0.10] text-ink-tertiary'}`}>
+                        None
+                      </button>
+                      {photos.map((f) => {
+                        const on = p[open] === f.path;
+                        const taken = p[other] === f.path;
+                        return (
+                          <button key={f.path} type="button" onClick={() => pick(f.path)} aria-pressed={on} disabled={taken}
+                            title={taken ? `Already the ${other} photo of this pair` : f.name}
+                            className={`relative w-20 h-20 rounded-lg overflow-hidden border-2 disabled:opacity-40 ${on ? 'border-[#cc0000]' : 'border-transparent'}`}>
+                            <img src={f.url} alt={f.name} className="w-full h-full object-cover" />
+                            {(on || taken) && (
+                              <span className="absolute top-1 right-1 px-1.5 h-5 rounded-full bg-[#cc0000] text-white text-[10px] font-bold flex items-center justify-center">
+                                {on ? PAIR_SIDES.find((s) => s.id === open).label : PAIR_SIDES.find((s) => s.id === other).label}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ol>
+      )}
+      {pairs.length < BEFORE_AFTER_MAX && (
+        <button type="button" onClick={add} className="mt-2 text-[13px] font-semibold text-[#cc0000] hover:text-[#a80000]">+ Add a pair</button>
+      )}
+      <div className="mt-3 grid sm:grid-cols-2 gap-3">
+        <Field label="Section heading (optional)" hint="Empty keeps the template's own.">
+          <input value={text.title} onChange={(e) => onText({ ...text, title: e.target.value })} maxLength={BEFORE_AFTER_TITLE_MAX} className={INPUT} />
+        </Field>
+        <Field label="Intro (optional)" hint="A sentence or two, facts only.">
+          <textarea rows={2} value={text.intro} onChange={(e) => onText({ ...text, intro: e.target.value })} maxLength={BEFORE_AFTER_INTRO_MAX} className={`${INPUT} leading-relaxed`} />
+        </Field>
+      </div>
+    </div>
+  );
+}
+
 export function DesignSetup({ project, onBack, onStarted }) {
   const { toast, confirm } = useAlert();
   const form = project.form || {};
@@ -931,6 +1117,9 @@ export function DesignSetup({ project, onBack, onStarted }) {
   const [templateId, setTemplateId] = useState(start.templateId || '');
   const [useBrand, setUseBrand] = useState(saved ? saved.useBrand !== false && start.brandHexes.length > 0 : start.brandHexes.length > 0);
   const [slots, setSlots] = useState(start.slots);
+  // The Before & After section's heading and intro as typed
+  // (design.beforeAfter); its pairs are slots.beforeAfter.
+  const [pairText, setPairText] = useState(() => ({ title: saved?.beforeAfter?.title || '', intro: saved?.beforeAfter?.intro || '' }));
   // The Design Studio's settings (src/lib/designLevers.js).
   const [levers, setLevers] = useState(() => sanitizeLevers(start.levers, start.templateId || ''));
   // Reference sites: inspire / match one / exact replica (design.reference).
@@ -1058,6 +1247,22 @@ export function DesignSetup({ project, onBack, onStarted }) {
     ...changedLeverGroups(cleanLevers, sanitizeLevers(saved?.levers, templateId)),
   ])];
 
+  // Before & After: offered (and written) only on a template with the
+  // section. The pairs stay in the setup on another one, for a switch back.
+  const pairsOn = hasBeforeAfter(templateId);
+  const pairs = Array.isArray(slots.beforeAfter) ? slots.beforeAfter : [];
+  const pairPhotos = importable.filter((f) => f.kind === 'photo');
+  // Changed since the last write? Sticky until a run applies them (the run
+  // clears it), like the Studio's groups, so Save now and Rewrite later
+  // still puts them on the site.
+  const pairsChanged = beforeAfterChangedSince({ slots, beforeAfter: pairText }, saved);
+  // What the next write does with them (rewriteSite): the setup's pairs on
+  // a first write (project.site_id is set once a run has made the site) or
+  // once changed here, else the site keeps its own. The preview shows the
+  // same.
+  const pairsApply = pairsOn && (!project.site_id || pairsChanged || beforeAfterImportsChanged(slots, saved?.imported, { projectId: project.id }));
+  const deskPairs = photoDeskPairs(project, pairPhotos);
+
   const cleanReference = useMemo(
     () => withBuiltReplica(sanitizeReference(reference, { projectId: project.id }), replicas, templateId),
     [reference, replicas, templateId, project.id],
@@ -1079,7 +1284,12 @@ export function DesignSetup({ project, onBack, onStarted }) {
       template: { label: template?.label || '', mood: template?.mood || '' },
       customColors: accent,
       useBrand,
-      slots,
+      // Always with the pairs, an empty list too: the server keeps the
+      // stored ones only for a save that sends none (a tab opened before
+      // they existed).
+      slots: { ...slots, beforeAfter: pairs },
+      beforeAfter: pairText,
+      beforeAfterChanged: pairsChanged,
       images: saved?.images || {},
       imported: saved?.imported || {},
       siteId: saved?.siteId || project.site_id || '',
@@ -1386,7 +1596,7 @@ export function DesignSetup({ project, onBack, onStarted }) {
     if (missing.length) { setError(`Fill in: ${missing.join(', ')}`); return; }
     if (project.site_id) {
       const ok = await confirm(
-        'This rewrites the site\'s text and business details from this page, replacing text changed in the editor. Photos, the brand color and the Design Studio settings change only where you changed them here; the rest of your editor work stays.',
+        'This rewrites the site\'s text and business details from this page, replacing text changed in the editor. Photos (Before & After pairs too), the brand color and the Design Studio settings change only where you changed them here; the rest of your editor work stays.',
         { title: 'Rewrite the site?', confirmText: 'Rewrite' },
       );
       if (!ok) return;
@@ -1396,6 +1606,9 @@ export function DesignSetup({ project, onBack, onStarted }) {
       const siteId = draft.siteId || crypto.randomUUID();
       const wanted = { logo: slots.logo, hero: slots.hero, about: slots.about };
       slots.gallery.forEach((p, i) => { wanted[`gallery${i}`] = p; });
+      // The complete Before & After pairs, copied like the gallery to the
+      // keys the template reads (baBefore{i} / baAfter{i}).
+      if (pairsOn) Object.assign(wanted, beforeAfterSlots(slots, { projectId: project.id }));
       // Photo links expire an hour after the page loaded: get fresh ones.
       const fresh = (await customSiteAdmin('get', { id: project.id })).project?.files || [];
       const images = {};
@@ -1413,9 +1626,20 @@ export function DesignSetup({ project, onBack, onStarted }) {
         images[key] = await importAssetToSite({ url: file.url, name: file.name, siteId, imageKey: key });
         imported[key] = path;
       }
+      // On a template without the Before & After section the site keeps the
+      // pairs it has: their photos are neither copied nor counted, and their
+      // last copies stay on record, so a switch back finds them unchanged.
+      if (!pairsOn) {
+        for (const [key, path] of Object.entries(draft.imported)) {
+          if (isBeforeAfterKey(key) && draft.images[key]) {
+            images[key] = draft.images[key];
+            imported[key] = path;
+          }
+        }
+      }
       // What this session changed: a rewrite applies only these to the site.
       const keys = new Set([...Object.keys(wanted), ...Object.keys(draft.imported)]);
-      const imagesChanged = [...keys].filter((k) => (wanted[k] || '') !== (draft.imported[k] || ''));
+      const imagesChanged = [...keys].filter((k) => (pairsOn || !isBeforeAfterKey(k)) && (wanted[k] || '') !== (draft.imported[k] || ''));
       const colorsChanged = (saved?.customColors?.accent || '') !== (accent.accent || '') || (saved?.templateId || '') !== templateId;
       setBusy('Starting…');
       await customSiteAdmin('design-save', { id: project.id, design: { ...draft, siteId, images, imported, imagesChanged, colorsChanged } });
@@ -1732,6 +1956,22 @@ export function DesignSetup({ project, onBack, onStarted }) {
                   })}
                 </div>
               </div>
+              {pairsOn ? (
+                <BeforeAfterPicker
+                  pairs={pairs}
+                  onChange={(next) => setSlots((p) => ({ ...p, beforeAfter: next }))}
+                  photos={pairPhotos}
+                  text={pairText}
+                  onText={setPairText}
+                  deskPairs={deskPairs}
+                  asked={Array.isArray(form.features) && form.features.includes(ASKED_FOR_PAIRS)}
+                  hidden={(cleanLevers.sections?.hidden || []).includes(BEFORE_AFTER_SECTION)}
+                />
+              ) : pairs.some((p) => p.before || p.after) && (
+                <p className="text-[12px] text-ink-tertiary">
+                  {template?.label || 'This template'} has no Before &amp; After section: the pairs set up for it stay saved here for a template that has one.
+                </p>
+              )}
             </div>
           )}
           {notImportable.length > 0 && (
@@ -1754,6 +1994,11 @@ export function DesignSetup({ project, onBack, onStarted }) {
               customColors={{ ...(site?.customColors || {}), ...accent }}
               customFonts={site?.customFonts}
               images={{ ...(site?.images || {}), ...slotImages({ slots, files: projectFiles, images: saved?.images, imported: saved?.imported }) }}
+              // The setup's pairs when the next write puts them on the site;
+              // otherwise the site's own stay in its copy and images.
+              beforeAfter={pairsApply
+                ? previewBeforeAfter({ templateId, slots, text: pairText, files: projectFiles, images: saved?.images, imported: saved?.imported })
+                : undefined}
               projectId={project.id}
             />
           </Suspense>

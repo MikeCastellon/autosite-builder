@@ -24,10 +24,10 @@ const DEVICES = {
 const DEBOUNCE_MS = 400;
 
 export default function DesignPreview({
-  templateId, businessInfo, copy, images, customColors, customFonts, levers, projectId, existingInfo,
+  templateId, businessInfo, copy, images, customColors, customFonts, levers, projectId, existingInfo, beforeAfter,
   isPro = true, defaultDevice = 'desktop', className = '',
 }) {
-  const input = buildPreviewInput({ templateId, businessInfo, copy, images, customColors, customFonts, levers, projectId, existingInfo });
+  const input = buildPreviewInput({ templateId, businessInfo, copy, images, customColors, customFonts, levers, projectId, existingInfo, beforeAfter });
   // Props arrive as fresh objects on every parent render: rebuild only when
   // what they say changes. The input is plain data, so the key is the input.
   const inputKey = input ? JSON.stringify(input) : '';

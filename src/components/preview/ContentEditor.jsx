@@ -14,6 +14,7 @@ import { editorTabs, templateReads, shadeGuideState, googleBadgeDefaults, templa
 import { colorChecks, formatRatio } from './colorChecks.js';
 import HeroServicesPanel from './editor/HeroServicesPanel.jsx';
 import FeaturedServicePanel from './editor/FeaturedServicePanel.jsx';
+import BeforeAfterPanel from './editor/BeforeAfterPanel.jsx';
 import CtaPhotoField from './editor/CtaPhotoField.jsx';
 import ServiceDetailsFields from './editor/ServiceDetailsFields.jsx';
 import HeadingsPanel from './editor/HeadingsPanel.jsx';
@@ -98,6 +99,7 @@ const NAV_ICON_PATHS = {
   ticker:       <><path d="M2 8h12" /><path d="M11 5l3 3-3 3M5 5L2 8l3 3" /></>,
   about:        <><circle cx="8" cy="5.5" r="2.5" /><path d="M3 14a5 5 0 0110 0" /></>,
   gallery:      <><rect x="2" y="3" width="12" height="10" rx="1" /><circle cx="6" cy="7" r="1" /><path d="M2 12l4-4 3 3 2-2 3 3" /></>,
+  beforeAfter:  <><rect x="2" y="3" width="12" height="10" rx="1" /><path d="M8 1.5v13" /><path d="M5.5 6.5L4 8l1.5 1.5M10.5 6.5L12 8l-1.5 1.5" /></>,
   testimonials: <path d="M8 2l1.8 4 4.2.6-3 2.9.8 4.2L8 11.7l-3.8 2 .8-4.2-3-2.9 4.2-.6z" />,
   contact:      <path d="M3 3.5C3 3 3.4 2.5 4 2.5h2.5l1 3-1.5 1c.8 2 2.5 3.7 4.5 4.5l1-1.5 3 1V13c0 .5-.5 1-1 1A11 11 0 013 3.5z" />,
   colors:       <><path d="M8 2a6 6 0 100 12c.6 0 1-.4 1-1 0-.4-.2-.7-.4-1-.2-.3-.3-.6-.3-1 0-.6.4-1 1-1H10a4 4 0 100-8z" /><circle cx="5" cy="7" r="0.8" fill="currentColor" stroke="none" /><circle cx="8" cy="5" r="0.8" fill="currentColor" stroke="none" /><circle cx="11.5" cy="7.5" r="0.8" fill="currentColor" stroke="none" /></>,
@@ -145,6 +147,7 @@ const EMPTY_SECTION_HINTS = {
   testimonials: 'Not on your page yet: add a review in Reviews.',
   statsBar: 'Not on your page yet: add stats in About > Stats Box, or details like years in business in Business Info.',
   featured: 'Not on your page yet: pick a service in Featured Service.',
+  beforeAfter: 'Not on your page yet: add a before and an after photo in Before & After.',
   locations: 'Not on your page yet: add your city, areas or hours in Business Info.',
 };
 const EMPTY_SECTION_HINT = 'Not on your page yet: this section has nothing to show.';
@@ -1487,6 +1490,19 @@ export default function ContentEditor({ isOpen, onClose, topOffset = 0, siteId, 
 
           {activeSection === 'gallery' && (
             <GallerySlots images={images} setImage={setImage} siteId={siteId} gridNote={templateHelp(templateId, 'gallery')} />
+          )}
+
+          {activeSection === 'beforeAfter' && (
+            <BeforeAfterPanel
+              copy={copy}
+              setCopy={setCopy}
+              images={images}
+              setImage={setImage}
+              patchImages={(fn) => onImagesChange((prev) => fn(prev || {}))}
+              siteId={siteId}
+              confirm={confirmDialog}
+              hasHeadingsTab={has('sectionTitles')}
+            />
           )}
 
           {activeSection === 'colors' && templateMeta && (

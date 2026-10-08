@@ -95,9 +95,10 @@ export const custom = {
 
 // Every owner-editable feature set up (kit/features.js; Edit > Hero
 // services, Google Rating, Footer, Headings, Featured Service, Vehicle
-// Makes, package details, areas, insured, review sources, CTA photo). The
-// themes with live sites show these only when the owner turns them on, so
-// the contract checks their extra sections and colors with this fixture.
+// Makes, package details, areas, insured, review sources, CTA photo,
+// Before & After pairs). The themes with live sites show these only when
+// the owner turns them on, so the contract checks their extra sections and
+// colors with this fixture.
 const FEATURE_SUMMARIES = [
   'Inside and out, top to bottom.',
   'Long-lasting gloss and protection.',
@@ -145,11 +146,16 @@ export const features = {
     featuredService: { serviceName: FEATURE_SERVICES[1].name, priceFrom: '$450', bullets: ['Deep gloss', 'Easier washing'] },
     vehicleMakes: ['BMW', 'Porsche', 'Rivian'],
     testimonialPlaceholders: DEMO_GENERATED_COPY.testimonialPlaceholders.map((q, i) => (i === 0 ? { ...q, source: 'google', rating: 5 } : q)),
+    beforeAfter: { pairs: [{ caption: 'Paint correction on a black sedan' }, {}] },
   },
   images: {
     ...FIXTURE_IMAGES,
     featured: photo('featured photo', '#1b2430', '#7d8a99'),
     cta: photo('cta photo', '#30261c', '#8c7a66'),
+    baBefore0: photo('before 1', '#4a4540', '#1c1a18', 'rgba(255,255,255,0.06)'),
+    baAfter0: photo('after 1', '#e9eef4', '#6f8299', 'rgba(255,255,255,0.4)'),
+    baBefore1: photo('before 2', '#5a5048', '#262220', 'rgba(255,255,255,0.06)'),
+    baAfter1: photo('after 2', '#f3efe6', '#8f8270', 'rgba(255,255,255,0.4)'),
   },
   customColors: {},
   customFonts: {},

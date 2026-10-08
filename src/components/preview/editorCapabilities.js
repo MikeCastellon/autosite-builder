@@ -26,6 +26,8 @@
 //   sectionTitles                    Headings tab
 //   featuredService                  Featured Service tab
 //   vehicleMakes                     Vehicle Makes tab
+//   beforeAfter                      Before & After tab (copy.beforeAfter
+//                                    + images baBefore<i> / baAfter<i>)
 //
 // SOURCE_CAPABILITIES (below) covers controls whose data is not a copy key
 // (business facts, per-service and per-review fields, images); the same
@@ -53,6 +55,7 @@ export const CAPABILITY_KEYS = {
   sectionTitles: ['sectionTitles'],
   featuredService: ['featuredService'],
   vehicleMakes: ['vehicleMakes'],
+  beforeAfter: ['beforeAfter'],
 };
 
 // Controls that depend on data other than a copy key (business facts,
@@ -78,8 +81,9 @@ const OPT_IN = [
 ];
 
 export const TEMPLATE_READS = {
-  // Theme-ready (visible) templates.
-  detailing_sporty: [...KIT, ...OPT_IN],
+  // Theme-ready (visible) templates. Bold & Sporty is the first with the
+  // Before & After band (opt-in too: nothing shows without copy.beforeAfter).
+  detailing_sporty: [...KIT, ...OPT_IN, 'beforeAfter'],
   mechanic_industrial: KIT,
   mechanic_garage: KIT,
   mobile_chrome: [...KIT, ...OPT_IN],
@@ -197,6 +201,7 @@ export const EDITOR_TABS = [
   { id: 'ticker', label: 'Ticker', group: 'content', needs: 'tickerItems' },
   { id: 'about', label: 'About', group: 'content' },
   { id: 'gallery', label: 'Gallery', group: 'content' },
+  { id: 'beforeAfter', label: 'Before & After', group: 'content', needs: 'beforeAfter' },
   { id: 'testimonials', label: 'Reviews', group: 'content' },
   { id: 'google', label: 'Google Rating', group: 'content', needs: 'googleBadge' },
   // (An Instagram tab stays off pending Meta App Review.)

@@ -6,10 +6,23 @@ import { renderToStaticMarkup } from 'react-dom/server';
 // preview never makes (it passes no widget ids).
 vi.mock('../../../lib/supabase.js', () => ({ supabase: {}, isImpersonationTab: false }));
 
+// Bold & Sporty with its Before & After section (a no-op once
+// templateSections.js lists it) and Chrome Elite without.
+vi.mock('../../../data/templateSections.js', async (importOriginal) => {
+  const m = await importOriginal();
+  const sectionIdsFor = (id) => {
+    const real = m.sectionIdsFor(id);
+    if (id === 'detailing_sporty') return real.includes('beforeAfter') ? real : [...real, 'beforeAfter'];
+    return id === 'mobile_chrome' ? real.filter((s) => s !== 'beforeAfter') : real;
+  };
+  return { ...m, sectionIdsFor };
+});
+
 const {
   PREVIEW_SANDBOX, PREVIEW_SCROLL_MESSAGE, SAMPLE_TAG,
-  buildPreviewInput, framePreviewHtml, hasWrittenCopy, publishedTabHtml, renderPreviewHtml, sampleCopy, slotImages,
+  buildPreviewInput, framePreviewHtml, hasWrittenCopy, previewBeforeAfter, publishedTabHtml, renderPreviewHtml, sampleCopy, slotImages,
 } = await import('./designPreview.js');
+const { TEMPLATE_COMPONENT_MAP } = await import('../../../data/templates.js');
 const { default: DesignPreview } = await import('./DesignPreview.jsx');
 const { leverPatch } = await import('../../../lib/designLevers.js');
 const { sanitizeDesign, siteBusinessInfo } = await import('../../../lib/customSiteDesign.js');
@@ -195,6 +208,78 @@ describe('slotImages', () => {
   it('skips picks without a link', () => {
     expect(slotImages({ slots: { hero: P(9) }, files })).toEqual({});
     expect(slotImages()).toEqual({});
+  });
+
+  it('leaves the Before & After pairs to previewBeforeAfter', () => {
+    expect(slotImages({ slots: { hero: P(1), beforeAfter: [{ before: P(2), after: P(3), caption: '' }] }, files })).toEqual({ hero: 'https://signed.example/1' });
+  });
+});
+
+describe('the Before & After pairs in the preview', () => {
+  const P = (n) => `11111111-1111-1111-1111-111111111111/photo/${String(n).padStart(8, '0')}-2222-2222-2222-222222222222.jpg`;
+  const files = [1, 2, 3, 4, 5].map((n) => ({ path: P(n), url: `https://signed.example/${n}` }));
+  const slots = {
+    hero: P(1),
+    gallery: [],
+    beforeAfter: [
+      { before: P(2), after: P(3), caption: 'Paint correction on the hood' },
+      { before: P(4), after: '', caption: 'Half picked' },
+      { before: P(4), after: P(5), caption: '' },
+    ],
+  };
+
+  it('maps the complete pairs to the run\'s keys, linked like the gallery, with the copy the run writes', () => {
+    const out = previewBeforeAfter({
+      templateId: 'detailing_sporty', slots, text: { title: 'Real work', intro: '' }, files,
+      // Pair 1's before was copied into the site from the same upload: its public link.
+      images: { baBefore0: 'https://public.example/b0.webp', baAfter0: 'https://public.example/old.webp' },
+      imported: { baBefore0: P(2), baAfter0: P(9) },
+    });
+    expect(out.images).toEqual({
+      baBefore0: 'https://public.example/b0.webp', baAfter0: 'https://signed.example/3',
+      baBefore1: 'https://signed.example/4', baAfter1: 'https://signed.example/5',
+    });
+    expect(out.copy).toEqual({ title: 'Real work', pairs: [{ caption: 'Paint correction on the hood' }, {}] });
+  });
+
+  it('turns the section off without a complete pair with both links, or on a template without it', () => {
+    expect(previewBeforeAfter({ templateId: 'detailing_sporty', slots, files: [] })).toEqual({ images: {}, copy: null });
+    expect(previewBeforeAfter({ templateId: 'mobile_chrome', slots, files }).copy).toBeNull();
+    expect(previewBeforeAfter()).toEqual({ images: {}, copy: null });
+  });
+
+  it('buildPreviewInput puts them in place of the site\'s own set, or leaves the site\'s', () => {
+    const own = { ...written, beforeAfter: { title: 'Owner\'s', pairs: [{ caption: 'Owner\'s' }, {}, {}] } };
+    const siteImages = { hero: 'https://public.example/hero.webp', baBefore2: 'https://public.example/b2.webp', baAfter2: 'https://public.example/a2.webp' };
+    const pairs = previewBeforeAfter({ templateId: 'detailing_sporty', slots, files });
+    const input = buildPreviewInput({ templateId: 'detailing_sporty', businessInfo: detailer, copy: own, images: siteImages, beforeAfter: pairs });
+    expect(input.generatedCopy.beforeAfter).toEqual({ pairs: [{ caption: 'Paint correction on the hood' }, {}] });
+    expect(input.images).toEqual({ hero: 'https://public.example/hero.webp', ...pairs.images });
+    // The setup removed them all: the section goes, photos too.
+    const none = buildPreviewInput({ templateId: 'detailing_sporty', businessInfo: detailer, copy: own, images: siteImages, beforeAfter: { images: {}, copy: null } });
+    expect(none.generatedCopy).not.toHaveProperty('beforeAfter');
+    expect(none.images).toEqual({ hero: 'https://public.example/hero.webp' });
+    // Not applied (a rewrite keeping the site's): as the site has them.
+    const kept = buildPreviewInput({ templateId: 'detailing_sporty', businessInfo: detailer, copy: own, images: siteImages });
+    expect(kept.generatedCopy.beforeAfter).toEqual(own.beforeAfter);
+    expect(kept.images).toEqual(siteImages);
+    // Sample copy before the first write gets them too.
+    const first = buildPreviewInput({ templateId: 'detailing_sporty', businessInfo: detailer, beforeAfter: pairs });
+    expect(first.sample).toBe(true);
+    expect(first.generatedCopy.beforeAfter).toEqual(pairs.copy);
+  });
+
+  it('shows the pairs\' photos on the page of every template whose module has the section', async () => {
+    const pairs = previewBeforeAfter({ templateId: 'detailing_sporty', slots, files });
+    for (const id of Object.keys(TEMPLATES)) {
+      const mod = await TEMPLATE_COMPONENT_MAP[id]();
+      const listed = [...(mod.sections || []), ...(mod.addedSections || []).map((s) => ({ id: s }))].some((s) => s.id === 'beforeAfter');
+      if (!listed) continue;
+      const input = buildPreviewInput({ templateId: id, businessInfo: { ...detailer, businessType: TEMPLATES[id].businessType }, copy: written, beforeAfter: pairs });
+      const html = await renderPreviewHtml(input);
+      expect(html, id).toContain('data-section="beforeAfter"');
+      for (const link of Object.values(pairs.images)) expect(html, id).toContain(link);
+    }
   });
 });
 

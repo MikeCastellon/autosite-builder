@@ -124,6 +124,7 @@ export const extraFonts = ["'Barlow Condensed', sans-serif"];  // stacks used be
   `VEHICLE_MAKES_DEFAULT_ALL`, `TEMPLATE_READS`, `TEMPLATE_HELP`). The panels take them as props, so they are the seed
   for a per-theme feature admin. `editorCapabilities.test.js` checks each one against the template's own calls, so a
   template names `copy.<key>` and those helper calls literally in its source.
+- Before & After (`kit/BeforeAfter.jsx` + `kit/beforeAfter.js`, Bold & Sporty first, ns `ds-ba`): on only when `copy.beforeAfter` is an object (`{ title?, intro?, pairs: [{ caption? }] }`), photos `images.baBefore0..5` / `baAfter0..5`, published only with a complete pair. Section id `beforeAfter` (an added section). The drag slider's script is `SITE_BA_JS` (`siteRuntime.js`), added by exportHtml only to pages showing the band; the editor uses its twin `beforeAfterPreview.js`. Custom sites pick pairs in the Design step (`design.slots.beforeAfter`).
 - Layout helpers: `heroOfferCss(ns, { stackFrom, scope })` (+ `heroOfferLockCss`) keeps the card one height only where
   it sits beside the copy; a split hero renders the card as its own grid item after the photo (over the photo column on
   desktop, never stacked in the text column). Text over an owner photo: `overPhoto` / `heroScrimBase` (`kit/theme.js`),
