@@ -96,20 +96,25 @@ export const custom = {
 // Every owner-editable feature set up (kit/features.js; Edit > Hero
 // services, Google Rating, Footer, Headings, Featured Service, Vehicle
 // Makes, package details, areas, insured, review sources, CTA photo,
-// Before & After pairs). The themes with live sites show these only when
-// the owner turns them on, so the contract checks their extra sections and
-// colors with this fixture.
+// Before & After pairs, and the reference-site bands: services in tabs by
+// category, Vehicle Types, How It Works steps, Detail Showcase, Comparison,
+// FAQ). The themes with live sites show these only when the owner turns
+// them on, so the contract checks their extra sections and colors with this
+// fixture.
 const FEATURE_SUMMARIES = [
   'Inside and out, top to bottom.',
   'Long-lasting gloss and protection.',
   'Swirls and scratches polished out.',
 ];
+// Two categories, so a design that offers service tabs shows them.
+const FEATURE_CATEGORIES = ['Detailing', 'Paint & Protection', 'Paint & Protection'];
 const FEATURE_SERVICES = DEMO_BUSINESS_INFO.services.map((s, i) => ({
   ...s,
   summary: FEATURE_SUMMARIES[i] || '',
   ...(i === 1 ? { badge: 'Most Popular' } : {}),
   includes: ['Interior:', 'Full vacuum', { text: 'Leather conditioning', highlight: true }, 'Exterior:', 'Hand wash and dry'],
   image: photo(`package ${i + 1}`, '#e7ecf2', '#55606e'),
+  category: FEATURE_CATEGORIES[i] || '',
 }));
 
 export const features = {
@@ -147,6 +152,38 @@ export const features = {
     vehicleMakes: ['BMW', 'Porsche', 'Rivian'],
     testimonialPlaceholders: DEMO_GENERATED_COPY.testimonialPlaceholders.map((q, i) => (i === 0 ? { ...q, source: 'google', rating: 5 } : q)),
     beforeAfter: { pairs: [{ caption: 'Paint correction on a black sedan' }, {}] },
+    serviceTabs: { enabled: true, all: true },
+    vehicleTypes: {
+      items: [
+        { name: 'Cars', desc: 'Sedans, coupes and daily drivers.', icon: 'car' },
+        { name: 'SUVs', icon: 'suv' },
+        { name: 'Trucks', desc: 'Beds and wheel wells too.' },
+      ],
+    },
+    howSteps: [
+      { emoji: '📱', title: 'Book a time', desc: 'Call or book online and pick a slot.' },
+      { emoji: '🚗', title: 'Drop it off', desc: 'Bring your car to the shop.' },
+      { emoji: '✨', title: 'Drive away clean', desc: 'Pick it up ready for the road.' },
+    ],
+    showcase: {
+      items: [
+        { title: 'Paint Correction', caption: 'Swirls polished out by hand.' },
+        { title: 'Interior Detail' },
+      ],
+    },
+    comparison: {
+      rows: [
+        { label: 'Hand wash', us: true, them: false },
+        { label: 'Interior detailing', us: true, them: 'Vacuum only' },
+        { label: 'Brushes on your paint', us: false, them: true },
+      ],
+    },
+    faq: {
+      items: [
+        { q: 'How long does a full detail take?', a: 'Most cars take about four hours.' },
+        { q: 'Do I need an appointment?', a: 'Yes. Book online or give us a call.' },
+      ],
+    },
   },
   images: {
     ...FIXTURE_IMAGES,
@@ -156,6 +193,8 @@ export const features = {
     baAfter0: photo('after 1', '#e9eef4', '#6f8299', 'rgba(255,255,255,0.4)'),
     baBefore1: photo('before 2', '#5a5048', '#262220', 'rgba(255,255,255,0.06)'),
     baAfter1: photo('after 2', '#f3efe6', '#8f8270', 'rgba(255,255,255,0.4)'),
+    showcase0: photo('showcase 1', '#232a33', '#8795a6'),
+    showcase1: photo('showcase 2', '#eef1f4', '#7c8794'),
   },
   customColors: {},
   customFonts: {},

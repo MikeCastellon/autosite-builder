@@ -69,15 +69,16 @@ vi.mock('../../data/templates.js', async (importOriginal) => {
   return { ...m, TEMPLATES: { ...m.TEMPLATES, replica_11111111: replica('replica_11111111'), replica_11111111_v2: replica('replica_11111111_v2') } };
 });
 
-// Bold & Sporty with its Before & After section (a no-op once
-// templateSections.js lists it) and Chrome Elite without, whatever the
-// templates do later.
+// Bold & Sporty with its Before & After section and the More sections (a
+// no-op once templateSections.js lists them) and Chrome Elite without,
+// whatever the templates do later.
 vi.mock('../../data/templateSections.js', async (importOriginal) => {
   const m = await importOriginal();
+  const more = ['beforeAfter', 'faq', 'process', 'vehicleTypes', 'comparison', 'showcase'];
   const sectionIdsFor = (id) => {
     const real = m.sectionIdsFor(id);
-    if (id === 'detailing_sporty') return real.includes('beforeAfter') ? real : [...real, 'beforeAfter'];
-    return id === 'mobile_chrome' ? real.filter((s) => s !== 'beforeAfter') : real;
+    if (id === 'detailing_sporty') return [...real, ...more.filter((s) => !real.includes(s))];
+    return id === 'mobile_chrome' ? real.filter((s) => !more.includes(s)) : real;
   };
   return { ...m, sectionIdsFor };
 });
@@ -1112,10 +1113,11 @@ describe('"From its code": what our server read from a captured site', () => {
       expect(text).toContain('Sections: Hero → Services (3 cards) → Reviews (carousel) → FAQ → Booking → Footer');
       expect(text).toContain('Features on this site');
     }
-    // Each feature against the setup's template (Chrome Elite here).
+    // Each feature against the setup's template (Chrome Elite here; its FAQ
+    // is in Bold & Sporty).
     expect(elements(site).filter((e) => e.type === 'p' && e.key).map(textOf)).toEqual([
       '✓We cover it: Header that stays on top while scrolling · every template we offer keeps its nav on top as the page scrolls',
-      '✗Not yet: FAQ (questions that open and close) · not in our templates yet',
+      '↗In another template: FAQ (questions that open and close) · in Bold & Sporty',
       '✓We cover it: Online booking widget (Square) · our booking widget, once booking is on (the Book buttons open it)',
       '✓We have it: Numbers band (stats) · its stats bar, with only numbers they give (none made up)',
     ]);

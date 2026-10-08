@@ -125,6 +125,26 @@ export const extraFonts = ["'Barlow Condensed', sans-serif"];  // stacks used be
   for a per-theme feature admin. `editorCapabilities.test.js` checks each one against the template's own calls, so a
   template names `copy.<key>` and those helper calls literally in its source.
 - Before & After (`kit/BeforeAfter.jsx` + `kit/beforeAfter.js`) is in every theme-ready template (ns `ds-ba`, `mc-ba`, `ss-ba`, `rl-ba`, `mi-ba`, `mg-ba`, `ic-ba`, `te-ba`, `ob-ba`, `wa-ba`, `cb-ba`; each has a `<Template>.golden.test.jsx` proving sites without it render byte-identical): on only when `copy.beforeAfter` is an object (`{ title?, intro?, pairs: [{ caption? }] }`), photos `images.baBefore0..5` / `baAfter0..5`, published only with a complete pair. Section id `beforeAfter` (an added section). The drag slider's script is `SITE_BA_JS` (`siteRuntime.js`), added by exportHtml only to pages showing the band; the editor uses its twin `beforeAfterPreview.js`. Custom sites pick pairs in the Design step (`design.slots.beforeAfter`).
+- The reference-site bands (Bold & Sporty only so far; each a pure `kit/<name>.js` + `kit/<Name>.jsx` with a
+  `<name>Css(ns)` generator, all opt-in added sections): FAQ (`kit/faq.js` / `Faq.jsx`, `copy.faq = { title?, intro?,
+  items: [{ q, a }] }`, id `faq`, ns `ds-faq`, published with FAQPage JSON-LD built from the printed items, never in the
+  editor), How It Works (`howItWorks.js` / `HowItWorks.jsx`, the shared `copy.howSteps`, id `process`, ns `ds-how`, on only
+  for a non-empty list: no starter steps, see `HOW_STEPS_STARTERS`), Vehicle Types (`vehicleTypes.js`, `copy.vehicleTypes
+  = { title?, intro?, items: [{ name, desc?, icon? }] }`, eight icons, id `vehicleTypes`, ns `ds-vt`), Comparison
+  (`comparison.js`, `copy.comparison = { title?, intro?, usLabel?, themLabel?, rows: [{ label, us, them }] }`, cells
+  true / false / text / left out, id `comparison`, ns `ds-cmp`; its tinted column is the one computed color, on the
+  root only while it renders), Detail Showcase (`showcase.js`, `copy.showcase = { title?, intro?, items: [{ title,
+  caption? }] }` + `images.showcase0..5`, id `showcase`, ns `ds-sc`) and service tabs (`serviceTabs.js` /
+  `ServiceTabs.jsx`, CSS-only radios: `copy.serviceTabs = { enabled: true, all? }` groups the template's own cards by
+  `services[i].category`, only with 2+ categories; ns `ds-st`). The published page shows only complete entries; the editor
+  shows every one with what it still needs, and a band with nothing complete is an editor-only section. A theme passes
+  its own heading (`labelledBy`), aliases the `--{ns}-*` variables to its repaired tokens after the kit CSS, and its
+  title / intro come from the band's own key first (`headingFields` `titleFrom: '<key>.title'`). Edit tabs:
+  `editor/FaqPanel.jsx`, `VehicleTypesPanel.jsx`, `ComparisonPanel.jsx`, `ShowcasePanel.jsx` (pure helpers in
+  `*Edit.js` over `bandListEdit.js`), the Services tab's `ServiceTabsPanel.jsx` (switch + Category) and the How It Works
+  tab's add / remove mode (`howStepsEdit.js`), gated by `CAPABILITY_KEYS` `faq`, `vehicleTypes`, `comparison`,
+  `showcase`, `serviceTabs`, `howSteps`. `DetailingSporty.sections.test.jsx` covers on/off, placement, editor vs
+  published and the contrast of every alias pair.
 - Layout helpers: `heroOfferCss(ns, { stackFrom, scope })` (+ `heroOfferLockCss`) keeps the card one height only where
   it sits beside the copy; a split hero renders the card as its own grid item after the photo (over the photo column on
   desktop, never stacked in the text column). Text over an owner photo: `overPhoto` / `heroScrimBase` (`kit/theme.js`),

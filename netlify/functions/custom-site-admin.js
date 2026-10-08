@@ -68,7 +68,11 @@ import {
 } from '../../src/lib/customSiteForm.js';
 import {
   designProblems, isRunStale, sanitizeBeforeAfterPairs, sanitizeBeforeAfterText, sanitizeDesign, sanitizeReference, sanitizeReferenceSites,
+  sanitizeShowcasePicks,
 } from '../../src/lib/customSiteDesign.js';
+import {
+  sanitizeExtraSectionIds, sanitizeExtraSections, sanitizeFaqNotes, serviceCategory, withSiteCategories,
+} from '../../src/lib/customSiteSections.js';
 import { REFERENCE_SHOT_MAX_BYTES, checkReferenceGroup, checkReferenceShot, referenceShotPath } from '../../src/lib/designSuggest.js';
 import { applyLaunchPatch } from '../../src/lib/customSiteLaunch.js';
 import { KIT_KEYS } from '../../src/lib/launchKit.js';
@@ -587,6 +591,32 @@ export const handler = async (event) => {
             if (text) next.beforeAfter = text;
           }
           if (sent.beforeAfterChanged === undefined && prev.beforeAfterChanged === true) next.beforeAfterChanged = true;
+          // And for the More sections: their switches, the marks a run still
+          // has to apply, the FAQ's pasted questions, the showcase's photos.
+          // A page that knows them always sends the switches (an all-off set
+          // too), so a save without them is a tab from before they existed:
+          // it keeps the stored ones, and the categories the stored services
+          // had (that tab's services editor has no Category field).
+          if (sent.extraSections === undefined) {
+            const extra = sanitizeExtraSections(prev.extraSections);
+            if (extra) next.extraSections = extra;
+            const prevServices = Array.isArray(prev.businessInfo?.services) ? prev.businessInfo.services : [];
+            if (prevServices.some((s) => serviceCategory(s)) && Array.isArray(next.businessInfo?.services)) {
+              next.businessInfo = { ...next.businessInfo, services: withSiteCategories(next.businessInfo.services, prevServices) };
+            }
+          }
+          if (sent.extraSectionsChanged === undefined) {
+            const marks = sanitizeExtraSectionIds(prev.extraSectionsChanged);
+            if (marks.length) next.extraSectionsChanged = marks;
+          }
+          if (sent.faqNotes === undefined) {
+            const notes = sanitizeFaqNotes(prev.faqNotes);
+            if (notes) next.faqNotes = notes;
+          }
+          if (sentSlots.showcase === undefined) {
+            const picks = sanitizeShowcasePicks(prev.slots?.showcase, { projectId: current.id });
+            if (picks.length) next.slots = { ...next.slots, showcase: picks };
+          }
           // A site, once created, keeps its id.
           if (current.site_id) next.siteId = current.site_id;
           let q = db.from(TABLE).update({ design: next }).eq('id', current.id);

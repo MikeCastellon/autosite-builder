@@ -18,9 +18,10 @@ import { exportHtmlString } from '../../../lib/exportHtml.js';
 import { TEMPLATES } from '../../../data/templates.js';
 import { COLOR_ROLES, leverPatch } from '../../../lib/designLevers.js';
 import {
-  DESIGN_OWNED_INFO, beforeAfterCopy, beforeAfterSlots, fillPackageDescriptions, isBeforeAfterKey, sanitizeDesign, schemaTypeFor,
-  siteBusinessInfo,
+  DESIGN_OWNED_INFO, beforeAfterCopy, beforeAfterSlots, extraSectionApplies, fillPackageDescriptions, isBeforeAfterKey, isShowcaseKey,
+  sanitizeDesign, sanitizeShowcasePicks, schemaTypeFor, showcaseSite, showcaseSlots, siteBusinessInfo,
 } from '../../../lib/customSiteDesign.js';
+import { EXTRA_SECTION_IDS, extraSectionOf, sanitizeExtraSections, withSiteCategories } from '../../../lib/customSiteSections.js';
 
 // Marks every placeholder paragraph the preview invents before Claude has
 // written the copy, so nobody mistakes it for the real text.
@@ -106,8 +107,9 @@ function pickLinks(wanted, { files, images, imported } = {}) {
 // The image map for the preview from the setup's photo picks (the slots
 // designFromIntake / DesignSetup keep: asset paths), linked by pickLinks.
 // Keys follow the run: logo, hero, about, gallery0..11. The Before & After
-// pairs come separately (previewBeforeAfter): a write applies them as one
-// unit with their captions, or not at all.
+// pairs come separately (previewBeforeAfter), and so do the showcase's
+// photos (previewExtraSections): a write applies each as one unit with its
+// words, or not at all.
 export function slotImages({ slots, files, images, imported } = {}) {
   const s = slots && typeof slots === 'object' ? slots : {};
   const wanted = { logo: s.logo, hero: s.hero, about: s.about };
@@ -131,6 +133,31 @@ export function previewBeforeAfter({ templateId, slots, text, files, images, imp
   return { images: links, copy: beforeAfterCopy({ templateId, slots, beforeAfter: text }, links) };
 }
 
+// The setup's More sections as the preview shows them, for buildPreviewInput
+// (`extraSections`): which sections the next write applies (the run's own
+// rule, customSiteDesign.js extraSectionApplies), which of those are on, and
+// the showcase as the setup has it (its photos linked like the gallery's,
+// the titles and captions the admin typed). What Claude still has to draft
+// (an FAQ, the steps, the vehicle types, a comparison, the titles it gives)
+// isn't there before the run: those show as the site has them now, or not
+// at all, never as placeholder words.
+//   design    the setup's design as the page would save it (templateId,
+//             businessInfo, extraSections, extraSectionsChanged, slots)
+//   existing  the site has been written (the next write is a rewrite)
+//   files, images, imported   as for slotImages
+// -> { applies: [section ids], on: { id: boolean }, showcase: { images,
+//    copy } | null }
+export function previewExtraSections({ design, existing = false, files, images, imported } = {}) {
+  const on = sanitizeExtraSections(design?.extraSections) || {};
+  const applies = EXTRA_SECTION_IDS.filter((id) => extraSectionApplies(design, id, { existing }));
+  let showcase = null;
+  if (applies.includes('showcase') && on.showcase) {
+    const links = pickLinks(showcaseSlots(design?.slots), { files, images, imported });
+    showcase = showcaseSite(sanitizeShowcasePicks(design?.slots?.showcase).map((p, i) => ({ ...p, url: links[`showcase${i}`] || '' })));
+  }
+  return { applies, on: Object.fromEntries(EXTRA_SECTION_IDS.map((id) => [id, on[id] === true])), showcase };
+}
+
 // Everything exportHtmlString needs to render the configured site:
 //   templateId    the setup's template (null result when it's unknown)
 //   businessInfo  the setup's details (design.businessInfo shape)
@@ -151,10 +178,17 @@ export function previewBeforeAfter({ templateId, slots, text, files, images, imp
 //                 copy.beforeAfter (null: the section off), as rewriteSite
 //                 replaces the site's set. Left out (a rewrite that keeps
 //                 the site's own pairs), `copy` and `images` keep theirs.
+//   extraSections the setup's More sections (previewExtraSections()), as the
+//                 run applies them: an applied one that is off comes off
+//                 (copy, and the showcase's photos), an applied showcase
+//                 shows the setup's photos, applied service tabs switch on;
+//                 every other one stays as `copy` has it, and the services
+//                 keep the categories `existingInfo` gave them while the
+//                 tabs aren't applied (rewriteSite's rules).
 // Returns { templateId, businessInfo, generatedCopy, templateMeta, images,
 // customColors, customFonts, sample } or null.
 export function buildPreviewInput({
-  templateId, businessInfo, copy, images, customColors, customFonts, levers, projectId = '', existingInfo = null, beforeAfter,
+  templateId, businessInfo, copy, images, customColors, customFonts, levers, projectId = '', existingInfo = null, beforeAfter, extraSections,
 } = {}) {
   // Own keys only: TEMPLATES['constructor'] is Object's, and would get as far
   // as the renderer before failing.
@@ -171,6 +205,11 @@ export function buildPreviewInput({
     info = { ...kept, ...info };
   }
   info = { ...info, ...patch.info };
+  const sections = extraSections && typeof extraSections === 'object' ? extraSections : null;
+  const applied = (id) => !!sections && Array.isArray(sections.applies) && sections.applies.includes(id);
+  if (existingInfo && typeof existingInfo === 'object' && !applied('serviceTabs')) {
+    for (const k of ['services', 'packages']) if (Array.isArray(info[k])) info[k] = withSiteCategories(info[k], existingInfo[k]);
+  }
 
   const sample = !hasWrittenCopy(copy);
   const base = sample ? { ...(copy && typeof copy === 'object' ? copy : {}), ...sampleCopy(design.businessInfo) } : copy;
@@ -180,6 +219,22 @@ export function buildPreviewInput({
   if (pairs) {
     if (pairs.copy && typeof pairs.copy === 'object') generatedCopy.beforeAfter = pairs.copy;
     else delete generatedCopy.beforeAfter;
+  }
+  // The showcase's photos: the setup's set in place of the site's when the
+  // write applies it (none when it goes off), else the site's own.
+  let showcaseImages = null;
+  for (const id of EXTRA_SECTION_IDS.filter(applied)) {
+    const { copyKey } = extraSectionOf(id);
+    if (!sections.on?.[id]) {
+      delete generatedCopy[copyKey];
+      if (id === 'showcase') showcaseImages = {};
+    } else if (id === 'showcase' && sections.showcase) {
+      generatedCopy.showcase = sections.showcase.copy;
+      showcaseImages = sections.showcase.images;
+    } else if (id === 'serviceTabs') {
+      // As the run writes it: the editor's "All" tab kept.
+      generatedCopy.serviceTabs = { enabled: true, ...(generatedCopy.serviceTabs?.all === true ? { all: true } : {}) };
+    }
   }
 
   const colors = {};
@@ -196,10 +251,13 @@ export function buildPreviewInput({
 
   const imageMap = {};
   for (const [k, v] of Object.entries(images && typeof images === 'object' ? images : {})) {
-    if (typeof v === 'string' && v && !(pairs && isBeforeAfterKey(k))) imageMap[k] = v;
+    if (typeof v === 'string' && v && !(pairs && isBeforeAfterKey(k)) && !(showcaseImages && isShowcaseKey(k))) imageMap[k] = v;
   }
   for (const [k, v] of Object.entries(pairs?.images && typeof pairs.images === 'object' ? pairs.images : {})) {
     if (isBeforeAfterKey(k) && typeof v === 'string' && v) imageMap[k] = v;
+  }
+  for (const [k, v] of Object.entries(showcaseImages || {})) {
+    if (isShowcaseKey(k) && typeof v === 'string' && v) imageMap[k] = v;
   }
 
   return {

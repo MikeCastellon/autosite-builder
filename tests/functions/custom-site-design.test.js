@@ -5,7 +5,7 @@
 // hand-over to the customer's account. Supabase is an in-memory fake.
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-const h = vi.hoisted(() => ({ db: null, user: null }));
+const h = vi.hoisted(() => ({ db: null, user: null, MORE: ['faq', 'process', 'vehicleTypes', 'comparison', 'showcase'] }));
 
 vi.mock('../../netlify/functions/_shared/auth.js', () => ({
   supabaseAdmin: () => h.db,
@@ -15,17 +15,24 @@ vi.mock('../../netlify/functions/_shared/auth.js', () => ({
   },
 }));
 
-// Bold & Sporty with its Before & After section (a no-op once
-// templateSections.js lists it) and Chrome Elite without, whatever the
+// Bold & Sporty with its Before & After section and the More sections (a
+// no-op once templateSections.js lists them; service tabs through the
+// editor's capability table) and Chrome Elite without, whatever the
 // templates do later.
 vi.mock('../../src/data/templateSections.js', async (importOriginal) => {
   const m = await importOriginal();
   const sectionIdsFor = (id) => {
     const real = m.sectionIdsFor(id);
-    if (id === 'detailing_sporty') return real.includes('beforeAfter') ? real : [...real, 'beforeAfter'];
-    return id === 'mobile_chrome' ? real.filter((s) => s !== 'beforeAfter') : real;
+    if (id === 'detailing_sporty') return [...real, ...['beforeAfter', ...h.MORE].filter((s) => !real.includes(s))];
+    return id === 'mobile_chrome' ? real.filter((s) => s !== 'beforeAfter' && !h.MORE.includes(s)) : real;
   };
   return { ...m, sectionIdsFor };
+});
+vi.mock('../../src/components/preview/editorCapabilities.js', async (importOriginal) => {
+  const m = await importOriginal();
+  const templateReads = (id, key) => (key === 'serviceTabs' && ['detailing_sporty', 'mobile_chrome'].includes(id)
+    ? id === 'detailing_sporty' : m.templateReads(id, key));
+  return { ...m, templateReads };
 });
 
 vi.mock('../../netlify/functions/_lib/postmark.js', async (importOriginal) => {
@@ -40,9 +47,11 @@ vi.mock('../../netlify/functions/_lib/postmark.js', async (importOriginal) => {
 });
 
 const postmark = await import('../../netlify/functions/_lib/postmark.js');
-const { runDesign } = await import('../../netlify/functions/custom-site-design-background.js');
+const { fetchSitePhoto, runDesign } = await import('../../netlify/functions/custom-site-design-background.js');
 const { requestDesignCopy } = await import('../../netlify/functions/_lib/custom-site-design-ai.js');
 const { handler: adminHandler } = await import('../../netlify/functions/custom-site-admin.js');
+const { COPY_SCHEMA } = await import('../../src/lib/customSiteDesign.js');
+const { SECTION_RULES } = await import('../../src/lib/customSiteSections.js');
 
 const PROJECT_ID = '11111111-2222-4333-8444-555555555555';
 const SITE_ID = '22222222-3333-4444-8555-666666666666';
@@ -619,5 +628,222 @@ describe('hand-over email', () => {
     expect(html).toContain('dana@gloss.test');
     expect(text).toContain('Forgot password');
     expect(postmark.customSiteHandoverEmail({ firstName: '', actionUrl: 'https://app.test', newAccount: false, email: 'a@b.co' }).html).toContain('Sign in');
+  });
+});
+
+// ─── More sections ────────────────────────────────────────────────────
+
+describe('More sections in the design run', () => {
+  const IMG = 'https://x.supabase.co/storage/v1/object/public/site-images/s/';
+  const photo = (n) => `${PROJECT_ID}/photo/aaaaaaaa-bbbb-4ccc-8ddd-${String(n).padStart(12, '0')}.jpg`;
+  const ALL = ['faq', 'process', 'vehicleTypes', 'comparison', 'showcase', 'serviceTabs'];
+  const SERVICES = [
+    { name: 'Hand Wash', price: '$40', description: '', category: 'Cars' },
+    { name: 'Interior Detail', price: '$120', description: '' },
+    { name: 'Hull Wash', price: '$200', description: '' },
+    { name: 'RV Wash', price: '', description: '' },
+  ];
+  // Every section on and marked; two showcase photos copied, the first
+  // titled by the admin.
+  const SECTIONS = {
+    ...DESIGN,
+    businessInfo: { ...DESIGN.businessInfo, services: SERVICES },
+    templateId: 'detailing_sporty',
+    template: { label: 'Bold & Sporty', mood: 'bold' },
+    levers: { facts: { paymentMethods: ['Cash', 'Zelle'] } },
+    extraSections: Object.fromEntries(ALL.map((id) => [id, true])),
+    extraSectionsChanged: ALL,
+    faqNotes: 'Q: Do you bring water? A: Yes, we bring our own water and power.',
+    slots: { ...DESIGN.slots, showcase: [{ path: photo(1), title: 'Ceramic coating', caption: '' }, { path: photo(2), title: '', caption: 'Hull, top to bottom' }] },
+    images: { ...DESIGN.images, showcase0: `${IMG}sc0.jpg`, showcase1: `${IMG}sc1.jpg` },
+    imported: { showcase0: photo(1), showcase1: photo(2) },
+  };
+  const DRAFT = {
+    faqItems: [
+      { q: 'Do you bring water?', a: 'Yes, we bring our own water and power.' },
+      { q: 'How do I pay?', a: 'Cash or Zelle.' },
+      { q: 'Is it guaranteed?', a: 'Every detail is guaranteed.' },
+    ],
+    howSteps: [{ title: 'Book', desc: 'Call or send a request.' }, { title: 'We come to you', desc: 'We bring everything.' }, { title: 'Enjoy', desc: 'Drive off clean.' }],
+    vehicleTypes: { title: 'Vehicles We Detail', items: [{ name: 'Cars', desc: '', icon: 'car' }, { name: 'Boats', desc: '', icon: 'boat' }, { name: 'RVs', desc: '', icon: 'rv' }] },
+    comparisonRows: [{ label: 'Comes to you', us: 'Yes', them: '—' }, { label: 'Hand wash', us: 'Yes', them: 'Brushes' }],
+    showcaseTitles: [{ photo: 1, title: 'Hull Wash' }],
+    serviceCategories: [
+      { name: 'Hand Wash', category: 'Cars' }, { name: 'Interior Detail', category: 'Cars' }, { name: 'Hull Wash', category: 'Boats' }, { name: 'RV Wash', category: 'RVs' },
+    ],
+  };
+  const answer = (extra = DRAFT) => ok(JSON.stringify({ ...JSON.parse(COPY_JSON), ...extra }));
+  const b64 = (v) => Buffer.from(v).toString('base64');
+  const loadImage = vi.fn(async (url) => ({ mediaType: 'image/jpeg', data: b64(url) }));
+  const run = (db, client, opts = {}) => runDesign({
+    db, client, projectId: PROJECT_ID, startedAt: STARTED, adminUser: { id: 'admin-1' }, actor: 'a', loadImage, ...opts,
+  });
+  // A site the editor already gave its own sections.
+  const editorSite = () => ({
+    id: SITE_ID, user_id: 'admin-1', template_id: 'detailing_sporty',
+    business_info: { businessName: 'Old', services: [{ name: 'Hull Wash', category: 'Marine' }], packages: [{ name: 'Hull Wash', category: 'Marine' }] },
+    generated_content: {
+      headline: 'Old',
+      faq: { items: [{ q: 'Owner\'s question?', a: 'Owner\'s answer.' }] },
+      howSteps: [{ title: 'Owner step', desc: 'Theirs.' }],
+      showcase: { items: [{ title: 'Owner card' }] },
+      serviceTabs: { enabled: true, all: true },
+      _images: { logo: 'editor-logo.png', showcase0: 'editor-sc0.jpg' },
+    },
+  });
+
+  it('the first write drafts every section switched on, checks it against the facts, and spends the marks', async () => {
+    const db = fakeDb({ projects: [project({ design: SECTIONS })] });
+    const client = fakeClient([answer()]);
+    expect((await run(db, client)).status).toBe(200);
+    const { body } = client.calls[0];
+    expect(body.output_config.format.schema.required).toEqual([
+      ...COPY_SCHEMA.required, 'faqItems', 'howSteps', 'vehicleTypes', 'comparisonRows', 'showcaseTitles', 'serviceCategories',
+    ]);
+    expect(body.max_tokens).toBe(20000);
+    // The rules ride in the prompt; the untitled photo follows its label.
+    const [text, label, image] = body.messages[0].content;
+    for (const id of ALL) expect(text.text).toContain(SECTION_RULES[id]);
+    expect(text.text).toContain('<pasted_faq>\nQ: Do you bring water? A: Yes, we bring our own water and power.\n</pasted_faq>');
+    expect(text.text).toContain('- Hand Wash ($40) [category: Cars]');
+    expect(label).toEqual({ type: 'text', text: 'Showcase photo 1:' });
+    expect(image).toEqual({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: b64(`${IMG}sc1.jpg`) } });
+    expect(loadImage.mock.calls.map(([url]) => url)).toEqual([`${IMG}sc1.jpg`]);
+    expect(body.system).toContain('More sections: the request may ask for parts of the page');
+
+    const site = db.state.sites[0];
+    const c = site.generated_content;
+    // The guarantee nobody gave goes; the rest is as checked.
+    expect(c.faq).toEqual({ items: DRAFT.faqItems.slice(0, 2) });
+    expect(c.howSteps).toEqual(DRAFT.howSteps);
+    expect(c.vehicleTypes).toEqual({ title: 'Vehicles We Detail', items: [{ name: 'Cars', icon: 'car' }, { name: 'Boats', icon: 'boat' }, { name: 'RVs', icon: 'rv' }] });
+    expect(c.comparison).toEqual({ themLabel: 'Automated car wash', rows: [{ label: 'Comes to you', us: true, them: false }, { label: 'Hand wash', us: true, them: 'Brushes' }] });
+    expect(c.showcase).toEqual({ items: [{ title: 'Ceramic coating' }, { title: 'Hull Wash', caption: 'Hull, top to bottom' }] });
+    expect(c.serviceTabs).toEqual({ enabled: true });
+    expect(c._images).toEqual({ ...DESIGN.images, showcase0: `${IMG}sc0.jpg`, showcase1: `${IMG}sc1.jpg` });
+    expect(site.business_info.services.map((x) => x.category)).toEqual(['Cars', 'Cars', 'Boats', 'RVs']);
+    expect(site.business_info.packages).toEqual(site.business_info.services);
+    expect(db.state.projects[0].design).not.toHaveProperty('extraSectionsChanged');
+    expect(db.state.events.find((e) => e.type === 'design_ready').data.sections).toEqual({ faq: 2, process: 3, vehicleTypes: 3, comparison: 2, showcase: 2, serviceTabs: 1 });
+  });
+
+  it('a photo that won\'t load goes untitled, and nothing is asked about it', async () => {
+    const db = fakeDb({ projects: [project({ design: { ...SECTIONS, extraSections: { showcase: true }, extraSectionsChanged: ['showcase'] } })] });
+    const client = fakeClient([answer({})]);
+    await run(db, client, { loadImage: async () => null });
+    const { body } = client.calls[0];
+    expect(typeof body.messages[0].content).toBe('string');
+    expect(body.output_config.format.schema).toBe(COPY_SCHEMA);
+    expect(db.state.sites[0].generated_content.showcase).toEqual({ items: [{ title: 'Ceramic coating' }, { caption: 'Hull, top to bottom' }] });
+  });
+
+  it('a rewrite drafts only the sections changed here; the others keep the editor\'s work', async () => {
+    // Only How it works changed: switched off.
+    const design = { ...SECTIONS, extraSections: { ...SECTIONS.extraSections, process: false }, extraSectionsChanged: ['process'] };
+    const db = fakeDb({ projects: [project({ site_id: SITE_ID, design })], sites: [editorSite()] });
+    const client = fakeClient([answer({})]);
+    await run(db, client);
+    const { body } = client.calls[0];
+    // Nothing to draft: the plain request, no photos.
+    expect(body.output_config.format.schema).toBe(COPY_SCHEMA);
+    expect(typeof body.messages[0].content).toBe('string');
+    expect(body.messages[0].content).not.toContain('More sections');
+    const site = db.state.sites[0];
+    expect(site.generated_content.faq).toEqual(editorSite().generated_content.faq);
+    expect(site.generated_content.showcase).toEqual(editorSite().generated_content.showcase);
+    expect(site.generated_content.serviceTabs).toEqual({ enabled: true, all: true });
+    expect(site.generated_content).not.toHaveProperty('howSteps');
+    expect(site.generated_content._images).toEqual(editorSite().generated_content._images);
+    // The services are the setup's, with the categories the site gave them.
+    expect(site.business_info.services.map((x) => [x.name, x.category])).toEqual([['Hand Wash', undefined], ['Interior Detail', undefined], ['Hull Wash', 'Marine'], ['RV Wash', undefined]]);
+    expect(db.state.projects[0].design).not.toHaveProperty('extraSectionsChanged');
+  });
+
+  it('a changed section whose draft has nothing usable keeps the site\'s, and its mark waits', async () => {
+    const design = { ...SECTIONS, extraSectionsChanged: ['faq', 'comparison'] };
+    const db = fakeDb({ projects: [project({ site_id: SITE_ID, design })], sites: [editorSite()] });
+    await run(db, fakeClient([answer({ faqItems: [{ q: 'Price?', a: 'Only $5 today!' }], comparisonRows: [{ label: 'Hand wash', us: 'Yes', them: 'No' }, { label: 'Safer', us: 'Yes', them: 'No' }] })]));
+    expect(db.state.sites[0].generated_content.faq).toEqual(editorSite().generated_content.faq);
+    expect(db.state.sites[0].generated_content).not.toHaveProperty('comparison');
+    expect(db.state.projects[0].design.extraSectionsChanged).toEqual(['faq', 'comparison']);
+  });
+
+  it('a template without them asks for none and keeps every mark for one that has them', async () => {
+    const db = fakeDb({ projects: [project({ design: { ...SECTIONS, templateId: 'mobile_chrome' } })] });
+    const client = fakeClient([answer({})]);
+    await run(db, client);
+    expect(client.calls[0].body.output_config.format.schema).toBe(COPY_SCHEMA);
+    const c = db.state.sites[0].generated_content;
+    for (const k of ['faq', 'howSteps', 'vehicleTypes', 'comparison', 'showcase', 'serviceTabs']) expect(c).not.toHaveProperty(k);
+    expect(c._images).toEqual(DESIGN.images);
+    expect(db.state.projects[0].design.extraSectionsChanged).toEqual(ALL);
+  });
+
+  it('requestDesignCopy sends the prompt\'s schema and photos, and the plain retry keeps the photos', async () => {
+    const client = fakeClient([Object.assign(new Error('bad request'), { status: 400 }), ok()]);
+    const schema = { type: 'object', additionalProperties: false, required: [], properties: {} };
+    await requestDesignCopy(client, { system: 's', user: 'u', fields: ['faqItems'], schema, images: [{ number: 1, mediaType: 'image/png', data: 'AAAA' }] });
+    expect(client.calls[0].body.output_config.format.schema).toBe(schema);
+    const content = [{ type: 'text', text: 'u' }, { type: 'text', text: 'Showcase photo 1:' }, { type: 'image', source: { type: 'base64', media_type: 'image/png', data: 'AAAA' } }];
+    expect(client.calls[0].body.messages[0].content).toEqual(content);
+    expect(client.calls[1].body.messages[0].content).toEqual(content);
+    expect(client.calls[1].body.max_tokens).toBe(20000);
+    // Without sections: as before.
+    const plain = fakeClient([ok()]);
+    await requestDesignCopy(plain, { system: 's', user: 'u' });
+    expect(plain.calls[0].body.output_config.format.schema).toBe(COPY_SCHEMA);
+    expect(plain.calls[0].body.max_tokens).toBe(16000);
+    expect(plain.calls[0].body.messages[0].content).toBe('u');
+  });
+
+  it('fetchSitePhoto loads only our own public images, in a format Claude reads, under the size limit', async () => {
+    const bytes = (n) => new Uint8Array(n).buffer;
+    const fetch = vi.fn(async () => ({ ok: true, headers: { get: () => 'image/jpeg; charset=binary' }, arrayBuffer: async () => new TextEncoder().encode('jpeg-bytes').buffer }));
+    vi.stubGlobal('fetch', fetch);
+    try {
+      expect(await fetchSitePhoto(`${IMG}a.jpg`)).toEqual({ mediaType: 'image/jpeg', data: b64('jpeg-bytes') });
+      expect(await fetchSitePhoto('https://evil.test/storage/v1/object/public/site-images/a.jpg')).toBeNull();
+      expect(await fetchSitePhoto(null)).toBeNull();
+      expect(fetch).toHaveBeenCalledTimes(1);
+      fetch.mockImplementationOnce(async () => ({ ok: true, headers: { get: () => 'image/avif' }, arrayBuffer: async () => bytes(4) }));
+      expect(await fetchSitePhoto(`${IMG}b.avif`)).toBeNull();
+      fetch.mockImplementationOnce(async () => ({ ok: true, headers: { get: () => 'image/png' }, arrayBuffer: async () => bytes(4 * 1024 * 1024) }));
+      expect(await fetchSitePhoto(`${IMG}c.png`)).toBeNull();
+      fetch.mockImplementationOnce(async () => ({ ok: false }));
+      expect(await fetchSitePhoto(`${IMG}d.png`)).toBeNull();
+      fetch.mockImplementationOnce(async () => { throw new Error('network down'); });
+      expect(await fetchSitePhoto(`${IMG}e.png`)).toBeNull();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('design-save keeps them for a tab that sends none, and clears them for one that sends them empty', async () => {
+    h.db = fakeDb({ projects: [project({ design_status: 'ready', site_id: SITE_ID, design: {} })] });
+    const saved = () => h.db.state.projects[0].design;
+    expect((await adminHandler(post({ action: 'design-save', id: PROJECT_ID, design: SECTIONS }))).statusCode).toBe(200);
+    expect(saved().extraSections).toEqual(SECTIONS.extraSections);
+    expect(saved().extraSectionsChanged).toEqual(ALL);
+    expect(saved().faqNotes).toBe(SECTIONS.faqNotes);
+    expect(saved().slots.showcase).toEqual(SECTIONS.slots.showcase);
+    expect(saved().images.showcase1).toBe(`${IMG}sc1.jpg`);
+    expect(saved().businessInfo.services[0].category).toBe('Cars');
+    // A tab opened before them: no switches, marks, notes or photos, and
+    // services without a Category field. Everything stays.
+    const old = { ...DESIGN, businessInfo: { ...DESIGN.businessInfo, services: SERVICES.map((x) => ({ name: x.name, price: x.price, description: '' })) } };
+    expect((await adminHandler(post({ action: 'design-save', id: PROJECT_ID, design: old }))).statusCode).toBe(200);
+    expect(saved().extraSections).toEqual(SECTIONS.extraSections);
+    expect(saved().extraSectionsChanged).toEqual(ALL);
+    expect(saved().faqNotes).toBe(SECTIONS.faqNotes);
+    expect(saved().slots.showcase).toEqual(SECTIONS.slots.showcase);
+    expect(saved().businessInfo.services.map((x) => x.category)).toEqual(['Cars', undefined, undefined, undefined]);
+    // The page sends all of them, an all-off set and empty lists too: they clear.
+    await adminHandler(post({
+      action: 'design-save', id: PROJECT_ID,
+      design: { ...old, extraSections: { faq: false }, extraSectionsChanged: [], faqNotes: '', slots: { ...DESIGN.slots, showcase: [] } },
+    }));
+    for (const k of ['extraSections', 'extraSectionsChanged', 'faqNotes']) expect(saved()).not.toHaveProperty(k);
+    expect(saved().slots).not.toHaveProperty('showcase');
+    expect(saved().businessInfo.services.map((x) => x.category)).toEqual([undefined, undefined, undefined, undefined]);
   });
 });

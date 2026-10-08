@@ -5,9 +5,9 @@
 // fails when a template changes and this file doesn't.
 export const TEMPLATE_SECTIONS = Object.freeze({
   detailing_sporty: {
-    sections: [{ id: 'hero', label: 'Hero' }, { id: 'statsBar', label: 'Stats Bar' }, { id: 'brands', label: 'Vehicle Makes' }, { id: 'services', label: 'Services' }, { id: 'featured', label: 'Featured Service' }, { id: 'about', label: 'About' }, { id: 'gallery', label: 'Gallery' }, { id: 'beforeAfter', label: 'Before & After' }, { id: 'testimonials', label: 'Reviews' }, { id: 'cta', label: 'Contact / CTA' }, { id: 'awards', label: 'Awards' }],
-    added: ['brands', 'featured', 'beforeAfter'],
-    headingFields: ['hero', 'brands', 'services', 'featured', 'about', 'gallery', 'beforeAfter', 'testimonials', 'cta'],
+    sections: [{ id: 'hero', label: 'Hero' }, { id: 'statsBar', label: 'Stats Bar' }, { id: 'brands', label: 'Vehicle Makes' }, { id: 'services', label: 'Services' }, { id: 'featured', label: 'Featured Service' }, { id: 'vehicleTypes', label: 'Vehicle Types' }, { id: 'process', label: 'How It Works' }, { id: 'about', label: 'About' }, { id: 'gallery', label: 'Gallery' }, { id: 'beforeAfter', label: 'Before & After' }, { id: 'showcase', label: 'Detail Showcase' }, { id: 'comparison', label: 'Comparison' }, { id: 'testimonials', label: 'Reviews' }, { id: 'faq', label: 'FAQ' }, { id: 'cta', label: 'Contact / CTA' }, { id: 'awards', label: 'Awards' }],
+    added: ['brands', 'featured', 'beforeAfter', 'vehicleTypes', 'process', 'showcase', 'comparison', 'faq'],
+    headingFields: ['hero', 'brands', 'services', 'featured', 'vehicleTypes', 'process', 'about', 'gallery', 'beforeAfter', 'showcase', 'comparison', 'testimonials', 'faq', 'cta'],
   },
   mechanic_industrial: {
     sections: [{ id: 'hero', label: 'Hero' }, { id: 'statsBar', label: 'Stats Bar' }, { id: 'services', label: 'Services' }, { id: 'about', label: 'About' }, { id: 'gallery', label: 'Gallery' }, { id: 'beforeAfter', label: 'Before & After' }, { id: 'testimonials', label: 'Reviews' }, { id: 'cta', label: 'Contact / CTA' }, { id: 'awards', label: 'Awards' }],

@@ -25,6 +25,16 @@ export const FROM_LABELS = {
   ctaSubtext: 'Contact > Subtext',
   'beforeAfter.title': 'Before & After > Heading',
   'beforeAfter.intro': 'Before & After > Intro line',
+  // The reference-site bands keep their heading on their own copy key too
+  // (the kit band reads it first).
+  'vehicleTypes.title': 'Vehicle Types > Heading',
+  'vehicleTypes.intro': 'Vehicle Types > Intro line',
+  'showcase.title': 'Detail Showcase > Heading',
+  'showcase.intro': 'Detail Showcase > Intro line',
+  'comparison.title': 'Comparison > Heading',
+  'comparison.intro': 'Comparison > Intro line',
+  'faq.title': 'FAQ > Heading',
+  'faq.intro': 'FAQ > Intro line',
 };
 
 // The keys that own a section's title / intro whatever the template (the

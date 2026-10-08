@@ -10,11 +10,17 @@ import { mergeSectionOrder, sameOrder, moveSection, placeSectionOrder } from '..
 import { repairSectionOrder } from '../../lib/sectionOrder.js';
 import { getFallbacks, businessKind, defaultHowSteps, defaultWhyCards } from '../../lib/templateFallbacks.js';
 import { useTemplateInfo } from './useTemplateInfo.js';
-import { editorTabs, templateReads, shadeGuideState, googleBadgeDefaults, templateHelp, heroCardDefault, featuredAutomatic, vehicleMakesDefaultAll } from './editorCapabilities.js';
+import { editorTabs, templateReads, shadeGuideState, googleBadgeDefaults, templateHelp, heroCardDefault, featuredAutomatic, vehicleMakesDefaultAll, howStepsStarters } from './editorCapabilities.js';
 import { colorChecks, formatRatio } from './colorChecks.js';
 import HeroServicesPanel from './editor/HeroServicesPanel.jsx';
 import FeaturedServicePanel from './editor/FeaturedServicePanel.jsx';
 import BeforeAfterPanel from './editor/BeforeAfterPanel.jsx';
+import FaqPanel from './editor/FaqPanel.jsx';
+import VehicleTypesPanel from './editor/VehicleTypesPanel.jsx';
+import ComparisonPanel from './editor/ComparisonPanel.jsx';
+import ShowcasePanel from './editor/ShowcasePanel.jsx';
+import { ServiceTabsSwitch, ServiceCategoryField } from './editor/ServiceTabsPanel.jsx';
+import { howStepsOn, howStepsStart, HOW_STEPS_HELP } from './editor/howStepsEdit.js';
 import CtaPhotoField from './editor/CtaPhotoField.jsx';
 import ServiceDetailsFields from './editor/ServiceDetailsFields.jsx';
 import HeadingsPanel from './editor/HeadingsPanel.jsx';
@@ -110,7 +116,17 @@ const NAV_ICON_PATHS = {
   featured:     <><circle cx="8" cy="6" r="4" /><path d="M5.5 9.3L4.5 14 8 12.3l3.5 1.7-1-4.7" /></>,
   makes:        <path d="M3 10.5v1a1 1 0 001 1h1a1 1 0 001-1v-1m4 0v1a1 1 0 001 1h1a1 1 0 001-1v-1M3.5 7l1-3.5h7L12.5 7m-9 0h9m-9 0a1.5 1.5 0 00-1.5 1.5v2h12v-2A1.5 1.5 0 0012.5 7" />,
   google:       <><rect x="1.5" y="4.5" width="13" height="7" rx="3.5" /><path d="M5 8h.01M8 8h.01M11 8h.01" /></>,
+  vehicleTypes: <><path d="M1.5 4h8v6.5h-8z" /><path d="M9.5 6.5h3l2 2.5v1.5h-5" /><circle cx="4.5" cy="11.5" r="1.3" /><circle cx="11.5" cy="11.5" r="1.3" /></>,
+  showcase:     <><rect x="2" y="2.5" width="8.5" height="11" rx="1" /><path d="M13.5 2.5v3M12 4h3" /><path d="M2 10.5l2.5-2.5 2 2 1.5-1.5 2.5 2.5" /></>,
+  comparison:   <><rect x="2" y="2.5" width="12" height="11" rx="1" /><path d="M8 2.5v11M2 6h12" /><path d="M3.8 9.5l.9.9 1.6-1.9" /><path d="M10 9.7h2" /></>,
+  faq:          <><circle cx="8" cy="8" r="6" /><path d="M6.3 6.3a1.8 1.8 0 113 1.4c-.6.4-1.3.8-1.3 1.6v.3" /><path d="M8 11.5h.01" /></>,
 };
+
+// A rail label's text: a word too long for the 72px rail ("Comparison")
+// gets a soft hyphen before its last three letters, so it breaks there with
+// a hyphen instead of mid-word without one (browsers can't be relied on to
+// hyphenate by themselves). The hyphen only shows where the word breaks.
+const railText = (label) => label.split(' ').map((w) => (w.length > 9 ? `${w.slice(0, -3)}­${w.slice(-3)}` : w)).join(' ');
 
 function NavIcon({ id, className = 'w-[18px] h-[18px]' }) {
   const inner = NAV_ICON_PATHS[id];
@@ -149,6 +165,11 @@ const EMPTY_SECTION_HINTS = {
   featured: 'Not on your page yet: pick a service in Featured Service.',
   beforeAfter: 'Not on your page yet: add a before and an after photo in Before & After.',
   locations: 'Not on your page yet: add your city, areas or hours in Business Info.',
+  vehicleTypes: 'Not on your page yet: add the kinds of vehicles you work on in Vehicle Types.',
+  process: 'Not on your page yet: add your steps in How It Works.',
+  showcase: 'Not on your page yet: add a photo with a title in Detail Showcase.',
+  comparison: 'Not on your page yet: add a row with a label in Comparison.',
+  faq: 'Not on your page yet: add a question and its answer in FAQ.',
 };
 const EMPTY_SECTION_HINT = 'Not on your page yet: this section has nothing to show.';
 
@@ -720,7 +741,7 @@ export default function ContentEditor({ isOpen, onClose, topOffset = 0, siteId, 
                       >
                         <NavIcon id={s.id} />
                         <span className="block w-full text-center text-[11px] font-semibold leading-[1.15] break-words">
-                          {s.label}
+                          {railText(s.label)}
                         </span>
                       </button>
                     ))}
@@ -909,6 +930,9 @@ export default function ContentEditor({ isOpen, onClose, topOffset = 0, siteId, 
                   />
                 )}
                 <Field label="Services Intro" value={copy.servicesSection?.intro} onChange={(v) => setCopy('servicesSection.intro', v)} multiline rows={2} />
+                {/* Service tabs (copy.serviceTabs + each service's Category):
+                    only for a design that groups its services by them. */}
+                {has('serviceTabs') && <ServiceTabsSwitch copy={copy} setCopy={setCopy} services={packages} />}
                 {packages.map((pkg, i) => (
                   <div key={i} className="mb-5 p-3 bg-gray-50 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
@@ -934,6 +958,11 @@ export default function ContentEditor({ isOpen, onClose, topOffset = 0, siteId, 
                       />
                     </div>
                     <Field label="Description" value={pkg.description} onChange={(v) => updatePackage(i, 'description', v)} multiline rows={2} />
+                    {has('serviceTabs') && (
+                      // Written like the package details (patchService): an
+                      // emptied category leaves no '' behind in the row.
+                      <ServiceCategoryField value={pkg.category} services={packages} index={i} onChange={(v) => patchService(i, 'category', v, { name: pkg.name, count: packages.length })} />
+                    )}
                     {has('serviceDetails') && (
                       <ServiceDetailsFields service={pkg} index={i} siteId={siteId} summaryHelp={summaryHelpFor(pkg, packages)} onPatch={(key, value) => patchService(i, key, value, { name: pkg.name, count: packages.length })} />
                     )}
@@ -945,6 +974,27 @@ export default function ContentEditor({ isOpen, onClose, topOffset = 0, siteId, 
           })()}
 
           {activeSection === 'howItWorks' && (() => {
+            // A design without starter steps (editorCapabilities
+            // howStepsStarters: the kit band, Bold & Sporty) shows the
+            // section only once the owner has steps, so the tab adds and
+            // removes it (howStepsEdit.js) and never speaks of starters.
+            const optIn = !howStepsStarters(templateId);
+            const hiddenNote = isSectionHidden('process') && (
+              <p className="text-[11px] text-amber-700 mb-3 leading-snug">This section is switched off in Sections, so it won&apos;t show until you switch it on there too.</p>
+            );
+            if (optIn && !howStepsOn(copy)) {
+              return (
+                <>
+                  {hiddenNote}
+                  <p className="text-[11px] text-gray-500 mb-3 leading-snug">{HOW_STEPS_HELP.off}</p>
+                  <button type="button" onClick={() => setCopy('howSteps', howStepsStart(bizType))} className="w-full py-2 text-[12px] font-semibold text-gray-500 border border-dashed border-gray-300 rounded-lg hover:border-gray-400 hover:text-gray-700 transition mb-2">+ Add a How It Works section</button>
+                </>
+              );
+            }
+            const removeSection = async () => {
+              const ok = await confirmDialog('Remove the How It Works section? Its steps come off your page too.', { title: 'Remove section?', confirmText: 'Remove' });
+              if (ok) setCopy('howSteps', null);
+            };
             // Until the owner saves steps, the template shows its own
             // starters. Seed from the template's exported defaults when it
             // has them (exactly what the preview shows), else from the
@@ -974,7 +1024,9 @@ export default function ContentEditor({ isOpen, onClose, topOffset = 0, siteId, 
             };
             return (
               <>
+                {hiddenNote}
                 <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">How It Works Steps</p>
+                {optIn && <p className="text-[11px] text-gray-500 mb-3 leading-snug">{HOW_STEPS_HELP.on}</p>}
                 {!own && (
                   <p className="text-[11px] text-gray-500 mb-3 leading-snug">
                     {exact
@@ -998,8 +1050,11 @@ export default function ContentEditor({ isOpen, onClose, topOffset = 0, siteId, 
                   </div>
                 ))}
                 <button type="button" onClick={addStep} className="w-full py-2 text-[12px] font-semibold text-gray-500 border border-dashed border-gray-300 rounded-lg hover:border-gray-400 hover:text-gray-700 transition mb-2">+ Add Step</button>
-                {own && (
+                {own && !optIn && (
                   <button type="button" onClick={restore} className="w-full py-1.5 text-[12px] text-gray-500 hover:text-red-500 transition mb-2">Use the starter steps instead</button>
+                )}
+                {optIn && (
+                  <button type="button" onClick={removeSection} className="text-[11px] font-semibold text-gray-500 hover:text-gray-900 hover:underline transition">Remove this section</button>
                 )}
               </>
             );
@@ -1503,6 +1558,33 @@ export default function ContentEditor({ isOpen, onClose, topOffset = 0, siteId, 
               confirm={confirmDialog}
               hasHeadingsTab={has('sectionTitles')}
             />
+          )}
+
+          {/* The reference-site bands' tabs (each opt-in: "+ Add a ...
+              section" / "Remove this section"), for designs that read them. */}
+          {activeSection === 'vehicleTypes' && (
+            <VehicleTypesPanel copy={copy} setCopy={setCopy} confirm={confirmDialog} hasHeadingsTab={has('sectionTitles')} />
+          )}
+
+          {activeSection === 'showcase' && (
+            <ShowcasePanel
+              copy={copy}
+              setCopy={setCopy}
+              images={images}
+              setImage={setImage}
+              patchImages={(fn) => onImagesChange((prev) => fn(prev || {}))}
+              siteId={siteId}
+              confirm={confirmDialog}
+              hasHeadingsTab={has('sectionTitles')}
+            />
+          )}
+
+          {activeSection === 'comparison' && (
+            <ComparisonPanel copy={copy} setCopy={setCopy} confirm={confirmDialog} businessName={businessInfo?.businessName} hasHeadingsTab={has('sectionTitles')} />
+          )}
+
+          {activeSection === 'faq' && (
+            <FaqPanel copy={copy} setCopy={setCopy} confirm={confirmDialog} hasHeadingsTab={has('sectionTitles')} />
           )}
 
           {activeSection === 'colors' && templateMeta && (
