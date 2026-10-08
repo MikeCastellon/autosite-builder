@@ -21,6 +21,7 @@ import {
   HERO_CARD_DEFAULTS,
   FEATURED_AUTOMATIC,
   VEHICLE_MAKES_DEFAULT_ALL,
+  HOW_STEPS_STARTERS,
   TEMPLATE_READS,
   TEMPLATE_HELP,
   EDITOR_TABS,
@@ -30,9 +31,16 @@ import {
   heroCardDefault,
   featuredAutomatic,
   vehicleMakesDefaultAll,
+  howStepsStarters,
   shadeGuideState,
 } from './editorCapabilities.js';
 import { loadTemplateInfo } from './useTemplateInfo.js';
+import { FAQ_TAB, FAQ_HINTS } from './templates/kit/faq.js';
+import { HOW_TAB, HOW_HINTS } from './templates/kit/howItWorks.js';
+import { VT_TAB, VT_HINTS } from './templates/kit/vehicleTypes.js';
+import { CMP_TAB, CMP_HINTS } from './templates/kit/comparison.js';
+import { SHOWCASE_SECTION, SHOWCASE_HINTS } from './templates/kit/showcase.js';
+import { SERVICE_TABS_HINTS } from './templates/kit/serviceTabs.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const dataDir = resolve(here, '../../data');
@@ -127,7 +135,10 @@ describe('section manifests', () => {
 
   it('headingFields name real sections, fields and owning copy keys', async () => {
     const FIELDS = ['eyebrow', 'title', 'accent', 'intro'];
-    const OWNERS = ['headline', 'servicesSection.title', 'servicesSection.intro', 'ctaHeadline', 'ctaSubtext', 'beforeAfter.title', 'beforeAfter.intro'];
+    const OWNERS = [
+      'headline', 'servicesSection.title', 'servicesSection.intro', 'ctaHeadline', 'ctaSubtext', 'beforeAfter.title', 'beforeAfter.intro',
+      'vehicleTypes.title', 'vehicleTypes.intro', 'showcase.title', 'showcase.intro', 'comparison.title', 'comparison.intro', 'faq.title', 'faq.intro',
+    ];
     let seen = 0;
     for (const id of IDS) {
       const mod = await TEMPLATE_COMPONENT_MAP[id]();
@@ -161,7 +172,7 @@ describe('section manifests', () => {
     expect(missing.footerSpec).toBe(null);
     expect(missing.addedSections).toEqual([]);
     const sporty = await loadTemplateInfo('detailing_sporty');
-    expect(sporty.addedSections).toEqual(['brands', 'featured', 'beforeAfter']);
+    expect(sporty.addedSections).toEqual(['brands', 'featured', 'beforeAfter', 'vehicleTypes', 'process', 'showcase', 'comparison', 'faq']);
     expect(Array.isArray(sporty.footerSpec?.columns)).toBe(true);
     expect((await loadTemplateInfo('carwash_bubble')).footerSpec).toBe(null);
   });
@@ -209,6 +220,28 @@ describe('tab names match the hints that point at them', () => {
     }
   });
 
+  // The kit's reference-site bands print their own editor hints (the empty
+  // band, an item that still needs something): each names the tab that
+  // edits it, which every template showing the band has.
+  it('the kit bands\' hints name their tabs, and the templates showing a band have that tab', () => {
+    const bands = [
+      { cap: 'faq', tab: FAQ_TAB, hints: FAQ_HINTS },
+      { cap: 'howSteps', tab: HOW_TAB, hints: HOW_HINTS },
+      { cap: 'vehicleTypes', tab: VT_TAB, hints: VT_HINTS },
+      { cap: 'comparison', tab: CMP_TAB, hints: CMP_HINTS },
+      { cap: 'showcase', tab: SHOWCASE_SECTION.label, hints: SHOWCASE_HINTS },
+      { cap: 'serviceTabs', tab: 'Services', hints: SERVICE_TABS_HINTS },
+    ];
+    for (const { cap, tab, hints } of bands) {
+      for (const t of hintTargets(Object.values(hints).join('\n'))) expect({ cap, tab: t.tab }).toEqual({ cap, tab });
+      const editorTab = EDITOR_TABS.find((x) => x.label === tab);
+      expect({ cap, tab: editorTab?.label }).toEqual({ cap, tab });
+      for (const id of IDS.filter((x) => templateReads(x, cap))) {
+        expect({ id, cap, has: editorTabs(id).some((x) => x.label === tab) }).toEqual({ id, cap, has: true });
+      }
+    }
+  });
+
   for (const id of IDS) {
     it(`${id}: every "Edit > ..." hint names a tab this template has`, () => {
       const tabs = editorTabs(id, { canEditBusiness: true, canSwitchTemplate: true }).map((t) => t.label);
@@ -225,7 +258,14 @@ describe('editorTabs', () => {
   const ids = (templateId, opts) => editorTabs(templateId, opts).map((t) => t.id);
 
   it('adds template-specific tabs only where the template reads them', () => {
-    expect(ids('detailing_sporty')).toEqual(['visibility', 'hero', 'headings', 'services', 'featured', 'makes', 'about', 'gallery', 'beforeAfter', 'testimonials', 'google', 'contact', 'colors', 'footer']);
+    expect(ids('detailing_sporty')).toEqual([
+      'visibility', 'hero', 'headings', 'services', 'featured', 'vehicleTypes', 'howItWorks', 'makes', 'about', 'gallery', 'beforeAfter',
+      'showcase', 'comparison', 'testimonials', 'google', 'faq', 'contact', 'colors', 'footer',
+    ]);
+    // The reference-site bands' tabs are Bold & Sporty's alone for now.
+    for (const id of IDS.filter((x) => x !== 'detailing_sporty')) {
+      expect({ id, tabs: ids(id).filter((t) => ['vehicleTypes', 'showcase', 'comparison', 'faq'].includes(t)) }).toEqual({ id, tabs: [] });
+    }
     expect(ids('mechanic_garage')).toEqual(['visibility', 'hero', 'services', 'about', 'gallery', 'beforeAfter', 'testimonials', 'contact', 'colors', 'footer']);
     expect(ids('tint_obsidian')).toEqual(expect.arrayContaining(['howItWorks', 'filmBrands', 'shadeGuide']));
     expect(ids('tint_obsidian')).not.toContain('whyUs');
@@ -276,7 +316,7 @@ describe('feature defaults match the template sources', () => {
   const FOOTER_COLUMN_TYPES = ['brand', 'links', 'services', 'areas', 'contact', 'hours'];
 
   it('every table names registered templates that read the feature', () => {
-    for (const [table, cap] of [[HERO_CARD_DEFAULTS, 'heroServices'], [FEATURED_AUTOMATIC, 'featuredService'], [VEHICLE_MAKES_DEFAULT_ALL, 'vehicleMakes'], [GOOGLE_BADGE_DEFAULTS, 'googleBadge']]) {
+    for (const [table, cap] of [[HERO_CARD_DEFAULTS, 'heroServices'], [FEATURED_AUTOMATIC, 'featuredService'], [VEHICLE_MAKES_DEFAULT_ALL, 'vehicleMakes'], [GOOGLE_BADGE_DEFAULTS, 'googleBadge'], [HOW_STEPS_STARTERS, 'howSteps']]) {
       for (const id of Object.keys(table)) {
         expect({ id, cap, known: IDS.includes(id), reads: templateReads(id, cap) }).toEqual({ id, cap, known: true, reads: true });
       }
@@ -303,6 +343,18 @@ describe('feature defaults match the template sources', () => {
         expect({ id, call: Boolean(m) }).toEqual({ id, call: true });
         expect({ id, all: vehicleMakesDefaultAll(id) }).toEqual({ id, all: !m[1] });
         expect({ id, listed: VEHICLE_MAKES_DEFAULT_ALL[id] }).toEqual({ id, listed: !m[1] });
+      }
+      if (templateReads(id, 'howSteps')) {
+        // The kit band (no starter steps) is called literally on
+        // copy.howSteps; every other reader shows its own starters.
+        const kit = /howItWorksSteps\(\s*(?:copy|generatedCopy)\??\.howSteps\s*\)/.test(src);
+        expect({ id, starters: howStepsStarters(id) }).toEqual({ id, starters: !kit });
+        expect({ id, listed: HOW_STEPS_STARTERS[id] }).toEqual({ id, listed: !kit });
+      }
+      if (templateReads(id, 'serviceTabs')) {
+        // The tabs group the template's own services by their category.
+        expect({ id, call: /serviceTabsOf\(\s*\w+\s*,\s*(?:copy|generatedCopy)\??\.serviceTabs\s*\)/.test(src) }).toEqual({ id, call: true });
+        expect({ id, category: /\.category\b/.test(src) }).toEqual({ id, category: true });
       }
       if (templateReads(id, 'footerBuilder')) {
         const { footerSpec: spec } = await TEMPLATE_COMPONENT_MAP[id]();

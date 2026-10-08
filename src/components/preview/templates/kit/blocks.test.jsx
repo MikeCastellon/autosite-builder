@@ -14,6 +14,12 @@ import { PackageBadge, PackagePhoto, PackageIncludes, packageDetailsCss } from '
 import { FeaturedBand, featuredBandCss } from './FeaturedBand.jsx';
 import { MakesBand, makesBandCss } from './MakesBand.jsx';
 import { beforeAfterCss } from './BeforeAfter.jsx';
+import { faqCss } from './Faq.jsx';
+import { howItWorksCss } from './HowItWorks.jsx';
+import { vehicleTypesCss } from './VehicleTypes.jsx';
+import { comparisonCss } from './Comparison.jsx';
+import { showcaseCss } from './Showcase.jsx';
+import { serviceTabsCss } from './ServiceTabs.jsx';
 import { EditorModeProvider } from './EditorMode.jsx';
 import { heroOfferOf, makesEyebrowDefault } from './features.js';
 import { telHref, phoneDisplay, businessKindOf, serviceIncludes } from './content.js';
@@ -288,6 +294,14 @@ describe.each([
   ['featuredBandCss', 'xx-ft', featuredBandCss],
   ['makesBandCss', 'xx-mk', makesBandCss],
   ['beforeAfterCss', 'xx-ba', beforeAfterCss],
+  // The reference-site bands (Bold & Sporty first).
+  ['faqCss', 'xx-faq', faqCss],
+  ['faqCss (twoFrom 960)', 'xx-faq', (ns) => faqCss(ns, { twoFrom: 960 })],
+  ['howItWorksCss', 'xx-how', howItWorksCss],
+  ['vehicleTypesCss', 'xx-vt', vehicleTypesCss],
+  ['comparisonCss', 'xx-cmp', comparisonCss],
+  ['showcaseCss', 'xx-sc', showcaseCss],
+  ['serviceTabsCss', 'xx-st', serviceTabsCss],
 ])('%s hygiene', (_, ns, gen) => {
   const css = gen(ns);
   const rules = cssRules(css);

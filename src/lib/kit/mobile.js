@@ -32,6 +32,11 @@
 import { BUSINESS_TYPE_OPTIONS, safeHref } from '../customSiteForm.js';
 import { mergeSectionOrder } from '../sectionManifest.js';
 import { beforeAfterPairs } from '../../components/preview/templates/kit/beforeAfter.js';
+import { vehicleTypesOf } from '../../components/preview/templates/kit/vehicleTypes.js';
+import { howItWorksSteps } from '../../components/preview/templates/kit/howItWorks.js';
+import { showcaseItems } from '../../components/preview/templates/kit/showcase.js';
+import { comparisonOf } from '../../components/preview/templates/kit/comparison.js';
+import { faqItems } from '../../components/preview/templates/kit/faq.js';
 
 export const MOBILE_VERSION = 1;
 export const MOBILE_INPUTS_FILE = 'mobile-inputs.json';
@@ -173,19 +178,25 @@ const tpl = (themeReady, list, added = []) => Object.freeze({ themeReady, sectio
 const STD = 'hero:Hero, statsBar:Stats Bar, services:Services, about:About, gallery:Gallery, testimonials:Reviews, cta:Contact / CTA';
 const STD_NO_STATS = 'hero:Hero, services:Services, about:About, gallery:Gallery, testimonials:Reviews, cta:Contact / CTA';
 const LIVE_THEME = 'hero:Hero, statsBar:Stats Bar, brands:Vehicle Makes, services:Services, featured:Featured Service, about:About, gallery:Gallery, testimonials:Reviews, cta:Contact / CTA, awards:Awards';
-// The live themes' sections with the Before & After band (Bold & Sporty and
-// Chrome Elite share them).
-const SPORTY = LIVE_THEME.replace('gallery:Gallery, ', 'gallery:Gallery, beforeAfter:Before & After, ');
+// The live themes' sections with the Before & After band (Chrome Elite).
+const CHROME = LIVE_THEME.replace('gallery:Gallery, ', 'gallery:Gallery, beforeAfter:Before & After, ');
+// Bold & Sporty also has the reference-site bands: Vehicle Types and How It
+// Works after the featured band, Detail Showcase and Comparison after the
+// Before & After band, FAQ after the reviews.
+const SPORTY = CHROME
+  .replace('featured:Featured Service, ', 'featured:Featured Service, vehicleTypes:Vehicle Types, process:How It Works, ')
+  .replace('beforeAfter:Before & After, ', 'beforeAfter:Before & After, showcase:Detail Showcase, comparison:Comparison, ')
+  .replace('testimonials:Reviews, ', 'testimonials:Reviews, faq:FAQ, ');
 const TINT_LEGACY = 'hero:Hero, statsBar:Stats Bar, services:Services, brands:Film Brands, about:About, gallery:Gallery, testimonials:Reviews, cta:Contact / CTA';
 const MECHANIC_KIT = 'hero:Hero, statsBar:Stats Bar, services:Services, about:About, gallery:Gallery, beforeAfter:Before & After, testimonials:Reviews, cta:Contact / CTA, awards:Awards';
 
 export const TEMPLATE_SECTIONS = Object.freeze({
-  detailing_sporty: tpl(true, SPORTY, ['brands', 'featured', 'beforeAfter']),
+  detailing_sporty: tpl(true, SPORTY, ['brands', 'featured', 'beforeAfter', 'vehicleTypes', 'process', 'showcase', 'comparison', 'faq']),
   detailing_coastal: tpl(false, STD),
   mobile_bold: tpl(false, STD_NO_STATS),
   mobile_modern: tpl(false, STD),
   mobile_rugged: tpl(false, STD),
-  mobile_chrome: tpl(true, SPORTY, ['brands', 'featured', 'beforeAfter']),
+  mobile_chrome: tpl(true, CHROME, ['brands', 'featured', 'beforeAfter']),
   wheel_edge: tpl(false, 'hero:Hero, statsBar:Stats Bar, services:Services, brands:Brands, about:About, gallery:Gallery, testimonials:Reviews, cta:Contact / CTA'),
   wheel_clean: tpl(false, 'hero:Hero, awards:Awards, statsBar:Stats Bar, services:Services, brands:Brands, about:About, gallery:Gallery, testimonials:Reviews, cta:Contact / CTA'),
   tint_dark: tpl(false, TINT_LEGACY),
@@ -223,7 +234,8 @@ const listOf = (v) => {
 // renders empty), and a live theme's opt-in section the owner never turned
 // on (Vehicle Makes without makes, Featured Service without a service,
 // Before & After without a pair that has both photos: `images` is the
-// site's image map).
+// site's image map; the reference-site bands without an entry the
+// published page shows, read with the kit's own helpers).
 export function siteSections({ templateId, copy, businessInfo, images } = {}) {
   const t = templateSections(templateId);
   const c = isObject(copy) ? copy : {};
@@ -234,6 +246,11 @@ export function siteSections({ templateId, copy, businessInfo, images } = {}) {
     brands: listOf(c.vehicleMakes).some((m) => typeof m === 'string' && m.trim()),
     featured: isObject(c.featuredService) && typeof c.featuredService.serviceName === 'string' && !!c.featuredService.serviceName.trim(),
     beforeAfter: Boolean(beforeAfterPairs(c.beforeAfter, images)?.pairs.length),
+    vehicleTypes: Boolean(vehicleTypesOf(c.vehicleTypes)?.items.length),
+    process: Boolean(howItWorksSteps(c.howSteps)?.steps.length),
+    showcase: Boolean(showcaseItems(c.showcase, images)?.items.length),
+    comparison: Boolean(comparisonOf(c.comparison)?.rows.length),
+    faq: Boolean(faqItems(c.faq)?.items.length),
   };
   const hiddenOf = (id) => ownerHidden.has(id)
     || (id === 'awards' && awards.length === 0)

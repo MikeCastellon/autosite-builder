@@ -5,10 +5,17 @@ import {
   BEFORE_AFTER_CAPTION_MAX, BEFORE_AFTER_INTRO_MAX, BEFORE_AFTER_MAX, BEFORE_AFTER_SECTION, BEFORE_AFTER_TITLE_MAX,
   CAPTURE_POLL_MS, DESIGN_MODEL, DESIGN_STALE_MS, REFERENCE_SITES_MAX, REFERENCE_SITE_NOTE_MAX, REFERENCE_SITE_URL_MAX, REPLICA_LABEL,
   SITE_BUSINESS_TYPES, beforeAfterCaption, beforeAfterChangedSince, beforeAfterImportsChanged, beforeAfterSlots, brandAccent,
-  canMatchReference, captureViewFor, capturedShotKey, designFromIntake, designProblems, hasBeforeAfter, isBeforeAfterKey, isCaptureLive,
-  isImportable, newerCapture, rankTemplates, referenceSiteKey, referenceSiteUrl, replacedShotSource, replicaTemplatesFor, sameReferenceSource,
-  sanitizeReference, sanitizeReferenceSites, showsPrices,
+  canMatchReference, captureViewFor, capturedShotKey, designFromIntake, designProblems, extraSectionOptIn, extraSectionsChangedSince,
+  extraSectionsFor, hasBeforeAfter, isBeforeAfterKey, isCaptureLive, isImportable, isShowcaseKey, newerCapture, rankTemplates,
+  referenceSiteKey, referenceSiteUrl, replacedShotSource, replicaTemplatesFor, sameReferenceSource, sanitizeReference, sanitizeReferenceSites,
+  showcaseSlots, showsPrices,
 } from '../../lib/customSiteDesign.js';
+import {
+  EXTRA_SECTIONS, EXTRA_SECTION_IDS, FAQ_NOTES_MAX, SERVICE_TABS_MIN_SERVICES, extraSectionOf, outlineExtraSections, sanitizeExtraSections,
+  serviceCategory,
+} from '../../lib/customSiteSections.js';
+import { SHOWCASE_LIMITS, SHOWCASE_MAX_ITEMS } from '../preview/templates/kit/showcase.js';
+import { SERVICE_CATEGORY_MAX } from '../preview/templates/kit/serviceTabs.js';
 import { formatBytes, safeHref } from '../../lib/customSiteForm.js';
 import { changedLeverGroups, leverGroupsChanged, sanitizeLevers } from '../../lib/designLevers.js';
 import { sanitizePhotos } from '../../lib/kit/photos.js';
@@ -17,7 +24,7 @@ import { unpackGeneratedContent } from '../../lib/siteRender.js';
 import { supabase } from '../../lib/supabase.js';
 import { useAlert } from '../ui/AlertProvider.jsx';
 import { formatDateTime } from './customSiteUi.jsx';
-import { previewBeforeAfter, slotImages } from './studio/designPreview.js';
+import { previewBeforeAfter, previewExtraSections, slotImages } from './studio/designPreview.js';
 
 // The Design Studio loads only when an admin opens the setup page: these
 // stay out of the bundle every visitor downloads.
@@ -1093,6 +1100,244 @@ function BeforeAfterPicker({ pairs, onChange, photos, text, onText, deskPairs = 
   );
 }
 
+// ─── More sections (design.extraSections, customSiteSections.js) ─────
+
+// What the customer ticked in the form's "What should your site have?".
+const ASKED_FOR_FAQ = 'FAQ';
+// Where "Pick the photos under Photos" scrolls to.
+const SHOWCASE_PICKER_ID = 'design-showcase-photos';
+
+const sectionLabels = (ids) => ids.map((id) => extraSectionOf(id)?.label || id).join(', ');
+
+// The optional sections of the setup's template: a switch each with one
+// line on what it is, all off until turned on. When the site is written,
+// Claude drafts every one that is on from the customer's facts only (an
+// FAQ, the steps, the vehicle types, a comparison, the showcase's titles,
+// the services' categories); nothing here is ever a placeholder on the
+// site.
+//   ids          the sections this template has (extraSectionsFor), in order
+//   on           { id: boolean }; onToggle (id, on) => void
+//   optIn        (id) => true when off takes it off the page (else the
+//                template's own version shows)
+//   hidden       section ids hidden under Sections (the Studio's levers)
+//   rewrite      the site exists: the next write is a rewrite, which applies
+//                only `marked` sections (changed here since the last write)
+//   onWriteAgain (id) => void: "Write it again" marks one
+//   suggested    the sections a matched reference's code shows, as
+//                { ids (on this template), missing (not on it) }, or null
+//                without a matched outline; onSuggest () => void turns them
+//                on; suggestNote the line after a press
+//   faqNotes / onFaqNotes   the FAQ's pasted questions and answers
+//   asked        the customer ticked FAQ in the form
+//   showcase     { picked, photos }: the showcase's picks, usable photos
+//   categories   { given, services }: services with a category, with a name
+//   elsewhere    labels of sections switched on that this template lacks
+//   templateLabel the template's name
+export function MoreSections({
+  ids, on, onToggle, optIn = () => true, hidden = [], rewrite = false, marked = [], onWriteAgain, suggested = null, onSuggest,
+  suggestNote = '', faqNotes = '', onFaqNotes, asked = false, showcase = { picked: 0, photos: 0 }, categories = { given: 0, services: 0 },
+  elsewhere = [], templateLabel = 'This template',
+}) {
+  const toTurnOn = suggested ? suggested.ids.filter((id) => !on[id]) : [];
+
+  // Under a switch: what it does now, and what to do next.
+  function notes(id) {
+    const isOn = !!on[id];
+    const out = [];
+    const note = (text, tone = 'muted') => out.push(
+      <p key={out.length} className={`mt-1 text-[12px] ${tone === 'warn' ? 'text-amber-800' : 'text-ink-tertiary'}`}>{text}</p>,
+    );
+    if (id === 'faq' && asked) note('They asked for an FAQ.');
+    if (!isOn && !optIn(id)) note('Off: the template\'s own version shows.');
+    if (isOn && hidden.includes(extraSectionOf(id)?.section)) note('Hidden under Sections: show it there, or it stays off the site.', 'warn');
+    if (isOn && id === 'showcase') {
+      // Without a photo a write has nothing to put there: a first write
+      // leaves it off, a rewrite leaves the site's own.
+      const without = rewrite ? 'a rewrite leaves the site\'s as it is' : 'it stays off the site';
+      if (!showcase.photos) note(`No usable photos yet: ${without} until there are some to pick.`, 'warn');
+      else if (!showcase.picked) note(`Pick its photos under Photos: without any, ${without}.`, 'warn');
+      else note(`${showcase.picked} of ${SHOWCASE_MAX_ITEMS} photos picked under Photos.`);
+    }
+    if (isOn && id === 'serviceTabs') {
+      if (categories.given > 0) {
+        // Claude groups the rest only with enough services to group.
+        const rest = categories.given < categories.services && categories.services >= SERVICE_TABS_MIN_SERVICES ? ' Claude groups the rest.' : '';
+        note(`Categories typed under Business details: ${categories.given} of ${categories.services} services.${rest}`);
+      }
+      else if (categories.services >= SERVICE_TABS_MIN_SERVICES) note('Claude groups their services into 2 to 5 categories, or type a Category per service under Business details.');
+      else note('Type a Category for each service under Business details: tabs need at least two categories.', 'warn');
+    }
+    if (rewrite && marked.includes(id)) {
+      note(isOn ? 'Written again on the next rewrite.' : (optIn(id) ? 'Taken off the site on the next rewrite.' : 'Back to the template\'s own on the next rewrite.'));
+    }
+    return out;
+  }
+
+  return (
+    <div data-more-sections="">
+      {suggested && (
+        <div className="mb-4 rounded-lg bg-[#faf9f7] border border-black/[0.06] px-3 py-2.5">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+            <button type="button" onClick={onSuggest} disabled={!toTurnOn.length} className={BTN_SMALL}>Turn on what the reference site has</button>
+            <span className="text-[12px] text-[#4a4a4a]">
+              {suggested.ids.length ? `Its code shows: ${sectionLabels(suggested.ids)}.` : 'Its code shows none of these sections.'}
+              {suggested.missing.length > 0 && ` Not in ${templateLabel}: ${sectionLabels(suggested.missing)}.`}
+            </span>
+          </div>
+          {suggestNote && <p role="status" className="mt-1.5 text-[12px] font-semibold text-emerald-800">{suggestNote}</p>}
+        </div>
+      )}
+      {ids.length === 0 ? (
+        <p className="text-[13px] text-ink-tertiary">
+          {templateLabel} has none of them ({sectionLabels(EXTRA_SECTION_IDS)}). Pick a template that has one to add it.
+        </p>
+      ) : (
+        <ul className="space-y-3">
+          {ids.map((id) => {
+            const s = extraSectionOf(id);
+            const isOn = !!on[id];
+            return (
+              <li key={id} className={`rounded-xl border p-3 ${isOn ? 'border-[#cc0000]/40 bg-[#cc0000]/[0.02]' : 'border-black/[0.08]'}`} data-extra-section={id}>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    role="switch"
+                    checked={isOn}
+                    aria-checked={isOn}
+                    onChange={(e) => onToggle?.(id, e.target.checked)}
+                    className="mt-0.5 w-4 h-4 shrink-0 accent-[#cc0000]"
+                  />
+                  <span className="min-w-0">
+                    <span className="block text-[13px] font-semibold text-[#1a1a1a]">{s.label}</span>
+                    <span className="block text-[12px] text-[#4a4a4a]">{s.what}</span>
+                  </span>
+                </label>
+                <div className="pl-7">
+                  {notes(id)}
+                  {isOn && id === 'faq' && (
+                    <Field label="Their own questions and answers (optional)" hint="Paste any the customer sent. Claude keeps their words, and adds only questions their facts answer." className="mt-2">
+                      <textarea rows={3} value={faqNotes} onChange={(e) => onFaqNotes?.(e.target.value)} maxLength={FAQ_NOTES_MAX} className={`${INPUT} leading-relaxed`} />
+                    </Field>
+                  )}
+                  {isOn && id === 'showcase' && showcase.photos > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => { if (typeof document !== 'undefined') document.getElementById(SHOWCASE_PICKER_ID)?.scrollIntoView({ block: 'center' }); }}
+                      className={`mt-1 ${LINK_BTN}`}
+                    >
+                      Pick the photos
+                    </button>
+                  )}
+                  {rewrite && isOn && !marked.includes(id) && (
+                    <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+                      <button type="button" onClick={() => onWriteAgain?.(id)} className={BTN_SMALL}>Write it again</button>
+                      <span className="text-[11px] text-ink-tertiary">A rewrite keeps the site's {s.label} (with any editor changes) unless you press this.</span>
+                    </div>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {elsewhere.length > 0 && (
+        <p className="mt-3 text-[12px] text-ink-tertiary">
+          {templateLabel} doesn't have {elsewhere.join(', ')}: {elsewhere.length === 1 ? 'it stays' : 'they stay'} switched on here for a template that has {elsewhere.length === 1 ? 'it' : 'them'}.
+        </p>
+      )}
+    </div>
+  );
+}
+
+// The Detail Showcase's photos under Photos (design.slots.showcase), for a
+// template with the section: up to 6 of their photos, in the order picked,
+// each with an optional title and caption. An empty title is Claude's to
+// give when the site is written: the listed service the photo shows,
+// looking at it (never a make, a brand or a claim). Captions are only ever
+// typed here.
+//   picks     slots.showcase as the page has it: [{ path, title, caption }]
+//   onChange  (picks) => void
+//   photos    the project's usable photo uploads (files with signed links)
+//   on        its switch under More sections
+//   hidden    the Sections setting hides the section
+export function ShowcasePicker({ picks, onChange, photos, on = false, hidden = false }) {
+  const byPath = new Map(photos.map((f) => [f.path, f]));
+  const full = picks.length >= SHOWCASE_MAX_ITEMS;
+  const update = (i, patch) => onChange(picks.map((p, j) => (j === i ? { ...p, ...patch } : p)));
+  // A thumbnail adds its photo at the end, or (picked already) takes it off.
+  function toggle(path) {
+    if (picks.some((p) => p.path === path)) onChange(picks.filter((p) => p.path !== path));
+    else if (!full) onChange([...picks, { path, title: '', caption: '' }]);
+  }
+
+  return (
+    <div data-showcase="" id={SHOWCASE_PICKER_ID}>
+      <p className="text-[12px] font-semibold text-[#1a1a1a] mb-1">
+        Detail showcase <span className="font-normal text-ink-tertiary">({picks.length} of {SHOWCASE_MAX_ITEMS})</span>
+      </p>
+      <p className="text-[11px] text-ink-tertiary">
+        Their photos as titled cards, in the order picked. Leave a title empty and Claude names it from their services by looking at the photo.
+      </p>
+      {!on && <p className="mt-1 text-[12px] text-amber-800">Turn on Detail showcase under More sections, or these photos stay off the site.</p>}
+      {on && hidden && <p className="mt-1 text-[12px] text-amber-800">Hidden under Sections: show the section there, or these photos stay off the site.</p>}
+      <div className="mt-2 flex flex-wrap gap-2">
+        {photos.map((f) => {
+          const n = picks.findIndex((p) => p.path === f.path);
+          const picked = n >= 0;
+          return (
+            <button key={f.path} type="button" onClick={() => toggle(f.path)} aria-pressed={picked} disabled={!picked && full} title={f.name}
+              className={`relative w-20 h-20 rounded-lg overflow-hidden border-2 disabled:opacity-40 ${picked ? 'border-[#cc0000]' : 'border-transparent'}`}>
+              <img src={f.url} alt={f.name} className="w-full h-full object-cover" />
+              {picked && <span className="absolute top-1 right-1 w-5 h-5 rounded-full bg-[#cc0000] text-white text-[11px] font-bold flex items-center justify-center">{n + 1}</span>}
+            </button>
+          );
+        })}
+      </div>
+      {picks.length > 0 && (
+        <ol className="mt-3 space-y-2">
+          {picks.map((p, i) => {
+            const f = byPath.get(p.path);
+            return (
+              <li key={p.path} className="flex flex-wrap items-start gap-3 rounded-xl border border-black/[0.08] p-3">
+                <span className="w-14 h-14 shrink-0 rounded-lg overflow-hidden bg-[#faf9f7] border border-black/[0.08] flex items-center justify-center">
+                  {f ? <img src={f.url} alt="" className="w-full h-full object-cover" /> : <span className="text-[10px] font-semibold text-ink-tertiary">Not found</span>}
+                </span>
+                <Field label={`Photo ${i + 1}: title`} hint="Optional: empty, Claude names it." className="min-w-[160px] flex-1">
+                  <input
+                    value={p.title || ''}
+                    onChange={(e) => update(i, { title: e.target.value })}
+                    maxLength={SHOWCASE_LIMITS.itemTitle}
+                    placeholder="e.g. Ceramic coating"
+                    aria-label={`Showcase photo ${i + 1} title`}
+                    className={INPUT}
+                  />
+                </Field>
+                <Field label="Caption" hint="Optional: what was done, plainly." className="min-w-[160px] flex-1">
+                  <input
+                    value={p.caption || ''}
+                    onChange={(e) => update(i, { caption: e.target.value })}
+                    maxLength={SHOWCASE_LIMITS.caption}
+                    aria-label={`Showcase photo ${i + 1} caption`}
+                    className={INPUT}
+                  />
+                </Field>
+                <button
+                  type="button"
+                  onClick={() => onChange(picks.filter((_, j) => j !== i))}
+                  aria-label={`Remove showcase photo ${i + 1}`}
+                  className="self-center text-[12px] font-semibold text-ink-tertiary hover:text-[#cc0000]"
+                >
+                  Remove
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+      )}
+    </div>
+  );
+}
+
 export function DesignSetup({ project, onBack, onStarted }) {
   const { toast, confirm } = useAlert();
   const form = project.form || {};
@@ -1120,6 +1365,15 @@ export function DesignSetup({ project, onBack, onStarted }) {
   // The Before & After section's heading and intro as typed
   // (design.beforeAfter); its pairs are slots.beforeAfter.
   const [pairText, setPairText] = useState(() => ({ title: saved?.beforeAfter?.title || '', intro: saved?.beforeAfter?.intro || '' }));
+  // More sections: the switches (design.extraSections), the FAQ's pasted
+  // questions and answers (design.faqNotes), the sections "Write it again"
+  // marked this session, and the line after "Turn on what the reference
+  // site has". The showcase's photos are slots.showcase, the service tabs'
+  // categories are on info.services.
+  const [extraOn, setExtraOn] = useState(() => sanitizeExtraSections(saved?.extraSections) || {});
+  const [faqNotes, setFaqNotes] = useState(() => (typeof saved?.faqNotes === 'string' ? saved.faqNotes : ''));
+  const [writeAgain, setWriteAgain] = useState([]);
+  const [fromReference, setFromReference] = useState('');
   // The Design Studio's settings (src/lib/designLevers.js).
   const [levers, setLevers] = useState(() => sanitizeLevers(start.levers, start.templateId || ''));
   // Reference sites: inspire / match one / exact replica (design.reference).
@@ -1263,6 +1517,21 @@ export function DesignSetup({ project, onBack, onStarted }) {
   const pairsApply = pairsOn && (!project.site_id || pairsChanged || beforeAfterImportsChanged(slots, saved?.imported, { projectId: project.id }));
   const deskPairs = photoDeskPairs(project, pairPhotos);
 
+  // More sections: offered (and written) only where the template has them
+  // (extraSectionsFor); a switch stays on in the setup on another template,
+  // for a switch back, like the pairs.
+  const sectionIds = extraSectionsFor(templateId, info.businessType);
+  const sectionsOn = Object.fromEntries(EXTRA_SECTION_IDS.map((id) => [id, extraOn[id] === true]));
+  const showcasePicks = Array.isArray(slots.showcase) ? slots.showcase : [];
+  const showcaseOn = sectionIds.includes('showcase') && sectionsOn.showcase;
+  const tabsOn = sectionIds.includes('serviceTabs') && sectionsOn.serviceTabs;
+  // Changed since the last write (sticky until a run applies them), or
+  // marked with "Write it again": a rewrite redoes only these.
+  const sectionsChanged = (() => {
+    const changed = new Set([...extraSectionsChangedSince({ businessInfo: info, extraSections: sectionsOn, faqNotes, slots }, saved), ...writeAgain]);
+    return EXTRA_SECTION_IDS.filter((id) => changed.has(id));
+  })();
+
   const cleanReference = useMemo(
     () => withBuiltReplica(sanitizeReference(reference, { projectId: project.id }), replicas, templateId),
     [reference, replicas, templateId, project.id],
@@ -1273,6 +1542,26 @@ export function DesignSetup({ project, onBack, onStarted }) {
     () => ({ ...project, files: projectFiles, assets: projectAssets }),
     [project, projectFiles, projectAssets],
   );
+
+  // "Turn on what the reference site has": the sections the matched
+  // reference's code shows (its outline, read by our server's capture),
+  // split into the ones this template has and the ones it hasn't; null
+  // without a matched reference with an outline (or while the rule loads).
+  const matchedOutline = outlineRule && cleanReference.mode === 'match' && cleanReference.source
+    ? outlineRule(cleanReference.source, projectAssets) || outlineRule(cleanReference.source, projectFiles)
+    : null;
+  const referenceSections = matchedOutline
+    ? (() => {
+      const found = outlineExtraSections(matchedOutline);
+      return { ids: found.filter((id) => sectionIds.includes(id)), missing: found.filter((id) => !sectionIds.includes(id)) };
+    })()
+    : null;
+  function turnOnReferenceSections() {
+    const ids = (referenceSections?.ids || []).filter((id) => !sectionsOn[id]);
+    if (!ids.length) return;
+    setExtraOn((prev) => ({ ...prev, ...Object.fromEntries(ids.map((id) => [id, true])) }));
+    setFromReference(`Turned on: ${ids.map((id) => extraSectionOf(id).label).join(', ')}. Check each one below.`);
+  }
 
   // The design as it will be saved, with images (once imported) and colors.
   function buildDesign(extra = {}) {
@@ -1287,9 +1576,16 @@ export function DesignSetup({ project, onBack, onStarted }) {
       // Always with the pairs, an empty list too: the server keeps the
       // stored ones only for a save that sends none (a tab opened before
       // they existed).
-      slots: { ...slots, beforeAfter: pairs },
+      // The showcase's photos too: an empty list clears them.
+      slots: { ...slots, beforeAfter: pairs, showcase: showcasePicks },
       beforeAfter: pairText,
       beforeAfterChanged: pairsChanged,
+      // Always all six switches, an all-off set too: the server keeps the
+      // stored ones only for a save without them (a tab opened before they
+      // existed).
+      extraSections: sectionsOn,
+      extraSectionsChanged: sectionsChanged,
+      faqNotes,
       images: saved?.images || {},
       imported: saved?.imported || {},
       siteId: saved?.siteId || project.site_id || '',
@@ -1596,7 +1892,7 @@ export function DesignSetup({ project, onBack, onStarted }) {
     if (missing.length) { setError(`Fill in: ${missing.join(', ')}`); return; }
     if (project.site_id) {
       const ok = await confirm(
-        'This rewrites the site\'s text and business details from this page, replacing text changed in the editor. Photos (Before & After pairs too), the brand color and the Design Studio settings change only where you changed them here; the rest of your editor work stays.',
+        'This rewrites the site\'s text and business details from this page, replacing text changed in the editor. Photos (Before & After pairs too), the brand color, the Design Studio settings and the More sections change only where you changed them here; the rest of your editor work stays.',
         { title: 'Rewrite the site?', confirmText: 'Rewrite' },
       );
       if (!ok) return;
@@ -1609,6 +1905,9 @@ export function DesignSetup({ project, onBack, onStarted }) {
       // The complete Before & After pairs, copied like the gallery to the
       // keys the template reads (baBefore{i} / baAfter{i}).
       if (pairsOn) Object.assign(wanted, beforeAfterSlots(slots, { projectId: project.id }));
+      // The showcase's photos, while its switch is on (showcase{i} for pick
+      // i), the same way.
+      if (showcaseOn) Object.assign(wanted, showcaseSlots(slots, { projectId: project.id }));
       // Photo links expire an hour after the page loaded: get fresh ones.
       const fresh = (await customSiteAdmin('get', { id: project.id })).project?.files || [];
       const images = {};
@@ -1629,17 +1928,17 @@ export function DesignSetup({ project, onBack, onStarted }) {
       // On a template without the Before & After section the site keeps the
       // pairs it has: their photos are neither copied nor counted, and their
       // last copies stay on record, so a switch back finds them unchanged.
-      if (!pairsOn) {
-        for (const [key, path] of Object.entries(draft.imported)) {
-          if (isBeforeAfterKey(key) && draft.images[key]) {
-            images[key] = draft.images[key];
-            imported[key] = path;
-          }
+      // The same for the showcase while its switch is off.
+      for (const [key, path] of Object.entries(draft.imported)) {
+        if (((!pairsOn && isBeforeAfterKey(key)) || (!showcaseOn && isShowcaseKey(key))) && draft.images[key]) {
+          images[key] = draft.images[key];
+          imported[key] = path;
         }
       }
       // What this session changed: a rewrite applies only these to the site.
       const keys = new Set([...Object.keys(wanted), ...Object.keys(draft.imported)]);
-      const imagesChanged = [...keys].filter((k) => (pairsOn || !isBeforeAfterKey(k)) && (wanted[k] || '') !== (draft.imported[k] || ''));
+      const imagesChanged = [...keys].filter((k) => (pairsOn || !isBeforeAfterKey(k)) && (showcaseOn || !isShowcaseKey(k))
+        && (wanted[k] || '') !== (draft.imported[k] || ''));
       const colorsChanged = (saved?.customColors?.accent || '') !== (accent.accent || '') || (saved?.templateId || '') !== templateId;
       setBusy('Starting…');
       await customSiteAdmin('design-save', { id: project.id, design: { ...draft, siteId, images, imported, imagesChanged, colorsChanged } });
@@ -1708,12 +2007,28 @@ export function DesignSetup({ project, onBack, onStarted }) {
             {!showsPrices(info.businessType) && (
               <p className="-mt-1 mb-2 text-[11px] text-ink-tertiary">This business type's templates list services without prices.</p>
             )}
+            {tabsOn && (
+              <p className="-mt-1 mb-2 text-[11px] text-ink-tertiary">
+                Service tabs are on: a Category puts a service under that tab (like Cars, Boats). Claude groups the ones left empty
+                {info.services.length >= SERVICE_TABS_MIN_SERVICES ? '.' : ` once there are ${SERVICE_TABS_MIN_SERVICES} or more services.`}
+              </p>
+            )}
             <div className="space-y-2">
               {info.services.map((s, i) => (
                 <div key={i} className="flex gap-2">
                   <input value={s.name} onChange={(e) => setService(i, { name: e.target.value })} placeholder="Service" aria-label={`Service ${i + 1} name`} className={INPUT} />
                   {showsPrices(info.businessType) && (
                     <input value={s.price} onChange={(e) => setService(i, { price: e.target.value })} placeholder="Price" aria-label={`Service ${i + 1} price`} className={`${INPUT} max-w-[140px]`} />
+                  )}
+                  {tabsOn && (
+                    <input
+                      value={s.category || ''}
+                      onChange={(e) => setService(i, { category: e.target.value })}
+                      placeholder="Category"
+                      aria-label={`Service ${i + 1} category`}
+                      maxLength={SERVICE_CATEGORY_MAX}
+                      className={`${INPUT} max-w-[140px]`}
+                    />
                   )}
                   <button
                     type="button"
@@ -1913,6 +2228,32 @@ export function DesignSetup({ project, onBack, onStarted }) {
                 disabled={!!busy}
               />
             </Section>
+
+            <Section
+              title="More sections"
+              intro={`Optional parts of the page, off until you turn them on. ${MODEL_NAME} writes each one from their own facts only, when the site is written.`}
+            >
+              <MoreSections
+                ids={sectionIds}
+                on={sectionsOn}
+                onToggle={(id, on) => setExtraOn((prev) => ({ ...prev, [id]: on }))}
+                optIn={(id) => extraSectionOptIn(templateId, id)}
+                hidden={cleanLevers.sections?.hidden || []}
+                rewrite={!!project.site_id}
+                marked={sectionsChanged}
+                onWriteAgain={(id) => setWriteAgain((prev) => (prev.includes(id) ? prev : [...prev, id]))}
+                suggested={referenceSections}
+                onSuggest={turnOnReferenceSections}
+                suggestNote={fromReference}
+                faqNotes={faqNotes}
+                onFaqNotes={setFaqNotes}
+                asked={Array.isArray(form.features) && form.features.includes(ASKED_FOR_FAQ)}
+                showcase={{ picked: showcasePicks.length, photos: pairPhotos.length }}
+                categories={{ given: info.services.filter((s) => s?.name && serviceCategory(s)).length, services: info.services.filter((s) => s?.name).length }}
+                elsewhere={EXTRA_SECTIONS.filter((x) => sectionsOn[x.id] && !sectionIds.includes(x.id)).map((x) => x.label)}
+                templateLabel={template.label}
+              />
+            </Section>
           </>
         )}
 
@@ -1972,6 +2313,19 @@ export function DesignSetup({ project, onBack, onStarted }) {
                   {template?.label || 'This template'} has no Before &amp; After section: the pairs set up for it stay saved here for a template that has one.
                 </p>
               )}
+              {sectionIds.includes('showcase') ? (
+                <ShowcasePicker
+                  picks={showcasePicks}
+                  onChange={(next) => setSlots((p) => ({ ...p, showcase: next }))}
+                  photos={pairPhotos}
+                  on={sectionsOn.showcase}
+                  hidden={(cleanLevers.sections?.hidden || []).includes('showcase')}
+                />
+              ) : showcasePicks.length > 0 && (
+                <p className="text-[12px] text-ink-tertiary">
+                  {template?.label || 'This template'} has no Detail showcase: the photos picked for it stay saved here for a template that has one.
+                </p>
+              )}
             </div>
           )}
           {notImportable.length > 0 && (
@@ -1999,6 +2353,15 @@ export function DesignSetup({ project, onBack, onStarted }) {
               beforeAfter={pairsApply
                 ? previewBeforeAfter({ templateId, slots, text: pairText, files: projectFiles, images: saved?.images, imported: saved?.imported })
                 : undefined}
+              // The More sections as the next write applies them (a draft
+              // Claude hasn't written yet shows as the site has it, or not).
+              extraSections={previewExtraSections({
+                design: { templateId, businessInfo: info, extraSections: sectionsOn, extraSectionsChanged: sectionsChanged, slots },
+                existing: !!project.site_id,
+                files: projectFiles,
+                images: saved?.images,
+                imported: saved?.imported,
+              })}
               projectId={project.id}
             />
           </Suspense>

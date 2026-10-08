@@ -377,7 +377,7 @@ describe('facts from the written site', () => {
     expect(redline.order).toEqual(['hero', 'about', 'brands', 'services', 'featured', 'testimonials', 'locations', 'cta']);
 
     const sporty = siteSections({ templateId: 'detailing_sporty', copy: { sectionOrder: ['hero', 'about', 'services'] }, businessInfo: { awards: ['Best of Miami'] } });
-    expect(sporty.sections.filter((s) => s.hidden).map((s) => s.id)).toEqual(['brands', 'featured', 'beforeAfter']);
+    expect(sporty.sections.filter((s) => s.hidden).map((s) => s.id)).toEqual(['brands', 'featured', 'vehicleTypes', 'process', 'beforeAfter', 'showcase', 'comparison', 'faq']);
     // The saved ids keep their order; one the save lacks takes its default
     // slot after its predecessor (the editor's repair, mergeSectionOrder).
     const at = (id) => sporty.order.indexOf(id);
@@ -387,14 +387,34 @@ describe('facts from the written site', () => {
 
     const optedIn = siteSections({
       templateId: 'detailing_sporty',
-      copy: { vehicleMakes: ['BMW'], featuredService: { serviceName: 'Ceramic Coating' }, beforeAfter: { pairs: [{}] } },
-      images: { baBefore0: 'https://img.example/b.jpg', baAfter0: 'https://img.example/a.jpg' },
+      copy: {
+        vehicleMakes: ['BMW'], featuredService: { serviceName: 'Ceramic Coating' }, beforeAfter: { pairs: [{}] },
+        vehicleTypes: { items: [{ name: 'Boats' }] },
+        howSteps: [{ title: 'Book online' }],
+        showcase: { items: [{ title: 'Ceramic Coating' }] },
+        comparison: { rows: [{ label: 'Comes to you', us: true, them: false }] },
+        faq: { items: [{ q: 'Do you come to me?', a: 'Yes.' }] },
+      },
+      images: { baBefore0: 'https://img.example/b.jpg', baAfter0: 'https://img.example/a.jpg', showcase0: 'https://img.example/s.jpg' },
     });
     expect(optedIn.sections.filter((s) => s.hidden).map((s) => s.id)).toEqual(['awards']);
     expect(optedIn.order.indexOf('beforeAfter')).toBe(optedIn.order.indexOf('gallery') + 1);
+    expect(optedIn.order).toEqual([
+      'hero', 'statsBar', 'brands', 'services', 'featured', 'vehicleTypes', 'process', 'about', 'gallery', 'beforeAfter',
+      'showcase', 'comparison', 'testimonials', 'faq', 'cta',
+    ]);
     // Before & After shows only with a pair that has both photos.
     const half = siteSections({ templateId: 'detailing_sporty', copy: { beforeAfter: { pairs: [{}] } }, images: { baBefore0: 'https://img.example/b.jpg' } });
     expect(half.sections.find((s) => s.id === 'beforeAfter').hidden).toBe(true);
+    // The reference-site bands count only with something the page shows: a
+    // question without its answer, a card without its photo, a blank step.
+    const drafts = siteSections({
+      templateId: 'detailing_sporty',
+      copy: { faq: { items: [{ q: 'Draft?' }] }, showcase: { items: [{ title: 'No photo' }] }, howSteps: [{ title: ' ' }], vehicleTypes: {}, comparison: { rows: [{ us: true }] } },
+    });
+    expect(drafts.sections.filter((s) => ['vehicleTypes', 'process', 'showcase', 'comparison', 'faq'].includes(s.id)).every((s) => s.hidden)).toBe(true);
+    // Chrome Elite has none of them.
+    expect(siteSections({ templateId: 'mobile_chrome', copy: { faq: { items: [{ q: 'Q', a: 'A' }] } } }).sections.map((s) => s.id)).not.toContain('faq');
   });
 
   it('takes contact details from the site only, never the intake', () => {

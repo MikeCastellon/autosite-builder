@@ -28,6 +28,15 @@
 //   vehicleMakes                     Vehicle Makes tab
 //   beforeAfter                      Before & After tab (copy.beforeAfter
 //                                    + images baBefore<i> / baAfter<i>)
+//   faq                              FAQ tab (copy.faq)
+//   vehicleTypes                     Vehicle Types tab (copy.vehicleTypes)
+//   comparison                       Comparison tab (copy.comparison)
+//   showcase                         Detail Showcase tab (copy.showcase
+//                                    + images showcase<i>)
+//   serviceTabs                      Services > Show services in tabs
+//                                    (copy.serviceTabs) and each service's
+//                                    Category (businessInfo.services[i]
+//                                    .category, what the tabs group by)
 //
 // SOURCE_CAPABILITIES (below) covers controls whose data is not a copy key
 // (business facts, per-service and per-review fields, images); the same
@@ -56,6 +65,11 @@ export const CAPABILITY_KEYS = {
   featuredService: ['featuredService'],
   vehicleMakes: ['vehicleMakes'],
   beforeAfter: ['beforeAfter'],
+  faq: ['faq'],
+  vehicleTypes: ['vehicleTypes'],
+  comparison: ['comparison'],
+  showcase: ['showcase'],
+  serviceTabs: ['serviceTabs'],
 };
 
 // Controls that depend on data other than a copy key (business facts,
@@ -80,10 +94,16 @@ const OPT_IN = [
   'serviceDetails', 'serviceAreas', 'insured', 'ctaImage', 'reviewSources',
 ];
 
+// The reference-site bands (kit Faq / HowItWorks / VehicleTypes /
+// Comparison / Showcase / ServiceTabs), Bold & Sporty first: each opt-in,
+// nothing shows until the owner adds it (How It Works: until they save
+// steps, see HOW_STEPS_STARTERS).
+const REFERENCE_BANDS = ['howSteps', 'faq', 'vehicleTypes', 'comparison', 'showcase', 'serviceTabs'];
+
 export const TEMPLATE_READS = {
   // Theme-ready (visible) templates. Every one has the Before & After band,
   // opt-in: nothing shows without copy.beforeAfter.
-  detailing_sporty: [...KIT, ...OPT_IN, 'beforeAfter'],
+  detailing_sporty: [...KIT, ...OPT_IN, 'beforeAfter', ...REFERENCE_BANDS],
   mechanic_industrial: [...KIT, 'beforeAfter'],
   mechanic_garage: [...KIT, 'beforeAfter'],
   mobile_chrome: [...KIT, ...OPT_IN, 'beforeAfter'],
@@ -179,6 +199,15 @@ export const FEATURED_AUTOMATIC = { mobile_redline: true, detailing_sporty: fals
 export const featuredAutomatic = (templateId) => FEATURED_AUTOMATIC[templateId] ?? true;
 export const VEHICLE_MAKES_DEFAULT_ALL = { mobile_redline: true, detailing_sporty: false, mobile_chrome: false, mobile_sudsy: false };
 export const vehicleMakesDefaultAll = (templateId) => VEHICLE_MAKES_DEFAULT_ALL[templateId] ?? true;
+//   HOW_STEPS_STARTERS         no copy.howSteps: the design's own starter
+//                              steps show (true, the designs that read
+//                              howSteps themselves) or no How It Works
+//                              section (false: the kit band, which a
+//                              template calls as howItWorksSteps(copy.howSteps)).
+//                              The How It Works tab then adds / removes the
+//                              section instead of offering starter steps.
+export const HOW_STEPS_STARTERS = { tint_obsidian: true, mobile_sudsy: true, carwash_bubble: true, detailing_sporty: false };
+export const howStepsStarters = (templateId) => HOW_STEPS_STARTERS[templateId] ?? true;
 
 // The Edit panel's tabs, top to bottom. `needs`: the capability a tab
 // depends on; `group`: where the icon rail files it. Labels are what
@@ -190,6 +219,7 @@ export const EDITOR_TABS = [
   { id: 'headings', label: 'Headings', group: 'content', needs: 'sectionTitles' },
   { id: 'services', label: 'Services', group: 'content' },
   { id: 'featured', label: 'Featured Service', group: 'content', needs: 'featuredService' },
+  { id: 'vehicleTypes', label: 'Vehicle Types', group: 'content', needs: 'vehicleTypes' },
   { id: 'howItWorks', label: 'How It Works', group: 'content', needs: 'howSteps' },
   { id: 'whyUs', label: 'Why Us', group: 'content', needs: 'whyCards' },
   { id: 'products', label: 'Products', group: 'content', needs: 'products' },
@@ -202,8 +232,11 @@ export const EDITOR_TABS = [
   { id: 'about', label: 'About', group: 'content' },
   { id: 'gallery', label: 'Gallery', group: 'content' },
   { id: 'beforeAfter', label: 'Before & After', group: 'content', needs: 'beforeAfter' },
+  { id: 'showcase', label: 'Detail Showcase', group: 'content', needs: 'showcase' },
+  { id: 'comparison', label: 'Comparison', group: 'content', needs: 'comparison' },
   { id: 'testimonials', label: 'Reviews', group: 'content' },
   { id: 'google', label: 'Google Rating', group: 'content', needs: 'googleBadge' },
+  { id: 'faq', label: 'FAQ', group: 'content', needs: 'faq' },
   // (An Instagram tab stays off pending Meta App Review.)
   { id: 'contact', label: 'Contact', group: 'content' },
   { id: 'colors', label: 'Colors & Fonts', group: 'design' },

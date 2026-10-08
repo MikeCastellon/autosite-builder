@@ -9,22 +9,35 @@ import {
   referenceSiteKey, referenceSiteUrl, replacedShotSource, sanitizeReferenceSites,
   BEFORE_AFTER_MAX, appliesBeforeAfter, beforeAfterCaption, beforeAfterChangedSince, beforeAfterCopy, beforeAfterImages, beforeAfterImportsChanged,
   completeBeforeAfterPairs, beforeAfterSlots, designSiteImages, hasBeforeAfter, isBeforeAfterKey, sanitizeBeforeAfterPairs, sanitizeBeforeAfterText,
+  copiedShowcase, designCopySchema, extraSectionApplies, extraSectionOptIn, extraSectionsChangedSince, extraSectionsFor, extraSectionsPlan,
+  extraSectionsWrite, isShowcaseKey, sanitizeShowcasePicks, showcaseImportsChanged, showcaseSite, showcaseSlots, withServiceCategories,
+  COPY_SCHEMA,
 } from './customSiteDesign.js';
+import { EXTRA_SYSTEM_PROMPT, SECTION_RULES, normalizeExtraSections } from './customSiteSections.js';
 import { referenceUrlKey } from './designSuggest.js';
 import { TEMPLATES } from '../data/templates.js';
 
 // The Before & After rules need a template with the section and one
 // without: Bold & Sporty has it (as its template work adds it; a no-op
 // once templateSections.js lists it) and Chrome Elite doesn't, whatever
-// the templates do later.
+// the templates do later. The same for the More sections: Bold & Sporty
+// has all of them (service tabs through the editor's capability table),
+// Chrome Elite none.
+const { MORE } = vi.hoisted(() => ({ MORE: ['faq', 'process', 'vehicleTypes', 'comparison', 'showcase'] }));
 vi.mock('../data/templateSections.js', async (importOriginal) => {
   const m = await importOriginal();
   const sectionIdsFor = (id) => {
     const real = m.sectionIdsFor(id);
-    if (id === 'detailing_sporty') return real.includes('beforeAfter') ? real : [...real, 'beforeAfter'];
-    return id === 'mobile_chrome' ? real.filter((s) => s !== 'beforeAfter') : real;
+    if (id === 'detailing_sporty') return [...real, ...['beforeAfter', ...MORE].filter((s) => !real.includes(s))];
+    return id === 'mobile_chrome' ? real.filter((s) => s !== 'beforeAfter' && !MORE.includes(s)) : real;
   };
   return { ...m, sectionIdsFor };
+});
+vi.mock('../components/preview/editorCapabilities.js', async (importOriginal) => {
+  const m = await importOriginal();
+  const templateReads = (id, key) => (key === 'serviceTabs' && ['detailing_sporty', 'mobile_chrome'].includes(id)
+    ? id === 'detailing_sporty' : m.templateReads(id, key));
+  return { ...m, templateReads };
 });
 
 const PROJECT = '11111111-2222-4333-8444-555555555555';
@@ -911,6 +924,306 @@ describe('Before & After pairs (design.slots.beforeAfter, design.beforeAfter)', 
       const out = rewrite(design({ templateId: 'mobile_chrome', beforeAfterChanged: true, imagesChanged: ['baBefore0', 'baAfter0'] }));
       expect(out.beforeAfter).toEqual(existing.generated_content.beforeAfter);
       expect(out._images).toEqual(existing.generated_content._images);
+    });
+  });
+});
+
+describe('More sections (design.extraSections)', () => {
+  const photo = (n) => `${PROJECT}/photo/aaaaaaaa-bbbb-4ccc-8ddd-${String(n).padStart(12, '0')}.jpg`;
+  const ALL = ['faq', 'process', 'vehicleTypes', 'comparison', 'showcase', 'serviceTabs'];
+  const ON = Object.fromEntries(ALL.map((id) => [id, true]));
+  const SERVICES = [
+    { name: 'Hand Wash', price: '$40', description: '', category: 'Cars' },
+    { name: 'Interior Detail', price: '$120', description: '' },
+    { name: 'Hull Wash', price: '$200', description: '' },
+    { name: 'RV Wash', price: '', description: '' },
+  ];
+  const base = (extra = {}) => ({
+    templateId: 'detailing_sporty',
+    businessInfo: { businessName: 'Gloss Boss', businessType: 'mobile_detailing', city: 'Austin', state: 'TX', services: SERVICES },
+    slots: { logo: '', hero: '', about: '', gallery: [] },
+    images: {},
+    imported: {},
+    ...extra,
+  });
+  // Three showcase picks; the first and third copied into the site.
+  const PICKS = [
+    { path: photo(1), title: 'Ceramic coating', caption: 'Two coats' },
+    { path: photo(2), title: '', caption: '' },
+    { path: photo(3), title: '', caption: 'Hull, top to bottom' },
+  ];
+  const COPIED = {
+    slots: { logo: '', hero: '', about: '', gallery: [], showcase: PICKS },
+    images: { showcase0: `${PREFIX}s/sc0.jpg`, showcase1: `${PREFIX}s/sc1.jpg`, showcase2: `${PREFIX}s/sc2.jpg` },
+    // Pick 2 was copied from another upload than it names now.
+    imported: { showcase0: photo(1), showcase1: photo(9), showcase2: photo(3) },
+  };
+
+  it('are offered where the template has them: by its sections, service tabs by capability and business type', () => {
+    expect(extraSectionsFor('detailing_sporty', 'mobile_detailing')).toEqual(ALL);
+    expect(extraSectionsFor('mobile_chrome', 'mobile_detailing')).toEqual([]);
+    // A name-list business type stores plain service names: no category, no tabs.
+    expect(extraSectionsFor('detailing_sporty', 'mechanic_shop')).toEqual(ALL.filter((id) => id !== 'serviceTabs'));
+    // Bright & Bubbly has its own How It Works (starter steps unless written).
+    expect(extraSectionsFor('mobile_sudsy', 'mobile_detailing')).toContain('process');
+    for (const id of ['', 'nope', 'constructor', undefined]) expect(extraSectionsFor(id)).toEqual([]);
+  });
+
+  it('knows whether off takes a section off the page or leaves the template\'s own', () => {
+    expect(extraSectionOptIn('detailing_sporty', 'faq')).toBe(true);
+    expect(extraSectionOptIn('mobile_sudsy', 'process')).toBe(false);
+    expect(extraSectionOptIn('mobile_chrome', 'serviceTabs')).toBe(true);
+  });
+
+  it('sanitizeDesign keeps the switches, marks, pasted questions, showcase picks and categories', () => {
+    const other = '99999999-2222-4333-8444-555555555555/photo/aaaaaaaa-bbbb-4ccc-8ddd-000000000001.jpg';
+    const out = sanitizeDesign({
+      ...base(),
+      businessInfo: { ...base().businessInfo, services: [{ name: 'Wash', price: '$40', category: '  Cars\nand trucks  ' }, { name: 'Wax', category: 7 }] },
+      extraSections: { faq: true, showcase: true, bogus: true },
+      extraSectionsChanged: ['showcase', 'faq', 'nope'],
+      faqNotes: ' Q: Cards?\r\nA: Yes. ',
+      slots: {
+        showcase: [
+          { path: photo(1), title: `  ${'Long title '.repeat(10)}`, caption: 'Two coats\nof ceramic' },
+          photo(2),
+          { path: other, title: 'Not theirs' },
+          { path: photo(1), title: 'Twice' },
+          { path: 'https://evil.test/x.jpg' },
+          ...[4, 5, 6, 7, 8].map((n) => ({ path: photo(n) })),
+        ],
+      },
+      imported: { showcase0: photo(1), showcase6: photo(2) },
+      images: { showcase0: `${PREFIX}s/sc0.jpg`, showcase1: 'https://evil.test/x.jpg' },
+      imagesChanged: ['showcase0', 'showcase9'],
+    }, { imageUrlPrefix: PREFIX, projectId: PROJECT });
+    expect(out.extraSections).toEqual({ faq: true, process: false, vehicleTypes: false, comparison: false, showcase: true, serviceTabs: false });
+    expect(out.extraSectionsChanged).toEqual(['faq', 'showcase']);
+    expect(out.faqNotes).toBe('Q: Cards?\nA: Yes.');
+    expect(out.slots.showcase).toHaveLength(6);
+    expect(out.slots.showcase[0]).toEqual({ path: photo(1), title: 'Long title Long title Long title Long title Long title Long', caption: 'Two coats of ceramic' });
+    expect(out.slots.showcase.slice(1).map((p) => p.path)).toEqual([photo(2), photo(4), photo(5), photo(6), photo(7)]);
+    // One line within 30 characters, as the kit prints it (a number is its text).
+    expect(out.businessInfo.services).toEqual([
+      { name: 'Wash', price: '$40', description: '', category: 'Cars and trucks' }, { name: 'Wax', price: '', description: '', category: '7' },
+    ]);
+    expect(out.imported).toEqual({ showcase0: photo(1) });
+    expect(out.images).toEqual({ showcase0: `${PREFIX}s/sc0.jpg` });
+    expect(out.imagesChanged).toEqual(['showcase0']);
+  });
+
+  it('stores nothing new for a design without them', () => {
+    const out = sanitizeDesign(base({ extraSections: { faq: false }, extraSectionsChanged: [], faqNotes: '  ', slots: { showcase: [] } }));
+    for (const k of ['extraSections', 'extraSectionsChanged', 'faqNotes']) expect(out).not.toHaveProperty(k);
+    expect(out.slots).toEqual({ logo: '', hero: '', about: '', gallery: [] });
+    expect(out.businessInfo.services[1]).toEqual({ name: 'Interior Detail', price: '$120', description: '' });
+  });
+
+  it('keeps the category through the site\'s business info, packages too, only where given', () => {
+    const info = siteBusinessInfo(base(), PROJECT);
+    expect(info.services[0]).toEqual({ name: 'Hand Wash', price: '$40', description: '', category: 'Cars' });
+    expect(info.services[1]).toEqual({ name: 'Interior Detail', price: '$120', description: '' });
+    expect(info.packages).toEqual(info.services);
+    expect(servicesForType('wheel_shop', SERVICES)).toEqual(['Hand Wash', 'Interior Detail', 'Hull Wash', 'RV Wash']);
+    const grouped = withServiceCategories(info, { 'interior detail': 'Cars', 'hull wash': 'Boats', 'hand wash': 'Boats' });
+    expect(grouped.services.map((x) => x.category)).toEqual(['Cars', 'Cars', 'Boats', undefined]);
+    expect(grouped.packages).toEqual(grouped.services);
+    expect(withServiceCategories(info, {})).toBe(info);
+  });
+
+  it('knows what the setup changed: a switch, the FAQ\'s input, the showcase\'s picks, the categories, or a saved mark', () => {
+    const saved = base({ extraSections: { faq: true }, faqNotes: 'Q: Cards? A: Yes.', slots: { showcase: PICKS } });
+    expect(extraSectionsChangedSince(saved, saved)).toEqual([]);
+    expect(extraSectionsChangedSince({ ...saved, extraSections: { faq: true, comparison: true } }, saved)).toEqual(['comparison']);
+    expect(extraSectionsChangedSince({ ...saved, faqNotes: 'Q: Cash? A: Yes.' }, saved)).toEqual(['faq']);
+    expect(extraSectionsChangedSince({ ...saved, slots: { showcase: [PICKS[1], PICKS[0]] } }, saved)).toEqual(['showcase']);
+    expect(extraSectionsChangedSince({ ...saved, slots: { showcase: [{ ...PICKS[0], title: 'Coating' }, ...PICKS.slice(1)] } }, saved)).toEqual(['showcase']);
+    const recategorized = { ...saved, businessInfo: { ...saved.businessInfo, services: SERVICES.map((x, i) => (i === 2 ? { ...x, category: 'Boats' } : x)) } };
+    expect(extraSectionsChangedSince(recategorized, saved)).toEqual(['serviceTabs']);
+    // A price change is no category change.
+    const repriced = { ...saved, businessInfo: { ...saved.businessInfo, services: SERVICES.map((x) => ({ ...x, price: '$1' })) } };
+    expect(extraSectionsChangedSince(repriced, saved)).toEqual([]);
+    expect(extraSectionsChangedSince(saved, { ...saved, extraSectionsChanged: ['vehicleTypes'] })).toEqual(['vehicleTypes']);
+    // Nothing saved yet: only what the setup has set counts.
+    const uncategorized = base({ businessInfo: { ...base().businessInfo, services: SERVICES.map((x) => ({ name: x.name, price: x.price, description: x.description })) } });
+    expect(extraSectionsChangedSince(uncategorized, null)).toEqual([]);
+    expect(extraSectionsChangedSince(base(), null)).toEqual(['serviceTabs']);
+  });
+
+  it('a first write applies every section the template has; a rewrite only the changed ones', () => {
+    const d = base({ extraSections: { faq: true }, extraSectionsChanged: ['comparison'] });
+    expect(ALL.filter((id) => extraSectionApplies(d, id))).toEqual(ALL);
+    expect(ALL.filter((id) => extraSectionApplies(d, id, { existing: true }))).toEqual(['comparison']);
+    // The showcase also when its photos changed.
+    expect(extraSectionApplies({ ...d, imagesChanged: ['showcase1'] }, 'showcase', { existing: true })).toBe(true);
+    // Never on a template without the section.
+    expect(ALL.filter((id) => extraSectionApplies({ ...d, templateId: 'mobile_chrome' }, id))).toEqual([]);
+  });
+
+  it('plans what Claude drafts: the applied sections that are on, the untitled copied photos, a grouping when needed', () => {
+    const d = base({ extraSections: ON, ...COPIED });
+    expect(extraSectionsPlan(d)).toEqual({ applies: ALL, draft: ALL, photos: [{ index: 2, url: `${PREFIX}s/sc2.jpg` }], categorize: true });
+    // A rewrite drafts only what changed.
+    expect(extraSectionsPlan({ ...d, extraSectionsChanged: ['faq'] }, { existing: true })).toEqual({ applies: ['faq'], draft: ['faq'], photos: [], categorize: false });
+    // Fewer than 4 services, or all of them grouped by the admin: no grouping asked.
+    expect(extraSectionsPlan({ ...d, businessInfo: { ...d.businessInfo, services: SERVICES.slice(0, 3) } }).categorize).toBe(false);
+    expect(extraSectionsPlan({ ...d, businessInfo: { ...d.businessInfo, services: SERVICES.map((x) => ({ ...x, category: 'Cars' })) } }).categorize).toBe(false);
+    // Off sections apply (they come off) but aren't drafted.
+    expect(extraSectionsPlan(base({ extraSections: { faq: true } }))).toEqual({ applies: ALL, draft: ['faq'], photos: [], categorize: false });
+  });
+
+  it('the showcase uses only photos copied from the upload a pick names now, in order, the admin\'s words first', () => {
+    const d = base({ extraSections: ON, ...COPIED });
+    expect(copiedShowcase(d).map((p) => p.index)).toEqual([0, 2]);
+    expect(showcaseSlots(d.slots)).toEqual({ showcase0: photo(1), showcase1: photo(2), showcase2: photo(3) });
+    expect(showcaseImportsChanged(d.slots, d.imported)).toBe(true);
+    expect(showcaseImportsChanged(d.slots, { showcase0: photo(1), showcase1: photo(2), showcase2: photo(3) })).toBe(false);
+    expect(showcaseSite(copiedShowcase(d), (p) => (p.index === 2 ? 'Hull wash' : 'Never used'))).toEqual({
+      images: { showcase0: `${PREFIX}s/sc0.jpg`, showcase1: `${PREFIX}s/sc2.jpg` },
+      copy: { items: [{ title: 'Ceramic coating', caption: 'Two coats' }, { title: 'Hull wash', caption: 'Hull, top to bottom' }] },
+    });
+    expect(showcaseSite([])).toBeNull();
+    expect(isShowcaseKey('showcase5')).toBe(true);
+    expect(isShowcaseKey('showcase6')).toBe(false);
+    expect(sanitizeShowcasePicks('x')).toEqual([]);
+  });
+
+  it('a write puts drafted sections on, takes off ones switched off, and leaves a draft with nothing usable alone', () => {
+    const d = base({ extraSections: { ...ON, vehicleTypes: false }, ...COPIED });
+    const drafted = {
+      faqItems: [{ q: 'Do you come to me?', a: 'Yes, anywhere in Austin.' }],
+      howSteps: [],
+      comparisonRows: [{ label: 'Comes to you', us: true, them: false }, { label: 'Hand wash', us: true, them: false }],
+      showcaseTitles: { 1: 'Hull wash' },
+      serviceCategories: { 'interior detail': 'Cars', 'hull wash': 'Boats', 'rv wash': 'RVs' },
+    };
+    const out = extraSectionsWrite(d, drafted, { photos: [{ number: 1, index: 2 }] });
+    expect(out.applied).toEqual(['faq', 'vehicleTypes', 'comparison', 'showcase', 'serviceTabs']);
+    expect(out.copy).toEqual({
+      faq: { items: drafted.faqItems },
+      comparison: { themLabel: 'Automated car wash', rows: drafted.comparisonRows },
+      showcase: { items: [{ title: 'Ceramic coating', caption: 'Two coats' }, { title: 'Hull wash', caption: 'Hull, top to bottom' }] },
+      serviceTabs: { enabled: true },
+    });
+    expect(out.remove).toEqual(['vehicleTypes']);
+    expect(out.images).toEqual({ showcase0: `${PREFIX}s/sc0.jpg`, showcase1: `${PREFIX}s/sc2.jpg` });
+    expect(out.categories).toEqual(drafted.serviceCategories);
+    expect(out.counts).toEqual({ faq: 1, comparison: 2, showcase: 2, serviceTabs: 1 });
+    // A showcase switched off takes its photos off too; no photo copied, nothing to put on.
+    expect(extraSectionsWrite(base({ extraSections: { faq: true }, ...COPIED }), {}).images).toEqual({});
+    const none = extraSectionsWrite(base({ extraSections: { showcase: true }, slots: { showcase: PICKS } }), {});
+    expect(none.applied).not.toContain('showcase');
+    expect(none.images).toBeNull();
+  });
+
+  it('designSiteImages leaves the showcase\'s photos to its copy', () => {
+    expect(designSiteImages(base({ images: { hero: `${PREFIX}h.jpg`, showcase0: `${PREFIX}s.jpg` } }))).toEqual({ hero: `${PREFIX}h.jpg` });
+  });
+
+  describe('a rewrite', () => {
+    const existing = {
+      template_id: 'detailing_sporty',
+      business_info: {
+        businessName: 'Old',
+        services: [{ name: 'Hand Wash', category: 'Wash' }, { name: 'hull wash', category: 'Boats' }],
+        packages: [{ name: 'Hand Wash', category: 'Wash' }, { name: 'hull wash', category: 'Boats' }],
+      },
+      generated_content: {
+        headline: 'Old',
+        faq: { items: [{ q: 'Owner\'s question?', a: 'Owner\'s answer.' }] },
+        howSteps: [{ title: 'Owner step', desc: 'Theirs.' }],
+        serviceTabs: { enabled: true, all: true },
+        showcase: { items: [{ title: 'Owner card' }] },
+        _images: { hero: 'editor-hero.jpg', showcase0: 'editor-sc0.jpg', showcase1: 'editor-sc1.jpg' },
+      },
+    };
+    const info = (d) => siteBusinessInfo(d, PROJECT);
+
+    it('keeps every section the setup didn\'t change, with the site\'s categories', () => {
+      const d = base({ extraSections: ON, ...COPIED });
+      const extra = extraSectionsWrite(d, {}, { existing: true });
+      const out = rewriteSite({ existing, copy: { headline: 'New' }, businessInfo: info(d), design: d, extra });
+      expect(out.generated_content.faq).toEqual(existing.generated_content.faq);
+      expect(out.generated_content.howSteps).toEqual(existing.generated_content.howSteps);
+      expect(out.generated_content.serviceTabs).toEqual({ enabled: true, all: true });
+      expect(out.generated_content._images).toEqual(existing.generated_content._images);
+      // Design-owned services, the site's categories by name (the admin's
+      // own "Cars" never lands while the tabs aren't rewritten).
+      expect(out.business_info.services.map((x) => [x.name, x.category])).toEqual([['Hand Wash', 'Wash'], ['Interior Detail', undefined], ['Hull Wash', 'Boats'], ['RV Wash', undefined]]);
+      expect(out.business_info.packages).toEqual(out.business_info.services);
+      // Without the More sections at all, the same.
+      const plain = rewriteSite({ existing, copy: { headline: 'New' }, businessInfo: info(d), design: d });
+      expect(plain.generated_content.faq).toEqual(existing.generated_content.faq);
+      expect(plain.business_info.services[0].category).toBe('Wash');
+    });
+
+    it('replaces the changed ones, takes off those switched off, and swaps the showcase\'s photos as a set', () => {
+      const d = base({ extraSections: { faq: true, showcase: true, serviceTabs: true }, extraSectionsChanged: ['faq', 'process', 'showcase', 'serviceTabs'], ...COPIED });
+      const drafted = { faqItems: [{ q: 'New question?', a: 'New answer.' }], serviceCategories: { 'interior detail': 'Cars', 'hull wash': 'Boats', 'rv wash': 'RVs' } };
+      const extra = extraSectionsWrite(d, drafted, { existing: true, photos: [] });
+      const businessInfo = withServiceCategories(info(d), extra.categories);
+      const out = rewriteSite({ existing, copy: { headline: 'New' }, businessInfo, design: d, extra });
+      expect(out.generated_content.faq).toEqual({ items: drafted.faqItems });
+      expect(out.generated_content).not.toHaveProperty('howSteps');
+      // The editor's "All" tab stays.
+      expect(out.generated_content.serviceTabs).toEqual({ enabled: true, all: true });
+      expect(out.generated_content.showcase).toEqual({ items: [{ title: 'Ceramic coating', caption: 'Two coats' }, { caption: 'Hull, top to bottom' }] });
+      expect(out.generated_content._images).toEqual({ hero: 'editor-hero.jpg', showcase0: `${PREFIX}s/sc0.jpg`, showcase1: `${PREFIX}s/sc2.jpg` });
+      expect(out.business_info.services.map((x) => x.category)).toEqual(['Cars', 'Cars', 'Boats', 'RVs']);
+    });
+
+    it('a changed section whose draft came back empty keeps the site\'s', () => {
+      const d = base({ extraSections: { faq: true }, extraSectionsChanged: ['faq'] });
+      const extra = extraSectionsWrite(d, normalizeExtraSections({ faqItems: [{ q: 'Price?', a: 'Only $5!' }] }, { fields: ['faqItems'], source: '' }), { existing: true });
+      expect(extra.applied).toEqual([]);
+      const out = rewriteSite({ existing, copy: { headline: 'New' }, businessInfo: info(d), design: d, extra });
+      expect(out.generated_content.faq).toEqual(existing.generated_content.faq);
+    });
+  });
+
+  describe('the prompt', () => {
+    const bi = { businessName: 'Gloss Boss', businessType: 'mobile_detailing', city: 'Austin', state: 'TX', phone: '(512) 555-0100', services: SERVICES };
+    const form = { about: 'We started in 2019.', notes: 'Customers ask if we bring water: yes, we do.' };
+    const prompt = (sections) => buildDesignPrompt({ businessInfo: bi, template: { label: 'Bold & Sporty', mood: 'bold' }, form, assets: [], sections });
+
+    it('asks for the drafted sections only, with their rules, fields and schema', () => {
+      const p = prompt({
+        draft: ['faq', 'process', 'comparison', 'serviceTabs'], facts: { paymentMethods: ['Cash'], yearsInBusiness: '6' },
+        faqNotes: 'Q: Do you take cards? A: Yes.', photos: [], categorize: true,
+      });
+      expect(p.system.endsWith(`\n\n${EXTRA_SYSTEM_PROMPT}`)).toBe(true);
+      for (const id of ['faq', 'process', 'comparison', 'serviceTabs']) expect(p.user).toContain(SECTION_RULES[id]);
+      for (const id of ['vehicleTypes', 'showcase']) expect(p.user).not.toContain(SECTION_RULES[id]);
+      expect(p.user).toContain('- Payment methods: Cash');
+      expect(p.user).toContain('<pasted_faq>\nQ: Do you take cards? A: Yes.\n</pasted_faq>');
+      // The services show the categories the designer gave while Claude groups them.
+      expect(p.user).toContain('- Hand Wash ($40) [category: Cars]\n- Interior Detail ($120)\n');
+      expect(p.user).toMatch(/footerTagline, faqItems \[\{ q, a \}\], howSteps \[\{ title, desc \}\], comparisonRows \[\{ label, us, them \}\], serviceCategories \[\{ name, category \}\]\.$/);
+      expect(p.fields).toEqual(['faqItems', 'howSteps', 'comparisonRows', 'serviceCategories']);
+      expect(p.schema.required).toEqual([...COPY_SCHEMA.required, 'faqItems', 'howSteps', 'comparisonRows', 'serviceCategories']);
+      expect(p.schema.properties.headline).toEqual(COPY_SCHEMA.properties.headline);
+    });
+
+    it('checks drafts against the facts given, never against its own rules', () => {
+      const p = prompt({ draft: ['faq'], facts: { yearsInBusiness: '6', insured: true }, faqNotes: 'Cards accepted.' });
+      for (const fact of ['gloss boss', '(512) 555-0100', 'hand wash $40', 'we started in 2019.', 'we bring water', 'insured: yes', '6 years', 'cards accepted.']) {
+        expect(p.source).toContain(fact);
+      }
+      // The rules name what's forbidden ("same day", "guarantee"); that never grounds it.
+      expect(p.source).not.toContain('same day');
+      expect(p.source).not.toContain('guarantee');
+    });
+
+    it('stays as it was without sections to draft', () => {
+      const plain = buildDesignPrompt({ businessInfo: bi, template: { label: 'X', mood: 'y' }, form, assets: [] });
+      expect(Object.keys(plain)).toEqual(['system', 'user']);
+      expect(Object.keys(prompt(null))).toEqual(['system', 'user']);
+      // Nothing to draft (a showcase without photos to title) is no section.
+      expect(prompt({ draft: ['showcase'], photos: [] })).toEqual(prompt(null));
+      expect(plain.user).not.toContain('More sections');
+      expect(plain.user).not.toContain('[category:');
+      expect(plain.user).toMatch(/footerTagline\.$/);
+      expect(designCopySchema({})).toBe(COPY_SCHEMA);
     });
   });
 });

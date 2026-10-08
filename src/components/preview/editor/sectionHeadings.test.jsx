@@ -77,7 +77,13 @@ describe('headingRows', () => {
   });
 
   it('every owner key names a real tab field', () => {
-    expect(Object.keys(FROM_LABELS)).toEqual(['headline', 'servicesSection.title', 'servicesSection.intro', 'ctaHeadline', 'ctaSubtext', 'beforeAfter.title', 'beforeAfter.intro']);
+    expect(Object.keys(FROM_LABELS)).toEqual([
+      'headline', 'servicesSection.title', 'servicesSection.intro', 'ctaHeadline', 'ctaSubtext', 'beforeAfter.title', 'beforeAfter.intro',
+      'vehicleTypes.title', 'vehicleTypes.intro', 'showcase.title', 'showcase.intro', 'comparison.title', 'comparison.intro', 'faq.title', 'faq.intro',
+    ]);
+    // Each names the tab and field that edit the same text ("Same text as
+    // FAQ > Heading"): the panels label those fields exactly so.
+    for (const label of Object.values(FROM_LABELS)) expect(label).toMatch(/^[A-Z][\w &]* > [A-Z][\w ]*$/);
   });
 });
 
