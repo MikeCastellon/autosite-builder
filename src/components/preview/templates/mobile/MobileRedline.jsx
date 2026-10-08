@@ -21,17 +21,20 @@
 // The feature markup and logic (price card, package details, featured band,
 // makes band, footer plan) live in the kit (HeroOffer, PackageDetails,
 // FeaturedBand, MakesBand, features.js) with ns="rl", so other themes share
-// them; this file keeps its own CSS for them.
+// them; this file keeps its own CSS for them. The Before & After band (kit
+// BeforeAfterBand, ns="rl-ba") came after sites were saved with this design:
+// it is opt-in (copy.beforeAfter), and a site without it renders exactly as
+// before (MobileRedline.golden.test.jsx).
 // Optional data this template reads beyond the common fields (all may be
 // absent): businessInfo.serviceAreas, .insured, .googlePlace, services[i]
 // .summary / .includes / .badge / .image; copy.sectionTitles,
 // .featuredService, .vehicleMakes, .googleBadge, .heroCard, .heroServices,
-// .footer, .reviewMode, testimonial .source / .rating; images.featured,
-// images.cta.
+// .footer, .reviewMode, .beforeAfter, testimonial .source / .rating;
+// images.featured, images.cta, images.baBefore<i> / baAfter<i>.
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import { ServiceCardCss, ServiceDescription } from '../ServiceCardParts.jsx';
 import { socialUrl } from '../SocialIcons.jsx';
-import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import { buildSectionOrderAdded } from '../../../../lib/sectionOrder.js';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HOURS_DAYS, isByAppointment } from '../../../../lib/businessHours.js';
@@ -57,16 +60,20 @@ import { HeroOffer } from '../kit/HeroOffer.jsx';
 import { PackageBadge, PackagePhoto, PackageIncludes } from '../kit/PackageDetails.jsx';
 import { FeaturedBand } from '../kit/FeaturedBand.jsx';
 import { MakesBand } from '../kit/MakesBand.jsx';
+import { BeforeAfterBand, beforeAfterCss } from '../kit/BeforeAfter.jsx';
+import { beforeAfterPairs, BA_DEFAULTS } from '../kit/beforeAfter.js';
 
 export const themeReady = true;
 
 // Default top-to-bottom order. Saved sites store these ids in
 // copy.sectionOrder / copy.hiddenSections: never rename one (the allowed ids
 // are frozen in templates.render.test.jsx SAVED_SECTION_IDS).
+// 'beforeAfter' (the Before & After band) came later: see addedSections.
 export const sections = [
   { id: 'hero', label: 'Hero & Quote' },
   { id: 'about', label: 'About' },
   { id: 'gallery', label: 'Gallery' },
+  { id: 'beforeAfter', label: 'Before & After' },
   { id: 'brands', label: 'Vehicle Makes' },
   { id: 'services', label: 'Packages' },
   { id: 'featured', label: 'Featured Service' },
@@ -76,6 +83,14 @@ export const sections = [
   { id: 'cta', label: 'Contact / CTA' },
 ];
 
+// Ids added after sites were saved with this design. Saved sites store
+// copy.sectionOrder without them, so the page orders them itself
+// (buildSectionOrderAdded): every older section keeps exactly its saved
+// order value, and an added band without a saved slot shares the value of
+// the section before it, rendering right after it in the DOM. The editor's
+// order repair leaves them out of the saved list for the same reason.
+export const addedSections = ['beforeAfter'];
+
 // The wordmark, the price card's step titles and the footer column titles
 // are set in Oswald whatever heading font the owner picks.
 export const extraFonts = ["'Oswald', sans-serif"];
@@ -84,12 +99,14 @@ export const extraFonts = ["'Oswald', sans-serif"];
 // field is ignored by this design). titleFrom / introFrom name the copy key
 // that owns that text; the Headings tab edits it there. placeholder: this
 // design's fixed default for a field (others are derived from the business).
-// Awards has a fixed "Recognition" label and no entry. headingDefaults()
-// below gives the derived defaults.
+// Awards has a fixed "Recognition" label and no entry. The Before & After
+// heading and intro live in copy.beforeAfter (the Before & After tab), like
+// Bold & Sporty's. headingDefaults() below gives the derived defaults.
 export const headingFields = {
   hero: { fields: ['eyebrow', 'title', 'accent'], titleFrom: 'headline' },
   about: { fields: ['title', 'accent'] },
   gallery: { fields: ['title', 'accent'], placeholder: { title: 'Real Results, Every Detail Matters' } },
+  beforeAfter: { fields: ['eyebrow', 'title', 'accent', 'intro'], titleFrom: 'beforeAfter.title', introFrom: 'beforeAfter.intro', placeholder: { intro: BA_DEFAULTS.intro } },
   brands: { fields: ['eyebrow'] },
   services: { fields: ['eyebrow', 'title', 'accent', 'intro'], titleFrom: 'servicesSection.title', introFrom: 'servicesSection.intro', placeholder: { eyebrow: 'Service Menu' } },
   featured: { fields: ['eyebrow', 'title', 'accent', 'intro'] },
@@ -669,6 +686,44 @@ a.rl-rev-src:hover{color:var(--rl-rev-text)}
 }
 `.replace(/\/\*[\s\S]*?\*\//g, '');
 
+// The Before & After band (kit BeforeAfter.jsx) in this design's look: a
+// centered head like the packages' and the reviews' (eyebrow, uppercase
+// heading with its accent words, muted intro), a hairline above the section
+// like About's, the photos in a hairline frame with the gallery's 6px
+// corners, tags cut like the package badge (the After tag on the accent with
+// its ring), the handle in the buttons' gradient and glow, and round
+// hairline arrows on the review cards' tint like the review carousel's. The
+// slider stays narrower than the page, centered under the head. Appended
+// after the kit's beforeAfterCss('rl-ba') only while the band renders, so a
+// site without copy.beforeAfter keeps exactly the style string it had. The
+// --rl-ba-* block variables alias tokens redlineTokens already
+// contrast-repairs: the page's text on its background for the Before tag,
+// the accent with its ink for the After tag and the handle; the arrows take
+// the review cards' own ink for the tint they sit on.
+const BA_CSS = `
+.rl-ba-band{border-top:1px solid var(--rl-line);--rl-ba-text:var(--rl-text);--rl-ba-muted:var(--rl-muted);--rl-ba-line:var(--rl-line);--rl-ba-focus:var(--rl-focus);--rl-ba-tag-bg:var(--rl-bg);--rl-ba-tag-text:var(--rl-text);--rl-ba-tag2-bg:var(--rl-accent);--rl-ba-tag2-text:var(--rl-on-accent);--rl-ba-knob-bg:var(--rl-accent);--rl-ba-knob-text:var(--rl-on-accent);--rl-ba-r:6px;--rl-ba-tag-r:4px;--rl-ba-btn-r:9999px}
+.rl-ba-h{margin-top:12px;font-size:30px;line-height:36px}
+.rl-ba-intro{margin-top:16px;font-size:16px;line-height:24px;color:var(--rl-muted)}
+.rl-ba-slider{max-width:1024px;margin:40px auto 0}
+.rl-ba-frame{border:1px solid var(--rl-line)}
+.rl-ba-todo .rl-ba-frame{border:0}
+.rl-ba-tag{padding:6px 12px;font-size:12px;line-height:16px;font-weight:700;letter-spacing:.06em}
+.rl-ba-tag-before{box-shadow:inset 0 0 0 1px var(--rl-line)}
+.rl-ba-tag-after{box-shadow:var(--rl-ring)}
+.rl-ba-knob{background:var(--rl-grad);box-shadow:var(--rl-ring),var(--rl-glow)}
+.rl-ba-cap{margin-top:16px;text-align:center;font-size:14px;line-height:20px}
+.rl-ba-nav{gap:12px;margin-top:24px}
+.rl-ba-btn{background:var(--rl-rev-bg);color:var(--rl-rev-text)}
+.rl-ba-count{font-size:14px;letter-spacing:.1em}
+@container (min-width:640px){
+.rl-ba-h{font-size:36px;line-height:40px}
+.rl-ba-cap{font-size:16px;line-height:24px}
+}
+@media (hover:hover){
+.rl-ba-btn:hover{border-color:var(--rl-accent)}
+}
+`;
+
 const txt = (v) => (typeof v === 'string' ? v.trim() : typeof v === 'number' ? String(v) : '');
 const list = (v) => (Array.isArray(v) ? v : []);
 // A quote's text without the quote marks the AI sometimes wraps it in.
@@ -739,6 +794,13 @@ export function headingDefaults(businessInfo, generatedCopy) {
   const ctaTitle = /\bfree\b/i.test(fb.ctaHeadline) ? 'Book Your Appointment' : fb.ctaHeadline;
   const ctaOwn = txt(copy.ctaHeadline) || ctaT.title;
 
+  // Before & After: the kit's neutral words (no claims: the photos make the
+  // point), its last word in the accent while the heading is the design's
+  // own. The owner's heading (the Before & After tab's, else Headings')
+  // gets accent words only where the owner says so.
+  const ba = copy.beforeAfter && typeof copy.beforeAfter === 'object' && !Array.isArray(copy.beforeAfter) ? copy.beforeAfter : {};
+  const baOwn = txt(ba.title) || sectionTitle(titles, 'beforeAfter').title;
+
   return {
     hero: { eyebrow: city ? `${city} ${tagline}` : fb.heroBadge, title: name, accent: '' },
     about: {
@@ -746,6 +808,7 @@ export function headingDefaults(businessInfo, generatedCopy) {
       accent: aboutT.title ? '' : aboutName ? 'Right Choice For Your Car' : 'Choose Us',
     },
     gallery: { title: 'Real Results, Every Detail Matters', accent: galT.title ? '' : 'Every Detail Matters' },
+    beforeAfter: { eyebrow: BA_DEFAULTS.eyebrow, title: BA_DEFAULTS.title, accent: baOwn ? '' : 'Difference' },
     brands: { eyebrow: makesEyebrowDefault(kind) },
     services: { eyebrow: 'Service Menu', title: svcTitle, accent: trailingWords(svcShown, 2) },
     featured: featuredTitleDefaults(fName, Boolean(ft.title)),
@@ -1028,7 +1091,7 @@ export default function MobileRedline({ businessInfo, generatedCopy, templateMet
 
   const hiddenIds = list(copy.hiddenSections);
   const show = (id) => !hiddenIds.includes(id);
-  const order = buildSectionOrder(copy, sections.map((s) => s.id));
+  const order = buildSectionOrderAdded(copy, sections.map((s) => s.id), addedSections);
 
   // ── Business facts ────────────────────────────────────────────────
   const name = txt(biz.businessName);
@@ -1136,11 +1199,22 @@ export default function MobileRedline({ businessInfo, generatedCopy, templateMet
   const hasAbout = aboutParas.length > 0 || Boolean(images.about) || aboutStats.length > 0;
   const hasLocations = areas.length > 0 || hours.rows.length > 0 || Boolean(hours.text) || Boolean(place);
 
+  // The Before & After band (Edit > Before & After): only once
+  // copy.beforeAfter exists, and on the published page only with a pair
+  // that has both photos (the editor shows every pair, and says what each
+  // still needs). Heading and intro: the owner's (copy.beforeAfter, which
+  // Edit > Headings edits too), else the design's own.
+  const ba = beforeAfterPairs(copy.beforeAfter, images, { editor });
+  const baT = sectionTitle(titles, 'beforeAfter');
+  const baTitle = ba?.title || baT.title || hd.beforeAfter.title;
+  const baIntro = ba?.intro || baT.intro || BA_DEFAULTS.intro;
+
   // What renders, for the menu, the footer links and section spacing.
   const rendered = {
     hero: show('hero'),
     about: show('about') && (hasAbout || editor),
     gallery: show('gallery') && (galleryImages.length > 0 || editor),
+    beforeAfter: show('beforeAfter') && Boolean(ba) && (ba.pairs.length > 0 || editor),
     brands: show('brands'),
     services: show('services') && (services.length > 0 || editor),
     featured: show('featured') && (featuredBody || editor),
@@ -1236,7 +1310,8 @@ export default function MobileRedline({ businessInfo, generatedCopy, templateMet
   // site) counts only while that block renders; otherwise the button's
   // wording decides, as without a URL (no dead in-page link).
   const pageIds = new Set(['top', 'main', 'home', ...Object.keys(anchors).map((k) => anchors[k]).filter((h) => h && h.startsWith('#')).map((h) => h.slice(1)),
-    rendered.about && 'about', rendered.brands && 'makes', rendered.featured && featuredBody && 'featured', rendered.awards && awards.length > 0 && 'awards'].filter(Boolean));
+    rendered.about && 'about', rendered.brands && 'makes', rendered.featured && featuredBody && 'featured', rendered.awards && awards.length > 0 && 'awards',
+    rendered.beforeAfter && ba.complete > 0 && 'before-after'].filter(Boolean));
   const ownUrl = (v) => {
     const u = txt(v);
     return u.startsWith('#') && u.length > 1 && !pageIds.has(u.slice(1)) ? '' : u;
@@ -1334,7 +1409,9 @@ export default function MobileRedline({ businessInfo, generatedCopy, templateMet
       className="rl-root"
       style={{ ...vars, containerType: 'inline-size', display: 'flex', flexDirection: 'column', minHeight: '100vh', overflowX: 'clip', background: t.bg, color: t.text, fontFamily: body, lineHeight: 1.5 }}
     >
-      <style>{CSS}</style>
+      {/* The band's CSS is appended only while it renders, so a site
+          without it keeps exactly this style string. */}
+      <style>{rendered.beforeAfter ? CSS + beforeAfterCss('rl-ba') + BA_CSS : CSS}</style>
       <a className="rl-skip" href="#main">Skip to content</a>
 
       <nav className={`rl-nav${images.logo && shortName.length > 12 ? ' rl-nav-tight' : ''}`} aria-label="Main" style={{ order: -1 }}>
@@ -1487,6 +1564,30 @@ export default function MobileRedline({ businessInfo, generatedCopy, templateMet
               )}
             </div>
           </section>
+        )}
+
+        {/* Before & After (Edit > Before & After): right after the gallery
+            in the DOM, so without a saved slot it shares the gallery's order
+            value (addedSections) and stays next to it. */}
+        {rendered.beforeAfter && (
+          <BeforeAfterBand
+            ns="rl-ba"
+            beforeAfter={copy.beforeAfter}
+            images={images}
+            editor={editor}
+            order={order('beforeAfter')}
+            className="rl-sec"
+            wrapClassName="rl-in"
+            labelledBy="rl-ba-h"
+            heading={(
+              <div className="rl-c">
+                <p className="rl-eyebrow">{baT.eyebrow || hd.beforeAfter.eyebrow}</p>
+                <h2 id="rl-ba-h" className="rl-h2 rl-ba-h"><Accented title={baTitle} accent={baT.accent || hd.beforeAfter.accent} /></h2>
+                {baIntro && <p className="rl-ba-intro">{baIntro}</p>}
+              </div>
+            )}
+            hints={ba.pairs.length === 0 && <EditorHint>{'Add a before and an after photo in Edit > Before & After.'}</EditorHint>}
+          />
         )}
 
         {rendered.brands && (

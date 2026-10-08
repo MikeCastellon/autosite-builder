@@ -18,7 +18,7 @@ import { SocialRow } from '../SocialIcons.jsx';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import IconOrEmoji from '../IconOrEmoji.jsx';
 import { ServiceCardCss, ServiceDescription, BookNowLink } from '../ServiceCardParts.jsx';
-import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import { buildSectionOrderAdded } from '../../../../lib/sectionOrder.js';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HOURS_DAYS } from '../../../../lib/businessHours.js';
@@ -27,12 +27,15 @@ import { deriveTheme, mix, alpha, ensureContrast } from '../kit/theme.js';
 import { PhotoSlot, PHOTO_HINTS } from '../kit/PhotoSlot.jsx';
 import { MobileMenu, MobileActionBar } from '../kit/MobileMenu.jsx';
 import { EditorOnly, useEditorMode } from '../kit/EditorMode.jsx';
+import { BeforeAfterBand, beforeAfterCss } from '../kit/BeforeAfter.jsx';
+import { beforeAfterPairs, BA_DEFAULTS } from '../kit/beforeAfter.js';
 
 export const themeReady = true;
 
 // Same ids and order as ContentEditor's TOGGLEABLE.mechanic_ironclad (and
 // the old buildSectionOrder call), so saved orders and hidden flags keep
 // working and the editor's Sections list matches what renders.
+// 'beforeAfter' (the Before & After band) came later: see addedSections.
 export const sections = [
   { id: 'hero', label: 'Hero' },
   { id: 'ticker', label: 'Service Ticker' },
@@ -40,10 +43,18 @@ export const sections = [
   { id: 'about', label: 'About / Shop' },
   { id: 'services', label: 'Services' },
   { id: 'gallery', label: 'Gallery' },
+  { id: 'beforeAfter', label: 'Before & After' },
   { id: 'whyUs', label: 'Why Choose Us' },
   { id: 'testimonials', label: 'Reviews' },
   { id: 'cta', label: 'Contact & Hours' },
 ];
+
+// Ids added after sites were saved with this design. Saved sites store
+// copy.sectionOrder without them, so the page orders them itself
+// (buildSectionOrderAdded): every older section keeps exactly its saved
+// order value, and an added band without a saved slot shares the value of
+// the section before it, rendering right after it in the DOM.
+export const addedSections = ['beforeAfter'];
 
 // Condensed label face for eyebrows, buttons and card titles while the
 // heading slot is the default Bebas Neue (the mockup's pairing).
@@ -496,6 +507,37 @@ a.ic-detail:hover{background:var(--ic-plate)}
 }
 `;
 
+// The Before & After band (kit BeforeAfter.jsx) in this design's look:
+// square photos with the hero's rust dash stripe along the bottom, tags cut
+// like the skewed buttons and set in the label face, the handle a skewed
+// rust plate, the caption a steel plate with a rust edge (like the hours
+// callouts), the counter in the display face and the arrows as square tiles
+// like the service icons. Appended after the kit's beforeAfterCss('ic-ba')
+// only while the band renders, so a site without copy.beforeAfter gets none
+// of it; its background is a section tone like the others (bandTone). The
+// --ic-ba-* block variables alias tokens deriveTheme / ironTokens already
+// contrast-repair: the Before tag is the page's text on its background, the
+// After tag and the handle the rust fill with its ink; the caption is text
+// on the surface (on steel inside an iron-toned band, like the Why Us
+// cells), the arrow icons accent text on the page background.
+const BA_CSS = `
+.ic-ba-band{--ic-ba-text:var(--ic-text);--ic-ba-muted:var(--ic-muted);--ic-ba-line:var(--ic-border-strong);--ic-ba-focus:var(--ic-focus);--ic-ba-tag-bg:var(--ic-bg);--ic-ba-tag-text:var(--ic-text);--ic-ba-tag2-bg:var(--ic-accent);--ic-ba-tag2-text:var(--ic-on-accent);--ic-ba-knob-bg:var(--ic-accent);--ic-ba-knob-text:var(--ic-on-accent);--ic-ba-r:0px;--ic-ba-tag-r:0px;--ic-ba-btn-r:0px}
+.ic-ba-frame{box-shadow:0 30px 60px -34px var(--ic-shadow)}
+.ic-ba-frame::after{content:'';position:absolute;left:0;right:0;bottom:0;z-index:4;height:4px;background:repeating-linear-gradient(90deg,var(--ic-accent) 0 30px,transparent 30px 40px);pointer-events:none}
+.ic-ba-todo .ic-ba-frame{box-shadow:none}
+.ic-ba-todo .ic-ba-frame::after{display:none}
+.ic-ba-tag{padding:6px 18px;-webkit-clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%);clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%);font-family:var(--ic-label);font-size:13px;font-weight:800;letter-spacing:.2em}
+.ic-ba-knob{border-radius:0;transform:skewX(-12deg)}
+.ic-ba-knob svg{transform:skewX(12deg)}
+.ic-ba-cap{margin-top:3px;padding:16px 22px;border-left:4px solid var(--ic-accent);background:var(--ic-cell,var(--ic-surface));font-family:var(--ic-label);font-size:17px;font-weight:700;letter-spacing:.02em;color:var(--ic-text)}
+.ic-ba-nav{justify-content:flex-start;gap:3px;margin-top:24px}
+.ic-ba-count{order:-1;margin-right:auto;font-family:var(--ic-head);font-size:calc(30px * var(--ic-hs2));font-weight:var(--ic-hw);line-height:1;letter-spacing:.08em;text-align:left}
+.ic-ba-btn{width:54px;height:54px;border-color:var(--ic-border-strong);background:var(--ic-bg);color:var(--ic-accent-text)}
+@media (hover:hover){
+.ic-ba-btn:hover{border-color:var(--ic-accent);background:var(--ic-plate)}
+}
+`;
+
 const txt = (v) => (typeof v === 'string' ? v.trim() : typeof v === 'number' ? String(v) : '');
 const list = (v) => (Array.isArray(v) ? v : []);
 
@@ -780,6 +822,16 @@ function sectionTones(ids) {
   return tone;
 }
 
+// The Before & After band (opt-in, so it is left out of sectionTones: every
+// other section keeps the tone it had without the band) takes the first of
+// these that neither the section before it nor the one after it uses.
+const BA_TONES = ['steel', 'bg', 'iron'];
+function bandTone(ids, tone, id) {
+  const i = ids.indexOf(id);
+  const near = [tone[ids[i - 1]], tone[ids[i + 1]]];
+  return BA_TONES.find((c) => !near.includes(c));
+}
+
 function initials(name) {
   const words = txt(name).replace(/[^A-Za-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean);
   return (words.length > 1 ? words[0][0] + words[1][0] : (words[0] || 'IC').slice(0, 2)).toUpperCase();
@@ -836,7 +888,16 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
 
   const hiddenIds = list(copy.hiddenSections);
   const show = (id) => !hiddenIds.includes(id);
-  const order = buildSectionOrder(copy, sections.map((s) => s.id));
+  const order = buildSectionOrderAdded(copy, sections.map((s) => s.id), addedSections);
+
+  // Before & After band (Edit > Before & After): only once copy.beforeAfter
+  // exists, and on the published page only with a pair that has both
+  // photos (the editor shows every pair, and says what each still needs).
+  // Heading and intro: the owner's (copy.beforeAfter), else the design's.
+  const ba = beforeAfterPairs(copy.beforeAfter, images, { editor });
+  const baOn = show('beforeAfter') && Boolean(ba) && (ba.pairs.length > 0 || editor);
+  const baTitle = ba?.title || BA_DEFAULTS.title;
+  const baIntro = ba?.intro || BA_DEFAULTS.intro;
 
   const name = txt(biz.businessName);
   const displayName = name || fb.shopName;
@@ -962,11 +1023,14 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
     about: show('about'),
     services: show('services') && (services.length > 0 || editor),
     gallery: show('gallery') && (galleryImages.length > 0 || editor),
+    beforeAfter: baOn,
     whyUs: show('whyUs') && (whyCards.length > 0 || editor),
     testimonials: show('testimonials') && Boolean(reviews),
     cta: show('cta'),
   };
-  const tone = sectionTones(sections.map((s) => s.id).filter((id) => renders[id]).sort((a, b) => order(a) - order(b)));
+  const shownIds = sections.map((s) => s.id).filter((id) => renders[id]).sort((a, b) => order(a) - order(b));
+  const tone = sectionTones(shownIds.filter((id) => id !== 'beforeAfter'));
+  if (renders.beforeAfter) tone.beforeAfter = bandTone(shownIds, tone, 'beforeAfter');
 
   const iron = ironTokens(t);
   const vars = {
@@ -1056,7 +1120,7 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
       className={`ic-root${labelFont === LABEL_FONT ? '' : ' ic-wide'}${displayName.length > 24 ? ' ic-long' : ''}${navDense ? ' ic-dense' : ''}`}
       style={{ ...vars, containerType: 'inline-size', display: 'flex', flexDirection: 'column', minHeight: '100vh', overflowX: 'clip', background: t.bg, color: t.text, fontFamily: body, lineHeight: 1.6 }}
     >
-      <style>{CSS}</style>
+      <style>{CSS + (baOn ? beforeAfterCss('ic-ba') + BA_CSS : '')}</style>
       <a className="ic-skip" href="#main">Skip to content</a>
 
       <nav className={`ic-nav${navSteps.map((s) => ` ic-has-${s}`).join('')}${navName ? ' ic-nav-name' : ''}${navLong ? ' ic-nav-long' : ''}`} aria-label="Main" style={{ order: -1 }}>
@@ -1320,6 +1384,29 @@ export default function MechanicIronclad({ businessInfo, generatedCopy, template
               )}
             </div>
           </section>
+        )}
+
+        {baOn && (
+          <BeforeAfterBand
+            ns="ic-ba"
+            beforeAfter={copy.beforeAfter}
+            images={images}
+            editor={editor}
+            order={order('beforeAfter')}
+            className={`ic-section ic-tone-${tone.beforeAfter}`}
+            wrapClassName="ic-wrap"
+            labelledBy="ic-ba-h"
+            heading={(
+              <div className={`ic-head${baIntro ? '' : ' ic-head-solo'}`} data-acg-reveal="">
+                <div>
+                  <p className="ic-eyebrow">{BA_DEFAULTS.eyebrow}</p>
+                  <h2 id="ic-ba-h" className="ic-display ic-h2"><Tone text={baTitle} /></h2>
+                </div>
+                {baIntro && <p className="ic-intro">{baIntro}</p>}
+              </div>
+            )}
+            hints={ba.pairs.length === 0 && <EditorHint>{'Add a before and an after photo in Edit > Before & After.'}</EditorHint>}
+          />
         )}
 
         {renders.whyUs && (

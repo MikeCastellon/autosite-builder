@@ -17,14 +17,15 @@
 // Owner-editable features (the kit's feature blocks, see CLAUDE.md "Feature
 // blocks"): the hero services card, the Google rating badge, the footer
 // builder, package details, headings, the featured-service band, the
-// vehicle-makes band, service areas / insured and Google review labels.
-// This design has live sites, so every feature is opt-in: each renders only
-// from data the owner saved (copy.heroCard, copy.googleBadge, copy.footer,
-// copy.sectionTitles, copy.featuredService, copy.vehicleMakes, services[i]
-// .badge/.image/.includes, businessInfo.serviceAreas, insured === true,
-// a review's source, images.cta). A site that saved none of them renders
-// byte-for-byte as before, in the editor too: no new markup, CSS or root
-// variables.
+// vehicle-makes band, service areas / insured, Google review labels and the
+// Before & After band. This design has live sites, so every feature is
+// opt-in: each renders only from data the owner saved (copy.heroCard,
+// copy.googleBadge, copy.footer, copy.sectionTitles, copy.featuredService,
+// copy.vehicleMakes, copy.beforeAfter, services[i].badge/.image/.includes,
+// businessInfo.serviceAreas, insured === true, a review's source,
+// images.cta). A site that saved none of them renders byte-for-byte as
+// before, in the editor too: no new markup, CSS or root variables
+// (MobileSudsy.golden.test.jsx).
 import { SocialRow } from '../SocialIcons.jsx';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import IconOrEmoji from '../IconOrEmoji.jsx';
@@ -50,15 +51,17 @@ import { HeroOffer, heroOfferCss, heroOfferLockCss } from '../kit/HeroOffer.jsx'
 import { PackageBadge, PackagePhoto, PackageIncludes, packageDetailsCss } from '../kit/PackageDetails.jsx';
 import { FeaturedBand, featuredBandCss } from '../kit/FeaturedBand.jsx';
 import { MakesBand, makesBandCss } from '../kit/MakesBand.jsx';
+import { BeforeAfterBand, beforeAfterCss } from '../kit/BeforeAfter.jsx';
+import { beforeAfterPairs, BA_DEFAULTS } from '../kit/beforeAfter.js';
 
 export const themeReady = true;
 
 // Default top-to-bottom order. Saved sites store these ids in
-// copy.sectionOrder / copy.hiddenSections: never rename one. 'brands' and
-// 'featured' came later (addedSections): buildSectionOrderAdded gives the
-// older ids exactly their old order values, and an added id the owner never
-// placed shares its predecessor's value (it sits right after it in the DOM),
-// so a saved site's page does not move.
+// copy.sectionOrder / copy.hiddenSections: never rename one. 'brands',
+// 'featured' and 'beforeAfter' came later (addedSections):
+// buildSectionOrderAdded gives the older ids exactly their old order values,
+// and an added id the owner never placed shares its predecessor's value (it
+// sits right after it in the DOM), so a saved site's page does not move.
 export const sections = [
   { id: 'hero', label: 'Hero' },
   { id: 'brands', label: 'Vehicle Makes' },
@@ -68,16 +71,18 @@ export const sections = [
   { id: 'whyUs', label: 'Why Choose Us' },
   { id: 'about', label: 'About' },
   { id: 'gallery', label: 'Gallery' },
+  { id: 'beforeAfter', label: 'Before & After' },
   { id: 'testimonials', label: 'Reviews' },
   { id: 'cta', label: 'Contact / CTA' },
 ];
-export const addedSections = ['brands', 'featured'];
+export const addedSections = ['brands', 'featured', 'beforeAfter'];
 
 export const extraFonts = [];
 
 // Edit > Headings: the copy.sectionTitles fields each section uses.
 // titleFrom / introFrom name the copy key that owns that text (the Headings
-// tab edits it there); placeholder: this design's fixed default for a field.
+// tab edits it there; the Before & After heading and intro live in
+// copy.beforeAfter); placeholder: this design's fixed default for a field.
 // headingDefaults() below gives the design's own text for the rest.
 export const headingFields = {
   hero: { fields: ['eyebrow', 'title', 'accent'], titleFrom: 'headline' },
@@ -88,6 +93,7 @@ export const headingFields = {
   whyUs: { fields: ['eyebrow', 'title', 'accent'] },
   about: { fields: ['eyebrow', 'title', 'accent'] },
   gallery: { fields: ['eyebrow', 'title', 'accent'] },
+  beforeAfter: { fields: ['eyebrow', 'title', 'accent', 'intro'], titleFrom: 'beforeAfter.title', introFrom: 'beforeAfter.intro', placeholder: { intro: BA_DEFAULTS.intro } },
   testimonials: { fields: ['eyebrow', 'title', 'accent'] },
   cta: { fields: ['eyebrow', 'title', 'accent', 'intro'], titleFrom: 'ctaHeadline', introFrom: 'ctaSubtext' },
 };
@@ -548,6 +554,43 @@ const FEATURE_CSS = `
 }
 `;
 
+// The Before & After band (kit BeforeAfter.jsx) in this design's look: the
+// photos in a paper card with the ink outline, 26px corners and hard shadow
+// of the gallery shots, pill tags tilted like the section tags (Before on
+// paper, After on the accent), an ink-edged divider and handle, chunky paper
+// arrow buttons with a hard shadow and the counter in the display face, all
+// centered under the centered head. The kit's track clips whatever leaves a
+// slide, so each slide keeps room on its right and bottom for the card's
+// shadow. Appended after the kit's beforeAfterCss('ss-ba'), at the very end
+// of the style string and only while the band renders, so a site without
+// copy.beforeAfter gets none of it (and FEATURE_CSS doesn't change). The
+// --ss-ba-* block variables alias tokens sudsTokens already contrast-repairs:
+// the paper with its card ink, the accent with its ink, and the page's own
+// text and muted text for the caption and counter.
+const BA_CSS = `
+.ss-ba-band{--ss-ba-text:var(--ss-text);--ss-ba-muted:var(--ss-muted);--ss-ba-line:var(--ss-ink);--ss-ba-focus:var(--ss-focus);--ss-ba-tag-bg:var(--ss-card-bg);--ss-ba-tag-text:var(--ss-card-text);--ss-ba-tag2-bg:var(--ss-accent);--ss-ba-tag2-text:var(--ss-on-accent);--ss-ba-knob-bg:var(--ss-accent);--ss-ba-knob-text:var(--ss-on-accent);--ss-ba-r:26px;--ss-ba-tag-r:999px}
+.ss-ba-slider{max-width:980px;margin:0 auto}
+.ss-ba-slide{padding:0 6px 8px 0}
+.ss-ba-frame{border:3px solid var(--ss-ink);background:var(--ss-card-bg);box-shadow:6px 6px 0 var(--ss-ink)}
+.ss-ba-todo .ss-ba-frame{border:0;background:none;box-shadow:none}
+.ss-ba-tag{border:2.5px solid var(--ss-ink);box-shadow:2px 2px 0 var(--ss-ink);font-weight:800;letter-spacing:.1em;rotate:-2deg}
+.ss-ba-tag-after{rotate:2deg}
+.ss-ba-line{width:4px;margin-left:-2px;box-shadow:0 0 0 2px var(--ss-ink)}
+.ss-ba-knob{width:48px;height:48px;margin:-24px 0 0 -24px;border:3px solid var(--ss-ink);box-shadow:3px 3px 0 var(--ss-ink)}
+.ss-ba-cap{margin-top:18px;text-align:center;font-size:16px;font-weight:700;line-height:1.55}
+.ss-ba-nav{gap:18px;margin-top:22px}
+.ss-ba-btn{width:52px;height:52px;border:3px solid var(--ss-ink);background:var(--ss-card-bg);color:var(--ss-card-text);box-shadow:3px 3px 0 var(--ss-ink)}
+.ss-ba-btn:focus-visible{outline-width:3px;outline-offset:3px}
+.ss-ba-btn:active{translate:2px 2px;box-shadow:1px 1px 0 var(--ss-ink)}
+.ss-ba-count{min-width:4.5em;font-family:var(--ss-head);font-weight:var(--ss-head-w);font-size:24px;line-height:1.2;letter-spacing:.04em}
+@media (hover:hover){
+.ss-ba-btn:hover{translate:-2px -2px;border-color:var(--ss-ink);background:var(--ss-accent-pale);box-shadow:5px 5px 0 var(--ss-ink)}
+}
+@media (prefers-reduced-motion:no-preference){
+.ss-ba-btn{transition:translate .18s ease,box-shadow .18s ease,background-color .18s ease}
+}
+`;
+
 const txt = (v) => (typeof v === 'string' ? v.trim() : typeof v === 'number' ? String(v) : '');
 const list = (v) => (Array.isArray(v) ? v : []);
 const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
@@ -968,6 +1011,9 @@ export function headingDefaults(businessInfo, generatedCopy) {
       title: cleaning ? 'Fresh out of the suds.' : 'Our latest work.',
       accent: cleaning ? 'suds.' : 'work.',
     },
+    // The kit's neutral words (no claims: the photos make the point), with
+    // this design's highlighted word like every other heading here.
+    beforeAfter: { eyebrow: BA_DEFAULTS.eyebrow, title: BA_DEFAULTS.title, accent: 'Difference' },
     testimonials: {
       eyebrow: 'Reviews',
       title: cleaning ? 'They used to have dirty cars too.' : 'Word on the street.',
@@ -1219,6 +1265,15 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
   const makes = vehicleMakesFor(copy.vehicleMakes, []);
   const makesOn = show('brands') && makes.length > 0;
 
+  // The Before & After band (Edit > Before & After): only once
+  // copy.beforeAfter exists, and on the published page only with a pair
+  // that has both photos (the editor shows every pair, and says what each
+  // still needs). Heading and intro: the owner's (copy.beforeAfter, which
+  // Edit > Headings edits too), else the design's own.
+  const ba = beforeAfterPairs(copy.beforeAfter, images, { editor });
+  const baOn = show('beforeAfter') && Boolean(ba) && (ba.pairs.length > 0 || editor);
+  const baIntro = ba?.intro || st('beforeAfter').intro || BA_DEFAULTS.intro;
+
   const howSteps = (Array.isArray(copy.howSteps) ? copy.howSteps : defaultSteps(type))
     .map((s) => ({ emoji: fixEmoji(txt(s?.emoji)), title: txt(s?.title), desc: txt(s?.desc) }))
     .filter((s) => s.title || s.desc);
@@ -1400,7 +1455,10 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
     + (featuredOn ? featuredBandCss('ss-ft') : '')
     + (makesOn ? makesBandCss('ss-mk') : '')
     + (featureOn ? FEATURE_CSS : '')
-    + navBadgeCss;
+    + navBadgeCss
+    // Last, so a page with the band starts with exactly the style string it
+    // has without it.
+    + (baOn ? beforeAfterCss('ss-ba') + BA_CSS : '');
 
   const vars = {
     '--ss-bg': t.bg,
@@ -1866,6 +1924,30 @@ export default function MobileSudsy({ businessInfo, generatedCopy, templateMeta,
               )}
             </div>
           </section>
+        )}
+
+        {/* Before & After (Edit > Before & After): right after the gallery
+            in the DOM, so without a saved slot it shares the gallery's order
+            value (addedSections) and stays next to it. */}
+        {baOn && (
+          <BeforeAfterBand
+            ns="ss-ba"
+            beforeAfter={copy.beforeAfter}
+            images={images}
+            editor={editor}
+            order={order('beforeAfter')}
+            className="ss-section"
+            wrapClassName="ss-wrap"
+            labelledBy="ss-ba-h"
+            heading={(
+              <div className="ss-head" data-acg-reveal="">
+                <Tag emoji="✨" className="ss-tag-l">{st('beforeAfter').eyebrow || hd.beforeAfter.eyebrow}</Tag>
+                <h2 id="ss-ba-h" className="ss-h2"><Accented as="em" {...headingOf(st('beforeAfter'), hd.beforeAfter, ba.title)} /></h2>
+                {baIntro && <p className="ss-sub">{baIntro}</p>}
+              </div>
+            )}
+            hints={ba.pairs.length === 0 && <EditorHint>{'Add a before and an after photo in Edit > Before & After.'}</EditorHint>}
+          />
         )}
 
         {show('testimonials') && reviews === 'google' && (
