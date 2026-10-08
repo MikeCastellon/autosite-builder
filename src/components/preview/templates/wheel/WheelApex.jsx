@@ -317,6 +317,8 @@ html[data-acg-scrolled] .wa-nav{box-shadow:0 12px 32px -20px var(--wa-shadow)}
 .wa-hero-text{padding:64px var(--wa-gutter) 56px}
 .wa-stage{border-left:0;border-top:1px solid var(--wa-border)}
 .wa-stage-media{flex:none;min-height:0;aspect-ratio:4/3}
+.wa-stage-media:empty{display:none}
+.wa-stage:has(>.wa-stage-media:empty:only-child){display:none}
 .wa-head,.wa-about,.wa-contact-grid{grid-template-columns:minmax(0,1fr)}
 .wa-media{aspect-ratio:4/3}
 }
@@ -346,6 +348,10 @@ html[data-acg-scrolled] .wa-nav{box-shadow:0 12px 32px -20px var(--wa-shadow)}
 .wa-h2{font-size:calc(clamp(38px,11cqi,48px) * var(--wa-h-scale))}
 .wa-h2-xl{font-size:calc(clamp(42px,12cqi,54px) * var(--wa-h-scale))}
 .wa-c1,.wa-c2,.wa-c3{grid-template-columns:minmax(0,1fr)}
+.wa-card-media:empty{display:none}
+.wa-card-media:has(>.wa-badge:only-child){aspect-ratio:auto;padding:22px 22px 0;background:none;border-bottom:0}
+.wa-card-media:has(>.wa-badge:only-child)>.wa-badge{position:static;display:inline-block}
+.wa-card-media:has(>.wa-badge:only-child)+.wa-card-body{padding-top:14px}
 .wa-brand-cell{flex-basis:130px;min-height:76px;font-size:calc(18px * var(--wa-h-scale-sm))}
 .wa-frame{padding:0 14px 14px 0}
 .wa-frame::before{top:14px;left:14px}
@@ -963,7 +969,9 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
             <div className="wa-stage">
               <div className="wa-stage-media">
                 {/* No photo: a blank panel (the editor shows where to
-                    upload one). */}
+                    upload one). Once the stage stacks under the copy
+                    (<= 800px) the CSS drops the empty panel, so phones
+                    do not get a box that reads as a broken image. */}
                 <PhotoSlot src={images.hero} slot="hero" alt="" loading="eager" fetchPriority="high" style={fill} />
               </div>
               {statsBand}
@@ -1043,6 +1051,10 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
                   {products.map((p, i) => (
                     <div key={`p${i}`} className="wa-cell" data-acg-reveal="" style={{ '--acg-delay': `${(i % 3) * 90}ms` }}>
                       <article className="acg-svc-card wa-card">
+                        {/* A card without a photo keeps a blank media block
+                            so a row of cards lines up; in the one-column
+                            phone grid (<= 600px) the CSS drops it (a badge
+                            moves into the card's top edge). */}
                         {productMedia && (
                           <div className="wa-card-media">
                             {p.badge && <span className="wa-badge">{p.badge}</span>}

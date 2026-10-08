@@ -49,6 +49,18 @@ const inner = (html, cls, from = 0) => {
   const m = html.slice(from).match(new RegExp(`<div class="${cls}">([\\s\\S]*?)</div>`));
   return m ? m[1] : null;
 };
+// The rules inside one @container block of the template's CSS.
+const containerRules = (html, query) => {
+  const css = cssOf(html);
+  const start = css.indexOf(`@container ${query}{`);
+  if (start < 0) return '';
+  let depth = 0;
+  for (let i = css.indexOf('{', start); i < css.length; i++) {
+    if (css[i] === '{') depth++;
+    else if (css[i] === '}' && --depth === 0) return css.slice(start, i + 1);
+  }
+  return '';
+};
 const rootVars = (html) => {
   const style = decode((html.match(/<div id="top" class="wa-root" style="([^"]*)"/) || [])[1] || '');
   return Object.fromEntries(style.split(';').map((d) => d.split(/:(.*)/s).map((x) => x.trim())).filter(([k]) => k));
@@ -136,6 +148,17 @@ describe('wheel_apex hero layouts', () => {
     expectNoRim(editor);
   });
 
+  it('drops the empty split panel once the stage stacks (<= 800px), never the editor placeholder', () => {
+    // The published panel is a truly empty element, so :empty matches it;
+    // the editor panel holds the placeholder, so it keeps showing.
+    const published = render({ copy: { heroLayout: 'split' }, images: NO_HERO });
+    expect(heroOf(published)).toContain('<div class="wa-stage"><div class="wa-stage-media"></div></div>');
+    const narrow = containerRules(published, '(max-width:800px)');
+    expect(narrow).toContain('.wa-stage-media:empty{display:none}');
+    expect(narrow).toContain('.wa-stage:has(>.wa-stage-media:empty:only-child){display:none}');
+    expect(cssOf(published)).not.toContain('data-acg-editor-only');
+  });
+
   it.each([
     ['default', {}],
     ['custom', CUSTOM_COLORS],
@@ -170,6 +193,19 @@ describe('wheel_apex product photos', () => {
     expect(inner(page, 'wa-card-media', second - 12)).toBe('<span class="wa-badge">New</span>');
     expectNoRim(html);
     expectNothingEditorOnly(html);
+  });
+
+  it('drops the blank media block in the one-column phone grid (<= 600px)', () => {
+    const html = render({ copy: { products: [...products, { name: 'Winter Steel', price: '$680' }] } });
+    // Badge only, and nothing at all: both shapes the phone rules match.
+    expect(markup(html)).toContain('<div class="wa-card-media"><span class="wa-badge">New</span></div>');
+    expect(markup(html)).toContain('<div class="wa-card-media"></div>');
+    const phone = containerRules(html, '(max-width:600px)');
+    expect(phone).toContain('.wa-card-media:empty{display:none}');
+    expect(phone).toContain('.wa-card-media:has(>.wa-badge:only-child){aspect-ratio:auto;');
+    // Wider layouts keep the block, so a row of cards lines up.
+    expect(containerRules(html, '(max-width:800px)')).not.toContain('wa-card-media');
+    expect(cssOf(html)).not.toContain('data-acg-editor-only');
   });
 
   it('shows the product upload placeholder in the editor', () => {
