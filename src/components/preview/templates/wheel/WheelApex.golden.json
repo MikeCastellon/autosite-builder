@@ -746,13 +746,13 @@
   }
  },
  "hashes": {
-  "sparse/publish": "2c029921d46838dee450543bc313eca41f268c2fb0903c8a37304be102a68cff",
-  "sparse/editor": "be48927b4a30e03c4068e9608cab9942cb588c48b05ed6215aa548b877990996",
-  "full/publish": "6e2dcffef7107ee6a89c9186a994aff7e8538e4a8f6ca29b3e57d8f0a5ed39b4",
-  "full/editor": "6e2dcffef7107ee6a89c9186a994aff7e8538e4a8f6ca29b3e57d8f0a5ed39b4",
-  "custom/publish": "d89ee2b41bad13dbc705fae46e8abc45ab2ef8e62c8be0a5e7df0ed059d26c3d",
-  "custom/editor": "d89ee2b41bad13dbc705fae46e8abc45ab2ef8e62c8be0a5e7df0ed059d26c3d",
-  "features/publish": "68ca9b1526a087d708242d50a4c649a427627707e5aa74da0c36f9caaed7a78f",
-  "features/editor": "68ca9b1526a087d708242d50a4c649a427627707e5aa74da0c36f9caaed7a78f"
+  "sparse/publish": "a64ab7fd4f97f44dca5d5938b2111f00ddfd7585bb0ec5c0340a896e69db5e65",
+  "sparse/editor": "4cf4ce2a847cf896ca6f7602909d1d3a838e3009920a1367ef085f40a46d6a57",
+  "full/publish": "fe37309f88c313f286b980ac43eda3a37cb1ddc466436985d479c818c6d65dcd",
+  "full/editor": "fe37309f88c313f286b980ac43eda3a37cb1ddc466436985d479c818c6d65dcd",
+  "custom/publish": "04d1d3a88c619443a7b4fc40e3102d1b7a99aa6b68beacaecd1c441ba6b87cf6",
+  "custom/editor": "04d1d3a88c619443a7b4fc40e3102d1b7a99aa6b68beacaecd1c441ba6b87cf6",
+  "features/publish": "3550a1baf664e9ee7bd1e86ff38fd2785b5eb2fbbe3e0cd92a6b85e4bbc72780",
+  "features/editor": "3550a1baf664e9ee7bd1e86ff38fd2785b5eb2fbbe3e0cd92a6b85e4bbc72780"
  }
 }
