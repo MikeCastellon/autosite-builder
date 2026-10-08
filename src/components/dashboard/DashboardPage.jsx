@@ -120,7 +120,10 @@ function DashboardNewsBanner() {
   );
 }
 
-export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite, profile, onOpenBookingSettings }) {
+// `onHandOverFreeSite(rowId)`: admins only. A site built for a customer in
+// Admin > Free websites (business_info.freeSiteId) gets a tag and a
+// "Hand over" button that opens that customer's hand-over there.
+export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite, profile, onOpenBookingSettings, onHandOverFreeSite }) {
   const { toast, confirm: confirmDialog } = useAlert();
   const { session } = useAuth();
   const userId = session?.user?.id;
@@ -551,6 +554,14 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
                     <p className="text-[18px] font-bold text-[#1a1a1a] truncate">
                       {site.business_info?.businessName || 'Untitled'}
                     </p>
+                    {onHandOverFreeSite && site.business_info?.freeSiteId && (
+                      <span
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-800 border border-amber-200"
+                        title="Built for a customer in Admin › Free websites"
+                      >
+                        Free website
+                      </span>
+                    )}
                     {site.published_url ? (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-green-50 text-green-700 border border-green-200">
                         <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
@@ -611,6 +622,14 @@ export default function DashboardPage({ onNewSite, onNewBookingPage, onEditSite,
                     (see handleEditClick). The "VIEWING AS …" banner keeps the
                     context obvious. */}
                 <div className="flex flex-wrap gap-2 sm:flex-col sm:items-stretch sm:w-auto">
+                  {onHandOverFreeSite && site.business_info?.freeSiteId && !isImpersonationTab && (
+                    <button
+                      onClick={() => onHandOverFreeSite(site.business_info.freeSiteId)}
+                      className="px-4 py-2 text-[13px] font-semibold bg-[#cc0000] text-white rounded-lg hover:bg-[#a80000] transition-colors"
+                    >
+                      Hand over
+                    </button>
+                  )}
                   {site.site_type !== 'booking_only' && (
                     <>
                       {onEditSite && (

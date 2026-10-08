@@ -7,12 +7,16 @@ import { isEffectiveSchedulerActive } from '../../lib/subscriptionGating.js';
 
 const PUBLISH_DOMAIN = import.meta.env.VITE_PUBLISH_DOMAIN || 'autocaregenius.com';
 
-export default function StepExport({ siteId: passedSiteId, businessInfo, generatedCopy, templateId, templateMeta, images, selectedWidgetIds, onBack, onStartOver }) {
+// `freeSite`: { onHandover, onLater } when an admin is building a free
+// website for a customer (Admin > Free websites). The page then ends on the
+// hand-over instead of the Pro upsell, and can be left without publishing.
+export default function StepExport({ siteId: passedSiteId, businessInfo, generatedCopy, templateId, templateMeta, images, selectedWidgetIds, onBack, onStartOver, freeSite = null }) {
   const { profile } = useAuth();
   const isPro = isEffectiveSchedulerActive(profile);
   const [publishing, setPublishing] = useState(false);
   const [published, setPublished] = useState(null);
   const [publishError, setPublishError] = useState(null);
+  const [leaving, setLeaving] = useState(false);
   const siteId = passedSiteId || crypto.randomUUID();
 
   const slug = generateSlug(businessInfo.businessName);
@@ -38,6 +42,13 @@ export default function StepExport({ siteId: passedSiteId, businessInfo, generat
     } finally {
       setPublishing(false);
     }
+  };
+
+  // App saves, links the site to the customer and opens Admin; it stays
+  // here (and says why) when the save fails.
+  const leave = async (go) => {
+    setLeaving(true);
+    try { await go(); } finally { setLeaving(false); }
   };
 
   return (
@@ -98,6 +109,15 @@ export default function StepExport({ siteId: passedSiteId, businessInfo, generat
               >
                 {publishing ? 'Publishing...' : '🚀 Publish Website'}
               </button>
+              {freeSite && (
+                <button
+                  onClick={() => leave(freeSite.onLater)}
+                  disabled={publishing || leaving}
+                  className="w-full py-2.5 px-4 mb-4 rounded-xl border border-black/[0.10] bg-white text-[#1a1a1a] hover:border-[#cc0000]/30 hover:text-[#cc0000] font-semibold transition-colors text-[13px] disabled:opacity-50"
+                >
+                  {leaving ? 'Saving…' : 'Save and finish later (back to Free websites)'}
+                </button>
+              )}
             </>
           ) : (
             <>
@@ -135,11 +155,36 @@ export default function StepExport({ siteId: passedSiteId, businessInfo, generat
                 </a>
               </div>
 
-              {/* Upgrade to Pro panel — features list + CTA. Custom domain
-                  lives behind this and only unlocks once the user upgrades. */}
-              <div className="mb-5">
-                <UpgradeProPanel />
-              </div>
+              {freeSite ? (
+                // A free website's last step: hand it to the customer.
+                <div className="border-2 border-[#cc0000]/25 bg-white rounded-xl p-5 mb-5">
+                  <p className="text-[11px] font-bold text-[#cc0000] uppercase tracking-[1.5px] mb-1.5">Final step</p>
+                  <p className="text-[17px] font-[800] text-[#1a1a1a] tracking-[-0.3px]">Hand it over to the customer</p>
+                  <p className="mt-1 text-[13px] text-[#555] leading-relaxed">
+                    The site is live in your account. Move it to the customer's account so they can sign in and manage it. You'll confirm their email before anything moves.
+                  </p>
+                  <button
+                    onClick={() => leave(freeSite.onHandover)}
+                    disabled={leaving}
+                    className="mt-4 w-full py-3 px-6 rounded-xl font-semibold text-[15px] bg-[#cc0000] hover:bg-[#aa0000] text-white transition-colors disabled:opacity-60"
+                  >
+                    {leaving ? 'Opening…' : 'Hand it over →'}
+                  </button>
+                  <button
+                    onClick={() => leave(freeSite.onLater)}
+                    disabled={leaving}
+                    className="mt-2 w-full py-2 text-[13px] font-semibold text-ink-tertiary hover:text-[#1a1a1a] transition-colors disabled:opacity-50"
+                  >
+                    Not yet: back to Free websites
+                  </button>
+                </div>
+              ) : (
+                /* Upgrade to Pro panel — features list + CTA. Custom domain
+                   lives behind this and only unlocks once the user upgrades. */
+                <div className="mb-5">
+                  <UpgradeProPanel />
+                </div>
+              )}
             </>
           )}
 

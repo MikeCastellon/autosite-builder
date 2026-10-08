@@ -38,6 +38,8 @@ export default function AdminPage({
   onOpenDemo,
   onBuildFreeSite,
   onOpenFreeSiteEditor,
+  freeSitesHandoverId,
+  onFreeSitesHandoverShown,
 }) {
   const { profile } = useAuth();
   // Held here rather than in the Pipeline tab, so "Open lead" on the Leads
@@ -84,7 +86,13 @@ export default function AdminPage({
         />
       )}
       {current === 'free-sites' && (
-        <AdminFreeSitesTab key={navKey} onBuildSite={onBuildFreeSite} onOpenSiteEditor={onOpenFreeSiteEditor} />
+        <AdminFreeSitesTab
+          key={navKey}
+          onBuildSite={onBuildFreeSite}
+          onOpenSiteEditor={onOpenFreeSiteEditor}
+          openHandoverId={freeSitesHandoverId}
+          onHandoverShown={onFreeSitesHandoverShown}
+        />
       )}
       {current === 'accounts' && <AdminAccountsTab key={`${accountsFilter}:${navKey}`} initialFilter={accountsFilter} />}
       {current === 'pipeline' && <PipelineTab userId={profile.id} openLeadId={openLeadId} onOpenLead={setOpenLeadId} />}

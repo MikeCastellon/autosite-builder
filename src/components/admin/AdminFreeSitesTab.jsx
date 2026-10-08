@@ -10,6 +10,9 @@ import { formatDateTime, timeAgo } from './customSiteUi.jsx';
 // then hand it to their account. "Build the site" opens the wizard with the
 // row's marker (App onBuildSite); the server links the saved site to the
 // row. The hand-over is the custom websites' one (free-site-admin).
+// `openHandoverId`: a row whose hand-over box opens once the list loads (the
+// builder's last step, a Sites card's "Hand over"); `onHandoverShown` tells
+// App it was used, so coming back to the tab doesn't open it again.
 
 const BTN = 'inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-black/[0.12] text-[12px] font-semibold text-[#1a1a1a] hover:border-[#cc0000]/40 disabled:opacity-50 transition-colors whitespace-nowrap';
 const BTN_DARK = 'inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1a1a1a] hover:bg-[#cc0000] text-white text-[12px] font-semibold disabled:opacity-50 transition-colors whitespace-nowrap';
@@ -31,8 +34,9 @@ const FILTERS = [
 const templateLabel = (id) => TEMPLATES[id]?.label || '';
 const shortUrl = (url) => String(url || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
 
-export default function AdminFreeSitesTab({ onBuildSite, onOpenSiteEditor }) {
+export default function AdminFreeSitesTab({ onBuildSite, onOpenSiteEditor, openHandoverId = null, onHandoverShown }) {
   const { toast, confirm } = useAlert();
+  const pendingHandover = useRef({ id: openHandoverId, shown: onHandoverShown });
   const [rows, setRows] = useState([]);
   const [mySites, setMySites] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -48,12 +52,20 @@ export default function AdminFreeSitesTab({ onBuildSite, onOpenSiteEditor }) {
       setRows(res.handovers || []);
       setMySites(res.mySites || []);
       setErr('');
+      const pending = pendingHandover.current;
+      if (pending.id) {
+        pendingHandover.current = { id: null };
+        pending.shown?.();
+        const row = (res.handovers || []).find((r) => r.id === pending.id);
+        if (row && freeSiteStatus(row) === 'building') setModal({ kind: 'handover', row });
+        else if (row && !row.handed_over_at) toast(`${customerName(row)}'s site isn't linked yet. Use "Use a site I built" on their row.`, 'error', 7000);
+      }
     } catch (e) {
       setErr(e.message || 'Could not load free websites');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => { refresh(); }, [refresh]);
 
