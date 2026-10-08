@@ -31,6 +31,7 @@
 //     note }], changes: [what the server corrected] }
 import { BUSINESS_TYPE_OPTIONS, safeHref } from '../customSiteForm.js';
 import { mergeSectionOrder } from '../sectionManifest.js';
+import { beforeAfterPairs } from '../../components/preview/templates/kit/beforeAfter.js';
 
 export const MOBILE_VERSION = 1;
 export const MOBILE_INPUTS_FILE = 'mobile-inputs.json';
@@ -172,11 +173,13 @@ const tpl = (themeReady, list, added = []) => Object.freeze({ themeReady, sectio
 const STD = 'hero:Hero, statsBar:Stats Bar, services:Services, about:About, gallery:Gallery, testimonials:Reviews, cta:Contact / CTA';
 const STD_NO_STATS = 'hero:Hero, services:Services, about:About, gallery:Gallery, testimonials:Reviews, cta:Contact / CTA';
 const LIVE_THEME = 'hero:Hero, statsBar:Stats Bar, brands:Vehicle Makes, services:Services, featured:Featured Service, about:About, gallery:Gallery, testimonials:Reviews, cta:Contact / CTA, awards:Awards';
+// Bold & Sporty: the live theme's sections and its Before & After band.
+const SPORTY = LIVE_THEME.replace('gallery:Gallery, ', 'gallery:Gallery, beforeAfter:Before & After, ');
 const TINT_LEGACY = 'hero:Hero, statsBar:Stats Bar, services:Services, brands:Film Brands, about:About, gallery:Gallery, testimonials:Reviews, cta:Contact / CTA';
 const MECHANIC_KIT = 'hero:Hero, statsBar:Stats Bar, services:Services, about:About, gallery:Gallery, testimonials:Reviews, cta:Contact / CTA, awards:Awards';
 
 export const TEMPLATE_SECTIONS = Object.freeze({
-  detailing_sporty: tpl(true, LIVE_THEME, ['brands', 'featured']),
+  detailing_sporty: tpl(true, SPORTY, ['brands', 'featured', 'beforeAfter']),
   detailing_coastal: tpl(false, STD),
   mobile_bold: tpl(false, STD_NO_STATS),
   mobile_modern: tpl(false, STD),
@@ -217,8 +220,10 @@ const listOf = (v) => {
 // in the order it shows them (the editor's Sections list). Hidden: the
 // owner hid it (copy.hiddenSections), Awards without an award (it never
 // renders empty), and a live theme's opt-in section the owner never turned
-// on (Vehicle Makes without makes, Featured Service without a service).
-export function siteSections({ templateId, copy, businessInfo } = {}) {
+// on (Vehicle Makes without makes, Featured Service without a service,
+// Before & After without a pair that has both photos: `images` is the
+// site's image map).
+export function siteSections({ templateId, copy, businessInfo, images } = {}) {
   const t = templateSections(templateId);
   const c = isObject(copy) ? copy : {};
   const info = isObject(businessInfo) ? businessInfo : {};
@@ -227,6 +232,7 @@ export function siteSections({ templateId, copy, businessInfo } = {}) {
   const optInOn = {
     brands: listOf(c.vehicleMakes).some((m) => typeof m === 'string' && m.trim()),
     featured: isObject(c.featuredService) && typeof c.featuredService.serviceName === 'string' && !!c.featuredService.serviceName.trim(),
+    beforeAfter: Boolean(beforeAfterPairs(c.beforeAfter, images)?.pairs.length),
   };
   const hiddenOf = (id) => ownerHidden.has(id)
     || (id === 'awards' && awards.length === 0)
@@ -684,7 +690,7 @@ export function mobileFacts({ project, site, look = null, urls = {}, logos = [],
   const typeLabel = BUSINESS_TYPE_OPTIONS.find((o) => o.value === typeValue && o.value !== 'other')?.label || '';
   const email = factText(info.email, 200);
   const palette = isObject(look?.palette) ? Object.fromEntries(PALETTE_ROLES.map((r) => [r, normHex(look.palette[r])])) : null;
-  const sections = siteSections({ templateId: site?.templateId, copy, businessInfo: info });
+  const sections = siteSections({ templateId: site?.templateId, copy, businessInfo: info, images: site?.images });
   return {
     version: MOBILE_VERSION,
     business: {

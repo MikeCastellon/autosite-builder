@@ -10,7 +10,8 @@
 //   2. The app's JS bundle (index.html → its module scripts → every chunk
 //      they import) holds the site runtime published pages carry
 //      (SITE_RUNTIME_JS, SITE_BASE_CSS, SITE_CQ_FALLBACK_JS with its
-//      CQ_REWRITE_FN, from src/lib/siteRuntime.js): every line of them that
+//      CQ_REWRITE_FN, and SITE_BA_JS for pages with a Before & After band,
+//      from src/lib/siteRuntime.js): every line of them that
 //      a minifier cannot rewrite is found verbatim.
 //   3. App code: this checkout is built here (vite build, in memory) and
 //      every piece of src/ text that comes through the minifier verbatim
@@ -23,7 +24,7 @@ import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { PRODUCTION_APP_ORIGIN, UPGRADE_MANUAL_SKIP } from '../../src/lib/siteUpgrade.js';
-import { CQ_REWRITE_FN, SITE_BASE_CSS, SITE_CQ_FALLBACK_JS, SITE_RUNTIME_JS } from '../../src/lib/siteRuntime.js';
+import { CQ_REWRITE_FN, SITE_BA_JS, SITE_BASE_CSS, SITE_CQ_FALLBACK_JS, SITE_RUNTIME_JS } from '../../src/lib/siteRuntime.js';
 
 const MAX_CHUNKS = 400;
 const MAX_BUNDLE_BYTES = 40 * 1024 * 1024;
@@ -33,7 +34,7 @@ const sha = (s) => createHash('sha256').update(lf(s), 'utf8').digest('hex');
 
 // The runtime as the source spells it: SITE_CQ_FALLBACK_JS interpolates
 // CQ_REWRITE_FN, so a bundle holds the two apart.
-const RUNTIME_SOURCES = [SITE_RUNTIME_JS, SITE_BASE_CSS, CQ_REWRITE_FN, ...SITE_CQ_FALLBACK_JS.split(CQ_REWRITE_FN)];
+const RUNTIME_SOURCES = [SITE_RUNTIME_JS, SITE_BA_JS, SITE_BASE_CSS, CQ_REWRITE_FN, ...SITE_CQ_FALLBACK_JS.split(CQ_REWRITE_FN)];
 
 // Text a minifier keeps verbatim inside a string or template literal: no
 // quotes, backslashes, template syntax or non-ASCII (which it may escape

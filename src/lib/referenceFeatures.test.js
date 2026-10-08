@@ -1,15 +1,20 @@
 // "Features on this site" (referenceFeatures.js): a label for every feature
 // the capture can find, and what our product does about each one for the
 // setup's template. The claims that rest on a template's code are checked
-// against the sources here, so a template that changes fails this file
-// until the table follows; anything we don't do says "not in our templates
-// yet".
+// against the sources here (Before & After against the published page,
+// given what the Design step writes), so a template that changes fails this
+// file until the table follows; anything we don't do says "not in our
+// templates yet".
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { FEATURE_IDS, SECTION_KINDS, sanitizeOutline } from './referenceOutline.js';
-import { TEMPLATES } from '../data/templates.js';
+import { TEMPLATES, TEMPLATE_COMPONENT_MAP } from '../data/templates.js';
+import { buildTemplateMeta } from './siteRender.js';
+import { normalizeBusinessInfo } from './normalizeBusinessInfo.js';
 import { TEMPLATE_SECTIONS, sectionIdsFor } from '../data/templateSections.js';
 import { templateReads } from '../components/preview/editorCapabilities.js';
 import {
@@ -28,6 +33,28 @@ const read = (rel) => readFileSync(resolve(here, rel), 'utf8');
 const THEME_READY = Object.keys(TEMPLATE_SECTIONS);
 const VISIBLE = THEME_READY.filter((id) => !TEMPLATES[id].hidden);
 const HIDDEN_LABELS = Object.values(TEMPLATES).filter((t) => t.hidden).map((t) => t.label);
+
+// A template's published page with one Before & After pair, in the shape
+// the Design step writes (customSiteDesign.js beforeAfterCopy: the copy
+// key and the pair's photos as images baBefore0 / baAfter0).
+async function renderWithPair(id) {
+  const { default: Template } = await TEMPLATE_COMPONENT_MAP[id]();
+  return renderToStaticMarkup(createElement(Template, {
+    businessInfo: normalizeBusinessInfo({
+      businessName: 'Pair Test Detailing', businessType: TEMPLATES[id].businessType, city: 'Austin', state: 'TX', phone: '(512) 555-0100',
+    }),
+    generatedCopy: { headline: 'Headline', subheadline: 'Subheadline', aboutText: 'About text', beforeAfter: { pairs: [{ caption: 'Interior shampoo' }] } },
+    templateMeta: buildTemplateMeta(id),
+    images: { baBefore0: 'https://img.test/ba-before-0.jpg', baAfter0: 'https://img.test/ba-after-0.jpg' },
+  }));
+}
+
+// The templates with a Before & After section (sections id 'beforeAfter'),
+// as the sections list has them: none until a template adds one, then
+// "have" there and "in <that template>" elsewhere.
+const WITH_PAIRS = THEME_READY.filter((id) => sectionIdsFor(id).includes('beforeAfter'));
+const pairsStatus = (templateId) => (WITH_PAIRS.includes(templateId) ? 'have'
+  : WITH_PAIRS.some((id) => VISIBLE.includes(id)) ? 'other-template' : 'missing');
 
 describe('feature labels', () => {
   it('name every feature the capture can find, in plain words', () => {
@@ -65,14 +92,34 @@ describe('featureSupport', () => {
 
   it('says what Bold & Sporty, Bright & Bubbly, Forge Studio and Redline do', () => {
     const table = (templateId) => Object.fromEntries(FEATURE_IDS.map((id) => [id, featureSupport(id, templateId).status]));
-    const missing = ['hero-video', 'hero-slider', 'before-after', 'faq', 'tabs', 'video', 'instagram-feed', 'chat', 'newsletter'];
+    const missing = ['hero-video', 'hero-slider', 'faq', 'tabs', 'video', 'instagram-feed', 'chat', 'newsletter'];
     const covered = ['sticky-header', 'reviews-widget', 'booking-widget', 'quote-form', 'contact-form', 'service-area'];
     const base = { ...Object.fromEntries(missing.map((id) => [id, 'missing'])), ...Object.fromEntries(covered.map((id) => [id, 'covered'])) };
-    expect(table('detailing_sporty')).toEqual({ ...base, carousel: 'have', gallery: 'have', reviews: 'have', pricing: 'have', map: 'missing', stats: 'have' });
-    expect(table('mobile_sudsy')).toEqual({ ...base, carousel: 'other-template', gallery: 'have', reviews: 'have', pricing: 'have', map: 'missing', stats: 'other-template' });
-    expect(table('wheel_apex')).toEqual({ ...base, carousel: 'have', gallery: 'have', reviews: 'have', pricing: 'have', map: 'missing', stats: 'other-template' });
+    // Before & After follows the templates' sections (checked against their
+    // code below).
+    const row = (templateId, rest) => ({ ...base, 'before-after': pairsStatus(templateId), ...rest });
+    expect(table('detailing_sporty')).toEqual(row('detailing_sporty', { carousel: 'have', gallery: 'have', reviews: 'have', pricing: 'have', map: 'missing', stats: 'have' }));
+    expect(table('mobile_sudsy')).toEqual(row('mobile_sudsy', { carousel: 'other-template', gallery: 'have', reviews: 'have', pricing: 'have', map: 'missing', stats: 'other-template' }));
+    expect(table('wheel_apex')).toEqual(row('wheel_apex', { carousel: 'have', gallery: 'have', reviews: 'have', pricing: 'have', map: 'missing', stats: 'other-template' }));
     // Redline, though hidden, is the setup's template on some projects.
-    expect(table('mobile_redline')).toEqual({ ...base, carousel: 'have', gallery: 'have', reviews: 'have', pricing: 'have', map: 'have', stats: 'other-template' });
+    expect(table('mobile_redline')).toEqual(row('mobile_redline', { carousel: 'have', gallery: 'have', reviews: 'have', pricing: 'have', map: 'have', stats: 'other-template' }));
+  });
+
+  it('says Before & After where a template has the section, and names it elsewhere', () => {
+    if (!WITH_PAIRS.length) {
+      // No template has it yet: nothing promised anywhere.
+      for (const id of [...THEME_READY, 'mobile_bold', '']) {
+        expect(featureSupport('before-after', id)).toEqual({ status: 'missing', text: 'not in our templates yet' });
+      }
+      return;
+    }
+    for (const id of WITH_PAIRS) {
+      expect(featureSupport('before-after', id)).toEqual({ status: 'have', text: 'its Before & After section, with pairs of their own photos' });
+    }
+    const without = THEME_READY.find((id) => !WITH_PAIRS.includes(id));
+    const named = WITH_PAIRS.filter((id) => VISIBLE.includes(id)).map((id) => TEMPLATES[id].label);
+    expect(featureSupport('before-after', without)).toEqual({ status: 'other-template', text: expect.stringMatching(/^in /) });
+    expect(featureSupport('before-after', without).text).toContain(named[0]);
   });
 
   it('words each answer for the template', () => {
@@ -127,6 +174,16 @@ describe('the claims match the templates\' code', () => {
       if (id !== 'mobile_redline') expect(src).not.toMatch(/<iframe/);
     }
     expect(sectionIdsFor('mobile_redline')).toContain('locations');
+  });
+
+  it('a Before & After is a template\'s own section showing the owner\'s photo pairs, and only there', async () => {
+    // "Have" exactly where the page, given what the Design step writes,
+    // shows the section with both of the pair's photos.
+    for (const id of THEME_READY) {
+      const html = await renderWithPair(id);
+      const shows = html.includes('data-section="beforeAfter"') && html.includes('ba-before-0') && html.includes('ba-after-0');
+      expect({ id, have: featureSupport('before-after', id).status === 'have' }).toEqual({ id, have: shows });
+    }
   });
 
   it('every theme-ready template shows the service area, and has a gallery and reviews', () => {

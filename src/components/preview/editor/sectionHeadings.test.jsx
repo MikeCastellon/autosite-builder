@@ -77,7 +77,7 @@ describe('headingRows', () => {
   });
 
   it('every owner key names a real tab field', () => {
-    expect(Object.keys(FROM_LABELS)).toEqual(['headline', 'servicesSection.title', 'servicesSection.intro', 'ctaHeadline', 'ctaSubtext']);
+    expect(Object.keys(FROM_LABELS)).toEqual(['headline', 'servicesSection.title', 'servicesSection.intro', 'ctaHeadline', 'ctaSubtext', 'beforeAfter.title', 'beforeAfter.intro']);
   });
 });
 

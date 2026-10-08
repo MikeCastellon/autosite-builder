@@ -15,6 +15,19 @@ vi.mock('../../netlify/functions/_shared/auth.js', () => ({
   },
 }));
 
+// Bold & Sporty with its Before & After section (a no-op once
+// templateSections.js lists it) and Chrome Elite without, whatever the
+// templates do later.
+vi.mock('../../src/data/templateSections.js', async (importOriginal) => {
+  const m = await importOriginal();
+  const sectionIdsFor = (id) => {
+    const real = m.sectionIdsFor(id);
+    if (id === 'detailing_sporty') return real.includes('beforeAfter') ? real : [...real, 'beforeAfter'];
+    return id === 'mobile_chrome' ? real.filter((s) => s !== 'beforeAfter') : real;
+  };
+  return { ...m, sectionIdsFor };
+});
+
 vi.mock('../../netlify/functions/_lib/postmark.js', async (importOriginal) => {
   const real = await importOriginal();
   return {
@@ -281,6 +294,121 @@ describe('custom-site-design-background runDesign', () => {
     expect(site.business_info.address).toBeUndefined();
     expect(site.business_info.extraFromEditor).toBe(1);
     expect(db.state.events.at(-1)).toEqual(expect.objectContaining({ type: 'design_ready', data: expect.objectContaining({ regenerated: true }) }));
+  });
+
+  describe('Before & After pairs', () => {
+    const IMG = 'https://x.supabase.co/storage/v1/object/public/site-images/s/';
+    const photo = (n) => `${PROJECT_ID}/photo/aaaaaaaa-bbbb-4ccc-8ddd-${String(n).padStart(12, '0')}.jpg`;
+    // Two complete pairs around a half-picked one, copied by the setup
+    // (generate: images + imported) to the keys the template reads.
+    const PAIRS = {
+      ...DESIGN,
+      templateId: 'detailing_sporty',
+      template: { label: 'Bold & Sporty', mood: 'bold' },
+      slots: {
+        ...DESIGN.slots,
+        beforeAfter: [
+          { before: photo(1), after: photo(2), caption: 'Paint correction on the hood' },
+          { before: photo(3), after: '', caption: '' },
+          { before: photo(4), after: photo(5), caption: '' },
+        ],
+      },
+      beforeAfter: { title: '', intro: 'Every pair is a car we did this year.' },
+      images: { ...DESIGN.images, baBefore0: `${IMG}b0.jpg`, baAfter0: `${IMG}a0.jpg`, baBefore1: `${IMG}b1.jpg`, baAfter1: `${IMG}a1.jpg` },
+      imported: { baBefore0: photo(1), baAfter0: photo(2), baBefore1: photo(4), baAfter1: photo(5) },
+      imagesChanged: ['baBefore0', 'baAfter0', 'baBefore1', 'baAfter1'],
+      beforeAfterChanged: true,
+    };
+    const PAIR_IMAGES = { baBefore0: `${IMG}b0.jpg`, baAfter0: `${IMG}a0.jpg`, baBefore1: `${IMG}b1.jpg`, baAfter1: `${IMG}a1.jpg` };
+    const run = (db) => runDesign({ db, client: fakeClient([ok()]), projectId: PROJECT_ID, startedAt: STARTED, adminUser: { id: 'admin-1' }, actor: 'a' });
+    // A site the editor already gave its own pairs.
+    const editorSite = (templateId = 'detailing_sporty') => ({
+      id: SITE_ID, user_id: 'admin-1', template_id: templateId, business_info: { businessName: 'Old' },
+      generated_content: {
+        headline: 'Old', beforeAfter: { title: 'Owner\'s heading', pairs: [{ caption: 'Owner\'s caption' }] },
+        _images: { logo: 'editor-logo.png', baBefore0: 'editor-b0.jpg', baAfter0: 'editor-a0.jpg' },
+      },
+    });
+
+    it('the first write puts the pairs on the site: their photos, captions and intro, no heading of ours', async () => {
+      const db = fakeDb({ projects: [project({ design: PAIRS })] });
+      expect((await run(db)).status).toBe(200);
+      const content = db.state.sites[0].generated_content;
+      expect(content.beforeAfter).toEqual({ intro: 'Every pair is a car we did this year.', pairs: [{ caption: 'Paint correction on the hood' }, {}] });
+      expect(content._images).toEqual({ ...DESIGN.images, ...PAIR_IMAGES });
+      // The changed mark is spent.
+      expect(db.state.projects[0].design.beforeAfterChanged).toBe(false);
+    });
+
+    it('a template without the section gets neither the copy nor the photos, and the mark waits for one with it', async () => {
+      const db = fakeDb({ projects: [project({ design: { ...PAIRS, templateId: 'mobile_chrome', leversChanged: ['layout'] } })] });
+      await run(db);
+      const content = db.state.sites[0].generated_content;
+      expect(content).not.toHaveProperty('beforeAfter');
+      expect(content._images).toEqual(DESIGN.images);
+      // The Studio's mark is spent, the pairs' isn't: they were never applied.
+      expect(db.state.projects[0].design.leversChanged).toEqual([]);
+      expect(db.state.projects[0].design.beforeAfterChanged).toBe(true);
+    });
+
+    it('a rewrite that keeps the site\'s pairs (none of the setup\'s copied) keeps the mark too', async () => {
+      const db = fakeDb({ projects: [project({ site_id: SITE_ID, design: { ...PAIRS, imported: {}, imagesChanged: [] } })], sites: [editorSite()] });
+      await run(db);
+      expect(db.state.sites[0].generated_content.beforeAfter).toEqual(editorSite().generated_content.beforeAfter);
+      expect(db.state.projects[0].design.beforeAfterChanged).toBe(true);
+    });
+
+    it('a photo copied from another upload than the pair names now stays off the site', async () => {
+      const db = fakeDb({ projects: [project({ design: { ...PAIRS, imported: { ...PAIRS.imported, baAfter0: photo(9) } } })] });
+      await run(db);
+      const content = db.state.sites[0].generated_content;
+      expect(content._images).not.toHaveProperty('baAfter0');
+      // Pair 1 still shows, in its place.
+      expect(content.beforeAfter.pairs).toEqual([{ caption: 'Paint correction on the hood' }, {}]);
+    });
+
+    it('an untouched rewrite keeps the editor\'s own pairs', async () => {
+      const db = fakeDb({
+        projects: [project({ site_id: SITE_ID, design: { ...PAIRS, imagesChanged: [], beforeAfterChanged: false } })],
+        sites: [editorSite()],
+      });
+      await run(db);
+      const content = db.state.sites[0].generated_content;
+      expect(content.headline).toBe('Austin\'s mobile shine');
+      expect(content.beforeAfter).toEqual(editorSite().generated_content.beforeAfter);
+      expect(content._images).toEqual(editorSite().generated_content._images);
+    });
+
+    it('a rewrite after the setup changed them replaces the site\'s set, then clears the mark', async () => {
+      const db = fakeDb({ projects: [project({ site_id: SITE_ID, design: { ...PAIRS, imagesChanged: [] } })], sites: [editorSite()] });
+      await run(db);
+      const content = db.state.sites[0].generated_content;
+      expect(content.beforeAfter).toEqual({ intro: 'Every pair is a car we did this year.', pairs: [{ caption: 'Paint correction on the hood' }, {}] });
+      expect(content._images).toEqual({ logo: 'editor-logo.png', ...PAIR_IMAGES });
+      expect(db.state.projects[0].design.beforeAfterChanged).toBe(false);
+    });
+
+    it('design-save keeps this project\'s pairs, and the stored ones for a page that sends none', async () => {
+      h.db = fakeDb({ projects: [project({ design_status: 'ready', site_id: SITE_ID, design: {} })] });
+      const other = '99999999-2222-4333-8444-555555555555/photo/aaaaaaaa-bbbb-4ccc-8ddd-000000000001.jpg';
+      const sent = { ...PAIRS, slots: { ...PAIRS.slots, beforeAfter: [...PAIRS.slots.beforeAfter, { before: other, after: photo(6), caption: 'x' }] } };
+      expect((await adminHandler(post({ action: 'design-save', id: PROJECT_ID, design: sent }))).statusCode).toBe(200);
+      const saved = () => h.db.state.projects[0].design;
+      expect(saved().slots.beforeAfter).toEqual([...PAIRS.slots.beforeAfter, { before: '', after: photo(6), caption: 'x' }]);
+      expect(saved().beforeAfter).toEqual({ title: '', intro: 'Every pair is a car we did this year.' });
+      expect(saved().beforeAfterChanged).toBe(true);
+      expect(saved().imported).toEqual(PAIRS.imported);
+      expect(saved().images).toEqual(PAIRS.images);
+      // A tab opened before the pairs existed sends none: they stay.
+      expect((await adminHandler(post({ action: 'design-save', id: PROJECT_ID, design: DESIGN }))).statusCode).toBe(200);
+      expect(saved().slots.beforeAfter).toHaveLength(4);
+      expect(saved().beforeAfter.intro).toBe('Every pair is a car we did this year.');
+      expect(saved().beforeAfterChanged).toBe(true);
+      // The page sends an empty list to clear them.
+      await adminHandler(post({ action: 'design-save', id: PROJECT_ID, design: { ...DESIGN, slots: { ...DESIGN.slots, beforeAfter: [] }, beforeAfter: { title: '', intro: '' }, beforeAfterChanged: true } }));
+      expect(saved().slots).not.toHaveProperty('beforeAfter');
+      expect(saved()).not.toHaveProperty('beforeAfter');
+    });
   });
 
   it('a refusal marks the run failed and creates nothing', async () => {

@@ -47,6 +47,39 @@ d.addEventListener('DOMContentLoaded',start);
 start();
 })();`;
 
+// Before & After sliders (kit/BeforeAfter.jsx). exportHtml.js adds this
+// after SITE_RUNTIME_JS only to a page that has one (a range input with
+// data-acg-ba-range), so every other page stays exactly as it was and the
+// runtime above keeps its 2 KB budget. Its listeners sit on document
+// (delegation), so it needs no init and can run from <head>:
+//   - input on a [data-acg-ba-range] sets --acg-ba (the divider) to its
+//     value% on the closest [data-acg-ba] figure;
+//   - a click on [data-acg-ba-prev] / [data-acg-ba-next] scrolls the
+//     [data-acg-ba-track] of its [data-acg-ba-slider] one slide back / on,
+//     wrapping round at the ends (the band's CSS makes it smooth where
+//     motion is allowed);
+//   - a track's scroll (captured: scroll events do not bubble) writes
+//     "02 / 03" into the slider's [data-acg-ba-count].
+// Slides are the track's children, each as wide as the track. Fails open:
+// without it, or on any error, every pair stays split 50/50 and the track
+// still swipes. The editor preview's twin is beforeAfterPreview.js.
+export const SITE_BA_JS = `(function(){
+var d=document;
+function pad(n){return (n<10?'0':'')+n;}
+function step(w,k){var r=w&&w.querySelector('[data-acg-ba-track]'),c,n,x,i;if(!r)return;
+n=r.children.length;x=r.clientWidth;if(!n||!x)return;
+i=Math.min(Math.round(r.scrollLeft/x),n-1);
+if(k){r.scrollLeft=(i+k+n)%n*x;return;}
+c=w.querySelector('[data-acg-ba-count]');if(c)c.textContent=pad(i+1)+' / '+pad(n);}
+d.addEventListener('input',function(e){var t=e.target,f;
+if(t&&t.closest&&t.hasAttribute('data-acg-ba-range')&&(f=t.closest('[data-acg-ba]')))f.style.setProperty('--acg-ba',t.value+'%');});
+d.addEventListener('click',function(e){var t=e.target,b;if(!t||!t.closest)return;
+b=t.closest('[data-acg-ba-prev],[data-acg-ba-next]');
+if(b)step(b.closest('[data-acg-ba-slider]'),b.hasAttribute('data-acg-ba-next')?1:-1);});
+d.addEventListener('scroll',function(e){var t=e.target;
+if(t&&t.closest&&t.hasAttribute('data-acg-ba-track'))step(t.closest('[data-acg-ba-slider]'),0);},true);
+})();`;
+
 // Reveal styles apply only on screens, when JS ran (html.acg-js) AND the
 // visitor has not asked for reduced motion, so content is never hidden
 // without the runtime (or on paper).

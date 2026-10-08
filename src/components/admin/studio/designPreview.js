@@ -18,7 +18,8 @@ import { exportHtmlString } from '../../../lib/exportHtml.js';
 import { TEMPLATES } from '../../../data/templates.js';
 import { COLOR_ROLES, leverPatch } from '../../../lib/designLevers.js';
 import {
-  DESIGN_OWNED_INFO, fillPackageDescriptions, sanitizeDesign, schemaTypeFor, siteBusinessInfo,
+  DESIGN_OWNED_INFO, beforeAfterCopy, beforeAfterSlots, fillPackageDescriptions, isBeforeAfterKey, sanitizeDesign, schemaTypeFor,
+  siteBusinessInfo,
 } from '../../../lib/customSiteDesign.js';
 
 // Marks every placeholder paragraph the preview invents before Claude has
@@ -85,15 +86,11 @@ export function sampleCopy(businessInfo) {
   };
 }
 
-// The image map for the preview from the setup's photo picks (the slots
-// designFromIntake / DesignSetup keep: asset paths). A slot already copied
+// Image key → asset path picks as preview links. A pick already copied
 // into the site from the same upload shows that public URL; otherwise the
 // upload's signed link from project.files (it expires an hour after the
-// project was loaded). Keys follow the run: logo, hero, about, gallery0..11.
-export function slotImages({ slots, files, images, imported } = {}) {
-  const s = slots && typeof slots === 'object' ? slots : {};
-  const wanted = { logo: s.logo, hero: s.hero, about: s.about };
-  (Array.isArray(s.gallery) ? s.gallery : []).slice(0, 12).forEach((p, i) => { wanted[`gallery${i}`] = p; });
+// project was loaded). Picks without either are left out.
+function pickLinks(wanted, { files, images, imported } = {}) {
   const signed = new Map((Array.isArray(files) ? files : [])
     .filter((f) => f && typeof f.path === 'string' && typeof f.url === 'string' && f.url)
     .map((f) => [f.path, f.url]));
@@ -104,6 +101,34 @@ export function slotImages({ slots, files, images, imported } = {}) {
     if (url) out[key] = url;
   }
   return out;
+}
+
+// The image map for the preview from the setup's photo picks (the slots
+// designFromIntake / DesignSetup keep: asset paths), linked by pickLinks.
+// Keys follow the run: logo, hero, about, gallery0..11. The Before & After
+// pairs come separately (previewBeforeAfter): a write applies them as one
+// unit with their captions, or not at all.
+export function slotImages({ slots, files, images, imported } = {}) {
+  const s = slots && typeof slots === 'object' ? slots : {};
+  const wanted = { logo: s.logo, hero: s.hero, about: s.about };
+  (Array.isArray(s.gallery) ? s.gallery : []).slice(0, 12).forEach((p, i) => { wanted[`gallery${i}`] = p; });
+  return pickLinks(wanted, { files, images, imported });
+}
+
+// The setup's Before & After as the preview shows it, for buildPreviewInput
+// (`beforeAfter`): { images, copy }. `images` are the complete pairs' photos
+// under the run's keys (baBefore{i} / baAfter{i}, linked like the gallery's),
+// `copy` is copy.beforeAfter as the run writes it from those photos and the
+// typed heading, intro and captions (customSiteDesign.js beforeAfterCopy),
+// or null when the section stays off (no complete pair with both links, or
+// a template without the section).
+//   templateId  the setup's template
+//   slots       the setup's slots (slots.beforeAfter: the pairs)
+//   text        { title, intro } as typed
+//   files, images, imported   as for slotImages
+export function previewBeforeAfter({ templateId, slots, text, files, images, imported } = {}) {
+  const links = pickLinks(beforeAfterSlots(slots), { files, images, imported });
+  return { images: links, copy: beforeAfterCopy({ templateId, slots, beforeAfter: text }, links) };
 }
 
 // Everything exportHtmlString needs to render the configured site:
@@ -120,10 +145,16 @@ export function slotImages({ slots, files, images, imported } = {}) {
 //   projectId     sets customProjectId like the run (optional)
 //   existingInfo  the site's current business_info for a rewrite (optional):
 //                 like rewriteSite, keys the Design step doesn't own stay
+//   beforeAfter   the setup's Before & After when the write applies it
+//                 (previewBeforeAfter(): { images, copy }): its photos
+//                 replace every baBefore/baAfter image and its copy becomes
+//                 copy.beforeAfter (null: the section off), as rewriteSite
+//                 replaces the site's set. Left out (a rewrite that keeps
+//                 the site's own pairs), `copy` and `images` keep theirs.
 // Returns { templateId, businessInfo, generatedCopy, templateMeta, images,
 // customColors, customFonts, sample } or null.
 export function buildPreviewInput({
-  templateId, businessInfo, copy, images, customColors, customFonts, levers, projectId = '', existingInfo = null,
+  templateId, businessInfo, copy, images, customColors, customFonts, levers, projectId = '', existingInfo = null, beforeAfter,
 } = {}) {
   // Own keys only: TEMPLATES['constructor'] is Object's, and would get as far
   // as the renderer before failing.
@@ -145,6 +176,11 @@ export function buildPreviewInput({
   const base = sample ? { ...(copy && typeof copy === 'object' ? copy : {}), ...sampleCopy(design.businessInfo) } : copy;
   const generatedCopy = { ...base, ...patch.copy };
   if (!sample) info = fillPackageDescriptions(info, generatedCopy);
+  const pairs = beforeAfter && typeof beforeAfter === 'object' ? beforeAfter : null;
+  if (pairs) {
+    if (pairs.copy && typeof pairs.copy === 'object') generatedCopy.beforeAfter = pairs.copy;
+    else delete generatedCopy.beforeAfter;
+  }
 
   const colors = {};
   for (const role of COLOR_ROLES) {
@@ -160,7 +196,10 @@ export function buildPreviewInput({
 
   const imageMap = {};
   for (const [k, v] of Object.entries(images && typeof images === 'object' ? images : {})) {
-    if (typeof v === 'string' && v) imageMap[k] = v;
+    if (typeof v === 'string' && v && !(pairs && isBeforeAfterKey(k))) imageMap[k] = v;
+  }
+  for (const [k, v] of Object.entries(pairs?.images && typeof pairs.images === 'object' ? pairs.images : {})) {
+    if (isBeforeAfterKey(k) && typeof v === 'string' && v) imageMap[k] = v;
   }
 
   return {

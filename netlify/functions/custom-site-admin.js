@@ -66,7 +66,9 @@ import { customSiteDraft, customSiteHandover, customSiteLive, customSiteWelcome 
 import {
   ASSET_BUCKET, ASSET_KINDS, STAGE_IDS, assetPath, fullName, isEmail, safeHref, sanitizeForm, stageAfterInvite,
 } from '../../src/lib/customSiteForm.js';
-import { designProblems, isRunStale, sanitizeDesign, sanitizeReference, sanitizeReferenceSites } from '../../src/lib/customSiteDesign.js';
+import {
+  designProblems, isRunStale, sanitizeBeforeAfterPairs, sanitizeBeforeAfterText, sanitizeDesign, sanitizeReference, sanitizeReferenceSites,
+} from '../../src/lib/customSiteDesign.js';
 import { REFERENCE_SHOT_MAX_BYTES, checkReferenceGroup, checkReferenceShot, referenceShotPath } from '../../src/lib/designSuggest.js';
 import { applyLaunchPatch } from '../../src/lib/customSiteLaunch.js';
 import { KIT_KEYS } from '../../src/lib/launchKit.js';
@@ -572,6 +574,19 @@ export const handler = async (event) => {
           // The same for the sites the team added by address: a tab opened
           // before that list existed sends none, and must not empty it.
           if (sent.referenceSites === undefined && prev.referenceSites !== undefined) next.referenceSites = sanitizeReferenceSites(prev.referenceSites);
+          // And for the Before & After pairs, their heading and intro, and
+          // the mark that a run still has to apply them. The page always
+          // sends its pairs (an empty list clears them).
+          const sentSlots = sent.slots && typeof sent.slots === 'object' ? sent.slots : {};
+          if (sentSlots.beforeAfter === undefined) {
+            const pairs = sanitizeBeforeAfterPairs(prev.slots?.beforeAfter, { projectId: current.id });
+            if (pairs.length) next.slots = { ...next.slots, beforeAfter: pairs };
+          }
+          if (sent.beforeAfter === undefined) {
+            const text = sanitizeBeforeAfterText(prev.beforeAfter);
+            if (text) next.beforeAfter = text;
+          }
+          if (sent.beforeAfterChanged === undefined && prev.beforeAfterChanged === true) next.beforeAfterChanged = true;
           // A site, once created, keeps its id.
           if (current.site_id) next.siteId = current.site_id;
           let q = db.from(TABLE).update({ design: next }).eq('id', current.id);

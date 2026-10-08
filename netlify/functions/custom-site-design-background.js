@@ -19,7 +19,8 @@ import { requireSuperAdmin } from './_lib/custom-site-auth.js';
 import { requestDesignCopy } from './_lib/custom-site-design-ai.js';
 import { FIXED_HERO_BUTTONS } from './_lib/copyGeneration.js';
 import {
-  buildDesignPrompt, designProblems, fillPackageDescriptions, normalizeDesignCopy, rewriteSite, siteBusinessInfo,
+  appliesBeforeAfter, beforeAfterCopy, buildDesignPrompt, designProblems, designSiteImages, fillPackageDescriptions, hasBeforeAfter,
+  normalizeDesignCopy, rewriteSite, siteBusinessInfo,
 } from '../../src/lib/customSiteDesign.js';
 import { leverPatch } from '../../src/lib/designLevers.js';
 
@@ -74,13 +75,19 @@ export async function runDesign({ db, client, projectId, startedAt, adminUser, a
     const { raw, model } = await requestDesignCopy(client, prompt);
     const copy = normalizeDesignCopy(raw, design.businessInfo);
     const businessInfo = fillPackageDescriptions(siteBusinessInfo(design, project.id), copy);
-    const images = design.images || {};
+    // The photos the setup copied into the site's images; the Before &
+    // After pairs' only on a template with that section.
+    const images = designSiteImages(design);
     // The Design Studio's settings (palette, fonts, sections, layouts) on top
     // of the brand accent; the same patch the setup's preview shows.
     const patch = leverPatch(design.levers, design.templateId);
     const colors = { ...(design.customColors || {}), ...patch.colors };
 
     const { data: existing } = await db.from('sites').select('id, user_id, template_id, business_info, generated_content').eq('id', design.siteId).maybeSingle();
+    // Did this write apply the setup's Before & After? Only then is its
+    // "changed" mark spent; otherwise (a template without the section) it
+    // stays for the next write on one with it.
+    const pairsApplied = existing ? appliesBeforeAfter(design) : hasBeforeAfter(design.templateId);
     if (existing) {
       // Rewriting: new copy and business facts; photos and colors only
       // where the setup changed them (rewriteSite).
@@ -93,6 +100,10 @@ export async function runDesign({ db, client, projectId, startedAt, adminUser, a
       if (error) throw new Error(`Could not update the site: ${error.message}`);
     } else {
       const generatedContent = { ...copy, ...patch.copy };
+      // Before & After: the admin's pairs, captions, heading and intro (no
+      // words of Claude's), on only with a pair whose two photos copied.
+      const beforeAfter = beforeAfterCopy(design, images);
+      if (beforeAfter) generatedContent.beforeAfter = beforeAfter;
       if (Object.keys(images).length) generatedContent._images = images;
       if (Object.keys(colors).length) generatedContent._customColors = colors;
       if (Object.keys(patch.fonts).length) generatedContent._customFonts = patch.fonts;
@@ -115,7 +126,8 @@ export async function runDesign({ db, client, projectId, startedAt, adminUser, a
       design_finished_at: now(),
     }).eq('id', project.id);
     await logEvent(db, project.id, 'design_ready', { model, regenerated: !!existing }, actor);
-    if (Array.isArray(design.leversChanged) ? design.leversChanged.length : design.leversChanged) await clearLeversChanged(db, project.id);
+    const spent = { levers: leversPending(design), beforeAfter: pairsApplied && design.beforeAfterChanged === true };
+    if (spent.levers || spent.beforeAfter) await clearAppliedChanges(db, project.id, spent);
     return { status: 200 };
   } catch (err) {
     console.error('[custom-site-design] failed:', err?.message || err);
@@ -124,16 +136,27 @@ export async function runDesign({ db, client, projectId, startedAt, adminUser, a
   }
 }
 
-// This write applied the Design Studio settings: clear the "changed" flag
-// so a later rewrite keeps the editor's own changes to colors, fonts and
-// sections. Guarded by updated_at like every other design write.
-async function clearLeversChanged(db, id) {
+// Does the design mark Design Studio groups as changed?
+function leversPending(d) {
+  return Array.isArray(d?.leversChanged) ? d.leversChanged.length > 0 : !!d?.leversChanged;
+}
+
+// This write applied the Design Studio settings and/or the Before & After
+// pairs (`spent`: { levers, beforeAfter }): clear those "changed" marks so
+// a later rewrite keeps the editor's own changes to colors, fonts,
+// sections and pairs. Guarded by updated_at like every other design write.
+async function clearAppliedChanges(db, id, spent) {
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const { data: row } = await db.from(TABLE).select('design, updated_at').eq('id', id).maybeSingle();
     const d = row?.design;
-    const changed = Array.isArray(d?.leversChanged) ? d.leversChanged.length > 0 : !!d?.leversChanged;
-    if (!d || typeof d !== 'object' || !changed) return;
-    let q = db.from(TABLE).update({ design: { ...d, leversChanged: [] } }).eq('id', id);
+    if (!d || typeof d !== 'object') return;
+    const levers = spent.levers && leversPending(d);
+    const pairs = spent.beforeAfter && d.beforeAfterChanged === true;
+    if (!levers && !pairs) return;
+    const next = { ...d };
+    if (levers) next.leversChanged = [];
+    if (pairs) next.beforeAfterChanged = false;
+    let q = db.from(TABLE).update({ design: next }).eq('id', id);
     if (row.updated_at) q = q.eq('updated_at', row.updated_at);
     const { data } = await q.select('id').maybeSingle();
     if (data) return;

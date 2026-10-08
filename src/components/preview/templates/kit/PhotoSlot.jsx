@@ -12,6 +12,8 @@ export const PHOTO_HINTS = {
   service: 'Add a package photo: Edit > Services > Package details > Package Photo',
   featured: 'Add a photo: Edit > Featured Service > Featured Photo',
   cta: 'Add a background photo: Edit > Contact > CTA Background',
+  baBefore: 'Add the before photo: Edit > Before & After',
+  baAfter: 'Add the after photo: Edit > Before & After',
 };
 
 const DEFAULT_HINT = 'Add a photo from the Edit panel (Hero, About or Gallery tab)';
@@ -44,8 +46,8 @@ const placeholderStyle = {
 // `style` sizes the slot in both states (width/height/aspectRatio/radius);
 // `imgStyle` adds img-only styles (objectPosition, filter, ...).
 // `slot` ('hero' | 'about' | 'logo' | 'gallery' | 'shade' | 'product' |
-// 'service' | 'featured' | 'cta') picks a PHOTO_HINTS entry when no `hint`
-// is given.
+// 'service' | 'featured' | 'cta' | 'baBefore' | 'baAfter') picks a
+// PHOTO_HINTS entry when no `hint` is given.
 export function PhotoSlot({
   src,
   alt = '',

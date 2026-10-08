@@ -18,7 +18,7 @@ vi.mock('../data/templates.js', async (importOriginal) => {
 
 const { exportHtmlString } = await import('./exportHtml.js');
 const { buildTemplateMeta } = await import('./siteRender.js');
-const { SITE_RUNTIME_JS, SITE_CQ_FALLBACK_JS, CQ_REWRITE_FN } = await import('./siteRuntime.js');
+const { SITE_RUNTIME_JS, SITE_CQ_FALLBACK_JS, CQ_REWRITE_FN, SITE_BA_JS } = await import('./siteRuntime.js');
 const { LEGACY_EXPORT_FAMILIES } = await import('./fontCatalog.js');
 const { TEMPLATE_COMPONENT_MAP } = await import('../data/templates.js');
 const { full, custom, FIXTURES } = await import('../components/preview/templates/__fixtures__/businesses.js');
@@ -95,6 +95,30 @@ describe('exportHtmlString', () => {
       expect(at).toBeLessThan(html.indexOf(`<script>${SITE_RUNTIME_JS}</script>`));
       expect(at).toBeLessThan(html.indexOf('</head>'));
     }
+  });
+
+  it('adds the Before & After script only to a page that shows the band', async () => {
+    const fx = FIXTURES.features;
+    const meta = buildTemplateMeta('detailing_sporty');
+    const tag = `<script>${SITE_BA_JS}</script>`;
+    const head = (h) => h.slice(0, h.indexOf('</head>'));
+    const withBand = await exportHtmlString('detailing_sporty', fx.businessInfo, fx.generatedCopy, meta, fx.images);
+    expect(withBand.split(tag)).toHaveLength(2);
+    expect(withBand.indexOf(tag)).toBeGreaterThan(withBand.indexOf(`<script>${SITE_RUNTIME_JS}</script>`));
+    expect(withBand.indexOf(tag)).toBeLessThan(withBand.indexOf('</head>'));
+    // Opt-in: without copy.beforeAfter the page carries no script and its
+    // <head> is otherwise the same.
+    const { beforeAfter: _ba, ...copy } = fx.generatedCopy;
+    const without = await exportHtmlString('detailing_sporty', fx.businessInfo, copy, meta, fx.images);
+    expect(without).not.toContain(SITE_BA_JS);
+    expect(without).not.toContain('data-acg-ba');
+    expect(head(withBand).replace(`\n  ${tag}`, '')).toBe(head(without));
+    // Owner text that spells the input is escaped text, not the band.
+    const spoof = await exportHtmlString('detailing_sporty', fx.businessInfo, { ...copy, subheadline: '<input data-acg-ba-range="">' }, meta, fx.images);
+    expect(spoof).not.toContain(SITE_BA_JS);
+    // Pages of the other templates never get it.
+    const other = await exportHtmlString('mobile_chrome', fx.businessInfo, fx.generatedCopy, buildTemplateMeta('mobile_chrome'), fx.images);
+    expect(other).not.toContain(SITE_BA_JS);
   });
 });
 

@@ -23,6 +23,8 @@ export const FROM_LABELS = {
   'servicesSection.intro': 'Services > Services Intro',
   ctaHeadline: 'Contact > Headline',
   ctaSubtext: 'Contact > Subtext',
+  'beforeAfter.title': 'Before & After > Heading',
+  'beforeAfter.intro': 'Before & After > Intro line',
 };
 
 // The keys that own a section's title / intro whatever the template (the

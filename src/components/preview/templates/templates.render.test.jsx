@@ -36,7 +36,7 @@ import * as kitSample from './__fixtures__/KitSampleTemplate.jsx';
 // are appended to its row and frozen from then on.
 const DEFAULT_IDS = ['hero', 'statsBar', 'services', 'about', 'gallery', 'testimonials', 'cta', 'awards'];
 const SAVED_SECTION_IDS = {
-  detailing_sporty: [...DEFAULT_IDS, 'brands', 'featured'],
+  detailing_sporty: [...DEFAULT_IDS, 'brands', 'featured', 'beforeAfter'],
   detailing_coastal: DEFAULT_IDS,
   detailing_autosync_dark: DEFAULT_IDS,
   detailing_autosync_white: DEFAULT_IDS,

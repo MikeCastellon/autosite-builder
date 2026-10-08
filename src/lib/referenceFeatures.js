@@ -76,6 +76,13 @@ const SUPPORT = {
   // Every theme-ready template's nav is position: sticky at the top.
   'sticky-header': { covered: () => 'every template we offer keeps its nav on top as the page scrolls' },
   gallery: { sections: ['gallery'], have: (t) => `its ${sectionLabel(t, 'gallery')} section` },
+  // The Before & After section (Bold & Sporty first): pairs of their own
+  // photos the Design step picks. However the template lays a pair out, the
+  // line names our section, not the reference's widget (a slider or not).
+  'before-after': {
+    sections: ['beforeAfter'],
+    have: (t) => `its ${sectionLabel(t, 'beforeAfter')} section, with pairs of their own photos`,
+  },
   carousel: {
     templates: [...SWIPE_GALLERY, ...SLIDING_REVIEWS],
     have: (t) => (SLIDING_REVIEWS.includes(t) ? 'its reviews slide sideways' : 'its gallery becomes a sideways swipe row once it has enough photos'),

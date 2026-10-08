@@ -13,6 +13,7 @@ import { HeroOffer, heroOfferCss, heroOfferLockCss, HERO_OFFER_LABELS } from './
 import { PackageBadge, PackagePhoto, PackageIncludes, packageDetailsCss } from './PackageDetails.jsx';
 import { FeaturedBand, featuredBandCss } from './FeaturedBand.jsx';
 import { MakesBand, makesBandCss } from './MakesBand.jsx';
+import { beforeAfterCss } from './BeforeAfter.jsx';
 import { EditorModeProvider } from './EditorMode.jsx';
 import { heroOfferOf, makesEyebrowDefault } from './features.js';
 import { telHref, phoneDisplay, businessKindOf, serviceIncludes } from './content.js';
@@ -286,6 +287,7 @@ describe.each([
   ['packageDetailsCss', 'xx-pk', packageDetailsCss],
   ['featuredBandCss', 'xx-ft', featuredBandCss],
   ['makesBandCss', 'xx-mk', makesBandCss],
+  ['beforeAfterCss', 'xx-ba', beforeAfterCss],
 ])('%s hygiene', (_, ns, gen) => {
   const css = gen(ns);
   const rules = cssRules(css);
@@ -322,7 +324,9 @@ describe.each([
       if (r.at.some((a) => a.startsWith('@keyframes'))) continue;
       for (const m of r.selector.matchAll(/[.#](-?[_a-zA-Z][\w-]*)/g)) expect(m[1].startsWith(`${ns}-`), `${r.selector}`).toBe(true);
     }
-    for (const m of css.matchAll(/var\(--([\w-]+)/g)) expect(m[1].startsWith(`${ns}-`), m[0]).toBe(true);
+    // --acg-* belongs to the page runtime (--acg-ba: the Before & After
+    // divider it moves).
+    for (const m of css.matchAll(/var\(--([\w-]+)/g)) expect(m[1].startsWith(`${ns}-`) || m[1].startsWith('acg-'), m[0]).toBe(true);
     for (const m of css.matchAll(/@keyframes ([\w-]+)/g)) expect(m[1].startsWith(`${ns}-`)).toBe(true);
   });
 });

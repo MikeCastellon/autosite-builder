@@ -127,7 +127,7 @@ describe('section manifests', () => {
 
   it('headingFields name real sections, fields and owning copy keys', async () => {
     const FIELDS = ['eyebrow', 'title', 'accent', 'intro'];
-    const OWNERS = ['headline', 'servicesSection.title', 'servicesSection.intro', 'ctaHeadline', 'ctaSubtext'];
+    const OWNERS = ['headline', 'servicesSection.title', 'servicesSection.intro', 'ctaHeadline', 'ctaSubtext', 'beforeAfter.title', 'beforeAfter.intro'];
     let seen = 0;
     for (const id of IDS) {
       const mod = await TEMPLATE_COMPONENT_MAP[id]();
@@ -161,7 +161,7 @@ describe('section manifests', () => {
     expect(missing.footerSpec).toBe(null);
     expect(missing.addedSections).toEqual([]);
     const sporty = await loadTemplateInfo('detailing_sporty');
-    expect(sporty.addedSections).toEqual(['brands', 'featured']);
+    expect(sporty.addedSections).toEqual(['brands', 'featured', 'beforeAfter']);
     expect(Array.isArray(sporty.footerSpec?.columns)).toBe(true);
     expect((await loadTemplateInfo('carwash_bubble')).footerSpec).toBe(null);
   });
@@ -225,7 +225,7 @@ describe('editorTabs', () => {
   const ids = (templateId, opts) => editorTabs(templateId, opts).map((t) => t.id);
 
   it('adds template-specific tabs only where the template reads them', () => {
-    expect(ids('detailing_sporty')).toEqual(['visibility', 'hero', 'headings', 'services', 'featured', 'makes', 'about', 'gallery', 'testimonials', 'google', 'contact', 'colors', 'footer']);
+    expect(ids('detailing_sporty')).toEqual(['visibility', 'hero', 'headings', 'services', 'featured', 'makes', 'about', 'gallery', 'beforeAfter', 'testimonials', 'google', 'contact', 'colors', 'footer']);
     expect(ids('mechanic_garage')).toEqual(['visibility', 'hero', 'services', 'about', 'gallery', 'testimonials', 'contact', 'colors', 'footer']);
     expect(ids('tint_obsidian')).toEqual(expect.arrayContaining(['howItWorks', 'filmBrands', 'shadeGuide']));
     expect(ids('tint_obsidian')).not.toContain('whyUs');
