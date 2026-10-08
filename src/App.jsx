@@ -32,6 +32,7 @@ import { saveSite } from './lib/saveSite.js';
 import { parkEditorState, demoEditorState, stateAfterDemo, DEMO_BACK_LABELS } from './lib/demoPreview.js';
 import { publishSite } from './lib/publishSite.js';
 import { buildTemplateMeta, unpackGeneratedContent, withWidgetKeys } from './lib/siteRender.js';
+import { builtForCustomer, freeSiteBusinessInfo } from './lib/freeSiteHandover.js';
 import { supabase, isImpersonationTab } from './lib/supabase.js';
 import { useAlert } from './components/ui/AlertProvider.jsx';
 import { isEffectiveSchedulerActive } from './lib/subscriptionGating.js';
@@ -79,6 +80,8 @@ export default function App() {
   // A custom-website project's site opened in the editor or its booking
   // settings: Back returns to that project (Admin > Custom websites).
   const [returnToProject, setReturnToProject] = useState(null);
+  // An editor opened from Admin > Free websites: Back returns there.
+  const [returnToFreeSites, setReturnToFreeSites] = useState(false);
   const [customSitesProjectId, setCustomSitesProjectId] = useState(landing.projectId);
   const [selectedCustomerKey, setSelectedCustomerKey] = useState(null);
   const [showResetPassword, setShowResetPassword] = useState(false);
@@ -136,12 +139,13 @@ export default function App() {
   }, [draftKey, draftRestored, businessType, businessInfo, selectedTemplate, step, siteId]);
 
   // Ensure Google Reviews widget key is in editedCopy when user is signed in.
-  // Not on a site built for a custom-website project: the signed-in admin's
-  // own reviews widget would end up on the customer's site.
+  // Not on a site the team builds for a customer (a custom or free website):
+  // the signed-in admin's own reviews widget would end up on the customer's
+  // site.
   useEffect(() => {
     if (!session?.user?.id || !editedCopy) return;
     if (editedCopy.googleWidgetKey) return;
-    if (businessInfo?.customProjectId) return;
+    if (builtForCustomer(businessInfo)) return;
     (async () => {
       try {
         const { data: widgets } = await supabase
@@ -159,7 +163,7 @@ export default function App() {
         }
       } catch (e) { /* ignore */ }
     })();
-  }, [session?.user?.id, editedCopy?.googleWidgetKey, businessInfo?.customProjectId]); // eslint-disable-line
+  }, [session?.user?.id, editedCopy?.googleWidgetKey, businessInfo?.customProjectId, businessInfo?.freeSiteId]); // eslint-disable-line
 
   // Demo preview: a template with placeholder data, no AI call needed. It
   // borrows the editor's state slots, so entering it parks the real editor
@@ -259,8 +263,9 @@ export default function App() {
     // if (businessInfo.instagramWidgetKey) merged.instagramWidgetKey = businessInfo.instagramWidgetKey;
     if (businessInfo.googleWidgetKey) merged.googleWidgetKey = businessInfo.googleWidgetKey;
 
-    // If still missing, fetch from Supabase
-    if (session?.user?.id && (!merged.instagramWidgetKey || !merged.googleWidgetKey)) {
+    // If still missing, fetch from Supabase. Never for a site the team
+    // builds for a customer: those are the admin's own widgets.
+    if (session?.user?.id && !builtForCustomer(businessInfo) && (!merged.instagramWidgetKey || !merged.googleWidgetKey)) {
       try {
         const { data: widgets } = await supabase
           .from('widget_configs')
@@ -513,6 +518,10 @@ export default function App() {
     setReturnToProject(null);
     openAdmin('custom-sites', { projectId });
   };
+  const backToFreeSites = () => {
+    setReturnToFreeSites(false);
+    openAdmin('free-sites');
+  };
 
   // Single source of truth for the business header navigation, spread into
   // <AppShell> so every customer page renders the identical nav. The active
@@ -532,9 +541,11 @@ export default function App() {
     onSignOut: handleSignOut,
   };
 
-  // `returnTo`: a custom-website project id when opened from that project.
-  const handleEditSite = async (site, { returnTo = null } = {}) => {
+  // `returnTo`: a custom-website project id when opened from that project;
+  // `toFreeSites`: opened from Admin > Free websites.
+  const handleEditSite = async (site, { returnTo = null, toFreeSites = false } = {}) => {
     setReturnToProject(returnTo);
+    setReturnToFreeSites(toFreeSites);
     setSiteId(site.id);
     setBusinessType(site.business_info?.businessType || null);
     setBusinessInfo(site.business_info || {});
@@ -554,9 +565,9 @@ export default function App() {
       customColors: savedCustomColors,
       customFonts: savedCustomFonts,
     } = unpackGeneratedContent(fullGenerated);
-    // Sites built for a custom-website project never take the signed-in
+    // Sites the team builds for a customer never take the signed-in
     // admin's widget keys (see the effect above).
-    const copy = site.business_info?.customProjectId
+    const copy = builtForCustomer(site.business_info)
       ? storedCopy
       : await withWidgetKeys(storedCopy, session?.user?.id, supabase);
 
@@ -811,6 +822,27 @@ export default function App() {
             setView('booking-settings');
           }}
           onOpenDemo={() => handleDashboardDemo('admin')}
+          onBuildFreeSite={(row) => {
+            // The normal builder from step 1, with what the admin already
+            // knows and the row's marker: the first save links the site to
+            // the row (free-site-admin), and the builder's own widgets stay
+            // off it.
+            handleStartOver();
+            setBusinessInfo(freeSiteBusinessInfo(row));
+            setView('wizard');
+            window.scrollTo(0, 0);
+          }}
+          onOpenFreeSiteEditor={async (siteId) => {
+            const { data: site, error: siteError } = await supabase.from('sites').select('*').eq('id', siteId).maybeSingle();
+            if (siteError || !site) { toast('Could not open the site', 'error'); return; }
+            // Publishing from this session uses the signed-in admin's
+            // account: someone else's site is edited as them (View as user).
+            if (site.user_id !== session?.user?.id) {
+              toast('This site is in another account. Ask the team member who built it, or use Admin › Customers › View as user.', 'error');
+              return;
+            }
+            await handleEditSite(site, { toFreeSites: true });
+          }}
         />
       </AdminShell>
     );
@@ -984,14 +1016,17 @@ export default function App() {
             ? handleBackFromDemo
             : editingExistingSite && returnToProject
               ? backToProject
-              : editingExistingSite
-                ? () => setView('dashboard')
-                : () => goTo(3)
+              : editingExistingSite && returnToFreeSites
+                ? backToFreeSites
+                : editingExistingSite
+                  ? () => setView('dashboard')
+                  : () => goTo(3)
         }
         backLabel={isDemoPreview
           ? DEMO_BACK_LABELS[demoReturn?.returnTo] || 'Back to Templates'
           : editingExistingSite && returnToProject ? 'Back to project'
-            : editingExistingSite ? 'Back to Sites' : 'Back to Templates'}
+            : editingExistingSite && returnToFreeSites ? 'Back to Free websites'
+              : editingExistingSite ? 'Back to Sites' : 'Back to Templates'}
         onExport={isDemoPreview || editingExistingSite ? null : () => goTo(6)}
         onSaveDraft={!isDemoPreview && editingExistingSite ? handleSaveDraft : null}
         onPublish={!isDemoPreview && editingExistingSite ? handlePublishFromEditor : null}

@@ -2,6 +2,7 @@ import { generateSlug } from './publishUtils.js';
 import { exportHtmlString } from './exportHtml.js';
 import { supabase } from './supabase.js';
 import { buildBookingPageHtml } from './bookingPageHtml.js';
+import { publishesAsPro } from './freeSiteHandover.js';
 
 /**
  * Publish a site by uploading HTML to Cloudflare R2.
@@ -11,7 +12,10 @@ export async function publishSite({ siteId, businessInfo, generatedCopy, templat
   // Only a preference: publish-site keeps a site's existing slug and picks
   // a free variant if another business already has this one.
   const slug = generateSlug(businessInfo.businessName);
-  const htmlContent = await exportHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, selectedWidgetIds || [], siteId, isPro);
+  // A free website built in a team member's account publishes on the free
+  // plan it is going to (freeSiteHandover.js).
+  const pro = publishesAsPro(businessInfo, isPro);
+  const htmlContent = await exportHtmlString(templateId, businessInfo, generatedCopy, templateMeta, images, selectedWidgetIds || [], siteId, pro);
 
   const { data: sessionData } = await supabase.auth.getSession();
   const token = sessionData?.session?.access_token;

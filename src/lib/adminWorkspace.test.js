@@ -29,6 +29,7 @@ describe('ADMIN_SECTIONS', () => {
     expect(ADMIN_SECTIONS.map((s) => [s.id, s.label])).toEqual([
       ['dashboard', 'Dashboard'],
       ['custom-sites', 'Custom websites'],
+      ['free-sites', 'Free websites'],
       ['accounts', 'Customers'],
       ['pipeline', 'Pipeline'],
       ['leads', 'Leads'],

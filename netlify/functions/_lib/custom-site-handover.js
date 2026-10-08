@@ -1,10 +1,16 @@
 import crypto from 'node:crypto';
 import { isEffectiveSchedulerActive } from './subscription-gating.js';
 
-// Handing a custom website to the customer's own account. The site was built
-// under the admin's account (so drafts could be published); here it moves to
-// the customer, with anything already tied to it, and the customer gets Pro
-// when the deal includes it (bookings switch off on a free account).
+// Handing a site the team built to the customer's own account: a custom
+// website (custom-site-admin) or a free website (free-site-admin). The site
+// was built under the admin's account (so drafts could be published); here
+// it moves to the customer, with anything already tied to it, and the
+// customer gets Pro when the deal includes it (bookings switch off on a free
+// account).
+//
+// `project` is a custom_site_projects or free_site_handovers row: both carry
+// site_id, client_email, client_first_name, client_last_name, client_phone
+// and business_name.
 //
 // `db` is a service-role Supabase client (auth.admin is needed to create an
 // account). Tables keyed by owner that follow the site: bookings, inquiries
@@ -39,12 +45,16 @@ export async function findCustomerAccount(db, email) {
   };
 }
 
-// Moves the project's site to the customer. Returns { userId, newAccount }.
+// Moves the project's site to the customer. Returns { userId, newAccount,
+// moved, widgetsRemoved } (widgetsRemoved: builder widgets taken off the
+// site; a page published before still shows them until it is republished).
 // Throws with a readable message when it can't.
 export async function handOverSite({ db, project, compPro }) {
   if (!project.site_id) throw Object.assign(new Error('Design and save the site first'), { status: 400 });
-  const { data: site } = await db.from('sites').select('id, user_id, business_info').eq('id', project.site_id).maybeSingle();
+  const { data: site } = await db.from('sites').select('id, user_id, business_info, generated_content, widget_config_ids').eq('id', project.site_id).maybeSingle();
   if (!site) throw Object.assign(new Error('The project\'s site no longer exists'), { status: 404 });
+  // Read before anything is written: a failed lookup leaves the hand-over undone.
+  const widgets = await withoutBuilderWidgets(db, site);
 
   const email = String(project.client_email || '').trim().toLowerCase();
   let account = await findCustomerAccount(db, email);
@@ -103,13 +113,16 @@ export async function handOverSite({ db, project, compPro }) {
   }
 
   const moved = {};
+  let widgetsRemoved = 0;
   if (site.user_id !== account.userId) {
-    // The project-site marker only kept the admin's own review widgets off
+    // The project-site markers only kept the admin's own review widgets off
     // the site while it was in the admin's account; the customer's own
     // widgets should work from now on.
     const businessInfo = { ...(site.business_info || {}) };
     delete businessInfo.customProjectId;
-    const { error } = await db.from('sites').update({ user_id: account.userId, business_info: businessInfo }).eq('id', site.id);
+    delete businessInfo.freeSiteId;
+    widgetsRemoved = widgets.removed;
+    const { error } = await db.from('sites').update({ user_id: account.userId, business_info: businessInfo, ...widgets.patch }).eq('id', site.id);
     if (error) throw Object.assign(new Error(`Could not move the site: ${error.message}`), { status: 500 });
     for (const table of FOLLOW_SITE) {
       const { data, error: moveError } = await db.from(table).update({ owner_user_id: account.userId }).eq('site_id', site.id).select('id');
@@ -117,7 +130,35 @@ export async function handOverSite({ db, project, compPro }) {
       moved[table] = data?.length || 0;
     }
   }
-  return { userId: account.userId, newAccount, moved };
+  return { userId: account.userId, newAccount, moved, widgetsRemoved };
+}
+
+// The builder's own Google reviews / Instagram widgets on the site: a site
+// built in the builder's business view (before it was marked for a
+// customer) picked up their widget keys, and the customer's page would show
+// the builder's reviews. Returns { patch, removed } for the sites update.
+// Only reads widget_configs when the site carries a key or a widget id.
+const WIDGET_KEY_FIELDS = ['googleWidgetKey', 'instagramWidgetKey'];
+
+export async function withoutBuilderWidgets(db, site) {
+  const content = site.generated_content && typeof site.generated_content === 'object' ? site.generated_content : null;
+  const fields = content ? WIDGET_KEY_FIELDS.filter((f) => content[f]) : [];
+  const ids = Array.isArray(site.widget_config_ids) ? site.widget_config_ids : [];
+  if (!fields.length && !ids.length) return { patch: {}, removed: 0 };
+  const { data: widgets, error } = await db.from('widget_configs').select('id, widget_key').eq('user_id', site.user_id);
+  if (error) throw Object.assign(new Error(`Could not check the site's widgets: ${error.message}`), { status: 500 });
+  const ownKeys = new Set((widgets || []).map((w) => w.widget_key).filter(Boolean));
+  const ownIds = new Set((widgets || []).map((w) => w.id));
+  const patch = {};
+  const dropped = fields.filter((f) => ownKeys.has(content[f]));
+  if (dropped.length) {
+    const next = { ...content };
+    for (const f of dropped) delete next[f];
+    patch.generated_content = next;
+  }
+  const keptIds = ids.filter((id) => !ownIds.has(id));
+  if (keptIds.length !== ids.length) patch.widget_config_ids = keptIds;
+  return { patch, removed: dropped.length + (ids.length - keptIds.length) };
 }
 
 // The link in the access email: a set-your-password link for a new account

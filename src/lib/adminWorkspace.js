@@ -11,6 +11,7 @@
 export const ADMIN_SECTIONS = Object.freeze([
   Object.freeze({ id: 'dashboard', label: 'Dashboard' }),
   Object.freeze({ id: 'custom-sites', label: 'Custom websites' }),
+  Object.freeze({ id: 'free-sites', label: 'Free websites' }),
   Object.freeze({ id: 'accounts', label: 'Customers' }),
   Object.freeze({ id: 'pipeline', label: 'Pipeline' }),
   Object.freeze({ id: 'leads', label: 'Leads' }),
