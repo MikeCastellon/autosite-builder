@@ -1127,7 +1127,12 @@ describe('"From its code": what our server read from a captured site', () => {
   it('shows nothing without an outline, or while the page loads the rule', () => {
     const plain = [SHOT, shopPart(1, { outline: undefined }), shopPart(2)];
     const { refs } = page(teamProject({ capture: RUN_READY }, { assets: plain }));
-    expect(itemsOf(refs, { outlineOf: (src) => referenceOutlineOf(src, plain) }).some((li) => codeBlock(li))).toBe(false);
+    const items = itemsOf(refs, { outlineOf: (src) => referenceOutlineOf(src, plain), urlShots: (src) => referenceShots(src, plain) });
+    expect(items.some((li) => codeBlock(li))).toBe(false);
+    // The address was captured before captures read the code: the page says
+    // how to get its fonts, sections and features.
+    const missing = (li) => elements(li).find((e) => e.props && 'data-outline-missing' in e.props);
+    expect(items.filter((li) => missing(li)).length).toBe(1);
     // designSuggest.js loads on demand; until then there is no rule.
     expect(refs.props.outlineOf).toBeNull();
     expect(itemsOf({ ...refs, props: { ...refs.props, files: assets.map(withLink) } }).some((li) => codeBlock(li))).toBe(false);
@@ -1323,6 +1328,11 @@ describe('"Copy this site\'s layout"', () => {
       expect(copyCapturePlan({ ...failed, assets: captured, key })).toBe('capture');
       expect(copyCapturePlan({ ...failed, assets: [...captured, ...uploaded], key })).toBe('match');
     }
+    // A capture taken before captures read the code (no outline on any
+    // part) is taken again, so the match gets the outline.
+    const older = [shopPart(1, { outline: undefined }), shopPart(2)];
+    expect(copyCapturePlan({ view: { state: 'ready' }, assets: older, key })).toBe('capture');
+    expect(copyCapturePlan({ view: { state: 'none' }, assets: older, key })).toBe('capture');
     // Another site's capture whose note only mentions this one isn't this one's.
     expect(copyCapturePlan({ view: { state: 'none' }, assets: [shopPart(1, { note: 'Screenshot of https://other.test/ - like https://shop.test/' })], key })).toBe('capture');
   });
