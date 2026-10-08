@@ -1,0 +1,758 @@
+{
+ "fixtures": {
+  "sparse": {
+   "businessInfo": {
+    "businessName": "Rivera Auto Care",
+    "city": "Tucson",
+    "state": "AZ",
+    "phone": "(520) 555-0142",
+    "businessType": "mobile_detailing",
+    "awards": [],
+    "packages": [],
+    "certifications": [],
+    "services": [],
+    "paymentMethods": [],
+    "brands": [],
+    "filmBrands": [],
+    "tireBrands": []
+   },
+   "generatedCopy": {
+    "headline": "Clean Cars, Done Right",
+    "subheadline": "Mobile detailing across Tucson.",
+    "aboutText": "Rivera Auto Care is a mobile detailing service in Tucson, AZ.",
+    "servicesSection": {
+     "items": [
+      {
+       "name": "Exterior Wash",
+       "description": "Hand wash and dry."
+      },
+      {
+       "name": "Interior Detail",
+       "description": "Vacuum and wipe-down of every surface."
+      }
+     ]
+    }
+   },
+   "templateMeta": {
+    "id": "wheel_apex",
+    "businessType": "wheel_shop",
+    "label": "Forge Studio",
+    "description": "Alloy & bronze e-commerce — product cards, finish selector, editorial.",
+    "previewColors": [
+     "#F0F1F3",
+     "#A8813A",
+     "#FFFFFF"
+    ],
+    "colors": {
+     "bg": "#F0F1F3",
+     "accent": "#A8813A",
+     "text": "#1C1E24",
+     "secondary": "#FFFFFF",
+     "muted": "#7A7D88"
+    },
+    "font": "'Bebas Neue', sans-serif",
+    "bodyFont": "'DM Sans', sans-serif",
+    "mood": "alloy, luxury, e-commerce, editorial, premium",
+    "tier": "premium"
+   },
+   "images": {}
+  },
+  "full": {
+   "businessInfo": {
+    "businessName": "AutoSite Demo Shop",
+    "phone": "(555) 800-1234",
+    "city": "Miami",
+    "state": "FL",
+    "address": "1420 NW 7th Ave",
+    "tagline": "Where Perfection Meets Passion",
+    "yearsInBusiness": "8",
+    "hours": {
+     "Mon–Fri": "8am–6pm",
+     "Sat": "9am–4pm"
+    },
+    "instagram": "@autositedemo",
+    "facebook": "facebook.com/autositedemo",
+    "tiktok": "@autositedemo",
+    "paymentMethods": [
+     "Cash",
+     "Credit Card",
+     "Venmo",
+     "Zelle"
+    ],
+    "awards": [
+     "Best Detail Shop 2024 — Miami New Times"
+    ],
+    "services": [
+     {
+      "name": "Full Detail",
+      "price": "$149",
+      "description": "Full exterior wash, interior vacuum, and window clean."
+     },
+     {
+      "name": "Ceramic Coating",
+      "price": "$299",
+      "description": "Everything in Basic plus clay bar, polish, and sealant."
+     },
+     {
+      "name": "Paint Correction",
+      "price": "$499",
+      "description": "Full paint correction, ceramic coating, and interior deep clean."
+     }
+    ],
+    "specialties": "Luxury & exotic vehicle specialists. We treat every car like it's our own.",
+    "serviceArea": "30-mile radius from Miami",
+    "brands": [
+     "Forgiato",
+     "Vossen",
+     "ADV.1",
+     "HRE"
+    ],
+    "filmBrands": [
+     "XPEL",
+     "LLumar",
+     "3M",
+     "Ceramic Pro"
+    ],
+    "warranty": "Lifetime warranty on all ceramic coatings",
+    "certifications": [
+     "ASE Certified",
+     "AAA Approved"
+    ],
+    "warrantyOffered": "12-month / 12,000-mile warranty on all repairs",
+    "tireBrands": [
+     "Michelin",
+     "Nitto",
+     "Toyo",
+     "Continental"
+    ],
+    "businessType": "detailing_shop",
+    "packages": [
+     {
+      "name": "Full Detail",
+      "price": "$149",
+      "description": "Full exterior wash, interior vacuum, and window clean."
+     },
+     {
+      "name": "Ceramic Coating",
+      "price": "$299",
+      "description": "Everything in Basic plus clay bar, polish, and sealant."
+     },
+     {
+      "name": "Paint Correction",
+      "price": "$499",
+      "description": "Full paint correction, ceramic coating, and interior deep clean."
+     }
+    ]
+   },
+   "generatedCopy": {
+    "headline": "Miami's Most Trusted Auto Detailing Studio",
+    "subheadline": "Professional results that protect your investment and keep your ride looking flawless.",
+    "aboutText": "AutoSite Demo Shop has been serving Miami and the surrounding communities for over 8 years. What started as a one-man operation out of a garage has grown into South Florida's most respected detailing studio.\n\nWe built this business on a simple belief: every car deserves to be treated like a showpiece. Whether you're rolling a daily driver or a six-figure exotic, our team brings the same obsessive attention to detail to every single job.\n\nBased right here in Miami, FL, we know the unique demands of the South Florida climate — UV exposure, salt air, humidity. Our packages are designed to protect your paint and keep it looking new for years to come.",
+    "servicesSection": {
+     "intro": "From show-quality paint corrections to lasting ceramic protection, we offer everything your Miami vehicle needs to stay pristine.",
+     "items": [
+      {
+       "name": "Full Detail",
+       "description": "A comprehensive top-to-bottom treatment inside and out. We clean, decontaminate, polish, and protect every inch of your vehicle."
+      },
+      {
+       "name": "Ceramic Coating",
+       "description": "Industry-leading ceramic protection that bonds to your paint and repels water, dirt, and UV rays for years — not just weeks."
+      },
+      {
+       "name": "Paint Correction",
+       "description": "Multi-stage machine polishing to eliminate swirl marks, scratches, and oxidation. Restore your paint to better-than-showroom condition."
+      },
+      {
+       "name": "Paint Protection Film",
+       "description": "Virtually invisible PPF shields your most vulnerable surfaces from rock chips, road debris, and light scratches."
+      },
+      {
+       "name": "Interior Detail",
+       "description": "Deep cleaned seats, carpets, dash, and trim. We extract every trace of dirt and condition every surface to last."
+      }
+     ]
+    },
+    "ctaPrimary": "Book Your Detail",
+    "ctaSecondary": "View Our Services",
+    "testimonialPlaceholders": [
+     {
+      "text": "AutoSite transformed my BMW — paint looks better than the day I bought it. The ceramic coating is incredible. Won't take my car anywhere else.",
+      "name": "Carlos M."
+     },
+     {
+      "text": "Fast, professional, and worth every penny. They detailed my truck before I sold it and I got $2,000 more than I expected. Absolutely unreal results.",
+      "name": "Jessica T."
+     },
+     {
+      "text": "Best detail shop in Miami, period. The team is knowledgeable, honest, and the quality of work is on another level. Highly recommend.",
+      "name": "Andre W."
+     }
+    ],
+    "metaDescription": "AutoSite Demo Shop — Miami FL. Professional auto detailing, ceramic coating & paint correction. Serving Miami and surrounding areas. Call (555) 800-1234.",
+    "metaTitle": "AutoSite Demo Shop | Auto Detailing in Miami, FL",
+    "footerTagline": "Proudly serving Miami and South Florida since 2016.",
+    "keywords": [
+     "Miami auto detailing",
+     "Miami ceramic coating",
+     "car detail Miami FL"
+    ],
+    "schemaType": "AutoRepair"
+   },
+   "templateMeta": {
+    "id": "wheel_apex",
+    "businessType": "wheel_shop",
+    "label": "Forge Studio",
+    "description": "Alloy & bronze e-commerce — product cards, finish selector, editorial.",
+    "previewColors": [
+     "#F0F1F3",
+     "#A8813A",
+     "#FFFFFF"
+    ],
+    "colors": {
+     "bg": "#F0F1F3",
+     "accent": "#A8813A",
+     "text": "#1C1E24",
+     "secondary": "#FFFFFF",
+     "muted": "#7A7D88"
+    },
+    "font": "'Bebas Neue', sans-serif",
+    "bodyFont": "'DM Sans', sans-serif",
+    "mood": "alloy, luxury, e-commerce, editorial, premium",
+    "tier": "premium"
+   },
+   "images": {
+    "hero": "https://img.test/photo-1.svg",
+    "about": "https://img.test/photo-2.svg",
+    "gallery0": "https://img.test/photo-3.svg",
+    "gallery1": "https://img.test/photo-4.svg",
+    "gallery2": "https://img.test/photo-5.svg",
+    "gallery3": "https://img.test/photo-6.svg"
+   }
+  },
+  "custom": {
+   "businessInfo": {
+    "businessName": "AutoSite Demo Shop",
+    "phone": "(555) 800-1234",
+    "city": "Miami",
+    "state": "FL",
+    "address": "1420 NW 7th Ave",
+    "tagline": "Where Perfection Meets Passion",
+    "yearsInBusiness": "8",
+    "hours": {
+     "Mon–Fri": "8am–6pm",
+     "Sat": "9am–4pm"
+    },
+    "instagram": "@autositedemo",
+    "facebook": "facebook.com/autositedemo",
+    "tiktok": "@autositedemo",
+    "paymentMethods": [
+     "Cash",
+     "Credit Card",
+     "Venmo",
+     "Zelle"
+    ],
+    "awards": [
+     "Best Detail Shop 2024 — Miami New Times"
+    ],
+    "services": [
+     {
+      "name": "Full Detail",
+      "price": "$149",
+      "description": "Full exterior wash, interior vacuum, and window clean."
+     },
+     {
+      "name": "Ceramic Coating",
+      "price": "$299",
+      "description": "Everything in Basic plus clay bar, polish, and sealant."
+     },
+     {
+      "name": "Paint Correction",
+      "price": "$499",
+      "description": "Full paint correction, ceramic coating, and interior deep clean."
+     }
+    ],
+    "specialties": "Luxury & exotic vehicle specialists. We treat every car like it's our own.",
+    "serviceArea": "30-mile radius from Miami",
+    "brands": [
+     "Forgiato",
+     "Vossen",
+     "ADV.1",
+     "HRE"
+    ],
+    "filmBrands": [
+     "XPEL",
+     "LLumar",
+     "3M",
+     "Ceramic Pro"
+    ],
+    "warranty": "Lifetime warranty on all ceramic coatings",
+    "certifications": [
+     "ASE Certified",
+     "AAA Approved"
+    ],
+    "warrantyOffered": "12-month / 12,000-mile warranty on all repairs",
+    "tireBrands": [
+     "Michelin",
+     "Nitto",
+     "Toyo",
+     "Continental"
+    ],
+    "businessType": "detailing_shop",
+    "packages": [
+     {
+      "name": "Full Detail",
+      "price": "$149",
+      "description": "Full exterior wash, interior vacuum, and window clean."
+     },
+     {
+      "name": "Ceramic Coating",
+      "price": "$299",
+      "description": "Everything in Basic plus clay bar, polish, and sealant."
+     },
+     {
+      "name": "Paint Correction",
+      "price": "$499",
+      "description": "Full paint correction, ceramic coating, and interior deep clean."
+     }
+    ]
+   },
+   "generatedCopy": {
+    "headline": "Miami's Most Trusted Auto Detailing Studio",
+    "subheadline": "Professional results that protect your investment and keep your ride looking flawless.",
+    "aboutText": "AutoSite Demo Shop has been serving Miami and the surrounding communities for over 8 years. What started as a one-man operation out of a garage has grown into South Florida's most respected detailing studio.\n\nWe built this business on a simple belief: every car deserves to be treated like a showpiece. Whether you're rolling a daily driver or a six-figure exotic, our team brings the same obsessive attention to detail to every single job.\n\nBased right here in Miami, FL, we know the unique demands of the South Florida climate — UV exposure, salt air, humidity. Our packages are designed to protect your paint and keep it looking new for years to come.",
+    "servicesSection": {
+     "intro": "From show-quality paint corrections to lasting ceramic protection, we offer everything your Miami vehicle needs to stay pristine.",
+     "items": [
+      {
+       "name": "Full Detail",
+       "description": "A comprehensive top-to-bottom treatment inside and out. We clean, decontaminate, polish, and protect every inch of your vehicle."
+      },
+      {
+       "name": "Ceramic Coating",
+       "description": "Industry-leading ceramic protection that bonds to your paint and repels water, dirt, and UV rays for years — not just weeks."
+      },
+      {
+       "name": "Paint Correction",
+       "description": "Multi-stage machine polishing to eliminate swirl marks, scratches, and oxidation. Restore your paint to better-than-showroom condition."
+      },
+      {
+       "name": "Paint Protection Film",
+       "description": "Virtually invisible PPF shields your most vulnerable surfaces from rock chips, road debris, and light scratches."
+      },
+      {
+       "name": "Interior Detail",
+       "description": "Deep cleaned seats, carpets, dash, and trim. We extract every trace of dirt and condition every surface to last."
+      }
+     ]
+    },
+    "ctaPrimary": "Book Your Detail",
+    "ctaSecondary": "View Our Services",
+    "testimonialPlaceholders": [
+     {
+      "text": "AutoSite transformed my BMW — paint looks better than the day I bought it. The ceramic coating is incredible. Won't take my car anywhere else.",
+      "name": "Carlos M."
+     },
+     {
+      "text": "Fast, professional, and worth every penny. They detailed my truck before I sold it and I got $2,000 more than I expected. Absolutely unreal results.",
+      "name": "Jessica T."
+     },
+     {
+      "text": "Best detail shop in Miami, period. The team is knowledgeable, honest, and the quality of work is on another level. Highly recommend.",
+      "name": "Andre W."
+     }
+    ],
+    "metaDescription": "AutoSite Demo Shop — Miami FL. Professional auto detailing, ceramic coating & paint correction. Serving Miami and surrounding areas. Call (555) 800-1234.",
+    "metaTitle": "AutoSite Demo Shop | Auto Detailing in Miami, FL",
+    "footerTagline": "Proudly serving Miami and South Florida since 2016.",
+    "keywords": [
+     "Miami auto detailing",
+     "Miami ceramic coating",
+     "car detail Miami FL"
+    ],
+    "schemaType": "AutoRepair",
+    "sectionOrder": [
+     "hero",
+     "about",
+     "services",
+     "testimonials",
+     "gallery",
+     "cta"
+    ],
+    "hiddenSections": [
+     "statsBar",
+     "awards"
+    ]
+   },
+   "templateMeta": {
+    "id": "wheel_apex",
+    "businessType": "wheel_shop",
+    "label": "Forge Studio",
+    "description": "Alloy & bronze e-commerce — product cards, finish selector, editorial.",
+    "previewColors": [
+     "#F0F1F3",
+     "#A8813A",
+     "#FFFFFF"
+    ],
+    "colors": {
+     "bg": "#14213d",
+     "accent": "#fca311",
+     "text": "#f4f1ea",
+     "secondary": "#1d2d50",
+     "muted": "#a9b4c8"
+    },
+    "font": "'Oswald', sans-serif",
+    "bodyFont": "'Manrope', sans-serif",
+    "mood": "alloy, luxury, e-commerce, editorial, premium",
+    "tier": "premium"
+   },
+   "images": {
+    "hero": "https://img.test/photo-1.svg",
+    "about": "https://img.test/photo-2.svg",
+    "gallery0": "https://img.test/photo-3.svg",
+    "gallery1": "https://img.test/photo-4.svg",
+    "gallery2": "https://img.test/photo-5.svg",
+    "gallery3": "https://img.test/photo-6.svg"
+   }
+  },
+  "features": {
+   "businessInfo": {
+    "businessName": "AutoSite Demo Shop",
+    "phone": "(555) 800-1234",
+    "city": "Miami",
+    "state": "FL",
+    "address": "1420 NW 7th Ave",
+    "tagline": "Where Perfection Meets Passion",
+    "yearsInBusiness": "8",
+    "hours": {
+     "Mon–Fri": "8am–6pm",
+     "Sat": "9am–4pm"
+    },
+    "instagram": "@autositedemo",
+    "facebook": "facebook.com/autositedemo",
+    "tiktok": "@autositedemo",
+    "paymentMethods": [
+     "Cash",
+     "Credit Card",
+     "Venmo",
+     "Zelle"
+    ],
+    "awards": [
+     "Best Detail Shop 2024 — Miami New Times"
+    ],
+    "services": [
+     {
+      "name": "Full Detail",
+      "price": "$149",
+      "description": "Full exterior wash, interior vacuum, and window clean.",
+      "summary": "Inside and out, top to bottom.",
+      "includes": [
+       "Interior:",
+       "Full vacuum",
+       {
+        "text": "Leather conditioning",
+        "highlight": true
+       },
+       "Exterior:",
+       "Hand wash and dry"
+      ],
+      "image": "https://img.test/photo-1.svg"
+     },
+     {
+      "name": "Ceramic Coating",
+      "price": "$299",
+      "description": "Everything in Basic plus clay bar, polish, and sealant.",
+      "summary": "Long-lasting gloss and protection.",
+      "badge": "Most Popular",
+      "includes": [
+       "Interior:",
+       "Full vacuum",
+       {
+        "text": "Leather conditioning",
+        "highlight": true
+       },
+       "Exterior:",
+       "Hand wash and dry"
+      ],
+      "image": "https://img.test/photo-2.svg"
+     },
+     {
+      "name": "Paint Correction",
+      "price": "$499",
+      "description": "Full paint correction, ceramic coating, and interior deep clean.",
+      "summary": "Swirls and scratches polished out.",
+      "includes": [
+       "Interior:",
+       "Full vacuum",
+       {
+        "text": "Leather conditioning",
+        "highlight": true
+       },
+       "Exterior:",
+       "Hand wash and dry"
+      ],
+      "image": "https://img.test/photo-3.svg"
+     }
+    ],
+    "specialties": "Luxury & exotic vehicle specialists. We treat every car like it's our own.",
+    "serviceArea": "30-mile radius from Miami",
+    "brands": [
+     "Forgiato",
+     "Vossen",
+     "ADV.1",
+     "HRE"
+    ],
+    "filmBrands": [
+     "XPEL",
+     "LLumar",
+     "3M",
+     "Ceramic Pro"
+    ],
+    "warranty": "Lifetime warranty on all ceramic coatings",
+    "certifications": [
+     "ASE Certified",
+     "AAA Approved"
+    ],
+    "warrantyOffered": "12-month / 12,000-mile warranty on all repairs",
+    "tireBrands": [
+     "Michelin",
+     "Nitto",
+     "Toyo",
+     "Continental"
+    ],
+    "businessType": "detailing_shop",
+    "packages": [
+     {
+      "name": "Full Detail",
+      "price": "$149",
+      "description": "Full exterior wash, interior vacuum, and window clean.",
+      "summary": "Inside and out, top to bottom.",
+      "includes": [
+       "Interior:",
+       "Full vacuum",
+       {
+        "text": "Leather conditioning",
+        "highlight": true
+       },
+       "Exterior:",
+       "Hand wash and dry"
+      ],
+      "image": "https://img.test/photo-1.svg"
+     },
+     {
+      "name": "Ceramic Coating",
+      "price": "$299",
+      "description": "Everything in Basic plus clay bar, polish, and sealant.",
+      "summary": "Long-lasting gloss and protection.",
+      "badge": "Most Popular",
+      "includes": [
+       "Interior:",
+       "Full vacuum",
+       {
+        "text": "Leather conditioning",
+        "highlight": true
+       },
+       "Exterior:",
+       "Hand wash and dry"
+      ],
+      "image": "https://img.test/photo-2.svg"
+     },
+     {
+      "name": "Paint Correction",
+      "price": "$499",
+      "description": "Full paint correction, ceramic coating, and interior deep clean.",
+      "summary": "Swirls and scratches polished out.",
+      "includes": [
+       "Interior:",
+       "Full vacuum",
+       {
+        "text": "Leather conditioning",
+        "highlight": true
+       },
+       "Exterior:",
+       "Hand wash and dry"
+      ],
+      "image": "https://img.test/photo-3.svg"
+     }
+    ],
+    "serviceAreas": [
+     "Northside",
+     "Lakeview",
+     "Riverbend"
+    ],
+    "insured": true,
+    "googlePlace": {
+     "placeId": "ChIJfixture-features",
+     "placeName": "AutoSite Demo Shop",
+     "rating": 4.8,
+     "reviewCount": 52
+    }
+   },
+   "generatedCopy": {
+    "headline": "Miami's Most Trusted Auto Detailing Studio",
+    "subheadline": "Professional results that protect your investment and keep your ride looking flawless.",
+    "aboutText": "AutoSite Demo Shop has been serving Miami and the surrounding communities for over 8 years. What started as a one-man operation out of a garage has grown into South Florida's most respected detailing studio.\n\nWe built this business on a simple belief: every car deserves to be treated like a showpiece. Whether you're rolling a daily driver or a six-figure exotic, our team brings the same obsessive attention to detail to every single job.\n\nBased right here in Miami, FL, we know the unique demands of the South Florida climate — UV exposure, salt air, humidity. Our packages are designed to protect your paint and keep it looking new for years to come.",
+    "servicesSection": {
+     "intro": "From show-quality paint corrections to lasting ceramic protection, we offer everything your Miami vehicle needs to stay pristine.",
+     "items": [
+      {
+       "name": "Full Detail",
+       "description": "A comprehensive top-to-bottom treatment inside and out. We clean, decontaminate, polish, and protect every inch of your vehicle."
+      },
+      {
+       "name": "Ceramic Coating",
+       "description": "Industry-leading ceramic protection that bonds to your paint and repels water, dirt, and UV rays for years — not just weeks."
+      },
+      {
+       "name": "Paint Correction",
+       "description": "Multi-stage machine polishing to eliminate swirl marks, scratches, and oxidation. Restore your paint to better-than-showroom condition."
+      },
+      {
+       "name": "Paint Protection Film",
+       "description": "Virtually invisible PPF shields your most vulnerable surfaces from rock chips, road debris, and light scratches."
+      },
+      {
+       "name": "Interior Detail",
+       "description": "Deep cleaned seats, carpets, dash, and trim. We extract every trace of dirt and condition every surface to last."
+      }
+     ]
+    },
+    "ctaPrimary": "Book Your Detail",
+    "ctaSecondary": "View Our Services",
+    "testimonialPlaceholders": [
+     {
+      "text": "AutoSite transformed my BMW — paint looks better than the day I bought it. The ceramic coating is incredible. Won't take my car anywhere else.",
+      "name": "Carlos M.",
+      "source": "google",
+      "rating": 5
+     },
+     {
+      "text": "Fast, professional, and worth every penny. They detailed my truck before I sold it and I got $2,000 more than I expected. Absolutely unreal results.",
+      "name": "Jessica T."
+     },
+     {
+      "text": "Best detail shop in Miami, period. The team is knowledgeable, honest, and the quality of work is on another level. Highly recommend.",
+      "name": "Andre W."
+     }
+    ],
+    "metaDescription": "AutoSite Demo Shop — Miami FL. Professional auto detailing, ceramic coating & paint correction. Serving Miami and surrounding areas. Call (555) 800-1234.",
+    "metaTitle": "AutoSite Demo Shop | Auto Detailing in Miami, FL",
+    "footerTagline": "Proudly serving Miami and South Florida since 2016.",
+    "keywords": [
+     "Miami auto detailing",
+     "Miami ceramic coating",
+     "car detail Miami FL"
+    ],
+    "schemaType": "AutoRepair",
+    "heroCard": "quote",
+    "heroServices": [
+     "Full Detail",
+     "Ceramic Coating"
+    ],
+    "googleBadge": {
+     "placements": [
+      "hero",
+      "nav",
+      "about",
+      "reviews",
+      "footer"
+     ]
+    },
+    "footer": {
+     "columns": [
+      {
+       "type": "brand",
+       "show": true
+      },
+      {
+       "type": "contact",
+       "show": true
+      },
+      {
+       "type": "hours",
+       "show": true
+      },
+      {
+       "type": "links",
+       "title": "More",
+       "show": true
+      },
+      {
+       "type": "areas",
+       "show": true
+      }
+     ],
+     "showCta": true,
+     "ctaText": "Book a Visit",
+     "bottomText": "Licensed and insured"
+    },
+    "sectionTitles": {
+     "services": {
+      "accent": "Services"
+     },
+     "featured": {
+      "eyebrow": "Signature Service"
+     },
+     "brands": {
+      "eyebrow": "Every make welcome"
+     }
+    },
+    "featuredService": {
+     "serviceName": "Ceramic Coating",
+     "priceFrom": "$450",
+     "bullets": [
+      "Deep gloss",
+      "Easier washing"
+     ]
+    },
+    "vehicleMakes": [
+     "BMW",
+     "Porsche",
+     "Rivian"
+    ]
+   },
+   "templateMeta": {
+    "id": "wheel_apex",
+    "businessType": "wheel_shop",
+    "label": "Forge Studio",
+    "description": "Alloy & bronze e-commerce — product cards, finish selector, editorial.",
+    "previewColors": [
+     "#F0F1F3",
+     "#A8813A",
+     "#FFFFFF"
+    ],
+    "colors": {
+     "bg": "#F0F1F3",
+     "accent": "#A8813A",
+     "text": "#1C1E24",
+     "secondary": "#FFFFFF",
+     "muted": "#7A7D88"
+    },
+    "font": "'Bebas Neue', sans-serif",
+    "bodyFont": "'DM Sans', sans-serif",
+    "mood": "alloy, luxury, e-commerce, editorial, premium",
+    "tier": "premium"
+   },
+   "images": {
+    "hero": "https://img.test/photo-4.svg",
+    "about": "https://img.test/photo-5.svg",
+    "gallery0": "https://img.test/photo-6.svg",
+    "gallery1": "https://img.test/photo-7.svg",
+    "gallery2": "https://img.test/photo-8.svg",
+    "gallery3": "https://img.test/photo-9.svg",
+    "featured": "https://img.test/photo-10.svg",
+    "cta": "https://img.test/photo-11.svg"
+   }
+  }
+ },
+ "hashes": {
+  "sparse/publish": "2c029921d46838dee450543bc313eca41f268c2fb0903c8a37304be102a68cff",
+  "sparse/editor": "be48927b4a30e03c4068e9608cab9942cb588c48b05ed6215aa548b877990996",
+  "full/publish": "6e2dcffef7107ee6a89c9186a994aff7e8538e4a8f6ca29b3e57d8f0a5ed39b4",
+  "full/editor": "6e2dcffef7107ee6a89c9186a994aff7e8538e4a8f6ca29b3e57d8f0a5ed39b4",
+  "custom/publish": "d89ee2b41bad13dbc705fae46e8abc45ab2ef8e62c8be0a5e7df0ed059d26c3d",
+  "custom/editor": "d89ee2b41bad13dbc705fae46e8abc45ab2ef8e62c8be0a5e7df0ed059d26c3d",
+  "features/publish": "68ca9b1526a087d708242d50a4c649a427627707e5aa74da0c36f9caaed7a78f",
+  "features/editor": "68ca9b1526a087d708242d50a4c649a427627707e5aa74da0c36f9caaed7a78f"
+ }
+}

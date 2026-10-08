@@ -173,10 +173,11 @@ const tpl = (themeReady, list, added = []) => Object.freeze({ themeReady, sectio
 const STD = 'hero:Hero, statsBar:Stats Bar, services:Services, about:About, gallery:Gallery, testimonials:Reviews, cta:Contact / CTA';
 const STD_NO_STATS = 'hero:Hero, services:Services, about:About, gallery:Gallery, testimonials:Reviews, cta:Contact / CTA';
 const LIVE_THEME = 'hero:Hero, statsBar:Stats Bar, brands:Vehicle Makes, services:Services, featured:Featured Service, about:About, gallery:Gallery, testimonials:Reviews, cta:Contact / CTA, awards:Awards';
-// Bold & Sporty: the live theme's sections and its Before & After band.
+// The live themes' sections with the Before & After band (Bold & Sporty and
+// Chrome Elite share them).
 const SPORTY = LIVE_THEME.replace('gallery:Gallery, ', 'gallery:Gallery, beforeAfter:Before & After, ');
 const TINT_LEGACY = 'hero:Hero, statsBar:Stats Bar, services:Services, brands:Film Brands, about:About, gallery:Gallery, testimonials:Reviews, cta:Contact / CTA';
-const MECHANIC_KIT = 'hero:Hero, statsBar:Stats Bar, services:Services, about:About, gallery:Gallery, testimonials:Reviews, cta:Contact / CTA, awards:Awards';
+const MECHANIC_KIT = 'hero:Hero, statsBar:Stats Bar, services:Services, about:About, gallery:Gallery, beforeAfter:Before & After, testimonials:Reviews, cta:Contact / CTA, awards:Awards';
 
 export const TEMPLATE_SECTIONS = Object.freeze({
   detailing_sporty: tpl(true, SPORTY, ['brands', 'featured', 'beforeAfter']),
@@ -184,23 +185,23 @@ export const TEMPLATE_SECTIONS = Object.freeze({
   mobile_bold: tpl(false, STD_NO_STATS),
   mobile_modern: tpl(false, STD),
   mobile_rugged: tpl(false, STD),
-  mobile_chrome: tpl(true, LIVE_THEME, ['brands', 'featured']),
+  mobile_chrome: tpl(true, SPORTY, ['brands', 'featured', 'beforeAfter']),
   wheel_edge: tpl(false, 'hero:Hero, statsBar:Stats Bar, services:Services, brands:Brands, about:About, gallery:Gallery, testimonials:Reviews, cta:Contact / CTA'),
   wheel_clean: tpl(false, 'hero:Hero, awards:Awards, statsBar:Stats Bar, services:Services, brands:Brands, about:About, gallery:Gallery, testimonials:Reviews, cta:Contact / CTA'),
   tint_dark: tpl(false, TINT_LEGACY),
   tint_sleek: tpl(false, TINT_LEGACY),
-  tint_elite: tpl(true, TINT_LEGACY),
-  mechanic_industrial: tpl(true, MECHANIC_KIT),
+  tint_elite: tpl(true, TINT_LEGACY.replace('gallery:Gallery, ', 'gallery:Gallery, beforeAfter:Before & After, '), ['beforeAfter']),
+  mechanic_industrial: tpl(true, MECHANIC_KIT, ['beforeAfter']),
   mechanic_friendly: tpl(false, 'hero:Hero, whyUs:Why Choose Us, services:Services, about:About, gallery:Gallery, testimonials:Reviews, cta:Contact / CTA'),
-  mechanic_garage: tpl(true, MECHANIC_KIT),
-  mechanic_ironclad: tpl(true, 'hero:Hero, ticker:Service Ticker, ctaBand:CTA Banner, about:About / Shop, services:Services, gallery:Gallery, whyUs:Why Choose Us, testimonials:Reviews, cta:Contact & Hours'),
-  tint_obsidian: tpl(true, 'hero:Hero, shadeGuide:Shade Guide, services:Services, brands:Film Brands, process:Process Steps, about:About, gallery:Gallery, testimonials:Reviews, cta:Contact / CTA'),
-  mobile_sudsy: tpl(true, 'hero:Hero, brands:Vehicle Makes, services:Services, featured:Featured Service, process:How It Works, whyUs:Why Choose Us, about:About, gallery:Gallery, testimonials:Reviews, cta:Contact / CTA', ['brands', 'featured']),
-  wheel_apex: tpl(true, 'hero:Hero, trustBar:Trust Bar, ticker:Scrolling Ticker, products:Products, brands:Brands, about:About, gallery:Gallery, testimonials:Reviews, cta:Contact / CTA'),
+  mechanic_garage: tpl(true, MECHANIC_KIT, ['beforeAfter']),
+  mechanic_ironclad: tpl(true, 'hero:Hero, ticker:Service Ticker, ctaBand:CTA Banner, about:About / Shop, services:Services, gallery:Gallery, beforeAfter:Before & After, whyUs:Why Choose Us, testimonials:Reviews, cta:Contact & Hours', ['beforeAfter']),
+  tint_obsidian: tpl(true, 'hero:Hero, shadeGuide:Shade Guide, services:Services, brands:Film Brands, process:Process Steps, about:About, gallery:Gallery, beforeAfter:Before & After, testimonials:Reviews, cta:Contact / CTA', ['beforeAfter']),
+  mobile_sudsy: tpl(true, 'hero:Hero, brands:Vehicle Makes, services:Services, featured:Featured Service, process:How It Works, whyUs:Why Choose Us, about:About, gallery:Gallery, beforeAfter:Before & After, testimonials:Reviews, cta:Contact / CTA', ['brands', 'featured', 'beforeAfter']),
+  wheel_apex: tpl(true, 'hero:Hero, trustBar:Trust Bar, ticker:Scrolling Ticker, products:Products, brands:Brands, about:About, gallery:Gallery, beforeAfter:Before & After, testimonials:Reviews, cta:Contact / CTA', ['beforeAfter']),
   detailing_autosync_dark: tpl(false, STD),
   detailing_autosync_white: tpl(false, STD_NO_STATS),
-  carwash_bubble: tpl(true, 'hero:Hero, services:Packages, process:How It Works, about:About & Features, gallery:Gallery, testimonials:Reviews, cta:Contact / CTA'),
-  mobile_redline: tpl(true, 'hero:Hero & Quote, about:About, gallery:Gallery, brands:Vehicle Makes, services:Packages, featured:Featured Service, testimonials:Reviews, awards:Awards, locations:Service Area & Hours, cta:Contact / CTA'),
+  carwash_bubble: tpl(true, 'hero:Hero, services:Packages, process:How It Works, about:About & Features, gallery:Gallery, beforeAfter:Before & After, testimonials:Reviews, cta:Contact / CTA', ['beforeAfter']),
+  mobile_redline: tpl(true, 'hero:Hero & Quote, about:About, gallery:Gallery, beforeAfter:Before & After, brands:Vehicle Makes, services:Packages, featured:Featured Service, testimonials:Reviews, awards:Awards, locations:Service Area & Hours, cta:Contact / CTA', ['beforeAfter']),
 });
 // An unknown template: the legacy default (sectionManifest.js STD).
 const FALLBACK_TEMPLATE = tpl(false, STD);

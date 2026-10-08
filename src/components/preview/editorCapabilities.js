@@ -81,21 +81,21 @@ const OPT_IN = [
 ];
 
 export const TEMPLATE_READS = {
-  // Theme-ready (visible) templates. Bold & Sporty is the first with the
-  // Before & After band (opt-in too: nothing shows without copy.beforeAfter).
+  // Theme-ready (visible) templates. Every one has the Before & After band,
+  // opt-in: nothing shows without copy.beforeAfter.
   detailing_sporty: [...KIT, ...OPT_IN, 'beforeAfter'],
-  mechanic_industrial: KIT,
-  mechanic_garage: KIT,
-  mobile_chrome: [...KIT, ...OPT_IN],
-  tint_elite: [...KIT, 'filmBrandsList', 'reviewMode'],
-  tint_obsidian: [...KIT, 'howSteps', 'filmBrandsList', 'shadeGuide'],
-  mobile_sudsy: [...KIT, 'howSteps', 'whyCards', ...OPT_IN],
-  wheel_apex: [...KIT, 'products', 'wheelBrands', 'trustBar', 'tickerItems'],
-  mechanic_ironclad: [...KIT, 'whyCards'],
-  carwash_bubble: [...KIT, 'howSteps', 'whyCards'],
+  mechanic_industrial: [...KIT, 'beforeAfter'],
+  mechanic_garage: [...KIT, 'beforeAfter'],
+  mobile_chrome: [...KIT, ...OPT_IN, 'beforeAfter'],
+  tint_elite: [...KIT, 'filmBrandsList', 'reviewMode', 'beforeAfter'],
+  tint_obsidian: [...KIT, 'howSteps', 'filmBrandsList', 'shadeGuide', 'beforeAfter'],
+  mobile_sudsy: [...KIT, 'howSteps', 'whyCards', ...OPT_IN, 'beforeAfter'],
+  wheel_apex: [...KIT, 'products', 'wheelBrands', 'trustBar', 'tickerItems', 'beforeAfter'],
+  mechanic_ironclad: [...KIT, 'whyCards', 'beforeAfter'],
+  carwash_bubble: [...KIT, 'howSteps', 'whyCards', 'beforeAfter'],
   mobile_redline: [
     ...KIT, 'trustBar', 'reviewMode', 'heroServices', 'googleBadge', 'footerBuilder', 'sectionTitles', 'featuredService', 'vehicleMakes',
-    'serviceDetails', 'serviceAreas', 'insured', 'ctaImage', 'reviewSources',
+    'serviceDetails', 'serviceAreas', 'insured', 'ctaImage', 'reviewSources', 'beforeAfter',
   ],
   // Legacy templates (hidden from the picker; some saved sites use them).
   detailing_coastal: ['ctaPrimaryUrl', 'ctaSecondaryUrl', 'aboutStats'],

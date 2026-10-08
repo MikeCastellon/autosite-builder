@@ -589,7 +589,7 @@ describe('colors, claims and order with every feature on', () => {
 
   it('exports addedSections and a footerSpec the editor can read', () => {
     const ids = mod.sections.map((s) => s.id);
-    expect(mod.addedSections).toEqual(['brands', 'featured']);
+    expect(mod.addedSections).toEqual(['brands', 'featured', 'beforeAfter']);
     for (const id of mod.addedSections) expect(ids).toContain(id);
     expect(ids.filter((id) => !mod.addedSections.includes(id))).toEqual(LEGACY_IDS);
     const spec = mod.footerSpec;

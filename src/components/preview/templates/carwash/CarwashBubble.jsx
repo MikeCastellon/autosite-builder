@@ -23,7 +23,7 @@ import { SocialRow } from '../SocialIcons.jsx';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import IconOrEmoji from '../IconOrEmoji.jsx';
 import { ServiceCardCss, ServiceDescription, BookNowLink } from '../ServiceCardParts.jsx';
-import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import { buildSectionOrderAdded } from '../../../../lib/sectionOrder.js';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HOURS_DAYS } from '../../../../lib/businessHours.js';
@@ -32,20 +32,31 @@ import { deriveTheme, mix, alpha, ensureContrast, contrastRatio, hexToRgb, rgbTo
 import { PhotoSlot, PHOTO_HINTS } from '../kit/PhotoSlot.jsx';
 import { MobileMenu, MobileActionBar } from '../kit/MobileMenu.jsx';
 import { EditorOnly, useEditorMode } from '../kit/EditorMode.jsx';
+import { BeforeAfterBand, beforeAfterCss } from '../kit/BeforeAfter.jsx';
+import { beforeAfterPairs, BA_DEFAULTS } from '../kit/beforeAfter.js';
 
 export const themeReady = true;
 
 // Same ids and order as ContentEditor's TOGGLEABLE.carwash_bubble, so the
 // editor's Sections list matches what renders. Never rename an id.
+// 'beforeAfter' (the Before & After band) came later: see addedSections.
 export const sections = [
   { id: 'hero', label: 'Hero' },
   { id: 'services', label: 'Packages' },
   { id: 'process', label: 'How It Works' },
   { id: 'about', label: 'About & Features' },
   { id: 'gallery', label: 'Gallery' },
+  { id: 'beforeAfter', label: 'Before & After' },
   { id: 'testimonials', label: 'Reviews' },
   { id: 'cta', label: 'Contact / CTA' },
 ];
+
+// Ids added after sites were saved with this design. Saved sites store
+// copy.sectionOrder without them, so the page orders them itself
+// (buildSectionOrderAdded): every older section keeps exactly its saved
+// order value, and an added band without a saved slot shares the value of
+// the section before it, rendering right after it in the DOM.
+export const addedSections = ['beforeAfter'];
 
 export const extraFonts = [];
 
@@ -485,6 +496,48 @@ html[data-acg-scrolled] .cb-nav{box-shadow:0 8px 30px -14px var(--cb-shadow-stro
 .cb-foot-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:36px 20px}
 .cb-foot-grid>:last-child:nth-child(even){grid-column:1 / -1}
 .cb-foot-bottom{flex-direction:column;align-items:flex-start}
+}
+`;
+
+// The Before & After band (kit BeforeAfter.jsx) in the bubbly look: big
+// soft-cornered photos with a bubble's glossy rim (inside them: the kit's
+// track clips its slides, so a drop shadow would end in a hard edge under
+// the caption), pill tags (Before in the band's deep ink, After in the soap
+// gradient), a soap-bubble handle with a glint, centered like the headings,
+// round chip arrows that fill with soap on hover. In the editor a pair
+// still missing a photo shows two rounded halves; the empty one's dashed
+// box (the half's only div: published CSS may not name the editor-only
+// attribute) gets the curve too, as the kit's placeholder carries no radius
+// and the frame's would cut its corners.
+// Appended after the kit's beforeAfterCss('cb-ba') only while the band
+// renders, so a site without copy.beforeAfter gets none of it. The
+// --cb-ba-* block variables alias token pairs bubbleTokens already
+// contrast-repair (and theme:check checks on the root): the ink text on the
+// ink, the button text on both stops of the soap gradient.
+const BA_CSS = `
+.cb-ba-band{--cb-ba-text:var(--cb-text);--cb-ba-muted:var(--cb-muted);--cb-ba-line:var(--cb-border-strong);--cb-ba-focus:var(--cb-focus);--cb-ba-tag-bg:var(--cb-ink-bg);--cb-ba-tag-text:var(--cb-ink-text);--cb-ba-tag2-bg:var(--cb-btn);--cb-ba-tag2-text:var(--cb-btn-text);--cb-ba-knob-bg:var(--cb-btn);--cb-ba-knob-text:var(--cb-btn-text);--cb-ba-r:28px;--cb-ba-tag-r:999px;--cb-ba-btn-r:50%}
+.cb-ba-slider{max-width:980px;margin:0 auto}
+.cb-ba-frame::after{content:'';position:absolute;inset:0;z-index:3;border-radius:inherit;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.45);pointer-events:none}
+.cb-ba-todo .cb-ba-frame{border-radius:0}
+.cb-ba-todo .cb-ba-frame::after{display:none}
+.cb-ba-half,.cb-ba-half>div{overflow:hidden;border-radius:22px}
+.cb-ba-tag{padding:6px 14px;font-size:11.5px;font-weight:800;line-height:16px;letter-spacing:.1em}
+.cb-ba-knob{border-width:3px;box-shadow:0 8px 22px -6px var(--cb-glow),0 0 0 1px rgba(0,0,0,.08)}
+.cb-ba-knob::after{content:'';position:absolute;top:7px;left:10px;width:9px;height:6px;border-radius:50%;background:rgba(255,255,255,.55);transform:rotate(-20deg);pointer-events:none}
+.cb-ba-cap{margin-top:16px;font-size:16px;font-weight:600;line-height:1.6;text-align:center;text-wrap:pretty}
+.cb-ba-nav{gap:14px;margin-top:24px}
+.cb-ba-count{font-family:var(--cb-head);font-size:17px;font-weight:var(--cb-head-w);letter-spacing:.08em}
+.cb-ba-btn{width:52px;height:52px;border-width:1.5px;background:var(--cb-chip-bg);color:var(--cb-chip-text)}
+@container (min-width:601px){
+.cb-ba-tag{top:18px;padding:7px 16px;font-size:12px}
+.cb-ba-tag-before{left:18px}
+.cb-ba-tag-after{right:18px}
+}
+@media (hover:hover){
+.cb-ba-btn:hover{background-color:var(--cb-btn-bg);background-image:var(--cb-btn);border-color:transparent;color:var(--cb-btn-text);box-shadow:0 10px 24px -12px var(--cb-glow);transform:translateY(-2px)}
+}
+@media (prefers-reduced-motion:no-preference){
+.cb-ba-btn{transition:transform .3s cubic-bezier(.34,1.56,.64,1),box-shadow .3s ease,border-color .2s ease,background-color .2s ease,color .2s ease}
 }
 `;
 
@@ -995,7 +1048,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
 
   const hiddenIds = list(copy.hiddenSections);
   const show = (id) => !hiddenIds.includes(id);
-  const order = buildSectionOrder(copy, sections.map((s) => s.id));
+  const order = buildSectionOrderAdded(copy, sections.map((s) => s.id), addedSections);
 
   const name = txt(biz.businessName) || fb.shopName;
   const phone = txt(biz.phone);
@@ -1069,6 +1122,15 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
   const testimonials = list(copy.testimonialPlaceholders).filter((q) => txt(q?.text));
   const reviews = copy.googleWidgetKey ? 'google' : testimonials.length > 0 ? 'quotes' : null;
 
+  // Before & After band (Edit > Before & After): only once copy.beforeAfter
+  // exists, and on the published page only with a pair that has both
+  // photos (the editor shows every pair, and says what each still needs).
+  // Heading and intro: the owner's, else the design's own words.
+  const ba = beforeAfterPairs(copy.beforeAfter, images, { editor });
+  const baOn = show('beforeAfter') && Boolean(ba) && (ba.pairs.length > 0 || editor);
+  const baTitle = ba?.title || BA_DEFAULTS.title;
+  const baIntro = ba?.intro || BA_DEFAULTS.intro;
+
   const has = {
     services: show('services') && services.length > 0,
     process: show('process') && howSteps.length > 0,
@@ -1080,11 +1142,13 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
   // The hero's wave is filled with the background of whatever section the
   // owner placed right after it (they can reorder); before the dark contact
   // band or the footer it is left out rather than drawn in the wrong color.
+  // The Before & After band (on the panel tone) counts only while it renders.
   const rendered = {
     services: show('services') && (services.length > 0 || editor),
     process: show('process') && (howSteps.length > 0 || editor),
     about: show('about'),
     gallery: show('gallery') && (galleryImages.length > 0 || editor),
+    beforeAfter: baOn,
     testimonials: show('testimonials') && !!reviews,
     cta: show('cta'),
   };
@@ -1093,7 +1157,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
     .filter((id) => id === 'hero' || rendered[id])
     .sort((a, b) => order(a) - order(b) || domIds.indexOf(a) - domIds.indexOf(b));
   const afterHero = flow[flow.indexOf('hero') + 1];
-  const waveFill = { services: 'panel', process: 'panel', about: 'panel', gallery: 'bg', testimonials: 'bg' }[afterHero];
+  const waveFill = { services: 'panel', process: 'panel', about: 'panel', gallery: 'bg', beforeAfter: 'panel', testimonials: 'bg' }[afterHero];
 
   const navNameTier = images.logo ? '' : name.length > 40 ? ' cb-nav-long cb-nav-xl' : name.length > 22 ? ' cb-nav-long' : '';
   const navLinks = [
@@ -1238,7 +1302,7 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
       className="cb-root"
       style={{ ...vars, containerType: 'inline-size', display: 'flex', flexDirection: 'column', minHeight: '100vh', overflowX: 'clip', background: t.bg, color: t.text, fontFamily: body, lineHeight: 1.6, WebkitFontSmoothing: 'antialiased' }}
     >
-      <style>{CSS}</style>
+      <style>{CSS + (baOn ? beforeAfterCss('cb-ba') + BA_CSS : '')}</style>
       <a className="cb-skip" href="#main">Skip to content</a>
 
       {/* cb-nav-x: some links step aside (cb-link-x), so the menu shows
@@ -1528,6 +1592,30 @@ export default function CarwashBubble({ businessInfo, generatedCopy, templateMet
               )}
             </div>
           </section>
+        )}
+
+        {/* Right after the gallery in the DOM: it shares the gallery's order
+            value until the owner places it (buildSectionOrderAdded). On the
+            panel tone, between the gallery's page tone and the reviews. */}
+        {baOn && (
+          <BeforeAfterBand
+            ns="cb-ba"
+            beforeAfter={copy.beforeAfter}
+            images={images}
+            editor={editor}
+            order={order('beforeAfter')}
+            className="cb-section cb-panel"
+            wrapClassName="cb-wrap"
+            labelledBy="cb-ba-h"
+            heading={(
+              <div className="cb-head cb-center" data-acg-reveal="">
+                <p className="cb-eyebrow"><Icon d={ICONS.sparkle} size={15} width={2} />{BA_DEFAULTS.eyebrow}</p>
+                <h2 id="cb-ba-h" className="cb-h2"><GradTail text={baTitle} cls="cb-grad" /></h2>
+                {baIntro && <p className="cb-sub">{baIntro}</p>}
+              </div>
+            )}
+            hints={ba.pairs.length === 0 && <EditorHint>{'Add a before and an after photo in Edit > Before & After.'}</EditorHint>}
+          />
         )}
 
         {show('testimonials') && reviews === 'google' && (

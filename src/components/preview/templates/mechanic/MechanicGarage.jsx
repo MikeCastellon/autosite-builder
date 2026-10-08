@@ -17,7 +17,7 @@
 import { SocialRow } from '../SocialIcons.jsx';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import { ServiceCardCss, ServiceDescription, BookNowLink } from '../ServiceCardParts.jsx';
-import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import { buildSectionOrderAdded } from '../../../../lib/sectionOrder.js';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HOURS_DAYS } from '../../../../lib/businessHours.js';
@@ -26,23 +26,34 @@ import { deriveTheme, mix, alpha, ensureContrast } from '../kit/theme.js';
 import { PhotoSlot, PHOTO_HINTS } from '../kit/PhotoSlot.jsx';
 import { MobileMenu, MobileActionBar } from '../kit/MobileMenu.jsx';
 import { EditorOnly, useEditorMode } from '../kit/EditorMode.jsx';
+import { BeforeAfterBand, beforeAfterCss } from '../kit/BeforeAfter.jsx';
+import { beforeAfterPairs, BA_DEFAULTS } from '../kit/beforeAfter.js';
 
 export const themeReady = true;
 
 // ContentEditor has no TOGGLEABLE entry for this template, so it lists
 // _default: same ids, same order. Awards used to be a dead toggle here; it
 // now drives the recognition strip. Never rename an id (saved sites store
-// them in copy.sectionOrder / copy.hiddenSections).
+// them in copy.sectionOrder / copy.hiddenSections). 'beforeAfter' (the
+// Before & After band) came later: see addedSections.
 export const sections = [
   { id: 'hero', label: 'Hero' },
   { id: 'statsBar', label: 'Stats Bar' },
   { id: 'services', label: 'Services' },
   { id: 'about', label: 'About' },
   { id: 'gallery', label: 'Gallery' },
+  { id: 'beforeAfter', label: 'Before & After' },
   { id: 'testimonials', label: 'Reviews' },
   { id: 'cta', label: 'Contact / CTA' },
   { id: 'awards', label: 'Awards' },
 ];
+
+// Ids added after sites were saved with this design. Saved sites store
+// copy.sectionOrder without them, so the page orders them itself
+// (buildSectionOrderAdded): every older section keeps exactly its saved
+// order value, and an added band without a saved slot shares the value of
+// the section before it, rendering right after it in the DOM.
+export const addedSections = ['beforeAfter'];
 
 // Work-order labels (eyebrows, numbers, hours) are set in a mono face.
 export const extraFonts = ["'Space Mono', monospace"];
@@ -389,6 +400,35 @@ html[data-acg-scrolled] .mg-nav{background-color:var(--mg-nav-scrolled);box-shad
 }
 `;
 
+// The Before & After band (kit BeforeAfter.jsx) in this design's look: the
+// concrete slab of the About section (so it parts the gallery from the
+// reviews), work-order mono labels on the tags and the counter, the handle
+// a square orange plate in its own shop-light glow, the gallery's orange
+// tab on the photo frame and the service cards' orange edge on the caption.
+// Appended after the kit's beforeAfterCss('mg-ba') only while the band
+// renders, so a site without copy.beforeAfter gets none of it. The --mg-ba-*
+// block variables alias tokens deriveTheme / garageTokens already
+// contrast-repair: the Before tag is the page's text on its background, the
+// After tag and the handle the orange fill with its ink; the counter is
+// accent text, readable on the slab like the eyebrows, and the arrows' hover
+// is the soft orange pair the outline buttons use.
+const BA_CSS = `
+.mg-ba-band{--mg-ba-text:var(--mg-text);--mg-ba-muted:var(--mg-muted);--mg-ba-line:var(--mg-border-strong);--mg-ba-focus:var(--mg-focus);--mg-ba-tag-bg:var(--mg-bg);--mg-ba-tag-text:var(--mg-text);--mg-ba-tag2-bg:var(--mg-accent);--mg-ba-tag2-text:var(--mg-on-accent);--mg-ba-knob-bg:var(--mg-accent);--mg-ba-knob-text:var(--mg-on-accent);--mg-ba-r:3px;--mg-ba-tag-r:2px;--mg-ba-btn-r:3px}
+.mg-ba-frame{border:1px solid var(--mg-border);box-shadow:0 28px 52px -30px var(--mg-shadow)}
+.mg-ba-frame::after{content:'';position:absolute;left:0;bottom:0;z-index:4;width:72px;height:5px;background:var(--mg-accent);pointer-events:none}
+.mg-ba-todo .mg-ba-frame{border:0;box-shadow:none}
+.mg-ba-todo .mg-ba-frame::after{display:none}
+.mg-ba-tag{padding:6px 12px;font-family:var(--mg-mono);font-size:11.5px;font-weight:700;letter-spacing:.16em}
+.mg-ba-knob{border-radius:3px;box-shadow:0 0 0 6px var(--mg-glow),0 10px 26px -6px rgba(0,0,0,.55)}
+.mg-ba-cap{margin-top:16px;padding-left:14px;border-left:4px solid var(--mg-accent);font-size:16px;line-height:1.55}
+.mg-ba-nav{justify-content:flex-start;gap:10px;margin-top:28px}
+.mg-ba-count{order:-1;margin-right:auto;font-family:var(--mg-mono);font-size:13px;font-weight:700;letter-spacing:.14em;text-align:left;color:var(--mg-accent-text)}
+.mg-ba-btn{width:48px;height:48px;border-width:2px}
+@media (hover:hover){
+.mg-ba-btn:hover{border-color:var(--mg-accent);color:var(--mg-soft-text);background:var(--mg-soft-bg)}
+}
+`;
+
 const txt = (v) => (typeof v === 'string' ? v.trim() : typeof v === 'number' ? String(v) : '');
 const list = (v) => (Array.isArray(v) ? v : []);
 
@@ -607,7 +647,16 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
 
   const hiddenIds = list(copy.hiddenSections);
   const show = (id) => !hiddenIds.includes(id);
-  const order = buildSectionOrder(copy, sections.map((s) => s.id));
+  const order = buildSectionOrderAdded(copy, sections.map((s) => s.id), addedSections);
+
+  // Before & After band (Edit > Before & After): only once copy.beforeAfter
+  // exists, and on the published page only with a pair that has both
+  // photos (the editor shows every pair, and says what each still needs).
+  // Heading and intro: the owner's (copy.beforeAfter), else the design's.
+  const ba = beforeAfterPairs(copy.beforeAfter, images, { editor });
+  const baOn = show('beforeAfter') && Boolean(ba) && (ba.pairs.length > 0 || editor);
+  const baTitle = ba?.title || BA_DEFAULTS.title;
+  const baIntro = ba?.intro || BA_DEFAULTS.intro;
 
   const name = txt(biz.businessName);
   const phone = txt(biz.phone);
@@ -803,7 +852,7 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
       className="mg-root"
       style={{ ...vars, containerType: 'inline-size', display: 'flex', flexDirection: 'column', minHeight: '100vh', overflowX: 'clip', background: t.bg, color: t.text, fontFamily: body, lineHeight: 1.6 }}
     >
-      <style>{CSS}</style>
+      <style>{CSS + (baOn ? beforeAfterCss('mg-ba') + BA_CSS : '')}</style>
       <a className="mg-skip" href="#main">Skip to content</a>
 
       <nav className="mg-nav" aria-label="Main" style={{ order: -1 }}>
@@ -1025,6 +1074,29 @@ export default function MechanicGarage({ businessInfo, generatedCopy, templateMe
               )}
             </div>
           </section>
+        )}
+
+        {baOn && (
+          <BeforeAfterBand
+            ns="mg-ba"
+            beforeAfter={copy.beforeAfter}
+            images={images}
+            editor={editor}
+            order={order('beforeAfter')}
+            className="mg-section mg-tex-alt"
+            wrapClassName="mg-wrap"
+            labelledBy="mg-ba-h"
+            heading={(
+              <div className={`mg-head${baIntro ? '' : ' mg-head-solo'}`} data-acg-reveal="">
+                <div>
+                  <p className="mg-eyebrow">{BA_DEFAULTS.eyebrow}</p>
+                  <h2 id="mg-ba-h" className="mg-h2">{baTitle}</h2>
+                </div>
+                {baIntro && <p className="mg-intro">{baIntro}</p>}
+              </div>
+            )}
+            hints={ba.pairs.length === 0 && <EditorHint>{'Add a before and an after photo in Edit > Before & After.'}</EditorHint>}
+          />
         )}
 
         {show('testimonials') && reviews === 'google' && (

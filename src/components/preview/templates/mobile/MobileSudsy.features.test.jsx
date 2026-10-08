@@ -562,8 +562,8 @@ describe('mobile_sudsy: features from owner data', () => {
 describe('mobile_sudsy: module exports and capability hooks', () => {
   it('declares the added sections and the footer spec', () => {
     const ids = mod.sections.map((s) => s.id);
-    expect(ids).toEqual(['hero', 'brands', 'services', 'featured', 'process', 'whyUs', 'about', 'gallery', 'testimonials', 'cta']);
-    expect(mod.addedSections).toEqual(['brands', 'featured']);
+    expect(ids).toEqual(['hero', 'brands', 'services', 'featured', 'process', 'whyUs', 'about', 'gallery', 'beforeAfter', 'testimonials', 'cta']);
+    expect(mod.addedSections).toEqual(['brands', 'featured', 'beforeAfter']);
     const types = mod.footerSpec.columns.map((c) => c.type);
     expect(types).toEqual(['brand', 'links', 'services', 'areas', 'contact', 'hours']);
     for (const t of types.filter((x) => x !== 'brand')) expect(typeof mod.footerSpec.titles[t]).toBe('string');

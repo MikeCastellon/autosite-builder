@@ -175,7 +175,7 @@ describe('fonts', () => {
 
 describe('sections', () => {
   const T = 'carwash_bubble';
-  const DEFAULT = ['hero', 'services', 'process', 'about', 'gallery', 'testimonials', 'cta'];
+  const DEFAULT = ['hero', 'services', 'process', 'about', 'gallery', 'beforeAfter', 'testimonials', 'cta'];
 
   it('knows which templates have section controls', () => {
     expect(sectionsSupported(T)).toBe(true);
@@ -190,13 +190,13 @@ describe('sections', () => {
     expect(rows[1]).toMatchObject({ id: 'services', label: 'Packages', index: 1, hidden: false, locked: false });
     expect(rows.find((r) => r.id === 'gallery').hidden).toBe(true);
     expect(rows[0]).toMatchObject({ id: 'hero', locked: true, hidden: false, first: true, last: false });
-    expect(rows[6]).toMatchObject({ id: 'cta', locked: true, last: true });
+    expect(rows[7]).toMatchObject({ id: 'cta', locked: true, last: true });
     expect(sectionRows(undefined, T).map((r) => r.id)).toEqual(DEFAULT);
   });
 
   it('moves up and down, and stores the template order as no lever', () => {
     const up = moveSection({ order: [], hidden: [] }, T, 'gallery', -1);
-    expect(up.order).toEqual(['hero', 'services', 'process', 'gallery', 'about', 'testimonials', 'cta']);
+    expect(up.order).toEqual(['hero', 'services', 'process', 'gallery', 'about', 'beforeAfter', 'testimonials', 'cta']);
     expect(currentSectionOrder(up, T)).toEqual(up.order);
     expect(moveSection(up, T, 'gallery', 1)).toEqual({ order: [], hidden: [] });
     expect(moveSection({ order: [], hidden: [] }, T, 'hero', -1)).toEqual({ order: [], hidden: [] });

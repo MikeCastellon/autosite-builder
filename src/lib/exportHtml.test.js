@@ -116,9 +116,11 @@ describe('exportHtmlString', () => {
     // Owner text that spells the input is escaped text, not the band.
     const spoof = await exportHtmlString('detailing_sporty', fx.businessInfo, { ...copy, subheadline: '<input data-acg-ba-range="">' }, meta, fx.images);
     expect(spoof).not.toContain(SITE_BA_JS);
-    // Pages of the other templates never get it.
-    const other = await exportHtmlString('mobile_chrome', fx.businessInfo, fx.generatedCopy, buildTemplateMeta('mobile_chrome'), fx.images);
-    expect(other).not.toContain(SITE_BA_JS);
+    // Every template has the band now: a page whose copy doesn't turn it on
+    // never gets the script, on another template too.
+    const other = (c) => exportHtmlString('mobile_chrome', fx.businessInfo, c, buildTemplateMeta('mobile_chrome'), fx.images);
+    expect((await other(fx.generatedCopy)).split(tag)).toHaveLength(2);
+    expect(await other(copy)).not.toContain(SITE_BA_JS);
   });
 });
 

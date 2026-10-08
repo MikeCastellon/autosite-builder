@@ -18,7 +18,7 @@
 import { SocialRow } from '../SocialIcons.jsx';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import { ServiceCardCss, ServiceDescription, BookNowLink } from '../ServiceCardParts.jsx';
-import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import { buildSectionOrderAdded } from '../../../../lib/sectionOrder.js';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HOURS_DAYS } from '../../../../lib/businessHours.js';
@@ -27,22 +27,33 @@ import { deriveTheme, mix, alpha, ensureContrast, readableOn } from '../kit/them
 import { PhotoSlot, PHOTO_HINTS } from '../kit/PhotoSlot.jsx';
 import { MobileMenu, MobileActionBar } from '../kit/MobileMenu.jsx';
 import { EditorOnly, useEditorMode } from '../kit/EditorMode.jsx';
+import { BeforeAfterBand, beforeAfterCss } from '../kit/BeforeAfter.jsx';
+import { beforeAfterPairs, BA_DEFAULTS } from '../kit/beforeAfter.js';
 
 export const themeReady = true;
 
 // ContentEditor has no TOGGLEABLE entry for this template, so it lists
 // _default: same ids, same order. Never rename an id (saved sites store
-// them in copy.sectionOrder / copy.hiddenSections).
+// them in copy.sectionOrder / copy.hiddenSections). 'beforeAfter' (the
+// Before & After band) came later: see addedSections.
 export const sections = [
   { id: 'hero', label: 'Hero' },
   { id: 'statsBar', label: 'Stats Bar' },
   { id: 'services', label: 'Services' },
   { id: 'about', label: 'About' },
   { id: 'gallery', label: 'Gallery' },
+  { id: 'beforeAfter', label: 'Before & After' },
   { id: 'testimonials', label: 'Reviews' },
   { id: 'cta', label: 'Contact / CTA' },
   { id: 'awards', label: 'Awards' },
 ];
+
+// Ids added after sites were saved with this design. Saved sites store
+// copy.sectionOrder without them, so the page orders them itself
+// (buildSectionOrderAdded): every older section keeps exactly its saved
+// order value, and an added band without a saved slot shares the value of
+// the section before it, rendering right after it in the DOM.
+export const addedSections = ['beforeAfter'];
 
 export const extraFonts = [];
 
@@ -364,6 +375,35 @@ html[data-acg-scrolled] .mi-nav::after{transform:scaleX(1)}
 }
 `;
 
+// The Before & After band (kit BeforeAfter.jsx) in this design's look: the
+// hero's steel gradient and blueprint grid behind it, near-square corners,
+// the handle as the square yellow plate of the nav mark, tags set like the
+// hero badges, the counter like the service-card numbers next to square
+// arrow buttons. Appended after the kit's beforeAfterCss('mi-ba') only while
+// the band renders, so a site without copy.beforeAfter gets none of it. The
+// --mi-ba-* block variables alias tokens deriveTheme / industrialTokens
+// already contrast-repair: the Before tag is the page's text on its
+// background, the After tag and the handle the safety-yellow fill with its
+// ink; the counter is accent text, readable on the steel like the kickers.
+const BA_CSS = `
+.mi-ba-band{--mi-ba-text:var(--mi-text);--mi-ba-muted:var(--mi-muted);--mi-ba-line:var(--mi-border-strong);--mi-ba-focus:var(--mi-focus);--mi-ba-tag-bg:var(--mi-bg);--mi-ba-tag-text:var(--mi-text);--mi-ba-tag2-bg:var(--mi-accent);--mi-ba-tag2-text:var(--mi-on-accent);--mi-ba-knob-bg:var(--mi-accent);--mi-ba-knob-text:var(--mi-on-accent);--mi-ba-r:2px;--mi-ba-tag-r:2px;--mi-ba-btn-r:3px;isolation:isolate;background:var(--mi-hero-grad);border-top:1px solid var(--mi-border)}
+.mi-ba-band::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;background-image:linear-gradient(var(--mi-grid) 1px,transparent 1px),linear-gradient(90deg,var(--mi-grid) 1px,transparent 1px);background-size:56px 56px;background-position:-1px -1px;-webkit-mask-image:linear-gradient(90deg,black 0%,black 40%,transparent 90%);mask-image:linear-gradient(90deg,black 0%,black 40%,transparent 90%)}
+.mi-ba-frame{border:1px solid var(--mi-border);box-shadow:0 28px 56px -34px var(--mi-shadow)}
+.mi-ba-frame::after{content:'';position:absolute;left:0;right:0;bottom:0;z-index:4;height:4px;background:var(--mi-accent);pointer-events:none}
+.mi-ba-todo .mi-ba-frame{border:0;box-shadow:none}
+.mi-ba-todo .mi-ba-frame::after{display:none}
+.mi-ba-tag{padding:6px 12px;font-size:11.5px;font-weight:800;letter-spacing:.16em}
+.mi-ba-knob{border-radius:3px}
+.mi-ba-cap{display:flex;align-items:baseline;gap:12px;margin-top:18px;font-size:16px;line-height:1.55}
+.mi-ba-cap::before{content:'';flex:none;width:22px;height:3px;border-radius:1px;background:var(--mi-accent);translate:0 -4px}
+.mi-ba-nav{justify-content:flex-start;gap:10px;margin-top:28px}
+.mi-ba-count{order:-1;margin-right:auto;font-size:13px;font-weight:800;letter-spacing:.16em;text-align:left;color:var(--mi-accent-text)}
+.mi-ba-btn{width:48px;height:48px;border-width:2px}
+@media (hover:hover){
+.mi-ba-btn:hover{border-color:var(--mi-accent);background:var(--mi-accent-soft)}
+}
+`;
+
 const txt = (v) => (typeof v === 'string' ? v.trim() : typeof v === 'number' ? String(v) : '');
 const list = (v) => (Array.isArray(v) ? v : []);
 const strList = (v) => (Array.isArray(v) ? v : typeof v === 'string' ? v.split(/[·,;|]+/) : [])
@@ -576,7 +616,16 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
 
   const hiddenIds = list(copy.hiddenSections);
   const show = (id) => !hiddenIds.includes(id);
-  const order = buildSectionOrder(copy, sections.map((s) => s.id));
+  const order = buildSectionOrderAdded(copy, sections.map((s) => s.id), addedSections);
+
+  // Before & After band (Edit > Before & After): only once copy.beforeAfter
+  // exists, and on the published page only with a pair that has both
+  // photos (the editor shows every pair, and says what each still needs).
+  // Heading and intro: the owner's (copy.beforeAfter), else the design's.
+  const ba = beforeAfterPairs(copy.beforeAfter, images, { editor });
+  const baOn = show('beforeAfter') && Boolean(ba) && (ba.pairs.length > 0 || editor);
+  const baTitle = ba?.title || BA_DEFAULTS.title;
+  const baIntro = ba?.intro || BA_DEFAULTS.intro;
 
   const name = txt(biz.businessName);
   const phone = txt(biz.phone);
@@ -823,7 +872,7 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
       className="mi-root"
       style={{ ...vars, containerType: 'inline-size', display: 'flex', flexDirection: 'column', minHeight: '100vh', overflowX: 'clip', background: t.bg, color: t.text, fontFamily: body, lineHeight: 1.6 }}
     >
-      <style>{CSS}</style>
+      <style>{CSS + (baOn ? beforeAfterCss('mi-ba') + BA_CSS : '')}</style>
       <a className="mi-skip" href="#main">Skip to content</a>
 
       <nav className="mi-nav" aria-label="Main" style={{ order: -1 }}>
@@ -1049,6 +1098,29 @@ export default function MechanicIndustrial({ businessInfo, generatedCopy, templa
               )}
             </div>
           </section>
+        )}
+
+        {baOn && (
+          <BeforeAfterBand
+            ns="mi-ba"
+            beforeAfter={copy.beforeAfter}
+            images={images}
+            editor={editor}
+            order={order('beforeAfter')}
+            className="mi-section"
+            wrapClassName="mi-wrap"
+            labelledBy="mi-ba-h"
+            heading={(
+              <div className={`mi-head${baIntro ? '' : ' mi-head-solo'}`} data-acg-reveal="">
+                <div>
+                  <p className="mi-kicker">{BA_DEFAULTS.eyebrow}</p>
+                  <h2 id="mi-ba-h" className="mi-h2">{baTitle}</h2>
+                </div>
+                {baIntro && <p className="mi-intro">{baIntro}</p>}
+              </div>
+            )}
+            hints={ba.pairs.length === 0 && <EditorHint>{'Add a before and an after photo in Edit > Before & After.'}</EditorHint>}
+          />
         )}
 
         {show('testimonials') && reviews === 'google' && (

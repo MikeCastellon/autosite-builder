@@ -12,6 +12,7 @@ import { useAuth } from './lib/AuthContext.jsx';
 import LoginPage from './components/auth/LoginPage.jsx';
 import LandingPage from './components/LandingPage.jsx';
 import ResetPasswordPage from './components/auth/ResetPasswordPage.jsx';
+import AuthSso from './components/auth/AuthSso.jsx';
 import DashboardPage from './components/dashboard/DashboardPage.jsx';
 import BookingOnlySetup from './components/dashboard/booking-only/BookingOnlySetup.jsx';
 import BookingSettingsPage from './components/dashboard/booking-settings/BookingSettingsPage.jsx';
@@ -32,7 +33,8 @@ import { saveSite } from './lib/saveSite.js';
 import { parkEditorState, demoEditorState, stateAfterDemo, DEMO_BACK_LABELS } from './lib/demoPreview.js';
 import { publishSite } from './lib/publishSite.js';
 import { buildTemplateMeta, unpackGeneratedContent, withWidgetKeys } from './lib/siteRender.js';
-import { builtForCustomer, freeSiteBusinessInfo } from './lib/freeSiteHandover.js';
+import { FREE_SITE_MARKER, builtForCustomer, freeSiteBusinessInfo } from './lib/freeSiteHandover.js';
+import { freeSiteAdmin } from './lib/freeSites.js';
 import { supabase, isImpersonationTab } from './lib/supabase.js';
 import { useAlert } from './components/ui/AlertProvider.jsx';
 import { isEffectiveSchedulerActive } from './lib/subscriptionGating.js';
@@ -82,6 +84,9 @@ export default function App() {
   const [returnToProject, setReturnToProject] = useState(null);
   // An editor opened from Admin > Free websites: Back returns there.
   const [returnToFreeSites, setReturnToFreeSites] = useState(false);
+  // A free website row whose hand-over box Admin > Free websites opens on
+  // arrival (the builder's last step, or "Hand over" on a Sites card).
+  const [freeSitesHandoverId, setFreeSitesHandoverId] = useState(null);
   const [customSitesProjectId, setCustomSitesProjectId] = useState(landing.projectId);
   const [selectedCustomerKey, setSelectedCustomerKey] = useState(null);
   const [showResetPassword, setShowResetPassword] = useState(false);
@@ -404,6 +409,12 @@ export default function App() {
     );
   }
 
+  // One-click sign-in from the Genius HQ tile. Ahead of the auth gate: the
+  // page itself creates the session.
+  if (typeof window !== 'undefined' && window.location.pathname === '/auth/sso') {
+    return <AuthSso />;
+  }
+
   // Custom website intake form: public, the token in the link is the key.
   if (typeof window !== 'undefined' && window.location.pathname === '/custom-site') {
     return <CustomSiteFormPage />;
@@ -520,6 +531,12 @@ export default function App() {
   };
   const backToFreeSites = () => {
     setReturnToFreeSites(false);
+    openAdmin('free-sites');
+  };
+  // Admin > Free websites with that row's hand-over box open.
+  const openFreeSiteHandover = (rowId) => {
+    setReturnToFreeSites(false);
+    setFreeSitesHandoverId(rowId);
     openAdmin('free-sites');
   };
 
@@ -822,6 +839,8 @@ export default function App() {
             setView('booking-settings');
           }}
           onOpenDemo={() => handleDashboardDemo('admin')}
+          freeSitesHandoverId={freeSitesHandoverId}
+          onFreeSitesHandoverShown={() => setFreeSitesHandoverId(null)}
           onBuildFreeSite={(row) => {
             // The normal builder from step 1, with what the admin already
             // knows and the row's marker: the first save links the site to
@@ -882,6 +901,31 @@ export default function App() {
       toast(`Save failed: ${err.message}`, 'error');
       throw err;
     }
+  };
+
+  // The builder's last step for a free website (Admin > Free websites):
+  // save, link the site to its row (the list also finds it by the marker,
+  // but this way the row holds it before the page loads), then go to Free
+  // websites, with the hand-over box open when `handover`.
+  const freeSiteRowId = !isDemoPreview && adminAllowed ? businessInfo?.[FREE_SITE_MARKER] || null : null;
+  const finishFreeSite = async ({ handover }) => {
+    const rowId = freeSiteRowId;
+    try {
+      await flushSaveSite();
+    } catch (err) {
+      toast(`Save failed: ${err.message}`, 'error');
+      return;
+    }
+    if (siteId) {
+      try {
+        await freeSiteAdmin('link-site', { id: rowId, siteId });
+      } catch (err) {
+        toast(`The site is saved, but it isn't linked to the customer yet: ${err.message}`, 'error');
+      }
+    }
+    handleStartOver();
+    if (handover) openFreeSiteHandover(rowId);
+    else backToFreeSites();
   };
 
   // "Publish" from the editor toolbar — saves the draft first, then
@@ -953,6 +997,7 @@ export default function App() {
           onNewSite={() => { handleStartOver(); setView('wizard'); }}
           onNewBookingPage={() => setView('booking-only-setup')}
           onEditSite={handleEditSite}
+          onHandOverFreeSite={adminAllowed ? openFreeSiteHandover : undefined}
           profile={profile}
           onOpenBookingSettings={(siteId) => { setReturnToProject(null); setSettingsSiteId(siteId); setView('booking-settings'); }}
         />
@@ -1028,7 +1073,7 @@ export default function App() {
             : editingExistingSite && returnToFreeSites ? 'Back to Free websites'
               : editingExistingSite ? 'Back to Sites' : 'Back to Templates'}
         onExport={isDemoPreview || editingExistingSite ? null : () => goTo(6)}
-        onSaveDraft={!isDemoPreview && editingExistingSite ? handleSaveDraft : null}
+        onSaveDraft={!isDemoPreview && (editingExistingSite || freeSiteRowId) ? handleSaveDraft : null}
         onPublish={!isDemoPreview && editingExistingSite ? handlePublishFromEditor : null}
         onStartOver={() => { handleStartOver(); setView('dashboard'); }}
         onSwitchTemplate={(newTemplateId) => {
@@ -1079,6 +1124,10 @@ export default function App() {
           selectedWidgetIds={selectedWidgetIds}
           onBack={() => goTo(5)}
           onStartOver={() => { handleStartOver(); setView('dashboard'); }}
+          freeSite={freeSiteRowId ? {
+            onHandover: () => finishFreeSite({ handover: true }),
+            onLater: () => finishFreeSite({ handover: false }),
+          } : null}
         />
         <HelpChrome profile={profile} />
       </>

@@ -373,7 +373,7 @@ describe('facts from the written site', () => {
   it('marks hidden, empty and opt-in sections and keeps the saved order', () => {
     const redline = siteSections({ templateId: 'mobile_redline', copy: { hiddenSections: ['gallery'] }, businessInfo: { awards: [] } });
     expect(redline.themeReady).toBe(true);
-    expect(redline.sections.filter((s) => s.hidden).map((s) => s.id)).toEqual(['gallery', 'awards']);
+    expect(redline.sections.filter((s) => s.hidden).map((s) => s.id)).toEqual(['gallery', 'beforeAfter', 'awards']);
     expect(redline.order).toEqual(['hero', 'about', 'brands', 'services', 'featured', 'testimonials', 'locations', 'cta']);
 
     const sporty = siteSections({ templateId: 'detailing_sporty', copy: { sectionOrder: ['hero', 'about', 'services'] }, businessInfo: { awards: ['Best of Miami'] } });
