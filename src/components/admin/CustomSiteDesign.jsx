@@ -356,17 +356,20 @@ function shotNoteKey(asset) {
 
 // How a copy of an address gets its screenshots: 'wait' (our server is
 // taking them now), 'match' (it has some: from a capture whose last run
-// didn't fail, or, after a failed one, ones the admin uploaded instead, so
-// a site our server can't open never loops) or 'capture' (none yet, or
-// the last capture failed). `view` is captureViewFor the address,
-// `failedStart` why its last start failed, `assets` the project's files.
+// didn't fail and that read the page's code, or, after a failed one, ones
+// the admin uploaded instead, so a site our server can't open never loops)
+// or 'capture' (none yet, the last capture failed, or it was taken before
+// captures read the code: its part 1 has no outline, and a copy should
+// match with one). `view` is captureViewFor the address, `failedStart`
+// why its last start failed, `assets` the project's files.
 export function copyCapturePlan({ view, failedStart = '', assets = [], key }) {
   if (view?.state === 'running') return 'wait';
   const shots = (Array.isArray(assets) ? assets : []).filter((a) => a?.kind === 'reference');
   if (failedStart || view?.state === 'failed' || view?.state === 'stale') {
     return shots.some((a) => !capturedShotKey(a) && shotNoteKey(a) === key) ? 'match' : 'capture';
   }
-  return shots.some((a) => capturedShotKey(a) === key) ? 'match' : 'capture';
+  const captured = shots.filter((a) => capturedShotKey(a) === key);
+  return captured.some((a) => a.outline && typeof a.outline === 'object') ? 'match' : 'capture';
 }
 
 const COPY_MATCHING = 'Claude is matching its layout (1–3 min)…';
@@ -726,7 +729,14 @@ function ReferenceSection({
                     {web && captureBlock(item, view, siteShots)}
                     {/* What our server read from its code: an address's
                         newest capture, or this captured screenshot's. */}
-                    {item.source && outlineOf && codeOutline(outlineOf(item.source), templateId)}
+                    {item.source && outlineOf && (codeOutline(outlineOf(item.source), templateId) || (
+                      // Captured before captures read the code: say how to get it.
+                      web && (siteShots || []).some((s) => capturedShotKey(s) === item.siteKey) && (
+                        <p className="mt-2 text-[11px] text-ink-tertiary" data-outline-missing="">
+                          Captured before we read sites' code. Capture again, or press Copy this site's layout, to add its fonts, sections and features.
+                        </p>
+                      )
+                    ))}
                     {on && item.kind === 'url' && matchedUrlShots && (
                       matchedUrlShots.length === 0 ? (
                         <p className="mt-2 text-[12px] text-amber-800">
