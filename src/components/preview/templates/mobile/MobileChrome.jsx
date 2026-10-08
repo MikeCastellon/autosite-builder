@@ -13,12 +13,13 @@
 // Owner-editable features (CLAUDE.md, "Feature blocks"): the hero services
 // card, the Google rating badge, the footer builder, package details, section
 // headings, the featured-service band, the vehicle-makes band, service areas
-// + insured, Google review labels and a contact background photo. They are
-// the kit's shared blocks (HeroOffer, PackageDetails, FeaturedBand,
-// MakesBand) in this design's look (FEATURE_CSS). Live sites use this
-// design, so every feature is opt-in: it renders only from the owner's own
-// new data, and a site that saved none of it gets exactly the markup, CSS
-// and root variables it had before the features existed.
+// + insured, Google review labels, a contact background photo and the
+// Before & After band. They are the kit's shared blocks (HeroOffer,
+// PackageDetails, FeaturedBand, MakesBand, BeforeAfterBand) in this design's
+// look (FEATURE_CSS, BA_CSS). Live sites use this design, so every feature
+// is opt-in: it renders only from the owner's own new data, and a site that
+// saved none of it gets exactly the markup, CSS and root variables it had
+// before the features existed (MobileChrome.golden.test.jsx).
 import { SocialRow } from '../SocialIcons.jsx';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import { ServiceCardCss, ServiceDescription, BookNowLink } from '../ServiceCardParts.jsx';
@@ -40,14 +41,17 @@ import { PackageBadge, PackagePhoto, PackageIncludes, packageDetailsCss } from '
 import { FeaturedBand, featuredBandCss } from '../kit/FeaturedBand.jsx';
 import { MakesBand, makesBandCss } from '../kit/MakesBand.jsx';
 import { vehicleMakesFor } from '../kit/vehicleMakes.js';
+import { BeforeAfterBand, beforeAfterCss } from '../kit/BeforeAfter.jsx';
+import { beforeAfterPairs, BA_DEFAULTS } from '../kit/beforeAfter.js';
 import { GoogleRatingBadge, StarRow, GOOGLE_STAR_GOLD, googleRatingOf, googlePlaceUrl, googleBadgePlacements } from '../kit/GoogleRatingBadge.jsx';
 
 export const themeReady = true;
 
 // Default top-to-bottom order. The original eight ids are ContentEditor's
 // TOGGLEABLE._default, which saved sites store in copy.sectionOrder /
-// copy.hiddenSections: never rename an id. 'brands' (the vehicle-makes band)
-// and 'featured' (the featured-service band) came later: see addedSections.
+// copy.hiddenSections: never rename an id. 'brands' (the vehicle-makes band),
+// 'featured' (the featured-service band) and 'beforeAfter' (the Before &
+// After band) came later: see addedSections.
 export const sections = [
   { id: 'hero', label: 'Hero' },
   { id: 'statsBar', label: 'Stats Bar' },
@@ -56,6 +60,7 @@ export const sections = [
   { id: 'featured', label: 'Featured Service' },
   { id: 'about', label: 'About' },
   { id: 'gallery', label: 'Gallery' },
+  { id: 'beforeAfter', label: 'Before & After' },
   { id: 'testimonials', label: 'Reviews' },
   { id: 'cta', label: 'Contact / CTA' },
   { id: 'awards', label: 'Awards' },
@@ -66,14 +71,16 @@ export const sections = [
 // value, and an added id the owner has not placed shares the value of the
 // section before it (it sits right after that section in the DOM, so the
 // CSS order tie keeps it there).
-export const addedSections = ['brands', 'featured'];
+export const addedSections = ['brands', 'featured', 'beforeAfter'];
 
 export const extraFonts = [];
 
 // Edit > Headings: the copy.sectionTitles fields each section uses (any
 // other field is ignored by this design). titleFrom / introFrom name the copy
-// key that owns that text; the Headings tab edits it there. Stats Bar and
-// Awards have no heading. headingDefaults() below gives the design's text.
+// key that owns that text; the Headings tab edits it there (the Before &
+// After heading and intro live in copy.beforeAfter, like Bold & Sporty's).
+// Stats Bar and Awards have no heading. headingDefaults() below gives the
+// design's text.
 export const headingFields = {
   hero: { fields: ['eyebrow', 'title', 'accent'], titleFrom: 'headline' },
   brands: { fields: ['eyebrow'] },
@@ -81,6 +88,7 @@ export const headingFields = {
   featured: { fields: ['eyebrow', 'title', 'accent', 'intro'] },
   about: { fields: ['eyebrow', 'title', 'accent'] },
   gallery: { fields: ['eyebrow', 'title', 'accent'] },
+  beforeAfter: { fields: ['eyebrow', 'title', 'accent', 'intro'], titleFrom: 'beforeAfter.title', introFrom: 'beforeAfter.intro', placeholder: { intro: BA_DEFAULTS.intro } },
   testimonials: { fields: ['eyebrow', 'title', 'accent', 'intro'] },
   cta: { fields: ['eyebrow', 'title', 'accent', 'intro'], titleFrom: 'ctaHeadline', introFrom: 'ctaSubtext' },
 };
@@ -483,6 +491,39 @@ const FEATURE_CSS = `
 }
 `;
 
+// The Before & After band (kit BeforeAfter.jsx) in this design's look: a
+// hairline frame with the chrome sheen along its top edge (like the service
+// cards), 2px corners, tags in the small tracked capitals of the labels, the
+// After tag and the handle in the buttons' metallic chrome, a hairline ahead
+// of the caption like the eyebrows', and the counter in the cards' numbering
+// style beside round hairline arrows. Appended after the kit's
+// beforeAfterCss('mc-ba'), at the very end of the style string and only
+// while the band renders, so a site without copy.beforeAfter gets none of it
+// (and FEATURE_CSS doesn't change). The --mc-ba-* block variables alias
+// tokens deriveTheme / chromeTokens already contrast-repair: the Before tag
+// is the page's text on its background, the After tag and the handle the
+// accent with its ink (every stop of --mc-chrome is checked against that
+// ink, as on the chrome buttons).
+const BA_CSS = `
+.mc-ba-band{--mc-ba-text:var(--mc-text);--mc-ba-muted:var(--mc-muted);--mc-ba-line:var(--mc-border-strong);--mc-ba-focus:var(--mc-focus);--mc-ba-tag-bg:var(--mc-bg);--mc-ba-tag-text:var(--mc-text);--mc-ba-tag2-bg:var(--mc-accent);--mc-ba-tag2-text:var(--mc-on-accent);--mc-ba-knob-bg:var(--mc-accent);--mc-ba-knob-text:var(--mc-on-accent);--mc-ba-r:2px;--mc-ba-tag-r:2px}
+.mc-ba-frame{border:1px solid var(--mc-border);box-shadow:0 28px 56px -32px var(--mc-shadow)}
+.mc-ba-frame::after{content:'';position:absolute;top:0;left:0;right:0;z-index:4;height:1px;background:var(--mc-line);pointer-events:none}
+.mc-ba-todo .mc-ba-frame{border:0;box-shadow:none}
+.mc-ba-todo .mc-ba-frame::after{display:none}
+.mc-ba-tag{padding:6px 12px;font-size:11px;font-weight:600;letter-spacing:.24em}
+.mc-ba-tag-before{box-shadow:inset 0 0 0 1px var(--mc-border-strong)}
+.mc-ba-tag-after,.mc-ba-knob{background-image:var(--mc-chrome);background-size:220% 100%}
+.mc-ba-tag-after{box-shadow:inset 0 1px 0 rgba(255,255,255,.3)}
+.mc-ba-cap{position:relative;margin-top:18px;padding-left:46px;font-size:15px;line-height:1.7}
+.mc-ba-cap::before{content:'';position:absolute;left:0;top:.85em;width:32px;height:1px;background:var(--mc-line-solid)}
+.mc-ba-nav{justify-content:flex-start;gap:12px;margin-top:28px}
+.mc-ba-count{order:-1;margin-right:auto;font-family:var(--mc-head);font-size:13px;font-weight:600;letter-spacing:.18em;text-align:left;color:var(--mc-accent-text)}
+.mc-ba-btn{width:48px;height:48px}
+@media (hover:hover){
+.mc-ba-btn:hover{border-color:var(--mc-accent-text);background:var(--mc-accent-soft)}
+}
+`;
+
 // The hero services card's wording: this design calls them services.
 const HQ_LABELS = {
   legend: 'Choose a service',
@@ -644,6 +685,8 @@ export function headingDefaults(businessInfo, generatedCopy) {
     featured: { eyebrow: 'Featured', ...featuredTitleDefaults(txt(fs.serviceName), Boolean(ft.title)) },
     about: { eyebrow: 'About', title: name ? `About ${name}` : 'About Us', accent: '' },
     gallery: { eyebrow: 'Gallery', title: 'Our Work', accent: '' },
+    // The kit's neutral words (no claims: the photos make the point).
+    beforeAfter: { eyebrow: BA_DEFAULTS.eyebrow, title: BA_DEFAULTS.title, accent: '' },
     testimonials: { eyebrow: 'Testimonials', title: 'What Clients Say', accent: '' },
     cta: { eyebrow: 'Contact', title: fb.ctaHeadline, accent: '' },
   };
@@ -791,6 +834,17 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
   // ticked; no list = no band.
   const makes = vehicleMakesFor(copy.vehicleMakes, []);
   const makesOn = show('brands') && makes.length > 0;
+
+  // The Before & After band (Edit > Before & After): only once
+  // copy.beforeAfter exists, and on the published page only with a pair
+  // that has both photos (the editor shows every pair, and says what each
+  // still needs). Heading and intro: the owner's (copy.beforeAfter, which
+  // Edit > Headings edits too), else the design's own.
+  const ba = beforeAfterPairs(copy.beforeAfter, images, { editor });
+  const baOn = show('beforeAfter') && Boolean(ba) && (ba.pairs.length > 0 || editor);
+  const baT = sectionTitle(titles, 'beforeAfter');
+  const baTitle = ba?.title || baT.title || hd.beforeAfter.title;
+  const baIntro = ba?.intro || baT.intro || BA_DEFAULTS.intro;
 
   // Stats only from what the owner entered: About > Stats Box values, else
   // business facts (years, area, hours, payment). No invented numbers.
@@ -998,7 +1052,10 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
     + (featuredOn ? featuredBandCss('mc-ft') : '')
     + (makesOn ? makesBandCss('mc-mk') : '')
     + (featureOn ? FEATURE_CSS : '')
-    + navBadgeCss;
+    + navBadgeCss
+    // Last, so a page with the band starts with exactly the style string it
+    // has without it.
+    + (baOn ? beforeAfterCss('mc-ba') + BA_CSS : '');
 
   return (
     <div
@@ -1295,6 +1352,33 @@ export default function MobileChrome({ businessInfo, generatedCopy, templateMeta
               )}
             </div>
           </section>
+        )}
+
+        {/* Right after the gallery in the DOM: without a saved slot it
+            shares the gallery's order value (addedSections). */}
+        {baOn && (
+          <BeforeAfterBand
+            ns="mc-ba"
+            beforeAfter={copy.beforeAfter}
+            images={images}
+            editor={editor}
+            order={order('beforeAfter')}
+            className="mc-section"
+            wrapClassName="mc-wrap"
+            labelledBy="mc-ba-h"
+            heading={(
+              <div className={`mc-head${baIntro ? '' : ' mc-head-solo'}`} data-acg-reveal="">
+                <div>
+                  <p className="mc-eyebrow">{baT.eyebrow || hd.beforeAfter.eyebrow}</p>
+                  <h2 id="mc-ba-h" className="mc-h2">
+                    <Accented title={baTitle} accent={baT.accent || hd.beforeAfter.accent} className="mc-chrome-text" />
+                  </h2>
+                </div>
+                {baIntro && <p className="mc-intro">{baIntro}</p>}
+              </div>
+            )}
+            hints={ba.pairs.length === 0 && <EditorHint>{'Add a before and an after photo in Edit > Before & After.'}</EditorHint>}
+          />
         )}
 
         {show('testimonials') && reviews === 'google' && (

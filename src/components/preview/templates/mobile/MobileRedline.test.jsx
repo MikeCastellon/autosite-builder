@@ -1040,7 +1040,7 @@ describe('footer columns (copy.footer)', () => {
 describe('headings manifest', () => {
   it('names only this design\'s sections, the four heading fields and the owning copy keys', () => {
     const ids = mod.sections.map((s) => s.id);
-    const OWNERS = ['headline', 'servicesSection.title', 'servicesSection.intro', 'ctaHeadline', 'ctaSubtext'];
+    const OWNERS = ['headline', 'servicesSection.title', 'servicesSection.intro', 'ctaHeadline', 'ctaSubtext', 'beforeAfter.title', 'beforeAfter.intro'];
     expect(mod.headingFields && typeof mod.headingFields).toBe('object');
     for (const [id, spec] of Object.entries(mod.headingFields)) {
       expect(ids).toContain(id);
@@ -1062,7 +1062,12 @@ describe('headings manifest', () => {
       if (spec.fields.includes('title') && !spec.titleFrom) sectionTitles[id].title = `Title ${id} Here`;
       if (spec.fields.includes('intro') && !spec.introFrom) sectionTitles[id].intro = `Intro ${id}.`;
     }
-    const html = render(RICH, { images: { gallery0: 'https://example.com/g.jpg' }, copy: { sectionTitles, servicesSection: { title: 'Svc Owner Title', intro: 'Svc owner intro.' }, ctaHeadline: 'Cta Owner Title', ctaSubtext: 'Cta owner intro.' } });
+    // The Before & After band shows (one complete pair) with its own heading
+    // and intro, which its tab owns (copy.beforeAfter).
+    const html = render(RICH, {
+      images: { gallery0: 'https://example.com/g.jpg', baBefore0: 'https://example.com/b.jpg', baAfter0: 'https://example.com/a.jpg' },
+      copy: { sectionTitles, servicesSection: { title: 'Svc Owner Title', intro: 'Svc owner intro.' }, ctaHeadline: 'Cta Owner Title', ctaSubtext: 'Cta owner intro.', beforeAfter: { title: 'Ba Owner Title', intro: 'Ba owner intro.', pairs: [{}] } },
+    });
     for (const [id, spec] of Object.entries(mod.headingFields)) {
       const text = visibleText(sectionHtml(html, id));
       if (sectionTitles[id].eyebrow) expect(text, id).toContain(`Eye ${id}`);
@@ -1070,7 +1075,7 @@ describe('headings manifest', () => {
       if (sectionTitles[id].intro) expect(text, id).toContain(`Intro ${id}.`);
     }
     const t = visibleText(html);
-    for (const s of ['Svc Owner Title', 'Svc owner intro.', 'Cta Owner Title', 'Cta owner intro.']) expect(t).toContain(s);
+    for (const s of ['Svc Owner Title', 'Svc owner intro.', 'Cta Owner Title', 'Cta owner intro.', 'Ba Owner Title', 'Ba owner intro.']) expect(t).toContain(s);
   });
 });
 

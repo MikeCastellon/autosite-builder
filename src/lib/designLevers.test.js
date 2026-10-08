@@ -20,7 +20,7 @@ describe('fonts', () => {
 describe('sections', () => {
   it('completes a partial order: template order for the rest, added sections beside their neighbor', () => {
     expect(fullSectionOrder(['gallery', 'hero', 'nope', 'gallery'], 'carwash_bubble'))
-      .toEqual(['gallery', 'hero', 'services', 'process', 'about', 'testimonials', 'cta']);
+      .toEqual(['gallery', 'beforeAfter', 'hero', 'services', 'process', 'about', 'testimonials', 'cta']);
     // A look written before Sporty gained 'brands', 'featured' and
     // 'beforeAfter' keeps them at their default spots, never below the
     // contact section.

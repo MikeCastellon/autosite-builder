@@ -325,8 +325,8 @@ describe('normalizeSuggestion', () => {
     const s = normalizeSuggestion(raw, { project: PROJECT, templateIds: ['mobile_chrome', 'mobile_sudsy'] });
     expect(s.templateId).toBe('mobile_sudsy');
     // Sudsy's later 'brands' and 'featured' sit beside their default neighbors.
-    expect(s.levers.sections.order.slice(0, 5)).toEqual(['hero', 'brands', 'gallery', 'services', 'featured']);
-    expect(s.levers.sections.order).toHaveLength(10);
+    expect(s.levers.sections.order.slice(0, 6)).toEqual(['hero', 'brands', 'gallery', 'beforeAfter', 'services', 'featured']);
+    expect(s.levers.sections.order).toHaveLength(11);
     expect(s.levers.sections.hidden).toEqual(['whyUs']);
     expect(s.levers.fonts).toEqual({ body: 'Nunito' });
     expect(s.levers.heroLayout).toBe('split');

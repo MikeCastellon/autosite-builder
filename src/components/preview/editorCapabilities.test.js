@@ -226,7 +226,7 @@ describe('editorTabs', () => {
 
   it('adds template-specific tabs only where the template reads them', () => {
     expect(ids('detailing_sporty')).toEqual(['visibility', 'hero', 'headings', 'services', 'featured', 'makes', 'about', 'gallery', 'beforeAfter', 'testimonials', 'google', 'contact', 'colors', 'footer']);
-    expect(ids('mechanic_garage')).toEqual(['visibility', 'hero', 'services', 'about', 'gallery', 'testimonials', 'contact', 'colors', 'footer']);
+    expect(ids('mechanic_garage')).toEqual(['visibility', 'hero', 'services', 'about', 'gallery', 'beforeAfter', 'testimonials', 'contact', 'colors', 'footer']);
     expect(ids('tint_obsidian')).toEqual(expect.arrayContaining(['howItWorks', 'filmBrands', 'shadeGuide']));
     expect(ids('tint_obsidian')).not.toContain('whyUs');
     expect(ids('wheel_apex')).toEqual(expect.arrayContaining(['products', 'brands', 'trustBar', 'ticker']));

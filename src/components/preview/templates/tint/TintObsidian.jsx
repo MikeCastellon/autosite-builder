@@ -20,7 +20,7 @@ import { SocialRow } from '../SocialIcons.jsx';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import IconOrEmoji from '../IconOrEmoji.jsx';
 import { ServiceCardCss, ServiceDescription, BookNowLink } from '../ServiceCardParts.jsx';
-import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import { buildSectionOrderAdded } from '../../../../lib/sectionOrder.js';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HOURS_DAYS } from '../../../../lib/businessHours.js';
@@ -28,11 +28,14 @@ import { deriveTheme, mix, alpha, ensureContrast, contrastRatio, hexToRgb, rgbTo
 import { PhotoSlot, PHOTO_HINTS } from '../kit/PhotoSlot.jsx';
 import { MobileMenu, MobileActionBar } from '../kit/MobileMenu.jsx';
 import { EditorOnly, useEditorMode } from '../kit/EditorMode.jsx';
+import { BeforeAfterBand, beforeAfterCss } from '../kit/BeforeAfter.jsx';
+import { beforeAfterPairs, BA_DEFAULTS } from '../kit/beforeAfter.js';
 
 export const themeReady = true;
 
 // Same ids and order as ContentEditor's TOGGLEABLE.tint_obsidian, so the
 // editor's Sections list matches what renders. Never rename an id.
+// 'beforeAfter' (the Before & After band) came later: see addedSections.
 export const sections = [
   { id: 'hero', label: 'Hero' },
   { id: 'shadeGuide', label: 'Shade Guide' },
@@ -41,9 +44,17 @@ export const sections = [
   { id: 'process', label: 'Process Steps' },
   { id: 'about', label: 'About' },
   { id: 'gallery', label: 'Gallery' },
+  { id: 'beforeAfter', label: 'Before & After' },
   { id: 'testimonials', label: 'Reviews' },
   { id: 'cta', label: 'Contact / CTA' },
 ];
+
+// Ids added after sites were saved with this design. Saved sites store
+// copy.sectionOrder without them, so the page orders them itself
+// (buildSectionOrderAdded): every older section keeps exactly its saved
+// order value, and an added band without a saved slot shares the value of
+// the section before it, rendering right after it in the DOM.
+export const addedSections = ['beforeAfter'];
 
 // Syne Mono sets the small "// code" accents (labels, spec keys, step
 // numbers); headings and body text always use the owner's two font slots.
@@ -535,6 +546,43 @@ html[data-acg-scrolled] .ob-nav{box-shadow:0 18px 40px -24px var(--ob-shadow)}
 }
 `;
 
+// The Before & After band (kit BeforeAfter.jsx) in the studio's look:
+// square glass with a hairline edge and the electric gradient along the top
+// of the photos (no glow outside them: the kit's track clips its slides, so
+// it would end in a hard edge under the caption), "// " mono tags (Before
+// in the accent ink on the void, After in the button gradient), a glowing
+// gradient handle, the caption on the second glow's rule, and the
+// "// 01 / 02" counter left with square arrows right, like the left-set
+// headings. Appended after the kit's beforeAfterCss('ob-ba') only while the
+// band renders, so a site without copy.beforeAfter gets none of it. The
+// --ob-ba-* block variables alias tokens deriveTheme / studioTokens already
+// contrast-repair: the accent ink on the page background, and the button
+// ink (--ob-on-accent) on both stops of --ob-btn.
+const BA_CSS = `
+.ob-ba-band{--ob-ba-text:var(--ob-text);--ob-ba-muted:var(--ob-muted);--ob-ba-line:var(--ob-border-strong);--ob-ba-focus:var(--ob-focus);--ob-ba-tag-bg:var(--ob-bg);--ob-ba-tag-text:var(--ob-accent-text);--ob-ba-tag2-bg:var(--ob-btn);--ob-ba-tag2-text:var(--ob-on-accent);--ob-ba-knob-bg:var(--ob-btn);--ob-ba-knob-text:var(--ob-on-accent);--ob-ba-r:0px;--ob-ba-tag-r:0px;--ob-ba-btn-r:0px}
+.ob-ba-frame{border:1px solid var(--ob-border2)}
+.ob-ba-frame::after{content:'';position:absolute;top:0;left:0;right:0;z-index:4;height:2px;background:var(--ob-grad);pointer-events:none}
+.ob-ba-todo .ob-ba-frame{border:0}
+.ob-ba-todo .ob-ba-frame::after{display:none}
+.ob-ba-tag{padding:7px 12px;font-family:var(--ob-mono);font-size:10.5px;font-weight:400;line-height:14px;letter-spacing:.24em}
+.ob-ba-tag::before{content:'// '}
+.ob-ba-tag-before{box-shadow:inset 0 0 0 1px var(--ob-border)}
+.ob-ba-knob{box-shadow:0 0 0 1px rgba(0,0,0,.2),0 0 28px var(--ob-glow)}
+.ob-ba-cap{margin-top:16px;padding-left:16px;border-left:2px solid var(--ob-accent2-text);font-size:16px;line-height:1.6;text-wrap:pretty}
+.ob-ba-nav{justify-content:flex-start;gap:12px;margin-top:28px}
+.ob-ba-count{order:-1;margin-right:auto;font-family:var(--ob-mono);font-size:12px;font-weight:400;letter-spacing:.24em;text-align:left;color:var(--ob-accent-text)}
+.ob-ba-count::before{content:'// '}
+.ob-ba-btn{width:52px;height:52px}
+@container (min-width:601px){
+.ob-ba-tag{top:18px;padding:8px 14px;font-size:11px}
+.ob-ba-tag-before{left:18px}
+.ob-ba-tag-after{right:18px}
+}
+@media (hover:hover){
+.ob-ba-btn:hover{border-color:var(--ob-accent-text);background:var(--ob-accent-soft);box-shadow:0 0 30px -4px var(--ob-glow)}
+}
+`;
+
 const txt = (v) => (typeof v === 'string' ? v.trim() : typeof v === 'number' ? String(v) : '');
 const list = (v) => (Array.isArray(v) ? v : []);
 
@@ -810,6 +858,15 @@ function Electric({ text }) {
   return <>{words.slice(0, -k).join(' ')} <span className="ob-electric">{words.slice(-k).join(' ')}</span></>;
 }
 
+// A section heading of the design's own words with its last word lit ("See
+// the Difference"), the two-tone voice of "Recent work." and "Our
+// services."; an owner's heading prints as typed, as theirs do.
+function LitLast({ text }) {
+  const words = txt(text).split(/\s+/).filter(Boolean);
+  if (words.length < 2) return <span className="ob-v">{txt(text)}</span>;
+  return <>{words.slice(0, -1).join(' ')} <span className="ob-v">{words[words.length - 1]}</span></>;
+}
+
 // Where a button goes when the owner entered no URL: its wording decides
 // (their text or the AI draft's), else the template's own default.
 function intentHref(label, map, fallback) {
@@ -852,7 +909,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
 
   const hiddenIds = list(copy.hiddenSections);
   const show = (id) => !hiddenIds.includes(id);
-  const order = buildSectionOrder(copy, sections.map((s) => s.id));
+  const order = buildSectionOrderAdded(copy, sections.map((s) => s.id), addedSections);
 
   const name = txt(biz.businessName) || fb.shopName;
   const phone = txt(biz.phone);
@@ -941,6 +998,15 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
     .filter((k) => /^gallery\d+$/.test(k) && images[k])
     .sort((a, b) => Number(a.slice(7)) - Number(b.slice(7)))
     .map((k) => images[k]);
+
+  // Before & After band (Edit > Before & After): only once copy.beforeAfter
+  // exists, and on the published page only with a pair that has both
+  // photos (the editor shows every pair, and says what each still needs).
+  // Heading and intro: the owner's, else the design's own words.
+  const ba = beforeAfterPairs(copy.beforeAfter, images, { editor });
+  const baOn = show('beforeAfter') && Boolean(ba) && (ba.pairs.length > 0 || editor);
+  const baTitle = ba?.title || BA_DEFAULTS.title;
+  const baIntro = ba?.intro || BA_DEFAULTS.intro;
 
   const testimonials = list(copy.testimonialPlaceholders).filter((q) => txt(q?.text));
   const reviews = copy.googleWidgetKey ? 'google' : testimonials.length > 0 ? 'quotes' : null;
@@ -1078,7 +1144,7 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
       className="ob-root"
       style={{ ...vars, containerType: 'inline-size', display: 'flex', flexDirection: 'column', minHeight: '100vh', overflowX: 'clip', background: t.bg, color: t.text, fontFamily: body, lineHeight: 1.6, WebkitFontSmoothing: 'antialiased' }}
     >
-      <style>{CSS}</style>
+      <style>{CSS + (baOn ? beforeAfterCss('ob-ba') + BA_CSS : '')}</style>
       <a className="ob-skip" href="#main">Skip to content</a>
 
       <nav className={`ob-nav${!images.logo && name.length > 26 ? ' ob-nav-long' : ''}${!images.logo && name.length > 36 ? ' ob-nav-xl' : ''}`} aria-label="Main" style={{ order: -1 }}>
@@ -1439,6 +1505,32 @@ export default function TintObsidian({ businessInfo, generatedCopy, templateMeta
               )}
             </div>
           </section>
+        )}
+
+        {/* Right after the gallery in the DOM: it shares the gallery's order
+            value until the owner places it (buildSectionOrderAdded). On the
+            deep tone, between the gallery's page tone and the reviews panel. */}
+        {baOn && (
+          <BeforeAfterBand
+            ns="ob-ba"
+            beforeAfter={copy.beforeAfter}
+            images={images}
+            editor={editor}
+            order={order('beforeAfter')}
+            className="ob-section ob-deep"
+            wrapClassName="ob-wrap"
+            labelledBy="ob-ba-h"
+            heading={(
+              <div className={`ob-head${baIntro ? '' : ' ob-head-solo'}`} data-acg-reveal="">
+                <div>
+                  <p className="ob-tag">{BA_DEFAULTS.eyebrow}</p>
+                  <h2 id="ob-ba-h" className="ob-h2" style={fit(baTitle)}>{ba.title || <LitLast text={baTitle} />}</h2>
+                </div>
+                {baIntro && <p className="ob-body">{baIntro}</p>}
+              </div>
+            )}
+            hints={ba.pairs.length === 0 && <EditorHint>{'Add a before and an after photo in Edit > Before & After.'}</EditorHint>}
+          />
         )}
 
         {show('testimonials') && reviews === 'google' && (

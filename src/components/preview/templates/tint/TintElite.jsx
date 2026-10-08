@@ -16,7 +16,7 @@
 import { SocialRow } from '../SocialIcons.jsx';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import { ServiceCardCss, ServiceDescription, BookNowLink } from '../ServiceCardParts.jsx';
-import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import { buildSectionOrderAdded } from '../../../../lib/sectionOrder.js';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HOURS_DAYS } from '../../../../lib/businessHours.js';
@@ -25,13 +25,16 @@ import { deriveTheme, mix, alpha, ensureContrast, contrastRatio, hexToRgb, rgbTo
 import { PhotoSlot, PHOTO_HINTS } from '../kit/PhotoSlot.jsx';
 import { MobileMenu, MobileActionBar } from '../kit/MobileMenu.jsx';
 import { EditorOnly, useEditorMode } from '../kit/EditorMode.jsx';
+import { BeforeAfterBand, beforeAfterCss } from '../kit/BeforeAfter.jsx';
+import { beforeAfterPairs, BA_DEFAULTS } from '../kit/beforeAfter.js';
 
 export const themeReady = true;
 
 // Same ids and order as ContentEditor's TOGGLEABLE.tint_elite, so the
 // editor's Sections list matches what renders (the old template put Film
 // Brands above Services, so the first drag in the editor moved untouched
-// sections). Never rename an id.
+// sections). Never rename an id. 'beforeAfter' (the Before & After band)
+// came later: see addedSections.
 export const sections = [
   { id: 'hero', label: 'Hero' },
   { id: 'statsBar', label: 'Stats Bar' },
@@ -39,9 +42,17 @@ export const sections = [
   { id: 'brands', label: 'Film Brands' },
   { id: 'about', label: 'About' },
   { id: 'gallery', label: 'Gallery' },
+  { id: 'beforeAfter', label: 'Before & After' },
   { id: 'testimonials', label: 'Reviews' },
   { id: 'cta', label: 'Contact / CTA' },
 ];
+
+// Ids added after sites were saved with this design. Saved sites store
+// copy.sectionOrder without them, so the page orders them itself
+// (buildSectionOrderAdded): every older section keeps exactly its saved
+// order value, and an added band without a saved slot shares the value of
+// the section before it, rendering right after it in the DOM.
+export const addedSections = ['beforeAfter'];
 
 export const extraFonts = [];
 
@@ -382,6 +393,35 @@ html[data-acg-scrolled] .te-nav::after{opacity:1}
 }
 `;
 
+// The Before & After band (kit BeforeAfter.jsx) in this design's look: a
+// gold hairline round the photos, the Before tag in gold on the page's own
+// black, the After tag and the handle in the gold-leaf sheen of the
+// buttons, the caption in the italic quote voice, gold italic numerals and
+// square gold-hairline arrows, the whole slider centered like the headings.
+// No shadow outside the photos: the kit's track clips its slides, so one
+// would end in a hard edge under the caption. Appended after the kit's
+// beforeAfterCss('te-ba') only while the band renders, so a site without
+// copy.beforeAfter gets none of it. The --te-ba-* block variables alias
+// tokens deriveTheme / goldTokens already contrast-repair: gold text on the
+// page background, and the button ink (--te-on-accent) on every stop of the
+// sheen.
+const BA_CSS = `
+.te-ba-band{--te-ba-text:var(--te-text);--te-ba-muted:var(--te-muted);--te-ba-line:var(--te-line);--te-ba-focus:var(--te-focus);--te-ba-tag-bg:var(--te-bg);--te-ba-tag-text:var(--te-accent-text);--te-ba-tag2-bg:var(--te-gold);--te-ba-tag2-text:var(--te-on-accent);--te-ba-knob-bg:var(--te-gold);--te-ba-knob-text:var(--te-on-accent);--te-ba-r:0px;--te-ba-tag-r:1px;--te-ba-btn-r:1px}
+.te-ba-slider{max-width:1000px;margin:0 auto}
+.te-ba-frame::after{content:'';position:absolute;inset:0;z-index:3;border:1px solid var(--te-line);pointer-events:none}
+.te-ba-todo .te-ba-frame::after{display:none}
+.te-ba-tag{padding:7px 14px;font-size:10.5px;font-weight:600;line-height:14px;letter-spacing:.26em}
+.te-ba-tag-before{box-shadow:inset 0 0 0 1px var(--te-line)}
+.te-ba-cap{margin-top:18px;font-family:var(--te-q-font);font-style:var(--te-q-style);font-size:17px;line-height:1.6;text-align:center;text-wrap:pretty}
+.te-ba-nav{gap:20px;margin-top:28px}
+.te-ba-count{font-family:var(--te-head);font-style:var(--te-d-style);font-weight:var(--te-d-weight);font-size:19px;letter-spacing:.08em;font-variant-numeric:lining-nums tabular-nums;color:var(--te-accent-text)}
+.te-ba-btn{width:52px;height:52px;color:var(--te-accent-text)}
+@container (min-width:601px){.te-ba-tag{padding:8px 16px;font-size:11px}}
+@media (hover:hover){
+.te-ba-btn:hover{border-color:var(--te-accent-text);background:var(--te-accent-soft)}
+}
+`;
+
 const txt = (v) => (typeof v === 'string' ? v.trim() : typeof v === 'number' ? String(v) : '');
 const list = (v) => (Array.isArray(v) ? v : []);
 // Owner lists may hold strings or { name } objects (wizard vs editor).
@@ -633,7 +673,7 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
 
   const hiddenIds = list(copy.hiddenSections);
   const show = (id) => !hiddenIds.includes(id);
-  const order = buildSectionOrder(copy, sections.map((s) => s.id));
+  const order = buildSectionOrderAdded(copy, sections.map((s) => s.id), addedSections);
 
   const name = txt(biz.businessName);
   const phone = txt(biz.phone);
@@ -702,6 +742,15 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
     .filter((k) => /^gallery\d+$/.test(k) && images[k])
     .sort((a, b) => Number(a.slice(7)) - Number(b.slice(7)))
     .map((k) => images[k]);
+
+  // Before & After band (Edit > Before & After): only once copy.beforeAfter
+  // exists, and on the published page only with a pair that has both
+  // photos (the editor shows every pair, and says what each still needs).
+  // Heading and intro: the owner's, else the design's own words.
+  const ba = beforeAfterPairs(copy.beforeAfter, images, { editor });
+  const baOn = show('beforeAfter') && Boolean(ba) && (ba.pairs.length > 0 || editor);
+  const baTitle = ba?.title || BA_DEFAULTS.title;
+  const baIntro = ba?.intro || BA_DEFAULTS.intro;
 
   // Reviews: the Google widget only when the owner picked it in Edit >
   // Reviews (reviewMode) and connected a widget; otherwise their quotes.
@@ -841,7 +890,7 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
       className="te-root"
       style={{ ...vars, containerType: 'inline-size', display: 'flex', flexDirection: 'column', minHeight: '100vh', overflowX: 'clip', background: t.bg, color: t.text, fontFamily: body, lineHeight: 1.6 }}
     >
-      <style>{CSS}</style>
+      <style>{CSS + (baOn ? beforeAfterCss('te-ba') + BA_CSS : '')}</style>
       <a className="te-skip" href="#main">Skip to content</a>
 
       <nav className={`te-nav${wordmarkTier}${navLinks.some((l) => l.extra) ? ' te-nav-x' : ''}`} aria-label="Main" style={{ order: -1 }}>
@@ -1080,6 +1129,23 @@ export default function TintElite({ businessInfo, generatedCopy, templateMeta, i
               )}
             </div>
           </section>
+        )}
+
+        {/* Right after the gallery in the DOM: it shares the gallery's order
+            value until the owner places it (buildSectionOrderAdded). */}
+        {baOn && (
+          <BeforeAfterBand
+            ns="te-ba"
+            beforeAfter={copy.beforeAfter}
+            images={images}
+            editor={editor}
+            order={order('beforeAfter')}
+            className="te-section"
+            wrapClassName="te-wrap"
+            labelledBy="te-ba-h"
+            heading={<Head eyebrow={BA_DEFAULTS.eyebrow} id="te-ba-h" title={baTitle} intro={baIntro} />}
+            hints={ba.pairs.length === 0 && <EditorHint>{'Add a before and an after photo in Edit > Before & After.'}</EditorHint>}
+          />
         )}
 
         {show('testimonials') && reviews === 'google' && (

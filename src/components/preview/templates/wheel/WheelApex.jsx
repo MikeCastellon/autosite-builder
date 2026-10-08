@@ -16,7 +16,7 @@ import { SocialRow } from '../SocialIcons.jsx';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import IconOrEmoji from '../IconOrEmoji.jsx';
 import { ServiceCardCss, ServiceDescription, BookNowLink } from '../ServiceCardParts.jsx';
-import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
+import { buildSectionOrderAdded } from '../../../../lib/sectionOrder.js';
 import { getFallbacks } from '../../../../lib/templateFallbacks.js';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HOURS_DAYS } from '../../../../lib/businessHours.js';
@@ -26,6 +26,8 @@ import { deriveTheme, mix, alpha, ensureContrast, readableOn, hexToRgb, rgbToHex
 import { PhotoSlot, PHOTO_HINTS } from '../kit/PhotoSlot.jsx';
 import { MobileMenu, MobileActionBar } from '../kit/MobileMenu.jsx';
 import { EditorOnly, useEditorMode } from '../kit/EditorMode.jsx';
+import { BeforeAfterBand, beforeAfterCss } from '../kit/BeforeAfter.jsx';
+import { beforeAfterPairs, BA_DEFAULTS } from '../kit/beforeAfter.js';
 
 export const themeReady = true;
 
@@ -33,6 +35,9 @@ export const themeReady = true;
 // editor's Sections list matches what renders (the old template rendered
 // ticker before trustBar and about before brands, so the first drag in the
 // editor moved sections the owner never touched). Never rename an id.
+// 'beforeAfter' (the Before & After band) came later: see addedSections.
+// It follows the gallery, the shop's finished work, rather than Products,
+// which is the catalog: a comparison is work shown, not stock for sale.
 export const sections = [
   { id: 'hero', label: 'Hero' },
   { id: 'trustBar', label: 'Trust Bar' },
@@ -41,9 +46,17 @@ export const sections = [
   { id: 'brands', label: 'Brands' },
   { id: 'about', label: 'About' },
   { id: 'gallery', label: 'Gallery' },
+  { id: 'beforeAfter', label: 'Before & After' },
   { id: 'testimonials', label: 'Reviews' },
   { id: 'cta', label: 'Contact / CTA' },
 ];
+
+// Ids added after sites were saved with this design. Saved sites store
+// copy.sectionOrder without them, so the page orders them itself
+// (buildSectionOrderAdded): every older section keeps exactly its saved
+// order value, and an added band without a saved slot shares the value of
+// the section before it, rendering right after it in the DOM.
+export const addedSections = ['beforeAfter'];
 
 export const extraFonts = [];
 
@@ -364,6 +377,33 @@ html[data-acg-scrolled] .wa-nav{box-shadow:0 12px 32px -20px var(--wa-shadow)}
 }
 `;
 
+// The Before & After band (kit BeforeAfter.jsx) in the forge's editorial
+// look: square photos in a hairline frame like the gallery shots, a white
+// Before tag in ink and a bronze After tag set like the product badges, a
+// bronze handle (the rim's center cap), the caption after the eyebrow's
+// diamond, the count in the display face left and square arrow tiles right
+// that fill with ink on hover, as the cards' arrows do. Appended after the
+// kit's beforeAfterCss('wa-ba') only while the band renders, so a site
+// without copy.beforeAfter gets none of it. The --wa-ba-* block variables
+// alias token pairs the page already uses, which theme:check checks on the
+// root: ink text on the white surface, --wa-on-accent on --wa-accent (the
+// photo hero's button).
+const BA_CSS = `
+.wa-ba-band{--wa-ba-text:var(--wa-text);--wa-ba-muted:var(--wa-muted);--wa-ba-line:var(--wa-border-strong);--wa-ba-focus:var(--wa-focus);--wa-ba-tag-bg:var(--wa-surface);--wa-ba-tag-text:var(--wa-text);--wa-ba-tag2-bg:var(--wa-accent);--wa-ba-tag2-text:var(--wa-on-accent);--wa-ba-knob-bg:var(--wa-accent);--wa-ba-knob-text:var(--wa-on-accent);--wa-ba-r:0px;--wa-ba-tag-r:0px;--wa-ba-btn-r:0px}
+.wa-ba-frame{border:1px solid var(--wa-border)}
+.wa-ba-todo .wa-ba-frame{border:0}
+.wa-ba-tag{padding:6px 12px;font-size:10.5px;font-weight:600;line-height:14px;letter-spacing:.16em}
+.wa-ba-cap{margin-top:16px;font-size:15px;line-height:1.6;text-wrap:pretty}
+.wa-ba-cap::before{content:'\\25C6';margin-right:10px;font-size:9px;vertical-align:2px;color:var(--wa-accent-text)}
+.wa-ba-nav{justify-content:flex-start;gap:10px;margin-top:28px}
+.wa-ba-count{order:-1;margin-right:auto;font-family:var(--wa-head);font-size:calc(28px * var(--wa-h-scale-sm));font-weight:var(--wa-h-weight);line-height:1;letter-spacing:.06em;text-align:left}
+.wa-ba-btn{width:48px;height:48px;color:var(--wa-ink2)}
+@container (min-width:601px){.wa-ba-tag{padding:7px 14px;font-size:11px}}
+@media (hover:hover){
+.wa-ba-btn:hover{background:var(--wa-ink);border-color:var(--wa-ink);color:var(--wa-on-ink)}
+}
+`;
+
 const txt = (v) => (typeof v === 'string' ? v.trim() : typeof v === 'number' ? String(v) : '');
 const list = (v) => (Array.isArray(v) ? v : []);
 const nameOf = (v) => txt(v && typeof v === 'object' ? v.name : v);
@@ -389,8 +429,8 @@ function linkHref(value) {
 }
 
 // Owners may type the editor's section ids as anchors; they map to the
-// element ids this template renders.
-const ANCHOR_ALIAS = { '#hero': '#top', '#products': '#services', '#testimonials': '#reviews', '#cta': '#contact' };
+// element ids this template renders (keys lowercase: matched that way).
+const ANCHOR_ALIAS = { '#hero': '#top', '#products': '#services', '#testimonials': '#reviews', '#cta': '#contact', '#beforeafter': '#before-after' };
 
 // Hours as display rows { days, time }. Only the per-day editor's shape
 // (exactly the seven HOURS_DAYS keys, '' = closed) may say a day is
@@ -689,7 +729,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
 
   const hiddenIds = list(copy.hiddenSections);
   const show = (id) => !hiddenIds.includes(id);
-  const order = buildSectionOrder(copy, sections.map((s) => s.id));
+  const order = buildSectionOrderAdded(copy, sections.map((s) => s.id), addedSections);
 
   const name = txt(biz.businessName);
   const phone = txt(biz.phone);
@@ -801,6 +841,15 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
   const testimonials = list(copy.testimonialPlaceholders).filter((q) => txt(q?.text));
   const reviews = copy.googleWidgetKey ? 'google' : testimonials.length > 0 ? 'quotes' : null;
 
+  // Before & After band (Edit > Before & After): only once copy.beforeAfter
+  // exists, and on the published page only with a pair that has both
+  // photos (the editor shows every pair, and says what each still needs).
+  // Heading and intro: the owner's, else the design's own words.
+  const ba = beforeAfterPairs(copy.beforeAfter, images, { editor });
+  const baOn = show('beforeAfter') && Boolean(ba) && (ba.pairs.length > 0 || editor);
+  const baTitle = ba?.title || BA_DEFAULTS.title;
+  const baIntro = ba?.intro || BA_DEFAULTS.intro;
+
   // What each section actually renders on the published page, so nav
   // links only point at real sections and neighbors alternate backgrounds.
   const rendered = {
@@ -811,9 +860,12 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
     testimonials: show('testimonials') && !!reviews,
     cta: show('cta'),
   };
+  // The band takes its turn in the alternation only while it renders (in
+  // the editor too, but never just for being listed), so a page without it
+  // keeps every tone it had.
   const defaultIdx = (id) => sections.findIndex((s) => s.id === id);
-  const toneOrder = ['products', 'brands', 'about', 'gallery', 'testimonials']
-    .filter((id) => rendered[id] || (editor && show(id)))
+  const toneOrder = ['products', 'brands', 'about', 'gallery', 'beforeAfter', 'testimonials']
+    .filter((id) => (id === 'beforeAfter' ? baOn : rendered[id] || (editor && show(id))))
     .sort((a, b) => order(a) - order(b) || defaultIdx(a) - defaultIdx(b));
   const tone = (id) => (toneOrder.indexOf(id) % 2 === 1 ? 'wa-sec-surface' : 'wa-sec-bg');
 
@@ -828,8 +880,10 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
 
   // A button URL that is an anchor must land on a section the published
   // page renders ("#gallery" with no gallery photos would go nowhere);
-  // otherwise it counts as empty and the button's default applies.
-  const liveAnchors = new Set(['#top', '#main', ...navLinks.map((l) => l.href)]);
+  // otherwise it counts as empty and the button's default applies. The
+  // Before & After band (no nav link) counts while it publishes a pair.
+  const baLive = show('beforeAfter') && Boolean(ba) && ba.complete > 0;
+  const liveAnchors = new Set(['#top', '#main', ...navLinks.map((l) => l.href), ...(baLive ? ['#before-after'] : [])]);
   const ownerHref = (value) => {
     const href = linkHref(value);
     if (!href || href[0] !== '#') return href;
@@ -960,7 +1014,7 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
       className="wa-root"
       style={{ ...vars, containerType: 'inline-size', display: 'flex', flexDirection: 'column', minHeight: '100vh', overflowX: 'clip', background: t.bg, color: t.text, fontFamily: body, lineHeight: 1.6 }}
     >
-      <style>{CSS}</style>
+      <style>{CSS + (baOn ? beforeAfterCss('wa-ba') + BA_CSS : '')}</style>
       <a className="wa-skip" href="#main">Skip to content</a>
 
       <nav className="wa-nav" aria-label="Main" style={{ order: -1 }}>
@@ -1302,6 +1356,31 @@ export default function WheelApex({ businessInfo, generatedCopy, templateMeta, i
               )}
             </div>
           </section>
+        )}
+
+        {/* Right after the gallery in the DOM: it shares the gallery's order
+            value until the owner places it (buildSectionOrderAdded). */}
+        {baOn && (
+          <BeforeAfterBand
+            ns="wa-ba"
+            beforeAfter={copy.beforeAfter}
+            images={images}
+            editor={editor}
+            order={order('beforeAfter')}
+            className={`wa-sec ${tone('beforeAfter')}`}
+            wrapClassName="wa-wrap"
+            labelledBy="wa-ba-h"
+            heading={(
+              <div className={`wa-head${baIntro ? '' : ' wa-head-solo'}`} data-acg-reveal="">
+                <div>
+                  <p className="wa-eyebrow">{BA_DEFAULTS.eyebrow}</p>
+                  <h2 id="wa-ba-h" className="wa-h2 wa-display">{baTitle}</h2>
+                </div>
+                {baIntro && <p className="wa-intro">{baIntro}</p>}
+              </div>
+            )}
+            hints={ba.pairs.length === 0 && <EditorHint>{'Add a before and an after photo in Edit > Before & After.'}</EditorHint>}
+          />
         )}
 
         {show('testimonials') && reviews === 'google' && (
