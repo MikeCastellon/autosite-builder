@@ -91,6 +91,7 @@ export const TEMPLATE_INFO = Object.freeze({
   mechanic_ironclad: info('Ironclad', 'tough, industrial, reliable, no-nonsense, hardworking'),
   carwash_bubble: info('Bubble Rush', 'fun, playful, cheerful, family-friendly, bright'),
   mobile_redline: info('Redline', 'bold, trustworthy, local, premium mobile service, dark with red accents'),
+  replica_9f02a6cb: info('Exact replica', 'clean, modern, light page with black bands, card layout, mobile service'),
 });
 
 // Section ids (the templates' `sections`, saved in copy.sectionOrder) as

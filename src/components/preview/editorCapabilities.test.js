@@ -262,10 +262,13 @@ describe('editorTabs', () => {
       'visibility', 'hero', 'headings', 'services', 'featured', 'vehicleTypes', 'howItWorks', 'makes', 'about', 'gallery', 'beforeAfter',
       'showcase', 'comparison', 'testimonials', 'google', 'faq', 'contact', 'colors', 'footer',
     ]);
-    // The reference-site bands' tabs are Bold & Sporty's alone for now.
-    for (const id of IDS.filter((x) => x !== 'detailing_sporty')) {
+    // The reference-site bands' tabs are Bold & Sporty's (and the replica
+    // built from that reference) alone for now.
+    for (const id of IDS.filter((x) => x !== 'detailing_sporty' && x !== 'replica_9f02a6cb')) {
       expect({ id, tabs: ids(id).filter((t) => ['vehicleTypes', 'showcase', 'comparison', 'faq'].includes(t)) }).toEqual({ id, tabs: [] });
     }
+    expect(ids('replica_9f02a6cb')).toEqual(expect.arrayContaining(['headings', 'vehicleTypes', 'howItWorks', 'beforeAfter', 'comparison', 'google', 'faq']));
+    expect(ids('replica_9f02a6cb')).not.toContain('showcase');
     expect(ids('mechanic_garage')).toEqual(['visibility', 'hero', 'services', 'about', 'gallery', 'beforeAfter', 'testimonials', 'contact', 'colors', 'footer']);
     expect(ids('tint_obsidian')).toEqual(expect.arrayContaining(['howItWorks', 'filmBrands', 'shadeGuide']));
     expect(ids('tint_obsidian')).not.toContain('whyUs');

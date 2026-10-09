@@ -213,6 +213,7 @@ export const TEMPLATE_SECTIONS = Object.freeze({
   detailing_autosync_white: tpl(false, STD_NO_STATS),
   carwash_bubble: tpl(true, 'hero:Hero, services:Packages, process:How It Works, about:About & Features, gallery:Gallery, beforeAfter:Before & After, testimonials:Reviews, cta:Contact / CTA', ['beforeAfter']),
   mobile_redline: tpl(true, 'hero:Hero & Quote, about:About, gallery:Gallery, beforeAfter:Before & After, brands:Vehicle Makes, services:Packages, featured:Featured Service, testimonials:Reviews, awards:Awards, locations:Service Area & Hours, cta:Contact / CTA', ['beforeAfter']),
+  replica_9f02a6cb: tpl(true, 'hero:Hero, statsBar:Info Bar, about:About, services:Services, vehicleTypes:Vehicle Types, process:How It Works, beforeAfter:Before & After, gallery:Gallery, comparison:Comparison, testimonials:Reviews, faq:FAQ, cta:Contact / CTA'),
 });
 // An unknown template: the legacy default (sectionManifest.js STD).
 const FALLBACK_TEMPLATE = tpl(false, STD);
