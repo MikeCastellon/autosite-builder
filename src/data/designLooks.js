@@ -337,6 +337,26 @@ const LOOKS = [
     heroLayout: '', aboutLayout: 'stats',
     note: 'Night navy and cobalt instead of red, for detailers whose brand is blue. Vehicle makes and packages come straight after the hero.',
   },
+
+  // ─── Exact replica (custom site 9f02a6cb): hidden, so custom-only looks ───
+  {
+    templateId: 'replica_9f02a6cb', slug: 'midnight', name: 'Midnight', customOnly: true,
+    mood: ['dark', 'sleek', 'modern', 'premium'],
+    palette: { bg: '#0c0e13', secondary: '#161a22', text: '#f4f5f7', muted: '#a4aab5', accent: '#4c6fff' },
+    fonts: ['Space Grotesk', 'Inter'],
+    order: ['hero', 'statsBar', 'services', 'about', 'vehicleTypes', 'process', 'beforeAfter', 'gallery', 'comparison', 'testimonials', 'faq', 'cta'], hidden: [],
+    heroLayout: 'full', aboutLayout: 'image',
+    note: 'The same layout on a near-black page with an electric blue, for a premium night look. Services come right after the hero.',
+  },
+  {
+    templateId: 'replica_9f02a6cb', slug: 'paper', name: 'Paper', customOnly: true,
+    mood: ['warm', 'light', 'friendly', 'clean'],
+    palette: { bg: '#f3f0e9', secondary: '#ffffff', text: '#171512', muted: '#58534b', accent: '#1d4ed8' },
+    fonts: ['Manrope', 'DM Sans'],
+    order: ['hero', 'statsBar', 'about', 'testimonials', 'services', 'vehicleTypes', 'process', 'beforeAfter', 'gallery', 'comparison', 'faq', 'cta'], hidden: [],
+    heroLayout: 'full', aboutLayout: 'image',
+    note: 'A warm paper page with a deep blue, softer and friendlier. Reviews move up, right after the story.',
+  },
 ];
 
 function deepFreeze(o) {
