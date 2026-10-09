@@ -14,13 +14,18 @@ import { full } from '../__fixtures__/businesses.js';
 const photo = (i) => `https://example.test/photos/gallery-${i}.jpg`;
 const STEP = { title: 'Step', desc: 'What happens.' };
 
-function render({ photos, steps, aboutText, hidden = [], editor = false }) {
+// pairs: [[beforeIndex, afterIndex]] of gallery photos the Before & After band also uses.
+function render({ photos, steps, aboutText, hidden = [], editor = false, pairs = [] }) {
   const images = { ...full.images, about: 'https://example.test/photos/about.jpg' };
-  for (const k of Object.keys(images)) if (/^gallery\d+$/.test(k)) delete images[k];
+  for (const k of Object.keys(images)) if (/^gallery\d+$/.test(k) || /^ba(Before|After)\d$/.test(k)) delete images[k];
   for (let i = 0; i < photos; i++) images[`gallery${i}`] = photo(i);
+  pairs.forEach(([b, a], n) => { images[`baBefore${n}`] = photo(b); images[`baAfter${n}`] = photo(a); });
   const el = createElement(MobileDriveway, {
     businessInfo: normalizeBusinessInfo(full.businessInfo),
-    generatedCopy: { ...full.generatedCopy, aboutText, howSteps: Array.from({ length: steps }, () => STEP), hiddenSections: hidden },
+    generatedCopy: {
+      ...full.generatedCopy, aboutText, howSteps: Array.from({ length: steps }, () => STEP), hiddenSections: hidden,
+      ...(pairs.length ? { beforeAfter: { pairs: pairs.map(() => ({ caption: '' })) } } : {}),
+    },
     templateMeta: buildTemplateMeta('mobile_driveway', {}, {}),
     images,
   });
@@ -50,4 +55,35 @@ describe('Driveway gallery photos', () => {
       }
     }
   }
+});
+
+describe('Driveway Before & After photos', () => {
+  it('shows a gallery photo the band uses only in the band, and the rest once each', () => {
+    for (const editor of [false, true]) {
+      for (const photos of [4, 8, 12]) {
+        for (const steps of [0, 3]) {
+          const pairs = [[photos - 4, photos - 3], [photos - 2, photos - 1]];
+          const html = render({ photos, steps, aboutText: 'Lead.\n\nRest.', editor, pairs });
+          const where = JSON.stringify({ editor, photos, steps });
+          expect(html, where).toContain('data-section="beforeAfter"');
+          for (let i = 0; i < photos; i++) expect(times(html, photo(i)), `${where} photo ${i}`).toBe(1);
+        }
+      }
+    }
+  });
+
+  it('gives the How It Works cards photos for every step or for none', () => {
+    // 8 photos: six in the band, one for About, one left: too few for three steps.
+    const html = render({ photos: 8, steps: 3, aboutText: 'Lead.\n\nRest.' });
+    expect(html).not.toContain('class="dw-step-ph"');
+    for (let i = 0; i < 8; i++) expect(times(html, photo(i))).toBe(1);
+    // 10 photos: six, About, three steps.
+    expect(render({ photos: 10, steps: 3, aboutText: 'Lead.\n\nRest.' }).split('class="dw-step-ph"').length - 1).toBe(3);
+  });
+
+  it('drops the footer photo card when no photo is left for it', () => {
+    const html = render({ photos: 7, steps: 0, aboutText: 'Lead.\n\nRest.' });
+    expect(html).toContain('dw-foot-nophoto');
+    expect(html).not.toContain('class="dw-foot-ph"');
+  });
 });
