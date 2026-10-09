@@ -14,10 +14,11 @@
 //   - facts (rating, stats, hours, prices) render only when the owner
 //     entered them, and editor hints go through PhotoSlot / EditorOnly.
 // Photos: hero, about, logo and the CTA background come from their own
-// slots. The gallery band shows the first six gallery photos; the next ones
-// fill the second About photo, the How It Works cards and the footer photo
-// card, and any left after those join the gallery band, so every photo
-// shows once.
+// slots. A gallery photo the Before & After band shows is left out of the
+// rest. The gallery band shows the first six gallery photos; the next ones
+// fill the second About photo, the How It Works cards (all of them or none)
+// and the footer photo card, and any left after those join the gallery band,
+// so every photo shows once.
 import { SocialRow } from '../SocialIcons.jsx';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import IconOrEmoji from '../IconOrEmoji.jsx';
@@ -392,6 +393,7 @@ html[data-acg-scrolled] .dw-nav-box{background:var(--dw-dark-bg)}
 
 .dw-foot{order:9999;padding:clamp(40px,7cqi,116px) 0 29px;background:var(--dw-dark-bg);color:var(--dw-dark-text)}
 .dw-foot-grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr);gap:22px}
+.dw-foot-nophoto{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)}
 .dw-foot-ph{position:relative;overflow:hidden;min-height:440px;border-radius:8px;background:var(--dw-card-bg)}
 .dw-foot-ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .dw-foot-ph::after{content:'';position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,.6),rgba(0,0,0,0) 45%)}
@@ -482,7 +484,7 @@ const FAQ_CSS = `
 
 // The kit Before & After slider on the dark band.
 const BA_CSS = `
-.dw-ba-band{--dw-ba-text:var(--dw-dark-text);--dw-ba-muted:var(--dw-dark-muted);--dw-ba-line:var(--dw-dark-line);--dw-ba-focus:var(--dw-dark-accent);--dw-ba-tag-bg:rgba(0,0,0,.6);--dw-ba-tag-text:#fff;--dw-ba-tag2-bg:rgba(0,0,0,.6);--dw-ba-tag2-text:#fff;--dw-ba-knob-bg:#fff;--dw-ba-knob-text:#000;--dw-ba-r:8px;--dw-ba-tag-r:2px}
+.dw-ba-band{--dw-ba-text:var(--dw-dark-text);--dw-ba-muted:var(--dw-dark-muted);--dw-ba-line:var(--dw-dark-line);--dw-ba-focus:var(--dw-dark-accent);--dw-ba-tag-bg:rgba(0,0,0,.6);--dw-ba-tag-text:#fff;--dw-ba-tag2-bg:rgba(0,0,0,.6);--dw-ba-tag2-text:#fff;--dw-ba-knob-bg:#fff;--dw-ba-knob-text:#000;--dw-ba-r:8px;--dw-ba-tag-r:2px;--dw-ba-ratio-wide:3 / 2}
 .dw-ba-band .dw-ba-slider,.dw-ba-band .dw-ba-nav,.dw-ba-band .dw-ba-cap{max-width:806px;margin-left:auto;margin-right:auto}
 `;
 
@@ -569,12 +571,20 @@ export default function MobileDriveway({ businessInfo, generatedCopy, templateMe
   const svcHead = heading('services', { title: copy.servicesSection?.title, intro: copy.servicesSection?.intro });
   const bookHref = show('cta') ? '#contact' : tel || (email ? `mailto:${email}` : '#top');
 
-  // Photos: the gallery band shows the first six; the next ones fill the
-  // second About photo, one How It Works card per step and the footer card
-  // (each only while its section shows), and whatever is left joins the
-  // gallery band, so every photo shows once.
+  // Before & After (kit band): opt-in through copy.beforeAfter, and on the
+  // published page only with a pair that has both photos.
+  const ba = beforeAfterPairs(copy.beforeAfter, images, { editor });
+  const baOn = show('beforeAfter') && Boolean(ba) && (ba.pairs.length > 0 || editor);
+  const baPhotos = new Set(baOn ? ba.pairs.flatMap((p) => [p.before, p.after]).filter(Boolean) : []);
+
+  // Photos: a gallery photo the Before & After band shows stays out of the
+  // rest. The gallery band shows the first six; the next ones fill the
+  // second About photo, the How It Works cards (one per step, or none while
+  // there aren't enough for every step) and the footer card, each only while
+  // its section shows, and whatever is left joins the gallery band, so every
+  // photo shows once.
   const galleryImages = Object.keys(images || {})
-    .filter((k) => /^gallery\d+$/.test(k) && images[k])
+    .filter((k) => /^gallery\d+$/.test(k) && images[k] && !baPhotos.has(images[k]))
     .sort((a, b) => Number(a.slice(7)) - Number(b.slice(7)))
     .map((k) => images[k]);
   const how = howItWorksSteps(copy.howSteps);
@@ -585,7 +595,7 @@ export default function MobileDriveway({ businessInfo, generatedCopy, templateMe
   const spare = galleryImages.slice(gallerySlots);
   let take = 0;
   const aboutPhoto2 = aboutOn && spare[take] ? spare[take++] : '';
-  const stepPhotos = howOn ? how.steps.map(() => spare[take++] || '') : [];
+  const stepPhotos = howOn && how.steps.length > 0 && spare.length - take >= how.steps.length ? how.steps.map(() => spare[take++]) : [];
   // Out of spare photos, the footer card borrows the About photo only while
   // the About section isn't showing it.
   const footPhoto = spare[take] ? spare[take++] : (!aboutOn && images.about) || '';
@@ -620,8 +630,6 @@ export default function MobileDriveway({ businessInfo, generatedCopy, templateMe
 
   const howHead = howItWorksHeading(copy.sectionTitles, HOW_DEFAULTS);
 
-  const ba = beforeAfterPairs(copy.beforeAfter, images, { editor });
-  const baOn = show('beforeAfter') && Boolean(ba) && (ba.pairs.length > 0 || editor);
   const baT = st('beforeAfter');
   const baHead = { eyebrow: baT.eyebrow || BA_DEFAULTS.eyebrow, title: ba?.title || baT.title || BA_DEFAULTS.title, accent: baT.accent, intro: ba?.intro || baT.intro || BA_DEFAULTS.intro };
 
@@ -1054,11 +1062,13 @@ export default function MobileDriveway({ businessInfo, generatedCopy, templateMe
       )}
 
       <footer className="dw-foot" style={{ order: 9999 }}>
-        <div className="dw-wrap dw-foot-grid">
-          <div className="dw-foot-ph">
-            {footPhoto && <PhotoSlot src={footPhoto} slot="gallery" alt="" loading="lazy" />}
-            {name && <p className="dw-eyebrow">{name}</p>}
-          </div>
+        <div className={`dw-wrap dw-foot-grid${footPhoto ? '' : ' dw-foot-nophoto'}`}>
+          {footPhoto && (
+            <div className="dw-foot-ph">
+              <PhotoSlot src={footPhoto} slot="gallery" alt="" loading="lazy" />
+              {name && <p className="dw-eyebrow">{name}</p>}
+            </div>
+          )}
           <div className="dw-foot-card dw-foot-mid">
             <div className="dw-foot-cols">
               <div>
