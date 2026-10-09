@@ -4,7 +4,7 @@ import {
   DESIGN_MODEL, DESIGN_STALE_MS, fillPackageDescriptions, isRunStale, rewriteSite, showsPrices, brandAccent, briefText, buildDesignPrompt, contrast, designFromIntake, designProblems, guessCityState,
   isImportable, joinHours, normalizeDesignCopy, parseCopyJson, parseServices, rankTemplates, sanitizeDesign,
   servicesForType, siteBusinessInfo, schemaTypeFor,
-  REFERENCE_MODES, REPLICA_LABEL, canMatchReference, isReplicaFor, isReplicaTemplate, replicaTemplatesFor, sameReferenceSource, sanitizeReference,
+  CUSTOM_ONLY_LABEL, REFERENCE_MODES, REPLICA_LABEL, canMatchReference, isCustomOnlyTemplate, isReplicaFor, isReplicaTemplate, replicaTemplatesFor, sameReferenceSource, sanitizeReference,
   CAPTURE_LIVE_MS, REFERENCE_SITES_MAX, REFERENCE_SITE_NOTE_MAX, REFERENCE_SITE_URL_MAX, captureViewFor, capturedShotKey, isCaptureLive, newerCapture,
   referenceSiteKey, referenceSiteUrl, replacedShotSource, sanitizeReferenceSites,
   BEFORE_AFTER_MAX, appliesBeforeAfter, beforeAfterCaption, beforeAfterChangedSince, beforeAfterCopy, beforeAfterImages, beforeAfterImportsChanged,
@@ -117,7 +117,10 @@ describe('designFromIntake', () => {
 describe('rankTemplates', () => {
   it('puts templates made for the business type first, then style matches', () => {
     const ranked = rankTemplates(Object.values(TEMPLATES), 'tint_shop', ['Luxury & high-end']);
-    expect(ranked.every((r) => !TEMPLATES[r.id].hidden)).toBe(true);
+    // Hidden templates stay out, except the custom-only ones, which end the list.
+    const hidden = ranked.filter((r) => TEMPLATES[r.id].hidden);
+    expect(hidden.every((r) => r.customOnly)).toBe(true);
+    expect(ranked.slice(ranked.length - hidden.length)).toEqual(hidden);
     expect(TEMPLATES[ranked[0].id].businessType).toBe('tint_shop');
     expect(ranked[0].id).toBe('tint_elite');
   });
@@ -169,6 +172,14 @@ describe('sanitizeDesign', () => {
 
   it('designProblems names what blocks generating', () => {
     expect(designProblems({ businessInfo: {} })).toEqual(['Business name', 'Business type', 'City', 'State', 'Template', 'Site id']);
+  });
+
+  it('designProblems refuses a template this build does not have, so its id never reaches a site', () => {
+    const ready = { businessInfo: { businessName: 'A', businessType: 'mobile_detailing', city: 'B', state: 'FL' }, siteId: 'x' };
+    expect(designProblems({ ...ready, templateId: 'mobile_driveway' })).toEqual([]);
+    expect(designProblems({ ...ready, templateId: 'detailing_sporty' })).toEqual([]);
+    expect(designProblems({ ...ready, templateId: 'replica_9f02a6cb' })).toEqual(['Template']);
+    expect(designProblems({ ...ready, templateId: 'constructor' })).toEqual(['Template']);
   });
 });
 
@@ -666,6 +677,17 @@ describe('replica templates in the Design step', () => {
     expect(rankTemplates(LIST, 'tint_shop').map((r) => r.id)).toEqual(['tint_a', 'wash_b']);
   });
 
+  it('counts a custom-only template its replica request names as that project\'s replica', () => {
+    const withCustom = [...LIST, { id: 'studio_c', label: 'Studio C', businessType: 'tint_shop', colors, hidden: true, customOnly: true }];
+    expect(replicaTemplatesFor(withCustom, PROJECT, 'studio_c').map((t) => t.id)).toEqual(['replica_11111111', 'studio_c']);
+    expect(replicaTemplatesFor(withCustom, OTHER, 'studio_c').map((t) => t.id)).toEqual(['replica_99999999', 'studio_c']);
+    // Only a custom-only template: never a visible one, an unknown id or another project's replica.
+    expect(replicaTemplatesFor(withCustom, PROJECT, 'tint_a').map((t) => t.id)).toEqual(['replica_11111111']);
+    expect(replicaTemplatesFor(withCustom, PROJECT, 'gone_id').map((t) => t.id)).toEqual(['replica_11111111']);
+    expect(replicaTemplatesFor(withCustom, PROJECT, 'replica_99999999').map((t) => t.id)).toEqual(['replica_11111111']);
+    expect(replicaTemplatesFor(withCustom, '', 'studio_c').map((t) => t.id)).toEqual(['studio_c']);
+  });
+
   it('knows which replicas a project may use', () => {
     expect(replicaTemplatesFor(LIST, PROJECT).map((t) => t.id)).toEqual(['replica_11111111']);
     expect(replicaTemplatesFor(LIST, '')).toEqual([]);
@@ -709,6 +731,36 @@ describe('replica templates in the Design step', () => {
       expect(t.description, t.id).toBe('Built from a reference site for one customer.');
       expect(registry, t.id).toMatch(new RegExp(`\\b${t.id}:\\s*\\(\\) => import\\('[^']*/Replica${own.toUpperCase()}\\.jsx'\\)`));
     }
+  });
+
+  it('offers a custom-only template to every project, last, never as the default or best match', () => {
+    const withCustom = [...LIST, { id: 'studio_c', label: 'Studio C', businessType: 'tint_shop', mood: 'luxury', colors, hidden: true, customOnly: true }];
+    for (const pid of [PROJECT, OTHER, '']) {
+      const ranked = rankTemplates(withCustom, 'tint_shop', ['Luxury & high-end'], pid);
+      expect(ranked[ranked.length - 1], pid).toEqual(expect.objectContaining({ id: 'studio_c', customOnly: true, reasons: [CUSTOM_ONLY_LABEL, 'Made for this business type'] }));
+      expect(ranked.filter((r) => r.id === 'studio_c').length, pid).toBe(1);
+      // The default pick (first entry that is neither a replica nor custom-only) is unchanged.
+      expect(ranked.find((r) => !r.replica && !r.customOnly).id, pid).toBe('tint_a');
+    }
+    expect(rankTemplates(withCustom, 'car_wash', [], OTHER).at(-1).reasons).toEqual([CUSTOM_ONLY_LABEL]);
+    // Plain hidden templates and replicas are never custom-only.
+    expect(withCustom.filter(isCustomOnlyTemplate).map((t) => t.id)).toEqual(['studio_c']);
+    expect(isCustomOnlyTemplate({ id: 'x', hidden: false, customOnly: true })).toBe(false);
+    expect(isCustomOnlyTemplate({ id: 'x', hidden: true, customOnly: true, customFor: [PROJECT] })).toBe(false);
+  });
+
+  // The free wizard, landing page and editor switcher skip a custom-only
+  // template only while its entry also says hidden: true.
+  it('keeps every custom-only template in the registry hidden and for every project', () => {
+    const custom = Object.values(TEMPLATES).filter((t) => t.customOnly === true);
+    expect(custom.map((t) => t.id)).toEqual(['mobile_driveway']);
+    for (const t of custom) {
+      expect(t.hidden, t.id).toBe(true);
+      expect(isReplicaTemplate(t), t.id).toBe(false);
+    }
+    const ranked = rankTemplates(Object.values(TEMPLATES), 'mobile_detailing', ['Clean & modern'], PROJECT);
+    expect(ranked.at(-1).id).toBe('mobile_driveway');
+    expect(ranked[0].customOnly).toBeUndefined();
   });
 
   it('still has the free wizard, landing page and editor switcher skip hidden templates', () => {

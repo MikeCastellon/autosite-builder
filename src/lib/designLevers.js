@@ -20,7 +20,7 @@ export const ABOUT_LAYOUTS = Object.freeze(['image', 'stats']);
 // contact section holds the booking and contact targets.
 export const ALWAYS_SHOWN = Object.freeze(['hero', 'cta']);
 // Redline is the one theme-ready template without the full/split hero.
-const NO_HERO_LAYOUT = new Set(['mobile_redline', 'replica_9f02a6cb']);
+const NO_HERO_LAYOUT = new Set(['mobile_redline', 'mobile_driveway']);
 
 export const FACT_LISTS = Object.freeze({ awards: 8, certifications: 8, paymentMethods: 10, serviceAreas: 20 });
 export const FACT_TEXTS = Object.freeze({ tagline: 120, yearsInBusiness: 40, warranty: 200 });

@@ -10,6 +10,12 @@
 //                         for those projects alone; every other picker skips
 //                         it because it is hidden. Its colors are the
 //                         customer's palette, never the reference site's.
+//   customOnly: true      a template for custom websites only. Always paired
+//                         with hidden: true (so the free wizard, the landing
+//                         page and the editor's switcher skip it); the admin
+//                         Design step lists it for every custom project,
+//                         labeled "Custom websites only", after the ranked
+//                         templates (never the default pick).
 export const TEMPLATES = {
   // ─── Detailing Shop ────────────────────────────────────────────
   detailing_sporty: {
@@ -300,12 +306,12 @@ export const TEMPLATES = {
     hidden: true,
   },
 
-  // ─── Replicas (custom websites: one customer each, hidden) ─────
-  replica_9f02a6cb: {
-    id: 'replica_9f02a6cb',
+  // ─── Mobile Detailing (Driveway): custom websites only ─────────
+  mobile_driveway: {
+    id: 'mobile_driveway',
     businessType: 'mobile_detailing',
-    label: 'Exact replica',
-    description: 'Built from a reference site for one customer.',
+    label: 'Driveway',
+    description: 'Light page with black bands, a floating menu, numbered service tabs and photo-card steps.',
     previewColors: ['#e8e8e8', '#0000ff', '#ffffff'],
     colors: { bg: '#e8e8e8', accent: '#0000ff', text: '#0a0a0a', secondary: '#ffffff', muted: '#4a4a4a' },
     font: "'Inter', sans-serif",
@@ -313,7 +319,7 @@ export const TEMPLATES = {
     mood: 'clean, modern, light page with black bands, card layout, mobile service',
     tier: 'premium',
     hidden: true,
-    customFor: ['9f02a6cb-dfc7-410e-ae32-41b2a9f6b351'],
+    customOnly: true,
   },
 };
 
@@ -340,5 +346,5 @@ export const TEMPLATE_COMPONENT_MAP = {
   detailing_autosync_white: () => import('../components/preview/templates/detailing/DetailingAutoSyncWhite.jsx'),
   carwash_bubble:       () => import('../components/preview/templates/carwash/CarwashBubble.jsx'),
   mobile_redline:       () => import('../components/preview/templates/mobile/MobileRedline.jsx'),
-  replica_9f02a6cb:     () => import('../components/preview/templates/custom/Replica9F02A6CB.jsx'),
+  mobile_driveway:      () => import('../components/preview/templates/mobile/MobileDriveway.jsx'),
 };

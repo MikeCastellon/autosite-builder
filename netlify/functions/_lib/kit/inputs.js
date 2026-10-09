@@ -323,7 +323,7 @@ export const TEMPLATE_LOOKS = Object.freeze({
   mechanic_ironclad: look('#111111', '#1e1e1e', '#ffffff', '#aaaaaa', '#C0392B', "'Bebas Neue', sans-serif", "'Barlow', sans-serif"),
   carwash_bubble: look('#f0f9ff', '#e0f7fa', '#0c4a6e', '#64748b', '#06b6d4', "'Righteous', cursive", "'Nunito', sans-serif"),
   mobile_redline: look('#0a0909', '#1a1818', '#f8f8f8', '#a7a3a4', '#ee3533', "'Inter', sans-serif", "'Inter', sans-serif"),
-  replica_9f02a6cb: look('#e8e8e8', '#ffffff', '#0a0a0a', '#4a4a4a', '#0000ff', "'Inter', sans-serif", "'Inter', sans-serif"),
+  mobile_driveway: look('#e8e8e8', '#ffffff', '#0a0a0a', '#4a4a4a', '#0000ff', "'Inter', sans-serif", "'Inter', sans-serif"),
 });
 
 const HEX_RE = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;

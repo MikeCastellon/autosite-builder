@@ -193,16 +193,34 @@ export function isReplicaFor(t, projectId) {
   return !!projectId && isReplicaTemplate(t) && t.customFor.includes(projectId);
 }
 
-// The replica templates this project may use, by label.
-export function replicaTemplatesFor(templates, projectId) {
-  return (templates || []).filter((t) => t && isReplicaFor(t, projectId))
-    .sort((a, b) => String(a.label).localeCompare(String(b.label)));
+// Custom-only templates (registry customOnly: true, always with hidden:
+// true): every custom project's Design step offers them, after the ranked
+// templates, so they are never the default pick or the best match. The
+// free wizard, the landing page and the editor's switcher skip them as
+// hidden. A replica (customFor) is never one, whatever its flags say.
+export const CUSTOM_ONLY_LABEL = 'Custom websites only';
+
+export function isCustomOnlyTemplate(t) {
+  return t?.customOnly === true && t.hidden === true && !isReplicaTemplate(t);
+}
+
+// The replica templates this project may use, by label. fulfilledId: the
+// template its replica request names (design.reference.replica.templateId);
+// when that is a custom-only template (a replica opened to every custom
+// project, like Driveway), it counts as this project's replica too, so the
+// request shows as done instead of asking for a rebuild.
+export function replicaTemplatesFor(templates, projectId, fulfilledId = '') {
+  const list = (templates || []).filter((t) => t && isReplicaFor(t, projectId));
+  const fulfilled = fulfilledId ? (templates || []).find((t) => t && t.id === fulfilledId && isCustomOnlyTemplate(t)) : null;
+  if (fulfilled && !list.includes(fulfilled)) list.push(fulfilled);
+  return list.sort((a, b) => String(a.label).localeCompare(String(b.label)));
 }
 
 // Visible templates ranked for this business type and these style picks,
 // after this project's own replica templates (whatever their business type:
-// the admin asked for them). A replica never shows for another project,
-// even if its entry forgot hidden: true.
+// the admin asked for them) and before the custom-only templates (flagged
+// customOnly, for any business type). A replica never shows for another
+// project, even if its entry forgot hidden: true.
 // `templates` is Object.values(TEMPLATES) from src/data/templates.js.
 export function rankTemplates(templates, businessType, styles = [], projectId = '') {
   const replicas = replicaTemplatesFor(templates, projectId).map((t) => ({
@@ -224,7 +242,13 @@ export function rankTemplates(templates, businessType, styles = [], projectId = 
     if (styles.includes('Bright & friendly') && !dark) score += 1;
     return { id: t.id, label: t.label, score, reasons, dark };
   }).sort((a, b) => b.score - a.score || a.label.localeCompare(b.label));
-  return [...replicas, ...ranked];
+  const customOnly = (templates || []).filter(isCustomOnlyTemplate)
+    .map((t) => ({
+      id: t.id, label: t.label, score: 0, dark: luminance(t.colors?.bg || '#ffffff') < 0.2, customOnly: true,
+      reasons: [CUSTOM_ONLY_LABEL, ...(t.businessType === businessType ? ['Made for this business type'] : [])],
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+  return [...replicas, ...ranked, ...customOnly];
 }
 
 // ─── Colors ──────────────────────────────────────────────────────────
@@ -1094,7 +1118,9 @@ export function designProblems(design) {
   if (!bi.businessType) out.push('Business type');
   if (!bi.city) out.push('City');
   if (!bi.state) out.push('State');
-  if (!design?.templateId) out.push('Template');
+  // A template the build doesn't have (e.g. one saved under an id since
+  // renamed) would write an id no module renders.
+  if (!design?.templateId || !templateSectionsFor(design.templateId)) out.push('Template');
   if (!design?.siteId) out.push('Site id');
   return out;
 }

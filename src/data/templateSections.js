@@ -59,7 +59,7 @@ export const TEMPLATE_SECTIONS = Object.freeze({
     added: ['beforeAfter'],
     headingFields: ['hero', 'about', 'gallery', 'beforeAfter', 'brands', 'services', 'featured', 'testimonials', 'locations', 'cta'],
   },
-  replica_9f02a6cb: {
+  mobile_driveway: {
     sections: [{ id: 'hero', label: 'Hero' }, { id: 'statsBar', label: 'Info Bar' }, { id: 'about', label: 'About' }, { id: 'services', label: 'Services' }, { id: 'vehicleTypes', label: 'Vehicle Types' }, { id: 'process', label: 'How It Works' }, { id: 'beforeAfter', label: 'Before & After' }, { id: 'gallery', label: 'Gallery' }, { id: 'comparison', label: 'Comparison' }, { id: 'testimonials', label: 'Reviews' }, { id: 'faq', label: 'FAQ' }, { id: 'cta', label: 'Contact / CTA' }],
     added: [],
     headingFields: ['hero', 'about', 'services', 'vehicleTypes', 'process', 'beforeAfter', 'gallery', 'comparison', 'testimonials', 'faq', 'cta'],
