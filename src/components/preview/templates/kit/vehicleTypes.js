@@ -40,10 +40,18 @@ export const VT_HINTS = Object.freeze({
 });
 
 // The icons an item may pick (kit/VehicleTypes.jsx draws them), in the
-// order an icon picker offers them, with the words it can label them by.
-export const VT_ICONS = Object.freeze(['car', 'suv', 'truck', 'van', 'boat', 'rv', 'motorcycle', 'fleet']);
+// order an icon picker offers them (the kinds of car first, then the bigger
+// vehicles), with the words it can label them by. Saved rows store these ids
+// (copy.vehicleTypes.items[].icon) and site runs pick from them, so an id is
+// never renamed or dropped: add new ones only.
+export const VT_ICONS = Object.freeze([
+  'car', 'sedan', 'coupe', 'sports', 'luxury', 'ev', 'convertible', 'classic',
+  'suv', 'truck', 'van', 'boat', 'rv', 'motorcycle', 'fleet',
+]);
 export const VT_ICON_LABELS = Object.freeze({
-  car: 'Car', suv: 'SUV', truck: 'Truck', van: 'Van', boat: 'Boat', rv: 'RV', motorcycle: 'Motorcycle', fleet: 'Fleet',
+  car: 'Car', sedan: 'Sedan', coupe: 'Coupe', sports: 'Sports car', luxury: 'Luxury car', ev: 'Electric (EV)',
+  convertible: 'Convertible', classic: 'Classic car',
+  suv: 'SUV', truck: 'Truck', van: 'Van', boat: 'Boat', rv: 'RV', motorcycle: 'Motorcycle', fleet: 'Fleet',
 });
 
 const isObj = (v) => Boolean(v) && typeof v === 'object' && !Array.isArray(v);
@@ -69,6 +77,14 @@ const field = (v, max) => clip(oneLine(v), max);
 // An item without one of VT_ICONS gets the icon its name suggests ("Boats"
 // -> boat), else the car. First match wins, so "Fleet vans" is the fleet
 // and "Trucks & SUVs" the truck.
+//
+// The kinds of car come after the vehicle words, so a name that matched
+// one of those before keeps its icon ("Electric trucks" is still the truck,
+// "Luxury SUVs" the SUV, "Company EVs" the fleet): an item saved without an
+// icon of its own only moves off the plain car. Among the kinds of car the
+// most telling word wins: what drives it (EV), then the class (sports,
+// luxury, classic), then the body (convertible, sedan, coupe), so "Luxury
+// sedans" is the luxury car and "Classic convertibles" the classic.
 const ICON_WORDS = [
   ['fleet', /\b(fleets?|commercial|company|business)\b/i],
   ['boat', /\b(boats?|yachts?|marine|pontoons?|jet ?skis?|watercraft|vessels?)\b/i],
@@ -77,6 +93,15 @@ const ICON_WORDS = [
   ['truck', /\b(trucks?|pick-?ups?)\b/i],
   ['van', /\b(vans?|minivans?|sprinters?)\b/i],
   ['suv', /\b(suvs?|crossovers?|4x4s?|jeeps?)\b/i],
+  ['ev', /\b(evs?|electric|hybrids?|plug-?ins?|teslas?)\b/i],
+  ['sports', /\b(sports|sports? ?cars?|exotics?|super ?cars?|hyper ?cars?|race ?cars?|track ?cars?|performance)\b/i],
+  ['luxury', /\b(luxury|luxe|premium|high-?end|executive|limos?|limousines?)\b/i],
+  ['classic', /\b(classics?|vintage|antiques?|collector|hot ?rods?|muscle ?cars?|old-?timers?)\b/i],
+  ['convertible', /\b(convertibles?|cabriolets?|cabrios?|roadsters?|drop-?tops?|soft-?tops?)\b/i],
+  ['sedan', /\b(sedans?|saloons?|four-?doors?|4-?doors?)\b/i],
+  // "é" is not a word character to \b, so the end is a lookahead instead
+  // ("Coupés" matches, "coupon" does not).
+  ['coupe', /\bcoup(?:e|é)s?(?![a-z0-9_])/i],
 ];
 export function vehicleIconFor(name) {
   const n = oneLine(name);

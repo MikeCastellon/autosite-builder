@@ -1,11 +1,12 @@
 // Edit > Vehicle Types: the helpers keep copy.vehicleTypes in step with
 // what the band shows (kit/vehicleTypes.js: eight cards, named ones
 // published, the icon from the name unless the owner picks one), quick picks
-// fill the started card first, and the panel renders on the server.
+// fill the started card first and name their own icon, and the panel renders
+// on the server.
 import { describe, it, expect } from 'vitest';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { VT_LIMITS, VT_ICONS, VT_DEFAULTS, vehicleTypesOf } from '../templates/kit/vehicleTypes.js';
+import { VT_LIMITS, VT_ICONS, VT_DEFAULTS, vehicleTypesOf, vehicleIconFor } from '../templates/kit/vehicleTypes.js';
 import {
   VT_TITLE_MAX, VT_INTRO_MAX, VT_NAME_MAX, VT_DESC_MAX, VT_MAX_ITEMS, VT_QUICK_NAMES,
   vtValue, vtStart, vtRows, vtIconChoices, vtQuickPicks, vtSetText, vtSetItem, vtAddItem, vtRemoveItem, vtMoveItem, vtAddQuick,
@@ -21,6 +22,19 @@ describe('vehicleTypesEdit', () => {
     expect([VT_TITLE_MAX, VT_INTRO_MAX, VT_NAME_MAX, VT_DESC_MAX, VT_MAX_ITEMS]).toEqual([VT_LIMITS.title, VT_LIMITS.intro, VT_LIMITS.name, VT_LIMITS.desc, VT_LIMITS.items]);
     expect(Object.keys(VT_QUICK_NAMES)).toEqual([...VT_ICONS]);
     expect(vtIconChoices().map((c) => c.id)).toEqual(['', ...VT_ICONS]);
+    expect(VT_QUICK_NAMES).toMatchObject({
+      sedan: 'Sedans', coupe: 'Coupes', sports: 'Sports Cars', luxury: 'Luxury Cars', ev: 'EVs', convertible: 'Convertibles', classic: 'Classic Cars',
+    });
+  });
+
+  it('names every quick pick so the name leads back to its own icon', () => {
+    // A quick pick saves its icon, but an owner who sets it back to
+    // Automatic gets the icon of the name: the same drawing.
+    for (const id of VT_ICONS) expect(vehicleIconFor(VT_QUICK_NAMES[id]), VT_QUICK_NAMES[id]).toBe(id);
+    for (const id of VT_ICONS) {
+      const [row] = vtRows({ vehicleTypes: vtSetItem(vtAddQuick(vtStart(), id), 0, 'icon', '') });
+      expect([row.icon, row.autoIcon]).toEqual(['', id]);
+    }
   });
 
   it('reads the band as on only for an object, and starts it with one card', () => {
@@ -68,8 +82,11 @@ describe('vehicleTypesEdit', () => {
 
   it('offers the quick picks not on the list yet, by icon or by name', () => {
     const copy = { vehicleTypes: { items: [{ name: 'Boats' }, { name: 'SUVs & Crossovers', icon: 'suv' }, { name: 'trucks' }] } };
-    expect(vtQuickPicks(copy).map((q) => q.icon)).toEqual(['car', 'van', 'rv', 'motorcycle', 'fleet']);
-    expect(vtQuickPicks({ vehicleTypes: { items: [{}] } })).toHaveLength(8);
+    expect(vtQuickPicks(copy).map((q) => q.icon)).toEqual(['car', 'sedan', 'coupe', 'sports', 'luxury', 'ev', 'convertible', 'classic', 'van', 'rv', 'motorcycle', 'fleet']);
+    expect(vtQuickPicks({ vehicleTypes: { items: [{}] } })).toHaveLength(15);
+    // A kind of car on the list by its name alone is not offered again.
+    const kinds = { vehicleTypes: { items: [{ name: 'Supercars' }, { name: 'sedans' }] } };
+    expect(vtQuickPicks(kinds).map((q) => q.icon)).toEqual(['car', 'coupe', 'luxury', 'ev', 'convertible', 'classic', 'suv', 'truck', 'van', 'boat', 'rv', 'motorcycle', 'fleet']);
   });
 });
 
@@ -85,9 +102,10 @@ describe('VehicleTypesPanel', () => {
     expect(html).toContain(`placeholder="${VT_DEFAULTS.title}"`);
     expect(html).toContain('value="Boats"');
     expect(html).toContain('Vehicle 2');
-    // The picker: Auto (the icon from the name) picked, then the eight.
+    // The picker: Auto (the icon from the name) picked, then every icon.
     expect(html).toContain('aria-label="Automatic (Boat, from the name)"');
-    expect((html.match(/role="radio"/g) || []).length).toBe(2 * 9);
+    expect((html.match(/role="radio"/g) || []).length).toBe(2 * 16);
+    expect(html).toContain('aria-label="Electric (EV)"');
     expect(html).toMatch(/aria-checked="true" aria-label="Automatic \(Boat/);
     expect(html.split('Not on your site yet: it needs a name.').length - 1).toBe(1);
     expect(html).toContain('Quick add:');

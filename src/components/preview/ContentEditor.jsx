@@ -20,7 +20,7 @@ import VehicleTypesPanel from './editor/VehicleTypesPanel.jsx';
 import ComparisonPanel from './editor/ComparisonPanel.jsx';
 import ShowcasePanel from './editor/ShowcasePanel.jsx';
 import { ServiceTabsSwitch, ServiceCategoryField } from './editor/ServiceTabsPanel.jsx';
-import { howStepsOn, howStepsStart, HOW_STEPS_HELP } from './editor/howStepsEdit.js';
+import { howStepsOn, howStepsStart, HOW_STEPS_HELP, howStepKey, howStepRemoveImages, howStepWithoutImages } from './editor/howStepsEdit.js';
 import CtaPhotoField from './editor/CtaPhotoField.jsx';
 import ServiceDetailsFields from './editor/ServiceDetailsFields.jsx';
 import HeadingsPanel from './editor/HeadingsPanel.jsx';
@@ -993,7 +993,10 @@ export default function ContentEditor({ isOpen, onClose, topOffset = 0, siteId, 
             }
             const removeSection = async () => {
               const ok = await confirmDialog('Remove the How It Works section? Its steps come off your page too.', { title: 'Remove section?', confirmText: 'Remove' });
-              if (ok) setCopy('howSteps', null);
+              if (!ok) return;
+              setCopy('howSteps', null);
+              // Its step photos go with it (functional: against the latest images).
+              if (has('howStepPhotos')) onImagesChange((prev) => howStepWithoutImages(prev || {}));
             };
             // Until the owner saves steps, the template shows its own
             // starters. Seed from the template's exported defaults when it
@@ -1001,13 +1004,17 @@ export default function ContentEditor({ isOpen, onClose, topOffset = 0, siteId, 
             // business type's defaults (templateFallbacks.js), never one
             // business's steps for every type (audit arch-5).
             const own = Array.isArray(copy?.howSteps);
+            // A photo per step (Driveway), only for the owner's own steps.
+            const stepPhotos = has('howStepPhotos') && own;
             const exact = Boolean(templateInfo?.defaultHowSteps);
             const steps = own
               ? copy.howSteps
               : exact ? templateInfo.defaultHowSteps(bizType) : defaultHowSteps(bizType);
             const restore = async () => {
               const ok = await confirmDialog('Remove your steps and show the starter steps again?', { title: 'Use starter steps?', confirmText: 'Use starter steps' });
-              if (ok) setCopy('howSteps', null);
+              if (!ok) return;
+              setCopy('howSteps', null);
+              if (has('howStepPhotos')) onImagesChange((prev) => howStepWithoutImages(prev || {}));
             };
             const updateStep = (i, key, val) => {
               const current = [...steps];
@@ -1018,6 +1025,8 @@ export default function ContentEditor({ isOpen, onClose, topOffset = 0, siteId, 
               const current = [...steps];
               current.splice(i, 1);
               setCopy('howSteps', current);
+              // The later steps' photos move up with their steps.
+              if (stepPhotos) onImagesChange((prev) => howStepRemoveImages(prev || {}, i));
             };
             const addStep = () => {
               setCopy('howSteps', [...steps, { emoji: '✨', title: '', desc: '' }]);
@@ -1027,6 +1036,7 @@ export default function ContentEditor({ isOpen, onClose, topOffset = 0, siteId, 
                 {hiddenNote}
                 <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">How It Works Steps</p>
                 {optIn && <p className="text-[11px] text-gray-500 mb-3 leading-snug">{HOW_STEPS_HELP.on}</p>}
+                {stepPhotos && <p className="text-[11px] text-gray-500 mb-3 leading-snug">{HOW_STEPS_HELP.photos}</p>}
                 {!own && (
                   <p className="text-[11px] text-gray-500 mb-3 leading-snug">
                     {exact
@@ -1047,6 +1057,11 @@ export default function ContentEditor({ isOpen, onClose, topOffset = 0, siteId, 
                       <input type="text" value={step.title ?? ''} onChange={(e) => updateStep(i, 'title', e.target.value)} placeholder="Step title" className="min-w-0 w-full bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 text-[12px] text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-400" />
                     </div>
                     <textarea rows={2} value={step.desc ?? ''} onChange={(e) => updateStep(i, 'desc', e.target.value)} placeholder="Step description" className="w-full bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 text-[12px] text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-400 resize-none" />
+                    {stepPhotos && (
+                      <div className="mt-2">
+                        <ImageSlot label="Step Photo" value={images?.[howStepKey(i)]} onChange={(v) => setImage(howStepKey(i), v)} siteId={siteId} uploadKey={howStepKey(i)} />
+                      </div>
+                    )}
                   </div>
                 ))}
                 <button type="button" onClick={addStep} className="w-full py-2 text-[12px] font-semibold text-gray-500 border border-dashed border-gray-300 rounded-lg hover:border-gray-400 hover:text-gray-700 transition mb-2">+ Add Step</button>
@@ -1367,6 +1382,7 @@ export default function ContentEditor({ isOpen, onClose, topOffset = 0, siteId, 
               {/* Always offered: templates fall back to the photo when the
                   Stats Box has no stats, and PhotoSlot's hint points here. */}
               <ImageSlot label="About Photo" value={images?.about} onChange={(v) => setImage('about', v)} siteId={siteId} uploadKey="about" />
+              {has('aboutPhoto2') && <ImageSlot label="Second About Photo" value={images?.about2} onChange={(v) => setImage('about2', v)} siteId={siteId} uploadKey="about2" />}
               <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Left Panel Style</p>
               <Toggle
                 value={copy?.aboutLayout || 'image'}

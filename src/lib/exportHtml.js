@@ -4,7 +4,7 @@ import { normalizeBusinessInfo } from './normalizeBusinessInfo.js';
 import { TEMPLATE_COMPONENT_MAP } from '../data/templates.js';
 import { supabase } from './supabase.js';
 import { buildFontHref, LEGACY_EXPORT_FAMILIES } from './fontCatalog.js';
-import { SITE_BA_JS, SITE_BASE_CSS, SITE_CQ_FALLBACK_JS, SITE_RUNTIME_JS } from './siteRuntime.js';
+import { SITE_BA_JS, SITE_BASE_CSS, SITE_CQ_FALLBACK_JS, SITE_RUNTIME_JS, SITE_SCROLL_JS } from './siteRuntime.js';
 
 const SCHEDULER_WIDGET_URL =
   (typeof window !== 'undefined' && window.location && window.location.origin
@@ -80,7 +80,7 @@ const LEGACY_MOBILE_CSS = `
       .tp-4col { grid-template-columns: 1fr 1fr !important; }
     }`;
 
-function buildSeoHead(businessInfo, generatedCopy, siteId, images, templateMeta, { fontHref = null, legacyLayout = true, beforeAfter = false } = {}) {
+function buildSeoHead(businessInfo, generatedCopy, siteId, images, templateMeta, { fontHref = null, legacyLayout = true, beforeAfter = false, scroller = false } = {}) {
   const biz = businessInfo;
   const copy = generatedCopy;
   const keywords = [
@@ -227,7 +227,8 @@ ${SITE_BASE_CSS}
   <!-- Container-query fallback for older browsers (no-op on current ones) -->
   <script>${SITE_CQ_FALLBACK_JS}</script>
   <script>${SITE_RUNTIME_JS}</script>${beforeAfter ? `
-  <script>${SITE_BA_JS}</script>` : ''}
+  <script>${SITE_BA_JS}</script>` : ''}${scroller ? `
+  <script>${SITE_SCROLL_JS}</script>` : ''}
 
   <!-- Local Business Schema -->
   <script type="application/ld+json">
@@ -261,7 +262,10 @@ async function buildHtmlString(templateId, businessInfo, generatedCopy, template
   // on a page that shows the band's range input; other pages stay as they
   // were. Text can't fake the tag: React escapes "<" in owner words.
   const beforeAfter = /<input\b[^>]*\sdata-acg-ba-range=/.test(bodyHtml);
-  const seoHead = buildSeoHead(businessInfo, generatedCopy, siteId, images, templateMeta, { fontHref, legacyLayout: !themeReady, beforeAfter });
+  // Same for the scroller buttons' script (SITE_SCROLL_JS): only a page with
+  // a <button data-acg-scroll="prev|next"> gets it.
+  const scroller = /<button\b[^>]*\sdata-acg-scroll=/.test(bodyHtml);
+  const seoHead = buildSeoHead(businessInfo, generatedCopy, siteId, images, templateMeta, { fontHref, legacyLayout: !themeReady, beforeAfter, scroller });
 
   // Inject widget script (template already renders the widget divs, just need the JS)
   let widgetsHtml = '';

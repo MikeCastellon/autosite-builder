@@ -11,7 +11,7 @@ import {
   VT_LIMITS, VT_SECTION, VT_TAB, VT_DEFAULTS, VT_HINTS, VT_ICONS, VT_ICON_LABELS, vehicleIconFor, vehicleTypesOf, vehicleTypesHeading,
 } from './vehicleTypes.js';
 import { EditorModeProvider } from './EditorMode.jsx';
-import { LucideIcon } from './icons.jsx';
+import { LucideIcon, LUCIDE } from './icons.jsx';
 
 const band = (props, editor = false) => {
   const el = createElement(VehicleTypesBand, { ns: 'xx-vt', order: 5, ...props, editor });
@@ -27,7 +27,7 @@ const chars = (s) => Array.from(s).length;
 const BANNED = /Verified (Customer|Review|Buyer)|Real Reviews|5\.0 (Google )?Rating|Open Now|[★☆⭐]|100% Satisf|Satisfaction Guarantee|Top[- ]Rated|(5|Five)[- ]Star|Certified|Guarantee/i;
 
 const SIX = {
-  title: 'For the Everyday Drive. And the Weekend Escape.',
+  title: 'Cars, Trucks, Boats and More',
   intro: 'Whatever you drive, wherever it is parked.',
   items: [
     { name: 'Cars', desc: 'Sedans, coupes and daily drivers.', icon: 'car' },
@@ -109,12 +109,15 @@ describe('vehicleTypesOf', () => {
 
 describe('icons', () => {
   it('takes the owner\'s pick, else what the name suggests, else the car', () => {
-    expect(VT_ICONS).toEqual(['car', 'suv', 'truck', 'van', 'boat', 'rv', 'motorcycle', 'fleet']);
+    expect(VT_ICONS).toEqual([
+      'car', 'sedan', 'coupe', 'sports', 'luxury', 'ev', 'convertible', 'classic',
+      'suv', 'truck', 'van', 'boat', 'rv', 'motorcycle', 'fleet',
+    ]);
     expect(vehicleTypesOf({ items: [{ name: 'Boats', icon: 'rv' }] }).items[0].icon).toBe('rv');
     expect(vehicleTypesOf({ items: [{ name: 'Boats', icon: 'helicopter' }] }).items[0].icon).toBe('boat');
     expect(vehicleTypesOf({ items: [{ name: 'Daily drivers', icon: 3 }] }).items[0].icon).toBe('car');
     const cases = {
-      Cars: 'car', 'Exotics & classics': 'car', 'SUVs & Crossovers': 'suv', Jeeps: 'suv', 'Trucks & SUVs': 'truck', 'Lifted pickups': 'truck',
+      Cars: 'car', 'Exotics & classics': 'sports', 'SUVs & Crossovers': 'suv', Jeeps: 'suv', 'Trucks & SUVs': 'truck', 'Lifted pickups': 'truck',
       'Vans & Sprinters': 'van', Minivans: 'van', 'Boats & Jet Skis': 'boat', Yachts: 'boat', 'RVs': 'rv', Motorhomes: 'rv', 'Campers and trailers': 'rv',
       Motorcycles: 'motorcycle', 'Bikes': 'motorcycle', Fleet: 'fleet', 'Commercial vans': 'fleet', 'Company cars': 'fleet', '': 'car', 'Advanced care': 'car',
     };
@@ -122,16 +125,114 @@ describe('icons', () => {
     for (const v of [undefined, null, 5, {}]) expect(vehicleIconFor(v)).toBe('car');
   });
 
+  it('names the kinds of car by their own words; the vehicle words still win', () => {
+    const cases = {
+      Sedans: 'sedan', 'Coupés': 'coupe', Supercars: 'sports', 'Luxury sedans': 'luxury', Teslas: 'ev', Roadsters: 'convertible',
+      'Muscle cars': 'classic', 'Electric trucks': 'truck', 'Luxury SUVs': 'suv', 'Company EVs': 'fleet', 'Daily drivers': 'car',
+      // The rest of each word list, and the order among the kinds of car.
+      Coupes: 'coupe', 'COUPÉ': 'coupe', 'Coupon deals': 'car', 'Saloons & four-doors': 'sedan', '4-door sedans': 'sedan',
+      'Sports cars': 'sports', Exotics: 'sports', 'Race cars': 'sports', 'Performance cars': 'sports', 'Sport utility vehicles': 'car',
+      'High-end cars': 'luxury', Limousines: 'luxury', 'Plug-in hybrids': 'ev', 'Electric cars': 'ev', 'Vintage cars': 'classic',
+      'Hot rods': 'classic', 'Classic convertibles': 'classic', Cabriolets: 'convertible', 'Drop-tops': 'convertible',
+      'Electric sports cars': 'ev', 'Luxury convertibles': 'luxury',
+    };
+    for (const [name, icon] of Object.entries(cases)) expect(vehicleIconFor(name), name).toBe(icon);
+  });
+
+  it('keeps a saved icon over the words its name now matches', () => {
+    for (const icon of ['car', 'suv', 'fleet']) {
+      expect(vehicleTypesOf({ items: [{ name: 'Sedans', icon }] }).items[0].icon).toBe(icon);
+      expect(vehicleTypesOf({ items: [{ name: 'Exotics & classics', icon }] }, { editor: true }).items[0].icon).toBe(icon);
+    }
+  });
+
+  // The words before the kinds of car came in (vehicleTypes.js ICON_WORDS as
+  // it was): a name saved without an icon of its own that drew anything but
+  // the car must draw the same icon now, since the page picks it again on
+  // every publish.
+  const OLD_ICON_WORDS = [
+    ['fleet', /\b(fleets?|commercial|company|business)\b/i],
+    ['boat', /\b(boats?|yachts?|marine|pontoons?|jet ?skis?|watercraft|vessels?)\b/i],
+    ['rv', /\b(rvs?|motor ?homes?|campers?|caravans?|trailers?|coaches)\b/i],
+    ['motorcycle', /\b(motorcycles?|motorbikes?|bikes?|scooters?)\b/i],
+    ['truck', /\b(trucks?|pick-?ups?)\b/i],
+    ['van', /\b(vans?|minivans?|sprinters?)\b/i],
+    ['suv', /\b(suvs?|crossovers?|4x4s?|jeeps?)\b/i],
+  ];
+  const oldIconFor = (name) => (OLD_ICON_WORDS.find(([, re]) => re.test(name)) || ['car'])[0];
+
+  it('moves a name off the plain car only: every other icon a name drew stays', () => {
+    const vehicles = ['Fleets', 'Commercial', 'Company', 'Business', 'Boats', 'Yachts', 'Marine', 'Pontoons', 'Jet skis', 'Watercraft', 'Vessels',
+      'RVs', 'Motorhomes', 'Campers', 'Caravans', 'Trailers', 'Coaches', 'Motorcycles', 'Motorbikes', 'Bikes', 'Scooters', 'Trucks', 'Pickups',
+      'Pick-ups', 'Vans', 'Minivans', 'Sprinters', 'SUVs', 'Crossovers', '4x4s', 'Jeeps', 'Cars', 'Daily drivers'];
+    const kinds = ['Sedans', 'Saloons', 'Four-door', '4-door', 'Coupes', 'Coupés', 'Sports', 'Sport', 'Sports cars', 'Exotic', 'Supercars', 'Hypercars',
+      'Race', 'Track', 'Performance', 'Luxury', 'Luxe', 'Premium', 'High-end', 'Executive', 'Limo', 'Limousines', 'EV', 'EVs', 'Electric', 'Hybrid',
+      'Plug-in', 'Tesla', 'Classic', 'Vintage', 'Antique', 'Collector', 'Hot rod', 'Muscle car', 'Old-timer', 'Convertibles', 'Cabriolet', 'Cabrio',
+      'Roadster', 'Drop-top', 'Soft-top'];
+    const corpus = [
+      ...vehicles, ...kinds,
+      ...kinds.flatMap((k) => vehicles.flatMap((v) => [`${k} ${v}`, `${v} & ${k}`, `${k.toLowerCase()} ${v.toLowerCase()}`])),
+      ...Object.values(VT_ICON_LABELS),
+    ];
+    let kept = 0;
+    let moved = 0;
+    for (const name of corpus) {
+      const before = oldIconFor(name);
+      if (before !== 'car') {
+        expect(vehicleIconFor(name), name).toBe(before);
+        kept++;
+      } else if (vehicleIconFor(name) !== 'car') moved++;
+    }
+    // The corpus reaches both sides: names that keep a vehicle icon and
+    // names that leave the car for a kind of car.
+    expect(kept).toBeGreaterThan(2000);
+    expect(moved).toBeGreaterThan(100);
+  });
+
   it('draws every icon as a decorative lucide-style svg; an unknown name draws the car', () => {
     expect(Object.keys(VT_ICON_PATHS)).toEqual([...VT_ICONS]);
     expect(Object.keys(VT_ICON_LABELS)).toEqual([...VT_ICONS]);
+    expect(VT_ICON_LABELS).toMatchObject({
+      sedan: 'Sedan', coupe: 'Coupe', sports: 'Sports car', luxury: 'Luxury car', ev: 'Electric (EV)', convertible: 'Convertible', classic: 'Classic car',
+    });
     const svg = renderToStaticMarkup(<VehicleTypeIcon name="boat" />);
     expect(svg).toMatch(/^<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">/);
     expect(renderToStaticMarkup(<VehicleTypeIcon name="nope" size={16} stroke={2} />)).toBe(renderToStaticMarkup(<LucideIcon name="car" />));
-    // Eight different drawings.
+    // Fifteen different drawings, stroke only.
     const drawn = VT_ICONS.map((name) => renderToStaticMarkup(<VehicleTypeIcon name={name} />));
-    expect(new Set(drawn).size).toBe(8);
+    expect(new Set(drawn).size).toBe(15);
     for (const s of drawn) expect(s).not.toMatch(/fill="(?!none)|style=|#[0-9a-f]{3}/i);
+    // The road vehicles stand on the same two wheels (the boat floats, the
+    // motorcycle has its own).
+    for (const name of VT_ICONS.filter((n) => !['boat', 'motorcycle', 'fleet'].includes(n))) {
+      expect(renderToStaticMarkup(<VehicleTypeIcon name={name} />), name).toContain('<circle cx="7" cy="17" r="2"></circle><path d="M9 17h6"></path><circle cx="17" cy="17" r="2"></circle>');
+    }
+  });
+
+  // The first eight drawings as origin/master rendered them before the kinds
+  // of car came in (renderToStaticMarkup(<VehicleTypeIcon name={id} />), the
+  // svg tag aside): live pages show them, so they never change.
+  const FROZEN = {
+    car: '<path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path><circle cx="7" cy="17" r="2"></circle><path d="M9 17h6"></path><circle cx="17" cy="17" r="2"></circle>',
+    suv: '<path d="M19 17h2a1 1 0 0 0 1-1v-3.4a2 2 0 0 0-1.6-2L17 10l-2.4-4a2 2 0 0 0-1.7-1H4a2 2 0 0 0-2 2v9a1 1 0 0 0 1 1h2"></path><path d="M2 10h15"></path><circle cx="7" cy="17" r="2"></circle><path d="M9 17h6"></path><circle cx="17" cy="17" r="2"></circle>',
+    truck: '<path d="M5 17H3a1 1 0 0 1-1-1v-4h10V7a1 1 0 0 1 1-1h3.5l2.8 4 1.9.4a1.2 1.2 0 0 1 .8 1.1V16a1 1 0 0 1-1 1h-2"></path><circle cx="7" cy="17" r="2"></circle><path d="M9 17h6"></path><circle cx="17" cy="17" r="2"></circle>',
+    van: '<path d="M5 17H3a1 1 0 0 1-1-1V6.5A1.5 1.5 0 0 1 3.5 5h11.6a1.5 1.5 0 0 1 1.2.6l5.4 6.8a1.5 1.5 0 0 1 .3.9V16a1 1 0 0 1-1 1h-2"></path><path d="M11 5v12"></path><circle cx="7" cy="17" r="2"></circle><path d="M9 17h6"></path><circle cx="17" cy="17" r="2"></circle>',
+    boat: '<path d="M2 12h20l-2.7 4.5a2 2 0 0 1-1.7 1H5.2a2 2 0 0 1-1.8-1.1z"></path><path d="M6 12V9a1 1 0 0 1 1-1h5.5l3 4"></path><path d="M2 21c1.2 0 1.8-.8 3.3-.8s2.1.8 3.3.8 1.8-.8 3.4-.8 2.1.8 3.3.8 1.8-.8 3.3-.8 2.1.8 3.4.8"></path>',
+    rv: '<path d="M5 17H3a1 1 0 0 1-1-1V4.5A1.5 1.5 0 0 1 3.5 3h15A1.5 1.5 0 0 1 20 4.5V7a1 1 0 0 1-1 1h-1.6l2.8 3.8 1.1.3a1 1 0 0 1 .7 1V16a1 1 0 0 1-1 1h-2"></path><rect x="5" y="6.5" width="5" height="3.5" rx="1"></rect><circle cx="7" cy="17" r="2"></circle><path d="M9 17h6"></path><circle cx="17" cy="17" r="2"></circle>',
+    motorcycle: '<circle cx="5" cy="16" r="3"></circle><circle cx="19" cy="16" r="3"></circle><path d="m19 16-3.4-8.5h-2.3"></path><path d="M5 16h4l1.5-3"></path><path d="M3.6 13a1 1 0 0 1 .9-1.5h5l1.7-1.8a2 2 0 0 1 1.4-.6h3.7"></path><path d="M10.5 13h3.5l1.8 3H10z"></path>',
+    fleet: '<path d="M6 10.2c0-.3.1-.7.2-1l1.1-2.3c.2-.4.7-.7 1.1-.7H14c.5 0 1 .2 1.4.6.7.7 1.8 1.8 1.8 1.8s2.2.5 3.6.9c.7.2 1.2.8 1.2 1.5v2.4c0 .4-.3.8-.8.8h-1.6a1.6 1.6 0 0 0-3.1-.55"></path><path d="M15.6 18.8h1.6c.48 0 .8-.32.8-.8v-2.4c0-.72-.56-1.36-1.2-1.52C15.36 13.68 13.2 13.2 13.2 13.2s-1.04-1.12-1.76-1.84c-.4-.32-.88-.56-1.44-.56H4.4c-.48 0-.88.32-1.12.72l-1.12 2.32A2.96 2.96 0 0 0 2 14.8V18c0 .48.32.8.8.8h1.6"></path><circle cx="6" cy="18.8" r="1.6"></circle><path d="M7.6 18.8h4.8"></path><circle cx="14" cy="18.8" r="1.6"></circle>',
+  };
+
+  it('never redraws an icon a page may already show', () => {
+    const open = '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">';
+    for (const [name, inner] of Object.entries(FROZEN)) {
+      expect(renderToStaticMarkup(<VehicleTypeIcon name={name} />), name).toBe(`${open}${inner}</svg>`);
+    }
+    // The car is lucide's own (kit/blocks.golden.json pins that drawing).
+    expect(VT_ICON_PATHS.car).toBe(LUCIDE.car);
+    // The old ids keep their order in the picker; the kinds of car slot in
+    // after the car.
+    expect(VT_ICONS.filter((id) => id in FROZEN)).toEqual(Object.keys(FROZEN));
   });
 });
 
@@ -169,7 +270,7 @@ describe('VehicleTypesBand', () => {
   it('published: the section, the design heading and one card per named item', () => {
     const html = band({ vehicleTypes: SIX, className: 'xx-section', wrapClassName: 'xx-wrap' });
     expect(sectionTag(html)).toBe('<section data-section="vehicleTypes" id="vehicle-types" class="xx-vt-band xx-section" aria-labelledby="xx-vt-h" style="order:5">');
-    expect(html).toContain('<div class="xx-wrap"><div class="xx-vt-head" data-acg-reveal=""><p class="xx-vt-eyebrow">Vehicles We Work On</p><h2 id="xx-vt-h" class="xx-vt-title">For the Everyday Drive. And the Weekend Escape.</h2><p class="xx-vt-intro">Whatever you drive, wherever it is parked.</p></div>');
+    expect(html).toContain('<div class="xx-wrap"><div class="xx-vt-head" data-acg-reveal=""><p class="xx-vt-eyebrow">Vehicles We Work On</p><h2 id="xx-vt-h" class="xx-vt-title">Cars, Trucks, Boats and More</h2><p class="xx-vt-intro">Whatever you drive, wherever it is parked.</p></div>');
     expect(html).toContain('<ul class="xx-vt-grid" role="list">');
     expect(count(html, '<li class="xx-vt-card"')).toBe(6);
     // Card markup: icon, name, optional line.

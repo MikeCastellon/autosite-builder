@@ -20,9 +20,12 @@ const toEntry = (e) => (isObj(e) ? { ...e } : typeof e === 'string' ? { name: e 
 
 // The quick picks: one per icon, named the way a list of vehicle kinds reads
 // ("Cars", "SUVs"). The owner picks what they work on: nothing is listed for
-// them.
+// them. Each name leads back to its own icon through vehicleIconFor, so a
+// quick pick whose icon is later set to Automatic keeps its drawing.
 export const VT_QUICK_NAMES = Object.freeze({
-  car: 'Cars', suv: 'SUVs', truck: 'Trucks', van: 'Vans', boat: 'Boats', rv: 'RVs', motorcycle: 'Motorcycles', fleet: 'Fleet',
+  car: 'Cars', sedan: 'Sedans', coupe: 'Coupes', sports: 'Sports Cars', luxury: 'Luxury Cars', ev: 'EVs',
+  convertible: 'Convertibles', classic: 'Classic Cars',
+  suv: 'SUVs', truck: 'Trucks', van: 'Vans', boat: 'Boats', rv: 'RVs', motorcycle: 'Motorcycles', fleet: 'Fleet',
 });
 
 // copy.vehicleTypes while the band is on, else null.

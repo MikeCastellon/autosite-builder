@@ -13,12 +13,14 @@
 //     the nav glass comes from html[data-acg-scrolled] (siteRuntime.js);
 //   - facts (rating, stats, hours, prices) render only when the owner
 //     entered them, and editor hints go through PhotoSlot / EditorOnly.
-// Photos: hero, about, logo and the CTA background come from their own
-// slots. A gallery photo the Before & After band shows is left out of the
-// rest. The gallery band shows the first six gallery photos; the next ones
-// fill the second About photo, the How It Works cards (all of them or none)
-// and the footer photo card, and any left after those join the gallery band,
-// so every photo shows once.
+// Photos: hero, about, the second About photo (about2), the How It Works
+// step photos (howStep<i>), logo and the CTA background come from their own
+// slots; the editor shows a placeholder for each one still empty. A gallery
+// photo the Before & After band or a service card shows is left out of the
+// gallery. The gallery band shows the first six gallery photos, the next one
+// fills the footer photo card, and any left after that join the band, so
+// every photo shows once. The review row scrolls sideways; its arrows are
+// data-acg-scroll buttons the page runtime drives (siteRuntime.js).
 import { SocialRow } from '../SocialIcons.jsx';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import IconOrEmoji from '../IconOrEmoji.jsx';
@@ -37,7 +39,7 @@ import { BeforeAfterBand, beforeAfterCss } from '../kit/BeforeAfter.jsx';
 import { beforeAfterPairs, BA_DEFAULTS } from '../kit/beforeAfter.js';
 import { FaqBand, faqCss } from '../kit/Faq.jsx';
 import { faqItems, faqHeading, FAQ_DEFAULTS, FAQ_HINTS } from '../kit/faq.js';
-import { howItWorksSteps, howItWorksHeading, HOW_DEFAULTS, HOW_HINTS } from '../kit/howItWorks.js';
+import { howItWorksSteps, howItWorksHeading, howStepPhotos, HOW_DEFAULTS, HOW_HINTS } from '../kit/howItWorks.js';
 import { VehicleTypeIcon } from '../kit/VehicleTypes.jsx';
 import { vehicleTypesOf, vehicleTypesHeading, VT_DEFAULTS, VT_HINTS } from '../kit/vehicleTypes.js';
 import { comparisonOf, comparisonHeading, CMP_DEFAULTS, CMP_HINTS } from '../kit/comparison.js';
@@ -143,6 +145,14 @@ function hoursFact(rows) {
 function initials(name) {
   const parts = txt(name).replace(/[^\p{L}\p{N}\s'-]/gu, ' ').split(/\s+/).filter(Boolean);
   return parts.slice(0, 2).map((p) => p[0].toUpperCase()).join('');
+}
+
+// `text` cut to at most `max` characters at a word break, closed with "…".
+function clipWords(text, max) {
+  if (text.length <= max) return text;
+  const cut = text.slice(0, max);
+  const space = cut.lastIndexOf(' ');
+  return `${(space > max * 0.6 ? cut.slice(0, space) : cut).replace(/[\s,.;:!?-]+$/, '')}…`;
 }
 
 // The about text split into its lead (the big statement) and the rest.
@@ -270,9 +280,12 @@ html[data-acg-scrolled] .dw-nav-box{background:var(--dw-dark-bg)}
 .dw-rating-num{font-family:var(--dw-head);font-size:30px;font-weight:500;letter-spacing:-.04em;line-height:1}
 .dw-rating-num small{font-size:13px;vertical-align:top}
 .dw-rating-txt{font-size:13px;line-height:1.35}
+.dw-hq-mark{font-family:var(--dw-head);font-size:34px;font-weight:600;line-height:.5;height:14px}
+.dw-hq-text{display:block;padding-top:12px;font-size:14px;line-height:1.45}
+.dw-hq-who{display:block;margin-top:10px;font-family:${MONO};font-size:10px;letter-spacing:.04em;text-transform:uppercase}
 
-.dw-info{background:var(--dw-dark-bg);color:var(--dw-dark-text);border-top:8px solid var(--dw-bg)}
-.dw-info-row{display:flex;justify-content:space-between;gap:24px;padding:28px 0 30px}
+.dw-info{background:var(--dw-dark-bg);color:var(--dw-dark-text)}
+.dw-info-row{display:flex;justify-content:space-between;gap:24px;padding-top:28px;padding-bottom:30px}
 .dw-info-item{min-width:0}
 .dw-info-label{display:block;margin:0 0 10px;font-family:${MONO};font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--dw-dark-accent)}
 .dw-info-value{display:block;font-size:16px;font-weight:500;line-height:1.35;color:inherit;text-decoration:none;overflow-wrap:anywhere}
@@ -281,10 +294,14 @@ html[data-acg-scrolled] .dw-nav-box{background:var(--dw-dark-bg)}
 .dw-about-top .dw-eyebrow{margin-top:12px}
 .dw-about-lead{margin:0;font-family:var(--dw-head);font-size:clamp(26px,2.8cqi,40px);font-weight:500;line-height:1.12;letter-spacing:-.035em;white-space:pre-line}
 .dw-about-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px;align-items:start}
+.dw-about-one{grid-template-columns:minmax(0,1fr) minmax(0,2fr)}
 .dw-about-ph{overflow:hidden;border-radius:6px;aspect-ratio:446/540}
-.dw-about-ph2{margin-top:86px;aspect-ratio:446/410}
+.dw-about-ph2{margin-top:86px}
 .dw-about-ph img,.dw-about-ph>div{width:100%;height:100%;object-fit:cover}
-.dw-about-card{display:flex;flex-direction:column;justify-content:space-between;gap:48px;margin-top:174px;padding:28px;border-radius:6px;background:var(--dw-alt-bg);color:var(--dw-alt-text)}
+.dw-about-card{display:flex;flex-direction:column;justify-content:space-between;gap:48px;align-self:stretch;margin-top:174px;padding:28px;border-radius:6px;background:var(--dw-alt-bg);color:var(--dw-alt-text)}
+.dw-about-one .dw-about-card{margin-top:86px}
+.dw-about-none{grid-template-columns:minmax(0,1fr)}
+.dw-about-none .dw-about-card{margin-top:0}
 .dw-about-card p{margin:0 0 14px;font-size:17px;line-height:1.5;white-space:pre-line}
 .dw-about-card p:last-child{margin-bottom:0}
 .dw-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
@@ -330,7 +347,7 @@ html[data-acg-scrolled] .dw-nav-box{background:var(--dw-dark-bg)}
 .dw-how-list{display:flex;flex-direction:column;gap:30px;margin:0;padding:0;list-style:none}
 .dw-step{padding:22px;border-radius:10px;background:var(--dw-card-bg);color:var(--dw-card-text)}
 .dw-step-ph{overflow:hidden;margin-bottom:22px;border-radius:6px;aspect-ratio:562/400}
-.dw-step-ph img{width:100%;height:100%;object-fit:cover}
+.dw-step-ph img,.dw-step-ph>div{width:100%;height:100%;object-fit:cover}
 .dw-step-h{display:flex;align-items:baseline;gap:14px;margin:0;font-size:18px;font-weight:500;line-height:1.3;letter-spacing:-.01em;text-transform:uppercase}
 .dw-step-n{font-family:${MONO};font-size:17px;color:var(--dw-dark-accent)}
 .dw-step-e{margin-left:auto;font-size:20px;line-height:1}
@@ -361,6 +378,10 @@ html[data-acg-scrolled] .dw-nav-box{background:var(--dw-dark-bg)}
 .dw-sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 
 .dw-rev-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px}
+.dw-rev-nav{display:flex;flex:none;gap:10px;margin-bottom:clamp(36px,4.5cqi,64px)}
+.dw-rev-btn{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;margin:0;padding:0;border:1px solid var(--dw-dark-line);border-radius:3px;background:none;color:var(--dw-dark-accent);cursor:pointer}
+.dw-rev-btn:focus-visible,.dw-rev:focus-visible{outline:2px solid var(--dw-dark-accent);outline-offset:3px}
+.dw-rev-few .dw-rev-nav{display:none}
 .dw-rev{display:grid;grid-auto-flow:column;grid-auto-columns:calc((100% - 44px)/3);gap:22px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:4px;scrollbar-width:none}
 .dw-rev::-webkit-scrollbar{display:none}
 .dw-q{display:flex;flex-direction:column;justify-content:space-between;gap:36px;min-height:314px;margin:0;padding:28px;border-radius:8px;scroll-snap-align:start;background:linear-gradient(180deg,var(--dw-card-bg),var(--dw-card-bg2));color:var(--dw-card-text)}
@@ -420,9 +441,12 @@ html[data-acg-scrolled] .dw-nav-box{background:var(--dw-dark-bg)}
   .dw-btn:hover .dw-btn-box{background:var(--dw-accent);color:var(--dw-on-accent)}
   .dw-svc-tab:hover{background:var(--dw-card-bg)}
   .dw-foot-book:hover{opacity:.8}
+  .dw-rev-btn:hover{border-color:var(--dw-dark-text)}
 }
 @media (prefers-reduced-motion: no-preference){
   .dw-nav-box,.dw-btn-box,.dw-svc-tab{transition:background-color .2s ease,color .2s ease,opacity .2s ease}
+  .dw-rev{scroll-behavior:smooth}
+  .dw-rev-btn{transition:border-color .2s ease}
 }
 @container (max-width: 1000px){
   .dw-links{display:none}
@@ -441,11 +465,12 @@ html[data-acg-scrolled] .dw-nav-box{background:var(--dw-dark-bg)}
   .dw-hero{min-height:760px}
   .dw-hero-in{flex-direction:column;align-items:flex-start}
   .dw-rating{width:100%}
-  .dw-info-row{flex-direction:column;gap:18px;padding:16px 0 20px}
+  .dw-info-row{flex-direction:column;gap:18px;padding-top:16px;padding-bottom:20px}
   .dw-info-label{margin-bottom:6px}
   .dw-about-top{grid-template-columns:1fr;gap:0}
   .dw-about-grid{grid-template-columns:1fr}
-  .dw-about-ph2,.dw-about-card{margin-top:0}
+  .dw-about-ph2,.dw-about-card,.dw-about-one .dw-about-card{margin-top:0}
+  .dw-about-one{grid-template-columns:minmax(0,1fr)}
   .dw-svc{grid-template-columns:minmax(0,1fr)}
   .dw-svc-list{display:none}
   .dw-svc-panels{display:flex;flex-direction:column;gap:24px}
@@ -464,6 +489,7 @@ html[data-acg-scrolled] .dw-nav-box{background:var(--dw-dark-bg)}
   .dw-cmp-us,.dw-cmp-them{width:30%}
   .dw-cmp-name{font-size:13px;overflow-wrap:anywhere}
   .dw-rev{grid-auto-columns:86%}
+  .dw-rev-few .dw-rev-nav{display:flex}
   .dw-cta-card,.dw-cta>[data-acg-inquiry]{padding:24px!important}
   .dw-foot-grid{grid-template-columns:minmax(0,1fr)}
   .dw-foot-cols{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
@@ -577,25 +603,33 @@ export default function MobileDriveway({ businessInfo, generatedCopy, templateMe
   const baOn = show('beforeAfter') && Boolean(ba) && (ba.pairs.length > 0 || editor);
   const baPhotos = new Set(baOn ? ba.pairs.flatMap((p) => [p.before, p.after]).filter(Boolean) : []);
 
-  // Photos: a gallery photo the Before & After band shows stays out of the
-  // rest. The gallery band shows the first six; the next ones fill the
-  // second About photo, the How It Works cards (one per step, or none while
-  // there aren't enough for every step) and the footer card, each only while
-  // its section shows, and whatever is left joins the gallery band, so every
+  // Photos: a gallery photo the Before & After band or a service card shows
+  // stays out of the gallery. The gallery band shows the first six, the next
+  // one fills the footer card, and whatever is left joins the band, so every
   // photo shows once.
+  const usedElsewhere = new Set([...baPhotos, ...(servicesOn ? services.map((x) => x.image).filter(Boolean) : [])]);
   const galleryImages = Object.keys(images || {})
-    .filter((k) => /^gallery\d+$/.test(k) && images[k] && !baPhotos.has(images[k]))
+    .filter((k) => /^gallery\d+$/.test(k) && images[k] && !usedElsewhere.has(images[k]))
     .sort((a, b) => Number(a.slice(7)) - Number(b.slice(7)))
     .map((k) => images[k]);
   const how = howItWorksSteps(copy.howSteps);
   const howOn = show('process') && Boolean(how) && (how.steps.length > 0 || editor);
+  // Edit > How It Works > Step Photo, one per step. The published page
+  // shows them once every step has one (an even row of cards); the editor
+  // shows a placeholder for each one still missing.
+  const stepPhotos = howOn ? howStepPhotos(copy.howSteps, images) : [];
+  const stepPhotosOn = editor || (stepPhotos.length > 0 && stepPhotos.every(Boolean));
   const about = aboutParts(copy.aboutText);
   const aboutOn = show('about') && Boolean(about.lead || editor);
+  // About > About Photo and Second About Photo: the editor shows both slots
+  // (a placeholder for an empty one); the published page only the photos
+  // that exist, the story card taking the room of a missing one.
+  const aboutPhoto2 = typeof images.about2 === 'string' && images.about2.trim() ? images.about2 : '';
+  const aboutPhotos = [{ src: txt(images.about) ? images.about : '', slot: 'about' }, { src: aboutPhoto2, slot: 'about2' }]
+    .filter((p) => editor || p.src);
   const gallerySlots = show('gallery') ? 6 : 0;
   const spare = galleryImages.slice(gallerySlots);
   let take = 0;
-  const aboutPhoto2 = aboutOn && spare[take] ? spare[take++] : '';
-  const stepPhotos = howOn && how.steps.length > 0 && spare.length - take >= how.steps.length ? how.steps.map(() => spare[take++]) : [];
   // Out of spare photos, the footer card borrows the About photo only while
   // the About section isn't showing it.
   const footPhoto = spare[take] ? spare[take++] : (!aboutOn && images.about) || '';
@@ -644,6 +678,11 @@ export default function MobileDriveway({ businessInfo, generatedCopy, templateMe
   const testimonials = list(copy.testimonialPlaceholders).filter((q) => txt(q?.text));
   const reviews = copy.googleWidgetKey ? 'google' : testimonials.length > 0 ? 'quotes' : null;
   const reviewsOn = show('testimonials') && Boolean(reviews);
+  // Without a connected Google rating, the hero card quotes the first review
+  // the Reviews section shows (stars and the Google label only for a quote
+  // the owner marked as a Google review), linking down to the rest.
+  const heroQuote = !ratingOn && reviewsOn && reviews === 'quotes' ? testimonials[0] : null;
+  const heroQuoteStars = heroQuote ? reviewStars(heroQuote) : 0;
 
   const ctaHead = heading('cta', { title: copy.ctaHeadline, intro: copy.ctaSubtext });
   const ctaPhoto = images.cta || images.hero || '';
@@ -758,6 +797,18 @@ export default function MobileDriveway({ businessInfo, generatedCopy, templateMe
                 </span>
               </a>
             )}
+            {heroQuote && (
+              <a className="dw-rating dw-hq" href="#reviews">
+                <span className="dw-rating-top">
+                  {heroQuoteStars > 0
+                    ? <StarRow rating={heroQuoteStars} size={20} color={GOOGLE_STAR_GOLD} />
+                    : <span className="dw-hq-mark" aria-hidden="true">“</span>}
+                  <span className="dw-rating-src">{heroQuote.source === 'google' ? 'Google review' : 'Reviews'}</span>
+                </span>
+                <span className="dw-hq-text">“{clipWords(txt(heroQuote.text), 150)}”</span>
+                <span className="dw-hq-who">{txt(heroQuote.name) || 'Customer'}</span>
+              </a>
+            )}
           </div>
         </section>
       )}
@@ -786,15 +837,12 @@ export default function MobileDriveway({ businessInfo, generatedCopy, templateMe
                 {!about.lead && <EditorHint>Add your story in Edit &gt; About.</EditorHint>}
               </div>
             </div>
-            <div className="dw-about-grid">
-              <div className="dw-about-ph" data-acg-reveal="">
-                <PhotoSlot src={images.about} slot="about" alt={name ? `${name} at work` : ''} />
-              </div>
-              {aboutPhoto2 ? (
-                <div className="dw-about-ph dw-about-ph2" data-acg-reveal="" style={{ '--acg-delay': '120ms' }}>
-                  <PhotoSlot src={aboutPhoto2} slot="gallery" alt="" />
+            <div className={`dw-about-grid${['dw-about-none', 'dw-about-one', ''].map((c) => (c ? ` ${c}` : ''))[aboutPhotos.length]}`}>
+              {aboutPhotos.map((p, i) => (
+                <div key={p.slot} className={i ? 'dw-about-ph dw-about-ph2' : 'dw-about-ph'} data-acg-reveal="" style={i ? { '--acg-delay': '120ms' } : undefined}>
+                  <PhotoSlot src={p.src} slot={p.slot} alt={i === 0 && name ? `${name} at work` : ''} />
                 </div>
-              ) : <div aria-hidden="true" />}
+              ))}
               {(about.rest.length > 0 || stats.length > 0) && (
                 <div className="dw-about-card" data-acg-reveal="" style={{ '--acg-delay': '220ms' }}>
                   <div>{about.rest.map((p, i) => <p key={i}>{p}</p>)}</div>
@@ -897,8 +945,8 @@ export default function MobileDriveway({ businessInfo, generatedCopy, templateMe
               <ol className="dw-how-list">
                 {how.steps.map((s, i) => (
                   <li key={i} className="dw-step" data-acg-reveal="">
-                    {stepPhotos[i] && (
-                      <div className="dw-step-ph"><PhotoSlot src={stepPhotos[i]} slot="gallery" alt="" /></div>
+                    {stepPhotosOn && (
+                      <div className="dw-step-ph"><PhotoSlot src={stepPhotos[i]} slot="howStep" alt="" /></div>
                     )}
                     <h3 className="dw-step-h">
                       <span className="dw-step-n">{s.number}</span>
@@ -983,18 +1031,24 @@ export default function MobileDriveway({ businessInfo, generatedCopy, templateMe
       {reviewsOn && (
         <section data-section="testimonials" id="reviews" className="dw-sec dw-dark" aria-labelledby="dw-rev-h" style={{ order: order('testimonials') }}>
           <div className="dw-wrap">
-            <div className="dw-rev-head">
+            <div className={`dw-rev-head${testimonials.length <= 3 ? ' dw-rev-few' : ''}`}>
               <Heading h={heading('testimonials')} id="dw-rev-h" center={false} />
+              {reviews === 'quotes' && testimonials.length > 1 && (
+                <div className="dw-rev-nav">
+                  <button type="button" className="dw-rev-btn" data-acg-scroll="prev" aria-controls="dw-rev-track" aria-label="Previous review"><LucideIcon name="arrowLeft" size={20} /></button>
+                  <button type="button" className="dw-rev-btn" data-acg-scroll="next" aria-controls="dw-rev-track" aria-label="Next review"><LucideIcon name="arrowRight" size={20} /></button>
+                </div>
+              )}
             </div>
             {reviews === 'google' ? (
               <GoogleReviewsWidget widgetKey={copy.googleWidgetKey} theme={copy.googleReviewsTheme} />
             ) : (
-              <div className="dw-rev" role="list">
+              <div id="dw-rev-track" className="dw-rev" data-acg-reveal="" {...(testimonials.length > 1 ? { role: 'region', 'aria-label': 'Customer reviews, scroll sideways for more', tabIndex: 0 } : {})}>
                 {testimonials.map((q, i) => {
                   const stars = reviewStars(q);
                   const who = txt(q.name) || 'Customer';
                   return (
-                    <figure key={i} className="dw-q" role="listitem" data-acg-reveal="" style={{ '--acg-delay': `${(i % 3) * 90}ms` }}>
+                    <figure key={i} className="dw-q">
                       <blockquote>“{txt(q.text)}”</blockquote>
                       <figcaption className="dw-q-foot">
                         {stars > 0 && <StarRow rating={stars} size={16} color={GOOGLE_STAR_GOLD} />}

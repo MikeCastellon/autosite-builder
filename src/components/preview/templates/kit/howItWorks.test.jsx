@@ -85,8 +85,8 @@ describe('howItWorksHeading', () => {
   });
 
   it('takes copy.sectionTitles.process (Edit > Headings), then the theme\'s defaults', () => {
-    const st = { process: { eyebrow: ' Easy ', title: 'A Better Detail. Three Simple Steps.', accent: 'Three Simple Steps', intro: 'Here is how.' } };
-    expect(howItWorksHeading(st)).toEqual({ eyebrow: 'Easy', title: 'A Better Detail. Three Simple Steps.', accent: 'Three Simple Steps', intro: 'Here is how.' });
+    const st = { process: { eyebrow: ' Easy ', title: 'Three Steps to a Clean Car', accent: 'a Clean Car', intro: 'Here is how.' } };
+    expect(howItWorksHeading(st)).toEqual({ eyebrow: 'Easy', title: 'Three Steps to a Clean Car', accent: 'a Clean Car', intro: 'Here is how.' });
     expect(howItWorksHeading({ process: { title: 'Ours' } }, { eyebrow: 'Steps', title: 'Theirs' })).toEqual({ eyebrow: 'Steps', title: 'Ours', accent: '', intro: '' });
     expect(howItWorksHeading({ whyUs: { title: 'Not this one' } }).title).toBe('How It Works');
   });
@@ -159,8 +159,8 @@ describe('HowItWorksBand', () => {
   });
 
   it('prints copy.sectionTitles.process, and takes a theme heading, hints, labels and id', () => {
-    const own = band({ howSteps: STEPS, sectionTitles: { process: { eyebrow: 'Easy', title: 'A Better Detail. Three Simple Steps.', accent: 'Three Simple Steps', intro: 'Here is how.' } } });
-    expect(own).toContain('<p class="xx-how-eyebrow">Easy</p><h2 id="xx-how-h" class="xx-how-title">A Better Detail. <span class="xx-how-em">Three Simple Steps</span>.</h2><p class="xx-how-intro">Here is how.</p>');
+    const own = band({ howSteps: STEPS, sectionTitles: { process: { eyebrow: 'Easy', title: 'Three Steps to a Clean Car', accent: 'a Clean Car', intro: 'Here is how.' } } });
+    expect(own).toContain('<p class="xx-how-eyebrow">Easy</p><h2 id="xx-how-h" class="xx-how-title">Three Steps to <span class="xx-how-em">a Clean Car</span></h2><p class="xx-how-intro">Here is how.</p>');
     const themed = band({
       howSteps: [{}],
       heading: <h2 id="xx-own-h">Our heading</h2>,

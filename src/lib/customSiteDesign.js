@@ -14,6 +14,7 @@ import { REFERENCE_MODES } from './referenceModes.js';
 import { sectionIdsFor, templateSectionsFor } from '../data/templateSections.js';
 import { TEMPLATE_READS, templateReads } from '../components/preview/editorCapabilities.js';
 import { SHOWCASE_LIMITS, SHOWCASE_MAX_ITEMS } from '../components/preview/templates/kit/showcase.js';
+import { HOW_STEP_IMAGE_KEY } from '../components/preview/templates/kit/howItWorks.js';
 import {
   EXTRA_SECTIONS, EXTRA_SECTION_IDS, SERVICE_TABS_MIN_SERVICES, draftedCopy, extraSectionCount, extraSectionOf, extraSectionsRequest,
   factLines, groundingText, sanitizeExtraSectionIds, sanitizeExtraSections, sanitizeFaqNotes, serviceCategoriesKey, serviceCategory,
@@ -1248,6 +1249,11 @@ export function rewriteSite({ existing, copy: written, businessInfo, design, ext
   if (sections?.images) {
     for (const key of Object.keys(images)) if (isShowcaseKey(key)) delete images[key];
     Object.assign(images, sections.images);
+  }
+  // How It Works written again or removed: its step photos (Edit > How It
+  // Works > Step Photo, keyed by step) belonged to the old steps.
+  if (sections && ((sections.remove || []).includes('howSteps') || Object.prototype.hasOwnProperty.call(sections.copy || {}, 'howSteps'))) {
+    for (const key of Object.keys(images)) if (HOW_STEP_IMAGE_KEY.test(key)) delete images[key];
   }
   let colors = { ...(prev._customColors || {}) };
   let fonts = prev._customFonts;

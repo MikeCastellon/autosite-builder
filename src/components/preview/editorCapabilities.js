@@ -81,6 +81,10 @@ export const SOURCE_CAPABILITIES = {
   serviceAreas: ['\\bserviceAreasOf\\('],
   insured: ['\\b(?:biz|businessInfo|info)\\??\\.insured\\b'],
   ctaImage: ['\\bimages\\??\\.cta\\b'],
+  // About > Second About Photo (images.about2) and How It Works > Step Photo
+  // (images.howStep<i>, read through the kit's howStepPhotos).
+  aboutPhoto2: ['\\bimages\\??\\.about2\\b'],
+  howStepPhotos: ['\\bhowStepPhotos\\('],
   reviewSources: ["\\.source\\s*===\\s*'google'"],
 };
 
@@ -120,7 +124,7 @@ export const TEMPLATE_READS = {
   // Driveway (custom websites only): no second hero button.
   mobile_driveway: [
     'ctaPrimaryUrl', 'servicesTitle', 'aboutStats', 'googleBadge', 'sectionTitles', 'serviceDetails', 'ctaImage', 'reviewSources',
-    'beforeAfter', 'howSteps', 'faq', 'vehicleTypes', 'comparison',
+    'beforeAfter', 'howSteps', 'faq', 'vehicleTypes', 'comparison', 'aboutPhoto2', 'howStepPhotos',
   ],
   // Legacy templates (hidden from the picker; some saved sites use them).
   detailing_coastal: ['ctaPrimaryUrl', 'ctaSecondaryUrl', 'aboutStats'],

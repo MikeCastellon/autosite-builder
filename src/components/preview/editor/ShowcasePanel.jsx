@@ -79,7 +79,7 @@ export function ShowcasePanel({ copy, setCopy, images, setImage, patchImages, si
             </span>
           </div>
           <ImageSlot label={`Detail Showcase ${i + 1}: photo`} value={images?.[showcaseKey(i)]} onChange={(v) => setImage(showcaseKey(i), v)} siteId={siteId} uploadKey={showcaseKey(i)} />
-          <Field label="Title" value={row.title} onChange={(v) => write(scSetItem(sc, images, i, 'title', v))} placeholder="e.g. Ceramic Protection" maxLength={SC_ITEM_TITLE_MAX} />
+          <Field label="Title" value={row.title} onChange={(v) => write(scSetItem(sc, images, i, 'title', v))} placeholder="e.g. Ceramic Coating" maxLength={SC_ITEM_TITLE_MAX} />
           <Field label="Caption (optional)" value={row.caption} onChange={(v) => write(scSetItem(sc, images, i, 'caption', v))} placeholder="e.g. Two coats on a black SUV" maxLength={SC_CAPTION_MAX} multiline rows={2} />
           {!row.complete && <Help tone="warn" className="-mt-2">{missing(row)}</Help>}
         </div>

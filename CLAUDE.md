@@ -98,7 +98,11 @@ export const extraFonts = ["'Barlow Condensed', sans-serif"];  // stacks used be
   20px of scroll, `data-acg-reveal` (+ `style="--acg-delay:120ms"`, `="fade"`) for reveal-on-scroll (never on or
   inside the hero), `data-acg-year` for the copyright year, `details.acg-menu` auto-close. The runtime starts at
   readyState `interactive` (not DOMContentLoaded, which waits for the deferred widget scripts) and fails open:
-  any error shows every reveal target.
+  any error shows every reveal target. Opt-in: `button[data-acg-scroll=prev|next][aria-controls=<scroller id>]`
+  (`type="button"`, with an `aria-label`) scrolls that horizontal scroller one card pitch (first two children's
+  `offsetLeft` gap, or its width with one child), from the nearest card, wrapping round at the ends. It sets
+  `scrollLeft`, so give the scroller `scroll-behavior: smooth` inside the reduced-motion media query. Its script
+  (`SITE_SCROLL_JS`) is added to a page only when its markup has such a button; editor twin `scrollerPreview.js`.
 - Reference implementation: `templates/__fixtures__/KitSampleTemplate.jsx`.
 
 #### Feature blocks (Redline's owner-editable features, shared)
@@ -130,7 +134,7 @@ export const extraFonts = ["'Barlow Condensed', sans-serif"];  // stacks used be
   items: [{ q, a }] }`, id `faq`, ns `ds-faq`, published with FAQPage JSON-LD built from the printed items, never in the
   editor), How It Works (`howItWorks.js` / `HowItWorks.jsx`, the shared `copy.howSteps`, id `process`, ns `ds-how`, on only
   for a non-empty list: no starter steps, see `HOW_STEPS_STARTERS`), Vehicle Types (`vehicleTypes.js`, `copy.vehicleTypes
-  = { title?, intro?, items: [{ name, desc?, icon? }] }`, eight icons, id `vehicleTypes`, ns `ds-vt`), Comparison
+  = { title?, intro?, items: [{ name, desc?, icon? }] }`, fifteen icons (`VT_ICONS`, ids never renamed), id `vehicleTypes`, ns `ds-vt`), Comparison
   (`comparison.js`, `copy.comparison = { title?, intro?, usLabel?, themLabel?, rows: [{ label, us, them }] }`, cells
   true / false / text / left out, id `comparison`, ns `ds-cmp`; its tinted column is the one computed color, on the
   root only while it renders), Detail Showcase (`showcase.js`, `copy.showcase = { title?, intro?, items: [{ title,

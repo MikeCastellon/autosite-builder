@@ -144,8 +144,8 @@ describe('ShowcaseBand', () => {
   });
 
   it('prints the owner\'s heading and intro over the theme\'s defaults over the design\'s', () => {
-    const own = band({ showcase: { ...WALTS, title: 'Every Detail Makes A Difference', intro: 'A closer look.' }, images: IMG(0), defaults: { eyebrow: 'Our craft', title: 'Theme title', intro: 'Theme intro' } });
-    expect(own).toContain('<p class="xx-sc-eyebrow">Our craft</p><h2 id="showcase-h" class="xx-sc-title">Every Detail Makes A Difference</h2><p class="xx-sc-intro">A closer look.</p>');
+    const own = band({ showcase: { ...WALTS, title: 'Recent Work Up Close', intro: 'A closer look.' }, images: IMG(0), defaults: { eyebrow: 'Our craft', title: 'Theme title', intro: 'Theme intro' } });
+    expect(own).toContain('<p class="xx-sc-eyebrow">Our craft</p><h2 id="showcase-h" class="xx-sc-title">Recent Work Up Close</h2><p class="xx-sc-intro">A closer look.</p>');
     const theme = band({ showcase: WALTS, images: IMG(0), defaults: { eyebrow: '', title: 'Theme title', intro: 'Theme intro' } });
     expect(theme).toContain('<div class="xx-sc-head" data-acg-reveal=""><h2 id="showcase-h" class="xx-sc-title">Theme title</h2><p class="xx-sc-intro">Theme intro</p></div>');
     // Never an empty heading: a blank default falls back to the design's.

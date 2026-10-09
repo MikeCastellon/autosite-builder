@@ -14,6 +14,11 @@
 // removes acg-js, so reveal content is never left hidden.
 // The editor preview (WebsitePreview.jsx) injects SITE_BASE_CSS and mirrors
 // the scrolled flag itself; it never adds acg-js, so reveals stay visible.
+// Opt-in scripts sit next to it: exportHtml.js adds SITE_BA_JS (Before &
+// After sliders) and SITE_SCROLL_JS (prev/next buttons on a horizontal
+// scroller) only to a page whose markup uses them, so every other page's
+// <head> stays byte-identical. Each has an editor twin in
+// src/components/preview (beforeAfterPreview.js, scrollerPreview.js).
 
 export const SITE_RUNTIME_JS = `(function(){
 var d=document,h=d.documentElement,w=window,s=null,ran=0;
@@ -78,6 +83,43 @@ b=t.closest('[data-acg-ba-prev],[data-acg-ba-next]');
 if(b)step(b.closest('[data-acg-ba-slider]'),b.hasAttribute('data-acg-ba-next')?1:-1);});
 d.addEventListener('scroll',function(e){var t=e.target;
 if(t&&t.closest&&t.hasAttribute('data-acg-ba-track'))step(t.closest('[data-acg-ba-slider]'),0);},true);
+})();`;
+
+// Prev/next buttons for a horizontal scroller (a row of review cards, say).
+// exportHtml.js adds this after SITE_RUNTIME_JS (and SITE_BA_JS) only to a
+// page whose markup has such a button, so every other page stays exactly as
+// it was. The contract, for any template:
+//   <div id="xx-rev-track">...cards...</div>   (overflow-x: auto)
+//   <button type="button" data-acg-scroll="prev" aria-controls="xx-rev-track"
+//     aria-label="Previous review">  (and the same with "next")
+//   - a click on the button (or on its icon) scrolls the element whose id
+//     is in aria-controls by one card pitch: the distance between its first
+//     two children's offsetLeft (gap included), or its clientWidth when it
+//     has one child;
+//   - it steps from the card nearest the current position, so a half-swiped
+//     row lands on a card, and wraps round: next at the end goes back to
+//     the start, prev at the start goes to the end;
+//   - it does nothing when the id names no element, the track is not laid
+//     out (no width, pitch 0) or nothing overflows.
+// It assigns scrollLeft (never scrollBy/scrollTo with a behavior), so the
+// track's own CSS scroll-behavior decides smooth or instant: put
+// scroll-behavior:smooth inside @media (prefers-reduced-motion:
+// no-preference) and reduced motion is respected. No init and no state:
+// one click listener on document (delegation), so it can run from <head>
+// and serves tracks rendered later too. ES5, under 1 KB. Without it the
+// track still swipes and the buttons do nothing. The editor preview's twin
+// is scrollerPreview.js.
+export const SITE_SCROLL_JS = `(function(){
+var d=document;
+d.addEventListener('click',function(e){var t=e.target,b,r,c,k,p,m,x,i;if(!t||!t.closest)return;
+b=t.closest('button[data-acg-scroll]');if(!b)return;
+k=b.getAttribute('data-acg-scroll');k=k==='next'?1:k==='prev'?-1:0;
+i=b.getAttribute('aria-controls');r=k&&i&&d.getElementById(i);if(!r)return;
+c=r.children;m=r.scrollWidth-r.clientWidth;
+p=c.length>1?c[1].offsetLeft-c[0].offsetLeft:r.clientWidth;
+if(!(m>=1)||!(p>0))return;
+x=r.scrollLeft;i=Math.round(x/p)+k;
+r.scrollLeft=k>0?(x>=m-1?0:Math.min(i*p,m)):(x<1?m:Math.max(i*p,0));});
 })();`;
 
 // Reveal styles apply only on screens, when JS ran (html.acg-js) AND the
