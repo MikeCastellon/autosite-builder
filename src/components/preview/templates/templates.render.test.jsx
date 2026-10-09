@@ -59,7 +59,7 @@ const SAVED_SECTION_IDS = {
   carwash_bubble: ['hero', 'services', 'process', 'about', 'gallery', 'testimonials', 'cta', 'beforeAfter'],
   // New template (no saved sites yet): its own ids, frozen from here on.
   mobile_redline: ['hero', 'about', 'gallery', 'brands', 'services', 'featured', 'testimonials', 'awards', 'locations', 'cta', 'beforeAfter'],
-  replica_9f02a6cb: ['hero', 'statsBar', 'about', 'services', 'vehicleTypes', 'process', 'beforeAfter', 'gallery', 'comparison', 'testimonials', 'faq', 'cta'],
+  mobile_driveway: ['hero', 'statsBar', 'about', 'services', 'vehicleTypes', 'process', 'beforeAfter', 'gallery', 'comparison', 'testimonials', 'faq', 'cta'],
   __kit_sample__: DEFAULT_IDS,
 };
 

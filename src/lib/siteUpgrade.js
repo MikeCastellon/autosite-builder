@@ -135,8 +135,8 @@ export function showNewDesignBadge(site, now = Date.now(), releaseDate = SITE_UP
 // modules exporting themeReady.
 export const NEW_DESIGN_TEMPLATES = Object.freeze([
   'carwash_bubble', 'detailing_sporty', 'mechanic_garage', 'mechanic_industrial', 'mechanic_ironclad',
-  'mobile_chrome', 'mobile_redline', 'mobile_sudsy', 'tint_elite', 'tint_obsidian', 'wheel_apex',
-  'replica_9f02a6cb',
+  'mobile_chrome', 'mobile_driveway', 'mobile_redline', 'mobile_sudsy', 'tint_elite', 'tint_obsidian',
+  'wheel_apex',
 ]);
 
 // Our own accounts (team, demo and test owners): never emailed, like super

@@ -3,10 +3,10 @@ import { TEMPLATES } from '../../data/templates.js';
 import { captureReference, customSiteAdmin, importAssetToSite, startDesignRun } from '../../lib/customSites.js';
 import {
   BEFORE_AFTER_CAPTION_MAX, BEFORE_AFTER_INTRO_MAX, BEFORE_AFTER_MAX, BEFORE_AFTER_SECTION, BEFORE_AFTER_TITLE_MAX,
-  CAPTURE_POLL_MS, DESIGN_MODEL, DESIGN_STALE_MS, REFERENCE_SITES_MAX, REFERENCE_SITE_NOTE_MAX, REFERENCE_SITE_URL_MAX, REPLICA_LABEL,
+  CAPTURE_POLL_MS, CUSTOM_ONLY_LABEL, DESIGN_MODEL, DESIGN_STALE_MS, REFERENCE_SITES_MAX, REFERENCE_SITE_NOTE_MAX, REFERENCE_SITE_URL_MAX, REPLICA_LABEL,
   SITE_BUSINESS_TYPES, beforeAfterCaption, beforeAfterChangedSince, beforeAfterImportsChanged, beforeAfterSlots, brandAccent,
   canMatchReference, captureViewFor, capturedShotKey, designFromIntake, designProblems, extraSectionOptIn, extraSectionsChangedSince,
-  extraSectionsFor, hasBeforeAfter, isBeforeAfterKey, isCaptureLive, isImportable, isShowcaseKey, newerCapture, rankTemplates,
+  extraSectionsFor, hasBeforeAfter, isBeforeAfterKey, isCaptureLive, isCustomOnlyTemplate, isImportable, isShowcaseKey, newerCapture, rankTemplates,
   referenceSiteKey, referenceSiteUrl, replacedShotSource, replicaTemplatesFor, sameReferenceSource, sanitizeReference, sanitizeReferenceSites,
   showcaseSlots, showsPrices,
 } from '../../lib/customSiteDesign.js';
@@ -848,13 +848,15 @@ function ReferenceSection({
           <div className="mt-3 space-y-2">
             {replicas.map((t) => (
               <div key={t.id} className="flex flex-wrap items-center gap-3 rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2">
-                <span className="text-[13px] text-[#1a1a1a]"><strong>Ready:</strong> {t.label} <span className="text-ink-tertiary">({REPLICA_LABEL})</span></span>
+                <span className="text-[13px] text-[#1a1a1a]"><strong>Ready:</strong> {t.label} <span className="text-ink-tertiary">({isCustomOnlyTemplate(t) ? CUSTOM_ONLY_LABEL : REPLICA_LABEL})</span></span>
                 {templateId === t.id
                   ? <span className="ml-auto text-[12px] font-semibold text-emerald-800">In use</span>
                   : <button type="button" onClick={() => onPickTemplate(t.id)} disabled={locked} className={`${BTN} ml-auto`}>Use this template</button>}
               </div>
             ))}
-            <p className="text-[11px] text-ink-tertiary">It's also first under Look. Save or write the site to keep a switch.</p>
+            <p className="text-[11px] text-ink-tertiary">
+              {replicas.some((t) => !isCustomOnlyTemplate(t)) ? "It's also first under Look." : "It's also under Look."} Save or write the site to keep a switch.
+            </p>
           </div>
         ) : replica.status === 'none' ? (
           <div className="mt-3">
@@ -1358,8 +1360,13 @@ export function DesignSetup({ project, onBack, onStarted }) {
   // This project's replica templates (customFor) come first, labeled; no
   // other project ever sees them.
   const ranked = useMemo(() => rankTemplates(ALL_TEMPLATES, info.businessType, form.styles || [], project.id), [info.businessType, form.styles, project.id]);
-  const replicas = useMemo(() => replicaTemplatesFor(ALL_TEMPLATES, project.id), [project.id]);
-  const [templateId, setTemplateId] = useState(start.templateId || '');
+  // A request fulfilled by a custom-only template (the saved
+  // reference.replica.templateId) counts as done.
+  const fulfilledReplicaId = typeof saved?.reference?.replica?.templateId === 'string' ? saved.reference.replica.templateId : '';
+  const replicas = useMemo(() => replicaTemplatesFor(ALL_TEMPLATES, project.id, fulfilledReplicaId), [project.id, fulfilledReplicaId]);
+  // A saved template this build doesn't know (e.g. renamed since) starts
+  // empty, so the default pick runs instead of leaving no look selected.
+  const [templateId, setTemplateId] = useState(templateById(start.templateId) ? start.templateId : '');
   const [useBrand, setUseBrand] = useState(saved ? saved.useBrand !== false && start.brandHexes.length > 0 : start.brandHexes.length > 0);
   const [slots, setSlots] = useState(start.slots);
   // The Before & After section's heading and intro as typed
@@ -1450,9 +1457,10 @@ export function DesignSetup({ project, onBack, onStarted }) {
   const copyLocked = !!copyRun && ['capture', 'save', 'start'].includes(copyRun.step);
 
   // Default to the best match once the business type is known (the one
-  // labeled so: a replica leads the list but is picked on purpose).
+  // labeled so: a replica leads the list and a custom-only template ends it,
+  // both picked on purpose).
   useEffect(() => {
-    if (!templateId && ranked.length && info.businessType) setTemplateId((ranked.find((r) => !r.replica) || ranked[0]).id);
+    if (!templateId && ranked.length && info.businessType) setTemplateId((ranked.find((r) => !r.replica && !r.customOnly) || ranked[0]).id);
   }, [templateId, ranked, info.businessType]);
 
   // A section order belongs to one template: a switch starts the new one
@@ -2059,8 +2067,9 @@ export function DesignSetup({ project, onBack, onStarted }) {
               {ranked.map((r) => {
                 const t = templateById(r.id);
                 const on = templateId === r.id;
-                // Replicas lead the list; "Best match" stays on the best of the rest.
-                const best = !r.replica && r.id === ranked.find((x) => !x.replica)?.id;
+                // Replicas lead the list and custom-only templates end it;
+                // "Best match" stays on the best of the rest.
+                const best = !r.replica && !r.customOnly && r.id === ranked.find((x) => !x.replica && !x.customOnly)?.id;
                 return (
                   <li key={r.id}>
                     <button

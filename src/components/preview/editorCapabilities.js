@@ -117,8 +117,8 @@ export const TEMPLATE_READS = {
     ...KIT, 'trustBar', 'reviewMode', 'heroServices', 'googleBadge', 'footerBuilder', 'sectionTitles', 'featuredService', 'vehicleMakes',
     'serviceDetails', 'serviceAreas', 'insured', 'ctaImage', 'reviewSources', 'beforeAfter',
   ],
-  // Exact replica for custom site 9f02a6cb (hidden): no second hero button.
-  replica_9f02a6cb: [
+  // Driveway (custom websites only): no second hero button.
+  mobile_driveway: [
     'ctaPrimaryUrl', 'servicesTitle', 'aboutStats', 'googleBadge', 'sectionTitles', 'serviceDetails', 'ctaImage', 'reviewSources',
     'beforeAfter', 'howSteps', 'faq', 'vehicleTypes', 'comparison',
   ],
@@ -178,7 +178,7 @@ export function templateHelp(templateId, spot) {
 // Opt-in themes show it nowhere until the owner switches a spot on.
 export const GOOGLE_BADGE_DEFAULTS = {
   mobile_redline: ['hero', 'footer'],
-  replica_9f02a6cb: ['hero'],
+  mobile_driveway: ['hero'],
   detailing_sporty: [],
   mobile_chrome: [],
   mobile_sudsy: [],
@@ -212,7 +212,7 @@ export const vehicleMakesDefaultAll = (templateId) => VEHICLE_MAKES_DEFAULT_ALL[
 //                              template calls as howItWorksSteps(copy.howSteps)).
 //                              The How It Works tab then adds / removes the
 //                              section instead of offering starter steps.
-export const HOW_STEPS_STARTERS = { tint_obsidian: true, mobile_sudsy: true, carwash_bubble: true, detailing_sporty: false, replica_9f02a6cb: false };
+export const HOW_STEPS_STARTERS = { tint_obsidian: true, mobile_sudsy: true, carwash_bubble: true, detailing_sporty: false, mobile_driveway: false };
 export const howStepsStarters = (templateId) => HOW_STEPS_STARTERS[templateId] ?? true;
 
 // The Edit panel's tabs, top to bottom. `needs`: the capability a tab

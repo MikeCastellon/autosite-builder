@@ -338,9 +338,9 @@ const LOOKS = [
     note: 'Night navy and cobalt instead of red, for detailers whose brand is blue. Vehicle makes and packages come straight after the hero.',
   },
 
-  // ─── Exact replica (custom site 9f02a6cb): hidden, so custom-only looks ───
+  // ─── Driveway (mobile_driveway): hidden, so custom-only looks ─────────
   {
-    templateId: 'replica_9f02a6cb', slug: 'midnight', name: 'Midnight', customOnly: true,
+    templateId: 'mobile_driveway', slug: 'midnight', name: 'Midnight', customOnly: true,
     mood: ['dark', 'sleek', 'modern', 'premium'],
     palette: { bg: '#0c0e13', secondary: '#161a22', text: '#f4f5f7', muted: '#a4aab5', accent: '#4c6fff' },
     fonts: ['Space Grotesk', 'Inter'],
@@ -349,7 +349,7 @@ const LOOKS = [
     note: 'The same layout on a near-black page with an electric blue, for a premium night look. Services come right after the hero.',
   },
   {
-    templateId: 'replica_9f02a6cb', slug: 'paper', name: 'Paper', customOnly: true,
+    templateId: 'mobile_driveway', slug: 'paper', name: 'Paper', customOnly: true,
     mood: ['warm', 'light', 'friendly', 'clean'],
     palette: { bg: '#f3f0e9', secondary: '#ffffff', text: '#171512', muted: '#58534b', accent: '#1d4ed8' },
     fonts: ['Manrope', 'DM Sans'],
