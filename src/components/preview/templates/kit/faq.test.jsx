@@ -47,12 +47,12 @@ describe('faqItems', () => {
 
   it('publishes complete items only; the editor gets every item, flagged, at its own index', () => {
     const faq = {
-      title: '  Before   We Get\nStarted ',
+      title: '  Answers   Before\nYou Book ',
       intro: ' Ask us anything. ',
       items: [{ q: ' Same day? ', a: ' Often. ' }, { q: 'Wax?' }, 'junk', { a: 'Only an answer' }, { q: 3, a: 4 }, null],
     };
     const pub = faqItems(faq);
-    expect(pub.title).toBe('Before We Get Started');
+    expect(pub.title).toBe('Answers Before You Book');
     expect(pub.intro).toBe('Ask us anything.');
     expect(pub.complete).toBe(2);
     expect(pub.items).toEqual([
@@ -130,8 +130,8 @@ describe('faqHeading', () => {
 
   it('takes the owner\'s copy.faq first, then copy.sectionTitles.faq, then the theme\'s defaults', () => {
     const st = { faq: { eyebrow: ' Good to know ', title: 'Common Questions', accent: 'Questions', intro: 'From sectionTitles' } };
-    expect(faqHeading({ title: 'Before We Get Started', intro: 'Ask away.' }, st)).toEqual({
-      eyebrow: 'Good to know', title: 'Before We Get Started', accent: 'Questions', intro: 'Ask away.',
+    expect(faqHeading({ title: 'Answers Before You Book', intro: 'Ask away.' }, st)).toEqual({
+      eyebrow: 'Good to know', title: 'Answers Before You Book', accent: 'Questions', intro: 'Ask away.',
     });
     expect(faqHeading({}, st)).toEqual({ eyebrow: 'Good to know', title: 'Common Questions', accent: 'Questions', intro: 'From sectionTitles' });
     expect(faqHeading({}, null, { eyebrow: 'Help', title: 'Your Questions' })).toEqual({ eyebrow: 'Help', title: 'Your Questions', accent: '', intro: '' });
@@ -241,9 +241,9 @@ describe('FaqBand', () => {
   });
 
   it('with no complete item the editor shows the whole band as editor-only, naming Edit > FAQ', () => {
-    const empty = band({ faq: { title: 'Before We Get Started' } }, true);
+    const empty = band({ faq: { title: 'Answers Before You Book' } }, true);
     expect(sectionTag(empty)).toContain('data-acg-editor-only=""');
-    expect(empty).toContain('>Before We Get Started</h2>');
+    expect(empty).toContain('>Answers Before You Book</h2>');
     expect(decode(empty)).toContain(`<p class="xx-faq-hint" data-acg-editor-only="">${FAQ_HINTS.empty}</p>`);
     expect(FAQ_HINTS.empty).toContain(`Edit > ${FAQ_TAB}`);
     expect(empty).not.toContain('xx-faq-list');
@@ -269,8 +269,8 @@ describe('FaqBand', () => {
   });
 
   it('prints the owner\'s heading and highlighted words, and takes a theme heading, hints and labels', () => {
-    const own = band({ faq: { title: 'Before We Get Started', intro: 'Quick answers.', items: [Q(1)] }, sectionTitles: { faq: { eyebrow: 'Help', accent: 'Get Started' } } });
-    expect(own).toContain('<p class="xx-faq-eyebrow">Help</p><h2 id="xx-faq-h" class="xx-faq-title">Before We <span class="xx-faq-em">Get Started</span></h2><p class="xx-faq-intro">Quick answers.</p>');
+    const own = band({ faq: { title: 'Answers Before You Book', intro: 'Quick answers.', items: [Q(1)] }, sectionTitles: { faq: { eyebrow: 'Help', accent: 'Before You Book' } } });
+    expect(own).toContain('<p class="xx-faq-eyebrow">Help</p><h2 id="xx-faq-h" class="xx-faq-title">Answers <span class="xx-faq-em">Before You Book</span></h2><p class="xx-faq-intro">Quick answers.</p>');
     const themed = band({
       faq: { items: [] },
       heading: <h2 id="xx-own-h">Our heading</h2>,

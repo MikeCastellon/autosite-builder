@@ -1,10 +1,9 @@
 // The Detail Showcase band (copy.showcase + images.showcase<i>,
 // kit/showcase.js), shared by every theme that offers it: large photo cards,
-// each the owner's photo with a short title ("Maintenance Wash", "Ceramic
-// Protection") and an optional caption under it. Two cards to a row on wide
-// screens, the right-hand column set lower than the left (the staggered
-// "Every Detail Makes A Difference" layout of the reference design); one
-// column at 600px and under.
+// each the owner's photo with a short title ("Hand Wash", "Ceramic
+// Coating") and an optional caption under it. Two cards to a row on wide
+// screens, the right-hand column set lower than the left (a staggered
+// layout); one column at 600px and under.
 //
 // Static markup with no script of its own: the published page needs only the
 // runtime's reveal-on-scroll (data-acg-reveal), and everything reads without

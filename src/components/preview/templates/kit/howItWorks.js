@@ -49,6 +49,9 @@ export function howColumns(n) {
   return count <= 4 ? count : Math.ceil(count / Math.ceil(count / 4));
 }
 
+// Whether a saved entry is a step the page shows (a title or a description).
+const shown = (s) => isObj(s) && Boolean(str(s.title) || str(s.desc));
+
 // The band's steps, or null while copy.howSteps is not a non-empty array
 // (the band is off). -> { steps: [{ number, emoji, title, desc }], cols }
 // Entries that are not objects, or have neither a title nor a description,
@@ -56,11 +59,32 @@ export function howColumns(n) {
 export function howItWorksSteps(howSteps) {
   if (!Array.isArray(howSteps) || howSteps.length === 0) return null;
   const steps = howSteps
-    .map((s) => (isObj(s) ? s : {}))
+    .filter(shown)
     .map((s) => ({ emoji: stepEmoji(s.emoji), title: str(s.title), desc: str(s.desc) }))
-    .filter((s) => s.title || s.desc)
     .map((s, i) => ({ number: stepNumber(i + 1), ...s }));
   return { steps, cols: howColumns(steps.length) };
+}
+
+// Step photos (designs that show one per step, Edit > How It Works > Step
+// Photo) live in the images map, keyed by the step's place in
+// copy.howSteps: an upload then lands against the latest images, never on a
+// copy that was cloned before it finished.
+export const HOW_STEP_IMAGE_KEY = /^howStep\d+$/;
+export const howStepKey = (i) => `howStep${i}`;
+
+// One photo URL per step howItWorksSteps shows, in the same order ('' for a
+// step without one), looked up by the step's place in copy.howSteps so a
+// blank step in between never moves a photo onto the wrong card.
+export function howStepPhotos(howSteps, images) {
+  if (!Array.isArray(howSteps)) return [];
+  const imgs = isObj(images) ? images : {};
+  const out = [];
+  howSteps.forEach((s, i) => {
+    if (!shown(s)) return;
+    const v = imgs[howStepKey(i)];
+    out.push(typeof v === 'string' && v.trim() ? v : '');
+  });
+  return out;
 }
 
 // The heading the band prints: copy.sectionTitles.process (Edit >

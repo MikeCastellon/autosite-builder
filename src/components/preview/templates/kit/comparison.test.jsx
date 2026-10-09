@@ -27,7 +27,7 @@ const BANNED = /Verified (Customer|Review|Buyer)|Real Reviews|5\.0 (Google )?Rat
 const WALTS = "Walt's Mobile Detailing";
 
 const ROWS = {
-  title: 'More Care. Less Compromise.',
+  title: 'Why a Mobile Detail',
   intro: 'A detailer in your driveway, next to a trip through the tunnel.',
   rows: [
     { label: 'Comes to you', us: true, them: false },
@@ -121,7 +121,7 @@ describe('comparisonHeading', () => {
     expect(comparisonHeading({}, undefined)).toEqual({ eyebrow: CMP_DEFAULTS.eyebrow, title: CMP_DEFAULTS.title, accent: '', intro: '' });
     const st = { comparison: { eyebrow: 'Why us', title: 'Us vs. Them', accent: 'Us', intro: 'Side by side.' } };
     expect(comparisonHeading({}, st)).toEqual({ eyebrow: 'Why us', title: 'Us vs. Them', accent: 'Us', intro: 'Side by side.' });
-    expect(comparisonHeading({ title: 'More Care.', intro: 'Own.' }, st)).toEqual({ eyebrow: 'Why us', title: 'More Care.', accent: 'Us', intro: 'Own.' });
+    expect(comparisonHeading({ title: 'Why Us.', intro: 'Own.' }, st)).toEqual({ eyebrow: 'Why us', title: 'Why Us.', accent: 'Us', intro: 'Own.' });
     expect(comparisonHeading({}, {}, { title: 'The Difference', eyebrow: '' })).toEqual({ eyebrow: '', title: 'The Difference', accent: '', intro: '' });
     expect(comparisonHeading(5, 'x', [])).toEqual(comparisonHeading({}, undefined));
   });
@@ -148,7 +148,7 @@ describe('ComparisonBand', () => {
     expect(sectionTag(html)).toBe('<section data-section="comparison" id="comparison" class="xx-cmp-band xx-section" aria-labelledby="xx-cmp-h" style="order:5">');
     expect(html).toContain(
       '<div class="xx-wrap"><table class="xx-cmp-table" aria-labelledby="xx-cmp-h" data-acg-reveal="">'
-      + '<caption class="xx-cmp-caption"><div class="xx-cmp-head"><p class="xx-cmp-eyebrow">The Difference</p><h2 id="xx-cmp-h" class="xx-cmp-title">More Care. Less Compromise.</h2><p class="xx-cmp-intro">A detailer in your driveway, next to a trip through the tunnel.</p></div></caption>'
+      + '<caption class="xx-cmp-caption"><div class="xx-cmp-head"><p class="xx-cmp-eyebrow">The Difference</p><h2 id="xx-cmp-h" class="xx-cmp-title">Why a Mobile Detail</h2><p class="xx-cmp-intro">A detailer in your driveway, next to a trip through the tunnel.</p></div></caption>'
       + '<thead><tr><td class="xx-cmp-corner"></td><th scope="col" class="xx-cmp-col xx-cmp-us">Walt&#x27;s Mobile Detailing</th><th scope="col" class="xx-cmp-col xx-cmp-them">Automated car wash</th></tr></thead><tbody>',
     );
     expect(html).not.toMatch(/data-acg-editor-only|xx-cmp-todo|xx-cmp-hint/);
@@ -224,8 +224,8 @@ describe('ComparisonBand', () => {
     const hints = band({ comparison: {}, heading: null, hints: <p className="th-hint">Theme hint</p> }, true);
     expect(hints).toContain('<div><p class="th-hint">Theme hint</p></div>');
     // Edit > Headings: eyebrow and highlighted words from copy.sectionTitles.
-    const st = band({ comparison: { rows: ROWS.rows }, sectionTitles: { comparison: { title: 'More Care. Less Compromise.', accent: 'Less Compromise.' } } });
-    expect(st).toContain('<h2 id="xx-cmp-h" class="xx-cmp-title">More Care. <span class="xx-cmp-em">Less Compromise.</span></h2>');
+    const st = band({ comparison: { rows: ROWS.rows }, sectionTitles: { comparison: { title: 'Why a Mobile Detail', accent: 'Mobile Detail' } } });
+    expect(st).toContain('<h2 id="xx-cmp-h" class="xx-cmp-title">Why a <span class="xx-cmp-em">Mobile Detail</span></h2>');
   });
 
   it('keeps every class it renders in its namespace', () => {

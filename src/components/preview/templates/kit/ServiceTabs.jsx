@@ -1,7 +1,6 @@
 // The service tabs (copy.serviceTabs + each service's category,
 // kit/serviceTabs.js): the template's own service cards grouped by kind,
-// under a row of tabs that shows one group at a time ("The Right Care For
-// Your Kind Of Drive" in the reference design).
+// under a row of tabs that shows one group at a time.
 //
 // CSS only, so the published page (renderToStaticMarkup, no script) works
 // exactly like the editor: one visually hidden radio per tab (name

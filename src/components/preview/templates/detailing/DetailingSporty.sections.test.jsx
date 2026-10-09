@@ -87,7 +87,7 @@ const SERVICES = [
 ];
 const BANDS = {
   vehicleTypes: {
-    title: 'For the Everyday Drive. And the Weekend Escape.',
+    title: 'Cars, Trucks, Boats and More',
     items: [
       { name: 'Cars', icon: 'car' }, { name: 'SUVs', icon: 'suv' }, { name: 'Trucks', icon: 'truck' },
       { name: 'Boats', icon: 'boat' }, { name: 'RVs', icon: 'rv' }, { name: 'Fleet', desc: 'Company vehicles on a schedule.', icon: 'fleet' },
@@ -100,14 +100,14 @@ const BANDS = {
   ],
   showcase: {
     items: [
-      { title: 'Maintenance Wash', caption: 'Hand wash, wheels and glass.' },
-      { title: 'Ceramic Protection' },
+      { title: 'Hand Wash', caption: 'Hand wash, wheels and glass.' },
+      { title: 'Ceramic Coating' },
       { title: 'Interior Reset', caption: 'Seats, carpets and trim.' },
       { title: 'Hand Wax' },
     ],
   },
   comparison: {
-    title: 'More Care. Less Compromise.',
+    title: 'Why a Mobile Detail',
     rows: [
       { label: 'Comes to you', us: true, them: false },
       { label: 'Hand wash & hand-applied wax', us: true, them: false },
@@ -346,28 +346,28 @@ describe('detailing_sporty reference bands: headings', () => {
 
   it('the owner\'s title / intro on the band\'s key win; label and highlight come from Edit > Headings', () => {
     const sectionTitles = {
-      faq: { eyebrow: 'Good to Know', title: 'Ignored', accent: 'Get Started', intro: 'Ignored too' },
-      process: { eyebrow: 'Easy', title: 'A Better Detail. Three Simple Steps.', accent: 'Three Simple Steps', intro: 'Here is how.' },
+      faq: { eyebrow: 'Good to Know', title: 'Ignored', accent: 'Before You Book', intro: 'Ignored too' },
+      process: { eyebrow: 'Easy', title: 'Three Steps to a Clean Car', accent: 'a Clean Car', intro: 'Here is how.' },
       showcase: { eyebrow: 'Up Close', title: 'From Headings' },
     };
     const copy = {
       ...ALL.copy,
-      faq: { ...BANDS.faq, title: 'Before We Get Started', intro: 'Quick answers.' },
-      showcase: { ...BANDS.showcase, title: 'Every Detail Makes A Difference' },
+      faq: { ...BANDS.faq, title: 'Answers Before You Book', intro: 'Quick answers.' },
+      showcase: { ...BANDS.showcase, title: 'Recent Work Up Close' },
       sectionTitles,
     };
     const html = decode(markup(render(FULL, { ...ALL, copy })));
     const faqBand = band(html, 'faq');
     expect(faqBand).toContain('<p class="ds-eyebrow">Good to Know</p>');
-    expect(faqBand).toContain('Before We <span class="ds-em">Get Started</span></h2>');
+    expect(faqBand).toContain('Answers <span class="ds-em">Before You Book</span></h2>');
     expect(faqBand).toContain('<p class="ds-intro">Quick answers.</p>');
     expect(faqBand).not.toContain('Ignored');
     const how = band(html, 'process');
-    expect(how).toContain('A Better Detail. <span class="ds-em">Three Simple Steps</span>.</h2>');
+    expect(how).toContain('Three Steps to <span class="ds-em">a Clean Car</span></h2>');
     expect(how).toContain('<p class="ds-intro">Here is how.</p>');
     const sc = band(html, 'showcase');
     expect(sc).toContain('<p class="ds-eyebrow">Up Close</p>');
-    expect(sc).toContain('>Every Detail Makes A Difference</h2>');
+    expect(sc).toContain('>Recent Work Up Close</h2>');
   });
 });
 

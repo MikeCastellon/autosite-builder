@@ -272,6 +272,16 @@ describe('rewrite rules', () => {
     generated_content: { headline: 'Old', sectionOrder: ['a'], _images: { logo: 'old-logo.png', about: 'old-about.jpg', hero: 'editor-hero.jpg' }, _customColors: { accent: '#00ff00' }, _customFonts: { font: 'Inter' } },
   };
 
+  it('drops the step photos when How It Works is written again or removed, and keeps them otherwise', () => {
+    const withSteps = { ...existing, generated_content: { ...existing.generated_content, howSteps: [{ title: 'A' }], _images: { ...existing.generated_content._images, howStep0: 's0.jpg', about2: 'a2.jpg' } } };
+    const images = (extra) => rewriteSite({ existing: withSteps, copy: {}, businessInfo: {}, design, extra }).generated_content._images;
+    expect(images({ applied: ['process'], copy: { howSteps: [{ title: 'New' }] }, remove: [] })).not.toHaveProperty('howStep0');
+    expect(images({ applied: ['process'], copy: {}, remove: ['howSteps'] })).not.toHaveProperty('howStep0');
+    expect(images({ applied: ['faq'], copy: { faq: { items: [] } }, remove: [] })).toHaveProperty('howStep0', 's0.jpg');
+    expect(images(null)).toHaveProperty('howStep0', 's0.jpg');
+    expect(images({ applied: ['process'], copy: {}, remove: ['howSteps'] })).toHaveProperty('about2', 'a2.jpg');
+  });
+
   it('applies only changed photos (and removes cleared ones), keeps editor colors and fonts', () => {
     const out = rewriteSite({ existing, copy: { headline: 'New' }, businessInfo: { businessName: 'New' }, design });
     expect(out.generated_content._images).toEqual({ logo: 'new-logo.png', hero: 'editor-hero.jpg' });

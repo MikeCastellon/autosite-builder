@@ -1,7 +1,6 @@
 // Pure logic behind the service tabs (kit/ServiceTabs.jsx): a template's
 // services grouped by kind ("Cars", "Boats", "RVs", "Pressure Washing"),
-// one tab per group, like the reference design's "The Right Care For Your
-// Kind Of Drive". No React and no browser globals; tolerates whatever a
+// one tab per group. No React and no browser globals; tolerates whatever a
 // saved row holds (missing keys, wrong types).
 //
 // The data:

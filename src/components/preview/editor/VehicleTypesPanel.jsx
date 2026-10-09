@@ -1,6 +1,6 @@
 // Edit > Vehicle Types: the kinds of vehicle the business works on
 // (copy.vehicleTypes.items: a name, an optional line and one of the band's
-// eight icons), and the band's heading and intro line (copy.vehicleTypes;
+// icons, VT_ICONS), and the band's heading and intro line (copy.vehicleTypes;
 // Edit > Headings edits the same two and adds the small label and the
 // highlighted words). The band is opt-in: it is on while
 // copy.vehicleTypes exists, and the published page lists a card only once it
@@ -22,7 +22,7 @@ const chipClass = (picked, size) => `flex items-center justify-center h-8 ${size
 }`;
 
 // The icon picker: "Auto" (the icon the name suggests, drawn on the button)
-// and the band's eight icons, as one radio group.
+// and every one of the band's icons (VT_ICONS), as one radio group.
 function IconPicker({ row, index, onPick }) {
   return (
     <div className="mb-4">

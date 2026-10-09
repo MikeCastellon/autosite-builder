@@ -6,6 +6,8 @@ export const PHOTO_HINTS = {
   hero: 'Add a hero photo: Edit > Hero > Hero Background',
   logo: 'Add your logo: Edit > Hero > Business Logo',
   about: 'Add a photo: Edit > About > About Photo',
+  about2: 'Add a second photo: Edit > About > Second About Photo',
+  howStep: 'Add a step photo: Edit > How It Works > Step Photo',
   gallery: 'Add photos: Edit > Gallery',
   shade: 'Add a shade photo: Edit > Shades',
   product: 'Add a product photo: Edit > Products > Product Image',
@@ -46,7 +48,7 @@ const placeholderStyle = {
 // `style` sizes the slot in both states (width/height/aspectRatio/radius);
 // `imgStyle` adds img-only styles (objectPosition, filter, ...).
 // `slot` ('hero' | 'about' | 'logo' | 'gallery' | 'shade' | 'product' |
-// 'service' | 'featured' | 'cta' | 'baBefore' | 'baAfter') picks a
+// 'service' | 'featured' | 'cta' | 'baBefore' | 'baAfter' | 'about2' | 'howStep') picks a
 // PHOTO_HINTS entry when no `hint` is given.
 export function PhotoSlot({
   src,

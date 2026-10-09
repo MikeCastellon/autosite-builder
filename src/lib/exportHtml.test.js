@@ -4,7 +4,11 @@ import { describe, it, expect, vi } from 'vitest';
 // it for widget_configs lookups, which these tests never trigger.
 vi.mock('./supabase.js', () => ({ supabase: {}, isImpersonationTab: false }));
 
-// Register the kit sample as a theme-ready template next to the real ones.
+// Register the kit sample as a theme-ready template next to the real ones,
+// and a bare stub for the scroller gate: copy.stubScroller renders a row
+// with prev/next buttons (the SITE_SCROLL_JS contract, icons inside), and
+// copy.stubBeforeAfter a Before & After range input, so the gate is tested
+// apart from any real template's markup.
 vi.mock('../data/templates.js', async (importOriginal) => {
   const actual = await importOriginal();
   return {
@@ -12,13 +16,28 @@ vi.mock('../data/templates.js', async (importOriginal) => {
     TEMPLATE_COMPONENT_MAP: {
       ...actual.TEMPLATE_COMPONENT_MAP,
       __kit_sample__: () => import('../components/preview/templates/__fixtures__/KitSampleTemplate.jsx'),
+      __scroller_stub__: async () => {
+        const { createElement: h } = await import('react');
+        const icon = () => h('svg', { 'aria-hidden': 'true', width: 16, height: 16 });
+        const button = (dir, label) => h('button', { type: 'button', 'data-acg-scroll': dir, 'aria-controls': 'stub-reviews', 'aria-label': label }, icon());
+        const ScrollerStub = ({ generatedCopy: copy }) => h('main', null,
+          h('p', null, String(copy?.subheadline ?? '')),
+          copy?.stubBeforeAfter && h('input', { type: 'range', 'data-acg-ba-range': '', 'aria-label': 'Compare' }),
+          copy?.stubScroller && h('section', { 'data-section': 'testimonials' },
+            h('div', { id: 'stub-reviews' }, h('blockquote', null, 'One'), h('blockquote', null, 'Two')),
+            button('prev', 'Previous review'),
+            button('next', 'Next review'),
+          ),
+        );
+        return { default: ScrollerStub };
+      },
     },
   };
 });
 
 const { exportHtmlString } = await import('./exportHtml.js');
 const { buildTemplateMeta } = await import('./siteRender.js');
-const { SITE_RUNTIME_JS, SITE_CQ_FALLBACK_JS, CQ_REWRITE_FN, SITE_BA_JS } = await import('./siteRuntime.js');
+const { SITE_RUNTIME_JS, SITE_CQ_FALLBACK_JS, CQ_REWRITE_FN, SITE_BA_JS, SITE_SCROLL_JS } = await import('./siteRuntime.js');
 const { LEGACY_EXPORT_FAMILIES } = await import('./fontCatalog.js');
 const { TEMPLATE_COMPONENT_MAP } = await import('../data/templates.js');
 const { full, custom, FIXTURES } = await import('../components/preview/templates/__fixtures__/businesses.js');
@@ -121,6 +140,38 @@ describe('exportHtmlString', () => {
     const other = (c) => exportHtmlString('mobile_chrome', fx.businessInfo, c, buildTemplateMeta('mobile_chrome'), fx.images);
     expect((await other(fx.generatedCopy)).split(tag)).toHaveLength(2);
     expect(await other(copy)).not.toContain(SITE_BA_JS);
+  });
+
+  it('adds the scroller script only to a page with a prev/next scroller button', async () => {
+    const tag = `<script>${SITE_SCROLL_JS}</script>`;
+    const runtime = `<script>${SITE_RUNTIME_JS}</script>`;
+    const head = (h) => h.slice(0, h.indexOf('</head>'));
+    const stub = (copy) => exportHtmlString('__scroller_stub__', full.businessInfo, { ...full.generatedCopy, ...copy }, buildTemplateMeta('detailing_sporty'), full.images);
+    const withButtons = await stub({ stubScroller: true });
+    expect(withButtons).toContain('<button type="button" data-acg-scroll="next" aria-controls="stub-reviews"');
+    expect(withButtons.split(tag)).toHaveLength(2);
+    expect(withButtons.indexOf(tag)).toBeGreaterThan(withButtons.indexOf(runtime));
+    expect(withButtons.indexOf(tag)).toBeLessThan(withButtons.indexOf('</head>'));
+    expect(withButtons).not.toContain(SITE_BA_JS);
+    // Opt-in: without the buttons the page carries no script and its <head>
+    // is otherwise the same, byte for byte.
+    const without = await stub({});
+    expect(without).not.toContain(SITE_SCROLL_JS);
+    expect(without).not.toContain('data-acg-scroll=');
+    expect(head(withButtons).replace(`\n  ${tag}`, '')).toBe(head(without));
+    // With a Before & After band too, it comes right after that band's script.
+    const both = await stub({ stubScroller: true, stubBeforeAfter: true });
+    const ba = `<script>${SITE_BA_JS}</script>`;
+    expect(both).toContain(`${runtime}\n  ${ba}\n  ${tag}\n`);
+    expect(both.split(tag)).toHaveLength(2);
+    expect(head(both).replace(`\n  ${tag}`, '')).toBe(head(await stub({ stubBeforeAfter: true })));
+    // Owner text that spells the button is escaped text, not a button.
+    const spoof = await stub({ subheadline: '<button type="button" data-acg-scroll="next" aria-controls="stub-reviews">' });
+    expect(spoof).toContain('&lt;button type=&quot;button&quot; data-acg-scroll=&quot;next&quot;');
+    expect(spoof).not.toContain(SITE_SCROLL_JS);
+    // A real template without scroller buttons never gets it.
+    const fx = FIXTURES.features;
+    expect(await exportHtmlString('detailing_sporty', fx.businessInfo, fx.generatedCopy, buildTemplateMeta('detailing_sporty'), fx.images)).not.toContain(SITE_SCROLL_JS);
   });
 });
 

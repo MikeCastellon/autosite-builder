@@ -16,12 +16,41 @@ import { LUCIDE } from './icons.jsx';
 import { Accented } from './Accented.jsx';
 import { vehicleTypesOf, vehicleTypesHeading, VT_HINTS } from './vehicleTypes.js';
 
-// One icon per VT_ICONS name: side views facing right on lucide's 24px grid
-// (stroke = currentColor, round caps and joins, like kit/icons.jsx), the
-// road vehicles on the same two wheels, so the set reads as one family. The
-// car is lucide's own; the others are drawn to match it.
+// One icon per VT_ICONS name, in VT_ICONS order: side views facing right on
+// lucide's 24px grid (stroke = currentColor, round caps and joins, like
+// kit/icons.jsx), the road vehicles on the same two wheels, so the set reads
+// as one family. The car is lucide's own; the others are drawn to match it.
+// Owners picked these drawings by how they look, and the next publish would
+// quietly change a live page, so a drawing is never redrawn: a new look is a
+// new id (vehicleTypes.test.jsx pins the first eight).
+//
+// The sedan, luxury car and coupe share one roof height and window line,
+// so what sets them apart is the part that names them: the trunk step and
+// door pillar, the crown, the fastback. Sizes they are checked at: 120px at
+// stroke 1.1 (Driveway's cards), 30-34px (the band), 14-18px (the editor's
+// picker and quick picks).
+const SEDAN_BODY = <path d="M5 17H3a1 1 0 0 1-1-1v-3.5A1.5 1.5 0 0 1 3.5 11h3l2-3.3A1.5 1.5 0 0 1 9.8 7h4a1.5 1.5 0 0 1 1.2.6l2.5 3.4 3 .6a1.8 1.8 0 0 1 1.5 1.8V16a1 1 0 0 1-1 1h-2" />;
+const WHEELS = <><circle cx="7" cy="17" r="2" /><path d="M9 17h6" /><circle cx="17" cy="17" r="2" /></>;
 export const VT_ICON_PATHS = {
   car: LUCIDE.car,
+  // Three boxes: trunk, cabin, hood; the window line and the pillar between
+  // the doors.
+  sedan: <>{SEDAN_BODY}<path d="M6.5 11h11" /><path d="M12 7v4" />{WHEELS}</>,
+  // Two doors: one long window under a roof that runs down to the tail.
+  coupe: <><path d="M5 17H3a1 1 0 0 1-1-1v-3.2a1.2 1.2 0 0 1 .8-1.1l5.7-3.9a3 3 0 0 1 1.7-.5h2.4a2 2 0 0 1 1.5.7l2.9 3.2 3.1.6a1.9 1.9 0 0 1 1.9 1.9V16a1 1 0 0 1-1 1h-2" /><path d="M3.5 11.2h13.5" />{WHEELS}</>,
+  // A low wedge (the roof well under the sedan's, the nose dropping to the
+  // front), the wing on its stand over the tail.
+  sports: <><path d="M5 17H3a1 1 0 0 1-1-1v-2.8a1 1 0 0 1 .7-1L7 11l3.6-2.3a2 2 0 0 1 1.1-.3h2.2a2 2 0 0 1 1.3.5l2.6 2.3 3.2.8A1.4 1.4 0 0 1 22 13.4V16a1 1 0 0 1-1 1h-2" /><path d="M7 11h10.8" /><path d="M2 8.5h4" /><path d="M4.5 8.5v3" />{WHEELS}</>,
+  // The sedan without its door pillar, a crown over the hood: a crown still
+  // reads small, where a sparkle over the roof turns into a taxi sign.
+  luxury: <>{SEDAN_BODY}<path d="M6.5 11h11" /><path d="M17.5 7 17 2.8l1.6 1.4.9-2.2.9 2.2 1.6-1.4L21.5 7z" />{WHEELS}</>,
+  // Lucide's car with a bolt on the door.
+  ev: <>{LUCIDE.car}<path d="M11.5 8.5 9.5 12h4l-2 3.5" /></>,
+  // No roof: the top folded down behind the seats, the windshield standing.
+  convertible: <><path d="M5 17H3a1 1 0 0 1-1-1v-3.2A1.8 1.8 0 0 1 3.8 11h12.7l3.9.8a2 2 0 0 1 1.6 2V16a1 1 0 0 1-1 1h-2" /><path d="M16.5 11 15 7.5" /><path d="M4 11a2 2 0 0 1 2-2h1.5a2 2 0 0 1 2 2" />{WHEELS}</>,
+  // Round-shouldered cabin standing on fenders that arch over each wheel,
+  // the axle line between them reading as the running board.
+  classic: <><path d="M4 13.6c0-2 .6-3.6 1.8-4.6l1.4-2.3A1.5 1.5 0 0 1 8.5 6h5a1.5 1.5 0 0 1 1.2.6L17 10l2.4.4a1.8 1.8 0 0 1 1.6 1.8v1.6" /><path d="M2 17c.4-2.8 2.4-4.5 5-4.5a4 4 0 0 1 4 4.5" /><path d="M13 17a4 4 0 0 1 4-4.5c2.5 0 4.5 1.5 5 4.5" />{WHEELS}</>,
   suv: <><path d="M19 17h2a1 1 0 0 0 1-1v-3.4a2 2 0 0 0-1.6-2L17 10l-2.4-4a2 2 0 0 0-1.7-1H4a2 2 0 0 0-2 2v9a1 1 0 0 0 1 1h2" /><path d="M2 10h15" /><circle cx="7" cy="17" r="2" /><path d="M9 17h6" /><circle cx="17" cy="17" r="2" /></>,
   truck: <><path d="M5 17H3a1 1 0 0 1-1-1v-4h10V7a1 1 0 0 1 1-1h3.5l2.8 4 1.9.4a1.2 1.2 0 0 1 .8 1.1V16a1 1 0 0 1-1 1h-2" /><circle cx="7" cy="17" r="2" /><path d="M9 17h6" /><circle cx="17" cy="17" r="2" /></>,
   van: <><path d="M5 17H3a1 1 0 0 1-1-1V6.5A1.5 1.5 0 0 1 3.5 5h11.6a1.5 1.5 0 0 1 1.2.6l5.4 6.8a1.5 1.5 0 0 1 .3.9V16a1 1 0 0 1-1 1h-2" /><path d="M11 5v12" /><circle cx="7" cy="17" r="2" /><path d="M9 17h6" /><circle cx="17" cy="17" r="2" /></>,
