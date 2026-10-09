@@ -295,7 +295,7 @@ html[data-acg-scrolled] .dw-nav-box{background:var(--dw-dark-bg)}
 .dw-about-lead{margin:0;font-family:var(--dw-head);font-size:clamp(26px,2.8cqi,40px);font-weight:500;line-height:1.12;letter-spacing:-.035em;white-space:pre-line}
 .dw-about-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px;align-items:start}
 .dw-about-one{grid-template-columns:minmax(0,1fr) minmax(0,2fr)}
-.dw-about-ph{overflow:hidden;border-radius:6px;aspect-ratio:446/540}
+.dw-about-ph{overflow:hidden;border-radius:6px;aspect-ratio:1/1}
 .dw-about-ph2{margin-top:86px}
 .dw-about-ph img,.dw-about-ph>div{width:100%;height:100%;object-fit:cover}
 .dw-about-card{display:flex;flex-direction:column;justify-content:space-between;gap:48px;align-self:stretch;margin-top:174px;padding:28px;border-radius:6px;background:var(--dw-alt-bg);color:var(--dw-alt-text)}
