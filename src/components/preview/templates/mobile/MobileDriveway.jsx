@@ -294,14 +294,14 @@ html[data-acg-scrolled] .dw-nav-box{background:var(--dw-dark-bg)}
 .dw-about-top .dw-eyebrow{margin-top:12px}
 .dw-about-lead{margin:0;font-family:var(--dw-head);font-size:clamp(26px,2.8cqi,40px);font-weight:500;line-height:1.12;letter-spacing:-.035em;white-space:pre-line}
 .dw-about-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px;align-items:start}
-.dw-about-one{grid-template-columns:minmax(0,1fr) minmax(0,2fr)}
+.dw-about-one .dw-about-ph{grid-column:2}
+.dw-about-one .dw-about-card{grid-column:3}
 .dw-about-ph{overflow:hidden;border-radius:6px;aspect-ratio:1/1}
 .dw-about-ph2{margin-top:86px}
 .dw-about-ph img,.dw-about-ph>div{width:100%;height:100%;object-fit:cover}
-.dw-about-card{display:flex;flex-direction:column;justify-content:space-between;gap:48px;align-self:stretch;margin-top:174px;padding:28px;border-radius:6px;background:var(--dw-alt-bg);color:var(--dw-alt-text)}
+.dw-about-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:32px;aspect-ratio:1/1;margin-top:174px;padding:28px;border-radius:6px;text-align:center;background:var(--dw-alt-bg);color:var(--dw-alt-text)}
 .dw-about-one .dw-about-card{margin-top:86px}
-.dw-about-none{grid-template-columns:minmax(0,1fr)}
-.dw-about-none .dw-about-card{margin-top:0}
+.dw-about-none .dw-about-card{grid-column:2;margin-top:0}
 .dw-about-card p{margin:0 0 14px;font-size:17px;line-height:1.5;white-space:pre-line}
 .dw-about-card p:last-child{margin-bottom:0}
 .dw-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
@@ -470,7 +470,7 @@ html[data-acg-scrolled] .dw-nav-box{background:var(--dw-dark-bg)}
   .dw-about-top{grid-template-columns:1fr;gap:0}
   .dw-about-grid{grid-template-columns:1fr}
   .dw-about-ph2,.dw-about-card,.dw-about-one .dw-about-card{margin-top:0}
-  .dw-about-one{grid-template-columns:minmax(0,1fr)}
+  .dw-about-one .dw-about-ph,.dw-about-one .dw-about-card,.dw-about-none .dw-about-card{grid-column:auto}
   .dw-svc{grid-template-columns:minmax(0,1fr)}
   .dw-svc-list{display:none}
   .dw-svc-panels{display:flex;flex-direction:column;gap:24px}
