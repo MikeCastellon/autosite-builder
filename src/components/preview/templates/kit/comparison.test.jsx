@@ -302,6 +302,8 @@ describe('comparisonCss', () => {
     // Three columns that add up, narrow and wide.
     expect(pct(rule(`.${ns}-corner`).body) + 2 * pct(rule(`.${ns}-col`).body)).toBe(100);
     expect(pct(rule(`.${ns}-corner`, WIDE).body) + 2 * pct(rule(`.${ns}-col`, WIDE).body)).toBe(100);
+    // A third per column on a phone: at 30% Sporty's spaced "AUTOMATED" split mid-word at 390px.
+    expect(pct(rule(`.${ns}-col`).body)).toBeGreaterThanOrEqual(33);
     // Narrow: smaller type and tighter cells than from 601px.
     expect(rule(`.${ns}-table`).body).toContain('font-size:14px');
     expect(rule(`.${ns}-table`, WIDE).body).toContain('font-size:16px');

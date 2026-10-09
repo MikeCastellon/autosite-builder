@@ -128,6 +128,10 @@ export function ComparisonBand({
 //   --ns-col-w (700) / -col-case (none)   column labels (in --ns-head-font)
 //   --ns-r (8px) the column's corners   --ns-max (1000px) table width
 // The table holds no link, so it gets no hover state.
+// On a phone the two columns take a third each: at 40/30/30 a theme's spaced
+// capitals ("AUTOMATED", Bold & Sporty at 390px) split mid-word as
+// "AUTOMATE / D". Labels still break anywhere below ~360px rather than widen
+// the page.
 export function comparisonCss(ns) {
   const p = `.${ns}`;
   const v = (name, fb) => (fb === undefined ? `var(--${ns}-${name})` : `var(--${ns}-${name},${fb})`);
@@ -142,8 +146,8 @@ ${p}-em{color:${v('accent')}}
 ${p}-intro{margin:18px 0 0;max-width:600px;font-size:17px;line-height:1.7;color:${v('muted')};text-wrap:pretty}
 ${p}-table{width:100%;max-width:${v('max', '1000px')};margin:0;border-collapse:separate;border-spacing:0;table-layout:fixed;font-size:14px;line-height:1.4;color:${v('text')}}
 ${p}-caption{caption-side:top;padding:0 0 clamp(28px,4cqi,48px);text-align:left}
-${p}-corner{width:40%;padding:0;border-bottom:1px solid ${v('line')}}
-${p}-col{width:30%;padding:12px 6px;font-family:${head};font-size:12px;font-weight:${v('col-w', '700')};line-height:1.25;letter-spacing:.02em;text-align:center;text-transform:${v('col-case', 'none')};vertical-align:middle;overflow-wrap:anywhere}
+${p}-corner{width:34%;padding:0;border-bottom:1px solid ${v('line')}}
+${p}-col{width:33%;padding:12px 4px;font-family:${head};font-size:12px;font-weight:${v('col-w', '700')};line-height:1.25;letter-spacing:.02em;text-align:center;text-transform:${v('col-case', 'none')};vertical-align:middle;overflow-wrap:anywhere}
 ${p}-col${p}-us{border:${usLine};border-bottom:0;border-radius:${r} ${r} 0 0;background:${v('us-head-bg')};color:${v('us-head-text')}}
 ${p}-col${p}-them{border-bottom:1px solid ${v('line')};color:${v('muted')}}
 ${p}-row{padding:14px 10px 14px 0;font-weight:600;text-align:left;vertical-align:middle;overflow-wrap:anywhere;border-bottom:1px solid ${v('line')}}
