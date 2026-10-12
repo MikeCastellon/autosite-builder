@@ -33,6 +33,8 @@
 //   comparison                       Comparison tab (copy.comparison)
 //   showcase                         Detail Showcase tab (copy.showcase
 //                                    + images showcase<i>)
+//   logoSize                         Hero > Logo size (the menu-bar logo,
+//                                    copy.logoSize, kit/logoSize.js)
 //   serviceTabs                      Services > Show services in tabs
 //                                    (copy.serviceTabs) and each service's
 //                                    Category (businessInfo.services[i]
@@ -70,6 +72,7 @@ export const CAPABILITY_KEYS = {
   comparison: ['comparison'],
   showcase: ['showcase'],
   serviceTabs: ['serviceTabs'],
+  logoSize: ['logoSize'],
 };
 
 // Controls that depend on data other than a copy key (business facts,
@@ -124,7 +127,7 @@ export const TEMPLATE_READS = {
   // Driveway (custom websites only): no second hero button.
   mobile_driveway: [
     'ctaPrimaryUrl', 'servicesTitle', 'aboutStats', 'googleBadge', 'sectionTitles', 'serviceDetails', 'ctaImage', 'reviewSources',
-    'beforeAfter', 'howSteps', 'faq', 'vehicleTypes', 'comparison', 'aboutPhoto2', 'howStepPhotos',
+    'beforeAfter', 'howSteps', 'faq', 'vehicleTypes', 'comparison', 'aboutPhoto2', 'howStepPhotos', 'logoSize',
   ],
   // Legacy templates (hidden from the picker; some saved sites use them).
   detailing_coastal: ['ctaPrimaryUrl', 'ctaSecondaryUrl', 'aboutStats'],

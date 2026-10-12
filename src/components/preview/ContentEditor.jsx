@@ -17,6 +17,7 @@ import FeaturedServicePanel from './editor/FeaturedServicePanel.jsx';
 import BeforeAfterPanel from './editor/BeforeAfterPanel.jsx';
 import FaqPanel from './editor/FaqPanel.jsx';
 import VehicleTypesPanel from './editor/VehicleTypesPanel.jsx';
+import LogoSizeField from './editor/LogoSizeField.jsx';
 import ComparisonPanel from './editor/ComparisonPanel.jsx';
 import ShowcasePanel from './editor/ShowcasePanel.jsx';
 import { ServiceTabsSwitch, ServiceCategoryField } from './editor/ServiceTabsPanel.jsx';
@@ -820,6 +821,7 @@ export default function ContentEditor({ isOpen, onClose, topOffset = 0, siteId, 
             <>
               <ImageSlot label="Hero Background" value={images?.hero} onChange={(v) => setImage('hero', v)} siteId={siteId} uploadKey="hero" />
               <ImageSlot label="Business Logo" value={images?.logo} onChange={(v) => setImage('logo', v)} siteId={siteId} uploadKey="logo" />
+              {has('logoSize') && images?.logo && <LogoSizeField value={copy?.logoSize} onChange={(v) => setCopy('logoSize', v)} />}
               <hr className="my-3 border-gray-100" />
               <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Hero Layout</p>
               <Toggle
