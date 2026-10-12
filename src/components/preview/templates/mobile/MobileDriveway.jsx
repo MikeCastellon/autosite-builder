@@ -44,6 +44,7 @@ import { VehicleTypeIcon } from '../kit/VehicleTypes.jsx';
 import { vehicleTypesOf, vehicleTypesHeading, VT_DEFAULTS, VT_HINTS } from '../kit/vehicleTypes.js';
 import { comparisonOf, comparisonHeading, CMP_DEFAULTS, CMP_HINTS } from '../kit/comparison.js';
 import { StarRow, GOOGLE_STAR_GOLD, googleRatingOf, googleBadgePlacements } from '../kit/GoogleRatingBadge.jsx';
+import { logoSizeOf, LOGO_SIZE } from '../kit/logoSize.js';
 
 export const themeReady = true;
 
@@ -256,6 +257,8 @@ const CSS = `
 .dw-nav-box{display:flex;align-items:center;gap:clamp(12px,1.6cqi,22px);width:fit-content;max-width:100%;margin:20px auto 0;padding:8px 8px 8px 16px;border-radius:6px;background:var(--dw-nav-bg);color:var(--dw-dark-text);box-shadow:0 10px 30px rgba(0,0,0,.25)}
 html[data-acg-scrolled] .dw-nav-box{background:var(--dw-dark-bg)}
 .dw-logo{display:flex;align-items:center;gap:10px;min-width:0;color:inherit;text-decoration:none}
+.dw-logo img{height:var(--dw-logo-h,38px);max-width:var(--dw-logo-w,150px);min-width:0}
+.dw-root section[id]{scroll-margin-top:max(0px,calc(var(--dw-logo-h,38px) - 38px))}
 .dw-logo-name{font-family:var(--dw-head);font-size:17px;font-weight:600;letter-spacing:-.02em;line-height:1.1;white-space:nowrap}
 .dw-links{display:flex;align-items:center;gap:clamp(14px,2cqi,28px);margin:0 6px}
 .dw-links a{color:inherit;font-size:15px;text-decoration:none;white-space:nowrap}
@@ -313,7 +316,7 @@ html[data-acg-scrolled] .dw-nav-box{background:var(--dw-dark-bg)}
 .dw-svc-list{display:flex;flex-direction:column}
 .dw-svc-tab{display:flex;align-items:center;gap:20px;min-height:62px;padding:12px 22px;border-bottom:1px solid var(--dw-dark-line);border-radius:7px;font-size:18px;line-height:1.25;cursor:pointer;color:var(--dw-dark-text)}
 .dw-svc-num{font-family:${MONO};font-size:16px;color:var(--dw-dark-muted)}
-.dw-svc-panels{position:sticky;top:96px;min-width:0}
+.dw-svc-panels{position:sticky;top:calc(58px + var(--dw-logo-h,38px));min-width:0}
 .dw-svc-panel{display:none;padding:22px;border-radius:8px;background:var(--dw-card-bg);color:var(--dw-card-text)}
 .dw-svc-main{display:grid;grid-template-columns:minmax(0,1fr);gap:28px}
 .dw-svc-panel.dw-has-ph .dw-svc-main{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
@@ -343,7 +346,7 @@ html[data-acg-scrolled] .dw-nav-box{background:var(--dw-dark-bg)}
 .dw-vt-desc{margin:-12px 0 0;font-size:14px;line-height:1.45;color:var(--dw-muted)}
 
 .dw-how{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,604px);gap:clamp(24px,4cqi,64px);align-items:start;max-width:1382px}
-.dw-how-head{position:sticky;top:110px}
+.dw-how-head{position:sticky;top:calc(72px + var(--dw-logo-h,38px))}
 .dw-how-list{display:flex;flex-direction:column;gap:30px;margin:0;padding:0;list-style:none}
 .dw-step{padding:22px;border-radius:10px;background:var(--dw-card-bg);color:var(--dw-card-text)}
 .dw-step-ph{overflow:hidden;margin-bottom:22px;border-radius:6px;aspect-ratio:562/400}
@@ -461,6 +464,8 @@ html[data-acg-scrolled] .dw-nav-box{background:var(--dw-dark-bg)}
   .dw-nav-phone{display:none}
   .dw-nav-box{width:auto;margin-top:16px;padding:8px 8px 8px 14px}
   .dw-nav-box .dw-logo{margin-right:auto}
+  .dw-logo img{height:min(var(--dw-logo-h,38px),52px)}
+  .dw-root section[id]{scroll-margin-top:max(0px,calc(min(var(--dw-logo-h,38px),52px) - 38px))}
   .dw-nav-box .dw-btn{font-size:13px;padding-left:10px}
   .dw-hero{min-height:760px}
   .dw-hero-in{flex-direction:column;align-items:flex-start}
@@ -706,8 +711,23 @@ export default function MobileDriveway({ businessInfo, generatedCopy, templateMe
   const primaryLabel = txt(copy.ctaPrimary) || (servicesOn ? 'View Services' : 'Book Now');
   const tagline = txt(copy.footerTagline) || txt(biz.tagline);
 
+  // Edit > Hero > Logo size: the menu-bar logo at 80-200% of its 38px x
+  // 150px box, and the bar grows with it (at 200% it still clears the
+  // hero's 120px top padding). The stylesheet lets the logo shrink (it is a
+  // flex item with min-width:0) rather than push Book Now or the links out
+  // of the bar, caps it at 52px tall on phones, and moves the sticky
+  // Services card, the How It Works heading and every jump target down by
+  // however much the bar grew. At 100%, or without a logo (the bar shows the
+  // name and the slider is hidden), nothing is set and the stylesheet's own
+  // 38px / 150px apply.
+  const logoPct = images.logo ? logoSizeOf(copy.logoSize) : LOGO_SIZE.base;
+  const logoVars = logoPct === LOGO_SIZE.base ? {} : {
+    '--dw-logo-h': `${Math.round(0.38 * logoPct)}px`,
+    '--dw-logo-w': `${Math.round(1.5 * logoPct)}px`,
+  };
+  // height: undefined drops PhotoSlot's inline 100%, so .dw-logo img sizes it.
   const logo = images.logo ? (
-    <PhotoSlot src={images.logo} slot="logo" alt={name ? `${name} logo` : 'Logo'} style={{ width: 'auto', height: 38, maxWidth: 150, objectFit: 'contain', borderRadius: 3 }} />
+    <PhotoSlot src={images.logo} slot="logo" alt={name ? `${name} logo` : 'Logo'} style={{ width: 'auto', height: undefined, objectFit: 'contain', borderRadius: 3 }} />
   ) : (
     <span className="dw-logo-name">{name}</span>
   );
@@ -730,6 +750,7 @@ export default function MobileDriveway({ businessInfo, generatedCopy, templateMe
     '--dw-head': head,
     '--dw-nav-bg': alpha(mix(tokens['--dw-dark-bg'], '#ffffff', 0.12), 0.88),
     '--dw-card-bg2': mix(tokens['--dw-card-bg'], tokens['--dw-dark-bg'], 0.55),
+    ...logoVars,
   };
 
   return (

@@ -80,6 +80,9 @@ export const extraFonts = ["'Barlow Condensed', sans-serif"];  // stacks used be
   section id uses; `titleFrom` / `introFrom` name the copy key that owns the text). Editor controls are gated by
   `editorCapabilities.js`: `CAPABILITY_KEYS` (copy keys) and `SOURCE_CAPABILITIES` (source regexes), both checked
   against the template sources by `editorCapabilities.test.js`.
+- Edit > Hero > Logo size: a template may read `copy.logoSize` through `logoSizeOf` (`kit/logoSize.js`: 80-200%,
+  100 when unset) and list `logoSize` in its `TEMPLATE_READS` entry. Only Driveway does so far (menu-bar logo; the
+  bar grows with it, phones cap it).
 
 ### The kit (`src/components/preview/templates/kit/`)
 
