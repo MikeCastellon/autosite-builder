@@ -63,6 +63,7 @@ function fakeDb({ scans = [] } = {}) {
       eq(c, v) { q.filters.push((r) => r[c] === v); return api; },
       is(c, v) { q.filters.push((r) => (r[c] ?? null) === v); return api; },
       lt(c, v) { q.filters.push((r) => r[c] != null && r[c] < v); return api; },
+      not(c) { q.filters.push((r) => r[c] != null); return api; },
       range(a, z) { return Promise.resolve({ data: match().slice(a, z + 1).map((r) => ({ ...r })), error: null }); },
       single() { q.single = true; return Promise.resolve(run()); },
       maybeSingle() { q.single = true; return Promise.resolve(run()); },
