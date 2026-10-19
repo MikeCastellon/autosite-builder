@@ -3,7 +3,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   ScanRunningError, buildAccountMatcher, buildLeadMatcher, claimScan, classify, closeDeadScans,
-  compactName, confirmedUserIds, hasDistinctiveWord, isKeyError, keepPlace, loadAccounts, normPhone, quarters, rectAround, runClaimedScan, runScan, toRow, websiteKind,
+  compactName, confirmedUserIds, hasDistinctiveWord, isKeyError, keepPlace, loadAccounts, normPhone, quarters, rectAround, runClaimedScan, runScan, scanSocials, toRow, websiteKind,
 } from './leadScan.js';
 
 function place({
@@ -188,6 +188,7 @@ function fakeDb(seed) {
       eq(c, v) { st.filters.push((r) => r[c] === v); return b; },
       is(c, v) { st.filters.push((r) => (r[c] ?? null) === v); return b; },
       lt(c, v) { st.filters.push((r) => r[c] != null && r[c] < v); return b; },
+      not(c) { st.filters.push((r) => r[c] != null); return b; },
       update(p) { st.op = 'update'; st.payload = p; return b; },
       insert(r) {
         // Mirrors sales_prospect_scans_one_running: one unfinished scan at a time.
@@ -366,6 +367,70 @@ describe('runScan', () => {
     // Stopped, rather than trying the other two tint searches.
     expect(calls).toBeLessThanOrEqual(3);
     expect(isKeyError(400, 'Request contains an invalid argument.')).toBe(false);
+  });
+});
+
+describe('socials', () => {
+  const site = (pages) => async (url) => {
+    if (String(url).includes('places.googleapis')) {
+      return { ok: true, json: async () => ({ places: [
+        place({ id: 'a', website: 'https://shinydetail.com' }),
+        place({ id: 'b', name: 'Gloss Tint', website: 'https://www.instagram.com/glosstint/' }),
+      ] }) };
+    }
+    const html = pages[String(url).replace(/\/$/, '')];
+    if (html == null) throw new Error('ECONNREFUSED');
+    return { ok: true, headers: { get: () => 'text/html' }, text: async () => html };
+  };
+
+  it('reads the socials off the websites a scan found, and takes a social page as one', async () => {
+    const db = fakeDb(EMPTY);
+    const stats = await runScan({
+      db, apiKey: 'k', paceMs: 0, center: CENTER, radiusMi: 5, categories: ['detailing_shop'],
+      fetchImpl: site({ 'https://shinydetail.com': '<a href="https://facebook.com/ShinyDetail">f</a>' }),
+    });
+    const byPlace = Object.fromEntries(db.tables.sales_prospects.map((p) => [p.place_id, p]));
+    expect(byPlace.a.socials).toEqual({ facebook: 'https://www.facebook.com/ShinyDetail' });
+    expect(byPlace.b).toMatchObject({ website_kind: 'social', socials: { instagram: 'https://www.instagram.com/glosstint' } });
+    expect(stats).toMatchObject({ socialsChecked: 2, socialsFound: 2 });
+    expect(db.log.upserts.every((r) => !('socials' in r))).toBe(true);
+  });
+
+  it('never fails the scan it follows', async () => {
+    const db = fakeDb(EMPTY);
+    const from = db.from;
+    // A read of the socials columns fails, as before their migration.
+    db.from = (t) => { const b = from(t); const sel = b.select; b.select = (c, o) => { if (String(c).includes('socials')) throw new Error('column does not exist'); return sel(c, o); }; return b; };
+    const stats = await runScan({
+      db, apiKey: 'k', paceMs: 0, center: CENTER, radiusMi: 5, categories: ['detailing_shop'], fetchImpl: site({}),
+    });
+    expect(stats).toMatchObject({ kept: 2, written: 2, socialsChecked: 0 });
+  });
+
+  it('reads the never-read first, skips the recently read, and stops at the cap', async () => {
+    const old = new Date(Date.now() - 60 * 86400000).toISOString();
+    const db = fakeDb({
+      sales_prospects: [
+        { id: '1', website: 'https://old.test', socials_checked_at: old, last_seen_at: 's' },
+        { id: '2', website: 'https://new.test', socials_checked_at: null, last_seen_at: 's' },
+        { id: '3', website: 'https://recent.test', socials_checked_at: new Date().toISOString(), last_seen_at: 's' },
+        { id: '4', website: 'https://other-area.test', socials_checked_at: null, last_seen_at: 'earlier' },
+      ],
+    });
+    const asked = [];
+    const fetchImpl = async (url) => { asked.push(url); return { ok: true, headers: { get: () => 'text/html' }, text: async () => '' }; };
+    await scanSocials({ db, fetchImpl, seenAt: 's', max: 1, concurrency: 1 });
+    expect(asked).toEqual(['https://new.test/']);
+  });
+
+  it('keeps what an earlier read found when the site is down this time', async () => {
+    const old = new Date(Date.now() - 60 * 86400000).toISOString();
+    const db = fakeDb({
+      sales_prospects: [{ id: '1', website: 'https://down.test', socials: { x: 'https://x.com/a' }, socials_checked_at: old, last_seen_at: 's' }],
+    });
+    await scanSocials({ db, fetchImpl: async () => { throw new Error('down'); }, seenAt: 's' });
+    expect(db.tables.sales_prospects[0].socials).toEqual({ x: 'https://x.com/a' });
+    expect(db.tables.sales_prospects[0].socials_checked_at).not.toBe(old);
   });
 });
 

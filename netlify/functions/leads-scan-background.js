@@ -12,8 +12,10 @@ import { requireSuperAdmin } from './_shared/adminAuth.js';
 import { runClaimedScan } from './_lib/leadScan.js';
 
 // Leaves four minutes to write before Netlify's 15-minute kill: a scan
-// stopped mid-write has paid for searches it never kept.
+// stopped mid-write has paid for searches it never kept. Reading the shops'
+// websites for social links comes out of those four, two minutes at most.
 const DEADLINE_MS = 11 * 60 * 1000;
+const SOCIALS_BUDGET_MS = 2 * 60 * 1000;
 
 export const handler = async (event) => {
   if (event.httpMethod !== 'POST') return { statusCode: 405 };
@@ -31,6 +33,7 @@ export const handler = async (event) => {
     scanId: body.scanId,
     apiKey: process.env.GOOGLE_PLACES_API_KEY,
     deadlineMs: DEADLINE_MS,
+    socialsBudgetMs: SOCIALS_BUDGET_MS,
     log: (m) => console.log(`[leads-scan] ${m}`),
   });
   if (result.error) console.error('[leads-scan] failed:', result.error);

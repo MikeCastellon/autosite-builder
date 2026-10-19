@@ -12,6 +12,7 @@
 import {
   LEAD_CATEGORIES, MAX_SCAN_REQUESTS, depthFor,
 } from '../../../src/lib/leadCategories.js';
+import { fetchSocials } from './socialLinks.js';
 
 // ---------------------------------------------------------------------------
 // Geometry
@@ -550,12 +551,13 @@ export async function runScan({
   center, radiusMi, categories, areaLabel = null, scanId = null,
   maxRequests = MAX_SCAN_REQUESTS, deadlineMs = null, concurrency = 4, paceMs = 110,
   categoryList = LEAD_CATEGORIES,
+  socialsMax = 600, socialsBudgetMs = 2 * 60 * 1000, socialsConcurrency = 8,
 }) {
   if (!apiKey) throw new Error('No Google Places key');
   const deadline = deadlineMs ? Date.now() + deadlineMs : Infinity;
   const stats = {
     requests: 0, answered: 0, found: 0, kept: 0, written: 0, added: 0, matched: 0, piped: 0, skipped: 0,
-    capped: false, timedOut: false,
+    capped: false, timedOut: false, socialsChecked: 0, socialsFound: 0,
   };
   let skipError = null;
   const pace = pacer(paceMs);
@@ -682,7 +684,57 @@ export async function runScan({
     if (data?.length) stats.matched += 1;
   }
 
+  // 5. Social accounts, off each shop's own website (Google has none).
+  // Extra, not the scan: a failure here is logged, never the scan's error.
+  try {
+    Object.assign(stats, await scanSocials({
+      db, fetchImpl, seenAt: now, max: socialsMax, budgetMs: socialsBudgetMs, concurrency: socialsConcurrency, log,
+    }));
+  } catch (e) {
+    log(`socials skipped: ${e?.message || e}`);
+  }
+
   log(`written ${stats.written} (${stats.added} new), ${stats.matched} have an account, ${stats.piped} already in the Pipeline`);
+  return stats;
+}
+
+/** A website's socials are read again after this long. */
+export const SOCIALS_RECHECK_MS = 30 * 24 * 60 * 60 * 1000;
+
+/**
+ * Read the socials off the websites of the businesses this scan saw: the ones
+ * never checked first, then the longest-ago, up to `max` sites or `budgetMs`,
+ * whichever comes first. A site that couldn't be read is still stamped, so it
+ * waits its turn instead of being retried every scan, and keeps what an
+ * earlier read found. Its own columns only, never an admin's verdict.
+ */
+export async function scanSocials({
+  db, fetchImpl = fetch, seenAt, max = 600, budgetMs = 2 * 60 * 1000, concurrency = 8, timeoutMs = 6000,
+  log = () => {},
+}) {
+  const stats = { socialsChecked: 0, socialsFound: 0 };
+  if (max <= 0) return stats;
+  const stale = Date.now() - SOCIALS_RECHECK_MS;
+  const rows = await selectAll(db, 'sales_prospects', 'id, website, socials_checked_at',
+    (q) => (seenAt ? q.eq('last_seen_at', seenAt) : q).not('website', 'is', null));
+  const due = rows
+    .filter((r) => !r.socials_checked_at || Date.parse(r.socials_checked_at) < stale)
+    .sort((a, b) => (a.socials_checked_at ? Date.parse(a.socials_checked_at) : 0)
+      - (b.socials_checked_at ? Date.parse(b.socials_checked_at) : 0))
+    .slice(0, max);
+  const stopAt = Date.now() + budgetMs;
+  await pool(due, concurrency, async (r) => {
+    if (Date.now() >= stopAt) return;
+    const { socials, ok } = await fetchSocials({ fetchImpl, website: r.website, timeoutMs });
+    const found = Object.keys(socials).length > 0;
+    const patch = { socials_checked_at: new Date().toISOString() };
+    if (ok) patch.socials = found ? socials : null;
+    const { error } = await db.from('sales_prospects').update(patch).eq('id', r.id);
+    if (error) return;
+    stats.socialsChecked += 1;
+    if (found) stats.socialsFound += 1;
+  });
+  log(`socials: ${stats.socialsChecked} of ${due.length} websites read, ${stats.socialsFound} with accounts`);
   return stats;
 }
 
