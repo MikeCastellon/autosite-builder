@@ -122,27 +122,6 @@ x=r.scrollLeft;i=Math.round(x/p)+k;
 r.scrollLeft=k>0?(x>=m-1?0:Math.min(i*p,m)):(x<1?m:Math.max(i*p,0));});
 })();`;
 
-// The Genius Store iframe's height (kit/StoreBand.jsx). exportHtml.js adds
-// this after SITE_RUNTIME_JS only to a page whose markup has an
-// <iframe data-acg-store>, so every other page stays exactly as it was. The
-// store (Genius Storefronts' embed) posts {type:'acg:height',height} on load,
-// on resize and when a shopper filters it; this sets that iframe's height
-// attribute. Accepts a message only from the store's origin (STORE_ORIGIN in
-// kit/store.js; any other page could otherwise resize the frame), only a
-// height of 100-20000px, and only for the iframe whose window sent it. One
-// listener, no init, so it can run from <head>. ES5. Without it the iframe
-// keeps its starting height and scrolls inside. The editor preview's twin is
-// storePreview.js.
-export const SITE_STORE_JS = `(function(){
-var O='https://storefronts.autocaregenius.com';
-window.addEventListener('message',function(e){var d=e.data,h,f,i;
-if(e.origin!==O||!d||d.type!=='acg:height')return;
-h=Number(d.height);if(!(h>=100&&h<=20000))return;
-f=document.querySelectorAll('iframe[data-acg-store]');
-for(i=0;i<f.length;i++)if(f[i].contentWindow===e.source){f[i].setAttribute('height',String(Math.round(h)));return;}
-});
-})();`;
-
 // Reveal styles apply only on screens, when JS ran (html.acg-js) AND the
 // visitor has not asked for reduced motion, so content is never hidden
 // without the runtime (or on paper).

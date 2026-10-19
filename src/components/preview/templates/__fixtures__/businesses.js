@@ -184,8 +184,6 @@ export const features = {
         { q: 'Do I need an appointment?', a: 'Yes. Book online or give us a call.' },
       ],
     },
-    // The Genius Store (kit/store.js): the owner's Genius Storefronts embed.
-    store: { slug: 'demo-detail-co' },
   },
   images: {
     ...FIXTURE_IMAGES,
