@@ -53,9 +53,9 @@ function CopyRow({ label, value, help }) {
   );
 }
 
-function Card({ title, children }) {
+function Card({ title, children, className = 'mb-5' }) {
   return (
-    <section className="bg-white border border-black/[0.07] rounded-2xl p-5 sm:p-6 mb-5">
+    <section className={`bg-white border border-black/[0.07] rounded-2xl p-5 sm:p-6 ${className}`}>
       {title && <h2 className="text-[17px] font-bold text-[#1a1a1a] mb-3">{title}</h2>}
       {children}
     </section>
@@ -147,7 +147,7 @@ export default function GeniusStorePage({ userId, profile }) {
   };
 
   if (sites === null) {
-    return <main className="max-w-3xl mx-auto px-4 py-10"><p className="text-[#888] text-sm">Loading...</p></main>;
+    return <main className="max-w-7xl mx-auto px-3 py-10"><p className="text-[#888] text-sm">Loading...</p></main>;
   }
 
   const partner = status?.partner;
@@ -158,9 +158,9 @@ export default function GeniusStorePage({ userId, profile }) {
   const name = site?.business_info?.businessName || 'your website';
 
   return (
-    <main className="max-w-3xl mx-auto px-4 py-10">
+    <main className="max-w-7xl mx-auto px-3 py-10">
       <h1 className="text-3xl sm:text-4xl font-black text-[#1a1a1a] tracking-tight mb-3 mt-8">Genius Store</h1>
-      <p className="text-[15px] text-gray-600 mb-6">
+      <p className="text-[15px] text-gray-600 mb-6 max-w-3xl">
         Sell Auto Care Genius car care products to your customers and earn a commission on every sale. Customers order
         online, Auto Care Genius ships to them, and you hold no stock.
       </p>
@@ -248,7 +248,9 @@ export default function GeniusStorePage({ userId, profile }) {
             <CopyRow label="Referral code" value={partner?.refCode} />
           </Card>
 
-          <Card title="On your website">
+          {/* Side by side on wide screens, like the other dashboard pages. */}
+          <div className="grid gap-5 lg:grid-cols-2 items-start">
+          <Card title="On your website" className="">
             {!status.siteHasShop && (
               <p className="text-[14px] text-gray-600">
                 Your website's design doesn't have a Shop section yet. Share your affiliate link and discount code instead:
@@ -291,7 +293,7 @@ export default function GeniusStorePage({ userId, profile }) {
             )}
           </Card>
 
-          <Card title="Sales and payouts">
+          <Card title="Sales and payouts" className="">
             <p className="text-[14px] text-gray-600">
               See your sales and commission, choose which products your store shows, and set up how you get paid at{' '}
               <a className="font-semibold text-[#cc0000] underline" href={status.dashboardUrl || STORE_ORIGIN} target="_blank" rel="noopener noreferrer">
@@ -300,6 +302,7 @@ export default function GeniusStorePage({ userId, profile }) {
               {status.email ? <> (sign in with {status.email})</> : null}.
             </p>
           </Card>
+          </div>
         </>
       )}
     </main>
