@@ -37,7 +37,7 @@ vi.mock('../data/templates.js', async (importOriginal) => {
 
 const { exportHtmlString } = await import('./exportHtml.js');
 const { buildTemplateMeta } = await import('./siteRender.js');
-const { SITE_RUNTIME_JS, SITE_CQ_FALLBACK_JS, CQ_REWRITE_FN, SITE_BA_JS, SITE_SCROLL_JS } = await import('./siteRuntime.js');
+const { SITE_RUNTIME_JS, SITE_CQ_FALLBACK_JS, CQ_REWRITE_FN, SITE_BA_JS, SITE_SCROLL_JS, SITE_STORE_JS } = await import('./siteRuntime.js');
 const { LEGACY_EXPORT_FAMILIES } = await import('./fontCatalog.js');
 const { TEMPLATE_COMPONENT_MAP } = await import('../data/templates.js');
 const { full, custom, FIXTURES } = await import('../components/preview/templates/__fixtures__/businesses.js');
@@ -140,6 +140,27 @@ describe('exportHtmlString', () => {
     const other = (c) => exportHtmlString('mobile_chrome', fx.businessInfo, c, buildTemplateMeta('mobile_chrome'), fx.images);
     expect((await other(fx.generatedCopy)).split(tag)).toHaveLength(2);
     expect(await other(copy)).not.toContain(SITE_BA_JS);
+  });
+
+  it('adds the Genius Store height listener only to a page with the store iframe', async () => {
+    const tag = `<script>${SITE_STORE_JS}</script>`;
+    const head = (h) => h.slice(0, h.indexOf('</head>'));
+    const fx = FIXTURES.features;
+    const page = (copy) => exportHtmlString('detailing_sporty', fx.businessInfo, copy, buildTemplateMeta('detailing_sporty'), fx.images);
+    const withStore = await page(fx.generatedCopy);
+    expect(withStore).toContain('<iframe data-acg-store=""');
+    expect(withStore.split(tag)).toHaveLength(2);
+    expect(withStore.indexOf(tag)).toBeLessThan(withStore.indexOf('</head>'));
+    // Without a store: no iframe, no script, and the <head> is otherwise the
+    // same, byte for byte.
+    const { store, ...noStore } = fx.generatedCopy;
+    const without = await page(noStore);
+    expect(without).not.toContain(SITE_STORE_JS);
+    expect(without).not.toContain('data-acg-store');
+    expect(head(withStore).replace(`\n  ${tag}`, '')).toBe(head(without));
+    // Owner text that spells the iframe is escaped text, not an iframe.
+    const spoof = await page({ ...noStore, subheadline: '<iframe data-acg-store="">' });
+    expect(spoof).not.toContain(SITE_STORE_JS);
   });
 
   it('adds the scroller script only to a page with a prev/next scroller button', async () => {

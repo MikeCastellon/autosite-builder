@@ -377,7 +377,7 @@ describe('facts from the written site', () => {
     expect(redline.order).toEqual(['hero', 'about', 'brands', 'services', 'featured', 'testimonials', 'locations', 'cta']);
 
     const sporty = siteSections({ templateId: 'detailing_sporty', copy: { sectionOrder: ['hero', 'about', 'services'] }, businessInfo: { awards: ['Best of Miami'] } });
-    expect(sporty.sections.filter((s) => s.hidden).map((s) => s.id)).toEqual(['brands', 'featured', 'vehicleTypes', 'process', 'beforeAfter', 'showcase', 'comparison', 'faq']);
+    expect(sporty.sections.filter((s) => s.hidden).map((s) => s.id)).toEqual(['brands', 'featured', 'vehicleTypes', 'process', 'beforeAfter', 'showcase', 'comparison', 'faq', 'shop']);
     // The saved ids keep their order; one the save lacks takes its default
     // slot after its predecessor (the editor's repair, mergeSectionOrder).
     const at = (id) => sporty.order.indexOf(id);
@@ -394,6 +394,7 @@ describe('facts from the written site', () => {
         showcase: { items: [{ title: 'Ceramic Coating' }] },
         comparison: { rows: [{ label: 'Comes to you', us: true, them: false }] },
         faq: { items: [{ q: 'Do you come to me?', a: 'Yes.' }] },
+        store: { slug: 'apex-detail' },
       },
       images: { baBefore0: 'https://img.example/b.jpg', baAfter0: 'https://img.example/a.jpg', showcase0: 'https://img.example/s.jpg' },
     });
@@ -401,7 +402,7 @@ describe('facts from the written site', () => {
     expect(optedIn.order.indexOf('beforeAfter')).toBe(optedIn.order.indexOf('gallery') + 1);
     expect(optedIn.order).toEqual([
       'hero', 'statsBar', 'brands', 'services', 'featured', 'vehicleTypes', 'process', 'about', 'gallery', 'beforeAfter',
-      'showcase', 'comparison', 'testimonials', 'faq', 'cta',
+      'showcase', 'comparison', 'testimonials', 'faq', 'shop', 'cta',
     ]);
     // Before & After shows only with a pair that has both photos.
     const half = siteSections({ templateId: 'detailing_sporty', copy: { beforeAfter: { pairs: [{}] } }, images: { baBefore0: 'https://img.example/b.jpg' } });
