@@ -12,7 +12,7 @@ const ACG_LOGO = 'https://www.autocaregenius.com/cdn/shop/files/v11_1.svg?v=1760
 // have their own shell (admin/AdminShell.jsx); super admins only get the
 // "Admin" switch here (onSwitchToAdmin), kept apart from the nav items.
 export default function AppHeader({
-  active,                  // 'overview' | 'sites' | 'inquiries' | 'bookings' | 'customers' | 'charges' | 'payments-connect' | 'profile'
+  active,                  // 'overview' | 'sites' | 'inquiries' | 'bookings' | 'customers' | 'charges' | 'payments-connect' | 'genius-store' | 'profile'
   userEmail,
   profile,
   onOpenOverview,
@@ -23,6 +23,7 @@ export default function AppHeader({
   onOpenCharges,
   onCharge,
   onOpenPaymentsConnect,
+  onOpenGeniusStore,
   onSwitchToAdmin,
   onOpenProfile,
   onSignOut,
@@ -55,6 +56,7 @@ export default function AppHeader({
     showBookingsNav && onOpenCustomers && { id: 'customers', label: 'Customers', onClick: onOpenCustomers },
     showBookingsNav && onOpenCharges && { id: 'charges', label: 'Charges', onClick: onOpenCharges },
     onOpenPaymentsConnect && { id: 'payments-connect', label: 'Payments', onClick: onOpenPaymentsConnect },
+    onOpenGeniusStore && { id: 'genius-store', label: 'Genius Store', onClick: onOpenGeniusStore },
   ].filter(Boolean);
 
   // One flex row (brand | nav | actions) rather than a nav centred on top of

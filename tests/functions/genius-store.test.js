@@ -6,11 +6,19 @@
 // words; missing env is a 503, not a crash.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-const h = vi.hoisted(() => ({ site: null, user: null, profile: null }));
+const h = vi.hoisted(() => ({ site: null, user: null, profile: null, updates: [], updateError: null }));
 
 vi.mock('../../netlify/functions/_shared/auth.js', () => ({
   supabaseAdmin: () => ({
-    from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: h.profile }) }) }) }),
+    from: (table) => ({
+      select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: table === 'profiles' ? h.profile : null }) }) }),
+      update: (patch) => ({
+        eq: async (col, val) => {
+          h.updates.push({ table, patch, [col]: val });
+          return { error: h.updateError };
+        },
+      }),
+    }),
   }),
   requireUser: async () => {
     if (!h.user) throw Object.assign(new Error('Not signed in. Please sign in again.'), { status: 401 });
@@ -47,8 +55,14 @@ beforeEach(() => {
   process.env.GENIUS_STOREFRONTS_URL = URL;
   process.env.GENIUS_WEBSITES_KEY = 'k3y';
   h.user = { id: 'owner-1', email: 'Owner@Shop.com' };
-  h.site = { id: SITE_ID, user_id: 'owner-1', business_info: { businessName: 'Apex Detail' } };
+  h.site = {
+    id: SITE_ID, user_id: 'owner-1', template_id: 'detailing_sporty', published_url: 'https://apex.autocaregeniushub.com',
+    business_info: { businessName: 'Apex Detail' },
+    generated_content: { headline: 'Shine', store: { title: 'Our shop' } },
+  };
   h.profile = { first_name: 'Ana', last_name: 'Ruiz' };
+  h.updates = [];
+  h.updateError = null;
   vi.spyOn(console, 'log').mockImplementation(() => {});
   vi.spyOn(console, 'error').mockImplementation(() => {});
 });
@@ -77,6 +91,33 @@ describe('genius-store', () => {
       accent: '#E11D48',
       scheme: 'dark',
     });
+  });
+
+  it('saves the store on a site whose design has the Shop section, keeping the owner\'s heading', async () => {
+    storefronts(() => [200, { ok: true, storefront: { slug: 'apex-detail' } }]);
+    const res = await handler(post({ action: 'enable', siteId: SITE_ID, termsVersion: 'v' }));
+    expect(bodyOf(res)).toMatchObject({ siteHasShop: true, storeOnSite: 'apex-detail', published: true });
+    expect(h.updates).toEqual([{
+      table: 'sites',
+      id: SITE_ID,
+      patch: { generated_content: { headline: 'Shine', store: { title: 'Our shop', slug: 'apex-detail' } } },
+    }]);
+  });
+
+  it('leaves a site on another design alone: the link and code still work there', async () => {
+    h.site = { ...h.site, template_id: 'carwash_bubble' };
+    storefronts(() => [200, { ok: true, storefront: { slug: 'apex-detail' } }]);
+    const res = await handler(post({ action: 'enable', siteId: SITE_ID, termsVersion: 'v' }));
+    expect(bodyOf(res)).toMatchObject({ siteHasShop: false, storeOnSite: null, storefront: { slug: 'apex-detail' } });
+    expect(h.updates).toEqual([]);
+  });
+
+  it('keeps the store when saving it on the site fails', async () => {
+    h.updateError = { message: 'boom' };
+    storefronts(() => [200, { ok: true, storefront: { slug: 'apex-detail' } }]);
+    const res = await handler(post({ action: 'enable', siteId: SITE_ID, termsVersion: 'v' }));
+    expect(res.statusCode).toBe(200);
+    expect(bodyOf(res)).toMatchObject({ storefront: { slug: 'apex-detail' }, storeOnSite: null });
   });
 
   it('drops an accent that is not a hex colour and falls back to the business name', async () => {
@@ -133,7 +174,7 @@ describe('genius-store', () => {
     const terms = await handler(post({ action: 'terms' }));
     expect(bodyOf(terms)).toEqual({ version: '2026-09-09', terms: [{ heading: 'H', body: ['b'] }] });
     const status = await handler(post({ action: 'status', siteId: SITE_ID }));
-    expect(bodyOf(status)).toMatchObject({ partner: null, email: 'owner@shop.com' });
+    expect(bodyOf(status)).toMatchObject({ partner: null, email: 'owner@shop.com', siteHasShop: true, storeOnSite: null, published: true });
     expect(calls[1].payload).toEqual({ action: 'status', email: 'owner@shop.com', siteId: SITE_ID });
   });
 

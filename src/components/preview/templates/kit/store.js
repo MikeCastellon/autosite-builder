@@ -7,6 +7,16 @@
 // genius-store.js); everything else about the store lives there. Pure, no
 // browser globals: templates and exportHtml both import it.
 
+// Where shoppers check out. An affiliate link is this with ?acgref=<code>:
+// the shop's theme snippet (acg-affiliate-ref.liquid) reads that parameter.
+export const SHOP_ORIGIN = 'https://www.autocaregenius.com';
+
+/** The owner's shareable affiliate link, or '' without a referral code. */
+export function affiliateLink(refCode) {
+  const code = String(refCode ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  return code ? `${SHOP_ORIGIN}/?acgref=${code}` : '';
+}
+
 // The only place a store iframe may point. The slug is the one thing taken
 // from copy, and storeOf checks it against Storefronts' own CHECK, so a
 // hand-edited copy can never frame another site.

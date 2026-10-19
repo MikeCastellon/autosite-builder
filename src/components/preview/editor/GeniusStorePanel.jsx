@@ -10,27 +10,11 @@
 //   colors             the site's colours (templateMeta.colors): the store
 //                      starts with its accent, and dark on a dark site
 import { useEffect, useState } from 'react';
-import { supabase } from '../../../lib/supabase.js';
 import { Label, Help, Note, Field, linkButtonClass } from './fields.jsx';
-import { storeOf, STORE_DEFAULTS, STORE_ORIGIN } from '../templates/kit/store.js';
-import { isDark } from '../templates/kit/theme.js';
+import { storeOf, affiliateLink, STORE_DEFAULTS, STORE_ORIGIN } from '../templates/kit/store.js';
+import { geniusStoreCall as call, storeLook, ratePercent as pct } from '../../../lib/geniusStore.js';
 
-async function call(action, payload = {}) {
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
-  const res = await fetch('/.netlify/functions/genius-store', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-    body: JSON.stringify({ action, ...payload }),
-  });
-  const body = await res.json().catch(() => ({}));
-  if (!res.ok) throw Object.assign(new Error(body.error || 'Something went wrong. Please try again.'), { code: body.code });
-  return body;
-}
-
-const pct = (rate) => (Number.isFinite(rate) ? `${Math.round(rate * 1000) / 10}%` : null);
-
-function Terms({ terms }) {
+export function Terms({ terms }) {
   return (
     <div className="max-h-56 overflow-y-auto border border-gray-200 rounded-lg px-3 py-2 mb-3 bg-white">
       {terms.map((section) => (
@@ -81,8 +65,7 @@ export function GeniusStorePanel({ copy, setCopy, siteId, colors, confirm }) {
     setBusy(true);
     setError('');
     try {
-      const scheme = colors?.bg && isDark(colors.bg) ? 'dark' : 'light';
-      const r = await call('enable', { siteId, termsVersion: terms.version, accent: colors?.accent, scheme });
+      const r = await call('enable', { siteId, termsVersion: terms.version, ...storeLook(colors) });
       if (!r.storefront?.slug) throw new Error('The store didn\'t come back. Please try again.');
       setStatus(r);
       setCopy('store', { ...(raw || {}), slug: r.storefront.slug });
@@ -158,9 +141,10 @@ export function GeniusStorePanel({ copy, setCopy, siteId, colors, confirm }) {
       <Help className="-mt-2 mb-4">Under the store your site also says that you earn a commission on its sales. That line always shows.</Help>
 
       <Label>Your codes</Label>
+      <Code label="Affiliate link" value={affiliateLink(partner?.refCode)} />
       <Code label="Referral code" value={partner?.refCode} />
       <Code label="Customer discount code" value={partner?.discountCode} />
-      <Help className="mt-1 mb-4">Give the discount code to customers in person: orders that use it count as yours too.</Help>
+      <Help className="mt-1 mb-4">Share the link anywhere (social posts, texts, your Google profile) and give the discount code to customers in person: orders through either count as yours. Copy them from Genius Store in the main menu.</Help>
 
       <Label>Sales and payouts</Label>
       <Help className="mt-0 mb-4">

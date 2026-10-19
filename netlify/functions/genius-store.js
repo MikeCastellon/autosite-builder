@@ -8,19 +8,23 @@
 //
 // POST { action, ... }, Bearer token:
 //   terms                                     the partner agreement to show
-//   status { siteId }                         partner + this site's storefront
+//   status { siteId }                         partner + this site's storefront,
+//                                             plus whether the site shows it
 //   enable { siteId, termsVersion, accent, scheme }
 //                                             approved partner + storefront
 //
 // The email sent on is always the signed-in owner's (requireUser /
 // requireSiteOwner), never one from the request body: the partner it creates
-// is paid. The editor stores the returned slug in copy.store itself.
+// is paid. On a design with the Shop section, enable also saves the slug in
+// the site's copy (copy.store), so turning the store on from the Genius Store
+// page puts it on the site without the editor; the editor sets the same key.
 //
 // Env: GENIUS_STOREFRONTS_URL (website-partner's URL), GENIUS_WEBSITES_KEY.
 // Without them it answers 503, so a deploy without the store set up says so
 // instead of failing in a way the owner cannot read.
 import { requireSiteOwner, requireUser, supabaseAdmin } from './_shared/auth.js';
 import { corsHeaders, jsonHeaders } from './_shared/cors.js';
+import { templateReads } from '../../src/components/preview/editorCapabilities.js';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const HEX = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;
@@ -32,6 +36,36 @@ const REFUSALS = {
   staff_account: 'This email is an Auto Care Genius staff login, so it can\'t also run a store. Use a different account for this website.',
   terms_changed: 'The store terms were just updated. Read them again and agree to turn on your store.',
 };
+
+// What the site itself shows: does its design have the Shop section, and is
+// a store saved on it (copy.store.slug in generated_content)?
+function siteStore(site) {
+  const slug = site?.generated_content?.store?.slug;
+  return {
+    siteHasShop: templateReads(site?.template_id, 'store'),
+    storeOnSite: typeof slug === 'string' && slug ? slug : null,
+    published: Boolean(site?.published_url),
+  };
+}
+
+// Save the store on the site (copy.store), keeping the owner's heading and
+// intro. Only on a design that reads it; a failure here never undoes the
+// store itself, the owner can still add it from the editor.
+async function saveStoreOnSite(site, slug) {
+  if (!slug || !templateReads(site.template_id, 'store')) return false;
+  const content = site.generated_content && typeof site.generated_content === 'object' ? site.generated_content : {};
+  const current = content.store && typeof content.store === 'object' ? content.store : {};
+  if (current.slug === slug) return true;
+  const { error } = await supabaseAdmin()
+    .from('sites')
+    .update({ generated_content: { ...content, store: { ...current, slug } } })
+    .eq('id', site.id);
+  if (error) {
+    console.error(`[genius-store] could not save the store on site ${site.id}:`, error.message);
+    return false;
+  }
+  return true;
+}
 
 async function callStorefronts(payload) {
   const url = process.env.GENIUS_STOREFRONTS_URL;
@@ -112,7 +146,7 @@ export const handler = async (event) => {
 
     if (action === 'status') {
       const status = await callStorefronts({ action: 'status', email, siteId });
-      return reply(200, { ...status, email });
+      return reply(200, { ...status, ...siteStore(site), email });
     }
 
     const termsVersion = String(body.termsVersion || '');
@@ -130,8 +164,10 @@ export const handler = async (event) => {
       // The site's look: a dark site starts with a dark store.
       scheme: body.scheme === 'dark' ? 'dark' : 'light',
     });
-    console.log(`[genius-store] site=${siteId} store=${result.storefront?.slug} created=${Boolean(result.created)}`);
-    return reply(200, { ...result, email });
+    const saved = await saveStoreOnSite(site, result.storefront?.slug);
+    console.log(`[genius-store] site=${siteId} store=${result.storefront?.slug} created=${Boolean(result.created)} onSite=${saved}`);
+    const shown = siteStore(site);
+    return reply(200, { ...result, ...shown, storeOnSite: saved ? result.storefront.slug : shown.storeOnSite, email });
   } catch (err) {
     return reply(err.status || 500, { error: err.message || 'Something went wrong', code: err.code });
   }

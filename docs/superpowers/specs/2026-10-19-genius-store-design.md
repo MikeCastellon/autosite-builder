@@ -24,7 +24,7 @@ the embed.
 | 5 | Approval | Automatic: turning the store on creates an **approved** partner. ACG can still suspend in Storefronts admin |
 | 6 | Payouts | Stay in Storefronts: the owner enters ACH / Zelle / PayPal there, ACG settles as for any partner. Not Stripe Connect (only Pro owners have it) |
 | 7 | GoAffPro | Storefronts links move from `?ref=` to `?acgref=`, and the order webhook stops reading GoAffPro's `ref` cart attribute, so the two programmes never see each other's referrals |
-| 8 | Where it is turned on | The editor's **Genius Store** tab (the section lives there). A dashboard card comes with phase 2 |
+| 8 | Where it is turned on | **Genius Store** in the business menu (owner asked 2026-10-19: "they will never find it" in the editor): turn it on, copy the affiliate link and discount code, add the Shop section and update the live site. The editor's Genius Store tab stays for the section's heading |
 | 9 | Where the link is stored | In the site's own copy: `copy.store = { slug, title?, intro? }`. Storefronts is the source of truth for everything else, so Website Creator needs **no database change** |
 | 10 | Framing | The storefront's `allowed_domains` stays empty (framable anywhere). An embed only ever credits its owner, so a copy on another site cannot take money from them, and custom-domain changes need no sync |
 
