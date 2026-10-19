@@ -702,19 +702,21 @@ export async function runScan({
 export const SOCIALS_RECHECK_MS = 30 * 24 * 60 * 60 * 1000;
 
 /**
- * Read the socials off the websites of the businesses this scan saw: the ones
- * never checked first, then the longest-ago, up to `max` sites or `budgetMs`,
- * whichever comes first. A site that couldn't be read is still stamped, so it
- * waits its turn instead of being retried every scan, and keeps what an
- * earlier read found. Its own columns only, never an admin's verdict.
+ * Read the shops' websites — socials, email, owner's name — for the ones this
+ * scan saw: never read first, then the longest-ago, up to `max` sites or
+ * `budgetMs`, whichever comes first. A site that couldn't be read is still
+ * stamped, so it waits its turn instead of being retried every scan, and
+ * keeps what an earlier read found. `recheckBefore` (a time) makes every site
+ * read before then due again. Its own columns only, never an admin's verdict.
  */
 export async function scanSocials({
   db, fetchImpl = fetch, seenAt, max = 600, budgetMs = 2 * 60 * 1000, concurrency = 8, timeoutMs = 6000,
-  log = () => {},
+  recheckBefore = null, log = () => {},
 }) {
-  const stats = { socialsChecked: 0, socialsFound: 0 };
+  const stats = { socialsChecked: 0, socialsFound: 0, emailsFound: 0, ownersFound: 0 };
   if (max <= 0) return stats;
-  const stale = Date.now() - SOCIALS_RECHECK_MS;
+  const stale = Math.max(Date.now() - SOCIALS_RECHECK_MS, recheckBefore ? Date.parse(recheckBefore) : 0);
+  let contactColumns = true;
   const rows = await selectAll(db, 'sales_prospects', 'id, website, socials_checked_at',
     (q) => (seenAt ? q.eq('last_seen_at', seenAt) : q).not('website', 'is', null));
   const due = rows
@@ -725,16 +727,24 @@ export async function scanSocials({
   const stopAt = Date.now() + budgetMs;
   await pool(due, concurrency, async (r) => {
     if (Date.now() >= stopAt) return;
-    const { socials, ok } = await fetchSocials({ fetchImpl, website: r.website, timeoutMs });
+    const { socials, email, ownerName, ok } = await fetchSocials({ fetchImpl, website: r.website, timeoutMs });
     const found = Object.keys(socials).length > 0;
     const patch = { socials_checked_at: new Date().toISOString() };
     if (ok) patch.socials = found ? socials : null;
-    const { error } = await db.from('sales_prospects').update(patch).eq('id', r.id);
+    const contact = ok && contactColumns ? { email: email || null, owner_name: ownerName || null } : {};
+    let { error } = await db.from('sales_prospects').update({ ...patch, ...contact }).eq('id', r.id);
+    if (error && Object.keys(contact).length) {
+      // Before the email/owner columns exist: keep reading socials.
+      contactColumns = false;
+      ({ error } = await db.from('sales_prospects').update(patch).eq('id', r.id));
+    }
     if (error) return;
     stats.socialsChecked += 1;
     if (found) stats.socialsFound += 1;
+    if (contact.email) stats.emailsFound += 1;
+    if (contact.owner_name) stats.ownersFound += 1;
   });
-  log(`socials: ${stats.socialsChecked} of ${due.length} websites read, ${stats.socialsFound} with accounts`);
+  log(`websites: ${stats.socialsChecked} of ${due.length} read, ${stats.socialsFound} with socials, ${stats.emailsFound} with an email, ${stats.ownersFound} with an owner's name`);
   return stats;
 }
 

@@ -423,6 +423,27 @@ describe('socials', () => {
     expect(asked).toEqual(['https://new.test/']);
   });
 
+  it('stores the email and owner the site states, and keeps reading socials before those columns exist', async () => {
+    const page = '<a href="mailto:info@shiny.test">m</a><p>Owner: Ana Diaz</p><a href="https://x.com/shiny">x</a>';
+    const fetchImpl = async () => ({ ok: true, headers: { get: () => 'text/html' }, text: async () => page });
+    const db = fakeDb({ sales_prospects: [{ id: '1', website: 'https://shiny.test', last_seen_at: 's' }] });
+    const stats = await scanSocials({ db, fetchImpl, seenAt: 's' });
+    expect(db.tables.sales_prospects[0]).toMatchObject({ email: 'info@shiny.test', owner_name: 'Ana Diaz' });
+    expect(stats).toMatchObject({ emailsFound: 1, ownersFound: 1 });
+
+    const old = fakeDb({ sales_prospects: [{ id: '1', website: 'https://shiny.test', last_seen_at: 's' }] });
+    const from = old.from;
+    old.from = (t) => {
+      const b = from(t);
+      const update = b.update;
+      b.update = (p) => ('email' in p ? { eq: async () => ({ error: { message: 'column "email" does not exist' } }) } : update(p));
+      return b;
+    };
+    await scanSocials({ db: old, fetchImpl, seenAt: 's' });
+    expect(old.tables.sales_prospects[0].socials).toEqual({ x: 'https://x.com/shiny' });
+    expect(old.tables.sales_prospects[0].email).toBeUndefined();
+  });
+
   it('keeps what an earlier read found when the site is down this time', async () => {
     const old = new Date(Date.now() - 60 * 86400000).toISOString();
     const db = fakeDb({

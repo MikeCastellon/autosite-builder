@@ -1,5 +1,6 @@
 /**
- * A business's social accounts, read off its own website.
+ * A business's social accounts, read off its own website — and, from the same
+ * visit, its email and the owner's name when the site states them.
  *
  * Google Places has no field for them, so after a scan the business's
  * homepage is fetched once and every link to a known network is kept: anchor
@@ -173,27 +174,157 @@ export function extractSocials(html) {
   return found;
 }
 
-const MAX_BODY = 1_500_000;
+// ---------------------------------------------------------------------------
+// Email and owner
+// ---------------------------------------------------------------------------
+
+const EMAIL_RX = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,24}/gi;
+// Addresses that aren't the business's: placeholders, robots, and the
+// website builder's or tracker's own.
+const NOT_THEIRS_LOCAL = /^(no-?reply|do-?not-?reply|donotreply|mailer-daemon|postmaster|abuse|example|test|user|username|name|email|your(name|email)?|someone|john\.?doe|jane\.?doe)$/i;
+const NOT_THEIRS_DOMAIN = [
+  'example.com', 'example.org', 'domain.com', 'yourdomain.com', 'email.com', 'mysite.com', 'company.com',
+  'sentry.io', 'wixpress.com', 'wix.com', 'squarespace.com', 'godaddy.com', 'secureserver.net', 'shopify.com',
+  'wordpress.com', 'weebly.com', 'jimdo.com', 'duda.co', 'yext.com', 'sentry-next.wixpress.com', 'gstatic.com',
+  'googleusercontent.com', 'cloudflare.com', 'w3.org', 'schema.org',
+];
+const FREE_MAIL = ['gmail.com', 'hotmail.com', 'yahoo.com', 'outlook.com', 'icloud.com', 'aol.com', 'live.com', 'msn.com', 'me.com'];
+
+const textOf = (html) => html
+  .replace(/<(script|style|noscript)[^>]*>[\s\S]*?<\/\1>/gi, ' ')
+  .replace(/<[^>]+>/g, ' ')
+  .replace(/&#64;|&commat;/gi, '@').replace(/&#46;/g, '.').replace(/&nbsp;/gi, ' ')
+  .replace(/&amp;/gi, '&').replace(/&#39;|&apos;/gi, "'")
+  .replace(/\s+/g, ' ');
+
+function cleanEmail(raw) {
+  const e = String(raw || '').trim().toLowerCase().replace(/^mailto:/, '').split('?')[0].replace(/\.+$/, '');
+  let decoded = e;
+  try { decoded = decodeURIComponent(e); } catch { /* keep as is */ }
+  const m = decoded.match(/^[a-z0-9._%+-]+@([a-z0-9.-]+\.[a-z]{2,24})$/);
+  if (!m) return null;
+  const [local] = decoded.split('@');
+  const domain = m[1];
+  if (/\.(png|jpe?g|gif|svg|webp|css|js)$/.test(domain)) return null;
+  if (NOT_THEIRS_LOCAL.test(local)) return null;
+  if (NOT_THEIRS_DOMAIN.some((d) => domain === d || domain.endsWith(`.${d}`))) return null;
+  return decoded;
+}
+
+function jsonLdBlocks(html) {
+  const out = [];
+  const rx = /<script[^>]*type\s*=\s*["']?application\/ld\+json["']?[^>]*>([\s\S]*?)<\/script>/gi;
+  for (let m = rx.exec(html); m; m = rx.exec(html)) {
+    try { out.push(JSON.parse(m[1].trim())); } catch { /* skip */ }
+  }
+  return out;
+}
+
+function walkJson(v, fn) {
+  if (Array.isArray(v)) v.forEach((x) => walkJson(x, fn));
+  else if (v && typeof v === 'object') {
+    for (const [k, val] of Object.entries(v)) { fn(k, val); walkJson(val, fn); }
+  }
+}
+
+const hostRoot = (host) => String(host || '').toLowerCase().replace(/^www\./, '');
 
 /**
- * A business's socials: the website itself when it is a social page, else
- * whatever its homepage links to. Never throws — a site that is down, slow or
- * not HTML gives {} — so `ok` says whether the page was actually read.
+ * The business's email off a page: mailto links, JSON-LD `email`, then any
+ * address in the visible text. One on the site's own domain wins, then a
+ * free-mail one (most shops use Gmail), then whatever else is left.
  */
-export async function fetchSocials({ fetchImpl = fetch, website, timeoutMs = 6000 }) {
-  const own = socialsFromWebsite(website);
-  if (Object.keys(own).length) return { socials: own, ok: true };
-  let url;
-  try {
-    url = new URL(website);
-    if (!/^https?:$/.test(url.protocol)) return { socials: {}, ok: false };
-  } catch {
-    return { socials: {}, ok: false };
+export function extractEmail(html, siteHost = '') {
+  if (!html) return null;
+  const found = [];
+  const add = (e) => { const c = cleanEmail(e); if (c && !found.includes(c)) found.push(c); };
+  const mailto = /href\s*=\s*["']?mailto:([^"'\s>]+)/gi;
+  for (let m = mailto.exec(html); m; m = mailto.exec(html)) add(m[1]);
+  for (const block of jsonLdBlocks(html)) {
+    walkJson(block, (k, val) => { if (k === 'email' && typeof val === 'string') add(val); });
   }
+  for (const m of textOf(html).matchAll(EMAIL_RX)) add(m[0]);
+  if (!found.length) return null;
+  const root = hostRoot(siteHost);
+  const rank = (e) => {
+    const d = e.split('@')[1];
+    if (root && (d === root || root.endsWith(`.${d}`) || d.endsWith(`.${root}`))) return 0;
+    return FREE_MAIL.includes(d) ? 1 : 2;
+  };
+  return [...found].sort((a, b) => rank(a) - rank(b))[0];
+}
+
+// Words that make a "name" a business, a role or a sentence, not a person.
+const NOT_A_PERSON = /\b(llc|inc|corp|co|company|auto|autos|automotive|detail|detailing|wash|tint|tinting|shop|services?|group|team|motors?|repair|center|centre|garage|the|and|of|our|us|we|you|your|florida|puerto|rico|miami|orlando|tampa|customer|customers|owner|owners|family|club|staff|management|department|office|sales|support|contact|about|home|welcome|since|years?|professional|certified|quality|best|mobile|call|today|now|here|more|free|get|book|text|visit|click|read|learn|open|hours|phone|tel|email|info|and)\b/i;
+
+/** A real person's name: two to four capitalised words, nothing else. */
+export function isPersonName(s) {
+  const name = String(s || '').trim().replace(/\s+/g, ' ');
+  if (!name || name.length > 40 || /\d|@|\//.test(name)) return false;
+  const words = name.split(' ');
+  if (words.length < 2 || words.length > 4) return false;
+  if (!words.every((w) => /^\p{Lu}[\p{L}'’.-]*$/u.test(w))) return false;
+  return !NOT_A_PERSON.test(name);
+}
+
+// Case-insensitive for the label; isPersonName checks the capitals after.
+const OWNER_TEXT = /\b(?:owner|owned by|owner\/operator|founder|founded by|co-founder|propietari[oa]|dueñ[oa]|fundador[a]?)\s*[:\-–—,]?\s*(\p{Lu}[\p{L}'’.-]+(?:\s+\p{Lu}[\p{L}'’.-]+){1,3})/giu;
+
+/**
+ * The owner's name, only where the site states it: JSON-LD `founder`,
+ * `employee` or `owner` as a person, or "Owner: …" / "Dueño: …" in the text.
+ * Null unless it reads as a person.
+ */
+export function extractOwnerName(html) {
+  if (!html) return null;
+  const candidates = [];
+  for (const block of jsonLdBlocks(html)) {
+    walkJson(block, (k, val) => {
+      if (!['founder', 'founders', 'employee', 'employees', 'owner'].includes(k)) return;
+      for (const v of [].concat(val)) {
+        if (typeof v === 'string') candidates.push(v);
+        else if (v && typeof v === 'object' && /person/i.test(String(v['@type'] || 'Person')) && typeof v.name === 'string') candidates.push(v.name);
+      }
+    });
+  }
+  for (const m of textOf(html).matchAll(OWNER_TEXT)) candidates.push(m[1]);
+  // "Owner: John Smith Call Today" — try the name shortened from the end too.
+  for (const c of candidates) {
+    const words = c.trim().split(/\s+/);
+    for (let n = Math.min(words.length, 4); n >= 2; n -= 1) {
+      const name = words.slice(0, n).join(' ');
+      if (isPersonName(name)) return name;
+    }
+  }
+  return null;
+}
+
+const CONTACT_LINK = /(contact|contacto|contactanos|contactenos|about|nosotros|quienes-somos|our-team|meet)/i;
+
+/** The site's contact or about page, if the homepage links one on the same host. */
+export function contactPageUrl(html, base) {
+  let baseUrl;
+  try { baseUrl = new URL(base); } catch { return null; }
+  const rx = /\bhref\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/gi;
+  for (let m = rx.exec(html || ''); m; m = rx.exec(html || '')) {
+    const href = decode(m[1] ?? m[2] ?? m[3]);
+    if (!CONTACT_LINK.test(href)) continue;
+    try {
+      const u = new URL(href, baseUrl);
+      if (/^https?:$/.test(u.protocol) && hostRoot(u.hostname) === hostRoot(baseUrl.hostname)
+        && u.pathname !== baseUrl.pathname) return u.toString();
+    } catch { /* skip */ }
+  }
+  return null;
+}
+
+const MAX_BODY = 1_500_000;
+
+async function getHtml(fetchImpl, url, timeoutMs) {
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), timeoutMs);
   try {
-    const res = await fetchImpl(url.toString(), {
+    const res = await fetchImpl(url, {
       redirect: 'follow',
       signal: ctl.signal,
       headers: {
@@ -201,14 +332,54 @@ export async function fetchSocials({ fetchImpl = fetch, website, timeoutMs = 600
         Accept: 'text/html,application/xhtml+xml',
       },
     });
-    if (!res?.ok || typeof res.text !== 'function') return { socials: {}, ok: false };
+    if (!res?.ok || typeof res.text !== 'function') return null;
     const type = res.headers?.get?.('content-type') || '';
-    if (type && !/html|xml|text\/plain/i.test(type)) return { socials: {}, ok: false };
-    const html = (await res.text()).slice(0, MAX_BODY);
-    return { socials: extractSocials(html), ok: true };
+    if (type && !/html|xml|text\/plain/i.test(type)) return null;
+    return (await res.text()).slice(0, MAX_BODY);
   } catch {
-    return { socials: {}, ok: false };
+    return null;
   } finally {
     clearTimeout(timer);
+  }
+}
+
+const NOTHING = { socials: {}, email: null, ownerName: null, ok: false };
+
+/**
+ * What a business's website says about it: its socials, its email and its
+ * owner's name. The website itself when it is a social page (nothing else to
+ * read there), else its homepage, plus its contact or about page when the
+ * homepage left the email or the owner unknown — two requests at most.
+ * Never throws: a site that is down, slow or not HTML gives nothing, and `ok`
+ * says whether the homepage was actually read.
+ */
+export async function fetchSocials({ fetchImpl = fetch, website, timeoutMs = 6000 }) {
+  const own = socialsFromWebsite(website);
+  if (Object.keys(own).length) return { socials: own, email: null, ownerName: null, ok: true };
+  let url;
+  try {
+    url = new URL(website);
+    if (!/^https?:$/.test(url.protocol)) return NOTHING;
+  } catch {
+    return NOTHING;
+  }
+  try {
+    const html = await getHtml(fetchImpl, url.toString(), timeoutMs);
+    if (html == null) return NOTHING;
+    const socials = extractSocials(html);
+    let email = extractEmail(html, url.hostname);
+    let ownerName = extractOwnerName(html);
+    const more = (!email || !ownerName) && contactPageUrl(html, url.toString());
+    if (more) {
+      const page = await getHtml(fetchImpl, more, timeoutMs);
+      if (page) {
+        email ||= extractEmail(page, url.hostname);
+        ownerName ||= extractOwnerName(page);
+        for (const [k, v] of Object.entries(extractSocials(page))) socials[k] ||= v;
+      }
+    }
+    return { socials, email, ownerName, ok: true };
+  } catch {
+    return NOTHING;
   }
 }
