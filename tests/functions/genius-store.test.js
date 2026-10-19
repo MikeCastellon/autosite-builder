@@ -6,7 +6,11 @@
 // words; missing env is a 503, not a crash.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-const h = vi.hoisted(() => ({ site: null, user: null, profile: null, updates: [], updateError: null }));
+const h = vi.hoisted(() => ({ site: null, user: null, profile: null, updates: [], updateError: null, pilot: true }));
+
+// The pilot switch (lib/geniusStorePilot.js) is tested on its own; here it is
+// on for the test owner unless a test turns it off.
+vi.mock('../../src/lib/geniusStorePilot.js', () => ({ geniusStoreAllowed: () => h.pilot }));
 
 vi.mock('../../netlify/functions/_shared/auth.js', () => ({
   supabaseAdmin: () => ({
@@ -63,6 +67,7 @@ beforeEach(() => {
   h.profile = { first_name: 'Ana', last_name: 'Ruiz' };
   h.updates = [];
   h.updateError = null;
+  h.pilot = true;
   vi.spyOn(console, 'log').mockImplementation(() => {});
   vi.spyOn(console, 'error').mockImplementation(() => {});
 });
@@ -183,6 +188,18 @@ describe('genius-store', () => {
     storefronts(() => [200, {}]);
     expect((await handler(post({ action: 'terms' }))).statusCode).toBe(401);
     expect(calls).toHaveLength(0);
+  });
+
+  it('refuses owners outside the pilot, without calling Storefronts', async () => {
+    h.pilot = false;
+    storefronts(() => [200, {}]);
+    for (const body of [{ action: 'terms' }, { action: 'status', siteId: SITE_ID }, { action: 'enable', siteId: SITE_ID, termsVersion: 'v' }]) {
+      const res = await handler(post(body));
+      expect(res.statusCode).toBe(403);
+      expect(bodyOf(res).error).toMatch(/not available/);
+    }
+    expect(calls).toHaveLength(0);
+    expect(h.updates).toEqual([]);
   });
 
   it('rejects unknown actions and bad site ids', async () => {

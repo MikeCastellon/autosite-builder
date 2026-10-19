@@ -25,10 +25,14 @@
 import { requireSiteOwner, requireUser, supabaseAdmin } from './_shared/auth.js';
 import { corsHeaders, jsonHeaders } from './_shared/cors.js';
 import { templateReads } from '../../src/components/preview/editorCapabilities.js';
+import { geniusStoreAllowed } from '../../src/lib/geniusStorePilot.js';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const HEX = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;
 const TIMEOUT_MS = 15000;
+// While the store is tested only the accounts in lib/geniusStorePilot.js
+// may use it; the app hides it from everyone else, and this is the guard.
+const NOT_YET = 'The Genius Store is not available on your account yet.';
 
 // website-partner's refusals, in words for the owner.
 const REFUSALS = {
@@ -132,7 +136,8 @@ export const handler = async (event) => {
 
   try {
     if (action === 'terms') {
-      await requireUser(event);
+      const user = await requireUser(event);
+      if (!geniusStoreAllowed(user.email)) return reply(403, { error: NOT_YET });
       const terms = await callStorefronts({ action: 'terms' });
       return reply(200, { version: terms.version, terms: terms.terms });
     }
@@ -143,6 +148,7 @@ export const handler = async (event) => {
     const { user, site } = await requireSiteOwner(event, siteId);
     const email = String(user.email || '').toLowerCase();
     if (!email) return reply(400, { error: 'Your account has no email address.' });
+    if (!geniusStoreAllowed(email)) return reply(403, { error: NOT_YET });
 
     if (action === 'status') {
       const status = await callStorefronts({ action: 'status', email, siteId });

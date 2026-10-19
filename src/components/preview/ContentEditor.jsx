@@ -496,7 +496,7 @@ function Toggle({ value, onChange, options }) {
   );
 }
 
-export default function ContentEditor({ isOpen, onClose, topOffset = 0, siteId, copy, images, onCopyChange, onImagesChange, templateMeta, templateId, customColors = {}, onCustomColors, customFonts = {}, onCustomFonts, businessType, onSwitchTemplate, businessInfo, onBusinessInfoChange }) {
+export default function ContentEditor({ isOpen, onClose, topOffset = 0, siteId, copy, images, onCopyChange, onImagesChange, templateMeta, templateId, customColors = {}, onCustomColors, customFonts = {}, onCustomFonts, businessType, onSwitchTemplate, businessInfo, onBusinessInfoChange, geniusStore = false }) {
   const { confirm: confirmDialog } = useAlert();
   const setBiz = (key, val) => {
     if (!onBusinessInfoChange) return;
@@ -564,7 +564,10 @@ export default function ContentEditor({ isOpen, onClose, topOffset = 0, siteId, 
   // the owner's order.
   const templateInfo = useTemplateInfo(templateId);
   const themeReady = templateInfo ? templateInfo.themeReady : true;
-  const toggleableSections = templateInfo?.sections || [];
+  // The Genius Store section only for owners who have the store
+  // (geniusStore, lib/geniusStorePilot.js): it is an added section, so
+  // leaving it out never moves the others.
+  const toggleableSections = (templateInfo?.sections || []).filter((s) => geniusStore || s.id !== 'shop');
   const defaultOrder = toggleableSections.map((s) => s.id);
   const hiddenSections = Array.isArray(copy?.hiddenSections) ? copy.hiddenSections : [];
   const orderedIds = mergeSectionOrder(copy?.sectionOrder, defaultOrder);
@@ -619,7 +622,7 @@ export default function ContentEditor({ isOpen, onClose, topOffset = 0, siteId, 
   const sections = editorTabs(templateId, {
     canEditBusiness: Boolean(onBusinessInfoChange),
     canSwitchTemplate: Boolean(onSwitchTemplate),
-  });
+  }).filter((tab) => geniusStore || tab.id !== 'shop');
   // After a template switch the open tab may not exist any more.
   const activeSection = sections.some((s) => s.id === selectedSection) ? selectedSection : 'visibility';
 

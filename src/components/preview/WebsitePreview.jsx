@@ -13,6 +13,7 @@ import { SITE_BASE_CSS } from '../../lib/siteRuntime.js';
 import { attachBeforeAfter } from './beforeAfterPreview.js';
 import { attachScrollers } from './scrollerPreview.js';
 import { attachStoreFrames } from './storePreview.js';
+import { geniusStoreAllowed } from '../../lib/geniusStorePilot.js';
 import { buildFontHref } from '../../lib/fontCatalog.js';
 
 const ACG_LOGO = 'https://www.autocaregenius.com/cdn/shop/files/v11_1.svg?v=1760731533&width=160';
@@ -171,6 +172,7 @@ export default function WebsitePreview({ siteId, businessInfo, onBusinessInfoCha
         onSwitchTemplate={onSwitchTemplate}
         businessInfo={businessInfo}
         onBusinessInfoChange={onBusinessInfoChange}
+        geniusStore={geniusStoreAllowed(profile?.email)}
       />
 
       {/* Preview frame */}
