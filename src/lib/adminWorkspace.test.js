@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import {
-  ADMIN_SECTIONS, ADMIN_SECTION_IDS, DEFAULT_ADMIN_SECTION, WORKSPACE_KEY,
+  ADMIN_GROUPS, adminGroupOf, ADMIN_SECTIONS, ADMIN_SECTION_IDS, DEFAULT_ADMIN_SECTION, WORKSPACE_KEY,
   adminSearch, canUseAdmin, initialLanding, isAdminSection, parseAdminLink, readWorkspace, stripAdminParams, writeWorkspace,
 } from './adminWorkspace.js';
 
@@ -46,6 +46,36 @@ describe('ADMIN_SECTIONS', () => {
     expect(Object.isFrozen(ADMIN_SECTIONS)).toBe(true);
     expect(Object.isFrozen(ADMIN_SECTIONS[0])).toBe(true);
     expect(Object.isFrozen(ADMIN_SECTION_IDS)).toBe(true);
+  });
+});
+
+describe('ADMIN_GROUPS', () => {
+  it('groups the sections into five header tabs, each landing on its first section', () => {
+    expect(ADMIN_GROUPS.map((g) => [g.label, g.sections.map((s) => s.id)])).toEqual([
+      ['Dashboard', ['dashboard']],
+      ['Websites', ['custom-sites', 'free-sites', 'site-upgrades']],
+      ['Customers', ['accounts']],
+      ['Sales', ['leads', 'pipeline']],
+      ['Activity', ['bookings', 'inquiries']],
+    ]);
+  });
+
+  it('holds every section exactly once', () => {
+    const ids = ADMIN_GROUPS.flatMap((g) => g.sections.map((s) => s.id));
+    expect([...ids].sort()).toEqual([...ADMIN_SECTION_IDS].sort());
+  });
+
+  it('finds a section\'s group, the Dashboard\'s for an unknown id', () => {
+    expect(adminGroupOf('pipeline').id).toBe('sales');
+    expect(adminGroupOf('free-sites').id).toBe('websites');
+    for (const id of ['nope', undefined, '']) expect(adminGroupOf(id).id).toBe('dashboard');
+  });
+
+  it('cannot be changed at runtime by a caller', () => {
+    expect(Object.isFrozen(ADMIN_GROUPS)).toBe(true);
+    expect(Object.isFrozen(ADMIN_GROUPS[1])).toBe(true);
+    expect(Object.isFrozen(ADMIN_GROUPS[1].sections)).toBe(true);
+    expect(Object.isFrozen(ADMIN_GROUPS[1].sections[0])).toBe(true);
   });
 });
 

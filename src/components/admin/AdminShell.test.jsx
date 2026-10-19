@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import AdminShell, { AccountMenuPanel } from './AdminShell.jsx';
-import { ADMIN_SECTIONS } from '../../lib/adminWorkspace.js';
+import { ADMIN_GROUPS } from '../../lib/adminWorkspace.js';
 
 const noop = () => {};
 
@@ -21,10 +21,16 @@ function render(props = {}, children = createElement('p', { id: 'page-body' }, '
 
 const text = (html) => html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
 
-// The two tab rows: the one in the bar (xl and up) and the scrolling row
-// under it (below xl). Only one shows at any width.
+// The two group-tab rows: the one in the bar (lg and up) and the scrolling
+// row under it (below lg). Only one shows at any width.
 function navs(html) {
   return [...html.matchAll(/<nav aria-label="(Admin|Admin sections)"[^>]*>([\s\S]*?)<\/nav>/g)].map((m) => ({ label: m[1], html: m[2] }));
+}
+
+// The current group's sub-tab row, or null.
+function subNav(html) {
+  const m = [...html.matchAll(/<nav aria-label="(\w+) sections"[^>]*>([\s\S]*?)<\/nav>/g)].find((x) => x[1] !== 'Admin');
+  return m ? { label: m[1], html: m[2] } : null;
 }
 
 function currentTabs(navHtml) {
@@ -41,30 +47,48 @@ describe('AdminShell', () => {
     expect(text(header)).toMatch(/\bAdmin\b/);
   });
 
-  it('lists every section as a flat row of tabs, in order, in both rows', () => {
+  it('shows one tab per group, in order, in both rows', () => {
     const rows = navs(render());
     expect(rows.map((r) => r.label)).toEqual(['Admin', 'Admin sections']);
-    const labels = ADMIN_SECTIONS.map((s) => s.label).join(' ');
-    for (const row of rows) expect(text(row.html).trim()).toBe(labels);
+    for (const row of rows) expect(text(row.html).trim()).toBe('Dashboard Websites Customers Sales Activity');
+    expect(ADMIN_GROUPS.map((g) => g.label)).toEqual(['Dashboard', 'Websites', 'Customers', 'Sales', 'Activity']);
   });
 
-  it('marks exactly the current section in each row', () => {
-    for (const row of navs(render({ section: 'pipeline' }))) {
-      expect(currentTabs(row.html)).toEqual(['Pipeline']);
+  it('marks the current section\'s group in each row and the section in the sub-tabs', () => {
+    const html = render({ section: 'pipeline' });
+    for (const row of navs(html)) expect(currentTabs(row.html)).toEqual(['Sales']);
+    expect(currentTabs(subNav(html).html)).toEqual(['Pipeline']);
+    expect(html.match(/aria-current=/g)).toHaveLength(3);
+  });
+
+  it('shows the current group\'s sections as sub-tabs, and none for a one-section group', () => {
+    const cases = {
+      'free-sites': ['Websites', 'Custom Free Upgrades', 'Free'],
+      'site-upgrades': ['Websites', 'Custom Free Upgrades', 'Upgrades'],
+      leads: ['Sales', 'Leads Pipeline', 'Leads'],
+      inquiries: ['Activity', 'Bookings Inquiries', 'Inquiries'],
+    };
+    for (const [section, [label, tabs, on]] of Object.entries(cases)) {
+      const sub = subNav(render({ section }));
+      expect(sub.label).toBe(label);
+      expect(text(sub.html).trim()).toBe(tabs);
+      expect(currentTabs(sub.html)).toEqual([on]);
     }
-    expect(render().match(/aria-current=/g)).toHaveLength(2);
+    for (const section of ['dashboard', 'accounts']) expect(subNav(render({ section }))).toBeNull();
   });
 
   it('marks the Dashboard for an unknown or missing section, as AdminPage shows it', () => {
     for (const section of ['nope', undefined, '1']) {
-      for (const row of navs(render({ section }))) expect(currentTabs(row.html)).toEqual(['Dashboard']);
+      const html = render({ section });
+      for (const row of navs(html)) expect(currentTabs(row.html)).toEqual(['Dashboard']);
+      expect(subNav(html)).toBeNull();
     }
   });
 
-  it('puts the tabs in the bar from xl and on a scrolling row below it', () => {
+  it('puts the tabs in the bar from lg and on a scrolling row below it', () => {
     const html = render();
-    expect(html).toMatch(/<nav aria-label="Admin" class="hidden xl:block[^"]*overflow-x-auto/);
-    expect(html).toMatch(/<nav aria-label="Admin sections" class="xl:hidden[^"]*overflow-x-auto/);
+    expect(html).toMatch(/<nav aria-label="Admin" class="hidden lg:block[^"]*overflow-x-auto/);
+    expect(html).toMatch(/<nav aria-label="Admin sections" class="lg:hidden[^"]*overflow-x-auto/);
   });
 
   it('offers the way back to the business next to the account menu', () => {
