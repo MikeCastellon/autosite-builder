@@ -172,7 +172,7 @@ describe('section manifests', () => {
     expect(missing.footerSpec).toBe(null);
     expect(missing.addedSections).toEqual([]);
     const sporty = await loadTemplateInfo('detailing_sporty');
-    expect(sporty.addedSections).toEqual(['brands', 'featured', 'beforeAfter', 'vehicleTypes', 'process', 'showcase', 'comparison', 'faq', 'shop']);
+    expect(sporty.addedSections).toEqual(['brands', 'featured', 'beforeAfter', 'vehicleTypes', 'process', 'showcase', 'comparison', 'faq']);
     expect(Array.isArray(sporty.footerSpec?.columns)).toBe(true);
     expect((await loadTemplateInfo('carwash_bubble')).footerSpec).toBe(null);
   });
@@ -260,7 +260,7 @@ describe('editorTabs', () => {
   it('adds template-specific tabs only where the template reads them', () => {
     expect(ids('detailing_sporty')).toEqual([
       'visibility', 'hero', 'headings', 'services', 'featured', 'vehicleTypes', 'howItWorks', 'makes', 'about', 'gallery', 'beforeAfter',
-      'showcase', 'comparison', 'testimonials', 'google', 'faq', 'shop', 'contact', 'colors', 'footer',
+      'showcase', 'comparison', 'testimonials', 'google', 'faq', 'contact', 'colors', 'footer',
     ]);
     // The reference-site bands' tabs are Bold & Sporty's and Driveway's
     // alone for now.
@@ -269,8 +269,6 @@ describe('editorTabs', () => {
     }
     expect(ids('mobile_driveway')).toEqual(expect.arrayContaining(['headings', 'vehicleTypes', 'howItWorks', 'beforeAfter', 'comparison', 'google', 'faq']));
     expect(ids('mobile_driveway')).not.toContain('showcase');
-    // The Genius Store tab: Bold & Sporty and Driveway first (phase 1).
-    expect(IDS.filter((id) => ids(id).includes('shop')).sort()).toEqual(['detailing_sporty', 'mobile_driveway']);
     expect(ids('mechanic_garage')).toEqual(['visibility', 'hero', 'services', 'about', 'gallery', 'beforeAfter', 'testimonials', 'contact', 'colors', 'footer']);
     expect(ids('tint_obsidian')).toEqual(expect.arrayContaining(['howItWorks', 'filmBrands', 'shadeGuide']));
     expect(ids('tint_obsidian')).not.toContain('whyUs');

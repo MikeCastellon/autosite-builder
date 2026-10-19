@@ -24,7 +24,7 @@
 import { SocialRow } from '../SocialIcons.jsx';
 import GoogleReviewsWidget from '../GoogleReviewsWidget.jsx';
 import IconOrEmoji from '../IconOrEmoji.jsx';
-import { buildSectionOrderAdded } from '../../../../lib/sectionOrder.js';
+import { buildSectionOrder } from '../../../../lib/sectionOrder.js';
 import { formatHours } from '../../../../lib/formatHours.js';
 import { HOURS_DAYS } from '../../../../lib/businessHours.js';
 import { deriveTheme, mix, alpha, ensureContrast, isDark, overPhoto } from '../kit/theme.js';
@@ -38,8 +38,6 @@ import { nameKey, bookingAttrs, reviewStars } from '../kit/features.js';
 import { BeforeAfterBand, beforeAfterCss } from '../kit/BeforeAfter.jsx';
 import { beforeAfterPairs, BA_DEFAULTS } from '../kit/beforeAfter.js';
 import { FaqBand, faqCss } from '../kit/Faq.jsx';
-import { StoreBand, storeCss } from '../kit/StoreBand.jsx';
-import { storeOf } from '../kit/store.js';
 import { faqItems, faqHeading, FAQ_DEFAULTS, FAQ_HINTS } from '../kit/faq.js';
 import { howItWorksSteps, howItWorksHeading, howStepPhotos, HOW_DEFAULTS, HOW_HINTS } from '../kit/howItWorks.js';
 import { VehicleTypeIcon } from '../kit/VehicleTypes.jsx';
@@ -65,15 +63,8 @@ export const sections = [
   { id: 'comparison', label: 'Comparison' },
   { id: 'testimonials', label: 'Reviews' },
   { id: 'faq', label: 'FAQ' },
-  { id: 'shop', label: 'Genius Store' },
   { id: 'cta', label: 'Contact / CTA' },
 ];
-
-// Ids added after sites were saved with this design: they order themselves
-// (buildSectionOrderAdded), so a saved site's sections keep exactly their
-// order values and its page does not change. The store renders right after
-// the FAQ in the markup, its predecessor here.
-export const addedSections = ['shop'];
 
 // Eyebrows, numbers and small labels are set in a monospace.
 export const extraFonts = ["'JetBrains Mono', monospace"];
@@ -510,12 +501,6 @@ html[data-acg-scrolled] .dw-nav-box{background:var(--dw-dark-bg)}
 }
 `;
 
-// The Genius Store band (kit StoreBand), on the light band like the FAQ,
-// square like the rest of this design.
-const SHOP_CSS = `
-.dw-shop-band{--dw-shop-text:var(--dw-text);--dw-shop-muted:var(--dw-muted);--dw-shop-accent:var(--dw-accent-text);--dw-shop-line:var(--dw-border-strong);--dw-shop-frame-bg:var(--dw-surface);--dw-shop-r:0px}
-`;
-
 // The kit FAQ band, restyled: two columns of questions with a rule under
 // each and the accent "+" (faqCss reads these --dw-faq-* aliases).
 const FAQ_CSS = `
@@ -567,7 +552,7 @@ export default function MobileDriveway({ businessInfo, generatedCopy, templateMe
 
   const hiddenIds = list(copy.hiddenSections);
   const show = (id) => !hiddenIds.includes(id);
-  const order = buildSectionOrderAdded(copy, sections.map((s) => s.id), addedSections);
+  const order = buildSectionOrder(copy, sections.map((s) => s.id));
   const hd = headingDefaults();
   const st = (id) => sectionTitle(copy.sectionTitles, id);
   // A band's heading: the owner's (Edit > Headings), else the design's own.
@@ -695,11 +680,6 @@ export default function MobileDriveway({ businessInfo, generatedCopy, templateMe
   const faqOn = show('faq') && Boolean(faq) && (faq.items.length > 0 || editor);
   const faqHead = faqHeading(copy.faq, copy.sectionTitles, FAQ_DEFAULTS);
 
-  // Edit > Genius Store: the owner's Genius Storefronts shop (kit/store.js).
-  // Nothing without a store, in the editor too.
-  const shop = storeOf(copy.store);
-  const shopOn = show('shop') && Boolean(shop);
-
   const testimonials = list(copy.testimonialPlaceholders).filter((q) => txt(q?.text));
   const reviews = copy.googleWidgetKey ? 'google' : testimonials.length > 0 ? 'quotes' : null;
   const reviewsOn = show('testimonials') && Boolean(reviews);
@@ -717,7 +697,6 @@ export default function MobileDriveway({ businessInfo, generatedCopy, templateMe
     galleryShown.length > 0 && { href: '#gallery', label: 'Work' },
     reviewsOn && { href: '#reviews', label: 'Reviews' },
     faqOn && { href: '#faq', label: 'FAQ' },
-    shopOn && { href: '#shop', label: 'Shop' },
   ].filter(Boolean);
   const menuLinks = [
     ...navLinks,
@@ -764,7 +743,6 @@ export default function MobileDriveway({ businessInfo, generatedCopy, templateMe
 
   const css = CSS + svcCss
     + (faqOn ? faqCss('dw-faq', { twoFrom: 601 }) + FAQ_CSS : '')
-    + (shopOn ? storeCss('dw-shop') + SHOP_CSS : '')
     + (baOn ? beforeAfterCss('dw-ba') + BA_CSS : '');
 
   const rootVars = {
@@ -1125,19 +1103,6 @@ export default function MobileDriveway({ businessInfo, generatedCopy, templateMe
           labelledBy="dw-faq-h"
           heading={<Heading h={faqHead} id="dw-faq-h" />}
           hints={editor && faq.items.length === 0 ? <EditorHint>{FAQ_HINTS.empty}</EditorHint> : null}
-        />
-      )}
-
-      {shopOn && (
-        <StoreBand
-          ns="dw-shop"
-          store={copy.store}
-          order={order('shop')}
-          businessName={name}
-          className="dw-sec dw-light dw-shop-band"
-          wrapClassName="dw-wrap"
-          labelledBy="dw-shop-h"
-          heading={<Heading h={{ eyebrow: shop.eyebrow, title: shop.title, accent: '', intro: shop.intro }} id="dw-shop-h" />}
         />
       )}
 

@@ -37,7 +37,6 @@ import { howItWorksSteps } from '../../components/preview/templates/kit/howItWor
 import { showcaseItems } from '../../components/preview/templates/kit/showcase.js';
 import { comparisonOf } from '../../components/preview/templates/kit/comparison.js';
 import { faqItems } from '../../components/preview/templates/kit/faq.js';
-import { storeOf } from '../../components/preview/templates/kit/store.js';
 
 export const MOBILE_VERSION = 1;
 export const MOBILE_INPUTS_FILE = 'mobile-inputs.json';
@@ -183,16 +182,16 @@ const LIVE_THEME = 'hero:Hero, statsBar:Stats Bar, brands:Vehicle Makes, service
 const CHROME = LIVE_THEME.replace('gallery:Gallery, ', 'gallery:Gallery, beforeAfter:Before & After, ');
 // Bold & Sporty also has the reference-site bands: Vehicle Types and How It
 // Works after the featured band, Detail Showcase and Comparison after the
-// Before & After band, FAQ after the reviews, then the Genius Store.
+// Before & After band, FAQ after the reviews.
 const SPORTY = CHROME
   .replace('featured:Featured Service, ', 'featured:Featured Service, vehicleTypes:Vehicle Types, process:How It Works, ')
   .replace('beforeAfter:Before & After, ', 'beforeAfter:Before & After, showcase:Detail Showcase, comparison:Comparison, ')
-  .replace('testimonials:Reviews, ', 'testimonials:Reviews, faq:FAQ, shop:Genius Store, ');
+  .replace('testimonials:Reviews, ', 'testimonials:Reviews, faq:FAQ, ');
 const TINT_LEGACY = 'hero:Hero, statsBar:Stats Bar, services:Services, brands:Film Brands, about:About, gallery:Gallery, testimonials:Reviews, cta:Contact / CTA';
 const MECHANIC_KIT = 'hero:Hero, statsBar:Stats Bar, services:Services, about:About, gallery:Gallery, beforeAfter:Before & After, testimonials:Reviews, cta:Contact / CTA, awards:Awards';
 
 export const TEMPLATE_SECTIONS = Object.freeze({
-  detailing_sporty: tpl(true, SPORTY, ['brands', 'featured', 'beforeAfter', 'vehicleTypes', 'process', 'showcase', 'comparison', 'faq', 'shop']),
+  detailing_sporty: tpl(true, SPORTY, ['brands', 'featured', 'beforeAfter', 'vehicleTypes', 'process', 'showcase', 'comparison', 'faq']),
   detailing_coastal: tpl(false, STD),
   mobile_bold: tpl(false, STD_NO_STATS),
   mobile_modern: tpl(false, STD),
@@ -214,7 +213,7 @@ export const TEMPLATE_SECTIONS = Object.freeze({
   detailing_autosync_white: tpl(false, STD_NO_STATS),
   carwash_bubble: tpl(true, 'hero:Hero, services:Packages, process:How It Works, about:About & Features, gallery:Gallery, beforeAfter:Before & After, testimonials:Reviews, cta:Contact / CTA', ['beforeAfter']),
   mobile_redline: tpl(true, 'hero:Hero & Quote, about:About, gallery:Gallery, beforeAfter:Before & After, brands:Vehicle Makes, services:Packages, featured:Featured Service, testimonials:Reviews, awards:Awards, locations:Service Area & Hours, cta:Contact / CTA', ['beforeAfter']),
-  mobile_driveway: tpl(true, 'hero:Hero, statsBar:Info Bar, about:About, services:Services, vehicleTypes:Vehicle Types, process:How It Works, beforeAfter:Before & After, gallery:Gallery, comparison:Comparison, testimonials:Reviews, faq:FAQ, shop:Genius Store, cta:Contact / CTA', ['shop']),
+  mobile_driveway: tpl(true, 'hero:Hero, statsBar:Info Bar, about:About, services:Services, vehicleTypes:Vehicle Types, process:How It Works, beforeAfter:Before & After, gallery:Gallery, comparison:Comparison, testimonials:Reviews, faq:FAQ, cta:Contact / CTA'),
 });
 // An unknown template: the legacy default (sectionManifest.js STD).
 const FALLBACK_TEMPLATE = tpl(false, STD);
@@ -237,8 +236,7 @@ const listOf = (v) => {
 // on (Vehicle Makes without makes, Featured Service without a service,
 // Before & After without a pair that has both photos: `images` is the
 // site's image map; the reference-site bands without an entry the
-// published page shows, read with the kit's own helpers; the Genius Store
-// without a store).
+// published page shows, read with the kit's own helpers).
 export function siteSections({ templateId, copy, businessInfo, images } = {}) {
   const t = templateSections(templateId);
   const c = isObject(copy) ? copy : {};
@@ -254,7 +252,6 @@ export function siteSections({ templateId, copy, businessInfo, images } = {}) {
     showcase: Boolean(showcaseItems(c.showcase, images)?.items.length),
     comparison: Boolean(comparisonOf(c.comparison)?.rows.length),
     faq: Boolean(faqItems(c.faq)?.items.length),
-    shop: Boolean(storeOf(c.store)),
   };
   const hiddenOf = (id) => ownerHidden.has(id)
     || (id === 'awards' && awards.length === 0)

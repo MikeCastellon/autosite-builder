@@ -29,8 +29,6 @@
 //   beforeAfter                      Before & After tab (copy.beforeAfter
 //                                    + images baBefore<i> / baAfter<i>)
 //   faq                              FAQ tab (copy.faq)
-//   store                            Genius Store tab (copy.store, the
-//                                    owner's Genius Storefronts embed)
 //   vehicleTypes                     Vehicle Types tab (copy.vehicleTypes)
 //   comparison                       Comparison tab (copy.comparison)
 //   showcase                         Detail Showcase tab (copy.showcase
@@ -70,7 +68,6 @@ export const CAPABILITY_KEYS = {
   vehicleMakes: ['vehicleMakes'],
   beforeAfter: ['beforeAfter'],
   faq: ['faq'],
-  store: ['store'],
   vehicleTypes: ['vehicleTypes'],
   comparison: ['comparison'],
   showcase: ['showcase'],
@@ -113,7 +110,7 @@ const REFERENCE_BANDS = ['howSteps', 'faq', 'vehicleTypes', 'comparison', 'showc
 export const TEMPLATE_READS = {
   // Theme-ready (visible) templates. Every one has the Before & After band,
   // opt-in: nothing shows without copy.beforeAfter.
-  detailing_sporty: [...KIT, ...OPT_IN, 'beforeAfter', ...REFERENCE_BANDS, 'store'],
+  detailing_sporty: [...KIT, ...OPT_IN, 'beforeAfter', ...REFERENCE_BANDS],
   mechanic_industrial: [...KIT, 'beforeAfter'],
   mechanic_garage: [...KIT, 'beforeAfter'],
   mobile_chrome: [...KIT, ...OPT_IN, 'beforeAfter'],
@@ -130,7 +127,7 @@ export const TEMPLATE_READS = {
   // Driveway (custom websites only): no second hero button.
   mobile_driveway: [
     'ctaPrimaryUrl', 'servicesTitle', 'aboutStats', 'googleBadge', 'sectionTitles', 'serviceDetails', 'ctaImage', 'reviewSources',
-    'beforeAfter', 'howSteps', 'faq', 'vehicleTypes', 'comparison', 'aboutPhoto2', 'howStepPhotos', 'logoSize', 'store',
+    'beforeAfter', 'howSteps', 'faq', 'vehicleTypes', 'comparison', 'aboutPhoto2', 'howStepPhotos', 'logoSize',
   ],
   // Legacy templates (hidden from the picker; some saved sites use them).
   detailing_coastal: ['ctaPrimaryUrl', 'ctaSecondaryUrl', 'aboutStats'],
@@ -253,8 +250,6 @@ export const EDITOR_TABS = [
   { id: 'testimonials', label: 'Reviews', group: 'content' },
   { id: 'google', label: 'Google Rating', group: 'content', needs: 'googleBadge' },
   { id: 'faq', label: 'FAQ', group: 'content', needs: 'faq' },
-  // Same id as the section it fills (data-section="shop").
-  { id: 'shop', label: 'Genius Store', group: 'content', needs: 'store' },
   // (An Instagram tab stays off pending Meta App Review.)
   { id: 'contact', label: 'Contact', group: 'content' },
   { id: 'colors', label: 'Colors & Fonts', group: 'design' },
