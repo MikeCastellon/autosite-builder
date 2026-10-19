@@ -16,6 +16,8 @@ import HeroServicesPanel from './editor/HeroServicesPanel.jsx';
 import FeaturedServicePanel from './editor/FeaturedServicePanel.jsx';
 import BeforeAfterPanel from './editor/BeforeAfterPanel.jsx';
 import FaqPanel from './editor/FaqPanel.jsx';
+import GeniusStorePanel from './editor/GeniusStorePanel.jsx';
+import { STORE_HINTS } from './templates/kit/store.js';
 import VehicleTypesPanel from './editor/VehicleTypesPanel.jsx';
 import LogoSizeField from './editor/LogoSizeField.jsx';
 import ComparisonPanel from './editor/ComparisonPanel.jsx';
@@ -121,6 +123,7 @@ const NAV_ICON_PATHS = {
   showcase:     <><rect x="2" y="2.5" width="8.5" height="11" rx="1" /><path d="M13.5 2.5v3M12 4h3" /><path d="M2 10.5l2.5-2.5 2 2 1.5-1.5 2.5 2.5" /></>,
   comparison:   <><rect x="2" y="2.5" width="12" height="11" rx="1" /><path d="M8 2.5v11M2 6h12" /><path d="M3.8 9.5l.9.9 1.6-1.9" /><path d="M10 9.7h2" /></>,
   faq:          <><circle cx="8" cy="8" r="6" /><path d="M6.3 6.3a1.8 1.8 0 113 1.4c-.6.4-1.3.8-1.3 1.6v.3" /><path d="M8 11.5h.01" /></>,
+  shop:         <><path d="M3 5.5h10l-.8 8H3.8z" /><path d="M5.8 5.5V4.3a2.2 2.2 0 014.4 0v1.2" /></>,
 };
 
 // A rail label's text: a word too long for the 72px rail ("Comparison")
@@ -171,6 +174,7 @@ const EMPTY_SECTION_HINTS = {
   showcase: 'Not on your page yet: add a photo with a title in Detail Showcase.',
   comparison: 'Not on your page yet: add a row with a label in Comparison.',
   faq: 'Not on your page yet: add a question and its answer in FAQ.',
+  shop: STORE_HINTS.empty,
 };
 const EMPTY_SECTION_HINT = 'Not on your page yet: this section has nothing to show.';
 
@@ -492,7 +496,7 @@ function Toggle({ value, onChange, options }) {
   );
 }
 
-export default function ContentEditor({ isOpen, onClose, topOffset = 0, siteId, copy, images, onCopyChange, onImagesChange, templateMeta, templateId, customColors = {}, onCustomColors, customFonts = {}, onCustomFonts, businessType, onSwitchTemplate, businessInfo, onBusinessInfoChange }) {
+export default function ContentEditor({ isOpen, onClose, topOffset = 0, siteId, copy, images, onCopyChange, onImagesChange, templateMeta, templateId, customColors = {}, onCustomColors, customFonts = {}, onCustomFonts, businessType, onSwitchTemplate, businessInfo, onBusinessInfoChange, geniusStore = false }) {
   const { confirm: confirmDialog } = useAlert();
   const setBiz = (key, val) => {
     if (!onBusinessInfoChange) return;
@@ -560,7 +564,10 @@ export default function ContentEditor({ isOpen, onClose, topOffset = 0, siteId, 
   // the owner's order.
   const templateInfo = useTemplateInfo(templateId);
   const themeReady = templateInfo ? templateInfo.themeReady : true;
-  const toggleableSections = templateInfo?.sections || [];
+  // The Genius Store section only for owners who have the store
+  // (geniusStore, lib/geniusStorePilot.js): it is an added section, so
+  // leaving it out never moves the others.
+  const toggleableSections = (templateInfo?.sections || []).filter((s) => geniusStore || s.id !== 'shop');
   const defaultOrder = toggleableSections.map((s) => s.id);
   const hiddenSections = Array.isArray(copy?.hiddenSections) ? copy.hiddenSections : [];
   const orderedIds = mergeSectionOrder(copy?.sectionOrder, defaultOrder);
@@ -615,7 +622,7 @@ export default function ContentEditor({ isOpen, onClose, topOffset = 0, siteId, 
   const sections = editorTabs(templateId, {
     canEditBusiness: Boolean(onBusinessInfoChange),
     canSwitchTemplate: Boolean(onSwitchTemplate),
-  });
+  }).filter((tab) => geniusStore || tab.id !== 'shop');
   // After a template switch the open tab may not exist any more.
   const activeSection = sections.some((s) => s.id === selectedSection) ? selectedSection : 'visibility';
 
@@ -1603,6 +1610,10 @@ export default function ContentEditor({ isOpen, onClose, topOffset = 0, siteId, 
 
           {activeSection === 'faq' && (
             <FaqPanel copy={copy} setCopy={setCopy} confirm={confirmDialog} hasHeadingsTab={has('sectionTitles')} />
+          )}
+
+          {activeSection === 'shop' && (
+            <GeniusStorePanel copy={copy} setCopy={setCopy} siteId={siteId} colors={templateMeta?.colors} confirm={confirmDialog} />
           )}
 
           {activeSection === 'colors' && templateMeta && (

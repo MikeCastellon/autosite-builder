@@ -18,6 +18,8 @@ import BookingOnlySetup from './components/dashboard/booking-only/BookingOnlySet
 import BookingSettingsPage from './components/dashboard/booking-settings/BookingSettingsPage.jsx';
 import BookingsPage from './components/dashboard/bookings-page/BookingsPage.jsx';
 import InquiriesPage from './components/dashboard/inquiries-page/InquiriesPage.jsx';
+import GeniusStorePage from './components/dashboard/genius-store/GeniusStorePage.jsx';
+import { geniusStoreAllowed } from './lib/geniusStorePilot.js';
 import CustomersPage from './components/dashboard/customers-page/CustomersPage.jsx';
 import CustomerDetailPage from './components/dashboard/customers-page/CustomerDetailPage.jsx';
 import AdminPage from './components/admin/AdminPage.jsx';
@@ -553,6 +555,8 @@ export default function App() {
     onOpenCharges: onOpenChargesProp,
     onCharge: onChargeProp,
     onOpenPaymentsConnect: onOpenPaymentsConnectProp,
+    // Only for the owners lib/geniusStorePilot.js lets in, while it is tested.
+    onOpenGeniusStore: geniusStoreAllowed(session?.user?.email) ? () => setView('genius-store') : undefined,
     onSwitchToAdmin: adminAllowed ? () => openAdmin() : undefined,
     onOpenProfile: () => setView('profile'),
     onSignOut: handleSignOut,
@@ -616,6 +620,14 @@ export default function App() {
       } catch { /* leave base64 in place; retry next open */ }
     })();
   };
+
+  if (view === 'genius-store' && geniusStoreAllowed(session?.user?.email)) {
+    return (
+      <AppShell active="genius-store" nav={navHandlers} userEmail={session?.user?.email} profile={profile}>
+        <GeniusStorePage userId={session?.user?.id} profile={profile} />
+      </AppShell>
+    );
+  }
 
   if (view === 'inquiries') {
     return (

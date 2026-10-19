@@ -46,6 +46,8 @@ import { comparisonOf, comparisonHeading, CMP_DEFAULTS, CMP_HINTS } from '../kit
 import { ShowcaseBand, showcaseCss } from '../kit/Showcase.jsx';
 import { showcaseItems, SHOWCASE_DEFAULTS } from '../kit/showcase.js';
 import { ServiceTabs, serviceTabsCss } from '../kit/ServiceTabs.jsx';
+import { StoreBand, storeCss } from '../kit/StoreBand.jsx';
+import { storeOf } from '../kit/store.js';
 import { serviceTabsOf, serviceTabsStatus, SERVICE_TABS_HINTS } from '../kit/serviceTabs.js';
 import {
   GoogleRatingBadge, StarRow, GOOGLE_STAR_GOLD, googleRatingOf, googlePlaceUrl, googleBadgePlacements,
@@ -59,10 +61,11 @@ export const themeReady = true;
 // vehicle-makes band), 'featured' (the featured-service band),
 // 'beforeAfter' (the Before & After band) and the reference-site bands
 // ('vehicleTypes', 'process' = How It Works, 'showcase' = Detail Showcase,
-// 'comparison', 'faq') came later: see addedSections. The later bands sit
-// where the reference design has them: what you work on and how it goes
-// right after the services, the showcase and the comparison after the
-// before & after photos, the questions after the reviews.
+// 'comparison', 'faq') and the Genius Store ('shop') came later: see
+// addedSections. The later bands sit where the reference design has them:
+// what you work on and how it goes right after the services, the showcase
+// and the comparison after the before & after photos, the questions after
+// the reviews, then the store, before the contact band.
 export const sections = [
   { id: 'hero', label: 'Hero' },
   { id: 'statsBar', label: 'Stats Bar' },
@@ -78,6 +81,7 @@ export const sections = [
   { id: 'comparison', label: 'Comparison' },
   { id: 'testimonials', label: 'Reviews' },
   { id: 'faq', label: 'FAQ' },
+  { id: 'shop', label: 'Genius Store' },
   { id: 'cta', label: 'Contact / CTA' },
   { id: 'awards', label: 'Awards' },
 ];
@@ -88,7 +92,7 @@ export const sections = [
 // order value, and an added band without a saved slot shares the value of
 // the section before it, rendering right after it in the DOM (so each band
 // below is placed in the markup right after its predecessor in `sections`).
-export const addedSections = ['brands', 'featured', 'beforeAfter', 'vehicleTypes', 'process', 'showcase', 'comparison', 'faq'];
+export const addedSections = ['brands', 'featured', 'beforeAfter', 'vehicleTypes', 'process', 'showcase', 'comparison', 'faq', 'shop'];
 
 export const extraFonts = [];
 
@@ -670,6 +674,12 @@ const CMP_CSS = `
 // edge (not an editor draft, which stays open to show what it needs). The
 // kit's focus ring sits inside the box: Sporty's own summary ring
 // (.ds-root summary:focus-visible) would draw it outside, over the border.
+// The Genius Store band (kit StoreBand): on the page background, with this
+// design's square corners and uppercase titles.
+const SHOP_CSS = `
+.ds-shop-band{--ds-shop-text:var(--ds-text);--ds-shop-muted:var(--ds-muted);--ds-shop-accent:var(--ds-accent-text);--ds-shop-line:var(--ds-border);--ds-shop-frame-bg:var(--ds-surface);--ds-shop-r:0px}
+`;
+
 const FAQ_CSS = `
 .ds-faq-band{--ds-faq-text:var(--ds-text);--ds-faq-muted:var(--ds-muted);--ds-faq-accent:var(--ds-accent-text);--ds-faq-item-bg:var(--ds-sf-bg);--ds-faq-open-bg:var(--ds-sf-bg);--ds-faq-item-text:var(--ds-sf-text);--ds-faq-item-muted:var(--ds-sf-muted);--ds-faq-item-accent:var(--ds-sf-accent);--ds-faq-hover:var(--ds-sf-accent);--ds-faq-line:var(--ds-sf-border);--ds-faq-line-open:var(--ds-sf-border-strong);--ds-faq-focus:var(--ds-sf-accent);--ds-faq-r:0px;--ds-faq-q-font:var(--ds-head);--ds-faq-q-w:var(--ds-head-w2);--ds-faq-head:var(--ds-head);--ds-faq-head-w:var(--ds-head-w);--ds-faq-title-case:uppercase}
 .ds-faq-item[open]:not(.ds-faq-todo){box-shadow:inset 4px 0 0 var(--ds-brand)}
@@ -1131,6 +1141,10 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
   // Edit > FAQ: questions that open and close (FAQPage data when published).
   const faq = faqItems(copy.faq, { editor });
   const faqOn = show('faq') && Boolean(faq) && (faq.items.length > 0 || editor);
+  // Edit > Genius Store: the owner's Genius Storefronts shop (kit/store.js).
+  // Nothing without a store, in the editor too.
+  const shop = storeOf(copy.store);
+  const shopOn = show('shop') && Boolean(shop);
 
   // Business Info > Areas served (the list only, never split from the
   // free-text service area) and the Fully insured switch (only when on).
@@ -1479,7 +1493,7 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
         {CSS + (heroOn ? heroOfferCss('ds-hq', { stackFrom: 1024 }) : '') + (pkgOn ? packageDetailsCss('ds-pk') : '') + (featuredOn ? featuredBandCss('ds-ft') : '') + (makesOn ? makesBandCss('ds-mk') : '') + (featureOn ? FEATURE_CSS : '') + (baOn ? beforeAfterCss('ds-ba') + BA_CSS : '') + navBadgeCss
           // The reference-site bands: kit CSS, then this design's aliases.
           + (serviceTabs ? serviceTabsCss('ds-st') + ST_CSS : '') + (vtOn ? vehicleTypesCss('ds-vt') + VT_CSS : '') + (howOn ? howItWorksCss('ds-how') + HOW_CSS : '')
-          + (scOn ? showcaseCss('ds-sc') + SC_CSS : '') + (cmpOn ? comparisonCss('ds-cmp') + CMP_CSS : '') + (faqOn ? faqCss('ds-faq') + FAQ_CSS : '')}
+          + (scOn ? showcaseCss('ds-sc') + SC_CSS : '') + (cmpOn ? comparisonCss('ds-cmp') + CMP_CSS : '') + (faqOn ? faqCss('ds-faq') + FAQ_CSS : '') + (shopOn ? storeCss('ds-shop') + SHOP_CSS : '')}
       </style>
       <a className="ds-skip" href="#main">Skip to content</a>
 
@@ -1947,6 +1961,19 @@ export default function DetailingSporty({ businessInfo, generatedCopy, templateM
             labelledBy="ds-faq-h"
             heading={bandHead(faqHeading(copy.faq, copy.sectionTitles, hd.faq), 'ds-faq-h')}
             hints={faq.items.length === 0 && <EditorHint>{FAQ_HINTS.empty}</EditorHint>}
+          />
+        )}
+
+        {shopOn && (
+          <StoreBand
+            ns="ds-shop"
+            store={copy.store}
+            order={order('shop')}
+            businessName={name}
+            className="ds-section"
+            wrapClassName="ds-wrap"
+            labelledBy="ds-shop-h"
+            heading={bandHead({ eyebrow: shop.eyebrow, title: shop.title, accent: '', intro: shop.intro }, 'ds-shop-h')}
           />
         )}
 

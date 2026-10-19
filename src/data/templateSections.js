@@ -5,8 +5,8 @@
 // fails when a template changes and this file doesn't.
 export const TEMPLATE_SECTIONS = Object.freeze({
   detailing_sporty: {
-    sections: [{ id: 'hero', label: 'Hero' }, { id: 'statsBar', label: 'Stats Bar' }, { id: 'brands', label: 'Vehicle Makes' }, { id: 'services', label: 'Services' }, { id: 'featured', label: 'Featured Service' }, { id: 'vehicleTypes', label: 'Vehicle Types' }, { id: 'process', label: 'How It Works' }, { id: 'about', label: 'About' }, { id: 'gallery', label: 'Gallery' }, { id: 'beforeAfter', label: 'Before & After' }, { id: 'showcase', label: 'Detail Showcase' }, { id: 'comparison', label: 'Comparison' }, { id: 'testimonials', label: 'Reviews' }, { id: 'faq', label: 'FAQ' }, { id: 'cta', label: 'Contact / CTA' }, { id: 'awards', label: 'Awards' }],
-    added: ['brands', 'featured', 'beforeAfter', 'vehicleTypes', 'process', 'showcase', 'comparison', 'faq'],
+    sections: [{ id: 'hero', label: 'Hero' }, { id: 'statsBar', label: 'Stats Bar' }, { id: 'brands', label: 'Vehicle Makes' }, { id: 'services', label: 'Services' }, { id: 'featured', label: 'Featured Service' }, { id: 'vehicleTypes', label: 'Vehicle Types' }, { id: 'process', label: 'How It Works' }, { id: 'about', label: 'About' }, { id: 'gallery', label: 'Gallery' }, { id: 'beforeAfter', label: 'Before & After' }, { id: 'showcase', label: 'Detail Showcase' }, { id: 'comparison', label: 'Comparison' }, { id: 'testimonials', label: 'Reviews' }, { id: 'faq', label: 'FAQ' }, { id: 'shop', label: 'Genius Store' }, { id: 'cta', label: 'Contact / CTA' }, { id: 'awards', label: 'Awards' }],
+    added: ['brands', 'featured', 'beforeAfter', 'vehicleTypes', 'process', 'showcase', 'comparison', 'faq', 'shop'],
     headingFields: ['hero', 'brands', 'services', 'featured', 'vehicleTypes', 'process', 'about', 'gallery', 'beforeAfter', 'showcase', 'comparison', 'testimonials', 'faq', 'cta'],
   },
   mechanic_industrial: {
@@ -60,8 +60,8 @@ export const TEMPLATE_SECTIONS = Object.freeze({
     headingFields: ['hero', 'about', 'gallery', 'beforeAfter', 'brands', 'services', 'featured', 'testimonials', 'locations', 'cta'],
   },
   mobile_driveway: {
-    sections: [{ id: 'hero', label: 'Hero' }, { id: 'statsBar', label: 'Info Bar' }, { id: 'about', label: 'About' }, { id: 'services', label: 'Services' }, { id: 'vehicleTypes', label: 'Vehicle Types' }, { id: 'process', label: 'How It Works' }, { id: 'beforeAfter', label: 'Before & After' }, { id: 'gallery', label: 'Gallery' }, { id: 'comparison', label: 'Comparison' }, { id: 'testimonials', label: 'Reviews' }, { id: 'faq', label: 'FAQ' }, { id: 'cta', label: 'Contact / CTA' }],
-    added: [],
+    sections: [{ id: 'hero', label: 'Hero' }, { id: 'statsBar', label: 'Info Bar' }, { id: 'about', label: 'About' }, { id: 'services', label: 'Services' }, { id: 'vehicleTypes', label: 'Vehicle Types' }, { id: 'process', label: 'How It Works' }, { id: 'beforeAfter', label: 'Before & After' }, { id: 'gallery', label: 'Gallery' }, { id: 'comparison', label: 'Comparison' }, { id: 'testimonials', label: 'Reviews' }, { id: 'faq', label: 'FAQ' }, { id: 'shop', label: 'Genius Store' }, { id: 'cta', label: 'Contact / CTA' }],
+    added: ['shop'],
     headingFields: ['hero', 'about', 'services', 'vehicleTypes', 'process', 'beforeAfter', 'gallery', 'comparison', 'testimonials', 'faq', 'cta'],
   },
 });
