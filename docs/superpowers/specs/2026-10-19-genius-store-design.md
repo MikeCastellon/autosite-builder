@@ -133,9 +133,10 @@ and storefront remain, so turning it back on reuses them).
    status with it); `GENIUS_WEBSITES_KEY` (secret, functions scope) and `GENIUS_STOREFRONTS_URL` set on the
    autosite-builder Netlify site. A copy of the key is in the main checkout's gitignored `.env.local`.
 2. Test on this PR's deploy preview with a non-staff account (it creates a real partner and a real `SAVE-` code).
-3. **Owner:** republish `acg-affiliate-ref.liquid` on the live Shopify theme, then push Storefronts and deploy
-   `shopify-order-webhook` (embed and webhook on `?acgref=`). Until then the live embed still sends `?ref=`.
-4. **Owner:** merge this PR.
+3. Done 2026-10-19: the `?acgref=` snippet is live on the Shopify theme (ACG-ActiveTheme e905d76, two-way
+   synced), Storefronts `main` is pushed (embed deploy 14a051b sends `?acgref=`), and `shopify-order-webhook`
+   (v11, no `ref` attribute) and `affiliate-invite` are redeployed, in that order so no click went unattributed.
+4. **Owner:** merge this PR once a store has been turned on from the preview.
 5. Tell the 5 existing partners to re-copy their share link.
 
 ## Not in scope
