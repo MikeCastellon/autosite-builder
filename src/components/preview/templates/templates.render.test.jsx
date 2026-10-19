@@ -36,7 +36,7 @@ import * as kitSample from './__fixtures__/KitSampleTemplate.jsx';
 // are appended to its row and frozen from then on.
 const DEFAULT_IDS = ['hero', 'statsBar', 'services', 'about', 'gallery', 'testimonials', 'cta', 'awards'];
 const SAVED_SECTION_IDS = {
-  detailing_sporty: [...DEFAULT_IDS, 'brands', 'featured', 'beforeAfter', 'vehicleTypes', 'process', 'showcase', 'comparison', 'faq'],
+  detailing_sporty: [...DEFAULT_IDS, 'brands', 'featured', 'beforeAfter', 'vehicleTypes', 'process', 'showcase', 'comparison', 'faq', 'shop'],
   detailing_coastal: DEFAULT_IDS,
   detailing_autosync_dark: DEFAULT_IDS,
   detailing_autosync_white: DEFAULT_IDS,
@@ -59,7 +59,7 @@ const SAVED_SECTION_IDS = {
   carwash_bubble: ['hero', 'services', 'process', 'about', 'gallery', 'testimonials', 'cta', 'beforeAfter'],
   // New template (no saved sites yet): its own ids, frozen from here on.
   mobile_redline: ['hero', 'about', 'gallery', 'brands', 'services', 'featured', 'testimonials', 'awards', 'locations', 'cta', 'beforeAfter'],
-  mobile_driveway: ['hero', 'statsBar', 'about', 'services', 'vehicleTypes', 'process', 'beforeAfter', 'gallery', 'comparison', 'testimonials', 'faq', 'cta'],
+  mobile_driveway: ['hero', 'statsBar', 'about', 'services', 'vehicleTypes', 'process', 'beforeAfter', 'gallery', 'comparison', 'testimonials', 'faq', 'cta', 'shop'],
   __kit_sample__: DEFAULT_IDS,
 };
 
