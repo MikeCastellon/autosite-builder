@@ -1,16 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
-import { ADMIN_SECTIONS, DEFAULT_ADMIN_SECTION, isAdminSection } from '../../lib/adminWorkspace.js';
+import { ADMIN_GROUPS, DEFAULT_ADMIN_SECTION, adminGroupOf, isAdminSection } from '../../lib/adminWorkspace.js';
 
 // The Admin workspace's frame, built like the other Genius apps' headers
 // (Closeout, Routes, Forecast, Trends, Passwords): a white sticky bar with
-// the ACG logo (back to Genius HQ), the "Genius Websites" wordmark, a flat
-// row of text tabs with a black pill on the current one, and the account
-// menu on the right. What says "admin" is the red Admin pill after the
+// the ACG logo (back to Genius HQ), the "Genius Websites" wordmark, a row
+// of text tabs with a black pill on the current one, and the account menu on
+// the right. What says "admin" is the red Admin pill after the
 // wordmark, the same spot Logistics and Vendors use for their context pill.
 // No HelpChrome or "Need Assistance?": those are for customers.
 //
-// All eight tabs fit in the bar from xl (1280px). Below that they move to a
-// second row that scrolls sideways, as Closeout's tabs do on small screens.
+// The tabs are ADMIN_GROUPS (Dashboard, Websites, Customers, Sales,
+// Activity): one tab per group, and the current group's sections as sub-tabs
+// on a row under the bar when it has more than one. They fit in the bar from
+// lg (1024px). Below that they move to a second row that scrolls sideways,
+// as Closeout's tabs do on small screens.
 
 const ACG_LOGO = 'https://www.autocaregenius.com/cdn/shop/files/v11_1.svg?v=1760731533&width=200';
 const HQ_URL = 'https://hq.autocaregenius.com';
@@ -19,6 +22,10 @@ const FOCUS = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:rin
 const TAB = 'shrink-0 whitespace-nowrap px-2.5 sm:px-3 py-1.5 rounded-token-md text-[13px] font-medium transition-colors';
 const TAB_ON = 'bg-ink-primary text-white';
 const TAB_OFF = 'text-ink-primary hover:bg-black/[0.04]';
+// Sub-tabs: underlined rather than pilled, so they read as a level below.
+const SUB = 'shrink-0 whitespace-nowrap px-3 h-10 -mb-px border-b-2 text-[13px] font-semibold transition-colors';
+const SUB_ON = 'border-ink-primary text-ink-primary';
+const SUB_OFF = 'border-transparent text-ink-tertiary hover:text-ink-primary';
 const MENU_ITEM = 'flex w-full items-center gap-2 rounded-token-md px-2.5 py-2 text-left text-[13px] font-semibold text-ink-secondary transition-colors hover:bg-surface-secondary';
 // Hides a scrolling row's scrollbar (the tabs still scroll by touch, wheel
 // and keyboard focus).
@@ -62,29 +69,56 @@ function Icon({ name, size = 14 }) {
   );
 }
 
-// The tabs, shared by the bar (xl+) and the second row (below xl). On the
-// scrolling row the current tab is brought to the middle, so a section
-// opened from a link or a card is never hidden off the edge.
-function Tabs({ current, onPick }) {
+// The group tabs, shared by the bar (lg+) and the second row (below lg). On
+// the scrolling row the current tab is brought to the middle, so a section
+// opened from a link or a card is never hidden off the edge. A group tab
+// opens the section of that group used last in this visit (`lastIn`), else
+// its first, so going Sales > Pipeline > Websites > Sales lands on Pipeline.
+function Tabs({ currentGroup, lastIn, onPick }) {
   const activeRef = useRef(null);
   useEffect(() => {
     activeRef.current?.scrollIntoView?.({ block: 'nearest', inline: 'center' });
-  }, [current]);
-  return ADMIN_SECTIONS.map((s) => {
-    const on = s.id === current;
+  }, [currentGroup]);
+  return ADMIN_GROUPS.map((g) => {
+    const on = g.id === currentGroup;
     return (
       <button
-        key={s.id}
+        key={g.id}
         ref={on ? activeRef : undefined}
         type="button"
-        onClick={() => onPick(s.id)}
+        onClick={() => onPick(lastIn[g.id] || g.sections[0].id)}
         aria-current={on ? 'page' : undefined}
         className={`${TAB} ${FOCUS} ${on ? TAB_ON : TAB_OFF}`}
       >
-        {s.label}
+        {g.label}
       </button>
     );
   });
+}
+
+// The current group's sections, under the bar. Nothing for a one-section group.
+function SubTabs({ group, current, onPick }) {
+  if (group.sections.length < 2) return null;
+  return (
+    <nav aria-label={`${group.label} sections`} className={`border-t border-black/[0.05] px-2 sm:px-6 overflow-x-auto ${NO_SCROLLBAR}`}>
+      <div className="flex items-center w-max mx-auto">
+        {group.sections.map((s) => {
+          const on = s.id === current;
+          return (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => onPick(s.id)}
+              aria-current={on ? 'page' : undefined}
+              className={`${SUB} ${FOCUS} ${on ? SUB_ON : SUB_OFF}`}
+            >
+              {s.label}
+            </button>
+          );
+        })}
+      </div>
+    </nav>
+  );
 }
 
 // The open menu. Its own component so it can be rendered (and tested)
@@ -181,7 +215,15 @@ export default function AdminShell({
 }) {
   // Same fallback as AdminPage, so the highlighted tab is always the page shown.
   const current = isAdminSection(section) ? section : DEFAULT_ADMIN_SECTION;
+  const group = adminGroupOf(current);
   const pick = (id) => onSection?.(id);
+
+  // Last section opened in each group, for its tab. Kept in state for this
+  // visit only: a fresh load starts each group at its first section.
+  const [lastIn, setLastIn] = useState({});
+  useEffect(() => {
+    setLastIn((prev) => (prev[group.id] === current ? prev : { ...prev, [group.id]: current }));
+  }, [group.id, current]);
 
   return (
     <div className="min-h-screen bg-surface-secondary">
@@ -208,26 +250,26 @@ export default function AdminShell({
           {/* w-max + mx-auto centres the row when it fits and starts it at
               the left when it doesn't (justify-center on a scrolling box
               would cut off the first tabs). */}
-          <nav aria-label="Admin" className={`hidden xl:block flex-1 min-w-0 overflow-x-auto ${NO_SCROLLBAR}`}>
+          <nav aria-label="Admin" className={`hidden lg:block flex-1 min-w-0 overflow-x-auto ${NO_SCROLLBAR}`}>
             <div className="flex items-center gap-1 w-max mx-auto">
-              <Tabs current={current} onPick={pick} />
+              <Tabs currentGroup={group.id} lastIn={lastIn} onPick={pick} />
             </div>
           </nav>
 
           <div className="ml-auto flex items-center gap-2 shrink-0">
             {onSwitchToBusiness && (
               // Outlined like the "Genius HQ" button in Genius Calendar. Only
-              // the icon between xl and 1440px, where the tabs need the room;
+              // the icon between lg and xl, where the tabs need the room;
               // the avatar menu has the same action at every width.
               <button
                 type="button"
                 onClick={onSwitchToBusiness}
                 aria-label="Switch to my business"
                 title="Switch to my business"
-                className={`hidden sm:inline-flex items-center gap-1.5 h-9 px-3 xl:px-2.5 min-[1440px]:px-3 rounded-token-md border border-black/[0.10] text-[12px] font-semibold text-ink-secondary hover:bg-surface-secondary hover:text-ink-primary transition-colors ${FOCUS}`}
+                className={`hidden sm:inline-flex items-center gap-1.5 h-9 px-3 lg:px-2.5 xl:px-3 rounded-token-md border border-black/[0.10] text-[12px] font-semibold text-ink-secondary hover:bg-surface-secondary hover:text-ink-primary transition-colors ${FOCUS}`}
               >
                 <Icon name="store" />
-                <span className="xl:hidden min-[1440px]:inline">Switch to my business</span>
+                <span className="lg:hidden xl:inline">Switch to my business</span>
               </button>
             )}
             <AccountMenu
@@ -240,12 +282,14 @@ export default function AdminShell({
           </div>
         </div>
 
-        {/* Below xl: the same tabs on their own row, scrolling sideways. */}
-        <nav aria-label="Admin sections" className={`xl:hidden border-t border-black/[0.05] px-2 sm:px-6 overflow-x-auto ${NO_SCROLLBAR}`}>
+        {/* Below lg: the same tabs on their own row, scrolling sideways. */}
+        <nav aria-label="Admin sections" className={`lg:hidden border-t border-black/[0.05] px-2 sm:px-6 overflow-x-auto ${NO_SCROLLBAR}`}>
           <div className="flex items-center gap-1 w-max h-11">
-            <Tabs current={current} onPick={pick} />
+            <Tabs currentGroup={group.id} lastIn={lastIn} onPick={pick} />
           </div>
         </nav>
+
+        <SubTabs group={group} current={current} onPick={pick} />
       </header>
 
       <div className="min-w-0">{children}</div>

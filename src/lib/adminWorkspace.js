@@ -6,8 +6,8 @@
 // anywhere (and in tests) without a client.
 
 // The ids are URL values (`?admin=<id>`) that live in sent emails and
-// bookmarks: never rename one, only add. The order is the tab order in the
-// Admin header.
+// bookmarks: never rename one, only add. The label is the page title; the
+// header groups the sections (ADMIN_GROUPS below).
 export const ADMIN_SECTIONS = Object.freeze([
   Object.freeze({ id: 'dashboard', label: 'Dashboard' }),
   Object.freeze({ id: 'custom-sites', label: 'Custom websites' }),
@@ -23,6 +23,49 @@ export const ADMIN_SECTIONS = Object.freeze([
 export const ADMIN_SECTION_IDS = Object.freeze(ADMIN_SECTIONS.map((s) => s.id));
 
 export const DEFAULT_ADMIN_SECTION = 'dashboard';
+
+// The Admin header's tabs. Nine flat tabs were too many to scan, so related
+// sections share one tab, and a group with more than one section shows them
+// as sub-tabs under the bar. `label` there is the short sub-tab name (the
+// page title stays the section's own label). The first section is where the
+// tab lands before one of the group was opened. Every section is in exactly
+// one group (adminWorkspace.test.js checks it).
+export const ADMIN_GROUPS = Object.freeze([
+  { id: 'dashboard', label: 'Dashboard', sections: [{ id: 'dashboard', label: 'Dashboard' }] },
+  {
+    id: 'websites',
+    label: 'Websites',
+    sections: [
+      { id: 'custom-sites', label: 'Custom' },
+      { id: 'free-sites', label: 'Free' },
+      { id: 'site-upgrades', label: 'Upgrades' },
+    ],
+  },
+  { id: 'customers', label: 'Customers', sections: [{ id: 'accounts', label: 'Customers' }] },
+  {
+    id: 'sales',
+    label: 'Sales',
+    sections: [
+      { id: 'leads', label: 'Leads' },
+      { id: 'pipeline', label: 'Pipeline' },
+    ],
+  },
+  {
+    id: 'activity',
+    label: 'Activity',
+    sections: [
+      { id: 'bookings', label: 'Bookings' },
+      { id: 'inquiries', label: 'Inquiries' },
+    ],
+  },
+].map((g) => Object.freeze({ ...g, sections: Object.freeze(g.sections.map((s) => Object.freeze(s))) })));
+
+// The group a section id belongs to; the Dashboard's for an unknown id, the
+// same fallback the page itself uses.
+export function adminGroupOf(sectionId) {
+  const id = isAdminSection(sectionId) ? sectionId : DEFAULT_ADMIN_SECTION;
+  return ADMIN_GROUPS.find((g) => g.sections.some((s) => s.id === id));
+}
 
 export function isAdminSection(id) {
   return typeof id === 'string' && ADMIN_SECTION_IDS.includes(id);
