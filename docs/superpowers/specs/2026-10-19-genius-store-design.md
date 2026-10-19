@@ -127,10 +127,15 @@ and storefront remain, so turning it back on reuses them).
 
 ## Rollout order (owner steps marked)
 
-1. **Owner:** approve and apply Storefronts migration 0018.
-2. **Owner:** set `GENIUS_WEBSITES_KEY` (Supabase secret) and deploy `website-partner` + `shopify-order-webhook`.
-3. **Owner:** republish `acg-affiliate-ref.liquid` on the live Shopify theme, then push Storefronts (embed `?acgref=`).
-4. **Owner:** set `GENIUS_STOREFRONTS_URL` + `GENIUS_WEBSITES_KEY` in Netlify for Website Creator, merge its PR.
+1. Done 2026-10-19 (owner approved): Storefronts migrations 0018 and 0019 applied; the shared key is in Vault
+   (`genius_websites_key`, read by the service-role-only `genius_websites_key()`: edge function secrets need the
+   CLI, which was not signed in); `website-partner` deployed and smoke-tested (401 without the key, terms and
+   status with it); `GENIUS_WEBSITES_KEY` (secret, functions scope) and `GENIUS_STOREFRONTS_URL` set on the
+   autosite-builder Netlify site. A copy of the key is in the main checkout's gitignored `.env.local`.
+2. Test on this PR's deploy preview with a non-staff account (it creates a real partner and a real `SAVE-` code).
+3. **Owner:** republish `acg-affiliate-ref.liquid` on the live Shopify theme, then push Storefronts and deploy
+   `shopify-order-webhook` (embed and webhook on `?acgref=`). Until then the live embed still sends `?ref=`.
+4. **Owner:** merge this PR.
 5. Tell the 5 existing partners to re-copy their share link.
 
 ## Not in scope
