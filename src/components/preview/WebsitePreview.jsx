@@ -12,6 +12,7 @@ import { EditorModeProvider } from './templates/kit/EditorMode.jsx';
 import { SITE_BASE_CSS } from '../../lib/siteRuntime.js';
 import { attachBeforeAfter } from './beforeAfterPreview.js';
 import { attachScrollers } from './scrollerPreview.js';
+import { attachStoreFrames } from './storePreview.js';
 import { buildFontHref } from '../../lib/fontCatalog.js';
 
 const ACG_LOGO = 'https://www.autocaregenius.com/cdn/shop/files/v11_1.svg?v=1760731533&width=160';
@@ -50,12 +51,14 @@ export default function WebsitePreview({ siteId, businessInfo, onBusinessInfoCha
   // flag templates style their nav with (html[data-acg-scrolled]), the
   // phone menu (details.acg-menu) closing on a link tap or outside click,
   // the Before & After sliders (SITE_BA_JS, beforeAfterPreview.js) and
-  // scrollers' prev/next buttons (SITE_SCROLL_JS, scrollerPreview.js).
+  // scrollers' prev/next buttons (SITE_SCROLL_JS, scrollerPreview.js) and
+  // the Genius Store iframe's height (SITE_STORE_JS, storePreview.js).
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
     const root = document.documentElement;
     const detachBeforeAfter = attachBeforeAfter(document);
     const detachScrollers = attachScrollers(document);
+    const detachStoreFrames = attachStoreFrames(window, document);
     let last = null;
     const onScroll = () => {
       const scrolled = window.scrollY > 20;
@@ -81,6 +84,7 @@ export default function WebsitePreview({ siteId, businessInfo, onBusinessInfoCha
       document.removeEventListener('click', onClick);
       detachBeforeAfter();
       detachScrollers();
+      detachStoreFrames();
       root.removeAttribute('data-acg-scrolled');
     };
   }, []);

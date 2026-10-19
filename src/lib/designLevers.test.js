@@ -27,7 +27,7 @@ describe('sections', () => {
     expect(fullSectionOrder(['hero', 'statsBar', 'services', 'about', 'gallery', 'testimonials', 'cta', 'awards'], 'detailing_sporty'))
       .toEqual([
         'hero', 'statsBar', 'brands', 'services', 'featured', 'vehicleTypes', 'process', 'about', 'gallery', 'beforeAfter',
-        'showcase', 'comparison', 'testimonials', 'faq', 'cta', 'awards',
+        'showcase', 'comparison', 'testimonials', 'faq', 'shop', 'cta', 'awards',
       ]);
     expect(fullSectionOrder([], 'carwash_bubble')).toEqual([]);
     expect(fullSectionOrder(['hero'], 'detailing_coastal')).toEqual([]);
@@ -93,7 +93,7 @@ describe('leverPatch', () => {
     expect(p.copy).toEqual({
       sectionOrder: [
         'about', 'services', 'featured', 'vehicleTypes', 'process', 'hero', 'statsBar', 'brands', 'gallery', 'beforeAfter',
-        'showcase', 'comparison', 'testimonials', 'faq', 'cta', 'awards',
+        'showcase', 'comparison', 'testimonials', 'faq', 'shop', 'cta', 'awards',
       ],
       hiddenSections: ['statsBar'],
       heroLayout: 'split',
