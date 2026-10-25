@@ -83,6 +83,19 @@ describe('billingStatusOf', () => {
     expect(s).toEqual({ key: 'trial', label: 'Trial', source: 'stripe', hasAccess: true, renewsAt: at(5), endsAt: null });
   });
 
+  it('a hand-over\'s Pro trial is a trial that ends, not renews or bills', () => {
+    const s = billingStatusOf({
+      subscription_status: 'cancelled', stripe_subscription_id: 'sub_old', subscription_current_period_end: ago(40),
+      subscription_ends_at: ago(40), pro_trial_ends_at: at(12),
+    }, NOW);
+    expect(s).toEqual({ key: 'trial', label: 'Trial', source: null, hasAccess: true, renewsAt: null, endsAt: at(12) });
+    expect(keyOf({ pro_trial_ends_at: at(1) })).toBe('trial');
+    expect(keyOf({ pro_trial_ends_at: ago(1) })).toBe('free');
+    // Pro at no charge, or a subscription, wins over the trial.
+    expect(keyOf({ scheduler_enabled: true, pro_trial_ends_at: at(1) })).toBe('comped');
+    expect(keyOf({ subscription_status: 'active', stripe_subscription_id: 'sub_1', pro_trial_ends_at: at(1) })).toBe('paying');
+  });
+
   it('a trial that ended (or ends right now) is paying', () => {
     const base = { subscription_status: 'active', stripe_subscription_id: 'sub_1' };
     expect(keyOf({ ...base, stripe_trial_ends_at: ago(1) })).toBe('paying');

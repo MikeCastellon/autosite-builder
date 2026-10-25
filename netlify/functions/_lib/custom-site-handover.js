@@ -1,12 +1,12 @@
 import crypto from 'node:crypto';
-import { isEffectiveSchedulerActive } from './subscription-gating.js';
+import { GATING_PROFILE_COLUMNS, isEffectiveSchedulerActive, proTrialEndsAt } from './subscription-gating.js';
 
 // Handing a site the team built to the customer's own account: a custom
 // website (custom-site-admin) or a free website (free-site-admin). The site
 // was built under the admin's account (so drafts could be published); here
 // it moves to the customer, with anything already tied to it, and the
-// customer gets Pro when the deal includes it (bookings switch off on a free
-// account).
+// customer gets Pro when the deal includes it, at no charge or as a trial
+// that ends by itself (bookings switch off on a free account).
 //
 // `project` is a custom_site_projects or free_site_handovers row: both carry
 // site_id, client_email, client_first_name, client_last_name, client_phone
@@ -24,7 +24,7 @@ export async function findCustomerAccount(db, email) {
   const target = String(email || '').trim().toLowerCase();
   if (!target) return null;
   const { data: profile } = await db.from('profiles')
-    .select('id, email, first_name, last_name, business_name, is_super_admin, scheduler_enabled, subscription_status, subscription_ends_at, stripe_first_failed_payment_at, stripe_connect_charges_enabled')
+    .select(`id, email, first_name, last_name, business_name, ${GATING_PROFILE_COLUMNS}, stripe_connect_charges_enabled`)
     .eq('email', target)
     .maybeSingle();
   if (!profile) return null;
@@ -35,6 +35,8 @@ export async function findCustomerAccount(db, email) {
     name: [profile.first_name, profile.last_name].filter(Boolean).join(' '),
     isAdmin: !!profile.is_super_admin,
     isPro: isEffectiveSchedulerActive(profile),
+    // Pro only from a running trial: when it ends.
+    trialEndsAt: proTrialEndsAt(profile)?.toISOString() || null,
     paymentsConnected: !!profile.stripe_connect_charges_enabled,
     sites: (sites || []).map((s) => ({
       id: s.id,
@@ -45,11 +47,15 @@ export async function findCustomerAccount(db, email) {
   };
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 // Moves the project's site to the customer. Returns { userId, newAccount,
-// moved, widgetsRemoved } (widgetsRemoved: builder widgets taken off the
-// site; a page published before still shows them until it is republished).
+// moved, widgetsRemoved, trialEndsAt } (widgetsRemoved: builder widgets
+// taken off the site; a page published before still shows them until it is
+// republished. trialEndsAt: when the Pro trial given here ends, or null).
+// compPro: Pro at no charge. trialDays: Pro for that many days instead.
 // Throws with a readable message when it can't.
-export async function handOverSite({ db, project, compPro }) {
+export async function handOverSite({ db, project, compPro, trialDays = 0 }) {
   if (!project.site_id) throw Object.assign(new Error('Design and save the site first'), { status: 400 });
   const { data: site } = await db.from('sites').select('id, user_id, business_info, generated_content, widget_config_ids').eq('id', project.site_id).maybeSingle();
   if (!site) throw Object.assign(new Error('The project\'s site no longer exists'), { status: 404 });
@@ -107,6 +113,14 @@ export async function handOverSite({ db, project, compPro }) {
   }
   // Never on top of a paid plan: that would keep Pro after they cancel.
   if (compPro && !account.isPro) profilePatch.scheduler_enabled = true;
+  // A trial needs no plan to switch off later: Pro lasts until the date.
+  // Nor is it given to an account that already has Pro, which includes one
+  // still on a trial. A new trial gets its own trial emails.
+  let trialEndsAt = null;
+  if (!compPro && trialDays > 0 && !account.isPro) {
+    trialEndsAt = new Date(Date.now() + trialDays * DAY_MS).toISOString();
+    Object.assign(profilePatch, { pro_trial_ends_at: trialEndsAt, pro_trial_reminder_sent_at: null, pro_trial_ended_sent_at: null });
+  }
   if (Object.keys(profilePatch).length) {
     const { error } = await db.from('profiles').update(profilePatch).eq('id', account.userId);
     if (error) throw Object.assign(new Error(`Could not update the customer's profile: ${error.message}`), { status: 500 });
@@ -130,7 +144,7 @@ export async function handOverSite({ db, project, compPro }) {
       moved[table] = data?.length || 0;
     }
   }
-  return { userId: account.userId, newAccount, moved, widgetsRemoved };
+  return { userId: account.userId, newAccount, moved, widgetsRemoved, trialEndsAt };
 }
 
 // The builder's own Google reviews / Instagram widgets on the site: a site

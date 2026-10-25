@@ -258,6 +258,9 @@ export default function AdminUserDrawer({ user, allTags, onClose, onRefresh }) {
             {user.stripe_trial_ends_at && new Date(user.stripe_trial_ends_at) > new Date() && (
               <Field label="Trial ends" value={formatDate(user.stripe_trial_ends_at)} />
             )}
+            {user.pro_trial_ends_at && new Date(user.pro_trial_ends_at) > new Date() && (
+              <Field label="Pro trial ends" value={formatDate(user.pro_trial_ends_at)} />
+            )}
             <Field label="Scheduler" value={user.scheduler_enabled ? 'Enabled' : 'Disabled'} />
           </Section>
 

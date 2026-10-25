@@ -68,6 +68,8 @@ function keyOf(profile, nowMs) {
   // Pro granted by hand (sites.scheduler_enabled mirrored on the profile),
   // with no subscription paying for it.
   if (profile?.scheduler_enabled && status !== 'active') return 'comped';
+  // A Pro trial from a free website's hand-over, with nothing paying.
+  if (status !== 'active' && ms(profile?.pro_trial_ends_at) > nowMs) return 'trial';
   if (status === 'active') {
     if (ms(profile.stripe_trial_ends_at) > nowMs) return 'trial';
     return sourceOf(profile) ? 'paying' : 'manual';
@@ -86,19 +88,22 @@ function keyOf(profile, nowMs) {
   return 'free';
 }
 
-// Billing status of one profile. First match wins: admin, comped, then the
-// subscription status (active -> trial / paying / manual, past_due -> in or
+// Billing status of one profile. First match wins: admin, comped, a Pro
+// trial without a subscription, then the subscription status (active ->
+// trial / paying / manual, past_due -> in or
 // out of the grace window, cancelled -> before or after the end date), else
 // free. `hasAccess` mirrors isEffectiveSchedulerActive.
 export function billingStatusOf(profile, now = new Date()) {
   const key = keyOf(profile, ms(now));
+  // A hand-over's Pro trial: nothing bills or renews, it just ends.
+  const handoverTrial = key === 'trial' && profile?.subscription_status !== 'active';
   return {
     key,
     label: LABELS[key],
-    source: SOURCED_KEYS.has(key) ? sourceOf(profile) : null,
+    source: SOURCED_KEYS.has(key) && !handoverTrial ? sourceOf(profile) : null,
     hasAccess: ACCESS_KEYS.has(key),
-    renewsAt: RENEWING_KEYS.has(key) ? (profile?.subscription_current_period_end || null) : null,
-    endsAt: profile?.subscription_ends_at || null,
+    renewsAt: RENEWING_KEYS.has(key) && !handoverTrial ? (profile?.subscription_current_period_end || null) : null,
+    endsAt: (handoverTrial ? profile.pro_trial_ends_at : profile?.subscription_ends_at) || null,
   };
 }
 
