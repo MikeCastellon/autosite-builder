@@ -2,6 +2,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { getStripe } from './_lib/stripe.js';
 import { findBlockingSubscription } from './_lib/subscription-guard.js';
+import { GATING_PROFILE_COLUMNS, checkoutTrialEnd } from './_lib/subscription-gating.js';
 import { corsHeaders, jsonHeaders } from './_shared/cors.js';
 
 export const handler = async (event) => {
@@ -29,7 +30,7 @@ export const handler = async (event) => {
   // Reuse an existing Stripe customer if we've seen this user before.
   const { data: profile } = await db
     .from('profiles')
-    .select('stripe_customer_id, email')
+    .select(`stripe_customer_id, email, ${GATING_PROFILE_COLUMNS}`)
     .eq('id', user.id)
     .maybeSingle();
 
@@ -62,6 +63,12 @@ export const handler = async (event) => {
     await db.from('profiles').update({ stripe_customer_id: customerId }).eq('id', user.id);
   }
 
+  // On a Pro trial (a free website's hand-over): the first charge waits
+  // until the trial ends, so subscribing early costs no free days. Stripe
+  // shows the trial on the checkout page; the webhook records the
+  // subscription as active with stripe_trial_ends_at.
+  const trialEnd = checkoutTrialEnd(profile);
+
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
     customer: customerId,
@@ -69,6 +76,7 @@ export const handler = async (event) => {
     line_items: [{ price: priceId, quantity: 1 }],
     subscription_data: {
       metadata: { supabase_user_id: user.id },
+      ...(trialEnd ? { trial_end: Math.floor(trialEnd.getTime() / 1000) } : {}),
     },
     payment_method_collection: 'always',
     allow_promotion_codes: true,

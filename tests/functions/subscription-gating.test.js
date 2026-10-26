@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { GATING_PROFILE_COLUMNS, isEffectiveSchedulerActive, proTrialEndsAt } from '../../netlify/functions/_lib/subscription-gating.js';
+import {
+  CHECKOUT_TRIAL_MIN_MS, GATING_PROFILE_COLUMNS, checkoutTrialEnd, isEffectiveSchedulerActive, proTrialEndsAt,
+} from '../../netlify/functions/_lib/subscription-gating.js';
 
 const FUTURE = new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString();
 const PAST = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
@@ -107,14 +109,27 @@ describe('Pro trials (a free website hand-over)', () => {
     expect(proTrialEndsAt(null)).toBeNull();
   });
 
+  it('checkout bills from the trial end only while Stripe allows it (48h+ ahead)', () => {
+    const inHours = (h) => new Date(Date.now() + h * 3600 * 1000).toISOString();
+    expect(CHECKOUT_TRIAL_MIN_MS).toBe(49 * 3600 * 1000);
+    expect(checkoutTrialEnd({ pro_trial_ends_at: FUTURE })?.toISOString()).toBe(FUTURE);
+    expect(checkoutTrialEnd({ pro_trial_ends_at: inHours(50) })).not.toBeNull();
+    expect(checkoutTrialEnd({ pro_trial_ends_at: inHours(48) })).toBeNull();
+    expect(checkoutTrialEnd({ pro_trial_ends_at: PAST })).toBeNull();
+    expect(checkoutTrialEnd({ pro_trial_ends_at: FUTURE, subscription_status: 'active' })).toBeNull();
+    expect(checkoutTrialEnd({})).toBeNull();
+  });
+
   it('the app mirror agrees', async () => {
     const client = await import('../../src/lib/subscriptionGating.js');
     for (const p of [
       { pro_trial_ends_at: FUTURE }, { pro_trial_ends_at: PAST }, { pro_trial_ends_at: FUTURE, subscription_status: 'active' },
       { pro_trial_ends_at: FUTURE, scheduler_enabled: true }, {},
+      { pro_trial_ends_at: new Date(Date.now() + 30 * 3600 * 1000).toISOString() },
     ]) {
       expect(client.isEffectiveSchedulerActive(p)).toBe(isEffectiveSchedulerActive(p));
       expect(client.proTrialEndsAt(p)?.toISOString() ?? null).toBe(proTrialEndsAt(p)?.toISOString() ?? null);
+      expect(client.checkoutTrialEnd(p)?.toISOString() ?? null).toBe(checkoutTrialEnd(p)?.toISOString() ?? null);
     }
   });
 });

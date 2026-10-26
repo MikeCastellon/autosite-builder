@@ -42,6 +42,18 @@ export function proTrialEndsAt(profile) {
   return new Date(Date.parse(profile.pro_trial_ends_at));
 }
 
+// Stripe Checkout takes a trial end only 48 hours or more ahead; the extra
+// hour covers clock drift between us and Stripe.
+export const CHECKOUT_TRIAL_MIN_MS = 49 * 60 * 60 * 1000;
+
+// Subscribing during a Pro trial: when the first charge will be (the
+// trial's end; stripe-checkout-url sets it), so the free days left aren't lost. null when it should be
+// now: no trial, Pro some other way, or too close to the end for Stripe.
+export function checkoutTrialEnd(profile) {
+  const ends = proTrialEndsAt(profile);
+  return ends && ends.getTime() - Date.now() >= CHECKOUT_TRIAL_MIN_MS ? ends : null;
+}
+
 // Paywall testing allowlist — emails in VITE_PAYWALL_ALLOWLIST_EMAILS see the
 // upgrade gate on Bookings even if they're admins or have scheduler_enabled.
 // Lets us QA the Subscribe flow on production without exposing the paywall
