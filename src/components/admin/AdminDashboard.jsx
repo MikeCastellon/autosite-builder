@@ -578,6 +578,14 @@ export default function AdminDashboard({ onSection, onOpenAccounts, onOpenProjec
     setAllTags((prev) => [...new Set([...prev, ...(tags || [])])].sort());
   }, []);
 
+  // Account > Edit in the drawer saved a corrected name / email / phone.
+  const applyProfilePatch = useCallback(({ userId, profile }) => {
+    setData((prev) => prev && {
+      ...prev,
+      users: prev.users.map((u) => (u.id === userId ? { ...u, ...profile } : u)),
+    });
+  }, []);
+
   const closeDrawer = useCallback(() => setSelectedUserId(null), []);
   const openUser = useCallback((u) => { if (u?.id) setSelectedUserId(u.id); }, []);
   const selectedUser = selectedUserId && data ? data.users.find((u) => u.id === selectedUserId) : null;
@@ -637,7 +645,7 @@ export default function AdminDashboard({ onSection, onOpenAccounts, onOpenProjec
       ) : null}
 
       {selectedUser && (
-        <AdminUserDrawer user={selectedUser} allTags={allTags} onClose={closeDrawer} onRefresh={applyMetadataPatch} />
+        <AdminUserDrawer user={selectedUser} allTags={allTags} onClose={closeDrawer} onRefresh={applyMetadataPatch} onProfileSaved={applyProfilePatch} />
       )}
     </div>
   );

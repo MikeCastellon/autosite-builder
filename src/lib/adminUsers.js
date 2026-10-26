@@ -4,6 +4,8 @@
 // anything sensitive.
 import { supabase } from './supabase.js';
 import { isLiveWebsite } from './adminStats.js';
+import { freeSiteAdmin } from './freeSites.js';
+import { customSiteAdmin } from './customSites.js';
 
 // Pull every signed-up user with the bits the admin list needs.
 // Rather than join in SQL (Supabase doesn't expose a clean cross-table
@@ -91,4 +93,37 @@ export async function listAllAdminTags() {
     }
   }
   return [...set].sort();
+}
+
+// Account > Edit in the user drawer: name, email, phone, business name.
+// Goes through the admin-user-update function, because the email is also
+// the sign-in address (auth.users), which only the service role can change.
+// Returns { profile, changed, handovers, stripeCustomer }.
+export async function updateAdminUser(userId, fields) {
+  const { data } = await supabase.auth.getSession();
+  const token = data?.session?.access_token;
+  if (!token) throw new Error('Not signed in');
+  let res;
+  try {
+    res = await fetch('/.netlify/functions/admin-user-update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ userId, ...fields }),
+    });
+  } catch {
+    throw new Error('Can\'t reach the server. Check your connection and try again.');
+  }
+  let body = {};
+  try { body = await res.json(); } catch { /* empty or non-JSON body */ }
+  if (!res.ok) throw new Error(body.error || `Request failed (${res.status})`);
+  return body;
+}
+
+// The hand-over's access email again, to the corrected address: a fresh
+// set-password link when the customer never signed in. `handover` is one
+// of updateAdminUser's { kind, id }.
+export async function resendAccessEmail({ kind, id }) {
+  return kind === 'custom'
+    ? customSiteAdmin('handover-email', { id })
+    : freeSiteAdmin('handover-email', { id });
 }
