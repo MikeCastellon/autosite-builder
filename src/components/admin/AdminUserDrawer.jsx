@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { getUserActivityCounts, saveAdminUserMetadata } from '../../lib/adminUsers.js';
+import { getUserActivityCounts, resendAccessEmail, saveAdminUserMetadata, updateAdminUser } from '../../lib/adminUsers.js';
+import { accountChanges, accountForm } from '../../lib/adminUserEdit.js';
 import { billingStatusOf } from '../../lib/adminStats.js';
 import { BillingBadge } from './billingUi.jsx';
 import { useAuth } from '../../lib/AuthContext.jsx';
@@ -15,12 +16,30 @@ function Field({ label, value, mono }) {
   );
 }
 
-function Section({ title, children }) {
+function Section({ title, action, children }) {
   return (
     <div className="border-b border-black/[0.07] py-4 last:border-b-0">
-      <p className="text-[11px] font-bold text-[#1a1a1a] uppercase tracking-[1.5px] mb-2">{title}</p>
+      <div className="flex items-center justify-between gap-3 mb-2">
+        <p className="text-[11px] font-bold text-[#1a1a1a] uppercase tracking-[1.5px]">{title}</p>
+        {action}
+      </div>
       {children}
     </div>
+  );
+}
+
+function EditInput({ label, value, onChange, type = 'text', autoFocus }) {
+  return (
+    <label className="block">
+      <span className="block text-[11px] font-semibold text-ink-tertiary uppercase tracking-wider mb-1">{label}</span>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        autoFocus={autoFocus}
+        className="w-full px-3 py-2 rounded-lg border border-black/[0.10] text-sm focus:outline-none focus:border-[#cc0000]"
+      />
+    </label>
   );
 }
 
@@ -32,9 +51,9 @@ function formatDate(iso) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-export default function AdminUserDrawer({ user, allTags, onClose, onRefresh }) {
+export default function AdminUserDrawer({ user, allTags, onClose, onRefresh, onProfileSaved }) {
   const { profile: adminProfile } = useAuth();
-  const { toast } = useAlert();
+  const { toast, confirm } = useAlert();
   const [notes, setNotes] = useState(user.adminNotes || '');
   const [tags, setTags] = useState(user.adminTags || []);
   const [tagInput, setTagInput] = useState('');
@@ -45,6 +64,63 @@ export default function AdminUserDrawer({ user, allTags, onClose, onRefresh }) {
   const skipFirstNotesAutosave = useRef(true);
 
   const billing = billingStatusOf(user);
+
+  // Account > Edit: fixes a mistyped name or email. `resend` holds the
+  // hand-overs whose access email went to the old address, once the email
+  // changed, so it can go out again to the new one.
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState(() => accountForm(user));
+  const [savingAccount, setSavingAccount] = useState(false);
+  const [resend, setResend] = useState(null);
+  const [resending, setResending] = useState(false);
+  const setField = (key) => (value) => setForm((f) => ({ ...f, [key]: value }));
+  const emailChanged = editing && form.email.trim().toLowerCase() !== String(user.email || '').toLowerCase();
+
+  function startEdit() {
+    setForm(accountForm(user));
+    setEditing(true);
+  }
+
+  async function saveAccount(e) {
+    e.preventDefault();
+    if (savingAccount) return;
+    const { changes, error } = accountChanges(form, user);
+    if (error) { toast(error, 'error'); return; }
+    if (!Object.keys(changes).length) { setEditing(false); return; }
+    if (changes.email) {
+      const ok = await confirm(
+        `${user.email} becomes ${changes.email}. They sign in with the new email from now on, and emails from us go there.`,
+        { title: 'Change their sign-in email?', confirmText: 'Change email' },
+      );
+      if (!ok) return;
+    }
+    setSavingAccount(true);
+    try {
+      const res = await updateAdminUser(user.id, form);
+      onProfileSaved?.({ userId: user.id, profile: res.profile });
+      setEditing(false);
+      setResend(res.handovers?.length ? { email: res.profile.email, handovers: res.handovers } : null);
+      toast(res.stripeCustomer ? 'Saved. Stripe still has the old email for receipts: change it in Stripe too.' : 'Saved', 'success', res.stripeCustomer ? 8000 : 4000);
+    } catch (err) {
+      toast(err.message || 'Could not save', 'error');
+    } finally {
+      setSavingAccount(false);
+    }
+  }
+
+  async function handleResend() {
+    if (resending || !resend) return;
+    setResending(true);
+    try {
+      for (const h of resend.handovers) await resendAccessEmail(h);
+      toast(`Access email sent to ${resend.email}`, 'success');
+      setResend(null);
+    } catch (err) {
+      toast(err.message || 'Could not send the email', 'error');
+    } finally {
+      setResending(false);
+    }
+  }
 
   // Activity counts on mount
   useEffect(() => {
@@ -241,11 +317,71 @@ export default function AdminUserDrawer({ user, allTags, onClose, onRefresh }) {
             <span className="text-[11px] text-ink-tertiary ml-auto">Joined {formatDate(user.created_at)}</span>
           </div>
 
-          <Section title="Account">
-            <Field label="Business" value={user.business_name || user.firstSiteName} />
-            <Field label="Phone" value={user.phone} />
-            <Field label="Email" value={user.email} />
-            <Field label="User ID" value={user.id} mono />
+          <Section
+            title="Account"
+            action={!editing && (
+              <button
+                type="button"
+                onClick={startEdit}
+                className="text-[12px] font-semibold text-[#cc0000] hover:underline"
+              >
+                Edit
+              </button>
+            )}
+          >
+            {editing ? (
+              <form onSubmit={saveAccount} className="space-y-2.5">
+                <div className="grid grid-cols-2 gap-2.5">
+                  <EditInput label="First name" value={form.firstName} onChange={setField('firstName')} autoFocus />
+                  <EditInput label="Last name" value={form.lastName} onChange={setField('lastName')} />
+                </div>
+                <EditInput label="Email" type="email" value={form.email} onChange={setField('email')} />
+                {emailChanged && (
+                  <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-900">
+                    This is their sign-in email. They sign in with the new one after you save.
+                  </p>
+                )}
+                <EditInput label="Phone" type="tel" value={form.phone} onChange={setField('phone')} />
+                <EditInput label="Business" value={form.businessName} onChange={setField('businessName')} />
+                <div className="flex justify-end gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setEditing(false)}
+                    disabled={savingAccount}
+                    className="px-3 py-2 rounded-lg border border-black/[0.10] text-[12px] font-semibold text-[#555] hover:text-[#1a1a1a] disabled:opacity-60"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={savingAccount}
+                    className="px-3 py-2 rounded-lg bg-[#1a1a1a] hover:bg-[#cc0000] disabled:opacity-60 text-white text-[12px] font-bold transition-colors"
+                  >
+                    {savingAccount ? 'Saving…' : 'Save'}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <>
+                <Field label="Business" value={user.business_name || user.firstSiteName} />
+                <Field label="Phone" value={user.phone} />
+                <Field label="Email" value={user.email} />
+                <Field label="User ID" value={user.id} mono />
+              </>
+            )}
+            {resend && (
+              <div role="status" className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-[12px] text-amber-900">
+                <p>Their access email went to the old address.</p>
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={resending}
+                  className="mt-1.5 font-bold text-[#cc0000] underline underline-offset-2 disabled:opacity-60"
+                >
+                  {resending ? 'Sending…' : `Send it to ${resend.email}`}
+                </button>
+              </div>
+            )}
           </Section>
 
           <Section title="Subscription">

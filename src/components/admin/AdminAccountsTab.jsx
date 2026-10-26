@@ -38,6 +38,11 @@ export default function AdminAccountsTab({ initialFilter } = {}) {
   }
   useEffect(() => { refresh(); }, []);
 
+  // The drawer's Account > Edit saved a corrected name / email / phone.
+  function applyProfilePatch({ userId, profile }) {
+    setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, ...profile } : u));
+  }
+
   // Splice an updated user back into the list when the drawer saves notes/tags,
   // so the row's tag chips reflect the change without a full refresh.
   function applyMetadataPatch({ userId, notes, tags }) {
@@ -220,6 +225,7 @@ export default function AdminAccountsTab({ initialFilter } = {}) {
           allTags={allTags}
           onClose={() => setSelectedUserId(null)}
           onRefresh={applyMetadataPatch}
+          onProfileSaved={applyProfilePatch}
         />
       )}
     </div>
