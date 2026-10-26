@@ -21,6 +21,7 @@ vi.mock('../../netlify/functions/_lib/postmark.js', async (importOriginal) => {
 });
 
 const postmark = await import('../../netlify/functions/_lib/postmark.js');
+const { isEffectiveSchedulerActive } = await import('../../netlify/functions/_lib/subscription-gating.js');
 const { handler } = await import('../../netlify/functions/free-site-admin.js');
 
 const ROW_ID = '33333333-4444-4555-8666-777777777777';
@@ -256,6 +257,53 @@ describe('free-site-admin hand-over', () => {
     expect(postmark.freeSiteHandover).toHaveBeenCalledWith(expect.objectContaining({ pro: true }));
   });
 
+  it('gives Pro free for 30 days when asked: Pro until then, on the row and in the email', async () => {
+    h.db = fakeDb({ rows: [row({ site_id: SITE_ID })], sites: [site()] });
+    const before = Date.now();
+    const res = await handler(post({ action: 'handover', id: ROW_ID, trial: true }));
+    expect(res.statusCode).toBe(200);
+    const profile = h.db.state.profiles.find((p) => p.email === 'dana@gloss.test');
+    const ends = Date.parse(profile.pro_trial_ends_at);
+    expect(ends - before).toBeGreaterThanOrEqual(30 * 24 * 3600 * 1000);
+    expect(ends - Date.now()).toBeLessThanOrEqual(30 * 24 * 3600 * 1000);
+    // No plan to switch off later, and fresh trial emails.
+    expect(profile).toEqual(expect.objectContaining({ scheduler_enabled: false, pro_trial_reminder_sent_at: null, pro_trial_ended_sent_at: null }));
+    expect(isEffectiveSchedulerActive(profile)).toBe(true);
+    expect(h.db.state.free_site_handovers[0]).toEqual(expect.objectContaining({ comp_pro: false, pro_trial_ends_at: profile.pro_trial_ends_at }));
+    expect(postmark.freeSiteHandover).toHaveBeenCalledWith(expect.objectContaining({ pro: true, trialEndsAt: profile.pro_trial_ends_at }));
+  });
+
+  it('a new trial replaces an ended one and its email stamps', async () => {
+    const dana = {
+      id: 'dana-1', email: 'dana@gloss.test', scheduler_enabled: false,
+      pro_trial_ends_at: '2026-01-01T00:00:00Z', pro_trial_reminder_sent_at: '2025-12-29T00:00:00Z', pro_trial_ended_sent_at: '2026-01-01T01:00:00Z',
+    };
+    h.db = fakeDb({
+      rows: [row({ site_id: SITE_ID })], sites: [site()], profiles: [ADMIN, dana],
+      authUsers: [{ id: 'dana-1', email: 'dana@gloss.test', email_confirmed_at: '2025-11-01T00:00:00Z' }],
+    });
+    await handler(post({ action: 'handover', id: ROW_ID, trial: true }));
+    const profile = h.db.state.profiles[1];
+    expect(Date.parse(profile.pro_trial_ends_at)).toBeGreaterThan(Date.now());
+    expect(profile).toEqual(expect.objectContaining({ pro_trial_reminder_sent_at: null, pro_trial_ended_sent_at: null }));
+  });
+
+  it('never a trial on top of Pro, and never Pro and a trial together', async () => {
+    const payer = { id: 'dana-1', email: 'dana@gloss.test', scheduler_enabled: false, subscription_status: 'active' };
+    h.db = fakeDb({
+      rows: [row({ site_id: SITE_ID })], sites: [site()], profiles: [ADMIN, payer],
+      authUsers: [{ id: 'dana-1', email: 'dana@gloss.test', email_confirmed_at: '2026-09-01T00:00:00Z' }],
+    });
+    expect((await handler(post({ action: 'handover', id: ROW_ID, trial: true }))).statusCode).toBe(200);
+    expect(h.db.state.profiles[1]).toEqual(payer);
+    expect(h.db.state.free_site_handovers[0].pro_trial_ends_at).toBeNull();
+
+    h.db = fakeDb({ rows: [row({ site_id: SITE_ID })], sites: [site()] });
+    const both = await handler(post({ action: 'handover', id: ROW_ID, trial: true, compPro: true }));
+    expect(both.statusCode).toBe(400);
+    expect(h.db.state.sites[0].user_id).toBe('admin-1');
+  });
+
   it('an existing account keeps its details and gets a sign-in link', async () => {
     const dana = { id: 'dana-1', email: 'dana@gloss.test', first_name: 'Dee', scheduler_enabled: false };
     h.db = fakeDb({
@@ -335,5 +383,14 @@ describe('free website hand-over email', () => {
     expect(postmark.freeSiteHandoverEmail({ ...base, pro: true }).text).toContain('Stripe');
     // The custom website email is unchanged.
     expect(postmark.customSiteHandoverEmail(base).html).toContain('Custom Websites');
+  });
+
+  it('says when a Pro trial ends, and that no card is needed', () => {
+    const base = { firstName: 'Dana', businessName: 'Gloss Boss', actionUrl: 'https://auth.test/x', newAccount: true, email: 'dana@gloss.test', pro: true };
+    const trial = postmark.freeSiteHandoverEmail({ ...base, trialEndsAt: '2026-11-24T18:00:00Z' });
+    expect(trial.text).toContain('free until Tuesday, November 24');
+    expect(trial.text).toContain('No card needed');
+    expect(trial.html).toContain('Your free Pro trial');
+    expect(postmark.freeSiteHandoverEmail(base).text).not.toContain('trial');
   });
 });

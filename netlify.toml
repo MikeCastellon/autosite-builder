@@ -12,6 +12,10 @@
 [functions."domain-sweep"]
   schedule = "*/2 * * * *"
 
+# Pro trial emails: "ends soon" a few days before, "has ended" after.
+[functions."pro-trial-sweep"]
+  schedule = "@hourly"
+
 # Screenshots of a reference site (custom-site-capture-background) drive a
 # headless Chromium with puppeteer-core. esbuild can't bundle either
 # package (dynamic requires, files read from the package at run time), so

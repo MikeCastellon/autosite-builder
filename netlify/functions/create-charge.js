@@ -3,7 +3,7 @@
 // Stripe Checkout session on the owner's connected account.
 import { createClient } from '@supabase/supabase-js';
 import { getStripe } from './_lib/stripe.js';
-import { isEffectiveSchedulerActive } from './_lib/subscription-gating.js';
+import { isEffectiveSchedulerActive, GATING_PROFILE_COLUMNS } from './_lib/subscription-gating.js';
 import { corsHeaders, jsonHeaders } from './_shared/cors.js';
 import { quoteCharge } from './_lib/charge-pricing.js';
 
@@ -26,7 +26,7 @@ export const handler = async (event) => {
 
   const { data: profile } = await db
     .from('profiles')
-    .select('id, stripe_connect_account_id, stripe_connect_charges_enabled, is_super_admin, scheduler_enabled, subscription_status, subscription_ends_at, stripe_first_failed_payment_at')
+    .select(`id, stripe_connect_account_id, stripe_connect_charges_enabled, ${GATING_PROFILE_COLUMNS}`)
     .eq('id', user.id)
     .maybeSingle();
   if (!profile) return fail(404, { error: 'Profile not found' });

@@ -8,13 +8,16 @@ const GRACE_MS = 7 * 24 * 60 * 60 * 1000;
 // period ends. scheduler-config and scheduler-slots once left it out, so the
 // widget offered slots that create-booking (which had it) then refused.
 export const GATING_PROFILE_COLUMNS =
-  'is_super_admin, scheduler_enabled, subscription_status, subscription_ends_at, stripe_first_failed_payment_at';
+  'is_super_admin, scheduler_enabled, subscription_status, subscription_ends_at, stripe_first_failed_payment_at, pro_trial_ends_at';
 
 export function isEffectiveSchedulerActive(profile) {
   if (!profile) return false;
   if (profile.is_super_admin) return true;
   if (profile.scheduler_enabled) return true;
   if (profile.subscription_status === 'active') return true;
+  // A Pro trial (a free website's hand-over can include one): Pro until it
+  // ends, then the free plan again.
+  if (trialRunning(profile)) return true;
   if (
     profile.subscription_status === 'cancelled' &&
     profile.subscription_ends_at &&
@@ -32,4 +35,18 @@ export function isEffectiveSchedulerActive(profile) {
     return false;
   }
   return false;
+}
+
+function trialRunning(profile) {
+  const ends = profile?.pro_trial_ends_at ? Date.parse(profile.pro_trial_ends_at) : NaN;
+  return Number.isFinite(ends) && ends > Date.now();
+}
+
+// The end of a running Pro trial when the trial is the only thing giving
+// Pro (no subscription, no Pro at no charge), else null: the upgrade
+// offer and the trial emails are for these accounts only.
+export function proTrialEndsAt(profile) {
+  if (!trialRunning(profile)) return null;
+  if (isEffectiveSchedulerActive({ ...profile, pro_trial_ends_at: null })) return null;
+  return new Date(Date.parse(profile.pro_trial_ends_at));
 }

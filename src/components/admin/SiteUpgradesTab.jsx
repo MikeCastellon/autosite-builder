@@ -62,7 +62,7 @@ function newRunId() {
 
 const SITE_COLUMNS = 'id, user_id, business_info, template_id, slug, published_url, custom_domain, custom_domain_status, site_type, scheduler_enabled, widget_config_ids, created_at';
 // What isEffectiveSchedulerActive reads, plus names for the list.
-const OWNER_COLUMNS = 'id, email, first_name, last_name, is_super_admin, scheduler_enabled, subscription_status, subscription_ends_at, stripe_first_failed_payment_at';
+const OWNER_COLUMNS = 'id, email, first_name, last_name, is_super_admin, scheduler_enabled, subscription_status, subscription_ends_at, stripe_first_failed_payment_at, pro_trial_ends_at';
 
 async function upgradeApi(action, payload = {}) {
   const { data } = await supabase.auth.getSession();

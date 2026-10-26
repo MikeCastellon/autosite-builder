@@ -1,5 +1,6 @@
 import AppHeader from './AppHeader.jsx';
 import HelpChrome from '../help/HelpChrome.jsx';
+import ProTrialBanner from './ProTrialBanner.jsx';
 
 // Authenticated app shell. Renders the ONE shared header + help chrome around a
 // page body so every dashboard-family view has an identical nav, with the active
@@ -11,6 +12,7 @@ export default function AppShell({ active, nav, userEmail, profile, children }) 
   return (
     <div className="min-h-screen bg-[#faf9f7]">
       <AppHeader active={active} userEmail={userEmail} profile={profile} {...nav} />
+      <ProTrialBanner profile={profile} />
       {children}
       <HelpChrome profile={profile} />
     </div>

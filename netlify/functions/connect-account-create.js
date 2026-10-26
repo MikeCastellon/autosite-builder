@@ -1,7 +1,7 @@
 // netlify/functions/connect-account-create.js
 import { createClient } from '@supabase/supabase-js';
 import { getStripe } from './_lib/stripe.js';
-import { isEffectiveSchedulerActive } from './_lib/subscription-gating.js';
+import { isEffectiveSchedulerActive, GATING_PROFILE_COLUMNS } from './_lib/subscription-gating.js';
 import { corsHeaders, jsonHeaders } from './_shared/cors.js';
 
 export const handler = async (event) => {
@@ -24,7 +24,7 @@ export const handler = async (event) => {
   // Pro gate — reuse the same rule as the Bookings paywall.
   const { data: profile } = await db
     .from('profiles')
-    .select('id, email, stripe_connect_account_id, is_super_admin, scheduler_enabled, subscription_status, subscription_ends_at, stripe_first_failed_payment_at')
+    .select(`id, email, stripe_connect_account_id, ${GATING_PROFILE_COLUMNS}`)
     .eq('id', user.id)
     .maybeSingle();
   if (!profile) return fail(404, { error: 'Profile not found' });

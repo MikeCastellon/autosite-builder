@@ -166,7 +166,9 @@ describe('the Pro gate is the same for the widget and for booking', () => {
         const src = readFileSync(path.join(dir, name), 'utf8');
         if (!src.includes('isEffectiveSchedulerActive(')) continue;
         if (name === 'subscription-gating.js') continue;
-        if (!src.includes('GATING_PROFILE_COLUMNS') && !src.includes('stripe_first_failed_payment_at')) offenders.push(`${dir}/${name}`);
+        // A list of its own must also read the Pro trial's end (a hand-over's trial).
+        const ownList = src.includes('stripe_first_failed_payment_at') && src.includes('pro_trial_ends_at');
+        if (!src.includes('GATING_PROFILE_COLUMNS') && !ownList) offenders.push(`${dir}/${name}`);
       }
     }
     expect(offenders).toEqual([]);

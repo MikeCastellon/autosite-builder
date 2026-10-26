@@ -6,6 +6,9 @@ export function isEffectiveSchedulerActive(profile) {
   if (profile.is_super_admin) return true;
   if (profile.scheduler_enabled) return true;
   if (profile.subscription_status === 'active') return true;
+  // A Pro trial (a free website's hand-over can include one): Pro until it
+  // ends, then the free plan again.
+  if (trialRunning(profile)) return true;
   if (
     profile.subscription_status === 'cancelled' &&
     profile.subscription_ends_at &&
@@ -23,6 +26,20 @@ export function isEffectiveSchedulerActive(profile) {
     return false;
   }
   return false;
+}
+
+function trialRunning(profile) {
+  const ends = profile?.pro_trial_ends_at ? Date.parse(profile.pro_trial_ends_at) : NaN;
+  return Number.isFinite(ends) && ends > Date.now();
+}
+
+// The end of a running Pro trial when the trial is the only thing giving
+// Pro (no subscription, no Pro at no charge), else null: the app offers
+// the upgrade to these accounts while the trial runs.
+export function proTrialEndsAt(profile) {
+  if (!trialRunning(profile)) return null;
+  if (isEffectiveSchedulerActive({ ...profile, pro_trial_ends_at: null })) return null;
+  return new Date(Date.parse(profile.pro_trial_ends_at));
 }
 
 // Paywall testing allowlist — emails in VITE_PAYWALL_ALLOWLIST_EMAILS see the

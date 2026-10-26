@@ -925,8 +925,9 @@ const FREE_HANDOVER_TIPS = [
 // newAccount: the link sets their password (first sign-in); otherwise it
 // opens the sign-in page.
 // eyebrow / tips: a free website's hand-over (freeSiteHandover) shares this
-// email with its own heading and free-plan tips.
-export function customSiteHandoverEmail({ firstName: givenName, businessName, siteUrl, actionUrl, newAccount, email, eyebrow = 'Custom Websites', tips = HANDOVER_TIPS }) {
+// email with its own heading and free-plan tips. notice: { html, text } shown
+// above the tips (a free website's Pro trial).
+export function customSiteHandoverEmail({ firstName: givenName, businessName, siteUrl, actionUrl, newAccount, email, eyebrow = 'Custom Websites', tips = HANDOVER_TIPS, notice = null }) {
   const first = String(givenName || '').trim();
   const whose = businessName ? `the ${esc(businessName)} website` : 'your new website';
   const intro = newAccount
@@ -941,7 +942,7 @@ export function customSiteHandoverEmail({ firstName: givenName, businessName, si
     title: first ? `It's all yours, ${esc(first)}!` : 'It\'s all yours!',
     intro,
     cta: { label: newAccount ? 'Set my password' : 'Sign in', href: actionUrl },
-    body: `${site}${tipList('What you can do now', tips)}
+    body: `${site}${notice?.html || ''}${tipList('What you can do now', tips)}
       <p style="margin:16px 0 0;font-size:12px;color:#a1a1aa;text-align:center;line-height:1.6;">Your sign-in email is <strong style="color:#52525b;">${esc(email)}</strong>.${newAccount ? ' If the button has expired, use "Forgot password" on the sign-in page.' : ''}</p>
       ${linkFallback(actionUrl)}`,
   });
@@ -953,6 +954,7 @@ export function customSiteHandoverEmail({ firstName: givenName, businessName, si
       : `${businessName ? `The ${businessName} website` : 'Your new website'} is now in your account. Sign in:`,
     actionUrl,
     ...(siteUrl ? ['', `Your site: ${siteUrl}`] : []),
+    ...(notice?.text ? ['', notice.text] : []),
     '',
     'What you can do now:',
     ...tips.map((t) => `- ${t}`),
@@ -1026,10 +1028,120 @@ export function customSiteHandover({ to, replyTo, ...message }) {
 }
 
 // Admin > Free websites: the same access email for a site the team built
-// with the normal builder. `pro`: the hand-over included Pro, so the
-// bookings and payments tips apply.
-export function freeSiteHandoverEmail({ pro, ...message }) {
-  return customSiteHandoverEmail({ ...message, eyebrow: 'Genius Websites', tips: pro ? HANDOVER_TIPS : FREE_HANDOVER_TIPS });
+// with the normal builder. `pro`: the account has Pro, so the bookings and
+// payments tips apply. `trialEndsAt`: that Pro is a trial ending then.
+export function freeSiteHandoverEmail({ pro, trialEndsAt, ...message }) {
+  return customSiteHandoverEmail({
+    ...message,
+    eyebrow: 'Genius Websites',
+    tips: pro ? HANDOVER_TIPS : FREE_HANDOVER_TIPS,
+    notice: trialEndsAt ? proTrialNotice(trialEndsAt) : null,
+  });
+}
+
+// ── Pro trials ─────────────────────────────────────────────────────────
+// A free website's hand-over can include Pro free for 30 days
+// (free-site-admin). The account goes back to the free plan by itself when
+// it ends; pro-trial-sweep sends proTrialEnding a few days before and
+// proTrialEnded once it has. What the emails say stops is what the server
+// stops without Pro: the booking widget (scheduler-config, scheduler-slots,
+// create-booking) and card payments (create-charge, connect-account-*).
+// Nothing else is promised.
+
+// The day a trial ends, in the team's time zone (the trial ends at the
+// hand-over's time of day; people plan by the day).
+export function formatTrialEnd(iso) {
+  return new Date(iso).toLocaleDateString('en-US', {
+    weekday: 'long', month: 'long', day: 'numeric',
+    timeZone: process.env.SUPPORT_TIMEZONE || 'America/New_York',
+  });
+}
+
+function proTrialNotice(trialEndsAt) {
+  const day = formatTrialEnd(trialEndsAt);
+  const line = 'No card needed. When it ends, your account moves to the free plan and your website stays live. We\'ll email you before then.';
+  return {
+    html: infoCard(`${cardHeading('Your free Pro trial')}
+      <p style="margin:0 0 6px;font-size:14px;color:#18181b;line-height:1.6;">Online booking and card payments are yours free until <strong>${esc(day)}</strong>.</p>
+      <p style="margin:0;font-size:13px;color:#52525b;line-height:1.6;">${esc(line)}</p>`),
+    text: `Your free Pro trial: online booking and card payments are yours free until ${day}. ${line}`,
+  };
+}
+
+const TRIAL_ENDS_LIST = [
+  'Online booking on your website switches off.',
+  'You can no longer take card payments.',
+  'Your website stays live on the free plan.',
+];
+
+// A few days before the trial ends. upgradeUrl opens the upgrade in the app.
+export function proTrialEndingEmail({ firstName: givenName, businessName, endsAt, upgradeUrl }) {
+  const first = String(givenName || '').trim();
+  const day = formatTrialEnd(endsAt);
+  const forBiz = businessName ? ` for ${esc(businessName)}` : '';
+  const html = renderEmailShell({
+    icon: null,
+    eyebrow: 'Genius Websites',
+    title: first ? `${esc(first)}, your Pro trial ends soon` : 'Your Pro trial ends soon',
+    intro: `Your free Pro trial${forBiz} ends on <strong style="color:#18181b;">${esc(day)}</strong>. Upgrade to keep online booking and card payments on your website.`,
+    cta: { label: 'Keep Pro', href: upgradeUrl },
+    body: `${tipList('When the trial ends', TRIAL_ENDS_LIST)}
+      ${linkFallback(upgradeUrl)}`,
+  });
+  const text = [
+    first ? `${first}, your Pro trial ends soon` : 'Your Pro trial ends soon',
+    '',
+    `Your free Pro trial${businessName ? ` for ${businessName}` : ''} ends on ${day}. Upgrade to keep online booking and card payments on your website:`,
+    upgradeUrl,
+    '',
+    'When the trial ends:',
+    ...TRIAL_ENDS_LIST.map((t) => `- ${t}`),
+    '',
+    'Questions? Just reply to this email.',
+  ].join('\n');
+  return { subject: `Your Pro trial ends ${day}`, html, text };
+}
+
+// Once the trial has ended.
+export function proTrialEndedEmail({ firstName: givenName, businessName, upgradeUrl }) {
+  const first = String(givenName || '').trim();
+  const whose = businessName ? `The ${esc(businessName)} website` : 'Your website';
+  const html = renderEmailShell({
+    icon: null,
+    eyebrow: 'Genius Websites',
+    title: first ? `${esc(first)}, your Pro trial has ended` : 'Your Pro trial has ended',
+    intro: `${whose} is still live on the free plan. Online booking and card payments are off for now.`,
+    cta: { label: 'Upgrade to Pro', href: upgradeUrl },
+    body: `<p style="margin:0;font-size:13px;color:#52525b;text-align:center;line-height:1.6;">Upgrade any time to turn them back on. Your bookings, customers and settings are all still there.</p>
+      ${linkFallback(upgradeUrl)}`,
+  });
+  const text = [
+    first ? `${first}, your Pro trial has ended` : 'Your Pro trial has ended',
+    '',
+    `${businessName ? `The ${businessName} website` : 'Your website'} is still live on the free plan. Online booking and card payments are off for now.`,
+    '',
+    'Upgrade any time to turn them back on. Your bookings, customers and settings are all still there:',
+    upgradeUrl,
+    '',
+    'Questions? Just reply to this email.',
+  ].join('\n');
+  return { subject: 'Your Pro trial has ended', html, text };
+}
+
+export function proTrialEnding({ to, replyTo, ...message }) {
+  return sendCustomSiteEmail('proTrialEnding', {
+    to,
+    replyTo: replyTo || CUSTOM_SITES_REPLY_TO,
+    ...proTrialEndingEmail(message),
+  });
+}
+
+export function proTrialEnded({ to, replyTo, ...message }) {
+  return sendCustomSiteEmail('proTrialEnded', {
+    to,
+    replyTo: replyTo || CUSTOM_SITES_REPLY_TO,
+    ...proTrialEndedEmail(message),
+  });
 }
 
 export function freeSiteHandover({ to, replyTo, ...message }) {

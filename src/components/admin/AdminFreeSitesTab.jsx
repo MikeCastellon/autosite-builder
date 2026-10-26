@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { TEMPLATES } from '../../data/templates.js';
 import { freeSiteAdmin } from '../../lib/freeSites.js';
-import { FREE_SITE_STATUS_LABELS, customerName, freeSiteStatus, isEmail } from '../../lib/freeSiteHandover.js';
+import { FREE_SITE_STATUS_LABELS, PRO_TRIAL_DAYS, customerName, freeSiteStatus, isEmail } from '../../lib/freeSiteHandover.js';
 import { useAlert } from '../ui/AlertProvider.jsx';
 import { formatDateTime, timeAgo } from './customSiteUi.jsx';
 
@@ -32,6 +32,8 @@ const FILTERS = [
 ];
 
 const templateLabel = (id) => TEMPLATES[id]?.label || '';
+// 'Nov 24': a Pro trial's end, never more than 30 days out.
+const trialDay = (iso) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 const shortUrl = (url) => String(url || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
 
 export default function AdminFreeSitesTab({ onBuildSite, onOpenSiteEditor, openHandoverId = null, onHandoverShown }) {
@@ -275,7 +277,7 @@ function Row({ row, onBuild, onOpen, onLink, onEdit, onHandover, onResend, onRem
         <StatusBadge status={status} />
         {status === 'handed_over' ? (
           <p className="mt-1 text-[11px] text-ink-tertiary whitespace-nowrap">
-            {formatDateTime(row.handed_over_at)}{row.comp_pro ? ' · Pro included' : ' · Free plan'}
+            {formatDateTime(row.handed_over_at)}{row.comp_pro ? ' · Pro included' : row.pro_trial_ends_at ? ` · Pro trial to ${trialDay(row.pro_trial_ends_at)}` : ' · Free plan'}
           </p>
         ) : site?.ownerEmail ? (
           <p className="mt-1 text-[11px] text-ink-tertiary truncate max-w-[180px]">In {site.ownerEmail}'s account</p>
@@ -531,11 +533,19 @@ function LinkSiteModal({ row, mySites, onClose, onSaved }) {
   );
 }
 
+// The plan the customer gets with the site. A trial is Pro until its end
+// date, then the free plan by itself (pro-trial-sweep emails them first).
+const PLANS = [
+  { id: 'free', label: 'Free plan', hint: () => 'Free-plan badge, no bookings, like anyone who signs up.' },
+  { id: 'trial', label: `Pro free for ${PRO_TRIAL_DAYS} days`, hint: (end) => `Bookings and payments until ${end}, then the free plan by itself. We email them 3 days before it ends and when it ends.` },
+  { id: 'pro', label: 'Pro at no charge', hint: () => 'Bookings and payments, with no end date.' },
+];
+
 function HandoverModal({ row, onClose, onDone }) {
   const { toast, confirm } = useAlert();
   const [account, setAccount] = useState(undefined); // undefined = loading, null = none
   const [checkError, setCheckError] = useState('');
-  const [compPro, setCompPro] = useState(false);
+  const [plan, setPlan] = useState('free');
   const [sendEmail, setSendEmail] = useState(true);
   const [busy, setBusy] = useState(false);
   const site = row.site;
@@ -551,13 +561,19 @@ function HandoverModal({ row, onClose, onDone }) {
   }, [row.id]);
 
   const websites = (account?.sites || []).filter((s) => s.type === 'website');
-  const pro = compPro && !account?.isPro;
+  // Never Pro or a trial on top of a plan they already have.
+  const choosing = !account?.isPro && !account?.isAdmin;
+  const pro = choosing && plan === 'pro';
+  const trial = choosing && plan === 'trial';
+  // The server sets the real date at hand-over; this is what the admin sees.
+  const trialEnd = trialDay(Date.now() + PRO_TRIAL_DAYS * 24 * 60 * 60 * 1000);
 
   async function handOver() {
     const lines = [
       account ? `Move the site to ${account.email}'s account.` : `Create an account for ${row.client_email} and move the site there.`,
       pro ? 'Give them Pro (bookings and payments) at no charge.' : null,
-      !compPro && !account?.isPro ? 'They stay on the free plan.' : null,
+      trial ? `Give them Pro free for ${PRO_TRIAL_DAYS} days (until ${trialEnd}), then the free plan.` : null,
+      choosing && plan === 'free' ? 'They stay on the free plan.' : null,
       sendEmail ? (account ? 'Email them that the site is in their account.' : 'Email them a link to set their password.') : 'Send no email.',
       'After this, they edit and publish it from their account.',
     ].filter(Boolean);
@@ -565,8 +581,7 @@ function HandoverModal({ row, onClose, onDone }) {
     if (!ok) return;
     setBusy(true);
     try {
-      // Never comp Pro on top of a plan they pay for.
-      const res = await freeSiteAdmin('handover', { id: row.id, compPro: pro, sendEmail });
+      const res = await freeSiteAdmin('handover', { id: row.id, compPro: pro, trial, sendEmail });
       if (res.emailError) toast(`Handed over, but the email didn't send: ${res.emailError}`, 'error');
       else toast(`The site is in ${row.client_email}'s account now`, 'success');
       if (res.widgetsRemoved && site?.publishedUrl) {
@@ -594,7 +609,7 @@ function HandoverModal({ row, onClose, onDone }) {
               <p className="text-[#cc0000] font-medium">{row.client_email} is an admin account. Use the customer's own email (Edit details).</p>
             ) : account ? (
               <p className="text-[#1a1a1a]">
-                {first} has an account ({account.email}){account.isPro ? ' on Pro' : ' on the free plan'}.
+                {first} has an account ({account.email}){account.trialEndsAt ? ` on a Pro trial until ${trialDay(account.trialEndsAt)}` : account.isPro ? ' on Pro' : ' on the free plan'}.
                 {websites.length > 0 && (
                   <span className="block mt-1 text-amber-800">
                     They already have a website ({websites.map((s) => s.name || 'unnamed').join(', ')}). This becomes another one.
@@ -604,23 +619,28 @@ function HandoverModal({ row, onClose, onDone }) {
             ) : (
               <p className="text-[#1a1a1a]">{first} doesn't have an account yet. We'll create one for {row.client_email}.</p>
             )}
-            {!account?.isPro && !account?.isAdmin && (
-              <label className="mt-3 flex items-start gap-2 cursor-pointer">
-                <input type="checkbox" checked={compPro} onChange={(e) => setCompPro(e.target.checked)} className="mt-0.5 w-4 h-4 accent-[#cc0000]" />
-                <span>
-                  Include Pro at no charge
-                  <span className="block text-[11px] text-ink-tertiary">Off: they're on the free plan (free-plan badge, no bookings), like anyone who signs up.</span>
-                </span>
-              </label>
+            {choosing && (
+              <fieldset className="mt-3">
+                <legend className="text-[12px] font-semibold text-[#1a1a1a] mb-1.5">Their plan</legend>
+                {PLANS.map((p) => (
+                  <label key={p.id} className="mt-1.5 flex items-start gap-2 cursor-pointer">
+                    <input type="radio" name="free-site-plan" checked={plan === p.id} onChange={() => setPlan(p.id)} className="mt-0.5 w-4 h-4 accent-[#cc0000]" />
+                    <span>
+                      {p.label}
+                      <span className="block text-[11px] text-ink-tertiary">{p.hint(trialEnd)}</span>
+                    </span>
+                  </label>
+                ))}
+              </fieldset>
             )}
-            <label className="mt-2 flex items-start gap-2 cursor-pointer">
+            <label className="mt-3 flex items-start gap-2 cursor-pointer">
               <input type="checkbox" checked={sendEmail} onChange={(e) => setSendEmail(e.target.checked)} className="mt-0.5 w-4 h-4 accent-[#cc0000]" />
               <span>Email {first} {account ? 'that it\'s in their account' : 'a link to set their password'}</span>
             </label>
             {site && !site.publishedUrl && (
               <p className="mt-3 text-[12px] text-amber-800">The site isn't published yet. Open it in the editor and press Publish first, so it's live when they sign in.</p>
             )}
-            {pro && site?.publishedUrl && (
+            {(pro || trial) && site?.publishedUrl && (
               <p className="mt-3 text-[12px] text-ink-tertiary">The live page keeps the free-plan badge until it's republished from their account.</p>
             )}
           </>

@@ -15,8 +15,10 @@
 //   link-site    { id, siteId }   → the row's site is one already built in a
 //                                   team account (replaces the current one)
 //   handover-check { id }         → the customer's account, if they have one
-//   handover     { id, compPro, sendEmail } → moves the site to the customer's
-//                                   account (created if needed) and emails them
+//   handover     { id, compPro, trial, sendEmail } → moves the site to the
+//                                   customer's account (created if needed) and
+//                                   emails them. compPro: Pro at no charge;
+//                                   trial: Pro free for PRO_TRIAL_DAYS days
 //   handover-email { id }         → sends the access email again
 //   delete       { id }           → removes the row; a site not handed over
 //                                   stays in its builder's account
@@ -30,7 +32,7 @@ import { corsHeaders, jsonHeaders } from './_shared/cors.js';
 import { requireSuperAdmin } from './_lib/custom-site-auth.js';
 import { accessLink, findCustomerAccount, handOverSite } from './_lib/custom-site-handover.js';
 import { freeSiteHandover } from './_lib/postmark.js';
-import { FREE_SITE_MARKER, isEmail, sanitizeCustomer } from '../../src/lib/freeSiteHandover.js';
+import { FREE_SITE_MARKER, PRO_TRIAL_DAYS, isEmail, sanitizeCustomer } from '../../src/lib/freeSiteHandover.js';
 
 const TABLE = 'free_site_handovers';
 const APP_URL = (process.env.MAIN_APP_URL || 'https://sitebuilder.autocaregenius.com').replace(/\/$/, '');
@@ -156,6 +158,7 @@ async function sendAccessEmail(db, row, { newAccount, actor }) {
       newAccount,
       email,
       pro: !!account?.isPro,
+      trialEndsAt: account?.trialEndsAt || null,
     });
   } catch (e) {
     message = (e?.message || 'Email failed to send').slice(0, 300);
@@ -254,6 +257,7 @@ export const handler = async (event) => {
         const current = await loadRow(db, body.id);
         if (!current) return reply(404, { error: 'Not found' });
         if (current.handed_over_at) return reply(409, { error: 'The site is already in their account' });
+        if (body.compPro && body.trial) return reply(400, { error: 'Pick Pro at no charge or the trial, not both' });
         await linkMarkedSites(db, [current]);
         if (!current.site_id) return reply(400, { error: 'Build the site first' });
         const { data: site } = await db.from('sites').select('id, user_id').eq('id', current.site_id).maybeSingle();
@@ -263,7 +267,7 @@ export const handler = async (event) => {
 
         let result;
         try {
-          result = await handOverSite({ db, project: current, compPro: !!body.compPro });
+          result = await handOverSite({ db, project: current, compPro: !!body.compPro, trialDays: body.trial ? PRO_TRIAL_DAYS : 0 });
         } catch (e) {
           return reply(e.status || 500, { error: e.message || 'Could not hand over the site' });
         }
@@ -272,6 +276,7 @@ export const handler = async (event) => {
           handed_over_by: adminUser.id,
           customer_user_id: result.userId,
           comp_pro: !!body.compPro,
+          pro_trial_ends_at: result.trialEndsAt,
         }).eq('id', current.id).select('*').single();
         const row = data || current;
         const emailError = body.sendEmail === false ? null : await sendAccessEmail(db, row, { newAccount: result.newAccount, actor });

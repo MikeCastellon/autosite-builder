@@ -37,6 +37,11 @@ export const FREE_SITE_STATUS_LABELS = {
   handed_over: 'Handed over',
 };
 
+// A hand-over can include Pro free for this many days (free-site-admin's
+// `trial`): the account is Pro until then, then on the free plan by itself,
+// and pro-trial-sweep emails the customer before and when it ends.
+export const PRO_TRIAL_DAYS = 30;
+
 export function isEmail(v) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v || '').trim());
 }
