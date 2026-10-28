@@ -50,3 +50,15 @@ export function proTrialEndsAt(profile) {
   if (isEffectiveSchedulerActive({ ...profile, pro_trial_ends_at: null })) return null;
   return new Date(Date.parse(profile.pro_trial_ends_at));
 }
+
+// Stripe Checkout takes a trial end only 48 hours or more ahead; the extra
+// hour covers clock drift between us and Stripe.
+export const CHECKOUT_TRIAL_MIN_MS = 49 * 60 * 60 * 1000;
+
+// Subscribing during a Pro trial: when the first charge should be (the
+// trial's end), so the free days left aren't lost. null when it should be
+// now: no trial, Pro some other way, or too close to the end for Stripe.
+export function checkoutTrialEnd(profile) {
+  const ends = proTrialEndsAt(profile);
+  return ends && ends.getTime() - Date.now() >= CHECKOUT_TRIAL_MIN_MS ? ends : null;
+}

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import UpgradeProDialog from './UpgradeProDialog.jsx';
-import { isEffectiveSchedulerActive, proTrialEndsAt } from '../../lib/subscriptionGating.js';
+import { checkoutTrialEnd, isEffectiveSchedulerActive, proTrialEndsAt } from '../../lib/subscriptionGating.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -31,6 +31,9 @@ export default function ProTrialBanner({ profile }) {
 
   const daysLeft = endsAt ? Math.max(1, Math.ceil((endsAt.getTime() - Date.now()) / DAY_MS)) : 0;
   const endDay = endsAt ? endsAt.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) : '';
+  // Far enough from the end, checkout bills from the trial's end
+  // (stripe-checkout-url); in its last two days it bills right away.
+  const billsAtEnd = !!checkoutTrialEnd(profile);
 
   return (
     <>
@@ -48,9 +51,11 @@ export default function ProTrialBanner({ profile }) {
         open={open}
         onClose={() => setOpen(false)}
         heading={endsAt ? 'Keep Pro after your trial' : 'Upgrade to Pro'}
-        subheading={endsAt
-          ? `Upgrade now so online booking and card payments keep working after ${endDay}.`
-          : 'Turn online booking and card payments back on.'}
+        subheading={!endsAt
+          ? 'Turn online booking and card payments back on.'
+          : billsAtEnd
+            ? `Subscribe now and your first charge is on ${endDay}, when your free trial ends.`
+            : `Upgrade now so online booking and card payments keep working after ${endDay}.`}
       />
     </>
   );
